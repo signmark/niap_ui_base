@@ -17,7 +17,6 @@ interface CampaignFormProps {
   onClose: () => void;
 }
 
-// Определяем схему для формы создания кампании
 const campaignFormSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
   description: z.string().optional()
@@ -39,10 +38,6 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
   const { mutate: createCampaign, isPending } = useMutation({
     mutationFn: async (values: CampaignFormValues) => {
-      console.log("Creating campaign with values:", values);
-      console.log("Using token:", token);
-      console.log("Using userId:", userId);
-
       if (!token || !userId) {
         throw new Error("Необходима авторизация");
       }
@@ -56,22 +51,23 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         body: JSON.stringify({
           name: values.name,
           description: values.description || null,
-          user: userId 
+          user: userId // Используем userId для поля user
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Campaign creation failed:", data);
+        if (data.errors?.[0]?.message?.includes("permission")) {
+          clearAuth();
+          window.location.href = "/auth/login";
+        }
         throw new Error(data.errors?.[0]?.message || "Не удалось создать кампанию");
       }
 
-      console.log("Campaign created successfully:", data);
       return data.data;
     },
-    onSuccess: (data) => {
-      console.log("Mutation succeeded, invalidating queries");
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       toast({ 
         title: "Успешно", 
@@ -81,11 +77,6 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       form.reset();
     },
     onError: (error: Error) => {
-      console.error("Mutation failed:", error);
-      if (error.message.includes("permission")) {
-        clearAuth();
-        window.location.href = "/auth/login";
-      }
       toast({
         title: "Ошибка",
         description: error.message,
@@ -94,18 +85,13 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
   });
 
-  const onSubmit = async (values: CampaignFormValues) => {
-    console.log("Form submitted with values:", values);
-    createCampaign(values);
-  };
-
   return (
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Создать новую кампанию</DialogTitle>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit((values) => createCampaign(values))} className="space-y-4">
           <FormField
             control={form.control}
             name="name"
