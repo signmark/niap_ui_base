@@ -9,7 +9,7 @@ import { useEffect } from "react";
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const token = useAuthStore((state) => state.token);
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setToken = useAuthStore((state) => state.setToken);
 
   useEffect(() => {
     if (!token) {
@@ -19,7 +19,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await logout();
-    setAuth(null, null);
+    setToken(null);
   };
 
   if (!token) return null;

@@ -48,18 +48,7 @@ export async function login(email: string, password: string) {
       throw new Error('Ошибка аутентификации');
     }
 
-    const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${auth.data.access_token}`
-      }
-    });
-
-    if (!userResponse.ok) {
-      throw new Error('Не удалось получить данные пользователя');
-    }
-
-    const { data: user } = await userResponse.json();
-    return { user, token: auth.data.access_token };
+    return { token: auth.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
     throw error instanceof Error ? error : new Error('Ошибка входа');
@@ -79,23 +68,18 @@ export async function logout() {
     }
   } catch (error) {
     console.error('Logout error:', error);
-  } finally {
-    useAuthStore.getState().setAuth(null, null);
   }
 }
 
 export async function getCampaigns(): Promise<Campaign[]> {
   try {
-    const store = useAuthStore.getState();
-    const filter = JSON.stringify({
-      user_id: { _eq: store.userId }
-    });
+    const token = useAuthStore.getState().token;
 
     const response = await fetch(
-      `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`,
+      `${DIRECTUS_URL}/items/user_campaigns`,
       {
         headers: {
-          'Authorization': `Bearer ${store.token}`
+          'Authorization': `Bearer ${token}`
         }
       }
     );
@@ -114,17 +98,16 @@ export async function getCampaigns(): Promise<Campaign[]> {
 
 export async function createCampaign(name: string, description?: string): Promise<Campaign> {
   try {
-    const store = useAuthStore.getState();
+    const token = useAuthStore.getState().token;
     const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${store.token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         name,
-        description,
-        user_id: store.userId
+        description
       })
     });
 
