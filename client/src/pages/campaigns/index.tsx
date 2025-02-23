@@ -7,20 +7,37 @@ import { Plus } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
+import { DIRECTUS_URL } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
-  const userId = useAuthStore((state) => state.userId);
+  const { token, userId } = useAuthStore();
 
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
-    enabled: !!userId,
+    queryFn: async () => {
+      const response = await fetch(`${DIRECTUS_URL}/items/campaigns?filter[user][_eq]=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      const data = await response.json();
+      return data.data;
+    },
+    enabled: !!token && !!userId,
   });
 
   const { mutate: deleteCampaign } = useMutation({
     mutationFn: async (id: number) => {
-      await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
+      const response = await fetch(`${DIRECTUS_URL}/items/campaigns/${id}`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to delete campaign');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
@@ -32,8 +49,8 @@ export default function Campaigns() {
   }
 
   return (
-    <Layout>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Campaigns</h1>
         <Button onClick={() => setIsOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -66,6 +83,6 @@ export default function Campaigns() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <CampaignForm onClose={() => setIsOpen(false)} />
       </Dialog>
-    </Layout>
+    </div>
   );
 }

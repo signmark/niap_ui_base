@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { insertCampaignSchema } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
+import { DIRECTUS_URL } from "@/lib/directus";
 
 interface CampaignFormProps {
   onClose: () => void;
@@ -17,23 +18,28 @@ interface CampaignFormProps {
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
   const { toast } = useToast();
-  const userId = useAuthStore((state) => state.userId);
+  const { token, userId } = useAuthStore();
 
   const form = useForm({
     resolver: zodResolver(insertCampaignSchema),
     defaultValues: {
       name: "",
       description: "",
-      userId: userId || "",
     },
   });
 
   const { mutate: createCampaign } = useMutation({
     mutationFn: async (values: any) => {
-      const res = await fetch("/api/campaigns", {
+      const res = await fetch(`${DIRECTUS_URL}/items/campaigns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...values,
+          user: userId
+        }),
       });
       if (!res.ok) throw new Error("Failed to create campaign");
       return res.json();

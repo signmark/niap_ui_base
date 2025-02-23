@@ -9,11 +9,11 @@ import { useEffect } from "react";
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const token = useAuthStore((state) => state.token);
-  const setToken = useAuthStore((state) => state.setToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     if (!token) {
-      navigate("/login");
+      navigate("/auth/login");
     }
   }, [token, navigate]);
 
@@ -28,7 +28,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setToken(null);
+      setAuth(null, null);
     }
   };
 
