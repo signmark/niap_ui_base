@@ -102,7 +102,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         const promises = selectedKeywords.map(keyword => {
           const now = new Date().toISOString();
           const data = {
-            id: crypto.randomUUID(), // Генерируем UUID для каждого ключевого слова
             campaign_id: campaignId,
             keyword: keyword.keyword,
             trend_score: keyword.trend,
