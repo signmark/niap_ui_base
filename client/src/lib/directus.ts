@@ -2,13 +2,6 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { useAuthStore } from './store';
 
-interface DirectusUser {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-}
-
 interface DirectusAuthResponse {
   data: {
     access_token: string;
@@ -28,7 +21,7 @@ interface Campaign {
 
 const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string): Promise<{ token: string }> {
   try {
     const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
       method: 'POST',
@@ -56,33 +49,33 @@ export async function login(email: string, password: string) {
 }
 
 export async function logout() {
+  const token = useAuthStore.getState().token;
+  if (!token) return;
+
   try {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      await fetch(`${DIRECTUS_URL}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-    }
+    await fetch(`${DIRECTUS_URL}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
   } catch (error) {
     console.error('Logout error:', error);
   }
 }
 
 export async function getCampaigns(): Promise<Campaign[]> {
-  try {
-    const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
+  if (!token) {
+    throw new Error('Не авторизован');
+  }
 
-    const response = await fetch(
-      `${DIRECTUS_URL}/items/user_campaigns`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+  try {
+    const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    );
+    });
 
     if (!response.ok) {
       throw new Error('Не удалось получить список кампаний');
@@ -97,8 +90,12 @@ export async function getCampaigns(): Promise<Campaign[]> {
 }
 
 export async function createCampaign(name: string, description?: string): Promise<Campaign> {
+  const token = useAuthStore.getState().token;
+  if (!token) {
+    throw new Error('Не авторизован');
+  }
+
   try {
-    const token = useAuthStore.getState().token;
     const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
       method: 'POST',
       headers: {
