@@ -8,7 +8,8 @@ import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
-  const { token, setAuth } = useAuthStore();
+  const token = useAuthStore((state) => state.token);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     if (!token) {
@@ -16,14 +17,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [token, navigate]);
 
-  if (!token) {
-    return null;
-  }
-
   const handleLogout = async () => {
     await logout();
     setAuth(null, null);
   };
+
+  if (!token) return null;
 
   return (
     <SidebarProvider>

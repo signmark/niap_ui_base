@@ -12,12 +12,11 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       userId: null,
-      setAuth: (userId, token) => {
-        set({ userId, token });
-      },
+      setAuth: (userId, token) => set({ userId, token }),
     }),
     {
-      name: 'auth-store',
+      name: 'auth-storage',
+      version: 1,
     }
   )
 );

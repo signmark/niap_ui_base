@@ -18,11 +18,12 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [_, navigate] = useLocation();
-  const { token, setAuth } = useAuthStore();
   const { toast } = useToast();
+  const token = useAuthStore((state) => state.token);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-  // Если уже авторизованы - редиректим на /campaigns
   useEffect(() => {
+    // Если есть токен - сразу редиректим
     if (token) {
       navigate("/campaigns");
     }
@@ -39,15 +40,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const { user, token } = await login(data.email, data.password);
-
-      // Сначала показываем успешный вход
-      toast({
-        title: "Успешный вход",
-        description: "Добро пожаловать в SEO Manager",
-      });
-
-      // Затем обновляем состояние авторизации
       setAuth(user.id, token);
+      navigate("/campaigns");
     } catch (error) {
       toast({
         variant: "destructive",
