@@ -42,7 +42,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         throw new Error("Необходима авторизация");
       }
 
-      const response = await fetch(`${DIRECTUS_URL}/items/campaigns`, {
+      const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -50,8 +50,8 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         },
         body: JSON.stringify({
           name: values.name,
-          description: values.description || null,
-          user_id: userId // Изменено с user на user_id
+          description: values.description,
+          user_id: userId
         }),
       });
 
