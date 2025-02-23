@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -17,8 +18,15 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [_, navigate] = useLocation();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const { token, setAuth } = useAuthStore();
   const { toast } = useToast();
+
+  // Если уже авторизованы - редиректим на /campaigns
+  useEffect(() => {
+    if (token) {
+      navigate("/campaigns");
+    }
+  }, [token, navigate]);
 
   const {
     register,
@@ -31,13 +39,15 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const { user, token } = await login(data.email, data.password);
-      setAuth(user.id, token);
-      navigate("/campaigns");
 
+      // Сначала показываем успешный вход
       toast({
         title: "Успешный вход",
         description: "Добро пожаловать в SEO Manager",
       });
+
+      // Затем обновляем состояние авторизации
+      setAuth(user.id, token);
     } catch (error) {
       toast({
         variant: "destructive",
