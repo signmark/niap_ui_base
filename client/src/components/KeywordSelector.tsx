@@ -99,17 +99,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       try {
         console.log("Saving keywords:", selectedKeywords);
+        // Создаем массив обещаний для каждого ключевого слова
         const promises = selectedKeywords.map(keyword => {
           const now = new Date().toISOString();
-          const data = {
+          return directusApi.post('/items/user_keywords', {
             campaign_id: campaignId,
             keyword: keyword.keyword,
             trend_score: keyword.trend,
             mentions_count: 0,
             last_checked: now
-          };
-          console.log("Saving keyword data:", data);
-          return directusApi.post('/items/user_keywords', { data });
+          });
         });
 
         await Promise.all(promises);
