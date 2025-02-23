@@ -33,21 +33,22 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<UserKeyword[]>({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
-      const response = await directusApi.get(`/items/user_keywords`, {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
+      try {
+        const response = await directusApi.get(`/items/user_keywords`, {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
             }
           }
-        }
-      });
+        });
 
-      if (!response.data?.data) {
+        return response.data?.data || [];
+      } catch (err) {
+        console.error("Error fetching keywords:", err);
         return [];
       }
-
-      return response.data.data;
     }
   });
 
@@ -96,6 +97,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           trend_score: keyword.trend
         })
       );
+
       await Promise.all(promises);
     },
     onSuccess: () => {
