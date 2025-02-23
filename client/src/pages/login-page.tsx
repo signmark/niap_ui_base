@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -19,14 +18,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
   const setToken = useAuthStore((state) => state.setToken);
-
-  useEffect(() => {
-    if (token) {
-      navigate("/campaigns");
-    }
-  }, [token, navigate]);
 
   const {
     register,
@@ -38,11 +30,9 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await login(data.email, data.password);
-      if (response.token) {
-        setToken(response.token);
-        // После установки токена редирект произойдет автоматически через useEffect
-      }
+      const { token } = await login(data.email, data.password);
+      setToken(token);
+      navigate("/campaigns");
     } catch (error) {
       toast({
         variant: "destructive",
