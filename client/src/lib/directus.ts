@@ -32,10 +32,16 @@ export async function login(email: string, password: string): Promise<{ token: s
     });
 
     if (!response.ok) {
-      throw new Error('Неверный email или пароль');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.[0]?.message || 'Неверный email или пароль');
     }
 
-    const data = await response.json();
+    const data: DirectusAuthResponse = await response.json();
+
+    if (!data?.data?.access_token) {
+      throw new Error('Некорректный ответ от сервера');
+    }
+
     return { token: data.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
@@ -48,14 +54,19 @@ export async function logout() {
   if (!token) return;
 
   try {
-    await fetch(`${DIRECTUS_URL}/auth/logout`, {
+    const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при выходе из системы');
+    }
   } catch (error) {
     console.error('Logout error:', error);
+    throw error instanceof Error ? error : new Error('Ошибка при выходе из системы');
   }
 }
 
@@ -73,10 +84,15 @@ export async function getCampaigns(): Promise<Campaign[]> {
     });
 
     if (!response.ok) {
-      throw new Error('Не удалось получить список кампаний');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.[0]?.message || 'Не удалось получить список кампаний');
     }
 
     const { data } = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Некорректный формат данных');
+    }
+
     return data;
   } catch (error) {
     console.error('Get campaigns error:', error);
@@ -104,10 +120,15 @@ export async function createCampaign(name: string, description?: string): Promis
     });
 
     if (!response.ok) {
-      throw new Error('Не удалось создать кампанию');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.[0]?.message || 'Не удалось создать кампанию');
     }
 
     const { data } = await response.json();
+    if (!data || typeof data !== 'object') {
+      throw new Error('Некорректный формат данных');
+    }
+
     return data;
   } catch (error) {
     console.error('Create campaign error:', error);
