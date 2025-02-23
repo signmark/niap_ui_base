@@ -1,45 +1,33 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { useToast } from "@/hooks/use-toast";
-
-const loginSchema = z.object({
-  email: z.string().email("Введите корректный email"),
-  password: z.string().min(1, "Введите пароль"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [_, navigate] = useLocation();
-  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const setToken = useAuthStore((state) => state.setToken);
 
-  const form = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  const onSubmit = async (data: LoginForm) => {
     try {
-      const { token } = await login(data.email, data.password);
-      setToken(token);
-      navigate("/campaigns");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка входа",
-        description: error instanceof Error ? error.message : "Произошла ошибка при входе",
-      });
+      const result = await login(email, password);
+      if (result.token) {
+        setToken(result.token);
+        navigate("/campaigns");
+      }
+    } catch (err) {
+      setError("Неверный email или пароль");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,53 +40,41 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Введите email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email</label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Введите email"
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Пароль</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Введите пароль"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Пароль</label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Введите пароль"
+              required
             />
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? "Вход..." : "Войти"}
-            </Button>
-          </form>
-        </Form>
+          {error && (
+            <div className="text-sm text-destructive">{error}</div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Вход..." : "Войти"}
+          </Button>
+        </form>
       </div>
     </div>
   );
