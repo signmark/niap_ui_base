@@ -23,6 +23,8 @@ interface UserKeyword {
   campaign_id: string;
   keyword: string;
   trend_score: number;
+  mentions_count: number;
+  last_checked: string;
 }
 
 export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
@@ -40,7 +42,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               campaign_id: {
                 _eq: campaignId
               }
-            }
+            },
+            sort: ["-id"] // Сортировка по ID в обратном порядке
           }
         });
         console.log("Existing keywords response:", response.data);
@@ -100,7 +103,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           const data = {
             campaign_id: campaignId,
             keyword: keyword.keyword,
-            trend_score: keyword.trend
+            trend_score: keyword.trend,
+            mentions_count: 0, // Добавляем обязательные поля
+            last_checked: new Date().toISOString() // Текущая дата
           };
           console.log("Saving keyword data:", data);
           return directusApi.post('/items/user_keywords', { data });
