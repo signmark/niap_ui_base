@@ -14,7 +14,7 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        const response = await directusApi.get(`/items/campaigns/${id}`);
+        const response = await directusApi.get(`/items/user_campaigns/${id}`);
         return response.data?.data;
       } catch (err) {
         console.error("Error fetching campaign:", err);
