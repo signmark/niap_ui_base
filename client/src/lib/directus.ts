@@ -1,4 +1,4 @@
-import { createDirectus, rest, authentication, readItems } from '@directus/sdk';
+import { createDirectus, rest, authentication } from '@directus/sdk';
 
 interface DirectusUser {
   id: string;
@@ -13,22 +13,21 @@ const directus = createDirectus(import.meta.env.VITE_DIRECTUS_URL || 'https://di
 
 export async function login(email: string, password: string) {
   try {
-    // Сначала выполняем вход
+    // Выполняем вход и получаем токен
     const auth = await directus.login(email, password);
     if (!auth) throw new Error('Ошибка аутентификации');
 
-    // После успешного входа получаем данные пользователя
-    const me = await directus.request(readItems('directus_users', {
-      filter: {
-        email: { _eq: email }
-      },
-      fields: ['id', 'email', 'first_name', 'last_name'],
-      limit: 1
-    }));
+    // Получаем данные о текущем пользователе через /users/me
+    const response = await fetch(`${import.meta.env.VITE_DIRECTUS_URL}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${auth.access_token}`
+      }
+    });
 
-    if (!me?.[0]) throw new Error('Пользователь не найден');
+    if (!response.ok) throw new Error('Не удалось получить данные пользователя');
 
-    return { user: me[0] as DirectusUser };
+    const user = await response.json();
+    return { user: user as DirectusUser };
   } catch (error) {
     console.error('Login error:', error);
     if (error instanceof Error) {
@@ -48,12 +47,14 @@ export async function logout() {
 
 export async function getCurrentUser() {
   try {
-    const me = await directus.request(readItems('directus_users', {
-      fields: ['id', 'email', 'first_name', 'last_name'],
-      limit: 1
-    }));
+    const response = await fetch(`${import.meta.env.VITE_DIRECTUS_URL}/users/me`, {
+      credentials: 'include'
+    });
 
-    return me?.[0] as DirectusUser | null;
+    if (!response.ok) return null;
+
+    const user = await response.json();
+    return user as DirectusUser;
   } catch (error) {
     console.error('Get current user error:', error);
     return null;
