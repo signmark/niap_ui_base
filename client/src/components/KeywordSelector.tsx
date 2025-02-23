@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Keyword, XmlRiverResponse } from "@shared/schema";
+import type { Keyword } from "@shared/schema";
 
 interface KeywordSelectorProps {
   campaignId: number;
@@ -27,7 +27,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { toast } = useToast();
 
   const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<Keyword[]>({
-    queryKey: ["/api/keywords", campaignId],
+    queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
       const { data } = await directusApi.get(`/items/campaign_keywords`, {
         params: {
@@ -44,30 +44,34 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (query: string) => {
-      const response = await fetch(
-        `http://xmlriver.com/wordstat/json?user=16797&key=f7947eff83104621deb713275fe3260bfde4f001&query=${encodeURIComponent(query)}`
-      );
-
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
       if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка при поиске ключевых слов");
       }
-
-      const data: XmlRiverResponse = await response.json();
-      return data;
+      return await response.json();
     },
     onSuccess: (data) => {
-      const results = data.data.keywords.map(kw => ({
-        ...kw,
+      if (!data.data || !Array.isArray(data.data.keywords)) {
+        throw new Error("Некорректный формат данных от API");
+      }
+
+      const results = data.data.keywords.map((kw: any) => ({
+        keyword: kw.keyword || kw.word || "",
+        difficulty: Number(kw.difficulty) || 0,
+        competition: Number(kw.competition) || 0,
+        volume: Number(kw.volume) || 0,
         selected: false
       }));
-      setSearchResults(results);
 
+      setSearchResults(results);
       toast({
         title: "Успешно",
         description: "Ключевые слова найдены"
       });
     },
     onError: (error: Error) => {
+      console.error("Search error:", error);
       toast({
         title: "Ошибка",
         description: error.message,
@@ -78,24 +82,26 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
-      for (const keyword of selectedKeywords) {
-        await directusApi.post('/items/campaign_keywords', {
+      const promises = selectedKeywords.map(keyword => 
+        directusApi.post('/items/campaign_keywords', {
           word: keyword.keyword,
           campaign_id: campaignId,
           trend: keyword.difficulty,
           competition: keyword.competition,
           volume: keyword.volume
-        });
-      }
+        })
+      );
+      await Promise.all(promises);
     },
     onSuccess: () => {
       toast({
         title: "Успешно",
-        description: "Выбранные ключевые слова сохранены"
+        description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
     },
     onError: (error: Error) => {
+      console.error("Save error:", error);
       toast({
         title: "Ошибка",
         description: error.message,
@@ -137,6 +143,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           placeholder="Введите запрос для поиска ключевых слов"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         <Button onClick={handleSearch} disabled={isSearching}>
           {isSearching ? (

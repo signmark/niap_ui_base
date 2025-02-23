@@ -44,19 +44,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(keyword);
   });
 
-  // WordStat API proxy
+  // XMLRiver API proxy
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
-      const response = await axios.get(`https://xmlriver.com/wordstat/json`, {
+      const response = await axios.get(`https://xmlriver.com/search/xml`, {
         params: {
-          user: process.env.WORDSTAT_USER,
-          key: process.env.WORDSTAT_KEY,
-          query: req.params.keyword
+          user: process.env.XMLRIVER_USER,
+          key: process.env.XMLRIVER_KEY,
+          query: req.params.keyword,
+          format: 'json',
+          language: 'ru'
         }
       });
+
+      if (!response.data || !response.data.data || !response.data.data.keywords) {
+        throw new Error("Некорректный формат ответа от XMLRiver API");
+      }
+
       res.json(response.data);
     } catch (error) {
-      res.status(500).json({ message: "WordStat API error" });
+      console.error('XMLRiver API error:', error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Error fetching keywords from XMLRiver" 
+      });
     }
   });
 
