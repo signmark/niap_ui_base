@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -10,21 +10,22 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   devtools(
-    (set) => ({
-      isAuthenticated: false,
-      userId: null,
-      token: null,
-      setAuth: (userId, token) => {
-        console.log('Setting auth state:', { userId, hasToken: !!token });
-        set({ 
-          isAuthenticated: !!userId && !!token,
-          userId,
-          token
-        });
-      },
-    }),
-    {
-      name: 'auth-store',
-    }
+    persist(
+      (set) => ({
+        isAuthenticated: false,
+        userId: null,
+        token: null,
+        setAuth: (userId, token) => {
+          set({ 
+            isAuthenticated: !!userId && !!token,
+            userId,
+            token
+          });
+        },
+      }),
+      {
+        name: 'auth-store',
+      }
+    )
   )
 );
