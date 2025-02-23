@@ -20,10 +20,10 @@ export default function LoginPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setToken = useAuthStore((state) => state.setToken);
 
+  // Редирект если уже авторизован
   useEffect(() => {
-    // Если есть токен - сразу редиректим
     if (token) {
       navigate("/campaigns");
     }
@@ -39,8 +39,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const { user, token } = await login(data.email, data.password);
-      setAuth(user.id, token);
+      const { token: newToken } = await login(data.email, data.password);
+      setToken(newToken);
       navigate("/campaigns");
     } catch (error) {
       toast({
