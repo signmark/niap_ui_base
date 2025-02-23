@@ -2,23 +2,6 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { useAuthStore } from './store';
 
-interface DirectusAuthResponse {
-  data: {
-    access_token: string;
-    expires: number;
-    refresh_token: string;
-  };
-}
-
-interface Campaign {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
 export async function login(email: string, password: string): Promise<{ token: string }> {
@@ -36,6 +19,11 @@ export async function login(email: string, password: string): Promise<{ token: s
     }
 
     const data = await response.json();
+
+    if (!data?.data?.access_token) {
+      throw new Error('Неверный ответ от сервера');
+    }
+
     return { token: data.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
@@ -54,9 +42,20 @@ export async function logout() {
         'Authorization': `Bearer ${token}`
       }
     });
+
+    useAuthStore.getState().clearToken();
   } catch (error) {
     console.error('Logout error:', error);
   }
+}
+
+interface Campaign {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export async function getCampaigns(): Promise<Campaign[]> {
