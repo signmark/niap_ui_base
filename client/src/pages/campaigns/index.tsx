@@ -19,14 +19,12 @@ export default function Campaigns() {
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      console.log("Fetching campaigns with userId:", userId);
-
       if (!token || !userId) {
         throw new Error("Необходима авторизация");
       }
 
       try {
-        const response = await fetch(`${DIRECTUS_URL}/items/campaigns?filter[user][_eq]=${userId}`, {
+        const response = await fetch(`${DIRECTUS_URL}/items/campaigns?filter[user_id][_eq]=${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -34,19 +32,15 @@ export default function Campaigns() {
 
         if (!response.ok) {
           const error = await response.json();
-          console.error("Failed to fetch campaigns:", error);
-
           if (error.errors?.[0]?.message?.includes("permission")) {
             useAuthStore.getState().clearAuth();
             window.location.href = "/auth/login";
             return [];
           }
-
           throw new Error('Не удалось загрузить кампании');
         }
 
         const data = await response.json();
-        console.log("Fetched campaigns:", data);
         return data.data;
       } catch (error) {
         console.error("Error fetching campaigns:", error);

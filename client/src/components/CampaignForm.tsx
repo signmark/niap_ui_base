@@ -51,7 +51,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         body: JSON.stringify({
           name: values.name,
           description: values.description || null,
-          user: userId // Используем userId для поля user
+          user_id: userId // Изменено с user на user_id
         }),
       });
 
