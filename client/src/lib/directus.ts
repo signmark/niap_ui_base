@@ -103,28 +103,36 @@ export async function createCampaign(name: string, description?: string) {
     throw new Error('Требуется авторизация');
   }
 
-  const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
-    },
-    body: JSON.stringify({
-      name,
-      description,
-      user_id: currentUser.id, // Explicitly set user_id
-    }),
-    credentials: 'include'
-  });
+  try {
+    console.log('Creating campaign with user_id:', currentUser.id);
 
-  if (!response.ok) {
-    const error = await response.json();
+    const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        user_id: currentUser.id, // Explicitly set user_id
+      }),
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Create campaign error:', error);
+      throw new Error('Не удалось создать кампанию');
+    }
+
+    const { data } = await response.json();
+    console.log('Created campaign:', data);
+    return data as Campaign;
+  } catch (error) {
     console.error('Create campaign error:', error);
-    throw new Error('Не удалось создать кампанию');
+    throw error instanceof Error ? error : new Error('Не удалось создать кампанию');
   }
-
-  const { data } = await response.json();
-  return data as Campaign;
 }
 
 export async function getCampaigns() {
@@ -132,19 +140,27 @@ export async function getCampaigns() {
     throw new Error('Требуется авторизация');
   }
 
-  const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`
-    },
-    credentials: 'include'
-  });
+  try {
+    console.log('Fetching campaigns with token:', accessToken?.substring(0, 10) + '...');
 
-  if (!response.ok) {
-    const error = await response.json();
+    const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Get campaigns error:', error);
+      throw new Error('Не удалось получить список кампаний');
+    }
+
+    const { data } = await response.json();
+    console.log('Received campaigns:', data);
+    return data as Campaign[];
+  } catch (error) {
     console.error('Get campaigns error:', error);
-    throw new Error('Не удалось получить список кампаний');
+    throw error instanceof Error ? error : new Error('Не удалось получить список кампаний');
   }
-
-  const { data } = await response.json();
-  return data as Campaign[];
 }
