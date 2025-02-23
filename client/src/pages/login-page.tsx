@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -18,14 +17,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [_, navigate] = useLocation();
-  const { isAuthenticated, setAuth } = useAuthStore();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/campaigns");
-    }
-  }, [isAuthenticated, navigate]);
 
   const {
     register,
@@ -38,12 +31,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const { user, token } = await login(data.email, data.password);
-
-      if (!user || !token) {
-        throw new Error('Ошибка авторизации');
-      }
-
       setAuth(user.id, token);
+      navigate("/campaigns");
 
       toast({
         title: "Успешный вход",
