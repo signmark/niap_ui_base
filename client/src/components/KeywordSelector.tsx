@@ -10,14 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { Keyword } from "@shared/schema";
 
 interface KeywordSelectorProps {
-  campaignId: number;
+  campaignId: string;
 }
 
 interface KeywordResult {
   keyword: string;
-  difficulty: number;
-  competition: number;
-  volume: number;
+  trend: number;
   selected: boolean;
 }
 
@@ -29,7 +27,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<Keyword[]>({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
-      const { data } = await directusApi.get(`/items/campaign_keywords`, {
+      const { data } = await directusApi.get(`/items/user_keywords`, {
         params: {
           filter: {
             campaign_id: {
@@ -58,9 +56,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
       const results = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword || kw.word || "",
-        difficulty: Number(kw.difficulty) || 0,
-        competition: Number(kw.competition) || 0,
-        volume: Number(kw.volume) || 0,
+        trend: Number(kw.trend) || Number(kw.difficulty) || 0,
         selected: false
       }));
 
@@ -83,12 +79,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       const promises = selectedKeywords.map(keyword => 
-        directusApi.post('/items/campaign_keywords', {
-          word: keyword.keyword,
+        directusApi.post('/items/user_keywords', {
+          keyword: keyword.keyword,
           campaign_id: campaignId,
-          trend: keyword.difficulty,
-          competition: keyword.competition,
-          volume: keyword.volume
+          trend: keyword.trend
         })
       );
       await Promise.all(promises);
@@ -164,9 +158,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               <TableRow>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
-                <TableHead>Объем</TableHead>
-                <TableHead>Конкуренция</TableHead>
-                <TableHead>Сложность</TableHead>
+                <TableHead>Тренд</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -179,9 +171,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                     />
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.volume}</TableCell>
-                  <TableCell>{keyword.competition}</TableCell>
-                  <TableCell>{keyword.difficulty}</TableCell>
+                  <TableCell>{keyword.trend}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -215,17 +205,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Ключевое слово</TableHead>
-                <TableHead>Объем</TableHead>
-                <TableHead>Конкуренция</TableHead>
                 <TableHead>Тренд</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {existingKeywords.map((keyword) => (
                 <TableRow key={keyword.id}>
-                  <TableCell>{keyword.word}</TableCell>
-                  <TableCell>{keyword.volume}</TableCell>
-                  <TableCell>{keyword.competition}</TableCell>
+                  <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
                 </TableRow>
               ))}
