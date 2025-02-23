@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCampaignSchema, insertKeywordSchema, insertContentSchema } from "@shared/schema";
+import { insertCampaignSchema, insertKeywordSchema } from "@shared/schema";
 import axios from "axios";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -58,21 +58,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "WordStat API error" });
     }
-  });
-
-  // Content routes
-  app.post("/api/content", async (req, res) => {
-    const result = insertContentSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ errors: result.error.errors });
-    }
-    const content = await storage.createContent(result.data);
-    res.json(content);
-  });
-
-  app.get("/api/campaigns/:id/content", async (req, res) => {
-    const content = await storage.getContent(Number(req.params.id));
-    res.json(content);
   });
 
   return httpServer;
