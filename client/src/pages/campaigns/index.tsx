@@ -17,13 +17,19 @@ export default function Campaigns() {
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
+      console.log("Fetching campaigns with userId:", userId);
       const response = await fetch(`${DIRECTUS_URL}/items/campaigns?filter[user][_eq]=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Failed to fetch campaigns:", error);
+        throw new Error('Failed to fetch campaigns');
+      }
       const data = await response.json();
+      console.log("Fetched campaigns:", data);
       return data.data;
     },
     enabled: !!token && !!userId,
@@ -45,16 +51,16 @@ export default function Campaigns() {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Campaigns</h1>
+        <h1 className="text-2xl font-bold">Кампании</h1>
         <Button onClick={() => setIsOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Campaign
+          Добавить кампанию
         </Button>
       </div>
 
@@ -72,7 +78,7 @@ export default function Campaigns() {
                   size="sm"
                   onClick={() => deleteCampaign(campaign.id)}
                 >
-                  Delete
+                  Удалить
                 </Button>
               </div>
             </CardContent>
