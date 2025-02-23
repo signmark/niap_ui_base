@@ -27,7 +27,7 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
   const { toast } = useToast();
-  const { token, userId } = useAuthStore();
+  const { token, userId, clearAuth } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignFormSchema),
@@ -43,6 +43,10 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       console.log("Using token:", token);
       console.log("Using userId:", userId);
 
+      if (!token || !userId) {
+        throw new Error("Необходима авторизация");
+      }
+
       const response = await fetch(`${DIRECTUS_URL}/items/campaigns`, {
         method: "POST",
         headers: { 
@@ -52,7 +56,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         body: JSON.stringify({
           name: values.name,
           description: values.description || null,
-          user: userId
+          user: userId 
         }),
       });
 
@@ -60,7 +64,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
       if (!response.ok) {
         console.error("Campaign creation failed:", data);
-        throw new Error(data.errors?.[0]?.message || "Failed to create campaign");
+        throw new Error(data.errors?.[0]?.message || "Не удалось создать кампанию");
       }
 
       console.log("Campaign created successfully:", data);
@@ -78,6 +82,10 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
     onError: (error: Error) => {
       console.error("Mutation failed:", error);
+      if (error.message.includes("permission")) {
+        clearAuth();
+        window.location.href = "/auth/login";
+      }
       toast({
         title: "Ошибка",
         description: error.message,
