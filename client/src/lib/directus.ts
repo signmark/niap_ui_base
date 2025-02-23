@@ -25,6 +25,7 @@ interface Campaign {
 const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
 let accessToken: string | null = null;
+let currentUser: DirectusUser | null = null;
 
 export async function login(email: string, password: string) {
   try {
@@ -46,22 +47,16 @@ export async function login(email: string, password: string) {
       throw new Error('Ошибка аутентификации');
     }
 
-    // Store the access token for future requests
     accessToken = auth.data.access_token;
 
-    const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${auth.data.access_token}`
-      },
-      credentials: 'include'
-    });
-
-    if (!userResponse.ok) {
+    // Get user info
+    const user = await getCurrentUser();
+    if (!user) {
       throw new Error('Не удалось получить данные пользователя');
     }
 
-    const { data: user } = await userResponse.json();
-    return { user: user as DirectusUser };
+    currentUser = user;
+    return { user };
   } catch (error) {
     console.error('Login error:', error);
     throw error instanceof Error ? error : new Error('Ошибка входа');
@@ -75,6 +70,7 @@ export async function logout() {
       credentials: 'include'
     });
     accessToken = null;
+    currentUser = null;
   } catch (error) {
     console.error('Logout error:', error);
   }
@@ -82,7 +78,12 @@ export async function logout() {
 
 export async function getCurrentUser() {
   try {
+    if (!accessToken) return null;
+
     const response = await fetch(`${DIRECTUS_URL}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
       credentials: 'include'
     });
 
@@ -98,7 +99,9 @@ export async function getCurrentUser() {
 
 // Campaigns API
 export async function createCampaign(name: string, description?: string) {
-  if (!accessToken) throw new Error('Требуется авторизация');
+  if (!accessToken || !currentUser) {
+    throw new Error('Требуется авторизация');
+  }
 
   const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
     method: 'POST',
@@ -109,11 +112,14 @@ export async function createCampaign(name: string, description?: string) {
     body: JSON.stringify({
       name,
       description,
+      user_id: currentUser.id, // Explicitly set user_id
     }),
     credentials: 'include'
   });
 
   if (!response.ok) {
+    const error = await response.json();
+    console.error('Create campaign error:', error);
     throw new Error('Не удалось создать кампанию');
   }
 
@@ -122,7 +128,9 @@ export async function createCampaign(name: string, description?: string) {
 }
 
 export async function getCampaigns() {
-  if (!accessToken) throw new Error('Требуется авторизация');
+  if (!accessToken) {
+    throw new Error('Требуется авторизация');
+  }
 
   const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
     headers: {
@@ -132,6 +140,8 @@ export async function getCampaigns() {
   });
 
   if (!response.ok) {
+    const error = await response.json();
+    console.error('Get campaigns error:', error);
     throw new Error('Не удалось получить список кампаний');
   }
 
