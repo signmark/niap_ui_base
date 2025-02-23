@@ -40,8 +40,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               campaign_id: {
                 _eq: campaignId
               }
-            },
-            sort: ["-date_created"]
+            }
           }
         });
         console.log("Existing keywords response:", response.data);
@@ -104,7 +103,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             trend_score: keyword.trend
           };
           console.log("Saving keyword data:", data);
-          return directusApi.post('/items/user_keywords', data);
+          return directusApi.post('/items/user_keywords', { data });
         });
 
         await Promise.all(promises);
