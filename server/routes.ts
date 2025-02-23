@@ -55,11 +55,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      if (!response.data?.items || !Array.isArray(response.data.items)) {
+      if (!response.data?.content?.includingPhrases?.items) {
         throw new Error("Некорректный формат ответа от XMLRiver API");
       }
 
-      const keywords = response.data.items.map((item: any) => ({
+      const keywords = response.data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
         trend: parseInt(item.number.replace(/\s/g, '')) || 0
       }));
