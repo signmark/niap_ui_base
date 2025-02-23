@@ -17,6 +17,12 @@ directusApi.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('Directus API Request:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      data: config.data
+    });
     return config;
   },
   (error) => {
@@ -26,8 +32,19 @@ directusApi.interceptors.request.use(
 
 // Add a response interceptor
 directusApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Directus API Response:', {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
+    console.error('Directus API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     if (error.response?.status === 401) {
       useAuthStore.getState().clearAuth();
       window.location.href = '/auth/login';

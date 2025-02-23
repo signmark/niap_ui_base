@@ -44,10 +44,11 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             sort: ["-date_created"]
           }
         });
+        console.log("Existing keywords response:", response.data);
         return response.data?.data || [];
       } catch (err) {
         console.error("Error fetching keywords:", err);
-        return [];
+        throw err;
       }
     }
   });
@@ -95,13 +96,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       try {
-        const promises = selectedKeywords.map(keyword =>
-          directusApi.post('/items/user_keywords', {
+        console.log("Saving keywords:", selectedKeywords);
+        const promises = selectedKeywords.map(keyword => {
+          const data = {
             campaign_id: campaignId,
             keyword: keyword.keyword,
             trend_score: keyword.trend
-          })
-        );
+          };
+          console.log("Saving keyword data:", data);
+          return directusApi.post('/items/user_keywords', data);
+        });
 
         await Promise.all(promises);
       } catch (error) {
@@ -115,7 +119,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
-      refetchKeywords(); // Обновляем список сохраненных ключевых слов
+      refetchKeywords();
     },
     onError: (error: Error) => {
       toast({
