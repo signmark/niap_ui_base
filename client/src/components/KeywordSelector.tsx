@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Keyword } from "@shared/schema";
 
 interface KeywordSelectorProps {
   campaignId: string;
@@ -19,15 +18,22 @@ interface KeywordResult {
   selected: boolean;
 }
 
+interface UserKeyword {
+  id: string;
+  campaign_id: string;
+  keyword: string;
+  trend_score: number;
+}
+
 export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
 
-  const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<Keyword[]>({
+  const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<UserKeyword[]>({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
-      const { data } = await directusApi.get(`/items/user_keywords`, {
+      const response = await directusApi.get(`/items/user_keywords`, {
         params: {
           filter: {
             campaign_id: {
@@ -36,7 +42,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           }
         }
       });
-      return data.data;
+
+      if (!response.data?.data) {
+        return [];
+      }
+
+      return response.data.data;
     }
   });
 
@@ -80,9 +91,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       const promises = selectedKeywords.map(keyword => 
         directusApi.post('/items/user_keywords', {
-          keyword: keyword.keyword,
           campaign_id: campaignId,
-          trend: keyword.trend
+          keyword: keyword.keyword,
+          trend_score: keyword.trend
         })
       );
       await Promise.all(promises);
@@ -212,7 +223,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               {existingKeywords.map((keyword) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

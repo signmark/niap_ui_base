@@ -15,16 +15,19 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        const { data } = await directusApi.get(`/items/campaigns/${id}`);
+        const response = await directusApi.get(`/items/campaigns/${id}`);
 
-        if (!data.data) {
+        if (!response.data?.data) {
           throw new Error("Кампания не найдена");
         }
 
-        return data.data;
+        return response.data.data;
       } catch (err) {
         console.error("Error fetching campaign:", err);
-        throw new Error("Ошибка при загрузке кампании");
+        if (err.response?.status === 401) {
+          throw new Error("Необходима авторизация");
+        }
+        throw new Error("Кампания не найдена или у вас нет прав доступа к ней");
       }
     },
     retry: false,
