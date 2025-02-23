@@ -30,7 +30,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
 
-  const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery<UserKeyword[]>({
+  const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery<UserKeyword[]>({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
       try {
@@ -71,8 +71,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       }
 
       const results = data.data.keywords.map((kw: any) => ({
-        keyword: kw.keyword || kw.word || "",
-        trend: Number(kw.trend) || Number(kw.difficulty) || 0,
+        keyword: kw.keyword,
+        trend: kw.trend,
         selected: false
       }));
 
@@ -114,6 +114,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
+      refetchKeywords(); // Обновляем список сохраненных ключевых слов
     },
     onError: (error: Error) => {
       toast({
