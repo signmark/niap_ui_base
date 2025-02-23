@@ -22,7 +22,6 @@ export default function LoginPage() {
   const token = useAuthStore((state) => state.token);
   const setToken = useAuthStore((state) => state.setToken);
 
-  // Редирект если уже авторизован
   useEffect(() => {
     if (token) {
       navigate("/campaigns");
@@ -39,9 +38,11 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const { token: newToken } = await login(data.email, data.password);
-      setToken(newToken);
-      navigate("/campaigns");
+      const response = await login(data.email, data.password);
+      if (response.token) {
+        setToken(response.token);
+        // После установки токена редирект произойдет автоматически через useEffect
+      }
     } catch (error) {
       toast({
         variant: "destructive",
