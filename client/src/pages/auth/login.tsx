@@ -9,10 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useLocation } from "wouter";
+import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email("Неверный формат email"),
+  password: z.string().min(1, "Пароль обязателен"),
 });
 
 export default function Login() {
@@ -33,10 +34,14 @@ export default function Login() {
       const response = await login(values.email, values.password);
       setAuth(response.user.id);
       navigate("/campaigns");
+      toast({
+        title: "Успешный вход",
+        description: "Добро пожаловать в SEO Manager",
+      });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Invalid email or password",
+        title: "Ошибка входа",
+        description: error instanceof Error ? error.message : "Проверьте email и пароль",
         variant: "destructive",
       });
     }
@@ -46,7 +51,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Login to SEO Manager</CardTitle>
+          <CardTitle className="text-2xl text-center">Вход в SEO Manager</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -58,7 +63,7 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your email" {...field} />
+                      <Input placeholder="Введите email" type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -69,16 +74,27 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Пароль</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
+                      <Input type="password" placeholder="Введите пароль" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Logging in..." : "Login"}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Вход...
+                  </>
+                ) : (
+                  "Войти"
+                )}
               </Button>
             </form>
           </Form>
