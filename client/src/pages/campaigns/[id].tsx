@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";
 import { directusApi } from "@/lib/directus";
-import type { Campaign } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,22 +10,14 @@ export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
 
-  const { data: campaign, isLoading, error } = useQuery<Campaign>({
+  const { data: campaign, isLoading, error } = useQuery({
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
         const response = await directusApi.get(`/items/campaigns/${id}`);
-
-        if (!response.data?.data) {
-          throw new Error("Кампания не найдена");
-        }
-
-        return response.data.data;
+        return response.data?.data;
       } catch (err) {
         console.error("Error fetching campaign:", err);
-        if (err.response?.status === 401) {
-          throw new Error("Необходима авторизация");
-        }
         throw new Error("Кампания не найдена или у вас нет прав доступа к ней");
       }
     },
