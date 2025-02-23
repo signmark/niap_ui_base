@@ -31,6 +31,7 @@ export default function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
+      // Шаг 1: Получаем токен
       const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -45,25 +46,38 @@ export default function Login() {
         throw new Error(data.errors?.[0]?.message || "Ошибка входа");
       }
 
-      if (data?.data?.access_token) {
-        // Get user data after successful login
-        const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${data.data.access_token}`
-          }
-        });
-        const userData = await userResponse.json();
-
-        setAuth(data.data.access_token, userData.data.id);
-        navigate("/campaigns");
-        toast({
-          title: "Успешный вход",
-          description: "Добро пожаловать в SEO Manager",
-        });
-      } else {
+      if (!data?.data?.access_token) {
         throw new Error("Неверный формат ответа от сервера");
       }
+
+      const token = data.data.access_token;
+
+      // Шаг 2: Получаем данные пользователя
+      const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!userResponse.ok) {
+        throw new Error("Не удалось получить данные пользователя");
+      }
+
+      const userData = await userResponse.json();
+
+      // Сохраняем токен и ID пользователя
+      setAuth(token, userData.data.id);
+
+      // Перенаправляем на страницу кампаний
+      navigate("/campaigns");
+
+      toast({
+        title: "Успешный вход",
+        description: "Добро пожаловать в SEO Manager",
+      });
+
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Ошибка входа",
         description: error instanceof Error ? error.message : "Проверьте email и пароль",
