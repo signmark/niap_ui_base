@@ -6,11 +6,11 @@ import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 
 export default function LoginPage() {
-  const [_, navigate] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [_, navigate] = useLocation();
   const setToken = useAuthStore((state) => state.setToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,11 +19,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await login(email, password);
-      if (result.token) {
-        setToken(result.token);
-        navigate("/campaigns");
-      }
+      const { token } = await login(email, password);
+      setToken(token);
+      navigate("/campaigns");
     } catch (err) {
       setError("Неверный email или пароль");
     } finally {
