@@ -22,7 +22,8 @@ export async function login(email: string, password: string) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
 
     if (!authResponse.ok) {
@@ -36,7 +37,8 @@ export async function login(email: string, password: string) {
     const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
         'Authorization': `Bearer ${auth.data.access_token}`
-      }
+      },
+      credentials: 'include'
     });
 
     if (!userResponse.ok) throw new Error('Не удалось получить данные пользователя');
