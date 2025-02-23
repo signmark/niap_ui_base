@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/lib/store";
-import { DIRECTUS_URL } from "@/lib/directus";
+import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
@@ -26,7 +26,7 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
   const { toast } = useToast();
-  const { token, userId, clearAuth } = useAuthStore();
+  const { userId } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignFormSchema),
@@ -38,32 +38,15 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
   const { mutate: createCampaign, isPending } = useMutation({
     mutationFn: async (values: CampaignFormValues) => {
-      if (!token || !userId) {
+      if (!userId) {
         throw new Error("Необходима авторизация");
       }
 
-      const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: values.name,
-          description: values.description,
-          user_id: userId
-        }),
+      const { data } = await directusApi.post('/items/user_campaigns', {
+        name: values.name,
+        description: values.description,
+        user_id: userId
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.errors?.[0]?.message?.includes("permission")) {
-          clearAuth();
-          window.location.href = "/auth/login";
-        }
-        throw new Error(data.errors?.[0]?.message || "Не удалось создать кампанию");
-      }
 
       return data.data;
     },

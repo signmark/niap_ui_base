@@ -6,74 +6,41 @@ import { Plus } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
-import { DIRECTUS_URL } from "@/lib/directus";
+import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
-  const { token, userId } = useAuthStore();
+  const { userId } = useAuthStore();
   const { toast } = useToast();
 
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      if (!token || !userId) {
+      if (!userId) {
         throw new Error("Необходима авторизация");
       }
 
-      try {
-        const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns?filter[user_id][_eq]=${userId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+      const { data } = await directusApi.get(`/items/user_campaigns`, {
+        params: {
+          filter: {
+            user_id: {
+              _eq: userId
+            }
           }
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          if (error.errors?.[0]?.message?.includes("permission")) {
-            useAuthStore.getState().clearAuth();
-            window.location.href = "/auth/login";
-            return [];
-          }
-          throw new Error('Не удалось загрузить кампании');
         }
+      });
 
-        const data = await response.json();
-        return data.data;
-      } catch (error) {
-        console.error("Error fetching campaigns:", error);
-        toast({
-          title: "Ошибка",
-          description: error instanceof Error ? error.message : "Не удалось загрузить кампании",
-          variant: "destructive",
-        });
-        return [];
-      }
+      return data.data;
     },
-    enabled: !!token && !!userId,
+    enabled: !!userId,
   });
 
   const { mutate: deleteCampaign } = useMutation({
     mutationFn: async (id: number) => {
-      if (!token) {
-        throw new Error("Необходима авторизация");
-      }
-
-      const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.errors?.[0]?.message || 'Не удалось удалить кампанию');
-      }
+      await directusApi.delete(`/items/user_campaigns/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
