@@ -11,6 +11,7 @@ import { queryClient } from "@/lib/queryClient";
 import { insertCampaignSchema } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
+import { Loader2 } from "lucide-react";
 
 interface CampaignFormProps {
   onClose: () => void;
@@ -28,9 +29,9 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
   });
 
-  const { mutate: createCampaign } = useMutation({
+  const { mutate: createCampaign, isPending } = useMutation({
     mutationFn: async (values: any) => {
-      const res = await fetch(`${DIRECTUS_URL}/items/campaigns`, {
+      const response = await fetch(`${DIRECTUS_URL}/items/campaigns`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -41,21 +42,34 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
           user: userId
         }),
       });
-      if (!res.ok) throw new Error("Failed to create campaign");
-      return res.json();
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.errors?.[0]?.message || "Failed to create campaign");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({ title: "Success", description: "Campaign created successfully" });
+      toast({ 
+        title: "Success", 
+        description: "Campaign created successfully" 
+      });
       onClose();
+      form.reset();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to create campaign",
+        description: error.message,
         variant: "destructive",
       });
     },
+  });
+
+  const onSubmit = form.handleSubmit((values) => {
+    createCampaign(values);
   });
 
   return (
@@ -64,7 +78,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         <DialogTitle>Create New Campaign</DialogTitle>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => createCampaign(values))} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <FormField
             control={form.control}
             name="name"
@@ -90,10 +104,19 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
             )}
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} type="button">
               Cancel
             </Button>
-            <Button type="submit">Create</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create"
+              )}
+            </Button>
           </div>
         </form>
       </Form>

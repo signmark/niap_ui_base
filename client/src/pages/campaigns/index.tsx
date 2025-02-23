@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -8,6 +7,7 @@ import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
+import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 
 export default function Campaigns() {
