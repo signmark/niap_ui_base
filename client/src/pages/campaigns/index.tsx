@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -10,6 +10,7 @@ import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
@@ -81,6 +82,12 @@ export default function Campaigns() {
             <CardContent>
               <p className="text-sm text-gray-500">{campaign.description}</p>
               <div className="mt-4 flex gap-2">
+                <Link href={`/campaigns/${campaign.id}`}>
+                  <Button variant="secondary" size="sm">
+                    <Search className="mr-2 h-4 w-4" />
+                    Подобрать ключевые слова
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
