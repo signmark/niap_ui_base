@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Keyword, XmlRiverResponse } from "@shared/schema";
 
 interface KeywordSelectorProps {
@@ -37,7 +37,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       const response = await fetch(
         `http://xmlriver.com/wordstat/json?user=16797&key=f7947eff83104621deb713275fe3260bfde4f001&query=${encodeURIComponent(query)}`
       );
-      
+
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }
