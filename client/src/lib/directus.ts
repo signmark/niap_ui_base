@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useAuthStore } from './store';
 
 interface DirectusUser {
   id: string;
@@ -27,99 +28,86 @@ interface Campaign {
 
 const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
-let accessToken: string | null = null;
-let currentUser: DirectusUser | null = null;
 
 export async function login(email: string, password: string) {
   try {
-    console.log('Attempting login for:', email);
-
     const authResponse = await fetch(`${DIRECTUS_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include'
+      body: JSON.stringify({ email, password })
     });
 
     if (!authResponse.ok) {
-      console.error('Auth response not OK:', authResponse.status);
       throw new Error('Неверный email или пароль');
     }
 
     const auth = await authResponse.json() as DirectusAuthResponse;
-    console.log('Auth response received:', { hasToken: !!auth.data?.access_token });
 
     if (!auth.data?.access_token) {
       throw new Error('Ошибка аутентификации');
     }
 
-    accessToken = auth.data.access_token;
-
-    // Get user info
+    // Get user info using the new token
     const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${auth.data.access_token}`
       }
     });
 
     if (!userResponse.ok) {
-      console.error('User info response not OK:', userResponse.status);
       throw new Error('Не удалось получить данные пользователя');
     }
 
     const { data: user } = await userResponse.json();
-    currentUser = user;
-
-    console.log('Login successful:', { userId: user.id });
+    useAuthStore.setState({token: auth.data.access_token, userId: user.id});
     return { user, token: auth.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
-    accessToken = null;
-    currentUser = null;
     throw error instanceof Error ? error : new Error('Ошибка входа');
   }
 }
 
 export async function logout() {
+  const store = useAuthStore.getState();
+  const token = store.token;
+
   try {
-    if (accessToken) {
+    if (token) {
       await fetch(`${DIRECTUS_URL}/auth/logout`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${token}`
         }
       });
     }
+    useAuthStore.setState({token: null, userId: null});
   } catch (error) {
     console.error('Logout error:', error);
-  } finally {
-    accessToken = null;
-    currentUser = null;
   }
 }
 
 export async function getCurrentUser() {
-  try {
-    if (!accessToken) {
-      console.log('No access token available');
-      return null;
-    }
+  const store = useAuthStore.getState();
+  const token = store.token;
 
+  if (!token) {
+    return null;
+  }
+
+  try {
     const response = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
     if (!response.ok) {
-      console.error('Get current user response not OK:', response.status);
       return null;
     }
 
     const { data: user } = await response.json();
-    currentUser = user;
     return user as DirectusUser;
   } catch (error) {
     console.error('Get current user error:', error);
@@ -128,7 +116,11 @@ export async function getCurrentUser() {
 }
 
 export async function createCampaign(name: string, description?: string) {
-  if (!accessToken || !currentUser) {
+  const store = useAuthStore.getState();
+  const token = store.token;
+  const userId = store.userId;
+
+  if (!token || !userId) {
     throw new Error('Требуется авторизация');
   }
 
@@ -137,18 +129,16 @@ export async function createCampaign(name: string, description?: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         name,
         description,
-        user_id: currentUser.id
+        user_id: userId
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Create campaign error:', error);
       throw new Error('Не удалось создать кампанию');
     }
 
@@ -161,31 +151,32 @@ export async function createCampaign(name: string, description?: string) {
 }
 
 export async function getCampaigns() {
-  if (!accessToken || !currentUser) {
+  const store = useAuthStore.getState();
+  const token = store.token;
+  const userId = store.userId;
+
+  if (!token || !userId) {
     throw new Error('Требуется авторизация');
   }
 
   try {
     const filter = JSON.stringify({
-      user_id: { _eq: currentUser.id }
+      user_id: { _eq: userId }
     });
 
     const url = `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`;
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Get campaigns error:', error);
       throw new Error('Не удалось получить список кампаний');
     }
 
     const { data } = await response.json();
-    console.log('Received campaigns:', data);
     return data as Campaign[];
   } catch (error) {
     console.error('Get campaigns error:', error);
