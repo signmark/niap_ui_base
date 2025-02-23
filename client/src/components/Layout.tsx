@@ -4,27 +4,21 @@ import { useLocation } from "wouter";
 import { LogOut, BarChart, FileText, Search } from "lucide-react";
 import { logout } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { isAuthenticated, setAuth } = useAuthStore();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-    }
-  }, [isAuthenticated, navigate]);
+  if (!isAuthenticated) {
+    navigate("/login");
+    return null;
+  }
 
   const handleLogout = async () => {
     await logout();
     setAuth(null, null);
     navigate("/login");
   };
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <SidebarProvider>
