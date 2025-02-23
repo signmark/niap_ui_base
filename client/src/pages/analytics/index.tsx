@@ -4,8 +4,6 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { Chart } from "@/components/ui/chart";
-import { format } from "date-fns";
 import type { Campaign } from "@shared/schema";
 
 export default function Analytics() {
@@ -18,69 +16,6 @@ export default function Analytics() {
   const { data: campaigns } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
   });
-
-  // Mock data for demonstration
-  const trendData = {
-    options: {
-      chart: {
-        id: "trend-chart",
-        type: "line" as const,
-        toolbar: {
-          show: false
-        }
-      },
-      stroke: {
-        curve: "smooth" as const
-      },
-      xaxis: {
-        categories: Array.from({ length: 30 }, (_, i) => 
-          format(new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000), "MMM dd")
-        )
-      }
-    },
-    series: [{
-      name: "Search Volume",
-      data: Array.from({ length: 30 }, () => Math.floor(Math.random() * 1000))
-    }]
-  };
-
-  const demographicsData = {
-    options: {
-      chart: {
-        id: "demographics-chart",
-        type: "bar" as const,
-        toolbar: {
-          show: false
-        }
-      },
-      plotOptions: {
-        bar: {
-          horizontal: true
-        }
-      },
-      xaxis: {
-        categories: ["18-24", "25-34", "35-44", "45-54", "55+"]
-      }
-    },
-    series: [{
-      name: "Users",
-      data: [15, 30, 25, 18, 12]
-    }]
-  };
-
-  const keywordPerformanceData = {
-    options: {
-      chart: {
-        id: "keyword-chart",
-        type: "pie" as const,
-        toolbar: {
-          show: false
-        }
-      },
-      labels: ["SEO", "Digital Marketing", "Content Strategy", "Analytics", "Social Media"]
-    },
-    series: [25, 20, 18, 15, 22]
-  };
 
   return (
     <Layout>
@@ -114,46 +49,31 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle>Search Volume Trends</CardTitle>
+              <CardTitle>Total Keywords</CardTitle>
             </CardHeader>
             <CardContent>
-              <Chart
-                type="line"
-                options={trendData.options}
-                series={trendData.series}
-                height={300}
-              />
+              <p className="text-3xl font-bold">0</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Demographics</CardTitle>
+              <CardTitle>Active Campaigns</CardTitle>
             </CardHeader>
             <CardContent>
-              <Chart
-                type="bar"
-                options={demographicsData.options}
-                series={demographicsData.series}
-                height={300}
-              />
+              <p className="text-3xl font-bold">{campaigns?.length || 0}</p>
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card>
             <CardHeader>
-              <CardTitle>Top Keywords Performance</CardTitle>
+              <CardTitle>Generated Contents</CardTitle>
             </CardHeader>
             <CardContent>
-              <Chart
-                type="pie"
-                options={keywordPerformanceData.options}
-                series={keywordPerformanceData.series}
-                height={300}
-              />
+              <p className="text-3xl font-bold">0</p>
             </CardContent>
           </Card>
         </div>
