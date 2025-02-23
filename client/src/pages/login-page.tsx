@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [_, navigate] = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const { toast } = useToast();
-  
+
   const {
     register,
     handleSubmit,
@@ -31,9 +31,14 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const { user, token } = await login(data.email, data.password);
+
+      if (!user || !token) {
+        throw new Error('Ошибка авторизации');
+      }
+
       setAuth(user.id, token);
       navigate("/campaigns");
-      
+
       toast({
         title: "Успешный вход",
         description: "Добро пожаловать в SEO Manager",
