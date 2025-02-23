@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Login from "@/pages/auth/login";
 import Campaigns from "@/pages/campaigns";
+import CampaignDetails from "@/pages/campaigns/[id]";
 import Keywords from "@/pages/keywords";
 import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
@@ -36,6 +37,7 @@ function Router() {
       </Route>
       <Route path="/auth/login" component={Login} />
       <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
+      <Route path="/campaigns/:id" component={() => <PrivateRoute component={CampaignDetails} />} />
       <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
       <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
       <Route component={NotFound} />
