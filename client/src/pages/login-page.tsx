@@ -19,8 +19,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { token } = await login(email, password);
-      setToken(token);
+      const data = await login(email, password);
+      setToken(data.data.access_token);
       navigate("/campaigns");
     } catch (err) {
       setError("Неверный email или пароль");

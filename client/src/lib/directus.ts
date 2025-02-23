@@ -12,12 +12,8 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 
-  if (!response.ok) {
-    throw new Error('Неверный email или пароль');
-  }
-
   const data = await response.json();
-  return { token: data.data.access_token };
+  return data;
 }
 
 export async function logout(token: string) {
