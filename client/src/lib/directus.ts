@@ -9,8 +9,11 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password })
   });
 
-  const data = await response.json();
-  return data;
+  if (!response.ok) {
+    throw new Error('Ошибка авторизации');
+  }
+
+  return response.json();
 }
 
 export async function logout(token: string) {
