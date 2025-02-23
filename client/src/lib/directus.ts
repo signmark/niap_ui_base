@@ -7,7 +7,7 @@ interface DirectusAuthResponse {
     access_token: string;
     expires: number;
     refresh_token: string;
-  }
+  };
 }
 
 interface Campaign {
@@ -32,20 +32,14 @@ export async function login(email: string, password: string): Promise<{ token: s
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.errors?.[0]?.message || 'Неверный email или пароль');
+      throw new Error('Неверный email или пароль');
     }
 
-    const data: DirectusAuthResponse = await response.json();
-
-    if (!data?.data?.access_token) {
-      throw new Error('Некорректный ответ от сервера');
-    }
-
+    const data = await response.json();
     return { token: data.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
-    throw error instanceof Error ? error : new Error('Ошибка входа');
+    throw new Error('Неверный email или пароль');
   }
 }
 
@@ -54,19 +48,14 @@ export async function logout() {
   if (!token) return;
 
   try {
-    const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {
+    await fetch(`${DIRECTUS_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-
-    if (!response.ok) {
-      throw new Error('Ошибка при выходе из системы');
-    }
   } catch (error) {
     console.error('Logout error:', error);
-    throw error instanceof Error ? error : new Error('Ошибка при выходе из системы');
   }
 }
 

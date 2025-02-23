@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
-  const { setToken, isAuthenticated } = useAuthStore();
+  const setToken = useAuthStore((state) => state.setToken);
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -42,12 +42,6 @@ export default function LoginPage() {
       });
     }
   };
-
-  // Redirect if already authenticated
-  if (isAuthenticated()) {
-    navigate("/campaigns");
-    return null;
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
