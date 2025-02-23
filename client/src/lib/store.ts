@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -10,23 +10,20 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   devtools(
-    persist(
-      (set) => ({
-        isAuthenticated: false,
-        userId: null,
-        token: null,
-        setAuth: (userId, token) => {
-          set({ 
-            isAuthenticated: !!userId && !!token,
-            userId,
-            token
-          });
-        },
-      }),
-      {
-        name: 'auth-store',
-        storage: createJSONStorage(() => localStorage),
-      }
-    )
+    (set) => ({
+      isAuthenticated: false,
+      userId: null,
+      token: null,
+      setAuth: (userId, token) => {
+        set({ 
+          isAuthenticated: !!userId && !!token,
+          userId,
+          token
+        });
+      },
+    }),
+    {
+      name: 'auth-store',
+    }
   )
 );
