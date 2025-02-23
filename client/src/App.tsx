@@ -8,28 +8,33 @@ import Keywords from "@/pages/keywords";
 import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 import { useAuthStore } from "@/lib/store";
+import { Layout } from "@/components/Layout";
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const token = useAuthStore((state) => state.token);
   const [, navigate] = useLocation();
 
-  if (!isAuthenticated) {
-    navigate("/login");
+  if (!token) {
+    navigate("/auth/login");
     return null;
   }
 
-  return <Component />;
+  return (
+    <Layout>
+      <Component />
+    </Layout>
+  );
 }
 
 function Router() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const token = useAuthStore((state) => state.token);
 
   return (
     <Switch>
       <Route path="/">
-        {() => <Redirect to={isAuthenticated ? "/campaigns" : "/login"} />}
+        {() => <Redirect to={token ? "/campaigns" : "/auth/login"} />}
       </Route>
-      <Route path="/login" component={Login} />
+      <Route path="/auth/login" component={Login} />
       <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
       <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
       <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
