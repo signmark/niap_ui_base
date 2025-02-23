@@ -4,7 +4,8 @@ import { devtools } from 'zustand/middleware';
 interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
-  setAuth: (userId: string | null) => void;
+  token: string | null;
+  setAuth: (userId: string | null, token: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -12,11 +13,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       isAuthenticated: false,
       userId: null,
-      setAuth: (userId) => 
+      token: null,
+      setAuth: (userId, token) => {
+        console.log('Setting auth state:', { userId, hasToken: !!token });
         set({ 
-          isAuthenticated: !!userId,
-          userId 
-        }),
+          isAuthenticated: !!userId && !!token,
+          userId,
+          token
+        });
+      },
     }),
     {
       name: 'auth-store',
