@@ -12,26 +12,36 @@ interface DirectusAuthResponse {
   expires: number;
 }
 
-const directus = createDirectus(import.meta.env.VITE_DIRECTUS_URL || 'https://directus.nplanner.ru/')
-  .with(rest())
-  .with(authentication('json'));
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://directus.nplanner.ru';
 
 export async function login(email: string, password: string) {
   try {
-    // Выполняем вход и получаем токен
-    const auth = await directus.login(email, password) as DirectusAuthResponse;
-    if (!auth.access_token) throw new Error('Ошибка аутентификации');
+    // Выполняем вход через /auth/login
+    const authResponse = await fetch(`${DIRECTUS_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!authResponse.ok) {
+      throw new Error('Неверный email или пароль');
+    }
+
+    const auth = await authResponse.json();
+    if (!auth.data?.access_token) throw new Error('Ошибка аутентификации');
 
     // Получаем данные о текущем пользователе через /users/me
-    const response = await fetch(`${import.meta.env.VITE_DIRECTUS_URL}/users/me`, {
+    const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
-        'Authorization': `Bearer ${auth.access_token}`
+        'Authorization': `Bearer ${auth.data.access_token}`
       }
     });
 
-    if (!response.ok) throw new Error('Не удалось получить данные пользователя');
+    if (!userResponse.ok) throw new Error('Не удалось получить данные пользователя');
 
-    const { data: user } = await response.json();
+    const { data: user } = await userResponse.json();
     return { user: user as DirectusUser };
   } catch (error) {
     console.error('Login error:', error);
@@ -44,7 +54,10 @@ export async function login(email: string, password: string) {
 
 export async function logout() {
   try {
-    await directus.logout();
+    await fetch(`${DIRECTUS_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
   } catch (error) {
     console.error('Logout error:', error);
   }
@@ -52,7 +65,7 @@ export async function logout() {
 
 export async function getCurrentUser() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_DIRECTUS_URL}/users/me`, {
+    const response = await fetch(`${DIRECTUS_URL}/users/me`, {
       credentials: 'include'
     });
 
