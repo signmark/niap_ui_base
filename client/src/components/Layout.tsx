@@ -11,7 +11,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await logout();
-    setAuth(null);
+    setAuth(null, null); // Pass both userId and token as null
     navigate("/login");
   };
 

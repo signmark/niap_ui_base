@@ -35,6 +35,7 @@ export async function login(email: string, password: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
 
     if (!authResponse.ok) {
@@ -55,7 +56,7 @@ export async function login(email: string, password: string) {
     }
 
     currentUser = user;
-    return { user };
+    return { user, token: auth.data.access_token }; // Return both user and token
   } catch (error) {
     console.error('Login error:', error);
     throw error instanceof Error ? error : new Error('Ошибка входа');
@@ -66,6 +67,7 @@ export async function logout() {
   try {
     await fetch(`${DIRECTUS_URL}/auth/logout`, {
       method: 'POST',
+      credentials: 'include'
     });
     accessToken = null;
     currentUser = null;
@@ -81,7 +83,8 @@ export async function getCurrentUser() {
     const response = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
-      }
+      },
+      credentials: 'include'
     });
 
     if (!response.ok) return null;
@@ -113,7 +116,8 @@ export async function createCampaign(name: string, description?: string) {
         name,
         description,
         user_id: currentUser.id, // Explicitly set user_id
-      })
+      }),
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -150,7 +154,8 @@ export async function getCampaigns() {
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
-      }
+      },
+      credentials: 'include'
     });
 
     if (!response.ok) {
