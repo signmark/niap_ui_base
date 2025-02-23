@@ -47,21 +47,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // XMLRiver API proxy
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
-      const response = await axios.get(`https://xmlriver.com/search/xml`, {
+      const response = await axios.get(`http://xmlriver.com/wordstat/json`, {
         params: {
           user: process.env.XMLRIVER_USER,
           key: process.env.XMLRIVER_KEY,
-          query: req.params.keyword,
-          format: 'json',
-          language: 'ru'
+          query: req.params.keyword
         }
       });
 
-      if (!response.data || !response.data.data || !response.data.data.keywords) {
+      if (!response.data?.items || !Array.isArray(response.data.items)) {
         throw new Error("Некорректный формат ответа от XMLRiver API");
       }
 
-      res.json(response.data);
+      const keywords = response.data.items.map((item: any) => ({
+        keyword: item.phrase,
+        trend: parseInt(item.number.replace(/\s/g, '')) || 0
+      }));
+
+      res.json({ data: { keywords } });
     } catch (error) {
       console.error('XMLRiver API error:', error);
       res.status(500).json({ 
