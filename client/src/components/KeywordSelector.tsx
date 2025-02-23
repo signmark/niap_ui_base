@@ -40,7 +40,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               campaign_id: {
                 _eq: campaignId
               }
-            }
+            },
+            sort: ["-date_created"]
           }
         });
         return response.data?.data || [];
@@ -94,7 +95,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       try {
-        const promises = selectedKeywords.map(keyword => 
+        const promises = selectedKeywords.map(keyword =>
           directusApi.post('/items/user_keywords', {
             campaign_id: campaignId,
             keyword: keyword.keyword,
@@ -131,8 +132,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   };
 
   const handleKeywordToggle = (index: number) => {
-    setSearchResults(prev => 
-      prev.map((kw, i) => 
+    setSearchResults(prev =>
+      prev.map((kw, i) =>
         i === index ? { ...kw, selected: !kw.selected } : kw
       )
     );
@@ -198,8 +199,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             </TableBody>
           </Table>
           <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveSelected} 
+            <Button
+              onClick={handleSaveSelected}
               disabled={isSaving || searchResults.every(kw => !kw.selected)}
             >
               {isSaving ? (
