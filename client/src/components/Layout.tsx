@@ -2,8 +2,8 @@ import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { LogOut, BarChart, FileText, Search } from "lucide-react";
-import { logout } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
+import { DIRECTUS_URL } from "@/lib/directus";
 import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -18,8 +18,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [token, navigate]);
 
   const handleLogout = async () => {
-    await logout();
-    setToken(null);
+    try {
+      await fetch(`${DIRECTUS_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setToken(null);
+    }
   };
 
   if (!token) return null;

@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { login } from "@/lib/directus";
+import { DIRECTUS_URL } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
@@ -19,7 +19,7 @@ const loginSchema = z.object({
 export default function Login() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setToken = useAuthStore((state) => state.setToken);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -31,13 +31,30 @@ export default function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      const response = await login(values.email, values.password);
-      setAuth(response.user.id);
-      navigate("/campaigns");
-      toast({
-        title: "Успешный вход",
-        description: "Добро пожаловать в SEO Manager",
+      const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values)
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.errors?.[0]?.message || "Ошибка входа");
+      }
+
+      if (data?.data?.access_token) {
+        setToken(data.data.access_token);
+        navigate("/campaigns");
+        toast({
+          title: "Успешный вход",
+          description: "Добро пожаловать в SEO Manager",
+        });
+      } else {
+        throw new Error("Неверный формат ответа от сервера");
+      }
     } catch (error) {
       toast({
         title: "Ошибка входа",
