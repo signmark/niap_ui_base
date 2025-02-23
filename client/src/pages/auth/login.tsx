@@ -6,10 +6,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { DIRECTUS_URL } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
+import { directusApi } from "@/lib/directus";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -32,38 +32,20 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       // Шаг 1: Получаем токен
-      const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values)
-      });
+      const { data: authData } = await directusApi.post('/auth/login', values);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.errors?.[0]?.message || "Ошибка входа");
-      }
-
-      if (!data?.data?.access_token) {
+      if (!authData?.data?.access_token) {
         throw new Error("Неверный формат ответа от сервера");
       }
 
-      const token = data.data.access_token;
+      const token = authData.data.access_token;
 
       // Шаг 2: Получаем данные пользователя
-      const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
+      const { data: userData } = await directusApi.get('/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
-      if (!userResponse.ok) {
-        throw new Error("Не удалось получить данные пользователя");
-      }
-
-      const userData = await userResponse.json();
 
       // Сохраняем токен и ID пользователя
       setAuth(token, userData.data.id);
