@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store";
+import { DIRECTUS_URL } from "@/lib/directus";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+      const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,14 +28,22 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+      console.log('Login response:', data); // Отладочный вывод
+
+      if (!response.ok) {
+        setError(data.errors?.[0]?.message || "Ошибка входа");
+        return;
+      }
 
       if (data?.data?.access_token) {
         setToken(data.data.access_token);
         navigate("/campaigns");
       } else {
-        setError("Ошибка входа");
+        console.error('Unexpected response structure:', data);
+        setError("Неверный формат ответа от сервера");
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError("Неверный email или пароль");
     } finally {
       setIsLoading(false);
