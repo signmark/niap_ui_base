@@ -19,7 +19,7 @@ export default function CampaignDetails() {
         throw new Error("Необходима авторизация");
       }
 
-      const { data } = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+      const { data } = await directusApi.get(`/items/campaigns/${campaignId}`, {
         params: {
           filter: {
             user_id: {
