@@ -19,7 +19,7 @@ const loginSchema = z.object({
 export default function Login() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const setToken = useAuthStore((state) => state.setToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,7 +46,15 @@ export default function Login() {
       }
 
       if (data?.data?.access_token) {
-        setToken(data.data.access_token);
+        // Get user data after successful login
+        const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${data.data.access_token}`
+          }
+        });
+        const userData = await userResponse.json();
+
+        setAuth(data.data.access_token, userData.data.id);
         navigate("/campaigns");
         toast({
           title: "Успешный вход",
