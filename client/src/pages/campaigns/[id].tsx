@@ -9,29 +9,19 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
-  const campaignId = parseInt(id);
   const { toast } = useToast();
 
   const { data: campaign, isLoading, error } = useQuery<Campaign>({
-    queryKey: ["/api/campaigns", campaignId],
+    queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        const { data } = await directusApi.get(`/items/campaigns`, {
-          params: {
-            filter: {
-              id: {
-                _eq: campaignId
-              }
-            },
-            limit: 1
-          }
-        });
+        const { data } = await directusApi.get(`/items/campaigns/${id}`);
 
-        if (!data?.data?.[0]) {
+        if (!data.data) {
           throw new Error("Кампания не найдена");
         }
 
-        return data.data[0];
+        return data.data;
       } catch (err) {
         console.error("Error fetching campaign:", err);
         throw new Error("Ошибка при загрузке кампании");
@@ -86,7 +76,7 @@ export default function CampaignDetails() {
           <CardTitle>Ключевые слова</CardTitle>
         </CardHeader>
         <CardContent>
-          <KeywordSelector campaignId={campaignId} />
+          <KeywordSelector campaignId={id} />
         </CardContent>
       </Card>
     </div>
