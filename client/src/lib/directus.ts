@@ -136,14 +136,22 @@ export async function createCampaign(name: string, description?: string) {
 }
 
 export async function getCampaigns() {
-  if (!accessToken) {
+  if (!accessToken || !currentUser) {
     throw new Error('Требуется авторизация');
   }
 
   try {
-    console.log('Fetching campaigns with token:', accessToken?.substring(0, 10) + '...');
+    console.log('Fetching campaigns for user:', currentUser.id);
 
-    const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
+    // Add filter to only get campaigns for current user
+    const filter = JSON.stringify({
+      user_id: { _eq: currentUser.id }
+    });
+
+    const url = `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`;
+    console.log('Request URL:', url);
+
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
