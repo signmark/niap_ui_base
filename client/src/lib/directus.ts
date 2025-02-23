@@ -28,10 +28,32 @@ interface Campaign {
 
 const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
+// Вспомогательная функция для выполнения авторизованных запросов
+async function authorizedFetch(url: string, options: RequestInit = {}) {
+  const token = useAuthStore.getState().token;
+  if (!token) {
+    throw new Error('Не авторизован');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 401) {
+    useAuthStore.getState().setAuth(null, null);
+    throw new Error('Сессия истекла');
+  }
+
+  return response;
+}
 
 export async function login(email: string, password: string) {
   try {
-    const authResponse = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    const response = await fetch(`${DIRECTUS_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,17 +61,16 @@ export async function login(email: string, password: string) {
       body: JSON.stringify({ email, password })
     });
 
-    if (!authResponse.ok) {
+    if (!response.ok) {
       throw new Error('Неверный email или пароль');
     }
 
-    const auth = await authResponse.json() as DirectusAuthResponse;
+    const auth = await response.json() as DirectusAuthResponse;
 
     if (!auth.data?.access_token) {
       throw new Error('Ошибка аутентификации');
     }
 
-    // Get user info using the new token
     const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
         'Authorization': `Bearer ${auth.data.access_token}`
@@ -61,7 +82,6 @@ export async function login(email: string, password: string) {
     }
 
     const { data: user } = await userResponse.json();
-    useAuthStore.setState({token: auth.data.access_token, userId: user.id});
     return { user, token: auth.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
@@ -70,66 +90,54 @@ export async function login(email: string, password: string) {
 }
 
 export async function logout() {
-  const store = useAuthStore.getState();
-  const token = store.token;
-
   try {
-    if (token) {
-      await fetch(`${DIRECTUS_URL}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-    }
-    useAuthStore.setState({token: null, userId: null});
+    await authorizedFetch(`${DIRECTUS_URL}/auth/logout`, {
+      method: 'POST'
+    });
   } catch (error) {
     console.error('Logout error:', error);
+  } finally {
+    useAuthStore.getState().setAuth(null, null);
   }
 }
 
-export async function getCurrentUser() {
-  const store = useAuthStore.getState();
-  const token = store.token;
-
-  if (!token) {
-    return null;
-  }
-
+export async function getCurrentUser(): Promise<DirectusUser | null> {
   try {
-    const response = await fetch(`${DIRECTUS_URL}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
+    const response = await authorizedFetch(`${DIRECTUS_URL}/users/me`);
     const { data: user } = await response.json();
-    return user as DirectusUser;
+    return user;
   } catch (error) {
     console.error('Get current user error:', error);
     return null;
   }
 }
 
-export async function createCampaign(name: string, description?: string) {
-  const store = useAuthStore.getState();
-  const token = store.token;
-  const userId = store.userId;
-
-  if (!token || !userId) {
-    throw new Error('Требуется авторизация');
-  }
-
+export async function getCampaigns(): Promise<Campaign[]> {
   try {
-    const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
+    const userId = useAuthStore.getState().userId;
+    const filter = JSON.stringify({
+      user_id: { _eq: userId }
+    });
+
+    const response = await authorizedFetch(
+      `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`
+    );
+
+    const { data } = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Get campaigns error:', error);
+    throw error instanceof Error ? error : new Error('Не удалось получить список кампаний');
+  }
+}
+
+export async function createCampaign(name: string, description?: string): Promise<Campaign> {
+  try {
+    const userId = useAuthStore.getState().userId;
+    const response = await authorizedFetch(`${DIRECTUS_URL}/items/user_campaigns`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         name,
@@ -138,48 +146,10 @@ export async function createCampaign(name: string, description?: string) {
       })
     });
 
-    if (!response.ok) {
-      throw new Error('Не удалось создать кампанию');
-    }
-
     const { data } = await response.json();
-    return data as Campaign;
+    return data;
   } catch (error) {
     console.error('Create campaign error:', error);
     throw error instanceof Error ? error : new Error('Не удалось создать кампанию');
-  }
-}
-
-export async function getCampaigns() {
-  const store = useAuthStore.getState();
-  const token = store.token;
-  const userId = store.userId;
-
-  if (!token || !userId) {
-    throw new Error('Требуется авторизация');
-  }
-
-  try {
-    const filter = JSON.stringify({
-      user_id: { _eq: userId }
-    });
-
-    const url = `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Не удалось получить список кампаний');
-    }
-
-    const { data } = await response.json();
-    return data as Campaign[];
-  } catch (error) {
-    console.error('Get campaigns error:', error);
-    throw error instanceof Error ? error : new Error('Не удалось получить список кампаний');
   }
 }
