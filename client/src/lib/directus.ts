@@ -35,13 +35,8 @@ export async function login(email: string, password: string): Promise<{ token: s
       throw new Error('Неверный email или пароль');
     }
 
-    const auth = await response.json() as DirectusAuthResponse;
-
-    if (!auth.data?.access_token) {
-      throw new Error('Ошибка аутентификации');
-    }
-
-    return { token: auth.data.access_token };
+    const data = await response.json();
+    return { token: data.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
     throw error instanceof Error ? error : new Error('Ошибка входа');
