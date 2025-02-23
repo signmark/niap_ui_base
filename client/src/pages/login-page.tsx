@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 
 export default function LoginPage() {
@@ -19,9 +18,18 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await login(email, password);
-      if (response?.data?.access_token) {
-        setToken(response.data.access_token);
+      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (data?.data?.access_token) {
+        setToken(data.data.access_token);
         navigate("/campaigns");
       } else {
         setError("Ошибка входа");
