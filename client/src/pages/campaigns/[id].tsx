@@ -5,37 +5,46 @@ import { KeywordSelector } from "@/components/KeywordSelector";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 import { Loader2 } from "lucide-react";
-import { useAuthStore } from "@/lib/store";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
   const campaignId = parseInt(id);
-  const { userId } = useAuthStore();
+  const { toast } = useToast();
 
-  const { data: campaign, isLoading } = useQuery<Campaign>({
+  const { data: campaign, isLoading, error } = useQuery<Campaign>({
     queryKey: ["/api/campaigns", campaignId],
     queryFn: async () => {
-      if (!userId) {
-        throw new Error("Необходима авторизация");
-      }
-
-      const { data } = await directusApi.get(`/items/campaigns/${campaignId}`, {
-        params: {
-          filter: {
-            user_id: {
-              _eq: userId
-            }
+      try {
+        const { data } = await directusApi.get(`/items/campaigns`, {
+          params: {
+            filter: {
+              id: {
+                _eq: campaignId
+              }
+            },
+            limit: 1
           }
+        });
+
+        if (!data?.data?.[0]) {
+          throw new Error("Кампания не найдена");
         }
-      });
 
-      if (!data.data) {
-        throw new Error("Кампания не найдена");
+        return data.data[0];
+      } catch (err) {
+        console.error("Error fetching campaign:", err);
+        throw new Error("Ошибка при загрузке кампании");
       }
-
-      return data.data;
     },
-    enabled: !!userId && !!campaignId,
+    retry: false,
+    onError: (err) => {
+      toast({
+        title: "Ошибка",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
   });
 
   if (isLoading) {
@@ -46,7 +55,7 @@ export default function CampaignDetails() {
     );
   }
 
-  if (!campaign) {
+  if (error || !campaign) {
     return (
       <div className="p-6">
         <Card>
