@@ -24,9 +24,10 @@ export default function Campaigns() {
       }
 
       try {
-        const response = await fetch(`${DIRECTUS_URL}/items/campaigns?filter[user_id][_eq]=${userId}`, {
+        const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns?filter[user_id][_eq]=${userId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           }
         });
 
@@ -61,10 +62,11 @@ export default function Campaigns() {
         throw new Error("Необходима авторизация");
       }
 
-      const response = await fetch(`${DIRECTUS_URL}/items/campaigns/${id}`, {
+      const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns/${id}`, {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         }
       });
 
