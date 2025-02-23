@@ -1,5 +1,3 @@
-import { createDirectus, rest, authentication } from '@directus/sdk';
-
 interface DirectusUser {
   id: string;
   email: string;
