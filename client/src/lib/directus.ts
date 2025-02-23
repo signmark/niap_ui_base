@@ -7,6 +7,11 @@ interface DirectusUser {
   last_name?: string;
 }
 
+interface DirectusAuthResponse {
+  access_token: string;
+  expires: number;
+}
+
 const directus = createDirectus(import.meta.env.VITE_DIRECTUS_URL || 'https://directus.nplanner.ru/')
   .with(rest())
   .with(authentication('json'));
@@ -14,8 +19,8 @@ const directus = createDirectus(import.meta.env.VITE_DIRECTUS_URL || 'https://di
 export async function login(email: string, password: string) {
   try {
     // Выполняем вход и получаем токен
-    const auth = await directus.login(email, password);
-    if (!auth) throw new Error('Ошибка аутентификации');
+    const auth = await directus.login(email, password) as DirectusAuthResponse;
+    if (!auth.access_token) throw new Error('Ошибка аутентификации');
 
     // Получаем данные о текущем пользователе через /users/me
     const response = await fetch(`${import.meta.env.VITE_DIRECTUS_URL}/users/me`, {
@@ -26,7 +31,7 @@ export async function login(email: string, password: string) {
 
     if (!response.ok) throw new Error('Не удалось получить данные пользователя');
 
-    const user = await response.json();
+    const { data: user } = await response.json();
     return { user: user as DirectusUser };
   } catch (error) {
     console.error('Login error:', error);
@@ -53,7 +58,7 @@ export async function getCurrentUser() {
 
     if (!response.ok) return null;
 
-    const user = await response.json();
+    const { data: user } = await response.json();
     return user as DirectusUser;
   } catch (error) {
     console.error('Get current user error:', error);
