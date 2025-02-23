@@ -43,7 +43,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                 _eq: campaignId
               }
             },
-            sort: ["-id"] // Сортировка по ID в обратном порядке
+            sort: ["-id"]
           }
         });
         console.log("Existing keywords response:", response.data);
@@ -100,12 +100,14 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       try {
         console.log("Saving keywords:", selectedKeywords);
         const promises = selectedKeywords.map(keyword => {
+          const now = new Date().toISOString();
           const data = {
+            id: crypto.randomUUID(), // Генерируем UUID для каждого ключевого слова
             campaign_id: campaignId,
             keyword: keyword.keyword,
             trend_score: keyword.trend,
-            mentions_count: 0, // Добавляем обязательные поля
-            last_checked: new Date().toISOString() // Текущая дата
+            mentions_count: 0,
+            last_checked: now
           };
           console.log("Saving keyword data:", data);
           return directusApi.post('/items/user_keywords', { data });
