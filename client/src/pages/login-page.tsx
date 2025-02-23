@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { login } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
@@ -18,14 +19,14 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
-  const setToken = useAuthStore((state) => state.setToken);
+  const { setToken, isAuthenticated } = useAuthStore();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
+  const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -42,6 +43,12 @@ export default function LoginPage() {
     }
   };
 
+  // Redirect if already authenticated
+  if (isAuthenticated()) {
+    navigate("/campaigns");
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-6 shadow-lg">
@@ -51,49 +58,53 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="email">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Введите email"
-              {...register("email")}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Введите email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="password">
-              Пароль
-            </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Введите пароль"
-              {...register("password")}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Пароль</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Введите пароль"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Вход..." : "Войти"}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Вход..." : "Войти"}
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );
