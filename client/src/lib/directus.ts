@@ -1,3 +1,6 @@
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+
 interface DirectusUser {
   id: string;
   email: string;
@@ -29,6 +32,8 @@ let currentUser: DirectusUser | null = null;
 
 export async function login(email: string, password: string) {
   try {
+    console.log('Attempting login for:', email);
+
     const authResponse = await fetch(`${DIRECTUS_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -39,10 +44,13 @@ export async function login(email: string, password: string) {
     });
 
     if (!authResponse.ok) {
+      console.error('Auth response not OK:', authResponse.status);
       throw new Error('Неверный email или пароль');
     }
 
     const auth = await authResponse.json() as DirectusAuthResponse;
+    console.log('Auth response received:', { hasToken: !!auth.data?.access_token });
+
     if (!auth.data?.access_token) {
       throw new Error('Ошибка аутентификации');
     }
@@ -50,46 +58,68 @@ export async function login(email: string, password: string) {
     accessToken = auth.data.access_token;
 
     // Get user info
-    const user = await getCurrentUser();
-    if (!user) {
+    const userResponse = await fetch(`${DIRECTUS_URL}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.error('User info response not OK:', userResponse.status);
       throw new Error('Не удалось получить данные пользователя');
     }
 
+    const { data: user } = await userResponse.json();
     currentUser = user;
-    return { user, token: auth.data.access_token }; // Return both user and token
+
+    console.log('Login successful:', { userId: user.id });
+    return { user, token: auth.data.access_token };
   } catch (error) {
     console.error('Login error:', error);
+    accessToken = null;
+    currentUser = null;
     throw error instanceof Error ? error : new Error('Ошибка входа');
   }
 }
 
 export async function logout() {
   try {
-    await fetch(`${DIRECTUS_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    accessToken = null;
-    currentUser = null;
+    if (accessToken) {
+      await fetch(`${DIRECTUS_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+    }
   } catch (error) {
     console.error('Logout error:', error);
+  } finally {
+    accessToken = null;
+    currentUser = null;
   }
 }
 
 export async function getCurrentUser() {
   try {
-    if (!accessToken) return null;
+    if (!accessToken) {
+      console.log('No access token available');
+      return null;
+    }
 
     const response = await fetch(`${DIRECTUS_URL}/users/me`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
-      },
-      credentials: 'include'
+      }
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error('Get current user response not OK:', response.status);
+      return null;
+    }
 
     const { data: user } = await response.json();
+    currentUser = user;
     return user as DirectusUser;
   } catch (error) {
     console.error('Get current user error:', error);
@@ -97,15 +127,12 @@ export async function getCurrentUser() {
   }
 }
 
-// Campaigns API
 export async function createCampaign(name: string, description?: string) {
   if (!accessToken || !currentUser) {
     throw new Error('Требуется авторизация');
   }
 
   try {
-    console.log('Creating campaign with user_id:', currentUser.id);
-
     const response = await fetch(`${DIRECTUS_URL}/items/user_campaigns`, {
       method: 'POST',
       headers: {
@@ -115,9 +142,8 @@ export async function createCampaign(name: string, description?: string) {
       body: JSON.stringify({
         name,
         description,
-        user_id: currentUser.id, // Explicitly set user_id
-      }),
-      credentials: 'include'
+        user_id: currentUser.id
+      })
     });
 
     if (!response.ok) {
@@ -127,7 +153,6 @@ export async function createCampaign(name: string, description?: string) {
     }
 
     const { data } = await response.json();
-    console.log('Created campaign:', data);
     return data as Campaign;
   } catch (error) {
     console.error('Create campaign error:', error);
@@ -141,21 +166,16 @@ export async function getCampaigns() {
   }
 
   try {
-    console.log('Fetching campaigns for user:', currentUser.id);
-
-    // Add filter to only get campaigns for current user
     const filter = JSON.stringify({
       user_id: { _eq: currentUser.id }
     });
 
     const url = `${DIRECTUS_URL}/items/user_campaigns?filter=${encodeURIComponent(filter)}`;
-    console.log('Request URL:', url);
 
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
-      },
-      credentials: 'include'
+      }
     });
 
     if (!response.ok) {
