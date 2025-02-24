@@ -44,6 +44,21 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     }
   });
 
+  // Format time and date utilities
+  const toUTCDate = (localDate: Date, timeStr: string) => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const date = new Date(localDate);
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   // Create new post
   const { mutate: createPost, isPending: isCreating } = useMutation({
     mutationFn: async () => {
@@ -51,14 +66,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         throw new Error("Заполните все обязательные поля");
       }
 
-      const scheduledDate = new Date(selectedDate);
-      const [hours, minutes] = selectedTime.split(":").map(Number);
-
-      // Создаем новую дату с сохранением выбранного времени
-      scheduledDate.setHours(hours);
-      scheduledDate.setMinutes(minutes);
-      scheduledDate.setSeconds(0);
-      scheduledDate.setMilliseconds(0);
+      const scheduledDate = toUTCDate(selectedDate, selectedTime);
 
       await directusApi.post("/items/campaign_posts", {
         campaign_id: campaignId,
@@ -79,9 +87,9 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       refetchPosts();
     },
     onError: (error: Error) => {
-      toast({ 
-        description: error.message || "Ошибка при создании поста", 
-        variant: "destructive" 
+      toast({
+        description: error.message || "Ошибка при создании поста",
+        variant: "destructive"
       });
     }
   });
@@ -108,11 +116,6 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     }
   };
 
-  // Format time in HH:mm format
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-  };
 
   // Generate calendar day content
   const getDayContent = (day: Date) => {
