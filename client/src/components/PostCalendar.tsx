@@ -110,7 +110,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
             value={mediaUrl}
             onChange={(e) => setMediaUrl(e.target.value)}
           />
-          <Button onClick={() => createPost()} disabled={isCreating || !selectedDate || !content}>
+          <Button onClick={() => createPost()} disabled={isCreating}>
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
