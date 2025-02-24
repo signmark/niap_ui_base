@@ -53,7 +53,12 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
       const scheduledDate = new Date(selectedDate);
       const [hours, minutes] = selectedTime.split(":").map(Number);
-      scheduledDate.setHours(hours, minutes);
+
+      // Создаем новую дату с сохранением выбранного времени
+      scheduledDate.setHours(hours);
+      scheduledDate.setMinutes(minutes);
+      scheduledDate.setSeconds(0);
+      scheduledDate.setMilliseconds(0);
 
       await directusApi.post("/items/campaign_posts", {
         campaign_id: campaignId,
@@ -104,9 +109,13 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   };
 
   // Format time in HH:mm format
-  const formatTime = (date: string) => {
-    const d = new Date(date);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   // Generate calendar day content
