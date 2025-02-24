@@ -64,8 +64,8 @@ export default function Keywords() {
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
         const formattedKeywords = data.map((item: any) => ({
-          id: item.keyword,
-          word: item.keyword,
+          id: item.keyword || "",
+          word: item.keyword || "",
           trend: parseInt(item.trend) || 0,
           competition: parseInt(item.competition) || 0,
           added: false
