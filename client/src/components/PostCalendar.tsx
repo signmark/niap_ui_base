@@ -61,8 +61,8 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         date.getFullYear(),
         date.getMonth(),
         date.getDate(),
-        hours, // Используем исходные часы
-        minutes // Используем исходные минуты
+        hours, 
+        minutes
       )
     );
 
