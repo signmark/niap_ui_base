@@ -72,8 +72,6 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   // Format time for display
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    // Добавляем 6 часов для корректного отображения
-    date.setHours(date.getHours() + 6);
     return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',

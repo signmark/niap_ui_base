@@ -53,8 +53,13 @@ export default function Keywords() {
       return res.json();
     },
     onSuccess: (data) => {
-      setSearchResults(data.keywords);
-      toast({ description: "Ключевые слова найдены" });
+      if (data && data.keywords && Array.isArray(data.keywords)) {
+        setSearchResults(data.keywords);
+        toast({ description: "Ключевые слова найдены" });
+      } else {
+        setSearchResults([]);
+        toast({ description: "Ключевые слова не найдены", variant: "destructive" });
+      }
     },
     onError: () => {
       toast({
