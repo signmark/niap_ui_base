@@ -10,31 +10,38 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { directusApi } from "@/lib/directus";
 import { Loader2, Plus } from "lucide-react";
 import type { Keyword, KeywordSearchResult } from "@shared/schema";
 
 interface KeywordTableProps {
-  keywords: (Keyword | KeywordSearchResult)[];
+  keywords: KeywordSearchResult[];
   existingKeywords: Keyword[];
   isLoading: boolean;
   campaignId: string;
+  onKeywordsUpdated: () => void;
 }
 
-export function KeywordTable({ keywords = [], existingKeywords, isLoading, campaignId }: KeywordTableProps) {
+export function KeywordTable({ 
+  keywords = [], 
+  existingKeywords = [], 
+  isLoading, 
+  campaignId,
+  onKeywordsUpdated 
+}: KeywordTableProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
     mutationFn: async (keywords: string[]) => {
       await Promise.all(
         keywords.map(async (keyword) => {
+          const keywordData = keywords.find(k => k === keyword);
           await directusApi.post("/items/user_keywords", {
             campaign_id: campaignId,
-            keyword,
-            trend_score: 0,
+            keyword: keyword,
+            trend_score: keywordData ? keywordData.trendScore : 0,
             mentions_count: 0,
             last_checked: new Date().toISOString()
           });
@@ -42,13 +49,13 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       toast({
         description: "Ключевые слова добавлены в кампанию"
       });
       setSelectedKeywords([]);
+      onKeywordsUpdated();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         description: "Не удалось добавить ключевые слова",
         variant: "destructive"
@@ -57,7 +64,7 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
   });
 
   const isKeywordAdded = (keyword: string) => {
-    return existingKeywords?.some(k => k.keyword === keyword);
+    return existingKeywords.some(k => k.keyword === keyword);
   };
 
   const handleAddSelected = () => {
@@ -74,13 +81,22 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
     );
   }
 
-  if (!keywords.length) {
+  if (!keywords.length && !existingKeywords.length) {
     return (
       <div className="text-center p-8 text-muted-foreground">
-        {existingKeywords?.length ? "Это все ключевые слова кампании" : "Введите ключевое слово для поиска"}
+        Введите ключевое слово для поиска
       </div>
     );
   }
+
+  const allKeywords = [
+    ...keywords,
+    ...existingKeywords.map(k => ({
+      keyword: k.keyword,
+      trendScore: k.trend_score || 0,
+      mentionsCount: k.mentions_count || 0
+    }))
+  ];
 
   return (
     <div className="space-y-4">
@@ -110,7 +126,10 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
           <TableRow>
             <TableHead className="w-12">
               <Checkbox
-                checked={selectedKeywords.length === keywords.filter(k => !isKeywordAdded(k.keyword)).length}
+                checked={
+                  selectedKeywords.length === 
+                  keywords.filter(k => !isKeywordAdded(k.keyword)).length
+                }
                 onCheckedChange={(checked) => {
                   if (checked) {
                     const availableKeywords = keywords
@@ -130,10 +149,8 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
           </TableRow>
         </TableHeader>
         <TableBody>
-          {keywords.map((keyword) => {
+          {allKeywords.map((keyword) => {
             const isAdded = isKeywordAdded(keyword.keyword);
-            const trendValue = 'trendScore' in keyword ? keyword.trendScore : keyword.trend;
-            const mentionsValue = 'mentionsCount' in keyword ? keyword.mentionsCount : 0;
 
             return (
               <TableRow key={keyword.keyword}>
@@ -152,8 +169,8 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
                   )}
                 </TableCell>
                 <TableCell>{keyword.keyword}</TableCell>
-                <TableCell>{trendValue}</TableCell>
-                <TableCell>{mentionsValue}</TableCell>
+                <TableCell>{keyword.trendScore}</TableCell>
+                <TableCell>{keyword.mentionsCount}</TableCell>
                 <TableCell className="text-right">
                   {isAdded ? (
                     <Button variant="ghost" size="sm" disabled>

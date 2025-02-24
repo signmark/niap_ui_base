@@ -36,11 +36,11 @@ export default function Keywords() {
   });
 
   // Получаем существующие ключевые слова кампании
-  const { data: campaignKeywords, isLoading: isLoadingKeywords } = useQuery({
+  const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
       if (!selectedCampaign) return [];
-      const response = await directusApi.get("/items/campaign_keywords", {
+      const response = await directusApi.get("/items/user_keywords", {
         params: {
           filter: {
             campaign_id: {
@@ -156,10 +156,11 @@ export default function Keywords() {
       </Card>
 
       <KeywordTable 
-        keywords={searchResults.length > 0 ? searchResults : (campaignKeywords || [])} 
-        existingKeywords={campaignKeywords || []} 
-        isLoading={isLoadingKeywords || isSearching} 
+        keywords={searchResults}
+        existingKeywords={existingKeywords || []}
+        isLoading={isLoadingKeywords || isSearching}
         campaignId={selectedCampaign}
+        onKeywordsUpdated={refetchKeywords}
       />
     </div>
   );
