@@ -53,8 +53,8 @@ export default function Keywords() {
       return res.json();
     },
     onSuccess: (data) => {
-      if (data && data.keywords && Array.isArray(data.keywords)) {
-        setSearchResults(data.keywords);
+      if (data && Array.isArray(data)) {
+        setSearchResults(data);
         toast({ description: "Ключевые слова найдены" });
       } else {
         setSearchResults([]);
