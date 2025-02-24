@@ -47,7 +47,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             sort: ["-id"]
           }
         });
-        console.log("Existing keywords response:", response.data);
         return response.data?.data || [];
       } catch (err) {
         console.error("Error fetching keywords:", err);
@@ -58,17 +57,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (query: string) => {
-      try {
-        const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Ошибка при поиске ключевых слов");
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Search error:", error);
-        throw error;
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка при поиске ключевых слов");
       }
+      return await response.json();
     },
     onSuccess: (data) => {
       if (!data.data || !Array.isArray(data.data.keywords)) {
@@ -99,18 +93,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       try {
-        console.log("Saving keywords:", selectedKeywords);
         const promises = selectedKeywords.map(keyword => {
           const now = new Date().toISOString();
-          return directusApi.post('/items/user_keywords', {
-            data: {
-              campaign_id: campaignId,
-              keyword: keyword.keyword,
-              trend_score: keyword.trend,
-              mentions_count: 0,
-              last_checked: now
-            }
-          });
+          const data = {
+            campaign_id: campaignId,
+            keyword: keyword.keyword,
+            trend_score: keyword.trend,
+            mentions_count: 0,
+            last_checked: now
+          };
+          return directusApi.post('/items/user_keywords', { data });
         });
 
         await Promise.all(promises);
@@ -130,7 +122,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     onError: (error: Error) => {
       toast({
         title: "Ошибка",
-        description: error.message,
+        description: "Не удалось сохранить ключевые слова",
         variant: "destructive"
       });
     }
