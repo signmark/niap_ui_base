@@ -76,8 +76,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
-      for (const keyword of selectedKeywords) {
-        await directusApi.post('/items/user_keywords', {
+      const promises = selectedKeywords.map(keyword =>
+        directusApi.post('/items/user_keywords', {
           data: {
             campaign_id: campaignId,
             keyword: keyword.keyword,
@@ -85,8 +85,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             mentions_count: 0,
             last_checked: new Date().toISOString()
           }
-        });
-      }
+        })
+      );
+      await Promise.all(promises);
     },
     onSuccess: () => {
       toast({
