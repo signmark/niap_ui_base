@@ -55,14 +55,27 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     date.setSeconds(0);
     date.setMilliseconds(0);
 
-    // Возвращаем дату в локальном времени
-    return date;
+    // Преобразуем в UTC
+    const utcDate = new Date(
+      Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        hours, // Используем исходные часы
+        minutes // Используем исходные минуты
+      )
+    );
+
+    return utcDate;
   };
 
   // Format time for display
   const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('ru-RU', {
+    const utcDate = new Date(dateStr);
+    // Преобразуем UTC обратно в локальное время
+    const localDate = new Date(utcDate);
+
+    return localDate.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false

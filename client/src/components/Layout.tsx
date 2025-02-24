@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { useEffect } from "react";
@@ -71,6 +71,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   Keywords
                 </Button>
                 <Button
+                  variant={location === "/posts" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/posts")}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Posts
+                </Button>
+                <Button
                   variant={location === "/analytics" ? "secondary" : "ghost"}
                   className="w-full justify-start"
                   onClick={() => handleNavigation("/analytics")}
@@ -114,6 +122,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 >
                   <Search className="mr-2 h-4 w-4" />
                   Keywords
+                </Button>
+                <Button
+                  variant={location === "/posts" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/posts")}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Posts
                 </Button>
                 <Button
                   variant={location === "/analytics" ? "secondary" : "ghost"}
