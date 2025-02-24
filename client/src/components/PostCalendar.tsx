@@ -48,20 +48,25 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const toUTCDate = (localDate: Date, timeStr: string) => {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const date = new Date(localDate);
+
+    // Создаем дату в локальном времени
     date.setHours(hours);
     date.setMinutes(minutes);
     date.setSeconds(0);
     date.setMilliseconds(0);
-    return date.toISOString();
+
+    return date;
   };
 
   // Convert UTC to local time
-  const formatTime = (utcStr: string) => {
-    const date = new Date(utcStr);
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    // Преобразуем в локальное время и форматируем
     return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
   };
 
@@ -80,7 +85,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         content,
         image_url: (postType === "image" || postType === "image-text") ? mediaUrl : null,
         video_url: postType === "video" ? mediaUrl : null,
-        scheduled_at: scheduledAt
+        scheduled_at: scheduledAt.toISOString()
       });
     },
     onSuccess: () => {
