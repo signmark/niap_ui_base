@@ -49,14 +49,26 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const date = new Date(localDate);
     date.setHours(hours, minutes, 0, 0);
-    return date;
+    const utcDate = new Date(Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      hours,
+      minutes,
+      0,
+      0
+    ));
+    return utcDate;
   };
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    return localDate.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   // Create new post
