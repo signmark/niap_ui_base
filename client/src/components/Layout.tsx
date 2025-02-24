@@ -44,13 +44,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">
-        {/* Sidebar для мобильных устройств */}
+        {/* Мобильное меню */}
         <div
-          className={`lg:hidden fixed inset-y-0 left-0 z-50 transform ${
+          className={`lg:hidden fixed inset-y-0 left-0 z-[100] transform ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } transition-transform duration-300`}
+          } transition-transform duration-300 w-64`}
         >
-          <Sidebar className="w-64 h-full bg-background border-r">
+          <Sidebar className="h-full bg-background border-r">
             <div className="px-3 py-4">
               <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
               <div className="space-y-1">
@@ -93,9 +93,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Sidebar>
         </div>
 
-        {/* Десктопный сайдбар */}
+        {/* Десктопное меню */}
         <div className="hidden lg:block w-64">
-          <Sidebar className="w-64 h-full bg-background border-r">
+          <Sidebar className="h-full bg-background border-r">
             <div className="px-3 py-4">
               <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
               <div className="space-y-1">
@@ -155,7 +155,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Оверлей для мобильного меню */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 lg:hidden z-40"
+            className="fixed inset-0 bg-black/50 lg:hidden z-[90]"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}

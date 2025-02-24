@@ -111,11 +111,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   // Format time in HH:mm format
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   // Generate calendar day content
@@ -129,14 +125,23 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
     if (!postsForDay?.length) return null;
 
+    const chunks = [];
+    for (let i = 0; i < postsForDay.length; i += 3) {
+      chunks.push(postsForDay.slice(i, i + 3));
+    }
+
     return (
-      <div className="flex gap-1 mt-1">
-        {postsForDay.map((post, index) => (
-          <div
-            key={post.id}
-            className={`w-2 h-2 rounded-full ${getDotColor(post.post_type)}`}
-            title={`${formatTime(post.scheduled_at)} - ${post.content.substring(0, 20)}...`}
-          />
+      <div className="flex flex-col gap-1 mt-1">
+        {chunks.map((chunk, chunkIndex) => (
+          <div key={chunkIndex} className="flex gap-1 justify-center">
+            {chunk.map((post) => (
+              <div
+                key={post.id}
+                className={`w-2 h-2 rounded-full ${getDotColor(post.post_type)}`}
+                title={`${formatTime(post.scheduled_at)} - ${post.content.substring(0, 20)}...`}
+              />
+            ))}
+          </div>
         ))}
       </div>
     );
