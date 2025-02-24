@@ -38,13 +38,11 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       toast({
-        title: "Успешно",
         description: "Ключевое слово добавлено в кампанию"
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Ошибка",
         description: error.message,
         variant: "destructive"
       });
@@ -84,11 +82,12 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
       </TableHeader>
       <TableBody>
         {keywords.map((keyword) => {
-          const added = isKeywordAdded(keyword.word);
+          const added = isKeywordAdded(keyword.word || keyword.keyword);
+          const wordText = keyword.word || keyword.keyword;
 
           return (
             <TableRow key={keyword.id}>
-              <TableCell>{keyword.word}</TableCell>
+              <TableCell>{wordText}</TableCell>
               <TableCell>{keyword.trend}</TableCell>
               <TableCell>{keyword.competition}</TableCell>
               <TableCell className="text-right">
@@ -100,7 +99,7 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => addToKeywords(keyword.word)}
+                    onClick={() => addToKeywords(wordText)}
                     disabled={isAdding}
                   >
                     {isAdding ? (
