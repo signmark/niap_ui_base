@@ -1,37 +1,43 @@
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/directus";
 
-export function SearchButton({ campaignId, keywords }: { campaignId: string; keywords: string[] }) {
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Search } from "lucide-react";
+import { directusApi } from "@/lib/directus";
+import { useState } from "react";
+
+export default function SearchButton({ campaignId }: { campaignId: string }) {
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
 
   const handleSearch = async () => {
-    setIsSearching(true);
     try {
-      await directusApi.post("/api/search", { keywords });
-      toast({ description: "Поиск запущен" });
+      setIsSearching(true);
+      const response = await directusApi.post("/items/search", {
+        campaign_id: campaignId
+      });
+      
+      toast({
+        title: "Поиск запущен",
+        description: "Результаты будут доступны через несколько секунд"
+      });
 
       // Обновление через 10 секунд
       setTimeout(() => {
-        directusApi.get(`/items/campaign_links?filter[campaign_id][_eq]=${campaignId}`)
-          .then(() => toast({ description: "Поиск завершен" }));
+        window.location.reload();
       }, 10000);
     } catch (error) {
-      toast({ description: "Ошибка при запуске поиска", variant: "destructive" });
+      toast({
+        title: "Ошибка",
+        description: "Не удалось запустить поиск",
+        variant: "destructive"
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
   return (
-    <Button 
-      onClick={handleSearch} 
-      disabled={isSearching || !keywords.length}
-      className="w-full"
-    >
+    <Button onClick={handleSearch} disabled={isSearching}>
       <Search className="mr-2 h-4 w-4" />
       {isSearching ? "Поиск..." : "Искать упоминания"}
     </Button>
