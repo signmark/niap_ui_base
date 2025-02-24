@@ -11,9 +11,11 @@ import { Loader2 } from "lucide-react";
 interface Post {
   id: string;
   campaign_id: string;
-  date: string;
   content: string;
-  media_url?: string;
+  post_type: string;
+  image_url: string | null;
+  video_url: string | null;
+  scheduled_at: string;
 }
 
 export function PostCalendar({ campaignId }: { campaignId: string }) {
@@ -47,12 +49,12 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       }
 
       await directusApi.post("/items/campaign_posts", {
-        data: {
-          campaign_id: campaignId,
-          date: selectedDate.toISOString(),
-          content,
-          media_url: mediaUrl || null
-        }
+        campaign_id: campaignId,
+        post_type: "text",
+        content,
+        image_url: null,
+        video_url: null,
+        scheduled_at: selectedDate.toISOString()
       });
     },
     onSuccess: () => {
@@ -89,7 +91,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
             {posts?.map((post: Post) => (
               <div key={post.id} className="p-2 bg-secondary rounded-md mb-2">
                 <p className="text-sm font-medium">
-                  {new Date(post.date).toLocaleDateString()}
+                  {new Date(post.scheduled_at).toLocaleDateString()}
                 </p>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {post.content}
