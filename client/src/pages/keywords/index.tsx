@@ -36,13 +36,31 @@ export default function Keywords() {
     }
   });
 
+  // Получаем существующие ключевые слова кампании
+  const { data: campaignKeywords, isLoading: isLoadingKeywords } = useQuery({
+    queryKey: ["/api/keywords", selectedCampaign],
+    queryFn: async () => {
+      if (!selectedCampaign) return [];
+      const response = await directusApi.get("/items/campaign_keywords", {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaign
+            }
+          }
+        }
+      });
+      return response.data?.data || [];
+    },
+    enabled: !!selectedCampaign
+  });
+
   // Поиск ключевых слов
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
       if (!response.ok) throw new Error("Не удалось найти ключевые слова");
-      const data = await response.json();
-      return data;
+      return await response.json();
     },
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
@@ -66,25 +84,6 @@ export default function Keywords() {
         variant: "destructive",
       });
     },
-  });
-
-  // Получаем существующие ключевые слова кампании
-  const { data: campaignKeywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["/api/keywords", selectedCampaign],
-    queryFn: async () => {
-      if (!selectedCampaign) return [];
-      const response = await directusApi.get("/items/campaign_keywords", {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaign
-            }
-          }
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!selectedCampaign
   });
 
   const handleSearch = () => {
