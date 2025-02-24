@@ -79,7 +79,10 @@ export default function Keywords() {
             <div className="flex gap-4">
               <Select 
                 value={selectedCampaign} 
-                onValueChange={setSelectedCampaign}
+                onValueChange={(value) => {
+                  setSelectedCampaign(value);
+                  setSearchResults([]);
+                }}
               >
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Выберите кампанию" />
