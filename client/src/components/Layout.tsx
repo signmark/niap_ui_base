@@ -44,51 +44,99 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">
-        <Sidebar 
-          className={`w-64 border-r lg:relative ${
-            isSidebarOpen ? 'fixed inset-y-0 left-0 z-50' : '-translate-x-full lg:translate-x-0'
-          } transition-transform duration-300 bg-background`}
+        {/* Sidebar для мобильных устройств */}
+        <div
+          className={`lg:hidden fixed inset-y-0 left-0 z-50 transform ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } transition-transform duration-300`}
         >
-          <div className="px-3 py-4">
-            <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
-            <div className="space-y-1">
+          <Sidebar className="w-64 h-full bg-background border-r">
+            <div className="px-3 py-4">
+              <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+              <div className="space-y-1">
+                <Button
+                  variant={location === "/campaigns" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/campaigns")}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Campaigns
+                </Button>
+                <Button
+                  variant={location === "/keywords" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/keywords")}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Keywords
+                </Button>
+                <Button
+                  variant={location === "/analytics" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/analytics")}
+                >
+                  <BarChart className="mr-2 h-4 w-4" />
+                  Analytics
+                </Button>
+              </div>
+            </div>
+            <div className="mt-auto p-4">
               <Button
-                variant={location === "/campaigns" ? "secondary" : "ghost"}
+                variant="ghost"
                 className="w-full justify-start"
-                onClick={() => handleNavigation("/campaigns")}
+                onClick={handleLogout}
               >
-                <FileText className="mr-2 h-4 w-4" />
-                Campaigns
-              </Button>
-              <Button
-                variant={location === "/keywords" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/keywords")}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Keywords
-              </Button>
-              <Button
-                variant={location === "/analytics" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/analytics")}
-              >
-                <BarChart className="mr-2 h-4 w-4" />
-                Analytics
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </div>
-          </div>
-          <div className="mt-auto p-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </Sidebar>
+          </Sidebar>
+        </div>
+
+        {/* Десктопный сайдбар */}
+        <div className="hidden lg:block w-64">
+          <Sidebar className="w-64 h-full bg-background border-r">
+            <div className="px-3 py-4">
+              <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+              <div className="space-y-1">
+                <Button
+                  variant={location === "/campaigns" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/campaigns")}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Campaigns
+                </Button>
+                <Button
+                  variant={location === "/keywords" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/keywords")}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Keywords
+                </Button>
+                <Button
+                  variant={location === "/analytics" ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation("/analytics")}
+                >
+                  <BarChart className="mr-2 h-4 w-4" />
+                  Analytics
+                </Button>
+              </div>
+            </div>
+            <div className="mt-auto p-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </Sidebar>
+        </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-16 border-b flex items-center px-4 lg:px-8">
@@ -104,7 +152,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
         </div>
 
-        {/* Overlay для мобильного меню */}
+        {/* Оверлей для мобильного меню */}
         {isSidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 lg:hidden z-40"
