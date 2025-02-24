@@ -38,7 +38,7 @@ export default function Posts() {
                 <SelectValue placeholder="Выберите кампанию" />
               </SelectTrigger>
               <SelectContent>
-                {campaigns?.map((campaign) => (
+                {campaigns?.map((campaign: any) => (
                   <SelectItem key={campaign.id} value={campaign.id}>
                     {campaign.name}
                   </SelectItem>
