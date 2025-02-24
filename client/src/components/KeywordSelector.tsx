@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface KeywordSelectorProps {
@@ -99,7 +99,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       try {
         console.log("Saving keywords:", selectedKeywords);
-        // Создаем массив обещаний для каждого ключевого слова
         const promises = selectedKeywords.map(keyword => {
           const now = new Date().toISOString();
           return directusApi.post('/items/user_keywords', {
@@ -136,6 +135,26 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
   });
 
+  const { mutate: deleteKeyword, isPending: isDeleting } = useMutation({
+    mutationFn: async (keywordId: string) => {
+      await directusApi.delete(`/items/user_keywords/${keywordId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "Ключевое слово удалено"
+      });
+      refetchKeywords();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключевое слово",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     searchKeywords(searchQuery);
@@ -160,6 +179,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       return;
     }
     saveKeywords(selectedKeywords);
+  };
+
+  const handleDelete = (keywordId: string) => {
+    if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
+      deleteKeyword(keywordId);
+    }
   };
 
   return (
@@ -238,6 +263,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               <TableRow>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,6 +271,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(keyword.id)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
