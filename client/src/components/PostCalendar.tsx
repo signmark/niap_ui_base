@@ -103,6 +103,12 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     }
   };
 
+  // Format time in HH:mm format
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   // Generate calendar day content
   const getDayContent = (day: Date) => {
     const postsForDay = posts?.filter(post => {
@@ -120,7 +126,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
           <div
             key={post.id}
             className={`w-2 h-2 rounded-full ${getDotColor(post.post_type)}`}
-            title={`${post.content.substring(0, 20)}...`}
+            title={`${formatTime(post.scheduled_at)} - ${post.content.substring(0, 20)}...`}
           />
         ))}
       </div>
@@ -169,7 +175,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${getDotColor(post.post_type)}`} />
                     <p className="text-sm font-medium">
-                      {new Date(post.scheduled_at).toLocaleTimeString()}
+                      {formatTime(post.scheduled_at)}
                     </p>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{post.content}</p>
