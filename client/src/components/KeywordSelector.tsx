@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Loader2, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SearchButton } from "./SearchButton";
 
 interface KeywordSelectorProps {
   campaignId: string;
@@ -189,23 +190,31 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Введите запрос для поиска ключевых слов"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <Button onClick={handleSearch} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск...
-            </>
-          ) : (
-            "Искать"
-          )}
-        </Button>
+      <div className="flex gap-2 justify-between items-center">
+        <div className="flex gap-2 flex-1">
+          <Input
+            placeholder="Введите запрос для поиска ключевых слов"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <Button onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Поиск...
+              </>
+            ) : (
+              "Искать"
+            )}
+          </Button>
+        </div>
+        {existingKeywords && existingKeywords.length > 0 && (
+          <SearchButton
+            campaignId={campaignId}
+            selectedKeywords={existingKeywords.map(k => k.keyword)}
+          />
+        )}
       </div>
 
       {searchResults.length > 0 && (

@@ -1,4 +1,3 @@
-
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -55,31 +54,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search endpoint
-  app.post('/api/search', async (req, res) => {
-    const { keywords } = req.body;
-    const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
-
+  app.post('/api/perplexity/search', async (req, res) => {
     try {
-      const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords }),
-      });
-
-      if (!webhookResponse.ok) {
-        throw new Error('Webhook request failed');
+      const { keywords } = req.body;
+      if (!keywords || !Array.isArray(keywords)) {
+        return res.status(400).json({ error: 'Keywords array is required' });
       }
+
+      const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+      if (!N8N_WEBHOOK_URL) {
+        return res.status(500).json({ error: 'N8N webhook URL is not configured' });
+      }
+
+      await axios.post(N8N_WEBHOOK_URL, { keywords });
 
       res.status(200).json({ message: 'Search initiated' });
     } catch (error) {
-      res.status(500).json({ error: 'Search failed' });
+      console.error('Search error:', error);
+      res.status(500).json({ error: 'Failed to initiate search' });
     }
   });
 
   // Posts endpoints
   app.post('/api/posts', async (req, res) => {
-    const { date, content, mediaUrl, campaignId } = req.body;
-    
+    const { date, content, mediaUrl, campaignId } = req.body;    
     try {
       await storage.createPost({ date: new Date(date), content, mediaUrl, campaignId });
       res.status(201).json({ message: 'Post created' });
