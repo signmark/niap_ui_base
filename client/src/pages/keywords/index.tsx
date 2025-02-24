@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,16 +8,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { directusApi } from "@/lib/directus";
-import type { Keyword } from "@shared/schema";
+import type { Keyword, KeywordSearchResult, WordStatResponse } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 
 export default function Keywords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<Keyword[]>([]);
+  const [searchResults, setSearchResults] = useState<KeywordSearchResult[]>([]);
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
-  const queryClient = useQueryClient();
 
   // Получаем список кампаний пользователя
   const { data: campaigns } = useQuery({
@@ -60,17 +59,15 @@ export default function Keywords() {
     mutationFn: async (keyword: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
       if (!response.ok) throw new Error("Не удалось найти ключевые слова");
-      const { data } = await response.json();
-      return data.keywords;
+      const data = await response.json() as WordStatResponse;
+      return data;
     },
     onSuccess: (data) => {
-      if (data && Array.isArray(data)) {
-        const formattedKeywords = data.map((item: any) => ({
-          id: item.keyword || "",
-          word: item.keyword || "",
-          trend: parseInt(item.trend) || 0,
-          competition: parseInt(item.competition) || 0,
-          added: false
+      if (data?.data?.keywords && Array.isArray(data.data.keywords)) {
+        const formattedKeywords: KeywordSearchResult[] = data.data.keywords.map((item) => ({
+          keyword: item.keyword,
+          trendScore: item.trend || 0,
+          mentionsCount: item.competition || 0
         }));
         setSearchResults(formattedKeywords);
         toast({ description: "Ключевые слова найдены" });
