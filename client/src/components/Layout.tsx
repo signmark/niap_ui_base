@@ -5,7 +5,6 @@ import { useLocation } from "wouter";
 import { LogOut, BarChart, FileText, Search, Menu, Calendar } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
-import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
