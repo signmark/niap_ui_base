@@ -20,7 +20,7 @@ interface KeywordTableProps {
   campaignId: string;
 }
 
-export function KeywordTable({ keywords, existingKeywords, isLoading, campaignId }: KeywordTableProps) {
+export function KeywordTable({ keywords = [], existingKeywords, isLoading, campaignId }: KeywordTableProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
