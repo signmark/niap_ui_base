@@ -1,67 +1,39 @@
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { directusApi } from "@/lib/directus";
 
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Loader2 } from 'lucide-react';
-import { Button } from './ui/button';
-import { useToast } from '@/hooks/use-toast';
-
-interface SearchButtonProps {
-  keywords: string[];
-  campaignId: string;
-}
-
-export function SearchButton({ keywords, campaignId }: SearchButtonProps) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const queryClient = useQueryClient();
+export function SearchButton({ campaignId, keywords }: { campaignId: string; keywords: string[] }) {
+  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
-  
-  const searchMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords, campaignId }),
-      });
-      if (!res.ok) throw new Error('Search failed');
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Search started',
-        description: 'Results will be updated in 10 seconds',
-      });
-      setIsRefreshing(true);
+
+  const handleSearch = async () => {
+    setIsSearching(true);
+    try {
+      await directusApi.post("/api/search", { keywords });
+      toast({ description: "Поиск запущен" });
+
+      // Обновление через 10 секунд
       setTimeout(() => {
-        queryClient.invalidateQueries(['campaign_links', campaignId]);
-        setIsRefreshing(false);
+        directusApi.get(`/items/campaign_links?filter[campaign_id][_eq]=${campaignId}`)
+          .then(() => toast({ description: "Поиск завершен" }));
       }, 10000);
-    },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Failed to start search',
-        variant: 'destructive',
-      });
-    },
-  });
+    } catch (error) {
+      toast({ description: "Ошибка при запуске поиска", variant: "destructive" });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   return (
     <Button 
-      onClick={() => searchMutation.mutate()}
-      disabled={searchMutation.isLoading || isRefreshing || keywords.length === 0}
-      className="w-full md:w-auto"
+      onClick={handleSearch} 
+      disabled={isSearching || !keywords.length}
+      className="w-full"
     >
-      {searchMutation.isLoading || isRefreshing ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {isRefreshing ? 'Refreshing...' : 'Searching...'}
-        </>
-      ) : (
-        <>
-          <Search className="mr-2 h-4 w-4" />
-          Search Keywords
-        </>
-      )}
+      <Search className="mr-2 h-4 w-4" />
+      {isSearching ? "Поиск..." : "Искать упоминания"}
     </Button>
   );
 }
