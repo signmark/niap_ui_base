@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Calendar } from "./ui/calendar";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
@@ -44,27 +44,21 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     }
   });
 
-  // Format time and date utilities
+  // Convert local time to UTC
   const toUTCDate = (localDate: Date, timeStr: string) => {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const date = new Date(localDate);
-    date.setHours(hours, minutes, 0, 0);
-    const utcDate = new Date(Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      hours,
-      minutes,
-      0,
-      0
-    ));
-    return utcDate;
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    return date.toISOString();
   };
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-    return localDate.toLocaleTimeString('ru-RU', {
+  // Convert UTC to local time
+  const formatTime = (utcStr: string) => {
+    const date = new Date(utcStr);
+    return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
@@ -78,7 +72,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         throw new Error("Заполните все обязательные поля");
       }
 
-      const scheduledDate = toUTCDate(selectedDate, selectedTime);
+      const scheduledAt = toUTCDate(selectedDate, selectedTime);
 
       await directusApi.post("/items/campaign_posts", {
         campaign_id: campaignId,
@@ -86,7 +80,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         content,
         image_url: (postType === "image" || postType === "image-text") ? mediaUrl : null,
         video_url: postType === "video" ? mediaUrl : null,
-        scheduled_at: scheduledDate.toISOString()
+        scheduled_at: scheduledAt
       });
     },
     onSuccess: () => {
@@ -127,7 +121,6 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         return 'bg-gray-500';
     }
   };
-
 
   // Generate calendar day content
   const getDayContent = (day: Date) => {
