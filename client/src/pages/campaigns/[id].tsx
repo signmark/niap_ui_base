@@ -1,10 +1,12 @@
 import { useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";
+import { PostCalendar } from "@/components/PostCalendar";
 import { directusApi } from "@/lib/directus";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,47 @@ export default function CampaignDetails() {
       toast({
         title: "Ошибка",
         description: err.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const { mutate: searchSemantic, isPending: isSearching } = useMutation({
+    mutationFn: async () => {
+      const keywords = await directusApi.get(`/items/user_keywords`, {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: id
+            }
+          }
+        }
+      });
+
+      if (!keywords.data?.data?.length) {
+        throw new Error("Добавьте ключевые слова перед запуском семантического анализа");
+      }
+
+      await fetch('/api/perplexity/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          keywords: keywords.data.data.map((k: any) => k.keyword)
+        })
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Поиск запущен",
+        description: "Анализ семантического ядра начат"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
         variant: "destructive"
       });
     }
@@ -57,8 +100,21 @@ export default function CampaignDetails() {
   return (
     <div className="space-y-6 p-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>{campaign.name}</CardTitle>
+          <Button onClick={() => searchSemantic()} disabled={isSearching}>
+            {isSearching ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Анализ...
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Семантический анализ
+              </>
+            )}
+          </Button>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">{campaign.description}</p>
@@ -71,6 +127,15 @@ export default function CampaignDetails() {
         </CardHeader>
         <CardContent>
           <KeywordSelector campaignId={id} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Календарь публикаций</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PostCalendar campaignId={id} />
         </CardContent>
       </Card>
     </div>
