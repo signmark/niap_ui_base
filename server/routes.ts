@@ -75,3 +75,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   return httpServer;
 }
+// Add this to your existing routes
+app.delete('/api/keywords/:id', async (req, res) => {
+  try {
+    await db.delete(keywords).where(eq(keywords.id, req.params.id));
+    res.status(200).json({ message: 'Keyword deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete keyword' });
+  }
+});
+// Add to your existing routes
+app.post('/api/search', async (req, res) => {
+  const { keywords } = req.body;
+  const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+
+  try {
+    // Send to n8n webhook
+    const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keywords }),
+    });
+
+    if (!webhookResponse.ok) {
+      throw new Error('Webhook request failed');
+    }
+
+    res.status(200).json({ message: 'Search initiated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+// Add to your existing routes
+app.post('/api/posts', async (req, res) => {
+  const { date, content, mediaUrl } = req.body;
+  
+  try {
+    await db.insert(posts).values({
+      date: new Date(date),
+      content,
+      mediaUrl,
+      campaignId: req.body.campaignId,
+    });
+    res.status(201).json({ message: 'Post created' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create post' });
+  }
+});
+
+app.get('/api/posts', async (req, res) => {
+  try {
+    const campaignPosts = await db.select().from(posts)
+      .where(eq(posts.campaignId, req.query.campaignId as string));
+    res.json(campaignPosts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
