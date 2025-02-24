@@ -103,11 +103,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         const promises = selectedKeywords.map(keyword => {
           const now = new Date().toISOString();
           return directusApi.post('/items/user_keywords', {
-            campaign_id: campaignId,
-            keyword: keyword.keyword,
-            trend_score: keyword.trend,
-            mentions_count: 0,
-            last_checked: now
+            data: {
+              campaign_id: campaignId,
+              keyword: keyword.keyword,
+              trend_score: keyword.trend,
+              mentions_count: 0,
+              last_checked: now
+            }
           });
         });
 
