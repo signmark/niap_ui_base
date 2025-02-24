@@ -61,7 +61,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         date.getFullYear(),
         date.getMonth(),
         date.getDate(),
-        hours, 
+        hours,
         minutes
       )
     );
@@ -72,6 +72,8 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   // Format time for display
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
+    // Добавляем 3 часа для корректного отображения в UTC+3
+    date.setHours(date.getHours() + 3);
     return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',

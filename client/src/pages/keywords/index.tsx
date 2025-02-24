@@ -26,6 +26,31 @@ export default function Keywords() {
     }
   });
 
+  // Поиск ключевых слов
+  const { mutate: searchKeywords, isPending: isSearching } = useMutation({
+    mutationFn: async (keyword: string) => {
+      const res = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
+      if (!res.ok) throw new Error("Не удалось найти ключевые слова");
+      const data = await res.json();
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data && Array.isArray(data)) {
+        setSearchResults(data);
+        toast({ description: "Ключевые слова найдены" });
+      } else {
+        setSearchResults([]);
+        toast({ description: "Ключевые слова не найдены", variant: "destructive" });
+      }
+    },
+    onError: () => {
+      toast({
+        description: "Не удалось найти ключевые слова",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Получаем существующие ключевые слова кампании
   const { data: campaignKeywords, isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", selectedCampaign],
@@ -43,30 +68,6 @@ export default function Keywords() {
       return response.data?.data || [];
     },
     enabled: !!selectedCampaign
-  });
-
-  // Поиск ключевых слов
-  const { mutate: searchKeywords, isPending: isSearching } = useMutation({
-    mutationFn: async (keyword: string) => {
-      const res = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
-      if (!res.ok) throw new Error("Не удалось найти ключевые слова");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data && Array.isArray(data)) {
-        setSearchResults(data);
-        toast({ description: "Ключевые слова найдены" });
-      } else {
-        setSearchResults([]);
-        toast({ description: "Ключевые слова не найдены", variant: "destructive" });
-      }
-    },
-    onError: () => {
-      toast({
-        description: "Не удалось найти ключевые слова",
-        variant: "destructive",
-      });
-    },
   });
 
   const handleSearch = () => {
