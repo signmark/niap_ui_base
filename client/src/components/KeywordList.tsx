@@ -32,7 +32,8 @@ export default function KeywordList({ campaignId }: { campaignId: string }) {
 
   const handleDelete = async (keywordId: string) => {
     try {
-      await deleteKeyword.mutateAsync(keywordId);
+      await directusApi.delete(`/items/user_keywords/${keywordId}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       toast({
         title: "Успешно",
         description: "Ключевое слово удалено"
