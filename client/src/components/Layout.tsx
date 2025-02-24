@@ -34,15 +34,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    setIsSidebarOpen(false);
+    navigate(path);
+  };
+
   if (!token) return null;
 
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">
         <Sidebar 
-          className={`w-64 border-r transition-all duration-300 lg:translate-x-0 ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } fixed lg:relative z-50 bg-background h-full`}
+          className={`w-64 border-r lg:relative ${
+            isSidebarOpen ? 'fixed inset-y-0 left-0 z-50' : '-translate-x-full lg:translate-x-0'
+          } transition-transform duration-300 bg-background`}
         >
           <div className="px-3 py-4">
             <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
@@ -50,10 +55,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Button
                 variant={location === "/campaigns" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => {
-                  navigate("/campaigns");
-                  setIsSidebarOpen(false);
-                }}
+                onClick={() => handleNavigation("/campaigns")}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Campaigns
@@ -61,10 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Button
                 variant={location === "/keywords" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => {
-                  navigate("/keywords");
-                  setIsSidebarOpen(false);
-                }}
+                onClick={() => handleNavigation("/keywords")}
               >
                 <Search className="mr-2 h-4 w-4" />
                 Keywords
@@ -72,10 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Button
                 variant={location === "/analytics" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => {
-                  navigate("/analytics");
-                  setIsSidebarOpen(false);
-                }}
+                onClick={() => handleNavigation("/analytics")}
               >
                 <BarChart className="mr-2 h-4 w-4" />
                 Analytics
@@ -108,7 +104,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
         </div>
 
-        {/* Overlay for mobile */}
+        {/* Overlay для мобильного меню */}
         {isSidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 lg:hidden z-40"
