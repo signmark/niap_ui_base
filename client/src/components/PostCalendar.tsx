@@ -49,24 +49,36 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const date = new Date(localDate);
 
-    // Создаем дату в локальном времени
+    // Устанавливаем локальное время
     date.setHours(hours);
     date.setMinutes(minutes);
     date.setSeconds(0);
     date.setMilliseconds(0);
 
-    return date;
+    // Конвертируем в UTC
+    const utcDate = new Date(Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours(),
+      date.getMinutes(),
+      0,
+      0
+    ));
+
+    return utcDate;
   };
 
-  // Convert UTC to local time
+  // Convert UTC to local time for display
   const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    // Преобразуем в локальное время и форматируем
-    return date.toLocaleTimeString('ru-RU', {
+    const utcDate = new Date(dateStr);
+    const localDate = new Date(utcDate.getTime());
+
+    return localDate.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: 'UTC'
     });
   };
 
