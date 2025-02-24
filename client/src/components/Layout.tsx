@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -36,15 +38,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
-        <Sidebar className="w-64 border-r">
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar 
+          className={`w-64 border-r transition-all duration-300 lg:translate-x-0 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } fixed lg:relative z-50 bg-background h-full`}
+        >
           <div className="px-3 py-4">
             <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
             <div className="space-y-1">
               <Button
                 variant={location === "/campaigns" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => navigate("/campaigns")}
+                onClick={() => {
+                  navigate("/campaigns");
+                  setIsSidebarOpen(false);
+                }}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Campaigns
@@ -52,7 +61,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Button
                 variant={location === "/keywords" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => navigate("/keywords")}
+                onClick={() => {
+                  navigate("/keywords");
+                  setIsSidebarOpen(false);
+                }}
               >
                 <Search className="mr-2 h-4 w-4" />
                 Keywords
@@ -60,7 +72,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Button
                 variant={location === "/analytics" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => navigate("/analytics")}
+                onClick={() => {
+                  navigate("/analytics");
+                  setIsSidebarOpen(false);
+                }}
               >
                 <BarChart className="mr-2 h-4 w-4" />
                 Analytics
@@ -78,7 +93,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </Sidebar>
-        <main className="flex-1 overflow-auto p-8">{children}</main>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="h-16 border-b flex items-center px-4 lg:px-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </div>
+          <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
+        </div>
+
+        {/* Overlay for mobile */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 lg:hidden z-40"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
       </div>
     </SidebarProvider>
   );
