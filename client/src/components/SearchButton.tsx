@@ -1,21 +1,34 @@
-
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Search } from "lucide-react";
-import { directusApi } from "@/lib/directus";
+import { Search, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
-export default function SearchButton({ campaignId }: { campaignId: string }) {
+interface SearchButtonProps {
+  campaignId: string;
+  selectedKeywords: string[];
+}
+
+export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps) {
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
 
   const handleSearch = async () => {
+    if (selectedKeywords.length === 0) {
+      toast({
+        title: "Внимание",
+        description: "Выберите ключевые слова для поиска",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSearching(true);
-      const response = await directusApi.post("/items/search", {
-        campaign_id: campaignId
+      await apiRequest("POST", "/api/perplexity/search", {
+        keywords: selectedKeywords
       });
-      
+
       toast({
         title: "Поиск запущен",
         description: "Результаты будут доступны через несколько секунд"
@@ -38,8 +51,19 @@ export default function SearchButton({ campaignId }: { campaignId: string }) {
 
   return (
     <Button onClick={handleSearch} disabled={isSearching}>
-      <Search className="mr-2 h-4 w-4" />
-      {isSearching ? "Поиск..." : "Искать упоминания"}
+      {isSearching ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Поиск...
+        </>
+      ) : (
+        <>
+          <Search className="mr-2 h-4 w-4" />
+          Искать упоминания
+        </>
+      )}
     </Button>
   );
 }
+
+export default SearchButton;
