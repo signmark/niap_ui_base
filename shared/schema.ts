@@ -12,12 +12,11 @@ export const campaigns = pgTable("user_campaigns", {
 
 export const keywords = pgTable("campaign_keywords", {
   id: serial("id").primaryKey(),
-  word: text("word").notNull(),
+  keyword: text("keyword").notNull(),
   campaignId: integer("campaign_id").references(() => campaigns.id),
-  trend: integer("trend"),
-  competition: integer("competition"),
-  volume: integer("volume"),
-  added: boolean("added").default(false),
+  trendScore: integer("trend_score"),
+  mentionsCount: integer("mentions_count"),
+  lastChecked: timestamp("last_checked"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -28,11 +27,10 @@ export const insertCampaignSchema = createInsertSchema(campaigns).pick({
 });
 
 export const insertKeywordSchema = createInsertSchema(keywords).pick({
-  word: true,
+  keyword: true,
   campaignId: true,
-  trend: true,
-  competition: true,
-  volume: true
+  trendScore: true,
+  mentionsCount: true
 });
 
 export type Campaign = typeof campaigns.$inferSelect;
@@ -41,14 +39,19 @@ export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Keyword = typeof keywords.$inferSelect;
 export type InsertKeyword = z.infer<typeof insertKeywordSchema>;
 
-// xmlriver API response type
-export interface XmlRiverResponse {
+// API response types
+export interface WordStatResponse {
   data: {
     keywords: Array<{
       keyword: string;
-      difficulty: number;
-      competition: number;
-      volume: number;
+      trend: number;
+      competition?: number;
     }>;
   };
+}
+
+export interface KeywordSearchResult {
+  keyword: string;
+  trendScore: number;
+  mentionsCount: number;
 }
