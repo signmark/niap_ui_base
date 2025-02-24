@@ -9,46 +9,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Campaign routes
   app.get("/api/campaigns", async (req, res) => {
-    const userId = req.headers["x-user-id"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-    const campaigns = await storage.getCampaigns(userId);
-    res.json(campaigns);
+    try {
+      console.log(`Fetching campaigns for user ${req.headers["x-user-id"]}`);
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const campaigns = await storage.getCampaigns(userId);
+      console.log("Campaigns found:", campaigns);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
   });
 
   app.post("/api/campaigns", async (req, res) => {
-    const result = insertCampaignSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ errors: result.error.errors });
+    try {
+      console.log("Received campaign data:", req.body);
+      const result = insertCampaignSchema.safeParse(req.body);
+      if (!result.success) {
+        console.error("Validation error:", result.error.errors);
+        return res.status(400).json({ errors: result.error.errors });
+      }
+      const campaign = await storage.createCampaign(result.data);
+      console.log("Campaign created:", campaign);
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      res.status(500).json({ error: "Failed to create campaign" });
     }
-    const campaign = await storage.createCampaign(result.data);
-    res.json(campaign);
   });
 
   app.delete("/api/campaigns/:id", async (req, res) => {
-    await storage.deleteCampaign(Number(req.params.id));
-    res.status(204).end();
+    try {
+      console.log(`Deleting campaign ${req.params.id}`);
+      await storage.deleteCampaign(Number(req.params.id));
+      console.log("Campaign deleted successfully");
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      res.status(500).json({ error: "Failed to delete campaign" });
+    }
   });
 
   // Keywords routes
   app.get("/api/campaigns/:id/keywords", async (req, res) => {
-    const keywords = await storage.getKeywords(Number(req.params.id));
-    res.json(keywords);
+    try {
+      console.log(`Fetching keywords for campaign ${req.params.id}`);
+      const keywords = await storage.getKeywords(Number(req.params.id));
+      console.log("Keywords found:", keywords);
+      res.json(keywords);
+    } catch (error) {
+      console.error("Error fetching keywords:", error);
+      res.status(500).json({ error: "Failed to fetch keywords" });
+    }
   });
 
   app.post("/api/keywords", async (req, res) => {
-    const result = insertKeywordSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ errors: result.error.errors });
+    try {
+      console.log("Received keyword data:", req.body);
+      const result = insertKeywordSchema.safeParse(req.body);
+      if (!result.success) {
+        console.error("Validation error:", result.error.errors);
+        return res.status(400).json({ errors: result.error.errors });
+      }
+      const keyword = await storage.addKeyword(result.data);
+      console.log("Keyword added:", keyword);
+      res.json(keyword);
+    } catch (error) {
+      console.error("Error adding keyword:", error);
+      res.status(500).json({ error: "Failed to add keyword" });
     }
-    const keyword = await storage.addKeyword(result.data);
-    res.json(keyword);
   });
 
   app.delete('/api/keywords/:id', async (req, res) => {
     try {
+      console.log(`Deleting keyword ${req.params.id}`);
       await storage.deleteKeyword(Number(req.params.id));
+      console.log("Keyword deleted successfully");
       res.status(200).json({ message: 'Keyword deleted' });
     } catch (error) {
+      console.error("Error deleting keyword:", error);
       res.status(500).json({ error: 'Failed to delete keyword' });
     }
   });
@@ -57,16 +97,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/perplexity/search', async (req, res) => {
     try {
       const { keywords } = req.body;
+      console.log("Received search request for keywords:", keywords);
+
       if (!keywords || !Array.isArray(keywords)) {
+        console.error("Invalid keywords format:", keywords);
         return res.status(400).json({ error: 'Keywords array is required' });
       }
 
       const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
       if (!N8N_WEBHOOK_URL) {
+        console.error("N8N webhook URL not configured");
         return res.status(500).json({ error: 'N8N webhook URL is not configured' });
       }
 
+      console.log("Sending request to N8N webhook");
       await axios.post(N8N_WEBHOOK_URL, { keywords });
+      console.log("Search request sent successfully");
 
       res.status(200).json({ message: 'Search initiated' });
     } catch (error) {
@@ -79,19 +125,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/posts', async (req, res) => {
     const { date, content, mediaUrl, campaignId } = req.body;    
     try {
+      console.log("Creating new post:", req.body);
       await storage.createPost({ date: new Date(date), content, mediaUrl, campaignId });
+      console.log("Post created successfully");
       res.status(201).json({ message: 'Post created' });
     } catch (error) {
+      console.error("Error creating post:", error);
       res.status(500).json({ error: 'Failed to create post' });
     }
   });
 
   app.get('/api/posts', async (req, res) => {
     try {
+      console.log("Fetching posts. Query params:", req.query);
       const campaignId = Number(req.query.campaignId);
       const posts = await storage.getPosts(campaignId);
+      console.log("Posts fetched:", posts);
       res.json(posts);
     } catch (error) {
+      console.error("Error fetching posts:", error);
       res.status(500).json({ error: 'Failed to fetch posts' });
     }
   });
@@ -99,6 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // XMLRiver API proxy
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
+      console.log(`Searching WordStat for keyword: ${req.params.keyword}`);
       const response = await axios.get(`http://xmlriver.com/wordstat/json`, {
         params: {
           user: process.env.XMLRIVER_USER,
@@ -107,15 +160,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
+      console.log("XMLRiver API response:", response.data);
+
       if (!response.data?.content?.includingPhrases?.items) {
+        console.error("Invalid response format from XMLRiver API");
         throw new Error("Некорректный формат ответа от XMLRiver API");
       }
 
-      const keywords = response.data.content.includingPhrases.items.map((item) => ({
+      const keywords = response.data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
         trend: parseInt(item.number.replace(/\s/g, '')) || 0
       }));
 
+      console.log("Processed keywords:", keywords);
       res.json({ data: { keywords } });
     } catch (error) {
       console.error('XMLRiver API error:', error);

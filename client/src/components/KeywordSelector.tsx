@@ -23,9 +23,11 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
 
+  // Запрос существующих ключевых слов
   const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
+      console.log("Fetching keywords for campaign:", campaignId);
       const response = await directusApi.get(`/items/user_keywords`, {
         params: {
           filter: {
@@ -35,12 +37,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           }
         }
       });
+      console.log("Existing keywords response:", response.data);
       return response.data?.data || [];
     }
   });
 
+  // Поиск новых ключевых слов
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (query: string) => {
+      console.log("Searching keywords with query:", query);
       const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
       if (!response.ok) {
         const error = await response.json();
@@ -49,6 +54,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       return await response.json();
     },
     onSuccess: (data) => {
+      console.log("Search results:", data);
       if (!data.data || !Array.isArray(data.data.keywords)) {
         throw new Error("Некорректный формат данных от API");
       }
@@ -66,6 +72,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("Search error:", error);
       toast({
         title: "Ошибка",
         description: error.message,
@@ -74,21 +81,32 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
   });
 
+  // Сохранение выбранных ключевых слов
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
-      // Создаем один запрос для добавления всех ключевых слов
-      const response = await directusApi.post('/items/user_keywords', {
-        data: selectedKeywords.map(keyword => ({
-          campaign_id: campaignId,
-          keyword: keyword.keyword,
-          trend_score: keyword.trend,
-          mentions_count: 0,
-          last_checked: new Date().toISOString()
-        }))
-      });
-      return response.data;
+      const keywordsToSave = selectedKeywords.map(keyword => ({
+        campaign_id: campaignId,
+        keyword: keyword.keyword,
+        trend_score: keyword.trend,
+        mentions_count: 0,
+        last_checked: new Date().toISOString()
+      }));
+
+      console.log("Saving keywords:", keywordsToSave);
+
+      try {
+        const response = await directusApi.post('/items/user_keywords', {
+          data: keywordsToSave
+        });
+        console.log("Save response:", response);
+        return response.data;
+      } catch (error) {
+        console.error("Error saving keywords:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Keywords saved successfully:", data);
       toast({
         title: "Успешно",
         description: "Ключевые слова сохранены"
@@ -106,8 +124,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
   });
 
+  // Удаление ключевого слова
   const { mutate: deleteKeyword } = useMutation({
     mutationFn: async (keywordId: string) => {
+      console.log("Deleting keyword:", keywordId);
       await directusApi.delete(`/items/user_keywords/${keywordId}`);
     },
     onSuccess: () => {
@@ -117,7 +137,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       });
       refetchKeywords();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Delete error:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось удалить ключевое слово",
