@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -98,7 +97,6 @@ export default function Keywords() {
   };
 
   return (
-    <Layout>
     <div className="space-y-4">
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Ключевые слова</h1>
@@ -165,6 +163,5 @@ export default function Keywords() {
         campaignId={selectedCampaign}
       />
     </div>
-    </Layout>
   );
 }
