@@ -1,10 +1,11 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Trash2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
+import { useDeleteKeyword } from "@/hooks/useKeywords";
 
 interface Keyword {
   id: string;
@@ -12,10 +13,11 @@ interface Keyword {
   trend_score: number;
 }
 
-export function KeywordList({ campaignId }: { campaignId: string }) {
+export default function KeywordList({ campaignId }: { campaignId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+  const deleteKeyword = useDeleteKeyword();
+
   const { data: keywords } = useQuery<Keyword[]>({
     queryKey: ["/api/keywords", campaignId],
     queryFn: async () => {
@@ -28,33 +30,40 @@ export function KeywordList({ campaignId }: { campaignId: string }) {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (keywordId: string) => {
+  const handleDelete = async (keywordId: string) => {
+    try {
       await directusApi.delete(`/items/user_keywords/${keywordId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords"] });
-      toast({ description: "Ключевое слово удалено" });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      toast({
+        title: "Успешно",
+        description: "Ключевое слово удалено"
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключевое слово",
+        variant: "destructive"
+      });
     }
-  });
+  };
 
   return (
-    <div className="rounded-lg border p-4">
-      <h2 className="text-lg font-semibold mb-4">Сохраненные ключевые слова</h2>
-      <div className="space-y-2">
-        <div className="grid grid-cols-[1fr,100px,40px] gap-4 font-medium">
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Сохраненные ключевые слова</h3>
+      <div className="rounded-md border">
+        <div className="grid grid-cols-[1fr,auto,auto] items-center gap-4 p-4 font-medium">
           <div>Ключевое слово</div>
           <div>Тренд</div>
           <div></div>
         </div>
         {keywords?.map((keyword) => (
-          <div key={keyword.id} className="grid grid-cols-[1fr,100px,40px] gap-4 items-center">
+          <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] items-center gap-4 border-t p-4">
             <div>{keyword.keyword}</div>
             <div>{keyword.trend_score}</div>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => deleteMutation.mutate(keyword.id)}
+              onClick={() => handleDelete(keyword.id)}
               className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
