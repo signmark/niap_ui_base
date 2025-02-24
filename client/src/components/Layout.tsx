@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen">
         {/* Мобильное меню */}
         <div
           className={`lg:hidden fixed inset-y-0 left-0 z-[100] w-64 transform ${
@@ -138,7 +138,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Sidebar>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col">
           <div className="h-16 border-b flex items-center px-4 lg:px-8">
             <Button
               variant="ghost"
@@ -149,7 +149,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-6 w-6" />
             </Button>
           </div>
-          <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
+          <main className="flex-1 p-4 lg:p-8">{children}</main>
         </div>
 
         {/* Оверлей для мобильного меню */}

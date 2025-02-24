@@ -54,11 +54,10 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       setSearchResults(data);
-      toast({ title: "Успешно", description: "Ключевые слова найдены" });
+      toast({ description: "Ключевые слова найдены" });
     },
     onError: () => {
       toast({
-        title: "Ошибка",
         description: "Не удалось найти ключевые слова",
         variant: "destructive",
       });
@@ -67,59 +66,57 @@ export default function Keywords() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col">
           <h1 className="text-2xl font-bold">Ключевые слова</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-2">
             Выберите кампанию и найдите релевантные ключевые слова
           </p>
         </div>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Select 
-                  value={selectedCampaign} 
-                  onValueChange={setSelectedCampaign}
-                >
-                  <SelectTrigger className="w-[300px]">
-                    <SelectValue placeholder="Выберите кампанию" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {campaigns?.map((campaign) => (
-                      <SelectItem key={campaign.id} value={campaign.id}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex gap-4">
+              <Select 
+                value={selectedCampaign} 
+                onValueChange={setSelectedCampaign}
+              >
+                <SelectTrigger className="w-[300px]">
+                  <SelectValue placeholder="Выберите кампанию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns?.map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="flex gap-4">
-                <Input
-                  placeholder="Введите ключевое слово для поиска"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={() => searchKeywords(searchTerm)} 
-                  disabled={isSearching || !searchTerm || !selectedCampaign}
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Поиск...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Искать
-                    </>
-                  )}
-                </Button>
-              </div>
+            <div className="flex gap-4">
+              <Input
+                placeholder="Введите ключевое слово для поиска"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                onClick={() => searchKeywords(searchTerm)} 
+                disabled={isSearching || !searchTerm || !selectedCampaign}
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Поиск...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Искать
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
