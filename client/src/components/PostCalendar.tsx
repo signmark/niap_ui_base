@@ -71,11 +71,10 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
   // Format time for display
   const formatTime = (dateStr: string) => {
-    const utcDate = new Date(dateStr);
-    // Преобразуем UTC обратно в локальное время
-    const localDate = new Date(utcDate);
-
-    return localDate.toLocaleTimeString('ru-RU', {
+    const date = new Date(dateStr);
+    // Добавляем 6 часов для корректного отображения
+    date.setHours(date.getHours() + 6);
+    return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false

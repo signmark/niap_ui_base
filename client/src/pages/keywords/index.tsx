@@ -137,7 +137,7 @@ export default function Keywords() {
         </Card>
 
         <KeywordTable 
-          keywords={searchResults} 
+          keywords={searchResults.length > 0 ? searchResults : (campaignKeywords || [])} 
           existingKeywords={campaignKeywords || []} 
           isLoading={isLoadingKeywords || isSearching} 
           campaignId={selectedCampaign}
