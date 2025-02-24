@@ -53,7 +53,7 @@ export default function Keywords() {
       return res.json();
     },
     onSuccess: (data) => {
-      setSearchResults(data);
+      setSearchResults(data.keywords);
       toast({ description: "Ключевые слова найдены" });
     },
     onError: () => {
@@ -63,6 +63,17 @@ export default function Keywords() {
       });
     },
   });
+
+  const handleSearch = () => {
+    if (!searchTerm || !selectedCampaign) return;
+    searchKeywords(searchTerm);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
     <Layout>
@@ -102,10 +113,11 @@ export default function Keywords() {
                 placeholder="Введите ключевое слово для поиска"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="flex-1"
               />
               <Button 
-                onClick={() => searchKeywords(searchTerm)} 
+                onClick={handleSearch} 
                 disabled={isSearching || !searchTerm || !selectedCampaign}
               >
                 {isSearching ? (
