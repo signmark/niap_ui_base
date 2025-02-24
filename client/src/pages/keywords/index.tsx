@@ -17,11 +17,19 @@ export default function Keywords() {
   const [searchResults, setSearchResults] = useState<Keyword[]>([]);
   const { toast } = useToast();
 
-  // Получаем список кампаний
+  // Получаем список кампаний пользователя
   const { data: campaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await directusApi.get("/items/user_campaigns");
+      const response = await directusApi.get("/items/user_campaigns", {
+        params: {
+          filter: {
+            user_id: {
+              _eq: "$CURRENT_USER"
+            }
+          }
+        }
+      });
       return response.data?.data || [];
     }
   });
@@ -36,7 +44,11 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
-        setSearchResults(data);
+        setSearchResults(data.map((item: any) => ({
+          keyword: item.keyword,
+          trend: item.trend || 0,
+          competition: 0
+        })));
         toast({ description: "Ключевые слова найдены" });
       } else {
         setSearchResults([]);
@@ -105,7 +117,7 @@ export default function Keywords() {
                   <SelectValue placeholder="Выберите кампанию" />
                 </SelectTrigger>
                 <SelectContent>
-                  {campaigns?.map((campaign) => (
+                  {campaigns?.map((campaign: any) => (
                     <SelectItem key={campaign.id} value={campaign.id}>
                       {campaign.name}
                     </SelectItem>

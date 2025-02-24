@@ -6,6 +6,7 @@ import Login from "@/pages/auth/login";
 import Campaigns from "@/pages/campaigns";
 import CampaignDetails from "@/pages/campaigns/[id]";
 import Keywords from "@/pages/keywords";
+import Posts from "@/pages/posts";
 import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 import { useAuthStore } from "@/lib/store";
@@ -20,11 +21,7 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
     return null;
   }
 
-  return (
-    <Layout>
-      <Component />
-    </Layout>
-  );
+  return <Component />;
 }
 
 function Router() {
@@ -39,6 +36,7 @@ function Router() {
       <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
       <Route path="/campaigns/:id" component={() => <PrivateRoute component={CampaignDetails} />} />
       <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
+      <Route path="/posts" component={() => <PrivateRoute component={Posts} />} />
       <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
       <Route component={NotFound} />
     </Switch>
