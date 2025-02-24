@@ -13,7 +13,7 @@ interface Post {
   id: string;
   campaign_id: string;
   content: string;
-  post_type: string;
+  post_type: 'text' | 'image' | 'image-text' | 'video';
   image_url: string | null;
   video_url: string | null;
   scheduled_at: string;
@@ -24,7 +24,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const [selectedTime, setSelectedTime] = useState("12:00");
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
-  const [postType, setPostType] = useState<"text" | "image" | "video">("text");
+  const [postType, setPostType] = useState<'text' | 'image' | 'image-text' | 'video'>("text");
   const { toast } = useToast();
 
   // Fetch existing posts
@@ -59,7 +59,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         campaign_id: campaignId,
         post_type: postType,
         content,
-        image_url: postType === "image" ? mediaUrl : null,
+        image_url: (postType === "image" || postType === "image-text") ? mediaUrl : null,
         video_url: postType === "video" ? mediaUrl : null,
         scheduled_at: scheduledDate.toISOString()
       });
@@ -94,6 +94,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       case 'text':
         return 'bg-blue-500';
       case 'image':
+      case 'image-text':
         return 'bg-yellow-500';
       case 'video':
         return 'bg-red-500';
@@ -126,6 +127,18 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     );
   };
 
+  // Get posts for selected date
+  const getSelectedDatePosts = () => {
+    if (!selectedDate || !posts) return [];
+
+    return posts.filter(post => {
+      const postDate = new Date(post.scheduled_at);
+      return postDate.getDate() === selectedDate.getDate() &&
+             postDate.getMonth() === selectedDate.getMonth() &&
+             postDate.getFullYear() === selectedDate.getFullYear();
+    });
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Календарь постов</h3>
@@ -148,36 +161,39 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
             initialFocus
           />
 
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Запланированные посты:</h4>
-            {posts?.map((post: Post) => (
-              <div key={post.id} className="p-2 bg-secondary rounded-md mb-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${getDotColor(post.post_type)}`} />
-                  <p className="text-sm font-medium">
-                    {new Date(post.scheduled_at).toLocaleString()}
-                  </p>
+          {selectedDate && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Посты на {selectedDate.toLocaleDateString()}:</h4>
+              {getSelectedDatePosts().map((post: Post) => (
+                <div key={post.id} className="p-2 bg-secondary rounded-md mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${getDotColor(post.post_type)}`} />
+                    <p className="text-sm font-medium">
+                      {new Date(post.scheduled_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{post.content}</p>
+                  {(post.image_url || post.video_url) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Медиа: {post.image_url || post.video_url}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{post.content}</p>
-                {(post.image_url || post.video_url) && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Медиа: {post.image_url || post.video_url}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
           <div className="flex gap-4">
-            <Select value={postType} onValueChange={(value: "text" | "image" | "video") => setPostType(value)}>
+            <Select value={postType} onValueChange={(value: 'text' | 'image' | 'image-text' | 'video') => setPostType(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Тип поста" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="text">Текст</SelectItem>
                 <SelectItem value="image">Изображение</SelectItem>
+                <SelectItem value="image-text">Текст с изображением</SelectItem>
                 <SelectItem value="video">Видео</SelectItem>
               </SelectContent>
             </Select>
@@ -201,9 +217,9 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
-          {(postType === "image" || postType === "video") && (
+          {(postType === "image" || postType === "image-text" || postType === "video") && (
             <Input
-              placeholder={`URL ${postType === "image" ? "изображения" : "видео"}`}
+              placeholder={`URL ${postType === "video" ? "видео" : "изображения"}`}
               value={mediaUrl}
               onChange={(e) => setMediaUrl(e.target.value)}
             />
