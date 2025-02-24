@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface KeywordSelectorProps {
@@ -23,7 +23,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
 
-  const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery({
+  const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
       const response = await directusApi.get(`/items/user_keywords`, {
@@ -78,11 +78,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
       const promises = selectedKeywords.map(keyword => 
         directusApi.post('/items/user_keywords', {
-          campaign_id: campaignId,
-          keyword: keyword.keyword,
-          trend_score: keyword.trend,
-          mentions_count: 0,
-          last_checked: new Date().toISOString()
+          data: {
+            campaign_id: campaignId,
+            keyword: keyword.keyword,
+            trend_score: keyword.trend,
+            mentions_count: 0,
+            last_checked: new Date().toISOString()
+          }
         })
       );
       await Promise.all(promises);
@@ -93,11 +95,32 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
+      refetchKeywords();
     },
     onError: (error: Error) => {
       toast({
         title: "Ошибка",
         description: "Не удалось сохранить ключевые слова",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const { mutate: deleteKeyword } = useMutation({
+    mutationFn: async (keywordId: string) => {
+      await directusApi.delete(`/items/user_keywords/${keywordId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "Ключевое слово удалено"
+      });
+      refetchKeywords();
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
     }
@@ -127,6 +150,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       return;
     }
     saveKeywords(selectedKeywords);
+  };
+
+  const handleDelete = (keywordId: string) => {
+    if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
+      deleteKeyword(keywordId);
+    }
   };
 
   return (
@@ -205,6 +234,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               <TableRow>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,6 +242,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(keyword.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
