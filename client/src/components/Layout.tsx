@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { LogOut, BarChart, FileText, Search, Menu } from "lucide-react";
@@ -42,124 +42,122 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (!token) return null;
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen overflow-hidden">
-        {/* Мобильное меню */}
-        <div
-          className={`lg:hidden fixed inset-y-0 left-0 z-[100] transform ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } transition-transform duration-300 w-64`}
-        >
-          <Sidebar className="h-full bg-background border-r">
-            <div className="px-3 py-4">
-              <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
-              <div className="space-y-1">
-                <Button
-                  variant={location === "/campaigns" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/campaigns")}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Campaigns
-                </Button>
-                <Button
-                  variant={location === "/keywords" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/keywords")}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Keywords
-                </Button>
-                <Button
-                  variant={location === "/analytics" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/analytics")}
-                >
-                  <BarChart className="mr-2 h-4 w-4" />
-                  Analytics
-                </Button>
-              </div>
-            </div>
-            <div className="mt-auto p-4">
+    <div className="flex h-screen overflow-hidden">
+      {/* Мобильное меню */}
+      <div
+        className={`lg:hidden fixed inset-y-0 left-0 z-[100] transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } transition-transform duration-300 w-64`}
+      >
+        <Sidebar className="h-full bg-background border-r">
+          <div className="px-3 py-4">
+            <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+            <div className="space-y-1">
               <Button
-                variant="ghost"
+                variant={location === "/campaigns" ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={handleLogout}
+                onClick={() => handleNavigation("/campaigns")}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                <FileText className="mr-2 h-4 w-4" />
+                Campaigns
+              </Button>
+              <Button
+                variant={location === "/keywords" ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => handleNavigation("/keywords")}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Keywords
+              </Button>
+              <Button
+                variant={location === "/analytics" ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => handleNavigation("/analytics")}
+              >
+                <BarChart className="mr-2 h-4 w-4" />
+                Analytics
               </Button>
             </div>
-          </Sidebar>
-        </div>
-
-        {/* Десктопное меню */}
-        <div className="hidden lg:block w-64">
-          <Sidebar className="h-full bg-background border-r">
-            <div className="px-3 py-4">
-              <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
-              <div className="space-y-1">
-                <Button
-                  variant={location === "/campaigns" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/campaigns")}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Campaigns
-                </Button>
-                <Button
-                  variant={location === "/keywords" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/keywords")}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Keywords
-                </Button>
-                <Button
-                  variant={location === "/analytics" ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation("/analytics")}
-                >
-                  <BarChart className="mr-2 h-4 w-4" />
-                  Analytics
-                </Button>
-              </div>
-            </div>
-            <div className="mt-auto p-4">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </Sidebar>
-        </div>
-
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="h-16 border-b flex items-center px-4 lg:px-8">
+          </div>
+          <div className="mt-auto p-4">
             <Button
               variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="w-full justify-start"
+              onClick={handleLogout}
             >
-              <Menu className="h-6 w-6" />
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
             </Button>
           </div>
-          <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
-        </div>
-
-        {/* Оверлей для мобильного меню */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 lg:hidden z-[90]"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
+        </Sidebar>
       </div>
-    </SidebarProvider>
+
+      {/* Десктопное меню */}
+      <div className="hidden lg:block w-64">
+        <Sidebar className="h-full bg-background border-r">
+          <div className="px-3 py-4">
+            <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+            <div className="space-y-1">
+              <Button
+                variant={location === "/campaigns" ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => handleNavigation("/campaigns")}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Campaigns
+              </Button>
+              <Button
+                variant={location === "/keywords" ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => handleNavigation("/keywords")}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Keywords
+              </Button>
+              <Button
+                variant={location === "/analytics" ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => handleNavigation("/analytics")}
+              >
+                <BarChart className="mr-2 h-4 w-4" />
+                Analytics
+              </Button>
+            </div>
+          </div>
+          <div className="mt-auto p-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </Sidebar>
+      </div>
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="h-16 border-b flex items-center px-4 lg:px-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </div>
+        <main className="flex-1 overflow-auto p-4 lg:p-8">{children}</main>
+      </div>
+
+      {/* Оверлей для мобильного меню */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 lg:hidden z-[90]"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+    </div>
   );
 }
