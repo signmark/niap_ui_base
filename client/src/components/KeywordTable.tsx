@@ -27,12 +27,11 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
   const queryClient = useQueryClient();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
-  // Добавление ключевого слова в кампанию
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
     mutationFn: async (keywords: string[]) => {
       await Promise.all(
         keywords.map(async (keyword) => {
-          await directusApi.post("/items/campaign_keywords", {
+          await directusApi.post("/items/user_keywords", {
             campaign_id: campaignId,
             keyword,
             trend_score: 0,
@@ -51,7 +50,7 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
     },
     onError: (error: Error) => {
       toast({
-        description: error.message,
+        description: "Не удалось добавить ключевые слова",
         variant: "destructive"
       });
     }
@@ -134,8 +133,7 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
           {keywords.map((keyword) => {
             const isAdded = isKeywordAdded(keyword.keyword);
             const trendValue = 'trendScore' in keyword ? keyword.trendScore : keyword.trend;
-            const mentionsValue = 'mentionsCount' in keyword ? keyword.mentionsCount : keyword.mentions_count;
-
+            const mentionsValue = 'mentionsCount' in keyword ? keyword.mentionsCount : 0;
 
             return (
               <TableRow key={keyword.keyword}>
