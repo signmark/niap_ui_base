@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,7 @@ export default function Keywords() {
   const [searchResults, setSearchResults] = useState<Keyword[]>([]);
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
+  const queryClient = useQueryClient();
 
   // Получаем список кампаний пользователя
   const { data: campaigns } = useQuery({
@@ -59,7 +60,8 @@ export default function Keywords() {
     mutationFn: async (keyword: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
       if (!response.ok) throw new Error("Не удалось найти ключевые слова");
-      return await response.json();
+      const { data } = await response.json();
+      return data.keywords;
     },
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
