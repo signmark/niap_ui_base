@@ -60,16 +60,15 @@ export default function Keywords() {
     mutationFn: async (keyword: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
       if (!response.ok) throw new Error("Не удалось найти ключевые слова");
-      const data = await response.json();
-      return data;
+      return await response.json();
     },
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
         const formattedKeywords = data.map((item: any) => ({
-          id: item.keyword || item.word, //Improved ID handling
-          word: item.keyword || item.word, //Improved word handling
-          trend: item.trend || 0,
-          competition: item.competition || 0,
+          id: item.keyword,
+          word: item.keyword,
+          trend: parseInt(item.trend) || 0,
+          competition: parseInt(item.competition) || 0,
           added: false
         }));
         setSearchResults(formattedKeywords);
@@ -99,7 +98,7 @@ export default function Keywords() {
   };
 
   return (
-    <Layout> {/*Restored Layout component */}
+    <Layout>
     <div className="space-y-4">
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Ключевые слова</h1>
