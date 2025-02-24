@@ -65,7 +65,7 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
   if (!keywords.length) {
     return (
       <div className="text-center p-8 text-muted-foreground">
-        Введите ключевое слово для поиска
+        {existingKeywords?.length ? "Это все ключевые слова кампании" : "Введите ключевое слово для поиска"}
       </div>
     );
   }
@@ -81,15 +81,17 @@ export function KeywordTable({ keywords = [], existingKeywords, isLoading, campa
         </TableRow>
       </TableHeader>
       <TableBody>
-        {keywords.map((keyword) => {
-          const added = isKeywordAdded(keyword.word || keyword.keyword);
+        {keywords.map((keyword: any) => {
           const wordText = keyword.word || keyword.keyword;
+          const trendScore = keyword.trend || keyword.trend_score;
+          const competition = keyword.competition || keyword.mentions_count;
+          const added = isKeywordAdded(wordText);
 
           return (
             <TableRow key={keyword.id}>
               <TableCell>{wordText}</TableCell>
-              <TableCell>{keyword.trend}</TableCell>
-              <TableCell>{keyword.competition}</TableCell>
+              <TableCell>{trendScore}</TableCell>
+              <TableCell>{competition}</TableCell>
               <TableCell className="text-right">
                 {added ? (
                   <Button variant="ghost" size="sm" disabled>
