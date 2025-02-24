@@ -21,7 +21,11 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
     return null;
   }
 
-  return <Component />;
+  return (
+    <Layout>
+      <Component />
+    </Layout>
+  );
 }
 
 function Router() {

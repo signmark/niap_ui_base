@@ -10,22 +10,24 @@ import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { directusApi } from "@/lib/directus";
 import type { Keyword } from "@shared/schema";
+import { useAuthStore } from "@/lib/store";
 
 export default function Keywords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Keyword[]>([]);
   const { toast } = useToast();
+  const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
   const { data: campaigns } = useQuery({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["/api/campaigns", userId],
     queryFn: async () => {
       const response = await directusApi.get("/items/user_campaigns", {
         params: {
           filter: {
             user_id: {
-              _eq: "$CURRENT_USER"
+              _eq: userId
             }
           }
         }
@@ -37,18 +39,21 @@ export default function Keywords() {
   // Поиск ключевых слов
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
-      const res = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
-      if (!res.ok) throw new Error("Не удалось найти ключевые слова");
-      const data = await res.json();
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
+      if (!response.ok) throw new Error("Не удалось найти ключевые слова");
+      const data = await response.json();
       return data;
     },
     onSuccess: (data) => {
       if (data && Array.isArray(data)) {
-        setSearchResults(data.map((item: any) => ({
-          keyword: item.keyword,
+        const formattedKeywords = data.map((item: any) => ({
+          id: item.keyword,
+          word: item.keyword,
           trend: item.trend || 0,
-          competition: 0
-        })));
+          competition: item.competition || 0,
+          added: false
+        }));
+        setSearchResults(formattedKeywords);
         toast({ description: "Ключевые слова найдены" });
       } else {
         setSearchResults([]);
@@ -68,7 +73,7 @@ export default function Keywords() {
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
       if (!selectedCampaign) return [];
-      const response = await directusApi.get("/items/user_keywords", {
+      const response = await directusApi.get("/items/campaign_keywords", {
         params: {
           filter: {
             campaign_id: {
@@ -94,73 +99,71 @@ export default function Keywords() {
   };
 
   return (
-    <Layout>
-      <div className="space-y-4">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold">Ключевые слова</h1>
-          <p className="text-muted-foreground mt-2">
-            Выберите кампанию и найдите релевантные ключевые слова
-          </p>
-        </div>
-
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <div className="flex gap-4">
-              <Select 
-                value={selectedCampaign} 
-                onValueChange={(value) => {
-                  setSelectedCampaign(value);
-                  setSearchResults([]);
-                }}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Выберите кампанию" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns?.map((campaign: any) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-4">
-              <Input
-                placeholder="Введите ключевое слово для поиска"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSearch} 
-                disabled={isSearching || !searchTerm || !selectedCampaign}
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Поиск...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Искать
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <KeywordTable 
-          keywords={searchResults.length > 0 ? searchResults : (campaignKeywords || [])} 
-          existingKeywords={campaignKeywords || []} 
-          isLoading={isLoadingKeywords || isSearching} 
-          campaignId={selectedCampaign}
-        />
+    <div className="space-y-4">
+      <div className="flex flex-col">
+        <h1 className="text-2xl font-bold">Ключевые слова</h1>
+        <p className="text-muted-foreground mt-2">
+          Выберите кампанию и найдите релевантные ключевые слова
+        </p>
       </div>
-    </Layout>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex gap-4">
+            <Select 
+              value={selectedCampaign} 
+              onValueChange={(value) => {
+                setSelectedCampaign(value);
+                setSearchResults([]);
+              }}
+            >
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Выберите кампанию" />
+              </SelectTrigger>
+              <SelectContent>
+                {campaigns?.map((campaign: any) => (
+                  <SelectItem key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-4">
+            <Input
+              placeholder="Введите ключевое слово для поиска"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSearch} 
+              disabled={isSearching || !searchTerm || !selectedCampaign}
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Поиск...
+                </>
+              ) : (
+                <>
+                  <Search className="mr-2 h-4 w-4" />
+                  Искать
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <KeywordTable 
+        keywords={searchResults.length > 0 ? searchResults : (campaignKeywords || [])} 
+        existingKeywords={campaignKeywords || []} 
+        isLoading={isLoadingKeywords || isSearching} 
+        campaignId={selectedCampaign}
+      />
+    </div>
   );
 }
