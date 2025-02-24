@@ -1,39 +1,29 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { directusApi } from '@/lib/directus';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { Trash2 } from "lucide-react";
-import { directusApi } from "@/lib/directus";
-import { useToast } from "@/hooks/use-toast";
-import { useDeleteKeyword } from "@/hooks/useKeywords";
-
-interface Keyword {
-  id: string;
-  keyword: string;
-  trend_score: number;
+interface KeywordListProps {
+  campaignId: string;
+  keywords: Array<{
+    id: string;
+    keyword: string;
+    trend_score: number;
+  }>;
 }
 
-export default function KeywordList({ campaignId }: { campaignId: string }) {
+export function KeywordList({ campaignId, keywords }: KeywordListProps) {
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const deleteKeyword = useDeleteKeyword();
-
-  const { data: keywords } = useQuery<Keyword[]>({
-    queryKey: ["/api/keywords", campaignId],
-    queryFn: async () => {
-      const response = await directusApi.get("/items/user_keywords", {
-        params: {
-          filter: { campaign_id: { _eq: campaignId } }
-        }
-      });
-      return response.data.data;
-    }
-  });
 
   const handleDelete = async (keywordId: string) => {
     try {
       await directusApi.delete(`/items/user_keywords/${keywordId}`);
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/keywords', campaignId] });
       toast({
         title: "Успешно",
         description: "Ключевое слово удалено"
@@ -47,24 +37,35 @@ export default function KeywordList({ campaignId }: { campaignId: string }) {
     }
   };
 
+  const filteredKeywords = keywords.filter(kw => 
+    kw.keyword.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Сохраненные ключевые слова</h3>
-      <div className="rounded-md border">
-        <div className="grid grid-cols-[1fr,auto,auto] items-center gap-4 p-4 font-medium">
+      <Input
+        type="text"
+        placeholder="Поиск ключевых слов..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="max-w-sm"
+      />
+
+      <div className="border rounded-lg">
+        <div className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 font-medium border-b">
           <div>Ключевое слово</div>
           <div>Тренд</div>
           <div></div>
         </div>
-        {keywords?.map((keyword) => (
-          <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] items-center gap-4 border-t p-4">
+
+        {filteredKeywords.map((keyword) => (
+          <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 items-center hover:bg-muted/50">
             <div>{keyword.keyword}</div>
             <div>{keyword.trend_score}</div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleDelete(keyword.id)}
-              className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Calendar } from "./ui/calendar";
 import { Button } from "./ui/button";
@@ -13,7 +14,14 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const { toast } = useToast();
 
   const handleCreatePost = async () => {
-    if (!selectedDate || !content) return;
+    if (!selectedDate || !content) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните все обязательные поля",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       await directusApi.post("/items/campaign_posts", {
@@ -28,37 +36,42 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       setMediaUrl("");
       setSelectedDate(undefined);
     } catch (error) {
-      toast({ description: "Ошибка при создании поста", variant: "destructive" });
+      toast({ 
+        description: "Ошибка при создании поста", 
+        variant: "destructive" 
+      });
     }
   };
 
   return (
     <div className="space-y-4">
-      <Calendar
-        mode="single"
-        selected={selectedDate}
-        onSelect={setSelectedDate}
-        className="rounded-md border"
-      />
-
-      <div className="space-y-2">
-        <Textarea
-          placeholder="Текст поста"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
-        <Input
-          placeholder="URL медиа"
-          value={mediaUrl}
-          onChange={(e) => setMediaUrl(e.target.value)}
-        />
-        <Button 
-          onClick={handleCreatePost}
-          disabled={!selectedDate || !content}
-          className="w-full"
-        >
-          Создать пост
-        </Button>
+      <h3 className="text-lg font-medium">Календарь постов</h3>
+      
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            className="rounded-md border"
+          />
+        </div>
+        
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Текст поста"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+          <Input
+            placeholder="URL медиа (опционально)"
+            value={mediaUrl}
+            onChange={(e) => setMediaUrl(e.target.value)}
+          />
+          <Button onClick={handleCreatePost}>
+            Создать пост
+          </Button>
+        </div>
       </div>
     </div>
   );
