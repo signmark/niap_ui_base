@@ -76,18 +76,17 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
-      const promises = selectedKeywords.map(keyword => 
-        directusApi.post('/items/user_keywords', {
-          data: {
-            campaign_id: campaignId,
-            keyword: keyword.keyword,
-            trend_score: keyword.trend,
-            mentions_count: 0,
-            last_checked: new Date().toISOString()
-          }
-        })
-      );
-      await Promise.all(promises);
+      // Создаем один запрос для добавления всех ключевых слов
+      const response = await directusApi.post('/items/user_keywords', {
+        data: selectedKeywords.map(keyword => ({
+          campaign_id: campaignId,
+          keyword: keyword.keyword,
+          trend_score: keyword.trend,
+          mentions_count: 0,
+          last_checked: new Date().toISOString()
+        }))
+      });
+      return response.data;
     },
     onSuccess: () => {
       toast({
@@ -98,6 +97,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       refetchKeywords();
     },
     onError: (error: Error) => {
+      console.error("Save error:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось сохранить ключевые слова",
