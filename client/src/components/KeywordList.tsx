@@ -1,24 +1,34 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { directusApi } from '@/lib/directus';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 
-interface KeywordListProps {
-  campaignId: string;
-  keywords: Array<{
-    id: string;
-    keyword: string;
-    trend_score: number;
-  }>;
-}
-
-export function KeywordList({ campaignId, keywords }: KeywordListProps) {
+export function KeywordList() {
+  const { id: campaignId } = useParams<{ id: string }>();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: keywords } = useQuery({
+    queryKey: ['/api/keywords', campaignId],
+    queryFn: async () => {
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            }
+          }
+        }
+      });
+      return response.data?.data || [];
+    }
+  });
 
   const handleDelete = async (keywordId: string) => {
     try {
@@ -37,7 +47,7 @@ export function KeywordList({ campaignId, keywords }: KeywordListProps) {
     }
   };
 
-  const filteredKeywords = keywords.filter(kw => 
+  const filteredKeywords = keywords?.filter(kw => 
     kw.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -58,7 +68,7 @@ export function KeywordList({ campaignId, keywords }: KeywordListProps) {
           <div></div>
         </div>
 
-        {filteredKeywords.map((keyword) => (
+        {filteredKeywords?.map((keyword) => (
           <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 items-center hover:bg-muted/50">
             <div>{keyword.keyword}</div>
             <div>{keyword.trend_score}</div>
