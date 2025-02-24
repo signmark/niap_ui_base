@@ -85,7 +85,7 @@ export default function Campaigns() {
                 <Link href={`/campaigns/${campaign.id}`}>
                   <Button variant="secondary" size="sm">
                     <Search className="mr-2 h-4 w-4" />
-                    Подобрать ключевые слова
+                    Управлять кампанией
                   </Button>
                 </Link>
                 <Button
