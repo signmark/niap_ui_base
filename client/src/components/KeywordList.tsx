@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -5,7 +6,6 @@ import { Trash2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { useDeleteKeyword } from "@/hooks/useKeywords";
-
 
 interface Keyword {
   id: string;
@@ -30,6 +30,22 @@ export default function KeywordList({ campaignId }: { campaignId: string }) {
     }
   });
 
+  const handleDelete = async (keywordId: string) => {
+    try {
+      await deleteKeyword.mutateAsync(keywordId);
+      toast({
+        title: "Успешно",
+        description: "Ключевое слово удалено"
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключевое слово",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Сохраненные ключевые слова</h3>
@@ -46,7 +62,7 @@ export default function KeywordList({ campaignId }: { campaignId: string }) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => deleteKeyword.mutate(keyword.id)}
+              onClick={() => handleDelete(keyword.id)}
               className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
