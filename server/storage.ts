@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
       eq(contentSources.isActive, true)
     ];
 
-    if (campaignId) {
+    if (typeof campaignId === 'number') {
       conditions.push(eq(contentSources.campaignId, campaignId));
     }
 

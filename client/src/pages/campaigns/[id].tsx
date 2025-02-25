@@ -7,6 +7,7 @@ import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { TrendsList } from "@/components/TrendsList";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
@@ -124,6 +125,15 @@ export default function CampaignDetails() {
         </CardHeader>
         <CardContent>
           <KeywordSelector campaignId={id} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Тренды и темы</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TrendsList campaignId={id} />
         </CardContent>
       </Card>
 
