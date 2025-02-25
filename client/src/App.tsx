@@ -8,6 +8,7 @@ import CampaignDetails from "@/pages/campaigns/[id]";
 import Keywords from "@/pages/keywords";
 import Posts from "@/pages/posts";
 import Analytics from "@/pages/analytics";
+import Trends from "@/pages/trends";
 import NotFound from "@/pages/not-found";
 import { useAuthStore } from "@/lib/store";
 import { Layout } from "@/components/Layout";
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
       <Route path="/posts" component={() => <PrivateRoute component={Posts} />} />
       <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
+      <Route path="/trends" component={() => <PrivateRoute component={Trends} />} />
       <Route component={NotFound} />
     </Switch>
   );
