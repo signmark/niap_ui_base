@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,9 @@ import { useAuthStore } from "@/lib/store";
 export default function Keywords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
@@ -38,16 +40,18 @@ export default function Keywords() {
   });
 
   // Поиск ключевых слов
-  const { mutate: searchKeywords, isPending: isSearching, data: searchResults } = useMutation({
+  const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
       const response = await apiRequest(`/api/wordstat/${encodeURIComponent(keyword)}`);
       if (!response?.data?.keywords) throw new Error("Не удалось найти ключевые слова");
       return response.data.keywords;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setSearchResults(data);
       toast({ description: "Ключевые слова найдены" });
     },
     onError: () => {
+      setSearchResults([]);
       toast({
         description: "Не удалось найти ключевые слова",
         variant: "destructive",
@@ -71,6 +75,12 @@ export default function Keywords() {
     selectedCampaign !== "loading" && 
     selectedCampaign !== "empty";
 
+  const handleCampaignChange = (value: string) => {
+    setSelectedCampaign(value);
+    setSearchResults([]);
+    setSearchTerm("");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col">
@@ -85,7 +95,7 @@ export default function Keywords() {
           <div className="flex gap-4">
             <Select 
               value={selectedCampaign} 
-              onValueChange={setSelectedCampaign}
+              onValueChange={handleCampaignChange}
             >
               <SelectTrigger className="w-[300px]">
                 <SelectValue placeholder="Выберите кампанию" />
@@ -139,11 +149,13 @@ export default function Keywords() {
 
       {isValidCampaignSelected && (
         <KeywordTable 
-          keywords={searchResults || []}
+          keywords={searchResults}
           existingKeywords={existingKeywords || []}
           isLoading={isLoadingKeywords || isSearching}
           campaignId={selectedCampaign}
-          onKeywordsUpdated={() => {}}
+          onKeywordsUpdated={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
+          }}
         />
       )}
     </div>
