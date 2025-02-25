@@ -15,7 +15,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
+      console.log("Fetching sources for user:", userId, "campaign:", campaignId);
+
+      if (isNaN(Number(campaignId))) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+
       const sources = await storage.getContentSources(userId, campaignId);
+      console.log("Found sources:", sources);
       res.json({ data: sources }); // Оборачиваем в объект с полем data
     } catch (error) {
       console.error("Error fetching sources:", error);
@@ -60,6 +67,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const period = req.query.period as string;
       const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+
+      if (isNaN(Number(campaignId))) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+
       const from = new Date();
 
       switch (period) {
