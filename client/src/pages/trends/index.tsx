@@ -123,7 +123,7 @@ export default function Trends() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             onClick={() => collectTrends()}
             disabled={isCollecting || !selectedCampaignId}
@@ -153,8 +153,8 @@ export default function Trends() {
           <CardTitle>Выбор кампании</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select 
-            value={selectedCampaignId} 
+          <Select
+            value={selectedCampaignId}
             onValueChange={setSelectedCampaignId}
           >
             <SelectTrigger className="w-[300px]">
@@ -199,9 +199,9 @@ export default function Trends() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-sm text-muted-foreground">
-                          {source.type === 'website' ? 'Вебсайт' : 
-                           source.type === 'telegram' ? 'Telegram канал' : 
-                           source.type === 'vk' ? 'VK группа' : source.type}
+                          {source.type === 'website' ? 'Вебсайт' :
+                            source.type === 'telegram' ? 'Telegram канал' :
+                              source.type === 'vk' ? 'VK группа' : source.type}
                         </div>
                         <Button
                           variant="ghost"
@@ -222,8 +222,8 @@ export default function Trends() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex gap-4">
-                <Select 
-                  value={selectedPeriod} 
+                <Select
+                  value={selectedPeriod}
                   onValueChange={(value: Period) => setSelectedPeriod(value)}
                 >
                   <SelectTrigger className="w-[200px]">
