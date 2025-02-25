@@ -20,13 +20,12 @@ export default function ContentManagement() {
       if (!response.ok) {
         throw new Error('Failed to fetch campaigns');
       }
-      const data = await response.json();
-      return data;
+      return await response.json();
     }
   });
 
   // Получаем тренды для выбранной кампании
-  const { data: trends, isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
+  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
     queryKey: ["/api/trends", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
@@ -38,8 +37,7 @@ export default function ContentManagement() {
       if (!response.ok) {
         throw new Error('Failed to fetch trends');
       }
-      const data = await response.json();
-      return data;
+      return await response.json();
     },
     enabled: !!selectedCampaignId
   });
@@ -100,7 +98,7 @@ export default function ContentManagement() {
                     <div className="flex justify-center p-4">
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  ) : !trends || trends.length === 0 ? (
+                  ) : trends.length === 0 ? (
                     <p className="text-center text-muted-foreground">
                       Нет актуальных трендов для этой кампании
                     </p>
