@@ -157,7 +157,7 @@ export function KeywordTable({
               keyword: k.keyword,
               trend: k.trend,
               competition: k.competition,
-              isExisting: isKeywordAdded(k.keyword)
+              isExisting: false
             })),
             ...existingKeywords.map(k => ({
               keyword: k.keyword,
@@ -166,7 +166,7 @@ export function KeywordTable({
               isExisting: true
             }))
           ].map((keyword) => (
-            <TableRow key={keyword.keyword}>
+            <TableRow key={`${keyword.keyword}-${keyword.isExisting ? 'existing' : 'new'}`}>
               <TableCell>
                 {!keyword.isExisting && (
                   <Checkbox
