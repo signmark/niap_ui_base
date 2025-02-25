@@ -1,43 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { directusApi } from "@/lib/directus";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 interface TrendsListProps {
-  campaignId: string;
+  campaignId: string | number | null;
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
-  // Получаем темы для выбранной кампании
   const { data: trends, isLoading } = useQuery({
     queryKey: ["/api/trends", campaignId],
     queryFn: async () => {
       console.log("Fetching trends for campaign:", campaignId);
-      // Сначала получим кампанию, чтобы узнать её внутренний ID
-      const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`);
-      const campaign = campaignResponse.data?.data;
-
-      if (!campaign) {
-        throw new Error("Кампания не найдена");
-      }
-
-      // Теперь получим тренды для этой кампании
-      const response = await directusApi.get('/items/trend_topics', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaign.id // Use the actual campaign ID from the response
-            }
-          },
-          fields: ['*', 'source_id.name', 'source_id.url'],
-          sort: ['-created_at']
-        }
+      const response = await apiRequest('/api/trends', {
+        params: { campaignId }
       });
-      console.log("Trends response:", response.data);
-      return response.data?.data || [];
+      console.log("Trends response:", response);
+      return response?.data || [];
     },
-    enabled: !!campaignId
+    enabled: campaignId !== null && campaignId !== undefined
   });
 
   if (isLoading) {
@@ -60,18 +42,16 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {trends.map((trend: any) => (
         <Card key={trend.id}>
-          <CardHeader>
-            <CardTitle className="text-lg">{trend.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="space-y-2">
+              <h3 className="font-medium">{trend.title}</h3>
               <p className="text-sm text-muted-foreground">
-                Источник: {trend.source_id?.name}
+                Источник: {trend.source_id?.name || 'Неизвестный источник'}
               </p>
               <div className="flex gap-4 text-sm">
-                <span>👁 {trend.views}</span>
-                <span>💬 {trend.comments}</span>
-                <span>❤️ {trend.reactions}</span>
+                <span>👁 {trend.views || 0}</span>
+                <span>💬 {trend.comments || 0}</span>
+                <span>❤️ {trend.reactions || 0}</span>
               </div>
             </div>
           </CardContent>

@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
       eq(contentSources.isActive, true)
     ];
 
-    if (typeof campaignId === 'number') {
+    if (typeof campaignId === 'number' && !isNaN(campaignId)) {
       conditions.push(eq(contentSources.campaignId, campaignId));
     }
 
@@ -118,12 +118,21 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-    if (typeof params.campaignId === 'number') {
-      conditions.push(eq(trendTopics.campaignId, params.campaignId));
+    if (typeof params.campaignId === 'number' && !isNaN(params.campaignId)) {
+      conditions.push(sql`${trendTopics.campaignId} = ${params.campaignId}`);
     }
 
     const query = db
-      .select()
+      .select({
+        id: trendTopics.id,
+        title: trendTopics.title,
+        sourceId: trendTopics.sourceId,
+        reactions: trendTopics.reactions,
+        comments: trendTopics.comments,
+        views: trendTopics.views,
+        createdAt: trendTopics.createdAt,
+        campaignId: trendTopics.campaignId
+      })
       .from(trendTopics)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(trendTopics.createdAt));
