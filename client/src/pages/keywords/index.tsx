@@ -51,7 +51,7 @@ export default function Keywords() {
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
       const response = await directusApi.get('/items/xmlriver_search', {
-        params: { keyword }
+        params: { query: keyword }
       });
       if (!response?.data?.data) throw new Error("Не удалось найти ключевые слова");
       return response.data.data;
