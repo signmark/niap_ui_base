@@ -68,16 +68,16 @@ export class DatabaseStorage implements IStorage {
 
   // Content Sources
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
+    console.log('Getting content sources with conditions:', { userId, campaignId });
+
     const conditions = [
       eq(contentSources.userId, userId),
       eq(contentSources.isActive, true)
     ];
 
-    if (campaignId !== undefined && campaignId !== null) {
+    if (campaignId !== undefined) {
       conditions.push(eq(contentSources.campaignId, campaignId));
     }
-
-    console.log('Getting content sources with conditions:', conditions);
 
     const sources = await db
       .select()
@@ -111,19 +111,28 @@ export class DatabaseStorage implements IStorage {
 
   // Trend Topics
   async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number } = {}): Promise<TrendTopic[]> {
-    let query = db.select().from(trendTopics);
+    console.log('Fetching trends with params:', params);
+
+    const conditions = [];
 
     if (params.from) {
-      query = query.where(sql`${trendTopics.createdAt} >= ${params.from}`);
+      conditions.push(sql`${trendTopics.createdAt} >= ${params.from}`);
     }
     if (params.to) {
-      query = query.where(sql`${trendTopics.createdAt} <= ${params.to}`);
+      conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-    if (params.campaignId) {
-      query = query.where(eq(trendTopics.campaignId, params.campaignId));
+    if (params.campaignId !== undefined) {
+      conditions.push(eq(trendTopics.campaignId, params.campaignId));
     }
 
-    return await query.orderBy(desc(trendTopics.reactions));
+    const trends = await db
+      .select()
+      .from(trendTopics)
+      .where(and(...conditions))
+      .orderBy(desc(trendTopics.createdAt));
+
+    console.log('Found trends:', trends);
+    return trends;
   }
 
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {

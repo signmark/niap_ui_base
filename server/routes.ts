@@ -59,6 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/trends", async (req, res) => {
     try {
       const period = req.query.period as string;
+      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
       const from = new Date();
 
       switch (period) {
@@ -78,8 +79,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from.setDate(from.getDate() - 7); // По умолчанию за неделю
       }
 
-      console.log('Fetching trends with params:', { period, from });
-      const trends = await storage.getTrendTopics({ from });
+      console.log('Fetching trends with params:', { period, from, campaignId });
+      const trends = await storage.getTrendTopics({ from, campaignId });
       console.log('Found trends:', trends);
       res.json({ data: trends }); // Оборачиваем в объект с полем data
     } catch (error) {
@@ -97,10 +98,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { campaignId } = req.body;
+      if (!campaignId) {
+        return res.status(400).json({ message: "Campaign ID is required" });
+      }
+
       console.log('Starting trend collection for user:', userId, 'campaign:', campaignId);
 
       const { crawler } = await import('./services/crawler');
-      await crawler.crawlAllSources(userId, campaignId ? Number(campaignId) : undefined);
+      await crawler.crawlAllSources(userId, Number(campaignId));
       console.log('Trend collection completed');
 
       res.json({ message: "Trend collection started" });
