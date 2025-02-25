@@ -47,13 +47,15 @@ export default function Keywords() {
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
-  // Поиск ключевых слов через XMLRiver
+  // Поиск ключевых слов через WordStat
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
-    mutationFn: async (keyword: string) => {
+    mutationFn: async (query: string) => {
       const response = await directusApi.get('/items/xmlriver_search', {
-        params: { query: keyword }
+        params: { query }
       });
-      if (!response?.data?.data) throw new Error("Не удалось найти ключевые слова");
+      if (!response?.data?.data) {
+        throw new Error("Не удалось найти ключевые слова");
+      }
       return response.data.data;
     },
     onSuccess: (data) => {
