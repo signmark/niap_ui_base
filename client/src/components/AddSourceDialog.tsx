@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/directus";
 import { insertContentSourceSchema } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AddSourceDialogProps {
   onClose: () => void;
@@ -21,7 +21,7 @@ interface AddSourceDialogProps {
 export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
-  
+
   const form = useForm({
     resolver: zodResolver(insertContentSourceSchema),
     defaultValues: {
@@ -34,8 +34,10 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
 
   const { mutate: createSource, isPending } = useMutation({
     mutationFn: async (values: any) => {
-      const response = await directusApi.post('/items/content_sources', values);
-      return response.data;
+      return await apiRequest('/api/sources', {
+        method: 'POST',
+        data: values
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
@@ -74,7 +76,7 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="url"

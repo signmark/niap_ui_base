@@ -7,10 +7,10 @@ import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus } from "lucide-react";
-import { directusApi } from "@/lib/directus";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import type { ContentSource, TrendTopic } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
+import { apiRequest } from "@/lib/queryClient";
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
@@ -20,38 +20,21 @@ export default function Trends() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const userId = useAuthStore((state) => state.userId);
 
-  // Получаем список источников пользователя
   const { data: sources, isLoading: isLoadingSources } = useQuery({
     queryKey: ["/api/sources", userId],
     queryFn: async () => {
-      const response = await directusApi.get("/items/content_sources", {
-        params: {
-          filter: {
-            user_id: {
-              _eq: userId
-            }
-          }
-        }
-      });
-      return response.data?.data as ContentSource[];
+      const response = await apiRequest('/api/sources');
+      return response.data as ContentSource[];
     }
   });
 
-  // Получаем список трендовых тем
   const { data: trendTopics, isLoading } = useQuery({
     queryKey: ["/api/trends", selectedPeriod],
     queryFn: async () => {
-      const response = await directusApi.get("/items/trend_topics", {
-        params: {
-          filter: {
-            created_at: {
-              _gte: "$NOW(-" + selectedPeriod + ")"
-            }
-          },
-          sort: ["-reactions", "-comments", "-views"]
-        }
+      const response = await apiRequest('/api/trends', {
+        params: { period: selectedPeriod }
       });
-      return response.data?.data as TrendTopic[];
+      return response.data as TrendTopic[];
     }
   });
 
