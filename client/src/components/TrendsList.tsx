@@ -14,11 +14,20 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     queryKey: ["/api/trends", campaignId],
     queryFn: async () => {
       console.log("Fetching trends for campaign:", campaignId);
+      // Сначала получим кампанию, чтобы узнать её внутренний ID
+      const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`);
+      const campaign = campaignResponse.data?.data;
+
+      if (!campaign) {
+        throw new Error("Кампания не найдена");
+      }
+
+      // Теперь получим тренды для этой кампании
       const response = await directusApi.get('/items/trend_topics', {
         params: {
           filter: {
             campaign_id: {
-              _eq: campaignId
+              _eq: campaign.id // Use the actual campaign ID from the response
             }
           },
           fields: ['*', 'source_id.name', 'source_id.url'],
