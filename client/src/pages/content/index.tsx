@@ -71,7 +71,7 @@ export default function ContentManagement() {
                 <SelectValue placeholder="Выберите кампанию" />
               </SelectTrigger>
               <SelectContent>
-                {campaigns?.map((campaign) => (
+                {campaigns.map((campaign) => (
                   <SelectItem key={campaign.id} value={campaign.id.toString()}>
                     {campaign.name}
                   </SelectItem>
@@ -98,13 +98,13 @@ export default function ContentManagement() {
                     <div className="flex justify-center p-4">
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  ) : trends?.length === 0 ? (
+                  ) : trends.length === 0 ? (
                     <p className="text-center text-muted-foreground">
                       Нет актуальных трендов для этой кампании
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {trends?.map((trend) => (
+                      {trends.map((trend) => (
                         <Card key={trend.id} className="overflow-hidden">
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
