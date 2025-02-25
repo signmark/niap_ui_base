@@ -17,7 +17,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         params: {
           filter: {
             campaign_id: {
-              _eq: campaignId
+              _eq: Number(campaignId)
             }
           },
           fields: ['*', 'source_id.name', 'source_id.url']
