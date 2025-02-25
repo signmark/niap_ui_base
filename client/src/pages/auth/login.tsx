@@ -55,7 +55,7 @@ export default function Login() {
 
       toast({
         title: "Успешный вход",
-        description: "Добро пожаловать в SEO Manager",
+        description: "Добро пожаловать в SMM Manager",
       });
 
     } catch (error) {
@@ -72,7 +72,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Вход в SEO Manager</CardTitle>
+          <CardTitle className="text-2xl text-center">Вход в SMM Manager</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
