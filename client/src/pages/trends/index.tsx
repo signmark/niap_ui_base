@@ -103,9 +103,9 @@ export default function Trends() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Анализ трендов</h1>
+          <h1 className="text-2xl font-bold">SMM Manager</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Анализ популярных тем в медицине и нутрициологии
+            Анализ популярных тем и управление контентом в социальных медиа
           </p>
         </div>
         <div className="flex gap-2">
