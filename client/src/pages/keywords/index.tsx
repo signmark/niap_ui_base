@@ -50,25 +50,36 @@ export default function Keywords() {
   // Поиск ключевых слов через WordStat
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (query: string) => {
-      const response = await directusApi.get('/items/xmlriver_search', {
-        params: { query }
-      });
-      if (!response?.data?.data) {
-        throw new Error("Не удалось найти ключевые слова");
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка при поиске ключевых слов");
       }
-      return response.data.data;
+      return await response.json();
     },
     onSuccess: (data) => {
-      setSearchResults(data);
-      toast({ description: "Ключевые слова найдены" });
-    },
-    onError: () => {
-      setSearchResults([]);
+      if (!data.data || !Array.isArray(data.data.keywords)) {
+        throw new Error("Некорректный формат данных от API");
+      }
+
+      const results = data.data.keywords.map((kw: any) => ({
+        keyword: kw.keyword,
+        trend: kw.trend,
+        competition: kw.competition
+      }));
+
+      setSearchResults(results);
       toast({
-        description: "Не удалось найти ключевые слова",
-        variant: "destructive",
+        description: "Ключевые слова найдены"
       });
     },
+    onError: (error: Error) => {
+      setSearchResults([]);
+      toast({
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   });
 
   const handleSearch = () => {
