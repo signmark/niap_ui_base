@@ -100,8 +100,19 @@ export default function CampaignDetails() {
   return (
     <div className="space-y-6 p-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>{campaign.name}</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col space-y-1.5">
+            <CardTitle>{campaign.name}</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {campaign.description}
+            </p>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className="flex flex-col space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Ключевые слова</h2>
           <Button onClick={() => searchSemantic()} disabled={isSearching}>
             {isSearching ? (
               <>
@@ -115,20 +126,14 @@ export default function CampaignDetails() {
               </>
             )}
           </Button>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500">{campaign.description}</p>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ключевые слова</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <KeywordSelector campaignId={id} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardContent className="p-6">
+            <KeywordSelector campaignId={id} />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
