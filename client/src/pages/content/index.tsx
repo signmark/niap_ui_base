@@ -17,8 +17,10 @@ export default function ContentManagement() {
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
       const response = await fetch('/api/campaigns');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
+      }
       const data = await response.json();
-      console.log("Campaigns response:", data);
       return data;
     }
   });
@@ -29,10 +31,14 @@ export default function ContentManagement() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log("Fetching trends for campaign:", selectedCampaignId);
-      const response = await fetch(`/api/trends?campaignId=${selectedCampaignId}`);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const response = await fetch(`/api/trends?from=${weekAgo.toISOString()}&campaignId=${selectedCampaignId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch trends');
+      }
       const data = await response.json();
-      console.log("Trends response:", data);
       return data;
     },
     enabled: !!selectedCampaignId
@@ -59,7 +65,6 @@ export default function ContentManagement() {
             <Select
               value={selectedCampaignId}
               onValueChange={(value) => {
-                console.log("Selected campaign:", value);
                 setSelectedCampaignId(value);
                 setSelectedTopics([]); // Сбрасываем выбранные темы при смене кампании
               }}
@@ -95,20 +100,20 @@ export default function ContentManagement() {
                     <div className="flex justify-center p-4">
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  ) : trends?.length === 0 ? (
+                  ) : !trends || trends.length === 0 ? (
                     <p className="text-center text-muted-foreground">
                       Нет актуальных трендов для этой кампании
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {trends?.map((trend) => (
+                      {trends.map((trend) => (
                         <Card key={trend.id} className="overflow-hidden">
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
                               <div>
                                 <h3 className="font-medium">{trend.title}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Источник: {trend.source?.name}
+                                  Источник: {trend.sourceId}
                                 </p>
                                 <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
                                   <span>👍 {trend.reactions}</span>
