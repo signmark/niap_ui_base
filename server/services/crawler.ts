@@ -11,7 +11,6 @@ export class ContentCrawler {
       return [{
         title: "Демо тема с сайта",
         sourceId: source.id,
-        url: source.url,
         reactions: 0,
         comments: 0,
         views: 0,
@@ -30,7 +29,6 @@ export class ContentCrawler {
     return [{
       title: "Демо тема из Telegram",
       sourceId: source.id,
-      url: source.url,
       reactions: 0,
       comments: 0,
       views: 0,
@@ -45,7 +43,6 @@ export class ContentCrawler {
     return [{
       title: "Демо тема из VK",
       sourceId: source.id,
-      url: source.url,
       reactions: 0,
       comments: 0,
       views: 0,
@@ -71,10 +68,10 @@ export class ContentCrawler {
   async crawlAllSources(userId: string): Promise<void> {
     try {
       const sources = await storage.getContentSources(userId);
-      
+
       for (const source of sources) {
         const topics = await this.crawlSource(source);
-        
+
         for (const topic of topics) {
           await storage.createTrendTopic(topic);
         }
