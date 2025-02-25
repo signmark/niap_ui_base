@@ -43,14 +43,9 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
 
   const { mutate: createSource, isPending } = useMutation({
     mutationFn: async (values: any) => {
-      // Преобразуем campaignId в число
-      const formattedValues = {
-        ...values,
-        campaignId: values.campaignId ? Number(values.campaignId) : undefined
-      };
       return await apiRequest('/api/sources', {
         method: 'POST',
-        data: formattedValues
+        data: values
       });
     },
     onSuccess: () => {

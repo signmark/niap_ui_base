@@ -68,22 +68,26 @@ export class DatabaseStorage implements IStorage {
 
   // Content Sources
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
-    let query = db.select().from(contentSources).where(
-      and(
-        eq(contentSources.userId, userId),
-        eq(contentSources.isActive, true)
-      )
-    );
+    const conditions = [
+      eq(contentSources.userId, userId),
+      eq(contentSources.isActive, true)
+    ];
 
     if (campaignId) {
-      query = query.where(eq(contentSources.campaignId, campaignId));
+      conditions.push(eq(contentSources.campaignId, campaignId));
     }
 
-    return await query;
+    return await db
+      .select()
+      .from(contentSources)
+      .where(and(...conditions));
   }
 
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
-    const [newSource] = await db.insert(contentSources).values(source).returning();
+    const [newSource] = await db.insert(contentSources).values({
+      ...source,
+      campaignId: source.campaignId ? Number(source.campaignId) : undefined
+    }).returning();
     return newSource;
   }
 
