@@ -24,7 +24,7 @@ export default function Keywords() {
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
       const response = await apiRequest('/api/campaigns');
-      return response;
+      return response?.data || [];
     }
   });
 
