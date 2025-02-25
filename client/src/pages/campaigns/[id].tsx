@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";
 import { PostCalendar } from "@/components/PostCalendar";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
@@ -99,41 +99,33 @@ export default function CampaignDetails() {
 
   return (
     <div className="space-y-6 p-6">
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-col space-y-1.5">
-            <CardTitle>{campaign.name}</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {campaign.description}
-            </p>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Ключевые слова</h2>
-          <Button onClick={() => searchSemantic()} disabled={isSearching}>
-            {isSearching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Анализ...
-              </>
-            ) : (
-              <>
-                <Search className="mr-2 h-4 w-4" />
-                Семантический анализ
-              </>
-            )}
-          </Button>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">{campaign.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {campaign.description}
+          </p>
         </div>
-
-        <Card>
-          <CardContent className="p-6">
-            <KeywordSelector campaignId={id} />
-          </CardContent>
-        </Card>
+        <Button onClick={() => searchSemantic()} disabled={isSearching}>
+          {isSearching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Анализ...
+            </>
+          ) : (
+            "Управлять"
+          )}
+        </Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ключевые слова</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <KeywordSelector campaignId={id} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
