@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 
@@ -42,6 +42,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { path: "/campaigns", label: "Campaigns", icon: FileText },
     { path: "/keywords", label: "Keywords", icon: Search },
+    { path: "/content", label: "Контент", icon: PenTool },
     { path: "/posts", label: "Posts", icon: Calendar },
     { path: "/trends", label: "Trends", icon: TrendingUp },
     { path: "/analytics", label: "Analytics", icon: BarChart },
