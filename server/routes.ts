@@ -1,11 +1,74 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCampaignSchema, insertKeywordSchema } from "@shared/schema";
+import { insertCampaignSchema, insertKeywordSchema, insertContentSourceSchema } from "@shared/schema";
 import axios from "axios";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Content Sources routes
+  app.get("/api/sources", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const sources = await storage.getContentSources(userId);
+      res.json(sources);
+    } catch (error) {
+      console.error("Error fetching sources:", error);
+      res.status(500).json({ error: "Failed to fetch sources" });
+    }
+  });
+
+  app.post("/api/sources", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const result = insertContentSourceSchema.safeParse({ ...req.body, userId });
+      if (!result.success) {
+        return res.status(400).json({ errors: result.error.errors });
+      }
+
+      const source = await storage.createContentSource(result.data);
+      res.status(201).json(source);
+    } catch (error) {
+      console.error("Error creating source:", error);
+      res.status(500).json({ error: "Failed to create source" });
+    }
+  });
+
+  // Trends routes
+  app.get("/api/trends", async (req, res) => {
+    try {
+      const period = req.query.period as string;
+      const from = new Date();
+
+      switch (period) {
+        case "3days":
+          from.setDate(from.getDate() - 3);
+          break;
+        case "7days":
+          from.setDate(from.getDate() - 7);
+          break;
+        case "14days":
+          from.setDate(from.getDate() - 14);
+          break;
+        case "30days":
+          from.setDate(from.getDate() - 30);
+          break;
+        default:
+          from.setDate(from.getDate() - 7); // По умолчанию за неделю
+      }
+
+      const trends = await storage.getTrendTopics({ from });
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching trends:", error);
+      res.status(500).json({ error: "Failed to fetch trends" });
+    }
+  });
 
   // Campaign routes
   app.get("/api/campaigns", async (req, res) => {
