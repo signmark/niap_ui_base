@@ -23,6 +23,7 @@ export default function Trends() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const userId = useAuthStore((state) => state.userId);
   const { toast } = useToast();
 
@@ -30,6 +31,14 @@ export default function Trends() {
     queryKey: ["/api/sources", userId],
     queryFn: async () => {
       const response = await apiRequest('/api/sources');
+      return response;
+    }
+  });
+
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+    queryKey: ["/api/campaigns"],
+    queryFn: async () => {
+      const response = await apiRequest('/api/campaigns');
       return response;
     }
   });
@@ -80,7 +89,8 @@ export default function Trends() {
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
       return await apiRequest('/api/trends/collect', {
-        method: 'POST'
+        method: 'POST',
+        data: { campaignId: selectedCampaignId }
       });
     },
     onSuccess: () => {
@@ -112,7 +122,7 @@ export default function Trends() {
           <Button 
             variant="outline"
             onClick={() => collectTrends()}
-            disabled={isCollecting}
+            disabled={isCollecting || !selectedCampaignId}
           >
             {isCollecting ? (
               <>
@@ -132,6 +142,32 @@ export default function Trends() {
           </Button>
         </div>
       </div>
+
+      {/* Campaign Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Выбор кампании</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select 
+            value={selectedCampaignId} 
+            onValueChange={setSelectedCampaignId}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Выберите кампанию" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingCampaigns ? (
+                <SelectItem disabled>Загрузка...</SelectItem>
+              ) : campaigns?.map((campaign) => (
+                <SelectItem key={campaign.id} value={campaign.id.toString()}>
+                  {campaign.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       {/* Sources List */}
       <Card>
@@ -214,6 +250,7 @@ export default function Trends() {
                   <TableHead className="w-[30px]"></TableHead>
                   <TableHead>Тема</TableHead>
                   <TableHead>Источник</TableHead>
+                  <TableHead>Кампания</TableHead>
                   <TableHead className="text-right">Реакции</TableHead>
                   <TableHead className="text-right">Комментарии</TableHead>
                   <TableHead className="text-right">Просмотры</TableHead>
@@ -233,6 +270,9 @@ export default function Trends() {
                       <TableCell>{topic.title}</TableCell>
                       <TableCell>
                         {sources?.data?.find(s => s.id === topic.sourceId)?.name}
+                      </TableCell>
+                      <TableCell>
+                        {campaigns?.find(c => c.id === topic.campaignId)?.name}
                       </TableCell>
                       <TableCell className="text-right">
                         {topic.reactions?.toLocaleString() ?? 0}
