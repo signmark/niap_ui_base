@@ -83,7 +83,7 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Кампания</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Выберите кампанию" />
@@ -91,7 +91,7 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
                   </FormControl>
                   <SelectContent>
                     {isLoadingCampaigns ? (
-                      <SelectItem value="" disabled>Загрузка...</SelectItem>
+                      <SelectItem value="">Загрузка...</SelectItem>
                     ) : campaigns?.map((campaign) => (
                       <SelectItem key={campaign.id} value={campaign.id.toString()}>
                         {campaign.name}
