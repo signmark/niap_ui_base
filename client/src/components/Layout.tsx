@@ -73,7 +73,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="h-full bg-background border-r">
           <div className="px-3 py-4">
-            <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+            <h2 className="mb-6 px-4 text-lg font-semibold">SMM Manager</h2>
             {renderNavItems()}
           </div>
           <div className="mt-auto p-4">
@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="hidden lg:block w-64">
         <div className="h-full bg-background border-r">
           <div className="px-3 py-4">
-            <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
+            <h2 className="mb-6 px-4 text-lg font-semibold">SMM Manager</h2>
             {renderNavItems()}
           </div>
           <div className="mt-auto p-4">
