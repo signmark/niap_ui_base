@@ -17,7 +17,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Fetching sources for user:", userId, "campaign:", campaignId);
 
-      if (isNaN(Number(campaignId))) {
+      if (campaignId && isNaN(campaignId)) {
         return res.status(400).json({ error: "Invalid campaign ID" });
       }
 
@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const period = req.query.period as string;
       const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
 
-      if (isNaN(Number(campaignId))) {
+      if (campaignId && isNaN(campaignId)) {
         return res.status(400).json({ error: "Invalid campaign ID" });
       }
 
