@@ -1,4 +1,6 @@
-import { campaigns, keywords, contents, type Campaign, type InsertCampaign, type Keyword, type InsertKeyword, type Content, type InsertContent } from "@shared/schema";
+import { db } from "./db";
+import { contentSources, trendTopics, campaigns, keywords, type Campaign, type InsertCampaign, type Keyword, type InsertKeyword, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
+import { eq, desc, sql, and } from "drizzle-orm";
 
 export interface IStorage {
   // Campaigns
@@ -6,82 +8,97 @@ export interface IStorage {
   getCampaign(id: number): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
-  
+
   // Keywords
   getKeywords(campaignId: number): Promise<Keyword[]>;
   addKeyword(keyword: InsertKeyword): Promise<Keyword>;
   updateKeyword(id: number, keyword: Partial<Keyword>): Promise<Keyword>;
-  
-  // Content
-  getContent(campaignId: number): Promise<Content[]>;
-  createContent(content: InsertContent): Promise<Content>;
+  deleteKeyword(id: number): Promise<void>;
+
+  // Content Sources and Trends
+  getContentSources(userId: string): Promise<ContentSource[]>;
+  createContentSource(source: InsertContentSource): Promise<ContentSource>;
+  getTrendTopics(params: { from?: Date; to?: Date }): Promise<TrendTopic[]>;
+  createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
 }
 
-export class MemStorage implements IStorage {
-  private campaigns: Map<number, Campaign>;
-  private keywords: Map<number, Keyword>;
-  private contents: Map<number, Content>;
-  private currentIds: { [key: string]: number };
-
-  constructor() {
-    this.campaigns = new Map();
-    this.keywords = new Map();
-    this.contents = new Map();
-    this.currentIds = {
-      campaign: 1,
-      keyword: 1,
-      content: 1
-    };
-  }
-
+export class DatabaseStorage implements IStorage {
+  // Campaigns
   async getCampaigns(userId: string): Promise<Campaign[]> {
-    return Array.from(this.campaigns.values()).filter(c => c.userId === userId);
+    return await db.select().from(campaigns).where(eq(campaigns.userId, userId));
   }
 
   async getCampaign(id: number): Promise<Campaign | undefined> {
-    return this.campaigns.get(id);
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return campaign;
   }
 
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const id = this.currentIds.campaign++;
-    const newCampaign = { ...campaign, id, createdAt: new Date() };
-    this.campaigns.set(id, newCampaign);
+    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
     return newCampaign;
   }
 
   async deleteCampaign(id: number): Promise<void> {
-    this.campaigns.delete(id);
+    await db.delete(campaigns).where(eq(campaigns.id, id));
   }
 
+  // Keywords
   async getKeywords(campaignId: number): Promise<Keyword[]> {
-    return Array.from(this.keywords.values()).filter(k => k.campaignId === campaignId);
+    return await db.select().from(keywords).where(eq(keywords.campaignId, campaignId));
   }
 
   async addKeyword(keyword: InsertKeyword): Promise<Keyword> {
-    const id = this.currentIds.keyword++;
-    const newKeyword = { ...keyword, id };
-    this.keywords.set(id, newKeyword);
+    const [newKeyword] = await db.insert(keywords).values(keyword).returning();
     return newKeyword;
   }
 
-  async updateKeyword(id: number, update: Partial<Keyword>): Promise<Keyword> {
-    const keyword = this.keywords.get(id);
-    if (!keyword) throw new Error('Keyword not found');
-    const updated = { ...keyword, ...update };
-    this.keywords.set(id, updated);
-    return updated;
+  async updateKeyword(id: number, keyword: Partial<Keyword>): Promise<Keyword> {
+    const [updatedKeyword] = await db
+      .update(keywords)
+      .set(keyword)
+      .where(eq(keywords.id, id))
+      .returning();
+    return updatedKeyword;
   }
 
-  async getContent(campaignId: number): Promise<Content[]> {
-    return Array.from(this.contents.values()).filter(c => c.campaignId === campaignId);
+  async deleteKeyword(id: number): Promise<void> {
+    await db.delete(keywords).where(eq(keywords.id, id));
   }
 
-  async createContent(content: InsertContent): Promise<Content> {
-    const id = this.currentIds.content++;
-    const newContent = { ...content, id, createdAt: new Date() };
-    this.contents.set(id, newContent);
-    return newContent;
+  // Content Sources
+  async getContentSources(userId: string): Promise<ContentSource[]> {
+    return await db
+      .select()
+      .from(contentSources)
+      .where(and(
+        eq(contentSources.userId, userId),
+        eq(contentSources.isActive, true)
+      ));
+  }
+
+  async createContentSource(source: InsertContentSource): Promise<ContentSource> {
+    const [newSource] = await db.insert(contentSources).values(source).returning();
+    return newSource;
+  }
+
+  // Trend Topics
+  async getTrendTopics(params: { from?: Date; to?: Date } = {}): Promise<TrendTopic[]> {
+    let query = db.select().from(trendTopics);
+
+    if (params.from) {
+      query = query.where(sql`${trendTopics.createdAt} >= ${params.from}`);
+    }
+    if (params.to) {
+      query = query.where(sql`${trendTopics.createdAt} <= ${params.to}`);
+    }
+
+    return await query.orderBy(desc(trendTopics.reactions));
+  }
+
+  async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
+    const [newTopic] = await db.insert(trendTopics).values(topic).returning();
+    return newTopic;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
