@@ -37,6 +37,12 @@ export function KeywordTable({
   const { toast } = useToast();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
+  // Проверяем, добавлено ли слово уже
+  const isKeywordAdded = (keyword: string) => {
+    return existingKeywords.some(k => k.keyword === keyword);
+  };
+
+  // Мутация для добавления ключевых слов
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
     mutationFn: async (keywordsToAdd: string[]) => {
       await Promise.all(
@@ -71,10 +77,6 @@ export function KeywordTable({
     }
   });
 
-  const isKeywordAdded = (keyword: string) => {
-    return existingKeywords.some(k => k.keyword === keyword);
-  };
-
   const handleAddSelected = () => {
     if (selectedKeywords.length > 0) {
       addToKeywords(selectedKeywords);
@@ -97,6 +99,7 @@ export function KeywordTable({
     );
   }
 
+  // Фильтруем доступные для добавления ключевые слова
   const availableKeywords = keywords.filter(k => !isKeywordAdded(k.keyword));
 
   return (
@@ -149,15 +152,21 @@ export function KeywordTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {[...keywords, ...existingKeywords.map(k => ({
-            keyword: k.keyword,
-            trend: k.trendScore,
-            competition: k.mentionsCount,
-            isExisting: true
-          }))].map((keyword) => (
+          {[
+            ...keywords.map(k => ({
+              ...k,
+              isExisting: isKeywordAdded(k.keyword)
+            })),
+            ...existingKeywords.map(k => ({
+              keyword: k.keyword,
+              trend: k.trendScore,
+              competition: k.mentionsCount,
+              isExisting: true
+            }))
+          ].map((keyword) => (
             <TableRow key={keyword.keyword}>
               <TableCell>
-                {!keyword.isExisting && !isKeywordAdded(keyword.keyword) && (
+                {!keyword.isExisting && (
                   <Checkbox
                     checked={selectedKeywords.includes(keyword.keyword)}
                     onCheckedChange={(checked) => {
@@ -174,7 +183,7 @@ export function KeywordTable({
               <TableCell>{keyword.trend}</TableCell>
               <TableCell>{keyword.competition}</TableCell>
               <TableCell className="text-right">
-                {keyword.isExisting || isKeywordAdded(keyword.keyword) ? (
+                {keyword.isExisting ? (
                   <Button variant="ghost" size="sm" disabled>
                     Добавлено
                   </Button>
