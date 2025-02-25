@@ -31,9 +31,9 @@ export default function Keywords() {
   const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
-      if (!selectedCampaign) return [];
+      if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") return [];
       const response = await apiRequest(`/api/campaigns/${selectedCampaign}/keywords`);
-      return response;
+      return response?.data || [];
     },
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
