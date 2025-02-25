@@ -10,9 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { directusApi } from "@/lib/directus";
 import type { Keyword } from "@shared/schema";
 
 interface KeywordTableProps {
@@ -36,6 +36,7 @@ export function KeywordTable({
 }: KeywordTableProps) {
   const { toast } = useToast();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
   // Проверяем, добавлено ли слово уже
   const isKeywordAdded = (keyword: string) => {
@@ -50,14 +51,12 @@ export function KeywordTable({
           const keywordData = keywords.find(k => k.keyword === keywordText);
           if (!keywordData) return;
 
-          await apiRequest('/api/keywords', {
-            method: 'POST',
-            data: {
-              campaignId: Number(campaignId),
-              keyword: keywordText,
-              trendScore: keywordData.trend,
-              mentionsCount: keywordData.competition
-            }
+          await directusApi.post('/items/user_keywords', {
+            campaign_id: campaignId,
+            keyword: keywordText,
+            trend_score: keywordData.trend,
+            mentions_count: keywordData.competition,
+            last_checked: new Date().toISOString()
           });
         })
       );
@@ -68,6 +67,7 @@ export function KeywordTable({
       });
       setSelectedKeywords([]);
       onKeywordsUpdated();
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
     },
     onError: () => {
       toast({
@@ -161,8 +161,8 @@ export function KeywordTable({
             })),
             ...existingKeywords.map(k => ({
               keyword: k.keyword,
-              trend: k.trendScore,
-              competition: k.mentionsCount,
+              trend: k.trend_score,
+              competition: k.mentions_count,
               isExisting: true
             }))
           ].map((keyword) => (
