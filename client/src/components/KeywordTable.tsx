@@ -154,7 +154,9 @@ export function KeywordTable({
         <TableBody>
           {[
             ...keywords.map(k => ({
-              ...k,
+              keyword: k.keyword,
+              trend: k.trend,
+              competition: k.competition,
               isExisting: isKeywordAdded(k.keyword)
             })),
             ...existingKeywords.map(k => ({
