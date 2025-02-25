@@ -39,6 +39,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Добавляем новый endpoint для удаления источника
+  app.delete("/api/sources/:id", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      await storage.deleteContentSource(Number(req.params.id), userId);
+      res.status(200).json({ message: "Source deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting source:", error);
+      res.status(500).json({ error: "Failed to delete source" });
+    }
+  });
+
   // Trends routes
   app.get("/api/trends", async (req, res) => {
     try {
