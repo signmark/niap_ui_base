@@ -39,7 +39,11 @@ export default function Trends() {
     queryKey: ["/api/sources", userId, selectedCampaignId],
     queryFn: async () => {
       const response = await apiRequest('/api/sources', {
-        params: { campaignId: selectedCampaignId || undefined }
+        params: { 
+          campaignId: selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" 
+            ? selectedCampaignId 
+            : undefined 
+        }
       });
       return response;
     },
@@ -74,7 +78,9 @@ export default function Trends() {
       const response = await apiRequest('/api/trends', {
         params: { 
           period: selectedPeriod,
-          campaignId: selectedCampaignId || undefined
+          campaignId: selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" 
+            ? selectedCampaignId 
+            : undefined
         }
       });
       return response;
@@ -116,6 +122,11 @@ export default function Trends() {
     }
   });
 
+  // Валидируем выбранную кампанию
+  const isValidCampaignSelected = selectedCampaignId && 
+    selectedCampaignId !== "loading" && 
+    selectedCampaignId !== "empty";
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -129,7 +140,7 @@ export default function Trends() {
           <Button
             variant="outline"
             onClick={() => collectTrends()}
-            disabled={isCollecting || !selectedCampaignId}
+            disabled={isCollecting || !isValidCampaignSelected}
           >
             {isCollecting ? (
               <>
@@ -143,7 +154,10 @@ export default function Trends() {
               </>
             )}
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button 
+            onClick={() => setIsDialogOpen(true)}
+            disabled={!isValidCampaignSelected}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Добавить источник
           </Button>
@@ -166,10 +180,10 @@ export default function Trends() {
             <SelectContent>
               {isLoadingCampaigns ? (
                 <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : campaigns?.length === 0 ? (
+              ) : !campaigns || campaigns.length === 0 ? (
                 <SelectItem value="empty">Нет доступных кампаний</SelectItem>
               ) : (
-                campaigns?.map((campaign: Campaign) => (
+                campaigns.map((campaign: Campaign) => (
                   <SelectItem 
                     key={campaign.id} 
                     value={campaign.id.toString()}
@@ -183,7 +197,7 @@ export default function Trends() {
         </CardContent>
       </Card>
 
-      {selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" ? (
+      {isValidCampaignSelected ? (
         <>
           {/* Sources List */}
           <Card>
@@ -201,7 +215,7 @@ export default function Trends() {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {sources?.data?.map((source) => (
+                  {sources?.data?.map((source: ContentSource) => (
                     <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                       <div>
                         <h3 className="font-medium">{source.name}</h3>
@@ -275,7 +289,7 @@ export default function Trends() {
                   <TableBody>
                     {(trendTopics?.data || [])
                       .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((topic) => (
+                      .map((topic: TrendTopic) => (
                         <TableRow key={topic.id}>
                           <TableCell>
                             <Checkbox
@@ -325,7 +339,10 @@ export default function Trends() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AddSourceDialog onClose={() => setIsDialogOpen(false)} />
+        <AddSourceDialog 
+          campaignId={selectedCampaignId} 
+          onClose={() => setIsDialogOpen(false)} 
+        />
       </Dialog>
     </div>
   );
