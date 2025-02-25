@@ -14,7 +14,6 @@ export class ContentCrawler {
         reactions: 0,
         comments: 0,
         views: 0,
-        createdAt: new Date(),
         isBookmarked: false
       }];
     } catch (error) {
@@ -32,7 +31,6 @@ export class ContentCrawler {
       reactions: 0,
       comments: 0,
       views: 0,
-      createdAt: new Date(),
       isBookmarked: false
     }];
   }
@@ -46,7 +44,6 @@ export class ContentCrawler {
       reactions: 0,
       comments: 0,
       views: 0,
-      createdAt: new Date(),
       isBookmarked: false
     }];
   }
@@ -67,17 +64,24 @@ export class ContentCrawler {
 
   async crawlAllSources(userId: string): Promise<void> {
     try {
+      console.log(`Starting to crawl sources for user ${userId}`);
       const sources = await storage.getContentSources(userId);
+      console.log(`Found ${sources.length} sources to crawl`);
 
       for (const source of sources) {
+        console.log(`Crawling source: ${source.name} (${source.type})`);
         const topics = await this.crawlSource(source);
+        console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         for (const topic of topics) {
+          console.log(`Saving topic: ${topic.title}`);
           await storage.createTrendTopic(topic);
         }
       }
+      console.log('Finished crawling all sources');
     } catch (error) {
       console.error('Error crawling sources:', error);
+      throw error;
     }
   }
 }

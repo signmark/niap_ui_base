@@ -76,11 +76,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from.setDate(from.getDate() - 7); // По умолчанию за неделю
       }
 
+      console.log('Fetching trends with params:', { period, from });
       const trends = await storage.getTrendTopics({ from });
-      res.json(trends);
+      console.log('Found trends:', trends);
+      res.json({ data: trends }); // Оборачиваем в объект с полем data
     } catch (error) {
       console.error("Error fetching trends:", error);
       res.status(500).json({ error: "Failed to fetch trends" });
+    }
+  });
+
+  // Добавляем endpoint для запуска сбора трендов
+  app.post("/api/trends/collect", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      console.log('Starting trend collection for user:', userId);
+      const { crawler } = await import('./services/crawler');
+      await crawler.crawlAllSources(userId);
+      console.log('Trend collection completed');
+
+      res.json({ message: "Trend collection started" });
+    } catch (error) {
+      console.error("Error collecting trends:", error);
+      res.status(500).json({ error: "Failed to collect trends" });
     }
   });
 
@@ -289,23 +311,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Добавляем endpoint для запуска сбора трендов
-  app.post("/api/trends/collect", async (req, res) => {
-    try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const { crawler } = await import('./services/crawler');
-      await crawler.crawlAllSources(userId);
-
-      res.json({ message: "Trend collection started" });
-    } catch (error) {
-      console.error("Error collecting trends:", error);
-      res.status(500).json({ error: "Failed to collect trends" });
-    }
-  });
 
   return httpServer;
 }
