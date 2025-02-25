@@ -18,6 +18,7 @@ export interface IStorage {
   // Content Sources and Trends
   getContentSources(userId: string): Promise<ContentSource[]>;
   createContentSource(source: InsertContentSource): Promise<ContentSource>;
+  deleteContentSource(id: number, userId: string): Promise<void>;
   getTrendTopics(params: { from?: Date; to?: Date }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
 }
@@ -79,6 +80,17 @@ export class DatabaseStorage implements IStorage {
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
     const [newSource] = await db.insert(contentSources).values(source).returning();
     return newSource;
+  }
+
+  async deleteContentSource(id: number, userId: string): Promise<void> {
+    // Soft delete - просто помечаем как неактивный
+    await db
+      .update(contentSources)
+      .set({ isActive: false })
+      .where(and(
+        eq(contentSources.id, id),
+        eq(contentSources.userId, userId)
+      ));
   }
 
   // Trend Topics

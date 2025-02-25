@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import type { ContentSource, TrendTopic } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
@@ -19,12 +21,35 @@ export default function Trends() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const userId = useAuthStore((state) => state.userId);
+  const { toast } = useToast();
 
   const { data: sources, isLoading: isLoadingSources } = useQuery({
     queryKey: ["/api/sources", userId],
     queryFn: async () => {
       const response = await apiRequest('/api/sources');
       return response;
+    }
+  });
+
+  const { mutate: deleteSource } = useMutation({
+    mutationFn: async (sourceId: number) => {
+      return await apiRequest(`/api/sources/${sourceId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
+      toast({
+        title: "Успешно",
+        description: "Источник удален"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   });
 
@@ -75,10 +100,19 @@ export default function Trends() {
                     <h3 className="font-medium">{source.name}</h3>
                     <p className="text-sm text-muted-foreground">{source.url}</p>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {source.type === 'website' ? 'Вебсайт' : 
-                     source.type === 'telegram' ? 'Telegram канал' : 
-                     source.type === 'vk' ? 'VK группа' : source.type}
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-muted-foreground">
+                      {source.type === 'website' ? 'Вебсайт' : 
+                       source.type === 'telegram' ? 'Telegram канал' : 
+                       source.type === 'vk' ? 'VK группа' : source.type}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteSource(source.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
               ))}
