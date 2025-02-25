@@ -61,13 +61,11 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
       setSearchResults(results);
       toast({
-        title: "Успешно",
         description: "Ключевые слова найдены"
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Ошибка",
         description: error.message,
         variant: "destructive"
       });
@@ -89,7 +87,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Успешно",
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
@@ -97,28 +94,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onError: () => {
       toast({
-        title: "Ошибка",
         description: "Не удалось сохранить ключевые слова",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const { mutate: deleteKeyword } = useMutation({
-    mutationFn: async (keywordId: string) => {
-      await directusApi.delete(`/items/user_keywords/${keywordId}`);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Успешно",
-        description: "Ключевое слово удалено"
-      });
-      refetchKeywords();
-    },
-    onError: () => {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
     }
@@ -141,7 +117,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
       toast({
-        title: "Внимание",
         description: "Выберите хотя бы одно ключевое слово",
         variant: "destructive"
       });
@@ -152,7 +127,17 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleDelete = (keywordId: string) => {
     if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
-      deleteKeyword(keywordId);
+      directusApi.delete(`/items/user_keywords/${keywordId}`).then(() => {
+        toast({
+          description: "Ключевое слово удалено"
+        });
+        refetchKeywords();
+      }).catch(() => {
+        toast({
+          description: "Не удалось удалить ключевое слово",
+          variant: "destructive"
+        });
+      });
     }
   };
 
@@ -164,6 +149,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="flex-1"
         />
         <Button onClick={handleSearch} disabled={isSearching}>
           {isSearching ? (

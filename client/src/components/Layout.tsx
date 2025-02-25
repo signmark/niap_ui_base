@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 
@@ -39,6 +39,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   if (!token) return null;
 
+  const navItems = [
+    { path: "/campaigns", label: "Campaigns", icon: FileText },
+    { path: "/keywords", label: "Keywords", icon: Search },
+    { path: "/posts", label: "Posts", icon: Calendar },
+    { path: "/trends", label: "Trends", icon: TrendingUp },
+    { path: "/analytics", label: "Analytics", icon: BarChart },
+  ];
+
+  const renderNavItems = () => (
+    <div className="space-y-1">
+      {navItems.map(({ path, label, icon: Icon }) => (
+        <Button
+          key={path}
+          variant={location === path ? "secondary" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => handleNavigation(path)}
+        >
+          <Icon className="mr-2 h-4 w-4" />
+          {label}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex h-screen">
       {/* Мобильное меню */}
@@ -50,40 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="h-full bg-background border-r">
           <div className="px-3 py-4">
             <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
-            <div className="space-y-1">
-              <Button
-                variant={location === "/campaigns" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/campaigns")}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Campaigns
-              </Button>
-              <Button
-                variant={location === "/keywords" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/keywords")}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Keywords
-              </Button>
-              <Button
-                variant={location === "/posts" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/posts")}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Posts
-              </Button>
-              <Button
-                variant={location === "/analytics" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/analytics")}
-              >
-                <BarChart className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-            </div>
+            {renderNavItems()}
           </div>
           <div className="mt-auto p-4">
             <Button
@@ -103,40 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="h-full bg-background border-r">
           <div className="px-3 py-4">
             <h2 className="mb-6 px-4 text-lg font-semibold">SEO Manager</h2>
-            <div className="space-y-1">
-              <Button
-                variant={location === "/campaigns" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/campaigns")}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Campaigns
-              </Button>
-              <Button
-                variant={location === "/keywords" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/keywords")}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Keywords
-              </Button>
-              <Button
-                variant={location === "/posts" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/posts")}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Posts
-              </Button>
-              <Button
-                variant={location === "/analytics" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/analytics")}
-              >
-                <BarChart className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-            </div>
+            {renderNavItems()}
           </div>
           <div className="mt-auto p-4">
             <Button
