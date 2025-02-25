@@ -24,32 +24,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Campaigns
-  async getCampaigns(userId: string): Promise<Campaign[]> {
-    return await db.select().from(campaigns).where(eq(campaigns.userId, userId));
-  }
-
-  async getCampaign(id: number): Promise<Campaign | undefined> {
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
-    return campaign;
-  }
-
-  async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
-    return newCampaign;
-  }
-
-  async deleteCampaign(id: number): Promise<void> {
-    await db.delete(campaigns).where(eq(campaigns.id, id));
-  }
-
   // Keywords
   async getKeywords(campaignId: number): Promise<Keyword[]> {
-    return await db.select().from(keywords).where(eq(keywords.campaignId, campaignId));
+    console.log('Getting keywords for campaign:', campaignId);
+    const result = await db
+      .select()
+      .from(keywords)
+      .where(eq(keywords.campaignId, campaignId));
+    console.log('Found keywords:', result);
+    return result;
   }
 
   async addKeyword(keyword: InsertKeyword): Promise<Keyword> {
-    const [newKeyword] = await db.insert(keywords).values(keyword).returning();
+    console.log('Adding keyword:', keyword);
+    const [newKeyword] = await db
+      .insert(keywords)
+      .values(keyword)
+      .returning();
+    console.log('Added keyword:', newKeyword);
     return newKeyword;
   }
 
@@ -68,16 +60,15 @@ export class DatabaseStorage implements IStorage {
 
   // Content Sources
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
-    const numericCampaignId = campaignId ? Number(campaignId) : undefined;
-    console.log('Getting content sources with params:', { userId, campaignId, numericCampaignId });
+    console.log('Getting content sources with params:', { userId, campaignId });
 
     const conditions = [
       eq(contentSources.userId, userId),
       eq(contentSources.isActive, true)
     ];
 
-    if (numericCampaignId && !isNaN(numericCampaignId)) {
-      conditions.push(eq(contentSources.campaignId, numericCampaignId));
+    if (campaignId) {
+      conditions.push(eq(contentSources.campaignId, campaignId));
     }
 
     const query = db
@@ -93,12 +84,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
-    console.log('Creating content source with data:', source);
-    const [newSource] = await db.insert(contentSources).values({
-      ...source,
-      campaignId: source.campaignId ? Number(source.campaignId) : null
-    }).returning();
-    console.log('Created new source:', newSource);
+    console.log('Creating content source:', source);
+    const [newSource] = await db
+      .insert(contentSources)
+      .values({
+        ...source,
+        campaignId: Number(source.campaignId)
+      })
+      .returning();
+    console.log('Created source:', newSource);
     return newSource;
   }
 
@@ -114,8 +108,7 @@ export class DatabaseStorage implements IStorage {
 
   // Trend Topics
   async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number } = {}): Promise<TrendTopic[]> {
-    const numericCampaignId = params.campaignId ? Number(params.campaignId) : undefined;
-    console.log('Fetching trends with params:', { ...params, numericCampaignId });
+    console.log('Fetching trends with params:', params);
 
     const conditions = [];
 
@@ -125,10 +118,8 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-
-    // Строго фильтруем по ID кампании
-    if (numericCampaignId !== undefined) {
-      conditions.push(eq(trendTopics.campaignId, numericCampaignId));
+    if (typeof params.campaignId === 'number') {
+      conditions.push(eq(trendTopics.campaignId, params.campaignId));
     }
 
     const query = db
@@ -146,12 +137,34 @@ export class DatabaseStorage implements IStorage {
 
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
     console.log('Creating trend topic:', topic);
-    const [newTopic] = await db.insert(trendTopics).values({
-      ...topic,
-      campaignId: topic.campaignId
-    }).returning();
+    const [newTopic] = await db
+      .insert(trendTopics)
+      .values({
+        ...topic,
+        campaignId: Number(topic.campaignId)
+      })
+      .returning();
     console.log('Created new topic:', newTopic);
     return newTopic;
+  }
+
+  // Campaigns
+  async getCampaigns(userId: string): Promise<Campaign[]> {
+    return await db.select().from(campaigns).where(eq(campaigns.userId, userId));
+  }
+
+  async getCampaign(id: number): Promise<Campaign | undefined> {
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return campaign;
+  }
+
+  async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
+    return newCampaign;
+  }
+
+  async deleteCampaign(id: number): Promise<void> {
+    await db.delete(campaigns).where(eq(campaigns.id, id));
   }
 }
 
