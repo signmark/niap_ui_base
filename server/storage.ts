@@ -73,21 +73,28 @@ export class DatabaseStorage implements IStorage {
       eq(contentSources.isActive, true)
     ];
 
-    if (campaignId) {
+    if (campaignId !== undefined && campaignId !== null) {
       conditions.push(eq(contentSources.campaignId, campaignId));
     }
 
-    return await db
+    console.log('Getting content sources with conditions:', conditions);
+
+    const sources = await db
       .select()
       .from(contentSources)
       .where(and(...conditions));
+
+    console.log('Found sources:', sources);
+    return sources;
   }
 
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
+    console.log('Creating content source with data:', source);
     const [newSource] = await db.insert(contentSources).values({
       ...source,
-      campaignId: source.campaignId ? Number(source.campaignId) : undefined
+      campaignId: source.campaignId ? Number(source.campaignId) : null
     }).returning();
+    console.log('Created new source:', newSource);
     return newSource;
   }
 
