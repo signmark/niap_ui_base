@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Existing tables
+// Existing tables remain unchanged
 export const campaigns = pgTable("user_campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -11,7 +11,7 @@ export const campaigns = pgTable("user_campaigns", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
-export const keywords = pgTable("campaign_keywords", {
+export const keywords = pgTable("user_keywords", {
   id: serial("id").primaryKey(),
   keyword: text("keyword").notNull(),
   campaignId: integer("campaign_id").references(() => campaigns.id),

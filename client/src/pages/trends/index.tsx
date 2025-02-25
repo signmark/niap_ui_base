@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import type { ContentSource, TrendTopic } from "@shared/schema";
@@ -20,6 +20,7 @@ export default function Trends() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const userId = useAuthStore((state) => state.userId);
 
+  // Получаем список источников пользователя
   const { data: sources, isLoading: isLoadingSources } = useQuery({
     queryKey: ["/api/sources", userId],
     queryFn: async () => {
@@ -36,6 +37,7 @@ export default function Trends() {
     }
   });
 
+  // Получаем список трендовых тем
   const { data: trendTopics, isLoading } = useQuery({
     queryKey: ["/api/trends", selectedPeriod],
     queryFn: async () => {
@@ -121,13 +123,13 @@ export default function Trends() {
                       {sources?.find(s => s.id === topic.sourceId)?.name}
                     </TableCell>
                     <TableCell className="text-right">
-                      {topic.reactions.toLocaleString()}
+                      {topic.reactions?.toLocaleString() ?? 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {topic.comments.toLocaleString()}
+                      {topic.comments?.toLocaleString() ?? 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {topic.views.toLocaleString()}
+                      {topic.views?.toLocaleString() ?? 0}
                     </TableCell>
                   </TableRow>
                 ))}
