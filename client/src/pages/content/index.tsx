@@ -3,46 +3,37 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { PublicationPanel } from "@/components/PublicationPanel";
-import type { TrendTopic } from "@shared/schema";
+import type { Campaign, TrendTopic } from "@shared/schema";
 
 export default function ContentManagement() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>();
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
 
   // Получаем список кампаний
-  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await directusApi.get('/items/user_campaigns');
-      console.log("Campaigns response:", response.data);
-      return response.data?.data || [];
+      const response = await fetch('/api/campaigns');
+      const data = await response.json();
+      console.log("Campaigns response:", data);
+      return data;
     }
   });
 
   // Получаем тренды для выбранной кампании
-  const { data: trends, isLoading: isLoadingTrends } = useQuery({
+  const { data: trends, isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
     queryKey: ["/api/trends", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log("Fetching trends for campaign directus_id:", selectedCampaignId);
-      const response = await directusApi.get('/items/trend_topics', {
-        params: {
-          filter: {
-            user_campaigns_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: ['*', 'source_id.*'],
-          sort: ['-created_at']
-        }
-      });
-      console.log("Trends response:", response.data);
-      return response.data?.data || [];
+      console.log("Fetching trends for campaign:", selectedCampaignId);
+      const response = await fetch(`/api/trends?campaignId=${selectedCampaignId}`);
+      const data = await response.json();
+      console.log("Trends response:", data);
+      return data;
     },
     enabled: !!selectedCampaignId
   });
@@ -78,7 +69,7 @@ export default function ContentManagement() {
               </SelectTrigger>
               <SelectContent>
                 {campaigns?.map((campaign) => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
+                  <SelectItem key={campaign.id} value={campaign.id.toString()}>
                     {campaign.name}
                   </SelectItem>
                 ))}
@@ -117,7 +108,7 @@ export default function ContentManagement() {
                               <div>
                                 <h3 className="font-medium">{trend.title}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Источник: {trend.source_id?.name}
+                                  Источник: {trend.source?.name}
                                 </p>
                                 <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
                                   <span>👍 {trend.reactions}</span>
@@ -132,7 +123,7 @@ export default function ContentManagement() {
                                     : "bg-secondary text-secondary-foreground"
                                 }`}
                                 onClick={() => {
-                                  setSelectedTopics(prev => 
+                                  setSelectedTopics(prev =>
                                     prev.some(t => t.id === trend.id)
                                       ? prev.filter(t => t.id !== trend.id)
                                       : [...prev, trend]
