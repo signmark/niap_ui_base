@@ -51,11 +51,19 @@ export default function Keywords() {
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
       const response = await directusApi.get(`/items/xmlriver_search/${encodeURIComponent(keyword)}`);
-      if (!response?.data?.data?.keywords) throw new Error("Не удалось найти ключевые слова");
-      return response.data.data.keywords;
+      const data = response.data?.data;
+      if (!data?.keywords || !Array.isArray(data.keywords)) {
+        throw new Error("Некорректный формат данных от API");
+      }
+      return data.keywords;
     },
     onSuccess: (data) => {
-      setSearchResults(data);
+      const formattedResults = data.map((keyword: any) => ({
+        keyword: keyword.keyword,
+        trend: keyword.trend,
+        competition: keyword.competition
+      }));
+      setSearchResults(formattedResults);
       toast({ description: "Ключевые слова найдены" });
     },
     onError: () => {
