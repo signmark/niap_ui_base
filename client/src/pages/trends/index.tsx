@@ -28,11 +28,14 @@ export default function Trends() {
   const { toast } = useToast();
 
   const { data: sources, isLoading: isLoadingSources } = useQuery({
-    queryKey: ["/api/sources", userId],
+    queryKey: ["/api/sources", userId, selectedCampaignId],
     queryFn: async () => {
-      const response = await apiRequest('/api/sources');
+      const response = await apiRequest('/api/sources', {
+        params: { campaignId: selectedCampaignId }
+      });
       return response;
-    }
+    },
+    enabled: !!selectedCampaignId
   });
 
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({

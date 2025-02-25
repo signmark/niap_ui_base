@@ -11,9 +11,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sources", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
+      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const sources = await storage.getContentSources(userId);
+      const sources = await storage.getContentSources(userId, campaignId);
       res.json({ data: sources }); // Оборачиваем в объект с полем data
     } catch (error) {
       console.error("Error fetching sources:", error);
