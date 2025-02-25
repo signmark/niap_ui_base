@@ -68,26 +68,26 @@ export class DatabaseStorage implements IStorage {
 
   // Content Sources
   async getContentSources(userId: string, campaignId?: number | string): Promise<ContentSource[]> {
-    console.log('Getting content sources with conditions:', { userId, campaignId });
+    const numericCampaignId = campaignId ? Number(campaignId) : undefined;
+    console.log('Getting content sources with params:', { userId, campaignId, numericCampaignId });
 
     const conditions = [
       eq(contentSources.userId, userId),
       eq(contentSources.isActive, true)
     ];
 
-    // Only add campaignId condition if it's provided and valid
-    if (campaignId !== undefined && campaignId !== null && campaignId !== '') {
-      const numericCampaignId = Number(campaignId);
-      if (!isNaN(numericCampaignId)) {
-        conditions.push(eq(contentSources.campaignId, numericCampaignId));
-      }
+    if (numericCampaignId && !isNaN(numericCampaignId)) {
+      conditions.push(eq(contentSources.campaignId, numericCampaignId));
     }
 
-    const sources = await db
+    const query = db
       .select()
       .from(contentSources)
       .where(and(...conditions));
 
+    console.log('SQL Query:', query.toSQL());
+
+    const sources = await query;
     console.log('Found sources:', sources);
     return sources;
   }
@@ -114,7 +114,8 @@ export class DatabaseStorage implements IStorage {
 
   // Trend Topics
   async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number | string } = {}): Promise<TrendTopic[]> {
-    console.log('Fetching trends with params:', params);
+    const numericCampaignId = params.campaignId ? Number(params.campaignId) : undefined;
+    console.log('Fetching trends with params:', { ...params, numericCampaignId });
 
     const conditions = [];
 
@@ -124,21 +125,19 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-
-    // Only add campaignId condition if it's provided and valid
-    if (params.campaignId !== undefined && params.campaignId !== null && params.campaignId !== '') {
-      const numericCampaignId = Number(params.campaignId);
-      if (!isNaN(numericCampaignId)) {
-        conditions.push(eq(trendTopics.campaignId, numericCampaignId));
-      }
+    if (numericCampaignId && !isNaN(numericCampaignId)) {
+      conditions.push(eq(trendTopics.campaignId, numericCampaignId));
     }
 
-    const trends = await db
+    const query = db
       .select()
       .from(trendTopics)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(trendTopics.createdAt));
 
+    console.log('SQL Query:', query.toSQL());
+
+    const trends = await query;
     console.log('Found trends:', trends);
     return trends;
   }
