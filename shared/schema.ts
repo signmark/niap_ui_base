@@ -21,13 +21,14 @@ export const keywords = pgTable("user_keywords", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
-// New tables for trend analysis
+// Updated table for content sources
 export const contentSources = pgTable("content_sources", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   url: text("url").notNull(),
   type: text("type").notNull(), // 'website', 'telegram', 'vk', etc.
   userId: text("user_id").notNull(),
+  campaignId: integer("campaign_id").references(() => campaigns.id), // Добавляем связь с кампанией
   createdAt: timestamp("created_at").defaultNow(),
   isActive: boolean("is_active").default(true)
 });
@@ -36,7 +37,7 @@ export const trendTopics = pgTable("trend_topics", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   sourceId: integer("source_id").references(() => contentSources.id),
-  campaignId: integer("campaign_id").references(() => campaigns.id), // Добавляем связь с кампанией
+  campaignId: integer("campaign_id").references(() => campaigns.id),
   reactions: integer("reactions").default(0),
   comments: integer("comments").default(0),
   views: integer("views").default(0),
@@ -61,13 +62,14 @@ export const insertContentSourceSchema = createInsertSchema(contentSources).pick
   name: true,
   url: true,
   type: true,
-  userId: true
+  userId: true,
+  campaignId: true // Добавляем в схему
 });
 
 export const insertTrendTopicSchema = createInsertSchema(trendTopics).pick({
   title: true,
   sourceId: true,
-  campaignId: true, // Добавляем в схему
+  campaignId: true,
   reactions: true,
   comments: true,
   views: true

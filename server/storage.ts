@@ -16,10 +16,10 @@ export interface IStorage {
   deleteKeyword(id: number): Promise<void>;
 
   // Content Sources and Trends
-  getContentSources(userId: string): Promise<ContentSource[]>;
+  getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]>;
   createContentSource(source: InsertContentSource): Promise<ContentSource>;
   deleteContentSource(id: number, userId: string): Promise<void>;
-  getTrendTopics(params: { from?: Date; to?: Date }): Promise<TrendTopic[]>;
+  getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
 }
 
@@ -67,14 +67,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Content Sources
-  async getContentSources(userId: string): Promise<ContentSource[]> {
-    return await db
-      .select()
-      .from(contentSources)
-      .where(and(
+  async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
+    let query = db.select().from(contentSources).where(
+      and(
         eq(contentSources.userId, userId),
         eq(contentSources.isActive, true)
-      ));
+      )
+    );
+
+    if (campaignId) {
+      query = query.where(eq(contentSources.campaignId, campaignId));
+    }
+
+    return await query;
   }
 
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
@@ -94,7 +99,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Trend Topics
-  async getTrendTopics(params: { from?: Date; to?: Date } = {}): Promise<TrendTopic[]> {
+  async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number } = {}): Promise<TrendTopic[]> {
     let query = db.select().from(trendTopics);
 
     if (params.from) {
@@ -102,6 +107,9 @@ export class DatabaseStorage implements IStorage {
     }
     if (params.to) {
       query = query.where(sql`${trendTopics.createdAt} <= ${params.to}`);
+    }
+    if (params.campaignId) {
+      query = query.where(eq(trendTopics.campaignId, params.campaignId));
     }
 
     return await query.orderBy(desc(trendTopics.reactions));

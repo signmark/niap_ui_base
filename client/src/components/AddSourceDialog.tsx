@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,13 +22,22 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+    queryKey: ["/api/campaigns"],
+    queryFn: async () => {
+      const response = await apiRequest('/api/campaigns');
+      return response;
+    }
+  });
+
   const form = useForm({
     resolver: zodResolver(insertContentSourceSchema),
     defaultValues: {
       name: "",
       url: "",
       type: "",
-      userId: userId || ""
+      userId: userId || "",
+      campaignId: ""
     }
   });
 
@@ -63,6 +72,33 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => createSource(values))} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="campaignId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Кампания</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите кампанию" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingCampaigns ? (
+                      <SelectItem value="" disabled>Загрузка...</SelectItem>
+                    ) : campaigns?.map((campaign) => (
+                      <SelectItem key={campaign.id} value={campaign.id.toString()}>
+                        {campaign.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="name"
