@@ -9,16 +9,41 @@ interface TrendsListProps {
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
-  // Сначала получаем тренды для кампании напрямую по campaign_id из URL
-  const { data: trends, isLoading } = useQuery({
-    queryKey: ["/api/trends", campaignId],
+  // First fetch campaign info from Directus to get internal ID
+  const { data: campaign, isLoading: isLoadingCampaign } = useQuery({
+    queryKey: ["/api/campaigns", campaignId],
     queryFn: async () => {
-      console.log("Fetching trends for campaign directus_id:", campaignId);
+      console.log("Fetching campaign info for directus_id:", campaignId);
+      const response = await directusApi.get('/items/user_campaigns', {
+        params: {
+          filter: {
+            directus_id: {
+              _eq: campaignId
+            }
+          },
+          limit: 1
+        }
+      });
+
+      const campaignData = response.data?.data?.[0];
+      console.log("Found campaign:", campaignData);
+      return campaignData;
+    },
+    enabled: !!campaignId
+  });
+
+  // Then fetch trends using the campaign's internal ID
+  const { data: trends, isLoading: isLoadingTrends } = useQuery({
+    queryKey: ["/api/trends", campaign?.id],
+    queryFn: async () => {
+      if (!campaign?.id) return [];
+
+      console.log("Fetching trends for campaign internal id:", campaign.id);
       const response = await directusApi.get('/items/trend_topics', {
         params: {
           filter: {
             campaign_id: {
-              _eq: campaignId
+              _eq: campaign.id
             }
           },
           fields: [
@@ -32,10 +57,10 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       console.log("Trends response:", response.data);
       return response.data?.data || [];
     },
-    enabled: !!campaignId
+    enabled: !!campaign?.id
   });
 
-  if (isLoading) {
+  if (isLoadingCampaign || isLoadingTrends) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
