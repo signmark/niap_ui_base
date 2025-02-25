@@ -9,6 +9,7 @@ import Keywords from "@/pages/keywords";
 import Posts from "@/pages/posts";
 import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
+import Content from "@/pages/content"; // Add Content import
 import NotFound from "@/pages/not-found";
 import { useAuthStore } from "@/lib/store";
 import { Layout } from "@/components/Layout";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
       <Route path="/campaigns/:id" component={() => <PrivateRoute component={CampaignDetails} />} />
       <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
+      <Route path="/content" component={() => <PrivateRoute component={Content} />} /> {/* Add Content route */}
       <Route path="/posts" component={() => <PrivateRoute component={Posts} />} />
       <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
       <Route path="/trends" component={() => <PrivateRoute component={Trends} />} />
