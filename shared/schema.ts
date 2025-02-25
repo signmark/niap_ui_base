@@ -58,13 +58,18 @@ export const insertKeywordSchema = createInsertSchema(keywords).pick({
   mentionsCount: true
 });
 
-export const insertContentSourceSchema = createInsertSchema(contentSources).pick({
-  name: true,
-  url: true,
-  type: true,
-  userId: true,
-  campaignId: true // Добавляем в схему
-});
+// Обновляем схему для валидации вставки источника
+export const insertContentSourceSchema = createInsertSchema(contentSources)
+  .pick({
+    name: true,
+    url: true,
+    type: true,
+    userId: true,
+    campaignId: true
+  })
+  .extend({
+    campaignId: z.string().transform((val) => Number(val)), // Преобразуем строку в число
+  });
 
 export const insertTrendTopicSchema = createInsertSchema(trendTopics).pick({
   title: true,
