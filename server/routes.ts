@@ -7,7 +7,7 @@ import axios from "axios";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
-  // Content Sources routes
+  // Sources routes
   app.get("/api/sources", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const sources = await storage.getContentSources(userId, campaignId);
       console.log("Found sources:", sources);
-      res.json({ data: sources }); // Оборачиваем в объект с полем data
+      res.json({ data: sources });
     } catch (error) {
       console.error("Error fetching sources:", error);
       res.status(500).json({ error: "Failed to fetch sources" });
@@ -41,7 +41,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const from = new Date();
-
       switch (period) {
         case "3days":
           from.setDate(from.getDate() - 3);
@@ -56,13 +55,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from.setDate(from.getDate() - 30);
           break;
         default:
-          from.setDate(from.getDate() - 7); // По умолчанию за неделю
+          from.setDate(from.getDate() - 7);
       }
 
       console.log('Fetching trends with params:', { period, from, campaignId });
       const trends = await storage.getTrendTopics({ from, campaignId });
       console.log('Found trends:', trends);
-      res.json({ data: trends }); // Оборачиваем в объект с полем data
+      res.json({ data: trends });
     } catch (error) {
       console.error("Error fetching trends:", error);
       res.status(500).json({ error: "Failed to fetch trends" });
