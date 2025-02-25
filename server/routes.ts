@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const sources = await storage.getContentSources(userId);
-      res.json(sources);
+      res.json({ data: sources }); // Оборачиваем в объект с полем data
     } catch (error) {
       console.error("Error fetching sources:", error);
       res.status(500).json({ error: "Failed to fetch sources" });
@@ -32,7 +32,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const source = await storage.createContentSource(result.data);
-      res.status(201).json(source);
+      res.status(201).json({ data: source }); // Оборачиваем в объект с полем data
     } catch (error) {
       console.error("Error creating source:", error);
       res.status(500).json({ error: "Failed to create source" });
