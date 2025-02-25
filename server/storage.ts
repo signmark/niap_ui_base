@@ -125,7 +125,9 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-    if (numericCampaignId && !isNaN(numericCampaignId)) {
+
+    // Строго фильтруем по ID кампании
+    if (numericCampaignId !== undefined) {
       conditions.push(eq(trendTopics.campaignId, numericCampaignId));
     }
 
@@ -143,11 +145,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
-    const numericCampaignId = topic.campaignId ? Number(topic.campaignId) : null;
+    console.log('Creating trend topic:', topic);
     const [newTopic] = await db.insert(trendTopics).values({
       ...topic,
-      campaignId: numericCampaignId
+      campaignId: topic.campaignId
     }).returning();
+    console.log('Created new topic:', newTopic);
     return newTopic;
   }
 }
