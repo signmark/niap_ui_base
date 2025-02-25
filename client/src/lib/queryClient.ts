@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { useAuthStore } from "@/lib/store";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -11,6 +12,7 @@ interface ApiRequestConfig {
   method?: string;
   data?: unknown;
   params?: Record<string, string>;
+  headers?: Record<string, string>;
 }
 
 export async function apiRequest(
@@ -18,12 +20,19 @@ export async function apiRequest(
   config: ApiRequestConfig = {}
 ): Promise<any> {
   const { method = 'GET', data, params } = config;
+  const token = useAuthStore.getState().token;
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 
+  const headers: Record<string, string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    "x-user-id": useAuthStore.getState().userId || ''
+  };
+
   const res = await fetch(url + queryString, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -38,8 +47,15 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const token = useAuthStore.getState().token;
+    const userId = useAuthStore.getState().userId;
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers: {
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        "x-user-id": userId || ''
+      }
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
