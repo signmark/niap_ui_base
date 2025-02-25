@@ -1,0 +1,143 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import type { TrendTopic } from "@shared/schema";
+
+const generateContentSchema = z.object({
+  topics: z.array(z.number()),
+  prompt: z.string().min(1, "Требуется описание контента"),
+  useAI: z.boolean().default(true),
+});
+
+type GenerateContentForm = z.infer<typeof generateContentSchema>;
+
+interface ContentGenerationPanelProps {
+  selectedTopics: TrendTopic[];
+  onGenerated?: () => void;
+}
+
+export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentGenerationPanelProps) {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const form = useForm<GenerateContentForm>({
+    resolver: zodResolver(generateContentSchema),
+    defaultValues: {
+      topics: selectedTopics.map(topic => topic.id),
+      prompt: "",
+      useAI: true,
+    }
+  });
+
+  const { mutate: generateContent } = useMutation({
+    mutationFn: async (values: GenerateContentForm) => {
+      return await apiRequest('/api/content/generate', {
+        method: 'POST',
+        data: values
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "Контент сгенерирован"
+      });
+      onGenerated?.();
+      form.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+    onSettled: () => {
+      setIsGenerating(false);
+    }
+  });
+
+  const onSubmit = (values: GenerateContentForm) => {
+    setIsGenerating(true);
+    generateContent(values);
+  };
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Генерация контента</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-medium">Выбранные темы:</h3>
+              <ul className="list-disc list-inside space-y-1">
+                {selectedTopics.map(topic => (
+                  <li key={topic.id} className="text-sm text-muted-foreground">
+                    {topic.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="prompt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Описание контента</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Опишите, какой контент нужно сгенерировать..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="useAI"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="text-sm font-normal">
+                    Использовать AI для улучшения контента
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Генерация...
+                </>
+              ) : (
+                "Сгенерировать"
+              )}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}

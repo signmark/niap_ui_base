@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
+import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import type { ContentSource, TrendTopic } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
@@ -20,6 +22,7 @@ export default function Trends() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const userId = useAuthStore((state) => state.userId);
   const { toast } = useToast();
 
@@ -62,6 +65,17 @@ export default function Trends() {
       return response;
     }
   });
+
+  const toggleTopicSelection = (topic: TrendTopic) => {
+    setSelectedTopics(prev => {
+      const isSelected = prev.some(t => t.id === topic.id);
+      if (isSelected) {
+        return prev.filter(t => t.id !== topic.id);
+      } else {
+        return [...prev, topic];
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -156,6 +170,7 @@ export default function Trends() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[30px]"></TableHead>
                   <TableHead>Тема</TableHead>
                   <TableHead>Источник</TableHead>
                   <TableHead className="text-right">Реакции</TableHead>
@@ -168,6 +183,12 @@ export default function Trends() {
                   .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map((topic) => (
                     <TableRow key={topic.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTopics.some(t => t.id === topic.id)}
+                          onCheckedChange={() => toggleTopicSelection(topic)}
+                        />
+                      </TableCell>
                       <TableCell>{topic.title}</TableCell>
                       <TableCell>
                         {sources?.data?.find(s => s.id === topic.sourceId)?.name}
@@ -188,6 +209,13 @@ export default function Trends() {
           )}
         </CardContent>
       </Card>
+
+      {selectedTopics.length > 0 && (
+        <ContentGenerationPanel
+          selectedTopics={selectedTopics}
+          onGenerated={() => setSelectedTopics([])}
+        />
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <AddSourceDialog onClose={() => setIsDialogOpen(false)} />
