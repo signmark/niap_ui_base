@@ -1,15 +1,22 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Updated campaigns table with directus_id
+// Updated campaigns table with social media settings
 export const campaigns = pgTable("user_campaigns", {
   id: serial("id").primaryKey(),
-  directusId: text("directus_id").notNull(), // Add directus_id field
+  directusId: text("directus_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   userId: text("user_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
+  // Add social media settings
+  socialMediaSettings: jsonb("social_media_settings").default({
+    telegram: { token: null, chatId: null },
+    vk: { token: null, groupId: null },
+    instagram: { token: null },
+    facebook: { token: null, pageId: null }
+  })
 });
 
 export const keywords = pgTable("user_keywords", {
@@ -22,10 +29,24 @@ export const keywords = pgTable("user_keywords", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
-// Updated content sources with directus_id
+// Content table for generated/scheduled posts
+export const scheduledContent = pgTable("scheduled_content", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").references(() => campaigns.id),
+  content: text("content").notNull(),
+  title: text("title"),
+  imageUrl: text("image_url"),
+  scheduledFor: timestamp("scheduled_for"),
+  platforms: jsonb("platforms").default(['telegram']),
+  status: text("status").default('draft'),
+  createdAt: timestamp("created_at").defaultNow(),
+  publishedAt: timestamp("published_at"),
+  directusId: text("directus_id")
+});
+
 export const contentSources = pgTable("content_sources", {
   id: serial("id").primaryKey(),
-  directusId: text("directus_id").notNull(), // Add directus_id field
+  directusId: text("directus_id").notNull(),
   name: text("name").notNull(),
   url: text("url").notNull(),
   type: text("type").notNull(),
@@ -35,10 +56,9 @@ export const contentSources = pgTable("content_sources", {
   isActive: boolean("is_active").default(true)
 });
 
-// Updated trend topics with directus_id
 export const trendTopics = pgTable("trend_topics", {
   id: serial("id").primaryKey(),
-  directusId: text("directus_id").notNull(), // Add directus_id field
+  directusId: text("directus_id").notNull(),
   title: text("title").notNull(),
   sourceId: integer("source_id").references(() => contentSources.id),
   campaignId: integer("campaign_id").references(() => campaigns.id),
@@ -49,13 +69,14 @@ export const trendTopics = pgTable("trend_topics", {
   isBookmarked: boolean("is_bookmarked").default(false)
 });
 
-// Update insert schemas
+// Update insert schemas with new fields
 export const insertCampaignSchema = createInsertSchema(campaigns)
   .pick({
     directusId: true,
     name: true,
     description: true,
-    userId: true
+    userId: true,
+    socialMediaSettings: true
   });
 
 export const insertKeywordSchema = createInsertSchema(keywords)
@@ -87,7 +108,38 @@ export const insertTrendTopicSchema = createInsertSchema(trendTopics)
     views: true
   });
 
-// Types
+export const insertScheduledContentSchema = createInsertSchema(scheduledContent)
+  .pick({
+    campaignId: true,
+    content: true,
+    title: true,
+    imageUrl: true,
+    scheduledFor: true,
+    platforms: true,
+    status: true,
+    directusId: true
+  });
+
+// Types for social media settings
+export interface SocialMediaSettings {
+  telegram?: {
+    token: string | null;
+    chatId: string | null;
+  };
+  vk?: {
+    token: string | null;
+    groupId: string | null;
+  };
+  instagram?: {
+    token: string | null;
+  };
+  facebook?: {
+    token: string | null;
+    pageId: string | null;
+  };
+}
+
+// Export types
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 
@@ -100,7 +152,10 @@ export type InsertContentSource = z.infer<typeof insertContentSourceSchema>;
 export type TrendTopic = typeof trendTopics.$inferSelect;
 export type InsertTrendTopic = z.infer<typeof insertTrendTopicSchema>;
 
-// API response types remain unchanged
+export type ScheduledContent = typeof scheduledContent.$inferSelect;
+export type InsertScheduledContent = z.infer<typeof insertScheduledContentSchema>;
+
+
 export interface WordStatResponse {
   data: {
     keywords: Array<{

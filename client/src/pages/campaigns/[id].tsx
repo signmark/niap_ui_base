@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";
 import { PostCalendar } from "@/components/PostCalendar";
@@ -8,10 +8,13 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
+import { SocialMediaSettings } from "@/components/SocialMediaSettings";
+import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: campaign, isLoading, error } = useQuery({
     queryKey: ["/api/campaigns", id],
@@ -121,6 +124,22 @@ export default function CampaignDetails() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Настройки публикации</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SocialMediaSettings 
+            campaignId={id} 
+            initialSettings={campaign.social_media_settings}
+            onSettingsUpdated={() => {
+              // Обновляем кэш кампании после изменения настроек
+              queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Ключевые слова</CardTitle>
         </CardHeader>
         <CardContent>
@@ -136,6 +155,14 @@ export default function CampaignDetails() {
           <TrendsList campaignId={id} />
         </CardContent>
       </Card>
+
+      <ContentGenerationPanel 
+        selectedTopics={[]} 
+        onGenerated={() => {
+          // Обновляем календарь после генерации контента
+          queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
+        }}
+      />
 
       <Card>
         <CardHeader>
