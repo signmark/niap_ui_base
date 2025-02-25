@@ -7,8 +7,8 @@ import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { directusApi } from "@/lib/directus";
-import type { Keyword, KeywordSearchResult, WordStatResponse } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import type { Campaign, KeywordSearchResult } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 
 export default function Keywords() {
@@ -19,19 +19,11 @@ export default function Keywords() {
   const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
-  const { data: campaigns } = useQuery({
-    queryKey: ["/api/campaigns", userId],
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+    queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await directusApi.get("/items/user_campaigns", {
-        params: {
-          filter: {
-            user_id: {
-              _eq: userId
-            }
-          }
-        }
-      });
-      return response.data?.data || [];
+      const response = await apiRequest('/api/campaigns');
+      return response;
     }
   });
 
@@ -40,31 +32,22 @@ export default function Keywords() {
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
       if (!selectedCampaign) return [];
-      const response = await directusApi.get("/items/user_keywords", {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaign
-            }
-          }
-        }
-      });
-      return response.data?.data || [];
+      const response = await apiRequest(`/api/campaigns/${selectedCampaign}/keywords`);
+      return response;
     },
-    enabled: !!selectedCampaign
+    enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
   // Поиск ключевых слов
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(keyword)}`);
-      if (!response.ok) throw new Error("Не удалось найти ключевые слова");
-      const data = await response.json() as WordStatResponse;
-      return data;
+      const response = await apiRequest(`/api/wordstat/${encodeURIComponent(keyword)}`);
+      if (!response?.data?.keywords) throw new Error("Не удалось найти ключевые слова");
+      return response;
     },
     onSuccess: (data) => {
       if (data?.data?.keywords && Array.isArray(data.data.keywords)) {
-        const formattedKeywords: KeywordSearchResult[] = data.data.keywords.map((item) => ({
+        const formattedKeywords: KeywordSearchResult[] = data.data.keywords.map((item: any) => ({
           keyword: item.keyword,
           trendScore: item.trend || 0,
           mentionsCount: item.competition || 0
@@ -95,6 +78,11 @@ export default function Keywords() {
     }
   };
 
+  // Валидируем выбранную кампанию
+  const isValidCampaignSelected = selectedCampaign && 
+    selectedCampaign !== "loading" && 
+    selectedCampaign !== "empty";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col">
@@ -118,11 +106,20 @@ export default function Keywords() {
                 <SelectValue placeholder="Выберите кампанию" />
               </SelectTrigger>
               <SelectContent>
-                {campaigns?.map((campaign: any) => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </SelectItem>
-                ))}
+                {isLoadingCampaigns ? (
+                  <SelectItem value="loading">Загрузка...</SelectItem>
+                ) : !campaigns || campaigns.length === 0 ? (
+                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+                ) : (
+                  campaigns.map((campaign: Campaign) => (
+                    <SelectItem 
+                      key={campaign.id} 
+                      value={campaign.id.toString()}
+                    >
+                      {campaign.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -137,7 +134,7 @@ export default function Keywords() {
             />
             <Button 
               onClick={handleSearch} 
-              disabled={isSearching || !searchTerm || !selectedCampaign}
+              disabled={isSearching || !searchTerm || !isValidCampaignSelected}
             >
               {isSearching ? (
                 <>

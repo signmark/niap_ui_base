@@ -3,7 +3,7 @@ import { storage } from '../storage';
 import type { ContentSource, InsertTrendTopic } from '@shared/schema';
 
 export class ContentCrawler {
-  async crawlWebsite(source: ContentSource, campaignId?: number): Promise<InsertTrendTopic[]> {
+  async crawlWebsite(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling website ${source.url} for campaign ${campaignId}`);
       const response = await axios.get(source.url);
@@ -24,7 +24,7 @@ export class ContentCrawler {
     }
   }
 
-  async crawlTelegram(source: ContentSource, campaignId?: number): Promise<InsertTrendTopic[]> {
+  async crawlTelegram(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling Telegram channel ${source.url} for campaign ${campaignId}`);
       // В реальном приложении здесь будет интеграция с Telegram API
@@ -43,7 +43,7 @@ export class ContentCrawler {
     }
   }
 
-  async crawlVK(source: ContentSource, campaignId?: number): Promise<InsertTrendTopic[]> {
+  async crawlVK(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling VK group ${source.url} for campaign ${campaignId}`);
       // В реальном приложении здесь будет интеграция с VK API
@@ -62,7 +62,7 @@ export class ContentCrawler {
     }
   }
 
-  async crawlSource(source: ContentSource, campaignId?: number): Promise<InsertTrendTopic[]> {
+  async crawlSource(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     console.log(`Crawling source: ${source.name} (${source.type}) for campaign ${campaignId}`);
 
     switch (source.type) {
