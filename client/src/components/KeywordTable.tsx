@@ -11,12 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { directusApi } from "@/lib/directus";
 import { Loader2, Plus } from "lucide-react";
-import type { Keyword, KeywordSearchResult } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import type { Keyword } from "@shared/schema";
 
 interface KeywordTableProps {
-  keywords: KeywordSearchResult[];
+  keywords: Array<{
+    keyword: string;
+    trend: number;
+    competition: number;
+  }>;
   existingKeywords: Keyword[];
   isLoading: boolean;
   campaignId: string;
@@ -40,12 +44,14 @@ export function KeywordTable({
           const keywordData = keywords.find(k => k.keyword === keywordText);
           if (!keywordData) return;
 
-          await directusApi.post("/items/user_keywords", {
-            campaign_id: campaignId,
-            keyword: keywordText,
-            trend_score: keywordData.trendScore,
-            mentions_count: keywordData.mentionsCount,
-            last_checked: new Date().toISOString()
+          await apiRequest('/api/keywords', {
+            method: 'POST',
+            data: {
+              campaignId: Number(campaignId),
+              keyword: keywordText,
+              trendScore: keywordData.trend,
+              mentionsCount: keywordData.competition
+            }
           });
         })
       );
@@ -92,11 +98,17 @@ export function KeywordTable({
   }
 
   const allKeywords = [
-    ...keywords,
+    ...keywords.map(k => ({
+      keyword: k.keyword,
+      trendScore: k.trend,
+      mentionsCount: k.competition,
+      isExisting: false
+    })),
     ...existingKeywords.map(k => ({
       keyword: k.keyword,
       trendScore: k.trend_score || 0,
-      mentionsCount: k.mentions_count || 0
+      mentionsCount: k.mentions_count || 0,
+      isExisting: true
     }))
   ];
 
@@ -130,7 +142,8 @@ export function KeywordTable({
               <Checkbox
                 checked={
                   selectedKeywords.length === 
-                  keywords.filter(k => !isKeywordAdded(k.keyword)).length
+                  keywords.filter(k => !isKeywordAdded(k.keyword)).length &&
+                  keywords.length > 0
                 }
                 onCheckedChange={(checked) => {
                   if (checked) {
@@ -146,52 +159,48 @@ export function KeywordTable({
             </TableHead>
             <TableHead>Ключевое слово</TableHead>
             <TableHead>Тренд</TableHead>
-            <TableHead>Упоминания</TableHead>
+            <TableHead>Конкуренция</TableHead>
             <TableHead className="text-right">Статус</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {allKeywords.map((keyword) => {
-            const isAdded = isKeywordAdded(keyword.keyword);
-
-            return (
-              <TableRow key={keyword.keyword}>
-                <TableCell>
-                  {!isAdded && (
-                    <Checkbox
-                      checked={selectedKeywords.includes(keyword.keyword)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedKeywords([...selectedKeywords, keyword.keyword]);
-                        } else {
-                          setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
-                        }
-                      }}
-                    />
-                  )}
-                </TableCell>
-                <TableCell>{keyword.keyword}</TableCell>
-                <TableCell>{keyword.trendScore}</TableCell>
-                <TableCell>{keyword.mentionsCount}</TableCell>
-                <TableCell className="text-right">
-                  {isAdded ? (
-                    <Button variant="ghost" size="sm" disabled>
-                      Добавлено
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => addToKeywords([keyword.keyword])}
-                      disabled={isAdding}
-                    >
-                      {isAdding ? "Добавление..." : "Добавить"}
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {allKeywords.map((keyword) => (
+            <TableRow key={keyword.keyword}>
+              <TableCell>
+                {!keyword.isExisting && (
+                  <Checkbox
+                    checked={selectedKeywords.includes(keyword.keyword)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedKeywords([...selectedKeywords, keyword.keyword]);
+                      } else {
+                        setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
+                      }
+                    }}
+                  />
+                )}
+              </TableCell>
+              <TableCell>{keyword.keyword}</TableCell>
+              <TableCell>{keyword.trendScore}</TableCell>
+              <TableCell>{keyword.mentionsCount}</TableCell>
+              <TableCell className="text-right">
+                {keyword.isExisting ? (
+                  <Button variant="ghost" size="sm" disabled>
+                    Добавлено
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addToKeywords([keyword.keyword])}
+                    disabled={isAdding}
+                  >
+                    {isAdding ? "Добавление..." : "Добавить"}
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
