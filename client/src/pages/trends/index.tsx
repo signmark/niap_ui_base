@@ -38,10 +38,6 @@ export default function Trends() {
     }
   });
 
-  const filteredTopics = trendTopics?.data?.filter(topic => 
-    topic.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -57,6 +53,41 @@ export default function Trends() {
         </Button>
       </div>
 
+      {/* Sources List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Источники данных</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingSources ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : sources?.data?.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              Нет добавленных источников
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sources?.data?.map((source) => (
+                <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
+                  <div>
+                    <h3 className="font-medium">{source.name}</h3>
+                    <p className="text-sm text-muted-foreground">{source.url}</p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {source.type === 'website' ? 'Вебсайт' : 
+                     source.type === 'telegram' ? 'Telegram канал' : 
+                     source.type === 'vk' ? 'VK группа' : source.type}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Trends Table */}
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex gap-4">
@@ -99,23 +130,25 @@ export default function Trends() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTopics?.map((topic) => (
-                  <TableRow key={topic.id}>
-                    <TableCell>{topic.title}</TableCell>
-                    <TableCell>
-                      {sources?.data?.find(s => s.id === topic.sourceId)?.name}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {topic.reactions?.toLocaleString() ?? 0}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {topic.comments?.toLocaleString() ?? 0}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {topic.views?.toLocaleString() ?? 0}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(trendTopics?.data || [])
+                  .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((topic) => (
+                    <TableRow key={topic.id}>
+                      <TableCell>{topic.title}</TableCell>
+                      <TableCell>
+                        {sources?.data?.find(s => s.id === topic.sourceId)?.name}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {topic.reactions?.toLocaleString() ?? 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {topic.comments?.toLocaleString() ?? 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {topic.views?.toLocaleString() ?? 0}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           )}
