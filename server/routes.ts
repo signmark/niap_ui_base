@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCampaignSchema, insertKeywordSchema, insertContentSourceSchema } from "@shared/schema";
-import axios from "axios";
+import { insertContentSourceSchema } from "@shared/schema";
+import { crawler } from "./services/crawler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -11,15 +11,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sources", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
-      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
 
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       console.log("Fetching sources for user:", userId, "campaign:", campaignId);
-
-      if (campaignId && isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
-      }
 
       const sources = await storage.getContentSources(userId, campaignId);
       console.log("Found sources:", sources);
@@ -34,11 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/trends", async (req, res) => {
     try {
       const period = req.query.period as string;
-      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
-
-      if (campaignId && isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
-      }
+      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
 
       const from = new Date();
       switch (period) {
@@ -81,19 +73,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      if (isNaN(Number(campaignId))) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
-      }
-
       console.log('Starting trend collection for user:', userId, 'campaign:', campaignId);
 
       // Получаем источники для данной кампании
-      const sources = await storage.getContentSources(userId, Number(campaignId));
+      const sources = await storage.getContentSources(userId, campaignId);
       if (!sources || sources.length === 0) {
         return res.status(400).json({ message: "No sources found for this campaign" });
       }
 
-      const { crawler } = await import('./services/crawler');
       await crawler.crawlAllSources(userId, Number(campaignId));
       console.log('Trend collection completed');
 
