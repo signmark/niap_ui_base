@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import type { ContentSource, TrendTopic } from "@shared/schema";
@@ -77,6 +77,28 @@ export default function Trends() {
     });
   };
 
+  const { mutate: collectTrends, isPending: isCollecting } = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/trends/collect', {
+        method: 'POST'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trends"] });
+      toast({
+        title: "Успешно",
+        description: "Запущен сбор трендов"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -86,10 +108,29 @@ export default function Trends() {
             Анализ популярных тем в медицине и нутрициологии
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Добавить источник
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => collectTrends()}
+            disabled={isCollecting}
+          >
+            {isCollecting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сбор данных...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Собрать тренды
+              </>
+            )}
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Добавить источник
+          </Button>
+        </div>
       </div>
 
       {/* Sources List */}
