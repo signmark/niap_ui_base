@@ -289,5 +289,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Добавляем endpoint для запуска сбора трендов
+  app.post("/api/trends/collect", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { crawler } = await import('./services/crawler');
+      await crawler.crawlAllSources(userId);
+
+      res.json({ message: "Trend collection started" });
+    } catch (error) {
+      console.error("Error collecting trends:", error);
+      res.status(500).json({ error: "Failed to collect trends" });
+    }
+  });
+
   return httpServer;
 }
