@@ -75,7 +75,7 @@ export class DatabaseStorage implements IStorage {
       eq(contentSources.isActive, true)
     ];
 
-    if (campaignId !== undefined) {
+    if (typeof campaignId === 'number' && !isNaN(campaignId)) {
       conditions.push(eq(contentSources.campaignId, campaignId));
     }
 
@@ -121,14 +121,14 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-    if (params.campaignId !== undefined) {
+    if (typeof params.campaignId === 'number' && !isNaN(params.campaignId)) {
       conditions.push(eq(trendTopics.campaignId, params.campaignId));
     }
 
     const trends = await db
       .select()
       .from(trendTopics)
-      .where(and(...conditions))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(trendTopics.createdAt));
 
     console.log('Found trends:', trends);
