@@ -16,10 +16,10 @@ export interface IStorage {
   deleteKeyword(id: number): Promise<void>;
 
   // Content Sources and Trends
-  getContentSources(userId: string, campaignId?: number | string): Promise<ContentSource[]>;
+  getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]>;
   createContentSource(source: InsertContentSource): Promise<ContentSource>;
   deleteContentSource(id: number, userId: string): Promise<void>;
-  getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number | string }): Promise<TrendTopic[]>;
+  getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
 }
 
@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Content Sources
-  async getContentSources(userId: string, campaignId?: number | string): Promise<ContentSource[]> {
+  async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
     const numericCampaignId = campaignId ? Number(campaignId) : undefined;
     console.log('Getting content sources with params:', { userId, campaignId, numericCampaignId });
 
@@ -113,7 +113,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Trend Topics
-  async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number | string } = {}): Promise<TrendTopic[]> {
+  async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number } = {}): Promise<TrendTopic[]> {
     const numericCampaignId = params.campaignId ? Number(params.campaignId) : undefined;
     console.log('Fetching trends with params:', { ...params, numericCampaignId });
 
