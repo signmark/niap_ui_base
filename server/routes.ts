@@ -259,5 +259,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Добавляем новый endpoint для генерации контента
+  app.post("/api/content/generate", async (req, res) => {
+    try {
+      const { topics, prompt, useAI } = req.body;
+      const userId = req.headers["x-user-id"] as string;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (!topics || !Array.isArray(topics) || topics.length === 0) {
+        return res.status(400).json({ error: "No topics selected" });
+      }
+
+      // Здесь будет логика генерации контента
+      // Можно использовать DeepSeek или другой AI-сервис
+
+      // Пока возвращаем заглушку
+      res.json({
+        message: "Content generation started",
+        topics,
+        prompt,
+        useAI
+      });
+    } catch (error) {
+      console.error("Error generating content:", error);
+      res.status(500).json({ error: "Failed to generate content" });
+    }
+  });
+
   return httpServer;
 }
