@@ -99,7 +99,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContentSource(id: number, userId: string): Promise<void> {
-    // Soft delete - просто помечаем как неактивный
     await db
       .update(contentSources)
       .set({ isActive: false })
@@ -136,7 +135,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
-    const [newTopic] = await db.insert(trendTopics).values(topic).returning();
+    const [newTopic] = await db.insert(trendTopics).values({
+      ...topic,
+      campaignId: topic.campaignId ? Number(topic.campaignId) : null
+    }).returning();
     return newTopic;
   }
 }
