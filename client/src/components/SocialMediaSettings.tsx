@@ -29,10 +29,15 @@ const socialMediaSettingsSchema = z.object({
   }),
   instagram: z.object({
     token: z.string().nullable(),
+    accessToken: z.string().nullable(),
   }),
   facebook: z.object({
     token: z.string().nullable(),
     pageId: z.string().nullable(),
+  }),
+  youtube: z.object({
+    apiKey: z.string().nullable(),
+    channelId: z.string().nullable(),
   }),
 });
 
@@ -55,8 +60,9 @@ export function SocialMediaSettings({
     defaultValues: initialSettings || {
       telegram: { token: null, chatId: null },
       vk: { token: null, groupId: null },
-      instagram: { token: null },
-      facebook: { token: null, pageId: null }
+      instagram: { token: null, accessToken: null },
+      facebook: { token: null, pageId: null },
+      youtube: { apiKey: null, channelId: null }
     }
   });
 
@@ -101,7 +107,12 @@ export function SocialMediaSettings({
                   <FormItem>
                     <FormLabel>Bot Token</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Введите токен бота" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Введите токен бота" 
+                        {...field} 
+                        value={field.value || ''} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -114,7 +125,11 @@ export function SocialMediaSettings({
                   <FormItem>
                     <FormLabel>ID Чата</FormLabel>
                     <FormControl>
-                      <Input placeholder="Введите ID чата" {...field} />
+                      <Input 
+                        placeholder="Введите ID чата" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,7 +147,12 @@ export function SocialMediaSettings({
                   <FormItem>
                     <FormLabel>Access Token</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Введите токен доступа" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Введите токен доступа" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -145,7 +165,92 @@ export function SocialMediaSettings({
                   <FormItem>
                     <FormLabel>ID Группы</FormLabel>
                     <FormControl>
-                      <Input placeholder="Введите ID группы" {...field} />
+                      <Input 
+                        placeholder="Введите ID группы" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Instagram Settings */}
+            <div className="space-y-4">
+              <h3 className="font-medium">Instagram</h3>
+              <FormField
+                control={form.control}
+                name="instagram.token"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Access Token</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Введите токен доступа" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="instagram.accessToken"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Дополнительный токен</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Введите дополнительный токен" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* YouTube Settings */}
+            <div className="space-y-4">
+              <h3 className="font-medium">YouTube</h3>
+              <FormField
+                control={form.control}
+                name="youtube.apiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>API Key</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Введите API ключ" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="youtube.channelId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Канала</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Введите ID канала" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
