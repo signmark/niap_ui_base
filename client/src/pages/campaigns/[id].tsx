@@ -20,8 +20,26 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
+        console.log("Fetching campaign with ID:", id);
         const response = await directusApi.get(`/items/user_campaigns/${id}`);
-        return response.data?.data;
+        console.log("Campaign response:", response.data);
+
+        // Ensure social_media_settings has all required fields
+        const defaultSettings = {
+          telegram: { token: null, chatId: null },
+          vk: { token: null, groupId: null },
+          instagram: { token: null, accessToken: null },
+          facebook: { token: null, pageId: null },
+          youtube: { apiKey: null, channelId: null }
+        };
+
+        return {
+          ...response.data?.data,
+          social_media_settings: {
+            ...defaultSettings,
+            ...(response.data?.data?.social_media_settings || {})
+          }
+        };
       } catch (err) {
         console.error("Error fetching campaign:", err);
         throw new Error("Кампания не найдена или у вас нет прав доступа к ней");
