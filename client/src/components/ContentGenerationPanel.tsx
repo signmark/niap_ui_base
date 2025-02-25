@@ -7,16 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { TrendTopic } from "@shared/schema";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 const generateContentSchema = z.object({
   topics: z.array(z.number()),
   prompt: z.string().min(1, "Требуется описание контента"),
   useAI: z.boolean().default(true),
+  scheduledFor: z.date().optional(),
+  platforms: z.array(z.enum(['telegram', 'vk', 'instagram', 'youtube'])),
+  title: z.string().optional(),
 });
 
 type GenerateContentForm = z.infer<typeof generateContentSchema>;
@@ -36,6 +41,9 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
       topics: selectedTopics.map(topic => topic.id),
       prompt: "",
       useAI: true,
+      platforms: ['telegram'],
+      scheduledFor: undefined,
+      title: "",
     }
   });
 
@@ -49,7 +57,7 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     onSuccess: () => {
       toast({
         title: "Успешно",
-        description: "Контент сгенерирован"
+        description: "Контент сгенерирован и запланирован"
       });
       onGenerated?.();
       form.reset();
@@ -70,6 +78,13 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     setIsGenerating(true);
     generateContent(values);
   };
+
+  const platformOptions = [
+    { id: 'telegram', label: 'Telegram' },
+    { id: 'vk', label: 'ВКонтакте' },
+    { id: 'instagram', label: 'Instagram' },
+    { id: 'youtube', label: 'YouTube' },
+  ];
 
   return (
     <Card className="mt-6">
@@ -92,6 +107,23 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
 
             <FormField
               control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Заголовок</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Введите заголовок публикации"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="prompt"
               render={({ field }) => (
                 <FormItem>
@@ -100,6 +132,66 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
                     <Textarea
                       placeholder="Опишите, какой контент нужно сгенерировать..."
                       {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="platforms"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Платформы для публикации</FormLabel>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {platformOptions.map((platform) => (
+                      <FormField
+                        key={platform.id}
+                        control={form.control}
+                        name="platforms"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={platform.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(platform.id as any)}
+                                  onCheckedChange={(checked) => {
+                                    const current = field.value || [];
+                                    const updated = checked
+                                      ? [...current, platform.id]
+                                      : current.filter((value) => value !== platform.id);
+                                    field.onChange(updated);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {platform.label}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="scheduledFor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Дата и время публикации</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
