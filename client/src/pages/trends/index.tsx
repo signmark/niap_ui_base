@@ -24,7 +24,7 @@ export default function Trends() {
     queryKey: ["/api/sources", userId],
     queryFn: async () => {
       const response = await apiRequest('/api/sources');
-      return response.data as ContentSource[];
+      return response;
     }
   });
 
@@ -34,11 +34,11 @@ export default function Trends() {
       const response = await apiRequest('/api/trends', {
         params: { period: selectedPeriod }
       });
-      return response.data as TrendTopic[];
+      return response;
     }
   });
 
-  const filteredTopics = trendTopics?.filter(topic => 
+  const filteredTopics = trendTopics?.data?.filter(topic => 
     topic.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -103,7 +103,7 @@ export default function Trends() {
                   <TableRow key={topic.id}>
                     <TableCell>{topic.title}</TableCell>
                     <TableCell>
-                      {sources?.find(s => s.id === topic.sourceId)?.name}
+                      {sources?.data?.find(s => s.id === topic.sourceId)?.name}
                     </TableCell>
                     <TableCell className="text-right">
                       {topic.reactions?.toLocaleString() ?? 0}

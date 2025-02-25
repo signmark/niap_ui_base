@@ -7,12 +7,21 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+interface ApiRequestConfig {
+  method?: string;
+  data?: unknown;
+  params?: Record<string, string>;
+}
+
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
+  config: ApiRequestConfig = {}
+): Promise<any> {
+  const { method = 'GET', data, params } = config;
+
+  const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+
+  const res = await fetch(url + queryString, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -20,7 +29,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
