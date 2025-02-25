@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface KeywordSelectorProps {
@@ -158,6 +158,27 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
+      {searchResults.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSaveSelected}
+            disabled={isSaving || searchResults.every(kw => !kw.selected)}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сохранение...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <Input
           placeholder="Введите запрос для поиска ключевых слов"
@@ -178,46 +199,29 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       </div>
 
       {searchResults.length > 0 && (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12"></TableHead>
+              <TableHead>Ключевое слово</TableHead>
+              <TableHead>Тренд</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {searchResults.map((keyword, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Checkbox
+                    checked={keyword.selected}
+                    onCheckedChange={() => handleKeywordToggle(index)}
+                  />
+                </TableCell>
+                <TableCell>{keyword.keyword}</TableCell>
+                <TableCell>{keyword.trend}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {searchResults.map((keyword, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Checkbox
-                      checked={keyword.selected}
-                      onCheckedChange={() => handleKeywordToggle(index)}
-                    />
-                  </TableCell>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveSelected}
-              disabled={isSaving || searchResults.every(kw => !kw.selected)}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Сохранение...
-                </>
-              ) : (
-                "Сохранить выбранные"
-              )}
-            </Button>
-          </div>
-        </>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       {isLoadingKeywords ? (
