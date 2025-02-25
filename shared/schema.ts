@@ -68,7 +68,12 @@ export const insertContentSourceSchema = createInsertSchema(contentSources)
     campaignId: true
   })
   .extend({
-    campaignId: z.string().transform((val) => Number(val)), // Преобразуем строку в число
+    campaignId: z.union([
+      z.string().transform((val) => Number(val)),
+      z.number(),
+      z.null(),
+      z.undefined()
+    ]).optional(),
   });
 
 export const insertTrendTopicSchema = createInsertSchema(trendTopics).pick({
