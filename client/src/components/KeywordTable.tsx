@@ -38,9 +38,9 @@ export function KeywordTable({
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
-    mutationFn: async (selectedKeywords: string[]) => {
+    mutationFn: async (keywordsToAdd: string[]) => {
       await Promise.all(
-        selectedKeywords.map(async (keywordText) => {
+        keywordsToAdd.map(async (keywordText) => {
           const keywordData = keywords.find(k => k.keyword === keywordText);
           if (!keywordData) return;
 
@@ -157,7 +157,7 @@ export function KeywordTable({
           }))].map((keyword) => (
             <TableRow key={keyword.keyword}>
               <TableCell>
-                {!keyword.isExisting && (
+                {!keyword.isExisting && !isKeywordAdded(keyword.keyword) && (
                   <Checkbox
                     checked={selectedKeywords.includes(keyword.keyword)}
                     onCheckedChange={(checked) => {
@@ -174,7 +174,7 @@ export function KeywordTable({
               <TableCell>{keyword.trend}</TableCell>
               <TableCell>{keyword.competition}</TableCell>
               <TableCell className="text-right">
-                {keyword.isExisting ? (
+                {keyword.isExisting || isKeywordAdded(keyword.keyword) ? (
                   <Button variant="ghost" size="sm" disabled>
                     Добавлено
                   </Button>
