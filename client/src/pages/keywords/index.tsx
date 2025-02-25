@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiRequest } from "@/lib/queryClient";
+import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 
@@ -16,15 +16,14 @@ export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await apiRequest('/api/campaigns');
-      return response?.data || [];
+      const response = await directusApi.get('/items/user_campaigns');
+      return response.data?.data || [];
     }
   });
 
@@ -33,8 +32,16 @@ export default function Keywords() {
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
       if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") return [];
-      const response = await apiRequest(`/api/campaigns/${selectedCampaign}/keywords`);
-      return response?.data || [];
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaign
+            }
+          }
+        }
+      });
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
@@ -42,9 +49,9 @@ export default function Keywords() {
   // Поиск ключевых слов
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
-      const response = await apiRequest(`/api/wordstat/${encodeURIComponent(keyword)}`);
-      if (!response?.data?.keywords) throw new Error("Не удалось найти ключевые слова");
-      return response.data.keywords;
+      const response = await directusApi.get(`/items/xmlriver_search/${encodeURIComponent(keyword)}`);
+      if (!response?.data?.data?.keywords) throw new Error("Не удалось найти ключевые слова");
+      return response.data.data.keywords;
     },
     onSuccess: (data) => {
       setSearchResults(data);
@@ -109,7 +116,7 @@ export default function Keywords() {
                   campaigns.map((campaign: Campaign) => (
                     <SelectItem 
                       key={campaign.id} 
-                      value={campaign.id.toString()}
+                      value={campaign.id}
                     >
                       {campaign.name}
                     </SelectItem>
@@ -154,7 +161,7 @@ export default function Keywords() {
           isLoading={isLoadingKeywords || isSearching}
           campaignId={selectedCampaign}
           onKeywordsUpdated={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
+            // queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
           }}
         />
       )}
