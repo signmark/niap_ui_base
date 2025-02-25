@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation, Link } from "wouter";
+import { Switch, Route, Link, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,7 +19,6 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
   const [, navigate] = useLocation();
 
   if (!token) {
-    console.log('No token found, redirecting to login');
     navigate("/auth/login");
     return null;
   }
@@ -32,25 +31,17 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
 }
 
 function Router() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const token = useAuthStore((state) => state.token);
-  const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  console.log('Router rendering, location:', location, 'token:', !!token, 'initialized:', isInitialized);
-
-  // Если store еще не инициализирован, показываем загрузку
-  if (!isInitialized) {
-    return <div>Loading...</div>;
-  }
-
-  // Если мы на странице логина и есть токен, редиректим на главную
-  if (location === "/auth/login" && token) {
-    return <Link to="/campaigns" />;
+  // Redirect from root to appropriate page
+  if (location === "/") {
+    navigate(token ? "/campaigns" : "/auth/login");
+    return null;
   }
 
   return (
     <Switch>
-      <Route path="/" component={() => <Link to={token ? "/campaigns" : "/auth/login"} />} />
       <Route path="/auth/login" component={Login} />
       <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
       <Route path="/campaigns/:id" component={() => <PrivateRoute component={CampaignDetails} />} />
@@ -65,7 +56,6 @@ function Router() {
 }
 
 function App() {
-  console.log('App rendering');
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
