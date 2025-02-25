@@ -97,24 +97,19 @@ export function KeywordTable({
     );
   }
 
+  const availableKeywords = keywords.filter(k => !isKeywordAdded(k.keyword));
   const allKeywords = [
     ...keywords.map(k => ({
       keyword: k.keyword,
       trendScore: k.trend,
       mentionsCount: k.competition,
-      isExisting: false
-    })),
-    ...existingKeywords.map(k => ({
-      keyword: k.keyword,
-      trendScore: k.trend_score || 0,
-      mentionsCount: k.mentions_count || 0,
-      isExisting: true
+      isExisting: isKeywordAdded(k.keyword)
     }))
   ];
 
   return (
     <div className="space-y-4">
-      {selectedKeywords.length > 0 && (
+      {availableKeywords.length > 0 && selectedKeywords.length > 0 && (
         <div className="flex justify-end">
           <Button
             onClick={handleAddSelected}
@@ -139,23 +134,21 @@ export function KeywordTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">
-              <Checkbox
-                checked={
-                  selectedKeywords.length === 
-                  keywords.filter(k => !isKeywordAdded(k.keyword)).length &&
-                  keywords.length > 0
-                }
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    const availableKeywords = keywords
-                      .filter(k => !isKeywordAdded(k.keyword))
-                      .map(k => k.keyword);
-                    setSelectedKeywords(availableKeywords);
-                  } else {
-                    setSelectedKeywords([]);
+              {availableKeywords.length > 0 && (
+                <Checkbox
+                  checked={
+                    selectedKeywords.length === availableKeywords.length &&
+                    availableKeywords.length > 0
                   }
-                }}
-              />
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedKeywords(availableKeywords.map(k => k.keyword));
+                    } else {
+                      setSelectedKeywords([]);
+                    }
+                  }}
+                />
+              )}
             </TableHead>
             <TableHead>Ключевое слово</TableHead>
             <TableHead>Тренд</TableHead>
