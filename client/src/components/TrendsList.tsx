@@ -2,24 +2,60 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { directusApi } from "@/lib/directus";
 
 interface TrendsListProps {
-  campaignId: string | number | null;
+  campaignId: string; // This is directus_id from the URL
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
-  const { data: trends, isLoading } = useQuery({
-    queryKey: ["/api/trends", campaignId],
+  // Сначала получаем кампанию по directus_id
+  const { data: campaign } = useQuery({
+    queryKey: ["/api/campaigns", campaignId],
     queryFn: async () => {
-      console.log("Fetching trends for campaign:", campaignId);
-      const response = await apiRequest('/api/trends', {
-        params: { campaignId }
+      const response = await directusApi.get(`/items/user_campaigns`, {
+        params: {
+          filter: {
+            directus_id: {
+              _eq: campaignId
+            }
+          },
+          limit: 1
+        }
       });
-      console.log("Trends response:", response);
-      return response?.data || [];
+      return response.data?.data?.[0];
     },
-    enabled: campaignId !== null && campaignId !== undefined
+    enabled: !!campaignId
+  });
+
+  // Получаем тренды, используя id кампании и включая данные источника
+  const { data: trends, isLoading } = useQuery({
+    queryKey: ["/api/trends", campaign?.id],
+    queryFn: async () => {
+      if (!campaign?.id) {
+        return [];
+      }
+
+      console.log("Fetching trends for campaign:", campaign.id);
+      const response = await directusApi.get('/items/trend_topics', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaign.id
+            }
+          },
+          fields: [
+            '*',
+            'source_id.*'
+          ],
+          sort: ['-created_at']
+        }
+      });
+
+      console.log("Trends response:", response.data);
+      return response.data?.data || [];
+    },
+    enabled: !!campaign?.id
   });
 
   if (isLoading) {

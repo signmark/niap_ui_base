@@ -131,7 +131,8 @@ export class DatabaseStorage implements IStorage {
         comments: trendTopics.comments,
         views: trendTopics.views,
         createdAt: trendTopics.createdAt,
-        campaignId: trendTopics.campaignId
+        campaignId: trendTopics.campaignId,
+        isBookmarked: trendTopics.isBookmarked
       })
       .from(trendTopics)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
