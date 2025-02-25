@@ -11,7 +11,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sources", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
-      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
 
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/trends", async (req, res) => {
     try {
       const period = req.query.period as string;
-      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
 
       const from = new Date();
       switch (period) {
@@ -73,15 +73,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      console.log('Starting trend collection for user:', userId, 'campaign:', campaignId);
+      const numericCampaignId = Number(campaignId);
+      if (isNaN(numericCampaignId)) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+
+      console.log('Starting trend collection for user:', userId, 'campaign:', numericCampaignId);
 
       // Получаем источники для данной кампании
-      const sources = await storage.getContentSources(userId, campaignId);
+      const sources = await storage.getContentSources(userId, numericCampaignId);
       if (!sources || sources.length === 0) {
         return res.status(400).json({ message: "No sources found for this campaign" });
       }
 
-      await crawler.crawlAllSources(userId, Number(campaignId));
+      await crawler.crawlAllSources(userId, numericCampaignId);
       console.log('Trend collection completed');
 
       res.json({ message: "Trend collection started" });
