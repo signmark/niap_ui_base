@@ -9,39 +9,16 @@ interface TrendsListProps {
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
-  // Сначала получаем кампанию по directus_id
-  const { data: campaign } = useQuery({
-    queryKey: ["/api/campaigns", campaignId],
-    queryFn: async () => {
-      const response = await directusApi.get(`/items/user_campaigns`, {
-        params: {
-          filter: {
-            directus_id: {
-              _eq: campaignId
-            }
-          },
-          limit: 1
-        }
-      });
-      return response.data?.data?.[0];
-    },
-    enabled: !!campaignId
-  });
-
-  // Получаем тренды, используя id кампании и включая данные источника
+  // Сначала получаем тренды для кампании напрямую по campaign_id из URL
   const { data: trends, isLoading } = useQuery({
-    queryKey: ["/api/trends", campaign?.id],
+    queryKey: ["/api/trends", campaignId],
     queryFn: async () => {
-      if (!campaign?.id) {
-        return [];
-      }
-
-      console.log("Fetching trends for campaign:", campaign.id);
+      console.log("Fetching trends for campaign directus_id:", campaignId);
       const response = await directusApi.get('/items/trend_topics', {
         params: {
           filter: {
             campaign_id: {
-              _eq: campaign.id
+              _eq: campaignId
             }
           },
           fields: [
@@ -55,7 +32,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       console.log("Trends response:", response.data);
       return response.data?.data || [];
     },
-    enabled: !!campaign?.id
+    enabled: !!campaignId
   });
 
   if (isLoading) {
