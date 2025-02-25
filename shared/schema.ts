@@ -36,11 +36,11 @@ export const trendTopics = pgTable("trend_topics", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   sourceId: integer("source_id").references(() => contentSources.id),
+  campaignId: integer("campaign_id").references(() => campaigns.id), // Добавляем связь с кампанией
   reactions: integer("reactions").default(0),
   comments: integer("comments").default(0),
   views: integer("views").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  isBookmarked: boolean("is_bookmarked").default(false)
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Schemas for data insertion
@@ -67,6 +67,7 @@ export const insertContentSourceSchema = createInsertSchema(contentSources).pick
 export const insertTrendTopicSchema = createInsertSchema(trendTopics).pick({
   title: true,
   sourceId: true,
+  campaignId: true, // Добавляем в схему
   reactions: true,
   comments: true,
   views: true

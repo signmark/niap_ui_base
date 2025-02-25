@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Добавляем endpoint для запуска сбора трендов
+  // Обновляем endpoint для запуска сбора трендов
   app.post("/api/trends/collect", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
@@ -94,9 +94,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      console.log('Starting trend collection for user:', userId);
+      const { campaignId } = req.body;
+      console.log('Starting trend collection for user:', userId, 'campaign:', campaignId);
+
       const { crawler } = await import('./services/crawler');
-      await crawler.crawlAllSources(userId);
+      await crawler.crawlAllSources(userId, campaignId ? Number(campaignId) : undefined);
       console.log('Trend collection completed');
 
       res.json({ message: "Trend collection started" });
