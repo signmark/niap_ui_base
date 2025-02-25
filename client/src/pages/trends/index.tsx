@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
-import type { ContentSource, TrendTopic } from "@shared/schema";
+import type { ContentSource, TrendTopic, Campaign } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -27,23 +27,23 @@ export default function Trends() {
   const userId = useAuthStore((state) => state.userId);
   const { toast } = useToast();
 
-  const { data: sources, isLoading: isLoadingSources } = useQuery({
-    queryKey: ["/api/sources", userId, selectedCampaignId],
-    queryFn: async () => {
-      const response = await apiRequest('/api/sources', {
-        params: { campaignId: selectedCampaignId }
-      });
-      return response;
-    },
-    enabled: !!selectedCampaignId
-  });
-
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
       const response = await apiRequest('/api/campaigns');
       return response;
     }
+  });
+
+  const { data: sources, isLoading: isLoadingSources } = useQuery({
+    queryKey: ["/api/sources", userId, selectedCampaignId],
+    queryFn: async () => {
+      const response = await apiRequest('/api/sources', {
+        params: { campaignId: selectedCampaignId || undefined }
+      });
+      return response;
+    },
+    enabled: !!userId
   });
 
   const { mutate: deleteSource } = useMutation({
@@ -72,11 +72,14 @@ export default function Trends() {
     queryKey: ["/api/trends", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
       const response = await apiRequest('/api/trends', {
-        params: { period: selectedPeriod, campaignId: selectedCampaignId }
+        params: { 
+          period: selectedPeriod,
+          campaignId: selectedCampaignId || undefined
+        }
       });
       return response;
     },
-    enabled: !!selectedCampaignId
+    enabled: !!userId
   });
 
   const toggleTopicSelection = (topic: TrendTopic) => {
@@ -162,18 +165,25 @@ export default function Trends() {
             </SelectTrigger>
             <SelectContent>
               {isLoadingCampaigns ? (
-                <SelectItem value="">Загрузка...</SelectItem>
-              ) : campaigns?.map((campaign) => (
-                <SelectItem key={campaign.id} value={campaign.id.toString()}>
-                  {campaign.name}
-                </SelectItem>
-              ))}
+                <SelectItem value="loading">Загрузка...</SelectItem>
+              ) : campaigns?.length === 0 ? (
+                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+              ) : (
+                campaigns?.map((campaign: Campaign) => (
+                  <SelectItem 
+                    key={campaign.id} 
+                    value={campaign.id.toString()}
+                  >
+                    {campaign.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </CardContent>
       </Card>
 
-      {selectedCampaignId ? (
+      {selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" ? (
         <>
           {/* Sources List */}
           <Card>

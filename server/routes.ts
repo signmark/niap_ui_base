@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Обновляем endpoint для запуска сбора трендов
+  // Trend collection endpoint
   app.post("/api/trends/collect", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"] as string;
