@@ -16,10 +16,10 @@ export interface IStorage {
   deleteKeyword(id: number): Promise<void>;
 
   // Content Sources and Trends
-  getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]>;
+  getContentSources(userId: string, campaignId?: number | string): Promise<ContentSource[]>;
   createContentSource(source: InsertContentSource): Promise<ContentSource>;
   deleteContentSource(id: number, userId: string): Promise<void>;
-  getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
+  getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number | string }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
 }
 
@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Content Sources
-  async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
+  async getContentSources(userId: string, campaignId?: number | string): Promise<ContentSource[]> {
     console.log('Getting content sources with conditions:', { userId, campaignId });
 
     const conditions = [
@@ -75,8 +75,12 @@ export class DatabaseStorage implements IStorage {
       eq(contentSources.isActive, true)
     ];
 
-    if (typeof campaignId === 'number' && !isNaN(campaignId)) {
-      conditions.push(eq(contentSources.campaignId, campaignId));
+    // Only add campaignId condition if it's provided and valid
+    if (campaignId !== undefined && campaignId !== null && campaignId !== '') {
+      const numericCampaignId = Number(campaignId);
+      if (!isNaN(numericCampaignId)) {
+        conditions.push(eq(contentSources.campaignId, numericCampaignId));
+      }
     }
 
     const sources = await db
@@ -109,7 +113,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Trend Topics
-  async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number } = {}): Promise<TrendTopic[]> {
+  async getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number | string } = {}): Promise<TrendTopic[]> {
     console.log('Fetching trends with params:', params);
 
     const conditions = [];
@@ -120,8 +124,13 @@ export class DatabaseStorage implements IStorage {
     if (params.to) {
       conditions.push(sql`${trendTopics.createdAt} <= ${params.to}`);
     }
-    if (typeof params.campaignId === 'number' && !isNaN(params.campaignId)) {
-      conditions.push(eq(trendTopics.campaignId, params.campaignId));
+
+    // Only add campaignId condition if it's provided and valid
+    if (params.campaignId !== undefined && params.campaignId !== null && params.campaignId !== '') {
+      const numericCampaignId = Number(params.campaignId);
+      if (!isNaN(numericCampaignId)) {
+        conditions.push(eq(trendTopics.campaignId, numericCampaignId));
+      }
     }
 
     const trends = await db
@@ -135,9 +144,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
+    const numericCampaignId = topic.campaignId ? Number(topic.campaignId) : null;
     const [newTopic] = await db.insert(trendTopics).values({
       ...topic,
-      campaignId: topic.campaignId ? Number(topic.campaignId) : null
+      campaignId: numericCampaignId
     }).returning();
     return newTopic;
   }
