@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
@@ -46,7 +47,7 @@ export default function Keywords() {
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
-  // Поиск ключевых слов
+  // Поиск ключевых слов через XMLRiver
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (keyword: string) => {
       const response = await directusApi.get(`/items/xmlriver_search/${encodeURIComponent(keyword)}`);
@@ -161,7 +162,7 @@ export default function Keywords() {
           isLoading={isLoadingKeywords || isSearching}
           campaignId={selectedCampaign}
           onKeywordsUpdated={() => {
-            // queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
+            queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
           }}
         />
       )}
