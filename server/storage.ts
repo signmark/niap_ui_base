@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { contentSources, trendTopics, campaigns, keywords, type Campaign, type InsertCampaign, type Keyword, type InsertKeyword, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
+import { trendTopics, contentSources, campaigns, keywords, type Campaign, type InsertCampaign, type Keyword, type InsertKeyword, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
 import { eq, desc, sql, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -125,6 +125,7 @@ export class DatabaseStorage implements IStorage {
     const query = db
       .select({
         id: trendTopics.id,
+        directusId: trendTopics.directusId,
         title: trendTopics.title,
         sourceId: trendTopics.sourceId,
         reactions: trendTopics.reactions,
