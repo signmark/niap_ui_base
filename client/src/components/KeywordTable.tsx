@@ -34,15 +34,17 @@ export function KeywordTable({
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
 
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
-    mutationFn: async (keywords: string[]) => {
+    mutationFn: async (selectedKeywords: string[]) => {
       await Promise.all(
-        keywords.map(async (keyword) => {
-          const keywordData = keywords.find(k => k === keyword);
+        selectedKeywords.map(async (keywordText) => {
+          const keywordData = keywords.find(k => k.keyword === keywordText);
+          if (!keywordData) return;
+
           await directusApi.post("/items/user_keywords", {
             campaign_id: campaignId,
-            keyword: keyword,
-            trend_score: keywordData ? keywordData.trendScore : 0,
-            mentions_count: 0,
+            keyword: keywordText,
+            trend_score: keywordData.trendScore,
+            mentions_count: keywordData.mentionsCount,
             last_checked: new Date().toISOString()
           });
         })
