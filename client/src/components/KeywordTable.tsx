@@ -98,14 +98,6 @@ export function KeywordTable({
   }
 
   const availableKeywords = keywords.filter(k => !isKeywordAdded(k.keyword));
-  const allKeywords = [
-    ...keywords.map(k => ({
-      keyword: k.keyword,
-      trendScore: k.trend,
-      mentionsCount: k.competition,
-      isExisting: isKeywordAdded(k.keyword)
-    }))
-  ];
 
   return (
     <div className="space-y-4">
@@ -157,7 +149,12 @@ export function KeywordTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {allKeywords.map((keyword) => (
+          {[...keywords, ...existingKeywords.map(k => ({
+            keyword: k.keyword,
+            trend: k.trendScore,
+            competition: k.mentionsCount,
+            isExisting: true
+          }))].map((keyword) => (
             <TableRow key={keyword.keyword}>
               <TableCell>
                 {!keyword.isExisting && (
@@ -174,8 +171,8 @@ export function KeywordTable({
                 )}
               </TableCell>
               <TableCell>{keyword.keyword}</TableCell>
-              <TableCell>{keyword.trendScore}</TableCell>
-              <TableCell>{keyword.mentionsCount}</TableCell>
+              <TableCell>{keyword.trend}</TableCell>
+              <TableCell>{keyword.competition}</TableCell>
               <TableCell className="text-right">
                 {keyword.isExisting ? (
                   <Button variant="ghost" size="sm" disabled>
