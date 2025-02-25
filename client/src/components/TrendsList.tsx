@@ -13,16 +13,19 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   const { data: trends, isLoading } = useQuery({
     queryKey: ["/api/trends", campaignId],
     queryFn: async () => {
+      console.log("Fetching trends for campaign:", campaignId);
       const response = await directusApi.get('/items/trend_topics', {
         params: {
           filter: {
             campaign_id: {
-              _eq: Number(campaignId)
+              _eq: campaignId
             }
           },
-          fields: ['*', 'source_id.name', 'source_id.url']
+          fields: ['*', 'source_id.name', 'source_id.url'],
+          sort: ['-created_at']
         }
       });
+      console.log("Trends response:", response.data);
       return response.data?.data || [];
     },
     enabled: !!campaignId
