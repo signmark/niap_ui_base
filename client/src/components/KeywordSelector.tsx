@@ -158,6 +158,25 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input
+          placeholder="Введите запрос для поиска ключевых слов"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+        />
+        <Button onClick={handleSearch} disabled={isSearching}>
+          {isSearching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Поиск...
+            </>
+          ) : (
+            "Искать"
+          )}
+        </Button>
+      </div>
+
       {searchResults.length > 0 && (
         <div className="flex justify-end">
           <Button
@@ -178,25 +197,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           </Button>
         </div>
       )}
-
-      <div className="flex gap-2">
-        <Input
-          placeholder="Введите запрос для поиска ключевых слов"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <Button onClick={handleSearch} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск...
-            </>
-          ) : (
-            "Искать"
-          )}
-        </Button>
-      </div>
 
       {searchResults.length > 0 && (
         <Table>
