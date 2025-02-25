@@ -13,7 +13,7 @@ export class ContentCrawler {
       return [{
         title,
         sourceId: source.id,
-        campaignId: campaignId || null,
+        campaignId: campaignId,
         reactions: Math.floor(Math.random() * 100),
         comments: Math.floor(Math.random() * 50),
         views: Math.floor(Math.random() * 1000)
@@ -32,7 +32,7 @@ export class ContentCrawler {
       return [{
         title,
         sourceId: source.id,
-        campaignId: campaignId || null,
+        campaignId: campaignId,
         reactions: Math.floor(Math.random() * 200),
         comments: Math.floor(Math.random() * 100),
         views: Math.floor(Math.random() * 2000)
@@ -51,7 +51,7 @@ export class ContentCrawler {
       return [{
         title,
         sourceId: source.id,
-        campaignId: campaignId || null,
+        campaignId: campaignId,
         reactions: Math.floor(Math.random() * 300),
         comments: Math.floor(Math.random() * 150),
         views: Math.floor(Math.random() * 3000)
@@ -78,23 +78,28 @@ export class ContentCrawler {
     }
   }
 
-  async crawlAllSources(userId: string, campaignId?: number): Promise<void> {
+  async crawlAllSources(userId: string, campaignId: number): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
+
+      // Получаем только источники для указанной кампании
       const sources = await storage.getContentSources(userId, campaignId);
-      console.log(`Found ${sources.length} sources to crawl`);
+      console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
       for (const source of sources) {
-        console.log(`Crawling source: ${source.name} (${source.type})`);
+        console.log(`Crawling source: ${source.name} (${source.type}) for campaign ${campaignId}`);
         const topics = await this.crawlSource(source, campaignId);
         console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         for (const topic of topics) {
-          console.log(`Saving topic: ${topic.title}`);
-          await storage.createTrendTopic(topic);
+          console.log(`Saving topic: ${topic.title} for campaign ${campaignId}`);
+          await storage.createTrendTopic({
+            ...topic,
+            campaignId: campaignId
+          });
         }
       }
-      console.log('Finished crawling all sources');
+      console.log(`Finished crawling all sources for campaign ${campaignId}`);
     } catch (error) {
       console.error('Error crawling sources:', error);
       throw error;
