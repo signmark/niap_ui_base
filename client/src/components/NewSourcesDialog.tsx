@@ -38,10 +38,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   // Функция для определения типа источника по URL
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
-    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) return 'telegram';
-    if (lowercaseUrl.includes('vk.com')) return 'vk';
-    if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) return 'youtube';
-    if (lowercaseUrl.includes('reddit.com')) return 'reddit';
+    // Проверяем в порядке приоритета
+    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) {
+      return 'telegram';
+    }
+    if (lowercaseUrl.includes('vk.com')) {
+      return 'vk';
+    }
+    if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) {
+      return 'youtube';
+    }
+    if (lowercaseUrl.includes('reddit.com/r/')) {
+      return 'reddit';
+    }
+    // Если не нашли соответствий, значит это обычный веб-сайт
     return 'website';
   };
 
@@ -74,11 +84,34 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             .map(url => {
               const cleanUrl = url.trim();
               const type = detectSourceType(cleanUrl);
-              const urlObj = new URL(cleanUrl);
-              const domain = urlObj.hostname.replace(/^www\./, '');
+
+              // Извлекаем название из URL в зависимости от типа
+              let name = '';
+              try {
+                const urlObj = new URL(cleanUrl);
+                switch (type) {
+                  case 'telegram':
+                    name = urlObj.pathname.split('/').pop() || 'Telegram Channel';
+                    break;
+                  case 'vk':
+                    name = urlObj.pathname.split('/').pop() || 'VK Group';
+                    break;
+                  case 'youtube':
+                    name = urlObj.pathname.includes('/channel/') ?
+                      'YouTube Channel' : urlObj.pathname.split('/').pop() || 'YouTube';
+                    break;
+                  case 'reddit':
+                    name = urlObj.pathname.split('/r/')[1]?.split('/')[0] || 'Reddit';
+                    break;
+                  default:
+                    name = urlObj.hostname.replace(/^www\./, '');
+                }
+              } catch (e) {
+                name = 'Unknown Source';
+              }
 
               return {
-                name: domain,
+                name,
                 url: cleanUrl,
                 type
               };
@@ -88,35 +121,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         console.error('Error parsing JSON response:', e);
       }
 
-      // Если не удалось распарсить JSON, ищем URLs в тексте
-      const urlRegex = /https?:\/\/[^\s\)"]+/g;
-      const urls = content.match(urlRegex) || [];
-
-      const parsedSources = urls
-        .filter(url => {
-          try {
-            new URL(url);
-            return true;
-          } catch {
-            return false;
-          }
-        })
-        .map(url => {
-          const cleanUrl = url.replace(/[,\)"]+$/, '');
-          const type = detectSourceType(cleanUrl);
-          const urlObj = new URL(cleanUrl);
-          const domain = urlObj.hostname.replace(/^www\./, '');
-
-          return {
-            name: domain,
-            url: cleanUrl,
-            type
-          };
-        });
-
-      console.log('Parsed sources:', parsedSources);
-      return parsedSources;
-
+      return [];
     } catch (e) {
       console.error('Error parsing sources:', e);
       return [];
