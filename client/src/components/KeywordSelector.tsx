@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,10 +22,11 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Обновленный запрос для получения существующих ключевых слов
   const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
-    queryKey: ["/api/campaigns", campaignId, "keywords"],
+    queryKey: ["/api/keywords", campaignId],
     queryFn: async () => {
       try {
         const response = await directusApi.get(`/items/user_keywords`, {
@@ -98,7 +99,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
-      refetchKeywords(); // Принудительно обновляем список после сохранения
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
     },
     onError: (error) => {
       console.error("Error saving keywords:", error);
