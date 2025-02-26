@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { trendTopics, contentSources, campaigns, keywords, type Campaign, type InsertCampaign, type Keyword, type InsertKeyword, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
+import { trendTopics, contentSources, campaigns, type Campaign, type InsertCampaign, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
 import { eq, desc, sql, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -8,12 +8,6 @@ export interface IStorage {
   getCampaign(id: number): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
-
-  // Keywords
-  getKeywords(campaignId: number): Promise<Keyword[]>;
-  addKeyword(keyword: InsertKeyword): Promise<Keyword>;
-  updateKeyword(id: number, keyword: Partial<Keyword>): Promise<Keyword>;
-  deleteKeyword(id: number): Promise<void>;
 
   // Content Sources and Trends
   getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]>;
@@ -24,40 +18,6 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Keywords
-  async getKeywords(campaignId: number): Promise<Keyword[]> {
-    console.log('Getting keywords for campaign:', campaignId);
-    const result = await db
-      .select()
-      .from(keywords)
-      .where(eq(keywords.campaignId, campaignId));
-    console.log('Found keywords:', result);
-    return result;
-  }
-
-  async addKeyword(keyword: InsertKeyword): Promise<Keyword> {
-    console.log('Adding keyword:', keyword);
-    const [newKeyword] = await db
-      .insert(keywords)
-      .values(keyword)
-      .returning();
-    console.log('Added keyword:', newKeyword);
-    return newKeyword;
-  }
-
-  async updateKeyword(id: number, keyword: Partial<Keyword>): Promise<Keyword> {
-    const [updatedKeyword] = await db
-      .update(keywords)
-      .set(keyword)
-      .where(eq(keywords.id, id))
-      .returning();
-    return updatedKeyword;
-  }
-
-  async deleteKeyword(id: number): Promise<void> {
-    await db.delete(keywords).where(eq(keywords.id, id));
-  }
-
   // Content Sources
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
     console.log('Getting content sources with params:', { userId, campaignId });
