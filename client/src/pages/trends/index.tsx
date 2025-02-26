@@ -130,9 +130,8 @@ export default function Trends() {
         throw new Error("Выберите кампанию");
       }
 
-      const campaign = campaigns.find(c => c.id === selectedCampaignId);
-      if (!campaign) {
-        throw new Error("Кампания не найдена");
+      if (!keywords?.length) {
+        throw new Error("Добавьте ключевые слова в кампанию");
       }
 
       const keywordsList = keywords.map((k: any) => k.keyword);
@@ -143,16 +142,11 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: `Вы - эксперт по социальным сетям и SMM. Проанализируйте указанный сайт и создайте список ключевых слов для продвижения в социальных сетях. Ответ должен быть в формате JSON-массива строк.`
+            content: `Вы - эксперт по поиску релевантных источников контента. Проанализируйте следующие ключевые слова и найдите популярные источники (веб-сайты, каналы, группы) с релевантным контентом. Возвращайте только JSON-массив с найденными источниками в формате: ["url1", "url2", "url3"]`
           },
           {
             role: "user",
-            content: `Проанализируйте сайт ${campaign?.link || ''} и предложите список ключевых слов и хэштегов для продвижения в социальных сетях, учитывая:
-      1. Брендовые ключевые слова
-      2. Тематические хэштеги
-      3. Популярные поисковые запросы в соцсетях
-      4. Конкурентные преимущества
-      5. Актуальные тренды в нише`
+            content: `Найдите самые релевантные источники по следующим ключевым словам: ${keywordsList.join(", ")}`
           }
         ],
         max_tokens: 1000,
@@ -169,6 +163,10 @@ export default function Trends() {
         },
         body: JSON.stringify(requestBody)
       });
+
+      if (!response.ok) {
+        throw new Error('Ошибка при поиске источников');
+      }
 
       const data = await response.json();
       console.log('API Response:', data);
