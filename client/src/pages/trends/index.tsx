@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import type { Campaign } from "@shared/schema";
 import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { queryClient } from "@/lib/queryClient";
 
 interface ContentSource {
   id: string;
@@ -42,6 +43,7 @@ export default function Trends() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSearchingNewSources, setIsSearchingNewSources] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const { toast } = useToast();
@@ -86,6 +88,79 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
+  // Удаление источника
+  const { mutate: deleteSource } = useMutation({
+    mutationFn: async (sourceId: string) => {
+      return await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
+        is_active: false
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+      toast({
+        title: "Успешно",
+        description: "Источник удален"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось удалить источник"
+      });
+    }
+  });
+
+  // Поиск новых источников через Perplexity
+  const { mutate: searchNewSources, isPending: isSearching } = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: "Find social media sources and websites that regularly post about these topics and have good engagement metrics (reactions, comments, views). Return only the URLs and names in JSON format."
+            },
+            {
+              role: "user",
+              content: `Find me top social media sources and websites about these topics: ${sources.map(s => s.name).join(", ")}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to search sources');
+      }
+
+      const data = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Успешно",
+        description: "Найдены новые источники"
+      });
+      setIsSearchingNewSources(true);
+      // TODO: Показать найденные источники в диалоге
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось найти новые источники"
+      });
+    }
+  });
+
   // Получаем тренды через Directus
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
@@ -114,29 +189,15 @@ export default function Trends() {
             sort: ['-reactions']
           }
         });
-
-        console.log("Trends API response:", response.data);
         return response.data?.data || [];
       } catch (error) {
-        console.error("Error fetching trends:", error);
         throw error;
       }
     },
     enabled: !!selectedCampaignId
   });
 
-  const toggleTopicSelection = (topic: TrendTopic) => {
-    setSelectedTopics(prev => {
-      const isSelected = prev.some(t => t.id === topic.id);
-      if (isSelected) {
-        return prev.filter(t => t.id !== topic.id);
-      } else {
-        return [...prev, topic];
-      }
-    });
-  };
-
-  // Запуск сбора трендов
+  // Для сбора трендов
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
       return await directusApi.post('/utils/crawler/run', {
@@ -158,7 +219,17 @@ export default function Trends() {
     }
   });
 
-  // Валидируем выбранную кампанию
+  const toggleTopicSelection = (topic: TrendTopic) => {
+    setSelectedTopics(prev => {
+      const isSelected = prev.some(t => t.id === topic.id);
+      if (isSelected) {
+        return prev.filter(t => t.id !== topic.id);
+      } else {
+        return [...prev, topic];
+      }
+    });
+  };
+
   const isValidCampaignSelected = selectedCampaignId && 
     selectedCampaignId !== "loading" && 
     selectedCampaignId !== "empty";
@@ -181,6 +252,23 @@ export default function Trends() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => searchNewSources()}
+            disabled={isSearching || !isValidCampaignSelected}
+          >
+            {isSearching ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Поиск источников...
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Найти источники
+              </>
+            )}
+          </Button>
           <Button
             variant="outline"
             onClick={() => collectTrends()}
@@ -258,6 +346,17 @@ export default function Trends() {
                             source.type === 'telegram' ? 'Telegram канал' :
                               source.type === 'vk' ? 'VK группа' : source.type}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm('Вы уверены, что хотите удалить этот источник?')) {
+                              deleteSource(source.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                   ))}
