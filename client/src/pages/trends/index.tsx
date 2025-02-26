@@ -152,8 +152,10 @@ export default function Trends() {
 - LinkedIn (linkedin.com/company/... или linkedin.com/in/...)
 - Reddit (reddit.com/r/...)
 
-Анализируйте ключевые слова и возвращайте только JSON-массив с найденными источниками в формате: ["url1", "url2", "url3"].
-Убедитесь, что все URL ведут именно на страницы соцсетей.`
+Возвращайте ТОЛЬКО JSON-массив с найденными источниками в формате:
+["twitter.com/example", "vk.com/group", "t.me/channel"]
+
+ВАЖНО: Не добавляйте никакого описательного текста или форматирования, только JSON-массив с URL.`
           },
           {
             role: "user",
