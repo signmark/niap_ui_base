@@ -21,6 +21,22 @@ interface SuggestedKeyword {
   isSelected: boolean;
 }
 
+// Add URL validation helper
+const normalizeUrl = (url: string): string => {
+  if (!url) return '';
+
+  try {
+    // Ensure URL has protocol
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    const urlObj = new URL(url);
+    return urlObj.toString();
+  } catch (e) {
+    return '';
+  }
+};
+
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -71,6 +87,11 @@ export default function CampaignDetails() {
 
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (url: string) => {
+      const normalizedUrl = normalizeUrl(url);
+      if (!normalizedUrl) {
+        throw new Error('Пожалуйста, введите корректный URL сайта');
+      }
+
       const requestBody = {
         model: "llama-3.1-sonar-small-128k-online",
         messages: [
@@ -80,7 +101,7 @@ export default function CampaignDetails() {
           },
           {
             role: "user",
-            content: `Сгенерируйте список из 10-15 самых релевантных ключевых слов для продвижения этого сайта в социальных сетях, учитывая его тематику и целевую аудиторию: ${url}`
+            content: `Проанализируйте сайт ${normalizedUrl} и сгенерируйте список из 10-15 самых релевантных ключевых слов для его продвижения в социальных сетях, учитывая тематику и целевую аудиторию. Верните только JSON-массив.`
           }
         ],
         max_tokens: 1000,
@@ -190,6 +211,14 @@ export default function CampaignDetails() {
     }
   };
 
+  const handleUrlUpdate = (newUrl: string) => {
+    const normalizedUrl = normalizeUrl(newUrl);
+    if (normalizedUrl !== campaign.link) {
+      updateCampaign({ link: normalizedUrl });
+    }
+  };
+
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -218,17 +247,12 @@ export default function CampaignDetails() {
           <Input
             placeholder="Введите URL сайта"
             defaultValue={campaign.link || ""}
-            onBlur={(e) => {
-              const newLink = e.target.value.trim();
-              if (newLink !== campaign.link) {
-                updateCampaign({ link: newLink });
-              }
-            }}
+            onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
             className="max-w-md"
           />
           <Button
             variant="secondary"
-            onClick={() => searchKeywords(campaign.link)}
+            onClick={() => campaign.link && searchKeywords(campaign.link)}
             disabled={isSearching || !campaign.link}
           >
             {isSearching ? (
