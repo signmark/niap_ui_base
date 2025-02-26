@@ -110,23 +110,16 @@ export default function Trends() {
     }
   });
 
-  // Получаем ключевые слова для кампании
-  const { data: keywords = [] } = useQuery({
+  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["campaign_keywords", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
       try {
-        const response = await directusApi.get('/items/campaign_keywords', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: selectedCampaignId
-              }
-            },
-            fields: ['id', 'keyword']
-          }
-        });
-        return response.data?.data || [];
+        const response = await fetch(`/api/campaigns/${selectedCampaignId}/keywords`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch keywords');
+        }
+        return response.json();
       } catch (error) {
         console.error("Error fetching keywords:", error);
         return [];
@@ -138,6 +131,11 @@ export default function Trends() {
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
+
+      if (!keywordsList) {
+        throw new Error('Добавьте ключевые слова для поиска источников');
+      }
+
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -176,7 +174,7 @@ Return the result as a JSON object with an array of sources. Format:
             },
             {
               role: "user",
-              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views.`
+              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views. Return sources with actual numeric values for metrics, not placeholders.`
             }
           ],
           max_tokens: 1000,
@@ -203,7 +201,7 @@ Return the result as a JSON object with an array of sources. Format:
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось найти новые источники"
+        description: error.message
       });
     }
   });
