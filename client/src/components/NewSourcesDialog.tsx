@@ -59,12 +59,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         await directusApi.post('/items/campaign_content_sources', {
           name: source.name,
           url: source.url,
-          type: source.type || 'website',
+          type: source.type,
           campaign_id: campaignId,
-          is_active: true,
-          update_frequency: source.post_frequency,
-          metrics_info: source.example_stats,
-          followers_count: source.followers
+          is_active: true
         });
       }
 
@@ -127,39 +124,13 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Платформа:</span>
                           <span className="font-medium">
-                            {source.type === 'twitter' ? 'Twitter/X' :
-                             source.type === 'vk' ? 'ВКонтакте' :
+                            {source.type === 'vk' ? 'ВКонтакте' :
                              source.type === 'telegram' ? 'Telegram' :
-                             source.type === 'instagram' ? 'Instagram' :
-                             source.type === 'facebook' ? 'Facebook' :
+                             source.type === 'youtube' ? 'YouTube' :
                              source.type === 'linkedin' ? 'LinkedIn' :
-                             source.type === 'reddit' ? 'Reddit' :
-                             source.type === 'youtube' ? 'YouTube' : source.type}
+                             source.type === 'reddit' ? 'Reddit' : source.type}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-muted-foreground">Подписчики:</span>
-                          <span className="font-medium">{source.followers}</span>
-                        </div>
-                        {source.metrics_available && (
-                          <div className="mt-2">
-                            <p className="text-muted-foreground">Средние показатели:</p>
-                            <div className="grid grid-cols-3 gap-2 mt-1">
-                              <div>
-                                👍 {source.example_stats?.avg_reactions || 'N/A'}
-                              </div>
-                              <div>
-                                💬 {source.example_stats?.avg_comments || 'N/A'}
-                              </div>
-                              <div>
-                                👀 {source.example_stats?.avg_views || 'N/A'}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Обновляется: {source.post_frequency === 'daily' ? 'ежедневно' : 'еженедельно'}
-                        </p>
                       </div>
                     </div>
                   </div>
