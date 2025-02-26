@@ -172,7 +172,10 @@ export default function CampaignDetails() {
       const promises = keywords.map(keyword => 
         directusApi.post('/items/user_keywords', {
           campaign_id: id,
-          keyword: keyword
+          keyword: keyword,
+          trend_score: 0, // Default trend score
+          mentions_count: 0, // Default mentions count
+          last_checked: new Date().toISOString() // Current timestamp
         })
       );
       await Promise.all(promises);
