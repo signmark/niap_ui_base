@@ -226,7 +226,9 @@ Return JSON in this format:
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}: ${await response.text()}`);
+        const errorText = await response.text();
+        console.error(`API request failed with status ${response.status}: ${errorText}`);
+        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
