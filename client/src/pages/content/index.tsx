@@ -9,10 +9,18 @@ import { PublicationPanel } from "@/components/PublicationPanel";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
+interface ContentSource {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  is_active: boolean;
+}
+
 interface TrendTopic {
   id: string;
   title: string;
-  source: { id: string; name: string };
+  source: ContentSource;
   reactions: number;
   comments: number;
   views: number;
@@ -49,7 +57,30 @@ export default function ContentManagement() {
               _eq: selectedCampaignId
             }
           },
-          fields: ['*', 'source.id', 'source.name'],
+          fields: ['*', 'source.*'],
+          sort: ['-created_at']
+        }
+      });
+
+      return response.data?.data || [];
+    },
+    enabled: !!selectedCampaignId
+  });
+
+  // Получаем источники контента для выбранной кампании
+  const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
+    queryKey: ["/api/campaign_content_sources", selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+
+      const response = await directusApi.get('/items/campaign_content_sources', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
+            }
+          },
+          fields: ['*'],
           sort: ['-created_at']
         }
       });
