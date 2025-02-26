@@ -37,7 +37,9 @@ export default function ContentManagement() {
       if (!response.ok) {
         throw new Error('Failed to fetch trends');
       }
-      return await response.json();
+      const data = await response.json();
+      console.log('Fetched trends:', data); // Debug log
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!selectedCampaignId
   });
