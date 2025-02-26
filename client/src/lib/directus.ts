@@ -20,8 +20,8 @@ directusApi.interceptors.request.use(
     console.log('Directus API Request:', {
       url: config.url,
       method: config.method,
+      params: config.params,
       headers: config.headers,
-      data: config.data
     });
     return config;
   },
@@ -35,16 +35,19 @@ directusApi.interceptors.response.use(
   (response) => {
     console.log('Directus API Response:', {
       status: response.status,
-      data: response.data
+      data: response.data,
+      headers: response.headers,
     });
     return response;
   },
   (error) => {
     console.error('Directus API Error:', {
+      message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message
+      config: error.config,
     });
+
     if (error.response?.status === 401) {
       useAuthStore.getState().clearAuth();
       window.location.href = '/auth/login';
