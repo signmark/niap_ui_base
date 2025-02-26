@@ -58,14 +58,42 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Извлекаем URL из текста
+      try {
+        // Пытаемся распарсить JSON массив напрямую
+        const urls = JSON.parse(content);
+        if (Array.isArray(urls)) {
+          return urls
+            .filter(url => {
+              try {
+                new URL(url);
+                return true;
+              } catch {
+                return false;
+              }
+            })
+            .map(url => {
+              const cleanUrl = url.trim();
+              const type = detectSourceType(cleanUrl);
+              const urlObj = new URL(cleanUrl);
+              const domain = urlObj.hostname.replace(/^www\./, '');
+
+              return {
+                name: domain,
+                url: cleanUrl,
+                type
+              };
+            });
+        }
+      } catch (e) {
+        console.error('Error parsing JSON response:', e);
+      }
+
+      // Если не удалось распарсить JSON, ищем URLs в тексте
       const urlRegex = /https?:\/\/[^\s\)"]+/g;
       const urls = content.match(urlRegex) || [];
 
-      // Создаем массив источников
       const parsedSources = urls
         .filter(url => {
-          // Фильтруем только валидные URL
           try {
             new URL(url);
             return true;
@@ -74,11 +102,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           }
         })
         .map(url => {
-          // Очищаем URL от лишних символов
           const cleanUrl = url.replace(/[,\)"]+$/, '');
           const type = detectSourceType(cleanUrl);
-
-          // Создаем название из домена
           const urlObj = new URL(cleanUrl);
           const domain = urlObj.hostname.replace(/^www\./, '');
 
@@ -103,7 +128,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentSources = sources.slice(startIndex, endIndex);
 
-  const isSourceSelected = (source: ParsedSource) => 
+  const isSourceSelected = (source: ParsedSource) =>
     selectedSources.some(s => s.url === source.url);
 
   const handleSelectAll = (checked: boolean) => {
