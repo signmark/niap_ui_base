@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -11,9 +11,12 @@ import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { Input } from "@/components/ui/input";
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedName, setEditedName] = useState("");
   const { userId } = useAuthStore();
   const { toast } = useToast();
 
@@ -39,6 +42,29 @@ export default function Campaigns() {
     enabled: !!userId,
   });
 
+  const { mutate: updateCampaign } = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      await directusApi.patch(`/items/user_campaigns/${id}`, {
+        name: name.trim()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({
+        title: "Успешно",
+        description: "Название кампании обновлено"
+      });
+      setEditingId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось обновить название"
+      });
+    }
+  });
+
   const { mutate: deleteCampaign } = useMutation({
     mutationFn: async (id: number) => {
       await directusApi.delete(`/items/user_campaigns/${id}`);
@@ -59,6 +85,25 @@ export default function Campaigns() {
     },
   });
 
+  const startEditing = (campaign: Campaign) => {
+    setEditingId(campaign.id);
+    setEditedName(campaign.name);
+  };
+
+  const handleSave = () => {
+    if (editingId && editedName.trim()) {
+      updateCampaign({ id: editingId, name: editedName });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setEditingId(null);
+    }
+  };
+
   if (isLoading) {
     return <div>Загрузка...</div>;
   }
@@ -77,7 +122,33 @@ export default function Campaigns() {
         {campaigns?.map((campaign) => (
           <Card key={campaign.id}>
             <CardHeader>
-              <CardTitle>{campaign.name}</CardTitle>
+              {editingId === campaign.id ? (
+                <Input
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  onBlur={handleSave}
+                  onKeyDown={handleKeyDown}
+                  className="font-semibold"
+                  autoFocus
+                />
+              ) : (
+                <CardTitle className="flex items-center gap-2">
+                  <span 
+                    className="cursor-pointer flex-grow"
+                    onClick={() => startEditing(campaign)}
+                  >
+                    {campaign.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => startEditing(campaign)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </CardTitle>
+              )}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-500">{campaign.description}</p>
