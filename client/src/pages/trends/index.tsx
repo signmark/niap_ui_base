@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Trash2, Pencil } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
@@ -15,6 +15,7 @@ import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { queryClient } from "@/lib/queryClient";
+import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 
 interface ContentSource {
   id: string;
@@ -48,6 +49,7 @@ export default function Trends() {
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+  const [isEditingCampaign, setIsEditingCampaign] = useState(false);
   const { toast } = useToast();
 
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
@@ -324,24 +326,37 @@ export default function Trends() {
 
       <Card>
         <CardContent className="pt-6">
-          <Select
-            value={selectedCampaignId}
-            onValueChange={setSelectedCampaignId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns.map((campaign) => (
-                <SelectItem
-                  key={campaign.id}
-                  value={campaign.id}
-                >
-                  {campaign.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Select
+                value={selectedCampaignId}
+                onValueChange={setSelectedCampaignId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите кампанию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((campaign) => (
+                    <SelectItem
+                      key={campaign.id}
+                      value={campaign.id}
+                    >
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedCampaignId && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsEditingCampaign(true)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -496,6 +511,15 @@ export default function Trends() {
               setFoundSourcesData(null);
             }}
             sourcesData={foundSourcesData}
+          />
+        )}
+      </Dialog>
+      <Dialog open={isEditingCampaign} onOpenChange={setIsEditingCampaign}>
+        {selectedCampaignId && (
+          <EditCampaignDialog
+            campaignId={selectedCampaignId}
+            currentName={campaigns.find(c => c.id === selectedCampaignId)?.name || ""}
+            onClose={() => setIsEditingCampaign(false)}
           />
         )}
       </Dialog>
