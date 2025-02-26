@@ -16,6 +16,7 @@ interface ContentSource {
   type: string;
   is_active: boolean;
   campaign_id: string;
+  created_at: string;
 }
 
 interface TrendTopic {
@@ -59,9 +60,12 @@ export default function ContentManagement() {
             filter: {
               campaign_id: {
                 _eq: selectedCampaignId
+              },
+              is_active: {
+                _eq: true
               }
             },
-            fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id'],
+            fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
           }
         });
 
