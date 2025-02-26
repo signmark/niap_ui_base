@@ -350,10 +350,12 @@ export default function Trends() {
             {selectedCampaignId && (
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
+                className="gap-2"
                 onClick={() => setIsEditingCampaign(true)}
               >
                 <Pencil className="h-4 w-4" />
+                Редактировать
               </Button>
             )}
           </div>
