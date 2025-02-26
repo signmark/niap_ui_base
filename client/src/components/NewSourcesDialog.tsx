@@ -81,20 +81,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      let urls: string[];
-      try {
-        // Пробуем распарсить как JSON
-        urls = JSON.parse(content);
-        if (!Array.isArray(urls)) {
-          throw new Error('Not an array');
-        }
-      } catch (e) {
-        // Если не получилось, извлекаем URL через регулярное выражение
-        const matches = content.match(/["'](https?:\/\/[^"']+|[^"']+\.[^"']+\/[^"']+)["']/g) || [];
-        urls = matches.map(url => url.replace(/["']/g, ''));
-      }
+      // Извлекаем URL из markdown-ссылок [text](url)
+      const markdownUrls = Array.from(content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g))
+        .map(match => match[2])
+        .filter(url => !url.includes('непосредственный URL отсутствует'));
 
-      return urls
+      // Извлекаем прямые упоминания URL
+      const directUrls = Array.from(content.matchAll(/(?:^|\s)((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.(?:com|ru|org|net)\/[^\s\)"]+)/gm))
+        .map(match => match[1])
+        .filter(url => !url.includes('непосредственный URL отсутствует'));
+
+      // Объединяем все найденные URL
+      const allUrls = [...new Set([...markdownUrls, ...directUrls])];
+
+      return allUrls
         .map(url => {
           // Добавляем протокол, если его нет
           const fullUrl = url.startsWith('http') ? url : 'https://' + url;
