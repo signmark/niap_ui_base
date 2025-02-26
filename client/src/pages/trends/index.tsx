@@ -134,20 +134,16 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: `Return a JSON object with an array of social media sources. Example format:
-{
-  "sources": [
-    {
-      "name": "Channel Name",
-      "url": "Full URL",
-      "type": "vk|telegram|youtube|reddit"
-    }
-  ]
-}`
+            content: `Вы - эксперт по анализу трендов и SEO. Проанализируйте указанный сайт и найдите релевантные ключевые слова и темы для его тематики.`
           },
           {
             role: "user",
-            content: `Find Russian language social media channels that post content about: ${keywordsList.join(", ")}`
+            content: `Проанализируйте сайт ${campaign?.link || ''} и предложите релевантные ключевые слова и темы в следующих категориях:
+      1. Основные услуги и продукты
+      2. Функциональность и возможности
+      3. Профессиональные термины и жаргон
+      4. Целевая аудитория
+      5. Проблемы и решения`
           }
         ],
         max_tokens: 1000,
