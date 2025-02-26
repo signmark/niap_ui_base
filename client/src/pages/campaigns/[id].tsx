@@ -1,6 +1,6 @@
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
 import { PostCalendar } from "@/components/PostCalendar";
 import { directusApi } from "@/lib/directus";
@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
 import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
-import Collapsible from "@/components/Collapsible"; // Placeholder import
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
@@ -22,26 +22,8 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        console.log("Fetching campaign with ID:", id);
         const response = await directusApi.get(`/items/user_campaigns/${id}`);
-        console.log("Campaign response:", response.data);
-
-        // Ensure social_media_settings has all required fields
-        const defaultSettings = {
-          telegram: { token: null, chatId: null },
-          vk: { token: null, groupId: null },
-          instagram: { token: null, accessToken: null },
-          facebook: { token: null, pageId: null },
-          youtube: { apiKey: null, channelId: null }
-        };
-
-        return {
-          ...response.data?.data,
-          social_media_settings: {
-            ...defaultSettings,
-            ...(response.data?.data?.social_media_settings || {})
-          }
-        };
+        return response.data?.data;
       } catch (err) {
         console.error("Error fetching campaign:", err);
         throw new Error("Кампания не найдена или у вас нет прав доступа к ней");
@@ -57,9 +39,29 @@ export default function CampaignDetails() {
     }
   });
 
+  const { mutate: updateCampaign } = useMutation({
+    mutationFn: async (values: { name?: string; link?: string }) => {
+      await directusApi.patch(`/items/user_campaigns/${id}`, values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", id] });
+      toast({
+        title: "Успешно",
+        description: "Данные кампании обновлены"
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось обновить данные кампании"
+      });
+    }
+  });
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -69,11 +71,8 @@ export default function CampaignDetails() {
     return (
       <div className="p-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-destructive">Ошибка</CardTitle>
-          </CardHeader>
           <CardContent>
-            <p>Кампания не найдена или у вас нет прав доступа к ней</p>
+            <p className="text-destructive">Кампания не найдена или у вас нет прав доступа к ней</p>
           </CardContent>
         </Card>
       </div>
@@ -81,59 +80,71 @@ export default function CampaignDetails() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{campaign.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {campaign.description}
-          </p>
+    <div className="space-y-6 p-6 overflow-y-auto">
+      <div className="sticky top-0 bg-background z-10 pb-4">
+        <h1 className="text-2xl font-bold mb-2">{campaign.name}</h1>
+        <div className="flex gap-4 items-center">
+          <Input
+            placeholder="Введите URL сайта"
+            defaultValue={campaign.link || ""}
+            onBlur={(e) => {
+              const newLink = e.target.value.trim();
+              if (newLink !== campaign.link) {
+                updateCampaign({ link: newLink });
+              }
+            }}
+            className="max-w-md"
+          />
         </div>
       </div>
 
-      <Collapsible title="Настройки публикации"> {/* Placeholder Collapsible */}
-        <SocialMediaSettings 
-          campaignId={id} 
-          initialSettings={campaign.social_media_settings}
-          onSettingsUpdated={() => {
-            queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
-          }}
-        />
-      </Collapsible>
+      <Accordion type="multiple" defaultValue={["social-media", "keywords", "trends", "content", "schedule"]}>
+        <AccordionItem value="social-media">
+          <AccordionTrigger>Настройки публикации</AccordionTrigger>
+          <AccordionContent>
+            <SocialMediaSettings 
+              campaignId={id} 
+              initialSettings={campaign.social_media_settings}
+              onSettingsUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+              }}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ключевые слова</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <KeywordSelector campaignId={id} />
-        </CardContent>
-      </Card>
+        <AccordionItem value="keywords">
+          <AccordionTrigger>Ключевые слова</AccordionTrigger>
+          <AccordionContent>
+            <KeywordSelector campaignId={id} />
+          </AccordionContent>
+        </AccordionItem>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Тренды и темы</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TrendsList campaignId={id} />
-        </CardContent>
-      </Card>
+        <AccordionItem value="trends">
+          <AccordionTrigger>Тренды и темы</AccordionTrigger>
+          <AccordionContent>
+            <TrendsList campaignId={id} />
+          </AccordionContent>
+        </AccordionItem>
 
-      <ContentGenerationPanel 
-        selectedTopics={[]} 
-        onGenerated={() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
-        }}
-      />
+        <AccordionItem value="content">
+          <AccordionTrigger>Генерация контента</AccordionTrigger>
+          <AccordionContent>
+            <ContentGenerationPanel 
+              selectedTopics={[]} 
+              onGenerated={() => {
+                queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
+              }}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Календарь публикаций</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PostCalendar campaignId={id} />
-        </CardContent>
-      </Card>
+        <AccordionItem value="schedule">
+          <AccordionTrigger>Календарь публикаций</AccordionTrigger>
+          <AccordionContent>
+            <PostCalendar campaignId={id} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
