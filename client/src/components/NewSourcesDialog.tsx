@@ -81,11 +81,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Извлекаем все URL из текста с помощью простого регулярного выражения
-      const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,})(?:\/[^\s\)"]*)?/g;
-      const matches = content.match(urlRegex) || [];
+      let urls: string[];
+      try {
+        // Пробуем распарсить как JSON
+        urls = JSON.parse(content);
+        if (!Array.isArray(urls)) {
+          throw new Error('Not an array');
+        }
+      } catch (e) {
+        // Если не получилось, извлекаем URL через регулярное выражение
+        const matches = content.match(/["'](https?:\/\/[^"']+|[^"']+\.[^"']+\/[^"']+)["']/g) || [];
+        urls = matches.map(url => url.replace(/["']/g, ''));
+      }
 
-      return matches
+      return urls
         .map(url => {
           // Добавляем протокол, если его нет
           const fullUrl = url.startsWith('http') ? url : 'https://' + url;
