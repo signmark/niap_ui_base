@@ -142,11 +142,24 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: "Найдите популярные и активные источники в социальных сетях по заданным ключевым словам. Верните только список URL в формате JSON-массива, без дополнительного текста или описаний."
+            content: `Найдите конкретные активные аккаунты, каналы и группы в социальных сетях, которые регулярно публикуют контент по заданным ключевым словам. Возвращайте массив реальных URL в формате JSON без описаний.
+
+Примеры форматов URL:
+- Twitter: "twitter.com/username"
+- VK: "vk.com/group_name"
+- Telegram: "t.me/channel_name"
+- Instagram: "instagram.com/username"
+- Facebook: "facebook.com/page_name"
+- YouTube: "youtube.com/c/channel_name"
+- LinkedIn: "linkedin.com/company/company_name"
+- Reddit: "reddit.com/r/subreddit_name"
+
+Вернуть только JSON-массив с URL, например:
+["twitter.com/nutrition_expert", "vk.com/zdorovoe_pitanie", "t.me/nutrient_news"]`
           },
           {
             role: "user",
-            content: `Найдите популярные URL (только из списка twitter.com, vk.com, t.me, instagram.com, facebook.com, youtube.com, linkedin.com, reddit.com) по ключевым словам: ${keywordsList.join(", ")}`
+            content: `Найдите самые популярные и активные источники (конкретные каналы, группы, аккаунты), которые регулярно публикуют контент по следующим ключевым словам: ${keywordsList.join(", ")}`
           }
         ],
         max_tokens: 1000,
