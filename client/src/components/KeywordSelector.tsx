@@ -23,19 +23,26 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
   const { toast } = useToast();
 
+  // Обновленный запрос для получения существующих ключевых слов
   const { data: existingKeywords, isLoading: isLoadingKeywords, refetch: refetchKeywords } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "keywords"],
     queryFn: async () => {
-      const response = await directusApi.get(`/items/user_keywords`, {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
+      try {
+        const response = await directusApi.get(`/items/user_keywords`, {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
             }
           }
-        }
-      });
-      return response.data?.data || [];
+        });
+        console.log("Fetched keywords:", response.data?.data);
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching keywords:", error);
+        throw new Error("Не удалось загрузить ключевые слова");
+      }
     }
   });
 
@@ -43,8 +50,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     mutationFn: async (query: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Ошибка при поиске ключевых слов");
+        throw new Error("Ошибка при поиске ключевых слов");
       }
       return await response.json();
     },
@@ -72,14 +78,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
   });
 
+  // Обновленная мутация для сохранения ключевых слов
   const { mutate: saveKeywords, isPending: isSaving } = useMutation({
     mutationFn: async (selectedKeywords: KeywordResult[]) => {
+      console.log("Saving keywords:", selectedKeywords);
       const promises = selectedKeywords.map(keyword =>
         directusApi.post('/items/user_keywords', {
           campaign_id: campaignId,
           keyword: keyword.keyword,
           trend_score: keyword.trend,
-          mentions_count: 0, 
+          mentions_count: 0,
           last_checked: new Date().toISOString()
         })
       );
@@ -90,9 +98,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
-      refetchKeywords();
+      refetchKeywords(); // Принудительно обновляем список после сохранения
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error saving keywords:", error);
       toast({
         description: "Не удалось сохранить ключевые слова",
         variant: "destructive"
@@ -122,22 +131,25 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       });
       return;
     }
+    console.log("Saving selected keywords:", selectedKeywords);
     saveKeywords(selectedKeywords);
   };
 
-  const handleDelete = (keywordId: string) => {
+  const handleDelete = async (keywordId: string) => {
     if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
-      directusApi.delete(`/items/user_keywords/${keywordId}`).then(() => {
+      try {
+        await directusApi.delete(`/items/user_keywords/${keywordId}`);
         toast({
           description: "Ключевое слово удалено"
         });
         refetchKeywords();
-      }).catch(() => {
+      } catch (error) {
+        console.error("Error deleting keyword:", error);
         toast({
           description: "Не удалось удалить ключевое слово",
           variant: "destructive"
         });
-      });
+      }
     }
   };
 
