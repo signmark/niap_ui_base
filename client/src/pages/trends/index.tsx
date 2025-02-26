@@ -141,15 +141,9 @@ export default function Trends() {
         throw new Error('Добавьте ключевые слова для поиска источников');
       }
 
-      console.log('Searching sources for keywords:', keywordsList);
+      console.log('Keywords before request:', keywordsList); 
 
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer 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',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const requestBody = {
           model: "llama-3.1-sonar-small-128k-online",
           messages: [
             {
@@ -208,17 +202,24 @@ Return JSON in this format:
           ],
           max_tokens: 1000,
           temperature: 0.7
-        })
+        };
+
+      console.log('Full API request body:', requestBody); 
+
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to search sources');
+        throw new Error(`API request failed with status ${response.status}: ${await response.text()}`);
       }
 
       const data = await response.json();
-      return data;
-    },
-    onSuccess: (data) => {
       console.log('API Response:', data);
       try {
         const content = data.choices[0].message.content;
@@ -230,6 +231,12 @@ Return JSON in this format:
         if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
           throw new Error('Не найдено подходящих источников');
         }
+        
+        const receivedKeywords = parsedData.sources.flatMap(source => Object.values(source).filter(value => typeof value === 'string' && value.includes(keywordsList)));
+        if (receivedKeywords.length == 0) {
+            throw new Error('Ключевые слова не найдены в ответе API');
+        }
+
         setFoundSourcesData(data);
         setIsSearchingNewSources(true);
         toast({
@@ -291,7 +298,7 @@ Return JSON in this format:
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
-      // Создаем новую задачу на сбор трендов
+      
       const response = await directusApi.post('/items/crawler_tasks', {
         campaign_id: selectedCampaignId,
         status: 'pending',
