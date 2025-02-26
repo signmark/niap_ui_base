@@ -254,7 +254,7 @@ export default function Trends() {
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              ) : sources?.length === 0 ? (
+              ) : !sources.length ? (
                 <p className="text-center text-muted-foreground py-4">
                   Нет добавленных источников
                 </p>
@@ -377,10 +377,12 @@ export default function Trends() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AddSourceDialog 
-          campaignId={selectedCampaignId} 
-          onClose={() => setIsDialogOpen(false)} 
-        />
+        {selectedCampaignId && (
+          <AddSourceDialog 
+            campaignId={selectedCampaignId} 
+            onClose={() => setIsDialogOpen(false)} 
+          />
+        )}
       </Dialog>
     </div>
   );
