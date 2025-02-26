@@ -127,19 +127,19 @@ export default function Trends() {
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword);
-      console.log('Ключевые слова для поиска:', keywordsList);
+      console.log('Keywords for search:', keywordsList);
 
       const requestBody = {
         model: "llama-3.1-sonar-small-128k-online",
         messages: [
           {
             role: "system",
-            content: `Find and return active social media sources that post content about the given topics. Return JSON in this exact format:
+            content: `Return a JSON object with an array of social media sources. Example format:
 {
   "sources": [
     {
-      "name": "Source Name",
-      "url": "full https URL",
+      "name": "Channel Name",
+      "url": "Full URL",
       "type": "vk|telegram|youtube|reddit"
     }
   ]
@@ -147,7 +147,7 @@ export default function Trends() {
           },
           {
             role: "user",
-            content: `Find active social media sources for EACH of these topics:\n${keywordsList.map(kw => `- ${kw}`).join('\n')}\n\nRequirements:\n- Russian language content only\n- Return multiple sources per topic\n- Only include real, active accounts`
+            content: `Find Russian language social media channels that post content about: ${keywordsList.join(", ")}`
           }
         ],
         max_tokens: 1000,
