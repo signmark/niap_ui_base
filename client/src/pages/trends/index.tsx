@@ -251,22 +251,19 @@ Return the result as a JSON object with an array of sources. Format:
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
       // Создаем новую задачу на сбор трендов
-      const flowResponse = await directusApi.post('/items/crawler_tasks', {
+      const response = await directusApi.post('/items/crawler_tasks', {
         campaign_id: selectedCampaignId,
         status: 'pending',
         type: 'trend_collection'
       });
 
-      // Запускаем сбор трендов
-      await directusApi.post(`/items/crawler_tasks/${flowResponse.data.data.id}/run`);
-
-      return flowResponse.data;
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
       toast({
         title: "Успешно",
-        description: "Запущен сбор трендов"
+        description: "Запущен сбор трендов. Результаты появятся в течение нескольких минут."
       });
     },
     onError: (error: Error) => {
