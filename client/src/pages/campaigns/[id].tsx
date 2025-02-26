@@ -76,11 +76,11 @@ export default function CampaignDetails() {
         messages: [
           {
             role: "system",
-            content: "Return a JSON array of suggested keywords, each should be relevant for social media promotion. Example format: [\"keyword 1\", \"keyword 2\"]"
+            content: `You are a specialized SEO keyword suggestion API that only returns JSON arrays. Always format your response as a valid JSON array of strings containing keywords, e.g. ["keyword1", "keyword2"]. Do not include any explanations or additional text.`
           },
           {
             role: "user",
-            content: `${url}\n\nПредложи список ключевых слов для продвижения сайта в соцсетях. По ним будет искаться контент в соцсетях и потом генериться контент для особо пополулярных запросов.`
+            content: `Generate a list of relevant keywords for social media promotion of this website: ${url}`
           }
         ],
         max_tokens: 1000,
@@ -101,12 +101,28 @@ export default function CampaignDetails() {
       }
 
       const data = await response.json();
+      const content = data.choices[0].message.content;
+
       try {
-        const keywords = JSON.parse(data.choices[0].message.content);
-        return keywords;
-      } catch (e) {
-        console.error('Error parsing keywords:', e);
+        // Try to parse the content directly first
+        const keywords = JSON.parse(content);
+        if (Array.isArray(keywords)) {
+          return keywords;
+        }
+
+        // If it's not an array, try to find a JSON array in the content
+        const match = content.match(/\[.*\]/s);
+        if (match) {
+          const keywords = JSON.parse(match[0]);
+          if (Array.isArray(keywords)) {
+            return keywords;
+          }
+        }
+
         throw new Error('Invalid response format');
+      } catch (e) {
+        console.error('Error parsing keywords:', e, content);
+        throw new Error('Не удалось обработать ответ API');
       }
     },
     onSuccess: (data) => {
