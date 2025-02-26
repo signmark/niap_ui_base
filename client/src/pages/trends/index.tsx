@@ -154,33 +154,42 @@ export default function Trends() {
           messages: [
             {
               role: "system",
-              content: `Find social media accounts and channels that match these criteria:
-1. Focus on these platforms: Twitter/X, VK, Telegram, Instagram, Facebook, YouTube
-2. Regularly post content about the specified topics
-3. Have public access to post metrics:
-   - Twitter/X: likes, retweets, replies, views
-   - VK: likes, reposts, comments, views
-   - Telegram: views, reactions, forwards
-   - Instagram: likes, comments
-   - Facebook: reactions, comments, shares
-   - YouTube: views, likes, comments
-4. Update content at least weekly
-5. Have significant engagement (>1000 followers/subscribers)
+              content: `Find social media accounts and channels that post content in Russian about the specified topics. Focus on these platforms:
 
-Return the result as a JSON object with an array of sources. Format:
+1. VK (ВКонтакте):
+   - Groups and public pages
+   - Must have post statistics (likes, reposts, views)
+   - Minimum 1000 followers
+
+2. Telegram:
+   - Public channels
+   - Must show view counts and reactions
+   - Minimum 500 subscribers
+
+3. YouTube:
+   - Russian-language channels
+   - Public view counts and likes
+   - Minimum 1000 subscribers
+
+4. Websites and Blogs:
+   - Russian language content
+   - Health and nutrition focused
+   - Must have engagement metrics
+
+Return JSON in this format:
 {
   "sources": [
     {
-      "name": "Account/Channel Name",
+      "name": "Channel Name",
       "url": "https://platform.com/account",
-      "type": "twitter|vk|telegram|instagram|facebook|youtube",
+      "type": "vk|telegram|youtube|website",
       "metrics_available": true,
-      "followers": "number of followers/subscribers",
+      "followers": "exact number",
       "post_frequency": "daily|weekly",
       "example_stats": {
-        "avg_reactions": "numeric value",
-        "avg_comments": "numeric value",
-        "avg_views": "numeric value if available"
+        "avg_reactions": "actual number",
+        "avg_comments": "actual number",
+        "avg_views": "actual number"
       }
     }
   ]
@@ -188,7 +197,13 @@ Return the result as a JSON object with an array of sources. Format:
             },
             {
               role: "user",
-              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views. Return sources with actual numeric values for metrics, not placeholders. Focus on finding accounts with high engagement rates.`
+              content: `Найди популярные источники контента по темам: ${keywordsList}. 
+              Обязательно:
+              - Контент на русском языке
+              - Активные площадки с регулярными публикациями
+              - Только источники где видна статистика постов (просмотры, лайки и т.д.)
+              - Реальные метрики, не заглушки
+              Возвращай только источники с высокой вовлеченностью аудитории.`
             }
           ],
           max_tokens: 1000,
@@ -204,12 +219,31 @@ Return the result as a JSON object with an array of sources. Format:
       return data;
     },
     onSuccess: (data) => {
-      setFoundSourcesData(data);
-      setIsSearchingNewSources(true);
-      toast({
-        title: "Найдены источники",
-        description: "Проверьте и добавьте подходящие источники с метриками"
-      });
+      console.log('API Response:', data);
+      try {
+        const content = data.choices[0].message.content;
+        let jsonStr = content.substring(
+          content.indexOf('{'),
+          content.lastIndexOf('}') + 1
+        );
+        const parsedData = JSON.parse(jsonStr);
+        if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
+          throw new Error('Не найдено подходящих источников');
+        }
+        setFoundSourcesData(data);
+        setIsSearchingNewSources(true);
+        toast({
+          title: "Найдены источники",
+          description: `Найдено ${parsedData.sources.length} источников с метриками`
+        });
+      } catch (error) {
+        console.error('Error parsing sources:', error);
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: "Не удалось обработать результаты поиска"
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
