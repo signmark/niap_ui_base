@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
+import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import type { Campaign } from "@shared/schema";
 import { directusApi } from "@/lib/directus";
@@ -44,11 +45,11 @@ export default function Trends() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSearchingNewSources, setIsSearchingNewSources] = useState(false);
+  const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const { toast } = useToast();
 
-  // Получаем список кампаний
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
@@ -60,7 +61,6 @@ export default function Trends() {
     }
   });
 
-  // Получаем источники для выбранной кампании через Directus
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
     queryKey: ["campaign_content_sources", selectedCampaignId],
     queryFn: async () => {
@@ -88,7 +88,6 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
-  // Удаление источника
   const { mutate: deleteSource } = useMutation({
     mutationFn: async (sourceId: string) => {
       return await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
@@ -111,7 +110,6 @@ export default function Trends() {
     }
   });
 
-  // Поиск новых источников через Perplexity
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -125,7 +123,7 @@ export default function Trends() {
           messages: [
             {
               role: "system",
-              content: "Find social media sources and websites that regularly post about these topics and have good engagement metrics (reactions, comments, views). Return only the URLs and names in JSON format."
+              content: "Find social media sources and websites that regularly post about these topics and have good engagement metrics (reactions, comments, views). Return the result as a JSON object with an array of sources, each containing name and url fields. Example format: {\"sources\": [{\"name\": \"Example Blog\", \"url\": \"https://example.com\"}]}"
             },
             {
               role: "user",
@@ -145,12 +143,12 @@ export default function Trends() {
       return data;
     },
     onSuccess: (data) => {
-      toast({
-        title: "Успешно",
-        description: "Найдены новые источники"
-      });
+      setFoundSourcesData(data);
       setIsSearchingNewSources(true);
-      // TODO: Показать найденные источники в диалоге
+      toast({
+        title: "Найдены источники",
+        description: "Проверьте и добавьте подходящие источники"
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -161,7 +159,6 @@ export default function Trends() {
     }
   });
 
-  // Получаем тренды через Directus
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
@@ -197,7 +194,6 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
-  // Для сбора трендов
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
       return await directusApi.post('/utils/crawler/run', {
@@ -230,8 +226,8 @@ export default function Trends() {
     });
   };
 
-  const isValidCampaignSelected = selectedCampaignId && 
-    selectedCampaignId !== "loading" && 
+  const isValidCampaignSelected = selectedCampaignId &&
+    selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";
 
   if (isLoadingCampaigns) {
@@ -286,7 +282,7 @@ export default function Trends() {
               </>
             )}
           </Button>
-          <Button 
+          <Button
             onClick={() => setIsDialogOpen(true)}
             disabled={!isValidCampaignSelected}
           >
@@ -307,8 +303,8 @@ export default function Trends() {
             </SelectTrigger>
             <SelectContent>
               {campaigns.map((campaign) => (
-                <SelectItem 
-                  key={campaign.id} 
+                <SelectItem
+                  key={campaign.id}
                   value={campaign.id}
                 >
                   {campaign.name}
@@ -454,9 +450,22 @@ export default function Trends() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {selectedCampaignId && (
-          <AddSourceDialog 
-            campaignId={selectedCampaignId} 
-            onClose={() => setIsDialogOpen(false)} 
+          <AddSourceDialog
+            campaignId={selectedCampaignId}
+            onClose={() => setIsDialogOpen(false)}
+          />
+        )}
+      </Dialog>
+
+      <Dialog open={isSearchingNewSources} onOpenChange={setIsSearchingNewSources}>
+        {selectedCampaignId && foundSourcesData && (
+          <NewSourcesDialog
+            campaignId={selectedCampaignId}
+            onClose={() => {
+              setIsSearchingNewSources(false);
+              setFoundSourcesData(null);
+            }}
+            sourcesData={foundSourcesData}
           />
         )}
       </Dialog>
