@@ -61,7 +61,7 @@ export default function CampaignDetails() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8">
+      <div className="flex justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -80,9 +80,9 @@ export default function CampaignDetails() {
   }
 
   return (
-    <div className="space-y-6 p-6 overflow-y-auto">
-      <div className="sticky top-0 bg-background z-10 pb-4">
-        <h1 className="text-2xl font-bold mb-2">{campaign.name}</h1>
+    <div className="space-y-6 p-6">
+      <div className="sticky top-0 bg-background z-10 pb-6">
+        <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
         <div className="flex gap-4 items-center">
           <Input
             placeholder="Введите URL сайта"
@@ -98,10 +98,12 @@ export default function CampaignDetails() {
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={["social-media", "keywords", "trends", "content", "schedule"]}>
-        <AccordionItem value="social-media">
-          <AccordionTrigger>Настройки публикации</AccordionTrigger>
-          <AccordionContent>
+      <Accordion type="single" defaultValue="social-media" className="space-y-4">
+        <AccordionItem value="social-media" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Настройки публикации
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
             <SocialMediaSettings 
               campaignId={id} 
               initialSettings={campaign.social_media_settings}
@@ -112,23 +114,29 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="keywords">
-          <AccordionTrigger>Ключевые слова</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="keywords" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Ключевые слова
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
             <KeywordSelector campaignId={id} />
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trends">
-          <AccordionTrigger>Тренды и темы</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="trends" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Тренды и темы
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
             <TrendsList campaignId={id} />
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="content">
-          <AccordionTrigger>Генерация контента</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="content" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Генерация контента
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
             <ContentGenerationPanel 
               selectedTopics={[]} 
               onGenerated={() => {
@@ -138,9 +146,11 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="schedule">
-          <AccordionTrigger>Календарь публикаций</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="schedule" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Календарь публикаций
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
             <PostCalendar campaignId={id} />
           </AccordionContent>
         </AccordionItem>
