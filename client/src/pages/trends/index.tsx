@@ -333,7 +333,7 @@ Return the result as a JSON object with an array of sources. Format:
             {isCollecting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Сбор данных...
+                Сбор трендов...
               </>
             ) : (
               <>
