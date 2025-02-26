@@ -98,7 +98,7 @@ export default function CampaignDetails() {
         </div>
       </div>
 
-      <Accordion type="single" defaultValue="social-media" className="space-y-4">
+      <Accordion type="single" defaultValue="keywords" className="space-y-4">
         <AccordionItem value="social-media" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки публикации
