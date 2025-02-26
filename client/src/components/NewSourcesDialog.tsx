@@ -36,17 +36,10 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Ищем JSON в тексте
-      const match = content.match(/\{[\s\S]*\}/);
-      if (!match) {
-        console.error('No JSON found in content');
-        return [];
-      }
-
-      const jsonStr = match[0];
-      console.log('Extracted JSON:', jsonStr);
-
-      const parsed = JSON.parse(jsonStr);
+      // Extract just the keywords array from the markdown content
+      const parsed = content.split('```json\n')[1]?.split('\n```')[0]?.trim()
+        ? JSON.parse(content.split('```json\n')[1].split('\n```')[0].trim())
+        : [];
       console.log('Parsed data:', parsed);
 
       if (!Array.isArray(parsed.sources)) {
