@@ -36,17 +36,25 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract platform names and hashtags
-      const hashtags = content.match(/#[\wа-яА-Я-]+/g) || [];
-      const platformMatches = content.match(/Платформа:\s*([^\n]+)/g) || [];
+      // Extract keywords between backticks and from json arrays
+      const regex = /[`"]([^`"]+)[`"]|"([^"]+)"/g;
+      const matches = [];
+      let match;
+      
+      while ((match = regex.exec(content)) !== null) {
+        const keyword = match[1] || match[2];
+        if (keyword && !keyword.includes('#') && !keyword.startsWith('http')) {
+          matches.push(keyword);
+        }
+      }
 
-      const keywords = [
-        ...hashtags.map(h => h.slice(1)), // Remove # from hashtags
-        ...platformMatches.map(p => p.replace('Платформа:', '').trim())
-      ];
+      const uniqueKeywords = [...new Set(matches)].filter(k => 
+        k && k.length > 0 && 
+        !k.includes('{') && 
+        !k.includes('}') &&
+        !k.includes('...')
+      );
 
-      // Filter out duplicates and empty strings
-      const uniqueKeywords = [...new Set(keywords)].filter(k => k && k.length > 0);
       console.log('Extracted keywords:', uniqueKeywords);
 
       return uniqueKeywords.map(keyword => ({
