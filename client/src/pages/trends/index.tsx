@@ -250,11 +250,20 @@ Return the result as a JSON object with an array of sources. Format:
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
-      return await directusApi.post('/utils/crawler/run', {
-        campaignId: selectedCampaignId
+      // Создаем новую задачу на сбор трендов
+      const flowResponse = await directusApi.post('/items/crawler_tasks', {
+        campaign_id: selectedCampaignId,
+        status: 'pending',
+        type: 'trend_collection'
       });
+
+      // Запускаем сбор трендов
+      await directusApi.post(`/items/crawler_tasks/${flowResponse.data.data.id}/run`);
+
+      return flowResponse.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
       toast({
         title: "Успешно",
         description: "Запущен сбор трендов"
@@ -264,7 +273,7 @@ Return the result as a JSON object with an array of sources. Format:
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: error.message
+        description: "Не удалось запустить сбор трендов"
       });
     }
   });
