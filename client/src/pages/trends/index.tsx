@@ -4,296 +4,101 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw, Search, Trash2, Pencil } from "lucide-react";
-import { AddSourceDialog } from "@/components/AddSourceDialog";
-import { NewSourcesDialog } from "@/components/NewSourcesDialog";
-import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
-import type { Campaign } from "@shared/schema";
-import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
+import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
+import { Loader2, Pencil } from "lucide-react";
 import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 
-// ... оставить остальные интерфейсы и типы без изменений ...
 
 export default function Trends() {
   const [isEditingCampaign, setIsEditingCampaign] = useState(false);
-  // ... оставить остальные состояния без изменений ...
+  const { toast } = useToast();
+
+  const { data: campaign, isLoading } = useQuery({
+    queryKey: ["campaign"],
+    queryFn: async () => {
+      const response = await directusApi.get('/items/user_campaigns/a99c0c78-bed0-4ec6-80d2-325500680bef');
+      console.log('Campaign response:', response);
+      return response.data;
+    }
+  });
+
+  const { mutate: updateCampaignName } = useMutation({
+    mutationFn: async (newName: string) => {
+      await directusApi.patch('/items/user_campaigns/a99c0c78-bed0-4ec6-80d2-325500680bef', {
+        name: newName
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign"] });
+      toast({
+        title: "Успешно",
+        description: "Название кампании обновлено"
+      });
+      setIsEditingCampaign(false);
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось обновить название"
+      });
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold">
-              {campaigns.find(c => c.id === selectedCampaignId)?.name || "Основная кампания"}
-            </h2>
-            {selectedCampaignId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setIsEditingCampaign(true)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Новая крутая кампания
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => searchNewSources()}
-            disabled={isSearching || !isValidCampaignSelected}
-          >
-            {isSearching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Поиск источников...
-              </>
-            ) : (
-              <>
-                <Search className="mr-2 h-4 w-4" />
-                Найти источники
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => collectTrends()}
-            disabled={isCollecting || !isValidCampaignSelected}
-          >
-            {isCollecting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Сбор трендов...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Собрать тренды
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            disabled={!isValidCampaignSelected}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Добавить источник
-          </Button>
-        </div>
+    <div>
+      <div className="flex items-center gap-2 mb-6">
+        <h1 className="text-2xl font-bold">
+          {campaign?.data?.name || "Основная кампания"}
+        </h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => setIsEditingCampaign(true)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <Select
-                value={selectedCampaignId}
-                onValueChange={setSelectedCampaignId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите кампанию" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns.map((campaign) => (
-                    <SelectItem
-                      key={campaign.id}
-                      value={campaign.id}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span>{campaign.name}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-2 h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCampaignId(campaign.id);
-                            setIsEditingCampaign(true);
-                          }}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <div className="space-y-4">
+        <Card>
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Ключевые слова</h2>
+            <div className="space-y-4">
+              <Input
+                placeholder="Введите запрос для поиска ключевых слов"
+              />
+              <div className="flex justify-end">
+                <Button>
+                  Искать
+                </Button>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
 
-      {isValidCampaignSelected && (
-        <>
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
-              {isLoadingSources ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : !sources.length ? (
-                <p className="text-center text-muted-foreground">
-                  Нет добавленных источников
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {sources.map((source) => (
-                    <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
-                      <div>
-                        <h3 className="font-medium">{source.name}</h3>
-                        <p className="text-sm text-muted-foreground">{source.url}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm text-muted-foreground">
-                          {source.type === 'website' ? 'Веб-сайт' :
-                            source.type === 'telegram' ? 'Telegram канал' :
-                              source.type === 'vk' ? 'VK группа' : source.type}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm('Вы уверены, что хотите удалить этот источник?')) {
-                              deleteSource(source.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex gap-4">
-                <Select
-                  value={selectedPeriod}
-                  onValueChange={(value: Period) => setSelectedPeriod(value)}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Выберите период" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3days">За 3 дня</SelectItem>
-                    <SelectItem value="7days">За неделю</SelectItem>
-                    <SelectItem value="14days">За 2 недели</SelectItem>
-                    <SelectItem value="30days">За месяц</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  placeholder="Поиск по темам"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-
-              {isLoadingTrends ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[30px]"></TableHead>
-                      <TableHead>Тема</TableHead>
-                      <TableHead>Источник</TableHead>
-                      <TableHead>Кампания</TableHead>
-                      <TableHead className="text-right">Реакции</TableHead>
-                      <TableHead className="text-right">Комментарии</TableHead>
-                      <TableHead className="text-right">Просмотры</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {trends
-                      .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((topic) => (
-                        <TableRow key={topic.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedTopics.some(t => t.id === topic.id)}
-                              onCheckedChange={() => toggleTopicSelection(topic)}
-                            />
-                          </TableCell>
-                          <TableCell>{topic.title}</TableCell>
-                          <TableCell>
-                            {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
-                          </TableCell>
-                          <TableCell>
-                            {campaigns.find(c => c.id === topic.campaign_id)?.name}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.reactions?.toLocaleString() ?? 0}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.comments?.toLocaleString() ?? 0}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.views?.toLocaleString() ?? 0}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {selectedTopics.length > 0 && (
-            <ContentGenerationPanel
-              selectedTopics={selectedTopics}
-              onGenerated={() => setSelectedTopics([])}
-            />
-          )}
-        </>
-      )}
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        {selectedCampaignId && (
-          <AddSourceDialog
-            campaignId={selectedCampaignId}
-            onClose={() => setIsDialogOpen(false)}
-          />
-        )}
-      </Dialog>
-
-      <Dialog open={isSearchingNewSources} onOpenChange={setIsSearchingNewSources}>
-        {selectedCampaignId && foundSourcesData && (
-          <NewSourcesDialog
-            campaignId={selectedCampaignId}
-            onClose={() => {
-              setIsSearchingNewSources(false);
-              setFoundSourcesData(null);
-            }}
-            sourcesData={foundSourcesData}
-          />
-        )}
-      </Dialog>
-      <Dialog open={isEditingCampaign} onOpenChange={setIsEditingCampaign}>
-        {selectedCampaignId && (
-          <EditCampaignDialog
-            campaignId={selectedCampaignId}
-            currentName={campaigns.find(c => c.id === selectedCampaignId)?.name || ""}
-            onClose={() => setIsEditingCampaign(false)}
-          />
-        )}
+      <Dialog 
+        open={isEditingCampaign} 
+        onOpenChange={setIsEditingCampaign}
+      >
+        <EditCampaignDialog
+          campaignId="a99c0c78-bed0-4ec6-80d2-325500680bef"
+          currentName={campaign?.data?.name || ""}
+          onClose={() => setIsEditingCampaign(false)}
+          onUpdate={updateCampaignName}
+        />
       </Dialog>
     </div>
   );
