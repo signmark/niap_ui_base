@@ -110,8 +110,34 @@ export default function Trends() {
     }
   });
 
+  // Получаем ключевые слова для кампании
+  const { data: keywords = [] } = useQuery({
+    queryKey: ["campaign_keywords", selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+      try {
+        const response = await directusApi.get('/items/campaign_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              }
+            },
+            fields: ['id', 'keyword']
+          }
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching keywords:", error);
+        return [];
+      }
+    },
+    enabled: !!selectedCampaignId
+  });
+
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
+      const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
@@ -123,11 +149,34 @@ export default function Trends() {
           messages: [
             {
               role: "system",
-              content: "Find social media sources and websites that regularly post about these topics and have good engagement metrics (reactions, comments, views). Return the result as a JSON object with an array of sources, each containing name and url fields. Example format: {\"sources\": [{\"name\": \"Example Blog\", \"url\": \"https://example.com\"}]}"
+              content: `Find social media sources and websites that match these criteria:
+1. Regularly post content about the specified topics
+2. Have measurable engagement metrics (reactions, comments, views)
+3. Provide public access to post statistics
+4. Update content frequently
+5. Focus on platforms like Medium, Reddit, Twitter/X, or popular blogs with engagement metrics
+
+Return the result as a JSON object with an array of sources. Format:
+{
+  "sources": [
+    {
+      "name": "Source Name",
+      "url": "https://example.com",
+      "type": "website|telegram|vk",
+      "metrics_available": true,
+      "update_frequency": "daily|weekly",
+      "example_stats": {
+        "avg_reactions": "numeric value if available",
+        "avg_comments": "numeric value if available",
+        "avg_views": "numeric value if available"
+      }
+    }
+  ]
+}`
             },
             {
               role: "user",
-              content: `Find me top social media sources and websites about these topics: ${sources.map(s => s.name).join(", ")}`
+              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views.`
             }
           ],
           max_tokens: 1000,
@@ -147,7 +196,7 @@ export default function Trends() {
       setIsSearchingNewSources(true);
       toast({
         title: "Найдены источники",
-        description: "Проверьте и добавьте подходящие источники"
+        description: "Проверьте и добавьте подходящие источники с метриками"
       });
     },
     onError: (error: Error) => {

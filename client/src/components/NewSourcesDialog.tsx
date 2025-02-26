@@ -19,10 +19,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [selectedSources, setSelectedSources] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
 
-  // Парсим результаты из Perplexity
   const sources = (() => {
     try {
-      // Извлекаем JSON из ответа
       const content = sourcesData.choices[0].message.content;
       let jsonStr = content.substring(
         content.indexOf('{'),
@@ -39,14 +37,15 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const addSelectedSources = async () => {
     setIsAdding(true);
     try {
-      // Добавляем каждый выбранный источник через Directus API
       for (const source of selectedSources) {
         await directusApi.post('/items/campaign_content_sources', {
           name: source.name,
           url: source.url,
           type: source.type || 'website',
           campaign_id: campaignId,
-          is_active: true
+          is_active: true,
+          update_frequency: source.update_frequency,
+          metrics_info: source.example_stats
         });
       }
 
@@ -94,9 +93,28 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                         );
                       }}
                     />
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-medium">{source.name}</h3>
                       <p className="text-sm text-muted-foreground">{source.url}</p>
+                      {source.metrics_available && (
+                        <div className="mt-2 text-sm">
+                          <p className="text-muted-foreground">Средние показатели:</p>
+                          <div className="grid grid-cols-3 gap-2 mt-1">
+                            <div>
+                              👍 {source.example_stats?.avg_reactions || 'N/A'}
+                            </div>
+                            <div>
+                              💬 {source.example_stats?.avg_comments || 'N/A'}
+                            </div>
+                            <div>
+                              👀 {source.example_stats?.avg_views || 'N/A'}
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Обновляется: {source.update_frequency === 'daily' ? 'ежедневно' : 'еженедельно'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
