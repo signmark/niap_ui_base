@@ -23,15 +23,38 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
 
+  // Парсинг ответа API
   const sources = (() => {
     try {
+      console.log('Raw sourcesData:', sourcesData);
+
+      if (!sourcesData?.choices?.[0]?.message?.content) {
+        console.error('Invalid API response structure');
+        return [];
+      }
+
       const content = sourcesData.choices[0].message.content;
-      let jsonStr = content.substring(
-        content.indexOf('{'),
-        content.lastIndexOf('}') + 1
-      );
-      const data = JSON.parse(jsonStr);
-      return Array.isArray(data.sources) ? data.sources : [];
+      console.log('API response content:', content);
+
+      // Ищем JSON в тексте
+      const match = content.match(/\{[\s\S]*\}/);
+      if (!match) {
+        console.error('No JSON found in content');
+        return [];
+      }
+
+      const jsonStr = match[0];
+      console.log('Extracted JSON:', jsonStr);
+
+      const parsed = JSON.parse(jsonStr);
+      console.log('Parsed data:', parsed);
+
+      if (!Array.isArray(parsed.sources)) {
+        console.error('Invalid sources array');
+        return [];
+      }
+
+      return parsed.sources;
     } catch (e) {
       console.error('Error parsing sources:', e);
       return [];
@@ -72,6 +95,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       });
       onClose();
     } catch (error) {
+      console.error('Error adding sources:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -125,10 +149,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                           <span className="text-muted-foreground">Платформа:</span>
                           <span className="font-medium">
                             {source.type === 'vk' ? 'ВКонтакте' :
-                             source.type === 'telegram' ? 'Telegram' :
-                             source.type === 'youtube' ? 'YouTube' :
-                             source.type === 'linkedin' ? 'LinkedIn' :
-                             source.type === 'reddit' ? 'Reddit' : source.type}
+                              source.type === 'telegram' ? 'Telegram' :
+                                source.type === 'youtube' ? 'YouTube' :
+                                  source.type === 'reddit' ? 'Reddit' : source.type}
                           </span>
                         </div>
                       </div>
