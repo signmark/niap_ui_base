@@ -79,7 +79,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           campaign_id: campaignId,
           keyword: keyword.keyword,
           trend_score: keyword.trend,
-          mentions_count: 0,
+          mentions_count: 0, 
           last_checked: new Date().toISOString()
         })
       );
