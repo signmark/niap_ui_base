@@ -126,6 +126,9 @@ export default function Trends() {
 
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
+      if (!selectedCampaignId) {
+        throw new Error("Please select a campaign first");
+      }
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Keywords for search:', keywordsList);
 
