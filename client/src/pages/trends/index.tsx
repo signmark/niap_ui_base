@@ -134,20 +134,16 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: `Return a JSON object with an array of social media sources. Example format:
-{
-  "sources": [
-    {
-      "name": "Channel Name",
-      "url": "Full URL",
-      "type": "vk|telegram|youtube|reddit"
-    }
-  ]
-}`
+            content: `Вы - эксперт по анализу трендов в области диетологии, питания и здоровья. Найдите релевантные ключевые слова и темы для сайта о планировании питания и работе диетологов.`
           },
           {
             role: "user",
-            content: `Find Russian language social media channels that post content about: ${keywordsList.join(", ")}`
+            content: `Проанализируйте сайт nplanner.ru и предложите релевантные ключевые слова и темы в следующих категориях:
+      1. Основные услуги (планирование питания, работа с диетологами)
+      2. Функциональность системы (расчет нутриентов, составление меню)
+      3. Профессиональные термины (диетанамнез, нутрициология)
+      4. Целевая аудитория (диетологи, нутрициологи, клиенты)
+      5. Проблемы и решения (экономия времени, автоматизация работы)`
           }
         ],
         max_tokens: 1000,
