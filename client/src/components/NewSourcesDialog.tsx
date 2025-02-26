@@ -87,12 +87,13 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         .filter(url => !url.includes('непосредственный URL отсутствует'));
 
       // Извлекаем прямые упоминания URL
-      const directUrls = Array.from(content.matchAll(/(?:^|\s)((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.(?:com|ru|org|net)\/[^\s\)"]+)/gm))
+      const directUrls = Array.from(content.matchAll(/(?:^|\s)((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}\/[^\s\)"',]+)/gm))
         .map(match => match[1])
         .filter(url => !url.includes('непосредственный URL отсутствует'));
 
       // Объединяем все найденные URL
       const allUrls = [...new Set([...markdownUrls, ...directUrls])];
+      console.log('Found URLs:', allUrls);
 
       return allUrls
         .map(url => {
