@@ -161,49 +161,19 @@ export default function Trends() {
 
       console.log('API Request:', JSON.stringify(requestBody, null, 2)); 
 
-      try {
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer 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',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        });
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error('Ошибка при поиске источников');
-        }
+      const data = await response.json();
+      console.log('API Response:', data);
 
-        const data = await response.json();
-        console.log('API Response:', data);
-
-        try {
-          const content = data.choices[0].message.content;
-          let jsonStr = content.substring(
-            content.indexOf('{'),
-            content.lastIndexOf('}') + 1
-          );
-          const parsedData = JSON.parse(jsonStr);
-          console.log('Parsed Data:', parsedData);
-
-          if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
-            console.error('No sources found in response');
-            throw new Error('Не найдено подходящих источников');
-          }
-
-          return data;
-        } catch (error) {
-          console.error('Error parsing sources:', error);
-          throw error;
-        }
-
-      } catch (error) {
-        console.error('API Call Error:', error);
-        throw error;
-      }
+      return data;
     },
     onSuccess: (data) => {
       console.log('Success Data:', data);
