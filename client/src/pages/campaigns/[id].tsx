@@ -76,11 +76,11 @@ export default function CampaignDetails() {
         messages: [
           {
             role: "system",
-            content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Возвращайте только JSON-массив ключевых слов на русском языке. Формат ответа должен быть валидным JSON-массивом строк, например: ["ключевое слово 1", "ключевое слово 2"]. Не включайте дополнительный текст или пояснения.`
+            content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Отвечайте ТОЛЬКО массивом ключевых слов в формате JSON, без пояснений. Пример: ["ключевое слово 1", "ключевое слово 2"]. Все слова должны быть на русском языке.`
           },
           {
             role: "user",
-            content: `Сгенерируйте список релевантных ключевых слов для продвижения этого сайта в социальных сетях. Фокусируйтесь на профессиональных терминах и популярных запросах в данной тематике: ${url}`
+            content: `Сгенерируйте список из 10-15 самых релевантных ключевых слов для продвижения этого сайта в социальных сетях, учитывая его тематику и целевую аудиторию: ${url}`
           }
         ],
         max_tokens: 1000,
@@ -97,32 +97,34 @@ export default function CampaignDetails() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch keywords');
+        throw new Error('Ошибка при получении ключевых слов');
       }
 
       const data = await response.json();
       const content = data.choices[0].message.content;
 
       try {
-        // Try to parse the content directly first
-        const keywords = JSON.parse(content);
-        if (Array.isArray(keywords)) {
-          return keywords;
+        // Попытка найти JSON массив в ответе
+        const match = content.match(/\[([\s\S]*?)\]/);
+        if (!match) {
+          throw new Error('Не удалось найти массив ключевых слов в ответе');
         }
 
-        // If it's not an array, try to find a JSON array in the content
-        const match = content.match(/\[.*\]/s);
-        if (match) {
-          const keywords = JSON.parse(match[0]);
-          if (Array.isArray(keywords)) {
-            return keywords;
-          }
+        // Парсим найденный массив
+        const keywords = JSON.parse(`[${match[1]}]`);
+
+        if (!Array.isArray(keywords)) {
+          throw new Error('Некорректный формат данных');
         }
 
-        throw new Error('Invalid response format');
+        // Проверяем и очищаем ключевые слова
+        return keywords
+          .filter(kw => typeof kw === 'string' && kw.trim().length > 0)
+          .map(kw => kw.trim());
+
       } catch (e) {
-        console.error('Error parsing keywords:', e, content);
-        throw new Error('Не удалось обработать ответ API');
+        console.error('Ошибка при обработке ключевых слов:', e, content);
+        throw new Error('Не удалось обработать ответ API. Пожалуйста, попробуйте еще раз.');
       }
     },
     onSuccess: (data) => {
@@ -133,14 +135,12 @@ export default function CampaignDetails() {
       setSuggestedKeywords(formattedKeywords);
       setIsSearchingKeywords(true);
       toast({
-        title: "Успешно",
-        description: "Найдены ключевые слова для сайта"
+        description: "Ключевые слова успешно найдены"
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Ошибка",
         description: error.message
       });
     }
