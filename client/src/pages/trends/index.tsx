@@ -269,8 +269,8 @@ export default function Trends() {
   }
 
   return (
-    <div className="space-y-6 min-h-screen">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 overflow-y-auto">
+      <div className="flex justify-between items-center sticky top-0 bg-background z-10 py-4">
         <div>
           <h1 className="text-2xl font-bold">SMM Manager</h1>
           <p className="text-sm text-muted-foreground mt-1">
