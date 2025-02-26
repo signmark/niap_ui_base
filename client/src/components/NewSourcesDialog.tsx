@@ -36,13 +36,17 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract keywords marked with backticks or hashtags
-      const matches = content.match(/[`#]([^`#\n]+)[`#]/g) || [];
-      const keywords = matches.map(match => 
-        match.replace(/[`#]/g, '').trim()
-      ).filter(k => k && !k.startsWith('Брендовые') && !k.startsWith('Тематические') && !k.startsWith('Популярные') && !k.startsWith('Конкурентные') && !k.startsWith('Актуальные') && !k.startsWith('Общие') && !k.startsWith('Специфичные') && !k.startsWith('Хэштеги'));
-      
-      const uniqueKeywords = [...new Set(keywords)];
+      // Extract platform names and hashtags
+      const hashtags = content.match(/#[\wа-яА-Я-]+/g) || [];
+      const platformMatches = content.match(/Платформа:\s*([^\n]+)/g) || [];
+
+      const keywords = [
+        ...hashtags.map(h => h.slice(1)), // Remove # from hashtags
+        ...platformMatches.map(p => p.replace('Платформа:', '').trim())
+      ];
+
+      // Filter out duplicates and empty strings
+      const uniqueKeywords = [...new Set(keywords)].filter(k => k && k.length > 0);
       console.log('Extracted keywords:', uniqueKeywords);
 
       return uniqueKeywords.map(keyword => ({
@@ -51,7 +55,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         selected: false
       }));
 
-      return parsed.sources;
     } catch (e) {
       console.error('Error parsing sources:', e);
       return [];
