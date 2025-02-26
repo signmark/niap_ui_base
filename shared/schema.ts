@@ -6,11 +6,11 @@ import { z } from "zod";
 export const campaigns = pgTable("user_campaigns", {
   id: serial("id").primaryKey(),
   directusId: text("directus_id").notNull(),
-  name: text("name").notNull(),
+  name: text("name").notNull(), 
   description: text("description"),
   userId: text("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  // Add social media settings
+  link: text("link"),
   socialMediaSettings: jsonb("social_media_settings").default({
     telegram: { token: null, chatId: null },
     vk: { token: null, groupId: null },
@@ -18,22 +18,6 @@ export const campaigns = pgTable("user_campaigns", {
     facebook: { token: null, pageId: null },
     youtube: { apiKey: null, channelId: null }
   })
-});
-
-
-// Content table for generated/scheduled posts
-export const scheduledContent = pgTable("scheduled_content", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaign_id").references(() => campaigns.id),
-  content: text("content").notNull(),
-  title: text("title"),
-  imageUrl: text("image_url"),
-  scheduledFor: timestamp("scheduled_for"),
-  platforms: jsonb("platforms").default(['telegram']),
-  status: text("status").default('draft'),
-  createdAt: timestamp("created_at").defaultNow(),
-  publishedAt: timestamp("published_at"),
-  directusId: text("directus_id")
 });
 
 export const contentSources = pgTable("content_sources", {
@@ -68,9 +52,9 @@ export const insertCampaignSchema = createInsertSchema(campaigns)
     name: true,
     description: true,
     userId: true,
+    link: true,
     socialMediaSettings: true
   });
-
 
 export const insertContentSourceSchema = createInsertSchema(contentSources)
   .pick({
@@ -91,18 +75,6 @@ export const insertTrendTopicSchema = createInsertSchema(trendTopics)
     reactions: true,
     comments: true,
     views: true
-  });
-
-export const insertScheduledContentSchema = createInsertSchema(scheduledContent)
-  .pick({
-    campaignId: true,
-    content: true,
-    title: true,
-    imageUrl: true,
-    scheduledFor: true,
-    platforms: true,
-    status: true,
-    directusId: true
   });
 
 // Types for social media settings
@@ -132,27 +104,10 @@ export interface SocialMediaSettings {
 // Export types
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
-
-
 export type ContentSource = typeof contentSources.$inferSelect;
 export type InsertContentSource = z.infer<typeof insertContentSourceSchema>;
-
 export type TrendTopic = typeof trendTopics.$inferSelect;
 export type InsertTrendTopic = z.infer<typeof insertTrendTopicSchema>;
-
-export type ScheduledContent = typeof scheduledContent.$inferSelect;
-export type InsertScheduledContent = z.infer<typeof insertScheduledContentSchema>;
-
-
-export interface WordStatResponse {
-  data: {
-    keywords: Array<{
-      keyword: string;
-      trend: number;
-      competition?: number;
-    }>;
-  };
-}
 
 export interface KeywordSearchResult {
   keyword: string;
