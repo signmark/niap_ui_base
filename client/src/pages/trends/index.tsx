@@ -269,8 +269,8 @@ export default function Trends() {
   }
 
   return (
-    <div className="space-y-6 overflow-y-auto">
-      <div className="flex justify-between items-center sticky top-0 bg-background z-10 py-4">
+    <div className="p-6">
+      <div className="flex justify-between items-center sticky top-0 bg-background z-10 pb-4">
         <div>
           <h1 className="text-2xl font-bold">SMM Manager</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -322,161 +322,163 @@ export default function Trends() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Select
-            value={selectedCampaignId}
-            onValueChange={setSelectedCampaignId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns.map((campaign) => (
-                <SelectItem
-                  key={campaign.id}
-                  value={campaign.id}
-                >
-                  {campaign.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <Select
+              value={selectedCampaignId}
+              onValueChange={setSelectedCampaignId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите кампанию" />
+              </SelectTrigger>
+              <SelectContent>
+                {campaigns.map((campaign) => (
+                  <SelectItem
+                    key={campaign.id}
+                    value={campaign.id.toString()}
+                  >
+                    {campaign.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
-      {isValidCampaignSelected && (
-        <>
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
-              {isLoadingSources ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : !sources.length ? (
-                <p className="text-center text-muted-foreground">
-                  Нет добавленных источников
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {sources.map((source) => (
-                    <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
-                      <div>
-                        <h3 className="font-medium">{source.name}</h3>
-                        <p className="text-sm text-muted-foreground">{source.url}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm text-muted-foreground">
-                          {source.type === 'website' ? 'Веб-сайт' :
-                            source.type === 'telegram' ? 'Telegram канал' :
-                              source.type === 'vk' ? 'VK группа' : source.type}
+        {isValidCampaignSelected && (
+          <>
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
+                {isLoadingSources ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : !sources.length ? (
+                  <p className="text-center text-muted-foreground">
+                    Нет добавленных источников
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {sources.map((source) => (
+                      <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
+                        <div>
+                          <h3 className="font-medium">{source.name}</h3>
+                          <p className="text-sm text-muted-foreground">{source.url}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm('Вы уверены, что хотите удалить этот источник?')) {
-                              deleteSource(source.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex items-center gap-4">
+                          <div className="text-sm text-muted-foreground">
+                            {source.type === 'website' ? 'Веб-сайт' :
+                              source.type === 'telegram' ? 'Telegram канал' :
+                                source.type === 'vk' ? 'VK группа' : source.type}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm('Вы уверены, что хотите удалить этот источник?')) {
+                                deleteSource(source.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex gap-4">
+                  <Select
+                    value={selectedPeriod}
+                    onValueChange={(value: Period) => setSelectedPeriod(value)}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Выберите период" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3days">За 3 дня</SelectItem>
+                      <SelectItem value="7days">За неделю</SelectItem>
+                      <SelectItem value="14days">За 2 недели</SelectItem>
+                      <SelectItem value="30days">За месяц</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    placeholder="Поиск по темам"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex gap-4">
-                <Select
-                  value={selectedPeriod}
-                  onValueChange={(value: Period) => setSelectedPeriod(value)}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Выберите период" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3days">За 3 дня</SelectItem>
-                    <SelectItem value="7days">За неделю</SelectItem>
-                    <SelectItem value="14days">За 2 недели</SelectItem>
-                    <SelectItem value="30days">За месяц</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isLoadingTrends ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[30px]"></TableHead>
+                        <TableHead>Тема</TableHead>
+                        <TableHead>Источник</TableHead>
+                        <TableHead>Кампания</TableHead>
+                        <TableHead className="text-right">Реакции</TableHead>
+                        <TableHead className="text-right">Комментарии</TableHead>
+                        <TableHead className="text-right">Просмотры</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trends
+                        .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((topic) => (
+                          <TableRow key={topic.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedTopics.some(t => t.id === topic.id)}
+                                onCheckedChange={() => toggleTopicSelection(topic)}
+                              />
+                            </TableCell>
+                            <TableCell>{topic.title}</TableCell>
+                            <TableCell>
+                              {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
+                            </TableCell>
+                            <TableCell>
+                              {campaigns.find(c => c.id === topic.campaign_id)?.name}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {topic.reactions?.toLocaleString() ?? 0}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {topic.comments?.toLocaleString() ?? 0}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {topic.views?.toLocaleString() ?? 0}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
 
-                <Input
-                  placeholder="Поиск по темам"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-
-              {isLoadingTrends ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[30px]"></TableHead>
-                      <TableHead>Тема</TableHead>
-                      <TableHead>Источник</TableHead>
-                      <TableHead>Кампания</TableHead>
-                      <TableHead className="text-right">Реакции</TableHead>
-                      <TableHead className="text-right">Комментарии</TableHead>
-                      <TableHead className="text-right">Просмотры</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {trends
-                      .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((topic) => (
-                        <TableRow key={topic.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedTopics.some(t => t.id === topic.id)}
-                              onCheckedChange={() => toggleTopicSelection(topic)}
-                            />
-                          </TableCell>
-                          <TableCell>{topic.title}</TableCell>
-                          <TableCell>
-                            {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
-                          </TableCell>
-                          <TableCell>
-                            {campaigns.find(c => c.id === topic.campaign_id)?.name}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.reactions?.toLocaleString() ?? 0}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.comments?.toLocaleString() ?? 0}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {topic.views?.toLocaleString() ?? 0}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {selectedTopics.length > 0 && (
-            <ContentGenerationPanel
-              selectedTopics={selectedTopics}
-              onGenerated={() => setSelectedTopics([])}
-            />
-          )}
-        </>
-      )}
+            {selectedTopics.length > 0 && (
+              <ContentGenerationPanel
+                selectedTopics={selectedTopics}
+                onGenerated={() => setSelectedTopics([])}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {selectedCampaignId && (
