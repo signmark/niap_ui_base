@@ -36,37 +36,32 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Try to extract JSON array first
-      const jsonMatch = content.match(/\[([\s\S]*?)\]/);
-      let keywords = [];
-      
-      if (jsonMatch) {
-        try {
-          const jsonArray = JSON.parse(jsonMatch[0]);
-          keywords = jsonArray.map(item => item.replace(/^#/, '')); // Remove # prefix if exists
-        } catch (e) {
-          console.error('Failed to parse JSON array:', e);
-        }
-      }
+      // Extract sections with emphasis marks and headers
+      const healthKeywords = new Set();
+      const sectionRegex = /#{1,3}\s*([^#\n]+)|[*]{2}([^*]+)[*]{2}/g;
+      let match;
 
-      // Fallback to extracting emphasized words if JSON parse failed
-      if (!keywords.length) {
-        const emphasisRegex = /\*\*([^*]+)\*\*/g;
-        const matches = [];
-        let match;
+      while ((match = sectionRegex.exec(content)) !== null) {
+        const phrase = (match[1] || match[2]).trim();
         
-        while ((match = emphasisRegex.exec(content)) !== null) {
-          const keyword = match[1].trim();
-          if (keyword && !keyword.includes('http') && !keyword.includes('#')) {
-            matches.push(keyword);
-          }
+        // Only include health/nutrition related keywords
+        if (phrase.toLowerCase().match(/(питани|здоров|диет|нутриен|витамин|калори|рацион)/)) {
+          healthKeywords.add(phrase);
         }
-        keywords = matches;
       }
 
-      const uniqueKeywords = [...new Set(keywords)]
-        .filter(k => k && k.length > 0)
-        .map(k => k.replace(/["""]/g, '')); // Clean up quotes
+      // Extract hashtags separately
+      const hashtagRegex = /#([а-яА-Яa-zA-Z0-9_]+)/g;
+      while ((match = hashtagRegex.exec(content)) !== null) {
+        const hashtag = match[1];
+        if (hashtag.toLowerCase().match(/(pit|zog|diet|nutri|vit|cal|food)/)) {
+          healthKeywords.add(hashtag);
+        }
+      }
+
+      const uniqueKeywords = [...healthKeywords]
+        .filter(k => !k.includes('http'))
+        .map(k => k.replace(/[#"""]/g, '').trim());
 
       console.log('Extracted keywords:', uniqueKeywords);
 
