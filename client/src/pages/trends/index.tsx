@@ -20,15 +20,30 @@ import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 // ... оставить остальные интерфейсы и типы без изменений ...
 
 export default function Trends() {
-  // ... оставить все useState и useQuery без изменений до cardContent ...
+  const [isEditingCampaign, setIsEditingCampaign] = useState(false);
+  // ... оставить состояния без изменений ...
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">SMM Manager</h1>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">
+              {campaigns.find(c => c.id === selectedCampaignId)?.name || "Основная кампания"}
+            </h2>
+            {selectedCampaignId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setIsEditingCampaign(true)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Анализ популярных тем и управление контентом в социальных медиа
+            Новая крутая кампания
           </p>
         </div>
         <div className="flex gap-2">

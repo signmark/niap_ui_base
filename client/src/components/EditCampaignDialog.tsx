@@ -44,7 +44,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
       console.error('Error updating campaign:', error);
       toast({
         variant: "destructive",
-        title: "Ошибка",
+        title: "Ошибка", 
         description: "Не удалось обновить название кампании"
       });
     } finally {
