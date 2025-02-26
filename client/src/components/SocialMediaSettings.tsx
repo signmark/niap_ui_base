@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -90,187 +89,220 @@ export function SocialMediaSettings({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Настройки публикации</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Telegram Settings */}
-            <div className="space-y-4">
-              <h3 className="font-medium">Telegram</h3>
-              <FormField
-                control={form.control}
-                name="telegram.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bot Token</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите токен бота" 
-                        {...field} 
-                        value={field.value || ''} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="telegram.chatId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Чата</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Введите ID чата" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Telegram Settings */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Telegram</h3>
+          <FormField
+            control={form.control}
+            name="telegram.token"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bot Token</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Введите токен бота" 
+                    {...field} 
+                    value={field.value || ''} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="telegram.chatId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID Чата</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Введите ID чата" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            {/* VK Settings */}
-            <div className="space-y-4">
-              <h3 className="font-medium">ВКонтакте</h3>
-              <FormField
-                control={form.control}
-                name="vk.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите токен доступа" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="vk.groupId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Группы</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Введите ID группы" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* VK Settings */}
+        <div className="space-y-4">
+          <h3 className="font-medium">ВКонтакте</h3>
+          <FormField
+            control={form.control}
+            name="vk.token"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Access Token</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Введите токен доступа" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="vk.groupId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID Группы</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Введите ID группы" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            {/* Instagram Settings */}
-            <div className="space-y-4">
-              <h3 className="font-medium">Instagram</h3>
-              <FormField
-                control={form.control}
-                name="instagram.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите токен доступа" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="instagram.accessToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дополнительный токен</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите дополнительный токен" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* Instagram Settings */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Instagram</h3>
+          <FormField
+            control={form.control}
+            name="instagram.token"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Access Token</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Введите токен доступа" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="instagram.accessToken"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Дополнительный токен</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Введите дополнительный токен" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            {/* YouTube Settings */}
-            <div className="space-y-4">
-              <h3 className="font-medium">YouTube</h3>
-              <FormField
-                control={form.control}
-                name="youtube.apiKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>API Key</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите API ключ" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="youtube.channelId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Канала</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Введите ID канала" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* Facebook Settings */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Facebook</h3>
+          <FormField
+            control={form.control}
+            name="facebook.token"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Access Token</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Введите токен доступа"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="facebook.pageId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Page ID</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Введите ID страницы"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Сохранение...
-                </>
-              ) : (
-                "Сохранить настройки"
-              )}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        {/* YouTube Settings */}
+        <div className="space-y-4">
+          <h3 className="font-medium">YouTube</h3>
+          <FormField
+            control={form.control}
+            name="youtube.apiKey"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>API Key</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    placeholder="Введите API ключ" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="youtube.channelId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID Канала</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Введите ID канала" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Сохранение...
+            </>
+          ) : (
+            "Сохранить настройки"
+          )}
+        </Button>
+      </form>
+    </Form>
   );
 }
