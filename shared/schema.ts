@@ -20,15 +20,6 @@ export const campaigns = pgTable("user_campaigns", {
   })
 });
 
-export const keywords = pgTable("user_keywords", {
-  id: serial("id").primaryKey(),
-  keyword: text("keyword").notNull(),
-  campaignId: integer("campaign_id").references(() => campaigns.id),
-  trendScore: integer("trend_score"),
-  mentionsCount: integer("mentions_count"),
-  lastChecked: timestamp("last_checked"),
-  createdAt: timestamp("created_at").defaultNow()
-});
 
 // Content table for generated/scheduled posts
 export const scheduledContent = pgTable("scheduled_content", {
@@ -80,13 +71,6 @@ export const insertCampaignSchema = createInsertSchema(campaigns)
     socialMediaSettings: true
   });
 
-export const insertKeywordSchema = createInsertSchema(keywords)
-  .pick({
-    keyword: true,
-    campaignId: true,
-    trendScore: true,
-    mentionsCount: true
-  });
 
 export const insertContentSourceSchema = createInsertSchema(contentSources)
   .pick({
@@ -149,8 +133,6 @@ export interface SocialMediaSettings {
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 
-export type Keyword = typeof keywords.$inferSelect;
-export type InsertKeyword = z.infer<typeof insertKeywordSchema>;
 
 export type ContentSource = typeof contentSources.$inferSelect;
 export type InsertContentSource = z.infer<typeof insertContentSourceSchema>;
