@@ -135,10 +135,10 @@ export default function Trends() {
 
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
-      const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
+      const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Ключевые слова для поиска:', keywordsList);
 
-      if (!keywordsList) {
+      if (!keywordsList.length) {
         console.error('No keywords found');
         throw new Error('Добавьте ключевые слова для поиска источников');
       }
@@ -152,7 +152,13 @@ export default function Trends() {
           },
           {
             role: "user",
-            content: `Найди активные каналы и группы, которые публикуют контент по темам: ${keywordsList}`
+            content: `Найди активные каналы и группы, которые публикуют контент по темам: ${keywordsList.join(", ")}
+
+Требования:
+1. Найди минимум 2-3 источника для КАЖДОГО ключевого слова
+2. Каждый источник должен регулярно публиковать контент по этой теме
+3. Источники должны быть на русском языке
+4. Обязательно верни URL для каждого источника`
           }
         ],
         max_tokens: 1000,
