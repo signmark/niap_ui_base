@@ -21,7 +21,7 @@ import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 
 export default function Trends() {
   const [isEditingCampaign, setIsEditingCampaign] = useState(false);
-  // ... оставить состояния без изменений ...
+  // ... оставить остальные состояния без изменений ...
 
   return (
     <div className="space-y-6">
