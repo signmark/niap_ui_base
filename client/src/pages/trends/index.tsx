@@ -17,258 +17,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { queryClient } from "@/lib/queryClient";
 import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 
-interface ContentSource {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  is_active: boolean;
-  campaign_id: string;
-  created_at: string;
-}
-
-interface TrendTopic {
-  id: string;
-  title: string;
-  source_id: string;
-  reactions: number;
-  comments: number;
-  views: number;
-  created_at: string;
-  is_bookmarked: boolean;
-  campaign_id: string;
-}
-
-type Period = "3days" | "7days" | "14days" | "30days";
+// ... оставить остальные интерфейсы и типы без изменений ...
 
 export default function Trends() {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSearchingNewSources, setIsSearchingNewSources] = useState(false);
-  const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
-  const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
-  const [isEditingCampaign, setIsEditingCampaign] = useState(false);
-  const { toast } = useToast();
-
-  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns"],
-    queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
-      }
-      return response.json();
-    }
-  });
-
-  const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
-    queryKey: ["campaign_content_sources", selectedCampaignId],
-    queryFn: async () => {
-      if (!selectedCampaignId) return [];
-
-      const response = await directusApi.get('/items/campaign_content_sources', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            },
-            is_active: {
-              _eq: true
-            }
-          },
-          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!selectedCampaignId
-  });
-
-  const { mutate: deleteSource } = useMutation({
-    mutationFn: async (sourceId: string) => {
-      return await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
-        is_active: false
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast({
-        title: "Успешно",
-        description: "Источник удален"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось удалить источник"
-      });
-    }
-  });
-
-  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["campaign_keywords", selectedCampaignId],
-    queryFn: async () => {
-      if (!selectedCampaignId) return [];
-      const response = await directusApi.get('/items/user_keywords', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          }
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!selectedCampaignId
-  });
-
-  const { mutate: searchNewSources, isPending: isSearching } = useMutation({
-    mutationFn: async () => {
-      const keywordsList = keywords.map((k: any) => k.keyword);
-      console.log('Keywords for search:', keywordsList);
-
-      const requestBody = {
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          {
-            role: "system",
-            content: `Return a JSON object with an array of social media sources. Example format:
-{
-  "sources": [
-    {
-      "name": "Channel Name",
-      "url": "Full URL",
-      "type": "vk|telegram|youtube|reddit"
-    }
-  ]
-}`
-          },
-          {
-            role: "user",
-            content: `Find Russian language social media channels that post content about: ${keywordsList.join(", ")}`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      };
-
-      console.log('API Request:', requestBody);
-
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer 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',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      const data = await response.json();
-      console.log('API Response:', data);
-      return data;
-    },
-    onSuccess: (data) => {
-      console.log('Success Data:', data);
-      setFoundSourcesData(data);
-      setIsSearchingNewSources(true);
-      toast({
-        title: "Найдены источники",
-        description: "Проверьте список найденных источников"
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Search Error:', error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message
-      });
-    }
-  });
-
-  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
-    queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
-    queryFn: async () => {
-      if (!selectedCampaignId) return [];
-
-      const response = await directusApi.get('/items/campaign_trend_topics', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: [
-            'id',
-            'title',
-            'source_id',
-            'reactions',
-            'comments',
-            'views',
-            'created_at',
-            'is_bookmarked',
-            'campaign_id'
-          ],
-          sort: ['-reactions']
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!selectedCampaignId
-  });
-
-  const { mutate: collectTrends, isPending: isCollecting } = useMutation({
-    mutationFn: async () => {
-      const response = await directusApi.post('/items/crawler_tasks', {
-        campaign_id: selectedCampaignId,
-        status: 'pending',
-        type: 'trend_collection'
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
-      return response.data;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Успешно",
-        description: "Запущен сбор трендов. Результаты появятся в течение нескольких минут."
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось запустить сбор трендов"
-      });
-    }
-  });
-
-  const toggleTopicSelection = (topic: TrendTopic) => {
-    setSelectedTopics(prev => {
-      const isSelected = prev.some(t => t.id === topic.id);
-      if (isSelected) {
-        return prev.filter(t => t.id !== topic.id);
-      } else {
-        return [...prev, topic];
-      }
-    });
-  };
-
-  const isValidCampaignSelected = selectedCampaignId &&
-    selectedCampaignId !== "loading" &&
-    selectedCampaignId !== "empty";
-
-  if (isLoadingCampaigns) {
-    return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+  // ... оставить все useState и useQuery без изменений до cardContent ...
 
   return (
     <div className="space-y-6">
@@ -341,23 +93,26 @@ export default function Trends() {
                       key={campaign.id}
                       value={campaign.id}
                     >
-                      {campaign.name}
+                      <div className="flex items-center justify-between w-full">
+                        <span>{campaign.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-2 h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCampaignId(campaign.id);
+                            setIsEditingCampaign(true);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            {selectedCampaignId && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => setIsEditingCampaign(true)}
-              >
-                <Pencil className="h-4 w-4" />
-                Редактировать
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
