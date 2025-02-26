@@ -36,13 +36,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract just the keywords array from the markdown content
-      const parsed = content.split('```json\n')[1]?.split('\n```')[0]?.trim()
-        ? JSON.parse(content.split('```json\n')[1].split('\n```')[0].trim())
-        : [];
-      console.log('Parsed data:', parsed);
+      // Extract all hashtags and keywords from the content
+      const matches = content.match(/[`#]([^`#\n]+)[`#]/g) || [];
+      const keywords = matches.map(match => 
+        match.replace(/[`#]/g, '').trim()
+      );
+      
+      const uniqueKeywords = [...new Set(keywords)];
+      console.log('Extracted keywords:', uniqueKeywords);
 
-      if (!Array.isArray(parsed.sources)) {
+      return uniqueKeywords.map(keyword => ({
+        keyword,
+        trend: 0,
+        selected: false
+      }));
         console.error('Invalid sources array');
         return [];
       }
