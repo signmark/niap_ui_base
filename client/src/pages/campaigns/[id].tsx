@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KeywordSelector } from "@/components/KeywordSelector";
+import { KeywordSelector } from "@/components/KeywordSelector";  
 import { PostCalendar } from "@/components/PostCalendar";
 import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
@@ -55,47 +55,6 @@ export default function CampaignDetails() {
     }
   });
 
-  const { mutate: searchSemantic, isPending: isSearching } = useMutation({
-    mutationFn: async () => {
-      const keywords = await directusApi.get(`/items/user_keywords`, {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: id
-            }
-          }
-        }
-      });
-
-      if (!keywords.data?.data?.length) {
-        throw new Error("Добавьте ключевые слова перед запуском семантического анализа");
-      }
-
-      await fetch('/api/perplexity/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          keywords: keywords.data.data.map((k: any) => k.keyword)
-        })
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Поиск запущен",
-        description: "Анализ семантического ядра начат"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Ошибка",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -128,21 +87,11 @@ export default function CampaignDetails() {
             {campaign.description}
           </p>
         </div>
-        <Button onClick={() => searchSemantic()} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Анализ...
-            </>
-          ) : (
-            "Управлять"
-          )}
-        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Настройки публикации</CardTitle>
+          <CardTitle>Социальные сети</CardTitle>
         </CardHeader>
         <CardContent>
           <SocialMediaSettings 
