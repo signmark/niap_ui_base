@@ -36,11 +36,11 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract all hashtags and keywords from the content
+      // Extract keywords marked with backticks or hashtags
       const matches = content.match(/[`#]([^`#\n]+)[`#]/g) || [];
       const keywords = matches.map(match => 
         match.replace(/[`#]/g, '').trim()
-      );
+      ).filter(k => k && !k.startsWith('Брендовые') && !k.startsWith('Тематические') && !k.startsWith('Популярные') && !k.startsWith('Конкурентные') && !k.startsWith('Актуальные') && !k.startsWith('Общие') && !k.startsWith('Специфичные') && !k.startsWith('Хэштеги'));
       
       const uniqueKeywords = [...new Set(keywords)];
       console.log('Extracted keywords:', uniqueKeywords);
@@ -50,9 +50,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         trend: 0,
         selected: false
       }));
-        console.error('Invalid sources array');
-        return [];
-      }
 
       return parsed.sources;
     } catch (e) {
