@@ -136,12 +136,13 @@ export default function Trends() {
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
+      console.log('Keywords before request:', keywordsList);
 
       if (!keywordsList) {
         throw new Error('Добавьте ключевые слова для поиска источников');
       }
 
-      console.log('Keywords before request:', keywordsList); 
+      console.log('Keywords to use:', keywordsList); 
 
       const requestBody = {
         model: "llama-3.1-sonar-small-128k-online",
@@ -192,7 +193,7 @@ Return JSON in this format:
       "post_frequency": "daily|weekly",
       "example_stats": {
         "avg_reactions": "actual number",
-        "avg_comments": "actual number",
+        "avg_comments": "actual number", 
         "avg_views": "actual number"
       }
     }
@@ -213,6 +214,8 @@ Return JSON in this format:
         max_tokens: 1000,
         temperature: 0.7
       };
+
+      console.log('Keywords before request:', keywordsList); 
 
       console.log('Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2)); 
 
@@ -245,15 +248,6 @@ Return JSON in this format:
           throw new Error('Не найдено подходящих источников');
         }
 
-        const receivedKeywords = parsedData.sources.flatMap(source => 
-          Object.values(source).filter(value => 
-            typeof value === 'string' && value.toLowerCase().includes(keywordsList.toLowerCase())
-          )
-        );
-        if (receivedKeywords.length === 0) {
-            throw new Error('Ключевые слова не найдены в ответе API');
-        }
-
         return data;
       } catch (error) {
         console.error('Error parsing sources:', error);
@@ -269,6 +263,7 @@ Return JSON in this format:
       });
     },
     onError: (error: Error) => {
+      console.error('Search error:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
