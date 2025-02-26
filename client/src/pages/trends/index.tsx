@@ -179,7 +179,26 @@ export default function Trends() {
 
         const data = await response.json();
         console.log('API Response:', data);
-        return data;
+
+        try {
+          const content = data.choices[0].message.content;
+          let jsonStr = content.substring(
+            content.indexOf('{'),
+            content.lastIndexOf('}') + 1
+          );
+          const parsedData = JSON.parse(jsonStr);
+          console.log('Parsed Data:', parsedData);
+
+          if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
+            console.error('No sources found in response');
+            throw new Error('Не найдено подходящих источников');
+          }
+
+          return data;
+        } catch (error) {
+          console.error('Error parsing sources:', error);
+          throw error;
+        }
 
       } catch (error) {
         console.error('API Call Error:', error);
