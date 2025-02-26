@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,18 @@ interface ContentSource {
   created_at: string;
 }
 
+interface TrendTopic {
+  id: string;
+  title: string;
+  source_id: string;
+  reactions: number;
+  comments: number;
+  views: number;
+  created_at: string;
+  is_bookmarked: boolean;
+  campaign_id: string;
+}
+
 const sourceSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
   url: z.string().url("Введите корректный URL"),
@@ -35,6 +48,7 @@ type SourceForm = z.infer<typeof sourceSchema>;
 export default function ContentPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>();
   const [isAddingSource, setIsAddingSource] = useState(false);
+  const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const { toast } = useToast();
 
   const form = useForm<SourceForm>({
@@ -86,6 +100,32 @@ export default function ContentPage() {
     enabled: !!selectedCampaignId
   });
 
+  // Получаем тренды для выбранной кампании через Directus
+  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
+    queryKey: ["campaign_trend_topics", selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+
+      try {
+        const response = await directusApi.get('/items/campaign_trend_topics', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              }
+            },
+            fields: ['id', 'title', 'source_id', 'reactions', 'comments', 'views', 'created_at', 'is_bookmarked', 'campaign_id'],
+            sort: ['-created_at']
+          }
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: !!selectedCampaignId
+  });
+
   const onSubmit = async (data: SourceForm) => {
     if (!selectedCampaignId) return;
 
@@ -126,7 +166,7 @@ export default function ContentPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Источники данных</h1>
+        <h1 className="text-2xl font-bold">Управление контентом</h1>
         {selectedCampaignId && (
           <Dialog open={isAddingSource} onOpenChange={setIsAddingSource}>
             <DialogTrigger asChild>
@@ -213,6 +253,7 @@ export default function ContentPage() {
             value={selectedCampaignId}
             onValueChange={(value) => {
               setSelectedCampaignId(value);
+              setSelectedTopics([]);
             }}
           >
             <SelectTrigger>
@@ -230,42 +271,146 @@ export default function ContentPage() {
       </Card>
 
       {selectedCampaignId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Источники данных</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingSources ? (
-              <div className="flex justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !sources.length ? (
-              <p className="text-center text-muted-foreground">
-                Нет добавленных источников
-              </p>
+        <Tabs defaultValue="sources">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="sources">Источники</TabsTrigger>
+            <TabsTrigger value="trends">Тренды</TabsTrigger>
+            <TabsTrigger value="generation">Генерация</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sources">
+            <Card>
+              <CardHeader>
+                <CardTitle>Источники данных</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSources ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : !sources.length ? (
+                  <p className="text-center text-muted-foreground">
+                    Нет добавленных источников
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {sources.map((source) => (
+                      <Card key={source.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-medium">{source.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {source.url}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Тип: {source.type}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="trends">
+            <Card>
+              <CardHeader>
+                <CardTitle>Тренды и темы</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingTrends ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : !trends.length ? (
+                  <p className="text-center text-muted-foreground">
+                    Нет актуальных трендов для этой кампании
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {trends.map((trend) => (
+                      <Card key={trend.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-medium">{trend.title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Источник: {sources.find(s => s.id === trend.source_id)?.name}
+                              </p>
+                              <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+                                <span>👍 {trend.reactions}</span>
+                                <span>💬 {trend.comments}</span>
+                                <span>👀 {trend.views}</span>
+                              </div>
+                            </div>
+                            <button
+                              className={`px-3 py-1 rounded-full text-sm ${
+                                selectedTopics.some(t => t.id === trend.id)
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-secondary text-secondary-foreground"
+                              }`}
+                              onClick={() => {
+                                setSelectedTopics(prev =>
+                                  prev.some(t => t.id === trend.id)
+                                    ? prev.filter(t => t.id !== trend.id)
+                                    : [...prev, trend]
+                                );
+                              }}
+                            >
+                              {selectedTopics.some(t => t.id === trend.id)
+                                ? "Выбрано"
+                                : "Выбрать"}
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="generation">
+            {selectedTopics.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Генерация контента</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <h3>Выбранные темы:</h3>
+                    <ul className="list-disc pl-6">
+                      {selectedTopics.map(topic => (
+                        <li key={topic.id}>{topic.title}</li>
+                      ))}
+                    </ul>
+                    <Button
+                      onClick={() => {
+                        // TODO: Implement content generation
+                        toast({
+                          title: "Генерация контента",
+                          description: "Функция будет добавлена позже"
+                        });
+                      }}
+                    >
+                      Сгенерировать контент
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-4">
-                {sources.map((source) => (
-                  <Card key={source.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-medium">{source.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {source.url}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Тип: {source.type}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <p className="text-center text-muted-foreground py-4">
+                Выберите темы для генерации контента на вкладке "Тренды"
+              </p>
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
