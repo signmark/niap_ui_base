@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
 import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+import Collapsible from "@/components/Collapsible"; // Placeholder import
+
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
@@ -89,21 +91,15 @@ export default function CampaignDetails() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Социальные сети</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SocialMediaSettings 
-            campaignId={id} 
-            initialSettings={campaign.social_media_settings}
-            onSettingsUpdated={() => {
-              // Обновляем кэш кампании после изменения настроек
-              queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
-            }}
-          />
-        </CardContent>
-      </Card>
+      <Collapsible title="Настройки публикации"> {/* Placeholder Collapsible */}
+        <SocialMediaSettings 
+          campaignId={id} 
+          initialSettings={campaign.social_media_settings}
+          onSettingsUpdated={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+          }}
+        />
+      </Collapsible>
 
       <Card>
         <CardHeader>
@@ -126,7 +122,6 @@ export default function CampaignDetails() {
       <ContentGenerationPanel 
         selectedTopics={[]} 
         onGenerated={() => {
-          // Обновляем календарь после генерации контента
           queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
         }}
       />
