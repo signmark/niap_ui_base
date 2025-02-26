@@ -66,24 +66,20 @@ export default function Trends() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      try {
-        const response = await directusApi.get('/items/campaign_content_sources', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: selectedCampaignId
-              },
-              is_active: {
-                _eq: true
-              }
+      const response = await directusApi.get('/items/campaign_content_sources', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
             },
-            fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
-          }
-        });
-        return response.data?.data || [];
-      } catch (error) {
-        throw error;
-      }
+            is_active: {
+              _eq: true
+            }
+          },
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+        }
+      });
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
@@ -114,21 +110,16 @@ export default function Trends() {
     queryKey: ["campaign_keywords", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-      try {
-        const response = await directusApi.get('/items/user_keywords', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: selectedCampaignId
-              }
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
             }
           }
-        });
-        return response.data?.data || [];
-      } catch (error) {
-        console.error("Error fetching keywords:", error);
-        return [];
-      }
+        }
+      });
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
@@ -137,11 +128,6 @@ export default function Trends() {
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Ключевые слова для поиска:', keywordsList);
-
-      if (!keywordsList.length) {
-        console.error('No keywords found');
-        throw new Error('Добавьте ключевые слова для поиска источников');
-      }
 
       const requestBody = {
         model: "llama-3.1-sonar-small-128k-online",
@@ -159,7 +145,7 @@ export default function Trends() {
         temperature: 0.7
       };
 
-      console.log('API Request:', JSON.stringify(requestBody, null, 2)); 
+      console.log('API Request:', requestBody);
 
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -199,32 +185,28 @@ export default function Trends() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      try {
-        const response = await directusApi.get('/items/campaign_trend_topics', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: selectedCampaignId
-              }
-            },
-            fields: [
-              'id',
-              'title',
-              'source_id',
-              'reactions',
-              'comments',
-              'views',
-              'created_at',
-              'is_bookmarked',
-              'campaign_id'
-            ],
-            sort: ['-reactions']
-          }
-        });
-        return response.data?.data || [];
-      } catch (error) {
-        throw error;
-      }
+      const response = await directusApi.get('/items/campaign_trend_topics', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
+            }
+          },
+          fields: [
+            'id',
+            'title',
+            'source_id',
+            'reactions',
+            'comments',
+            'views',
+            'created_at',
+            'is_bookmarked',
+            'campaign_id'
+          ],
+          sort: ['-reactions']
+        }
+      });
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
