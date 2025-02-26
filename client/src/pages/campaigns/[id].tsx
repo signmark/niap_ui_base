@@ -76,11 +76,11 @@ export default function CampaignDetails() {
         messages: [
           {
             role: "system",
-            content: `You are a specialized SEO keyword suggestion API that only returns JSON arrays. Always format your response as a valid JSON array of strings containing keywords, e.g. ["keyword1", "keyword2"]. Do not include any explanations or additional text.`
+            content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Возвращайте только JSON-массив ключевых слов на русском языке. Формат ответа должен быть валидным JSON-массивом строк, например: ["ключевое слово 1", "ключевое слово 2"]. Не включайте дополнительный текст или пояснения.`
           },
           {
             role: "user",
-            content: `Generate a list of relevant keywords for social media promotion of this website: ${url}`
+            content: `Сгенерируйте список релевантных ключевых слов для продвижения этого сайта в социальных сетях. Фокусируйтесь на профессиональных терминах и популярных запросах в данной тематике: ${url}`
           }
         ],
         max_tokens: 1000,
