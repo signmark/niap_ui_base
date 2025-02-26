@@ -136,7 +136,7 @@ export default function Trends() {
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
-      console.log('Keywords:', keywordsList);
+      console.log('Ключевые слова для поиска:', keywordsList);
 
       if (!keywordsList) {
         console.error('No keywords found');
@@ -148,74 +148,18 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: `Find social media accounts and channels that post content in Russian about the specified topics. Focus on these platforms:
-
-1. VK (ВКонтакте):
-   - Groups and public pages
-   - Must have post statistics (likes, reposts, views)
-   - Minimum 1000 followers
-
-2. Telegram:
-   - Public channels
-   - Must show view counts and reactions
-   - Minimum 500 subscribers
-
-3. YouTube:
-   - Russian-language channels
-   - Public view counts and likes
-   - Minimum 1000 subscribers
-
-4. LinkedIn:
-   - Company pages and influencer profiles
-   - Must have engagement metrics
-   - Minimum 1000 followers
-
-5. Reddit:
-   - Subreddits and active users
-   - Must have karma and engagement stats
-   - Russian-language content preferred
-
-6. Websites and Blogs:
-   - Russian language content
-   - Topic focused
-   - Must have engagement metrics
-
-Return JSON in this format:
-{
-  "sources": [
-    {
-      "name": "Channel Name",
-      "url": "https://platform.com/account",
-      "type": "vk|telegram|youtube|linkedin|reddit|website",
-      "metrics_available": true,
-      "followers": "exact number",
-      "post_frequency": "daily|weekly",
-      "example_stats": {
-        "avg_reactions": "actual number",
-        "avg_comments": "actual number", 
-        "avg_views": "actual number"
-      }
-    }
-  ]
-}`
+            content: "Найди подходящие источники в социальных сетях по заданным ключевым словам. Верни результат в формате JSON с массивом sources, где каждый источник имеет name, url и type (vk, telegram, youtube, linkedin или reddit)."
           },
           {
             role: "user",
-            content: `Найди популярные источники контента по темам: ${keywordsList}. 
-            Обязательно:
-            - Контент на русском языке
-            - Активные площадки с регулярными публикациями
-            - Только источники где видна статистика постов (просмотры, лайки и т.д.)
-            - Реальные метрики, не заглушки
-            Возвращай только источники с высокой вовлеченностью аудитории.`
+            content: `Найди активные каналы и группы, которые публикуют контент по темам: ${keywordsList}`
           }
         ],
         max_tokens: 1000,
         temperature: 0.7
       };
 
-      console.log('Keywords before request:', keywordsList);
-      console.log('Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2)); 
+      console.log('API Request:', JSON.stringify(requestBody, null, 2)); 
 
       try {
         const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -229,8 +173,8 @@ Return JSON in this format:
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`API request failed with status ${response.status}: ${errorText}`);
-          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+          console.error('API Error:', errorText);
+          throw new Error('Ошибка при поиске источников');
         }
 
         const data = await response.json();
@@ -238,21 +182,21 @@ Return JSON in this format:
         return data;
 
       } catch (error) {
-        console.error('API call error:', error);
+        console.error('API Call Error:', error);
         throw error;
       }
     },
     onSuccess: (data) => {
-      console.log('Success data:', data);
+      console.log('Success Data:', data);
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
       toast({
         title: "Найдены источники",
-        description: `Найдено ${data.choices[0].message.content.match(/"url":/g)?.length || 0} источников с метриками`
+        description: "Проверьте список найденных источников"
       });
     },
     onError: (error: Error) => {
-      console.error('Search error:', error);
+      console.error('Search Error:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
