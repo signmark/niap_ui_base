@@ -143,10 +143,14 @@ export default function Trends() {
           {
             role: "system",
             content: `Вы - эксперт по поиску релевантных источников контента в социальных сетях. Найдите популярные каналы, группы и аккаунты в следующих платформах:
-- Telegram каналы (t.me/...)
-- VK группы и паблики (vk.com/...)
-- YouTube каналы (youtube.com/...)
-- Reddit сообщества (reddit.com/r/...)
+- Twitter/X (twitter.com/...)
+- VK (vk.com/...)
+- Telegram (t.me/...)
+- Instagram (instagram.com/...)
+- Facebook (facebook.com/...)
+- YouTube (youtube.com/...)
+- LinkedIn (linkedin.com/company/... или linkedin.com/in/...)
+- Reddit (reddit.com/r/...)
 
 Анализируйте ключевые слова и возвращайте только JSON-массив с найденными источниками в формате: ["url1", "url2", "url3"].
 Убедитесь, что все URL ведут именно на страницы соцсетей.`

@@ -23,7 +23,7 @@ interface Source {
 interface ParsedSource {
   name: string;
   url: string;
-  type: 'website' | 'telegram' | 'vk' | 'youtube' | 'reddit';
+  type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'facebook' | 'youtube' | 'linkedin' | 'reddit' | 'website';
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -38,17 +38,30 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   // Функция для определения типа источника по URL
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
+
     // Проверяем в порядке приоритета
-    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) {
-      return 'telegram';
+    if (lowercaseUrl.includes('twitter.com') || lowercaseUrl.includes('x.com')) {
+      return 'twitter';
     }
     if (lowercaseUrl.includes('vk.com')) {
       return 'vk';
     }
+    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) {
+      return 'telegram';
+    }
+    if (lowercaseUrl.includes('instagram.com')) {
+      return 'instagram';
+    }
+    if (lowercaseUrl.includes('facebook.com') || lowercaseUrl.includes('fb.com')) {
+      return 'facebook';
+    }
     if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) {
       return 'youtube';
     }
-    if (lowercaseUrl.includes('reddit.com/r/')) {
+    if (lowercaseUrl.includes('linkedin.com')) {
+      return 'linkedin';
+    }
+    if (lowercaseUrl.includes('reddit.com')) {
       return 'reddit';
     }
     // Если не нашли соответствий, значит это обычный веб-сайт
@@ -102,6 +115,18 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                     break;
                   case 'reddit':
                     name = urlObj.pathname.split('/r/')[1]?.split('/')[0] || 'Reddit';
+                    break;
+                  case 'twitter':
+                    name = urlObj.pathname.split('/').pop() || 'Twitter/X';
+                    break;
+                  case 'instagram':
+                    name = urlObj.pathname.split('/').pop() || 'Instagram';
+                    break;
+                  case 'facebook':
+                    name = urlObj.pathname.split('/').pop() || 'Facebook';
+                    break;
+                  case 'linkedin':
+                    name = urlObj.pathname.split('/').pop() || 'LinkedIn';
                     break;
                   default:
                     name = urlObj.hostname.replace(/^www\./, '');
@@ -226,10 +251,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Платформа:</span>
                           <span className="font-medium">
-                            {source.type === 'vk' ? 'ВКонтакте' :
+                            {source.type === 'twitter' ? 'Twitter/X' :
+                              source.type === 'vk' ? 'ВКонтакте' :
                               source.type === 'telegram' ? 'Telegram' :
-                                source.type === 'youtube' ? 'YouTube' :
-                                  source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
+                              source.type === 'instagram' ? 'Instagram' :
+                              source.type === 'facebook' ? 'Facebook' :
+                              source.type === 'youtube' ? 'YouTube' :
+                              source.type === 'linkedin' ? 'LinkedIn' :
+                              source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                           </span>
                         </div>
                       </div>
