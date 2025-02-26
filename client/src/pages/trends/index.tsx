@@ -165,9 +165,19 @@ export default function Trends() {
    - Public view counts and likes
    - Minimum 1000 subscribers
 
-4. Websites and Blogs:
+4. LinkedIn:
+   - Company pages and influencer profiles
+   - Must have engagement metrics
+   - Minimum 1000 followers
+
+5. Reddit:
+   - Subreddits and active users
+   - Must have karma and engagement stats
+   - Russian-language content preferred
+
+6. Websites and Blogs:
    - Russian language content
-   - Health and nutrition focused
+   - Topic focused
    - Must have engagement metrics
 
 Return JSON in this format:
@@ -176,7 +186,7 @@ Return JSON in this format:
     {
       "name": "Channel Name",
       "url": "https://platform.com/account",
-      "type": "vk|telegram|youtube|website",
+      "type": "vk|telegram|youtube|linkedin|reddit|website",
       "metrics_available": true,
       "followers": "exact number",
       "post_frequency": "daily|weekly",
@@ -204,7 +214,7 @@ Return JSON in this format:
           temperature: 0.7
         };
 
-      console.log('Full API request body:', requestBody); 
+      console.log('Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2)); 
 
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -221,6 +231,7 @@ Return JSON in this format:
 
       const data = await response.json();
       console.log('API Response:', data);
+
       try {
         const content = data.choices[0].message.content;
         let jsonStr = content.substring(
@@ -231,9 +242,13 @@ Return JSON in this format:
         if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
           throw new Error('Не найдено подходящих источников');
         }
-        
-        const receivedKeywords = parsedData.sources.flatMap(source => Object.values(source).filter(value => typeof value === 'string' && value.includes(keywordsList)));
-        if (receivedKeywords.length == 0) {
+
+        const receivedKeywords = parsedData.sources.flatMap(source => 
+          Object.values(source).filter(value => 
+            typeof value === 'string' && value.toLowerCase().includes(keywordsList.toLowerCase())
+          )
+        );
+        if (receivedKeywords.length === 0) {
             throw new Error('Ключевые слова не найдены в ответе API');
         }
 
@@ -251,6 +266,8 @@ Return JSON in this format:
           description: "Не удалось обработать результаты поиска"
         });
       }
+
+      return data;
     },
     onError: (error: Error) => {
       toast({
@@ -298,7 +315,6 @@ Return JSON in this format:
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
-      
       const response = await directusApi.post('/items/crawler_tasks', {
         campaign_id: selectedCampaignId,
         status: 'pending',

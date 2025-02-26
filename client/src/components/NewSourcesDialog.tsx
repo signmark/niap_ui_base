@@ -14,10 +14,14 @@ interface NewSourcesDialogProps {
   sourcesData: any;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   const { toast } = useToast();
   const [selectedSources, setSelectedSources] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectAll, setSelectAll] = useState(false);
 
   const sources = (() => {
     try {
@@ -33,6 +37,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       return [];
     }
   })();
+
+  const totalPages = Math.ceil(sources.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentSources = sources.slice(startIndex, endIndex);
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedSources(sources);
+    } else {
+      setSelectedSources([]);
+    }
+  };
 
   const addSelectedSources = async () => {
     setIsAdding(true);
@@ -80,8 +98,16 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           </p>
         ) : (
           <>
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                checked={selectAll}
+                onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
+              />
+              <span className="text-sm">Выбрать все источники</span>
+            </div>
+
             <div className="space-y-2">
-              {sources.map((source: any, index: number) => (
+              {currentSources.map((source: any, index: number) => (
                 <Card key={index} className="p-4">
                   <div className="flex items-start gap-4">
                     <Checkbox
@@ -106,6 +132,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                              source.type === 'telegram' ? 'Telegram' :
                              source.type === 'instagram' ? 'Instagram' :
                              source.type === 'facebook' ? 'Facebook' :
+                             source.type === 'linkedin' ? 'LinkedIn' :
+                             source.type === 'reddit' ? 'Reddit' :
                              source.type === 'youtube' ? 'YouTube' : source.type}
                           </span>
                         </div>
@@ -139,7 +167,29 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
               ))}
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Назад
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Вперед
+                </Button>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                Страница {currentPage} из {totalPages}
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={onClose}>
                 Отмена
               </Button>
