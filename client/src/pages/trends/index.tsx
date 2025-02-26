@@ -142,28 +142,16 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: `Вы - эксперт по поиску релевантных источников контента в социальных сетях. Найдите популярные каналы, группы и аккаунты в следующих платформах:
-- Twitter/X (twitter.com/...)
-- VK (vk.com/...)
-- Telegram (t.me/...)
-- Instagram (instagram.com/...)
-- Facebook (facebook.com/...)
-- YouTube (youtube.com/...)
-- LinkedIn (linkedin.com/company/... или linkedin.com/in/...)
-- Reddit (reddit.com/r/...)
-
-Возвращайте ТОЛЬКО JSON-массив с найденными источниками в формате:
-["twitter.com/example", "vk.com/group", "t.me/channel"]
-
-ВАЖНО: Не добавляйте никакого описательного текста или форматирования, только JSON-массив с URL.`
+            content: "Найдите популярные и активные источники в социальных сетях по заданным ключевым словам. Верните только список URL в формате JSON-массива, без дополнительного текста или описаний."
           },
           {
             role: "user",
-            content: `Найдите самые популярные и активные источники в социальных сетях по следующим ключевым словам: ${keywordsList.join(", ")}`
+            content: `Найдите популярные URL (только из списка twitter.com, vk.com, t.me, instagram.com, facebook.com, youtube.com, linkedin.com, reddit.com) по ключевым словам: ${keywordsList.join(", ")}`
           }
         ],
         max_tokens: 1000,
-        temperature: 0.7
+        temperature: 0.7,
+        format: "json"
       };
 
       console.log('API Request:', requestBody);
