@@ -8,48 +8,48 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { insertContentSourceSchema } from "@shared/schema";
+import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { useAuthStore } from "@/lib/store";
+import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/queryClient";
 
 interface AddSourceDialogProps {
+  campaignId: string;
   onClose: () => void;
 }
 
-export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
+const sourceSchema = z.object({
+  name: z.string().min(1, "Название обязательно"),
+  url: z.string().url("Введите корректный URL"),
+  type: z.string().min(1, "Выберите тип источника")
+});
+
+type SourceForm = z.infer<typeof sourceSchema>;
+
+export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   const { toast } = useToast();
-  const userId = useAuthStore((state) => state.userId);
 
-  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
-    queryKey: ["/api/campaigns"],
-    queryFn: async () => {
-      const response = await apiRequest('/api/campaigns');
-      return response;
-    }
-  });
-
-  const form = useForm({
-    resolver: zodResolver(insertContentSourceSchema),
+  const form = useForm<SourceForm>({
+    resolver: zodResolver(sourceSchema),
     defaultValues: {
       name: "",
       url: "",
-      type: "",
-      userId: userId || "",
-      campaignId: undefined
+      type: ""
     }
   });
 
   const { mutate: createSource, isPending } = useMutation({
-    mutationFn: async (values: any) => {
-      return await apiRequest('/api/sources', {
-        method: 'POST',
-        data: values
+    mutationFn: async (values: SourceForm) => {
+      return await directusApi.post('/items/campaign_content_sources', {
+        name: values.name,
+        url: values.url,
+        type: values.type,
+        campaign_id: campaignId,
+        is_active: true
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       toast({
         title: "Успешно",
         description: "Источник добавлен"
@@ -74,39 +74,12 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
         <form onSubmit={form.handleSubmit((values) => createSource(values))} className="space-y-4">
           <FormField
             control={form.control}
-            name="campaignId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Кампания</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите кампанию" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingCampaigns ? (
-                      <SelectItem value="">Загрузка...</SelectItem>
-                    ) : campaigns?.map((campaign) => (
-                      <SelectItem key={campaign.id} value={campaign.id.toString()}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Название</FormLabel>
                 <FormControl>
-                  <Input placeholder="Введите название источника" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -120,7 +93,7 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
               <FormItem>
                 <FormLabel>URL</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -133,14 +106,15 @@ export function AddSourceDialog({ onClose }: AddSourceDialogProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Тип источника</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите тип источника" />
-                    </SelectTrigger>
-                  </FormControl>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите тип источника" />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="website">Вебсайт</SelectItem>
+                    <SelectItem value="website">Веб-сайт</SelectItem>
                     <SelectItem value="telegram">Telegram канал</SelectItem>
                     <SelectItem value="vk">VK группа</SelectItem>
                   </SelectContent>
