@@ -134,11 +134,20 @@ export default function Trends() {
         messages: [
           {
             role: "system",
-            content: "Найди подходящие источники в социальных сетях по заданным ключевым словам. Верни результат в формате JSON с массивом sources, где каждый источник имеет name, url и type (vk, telegram, youtube, linkedin или reddit)."
+            content: `Find and return active social media sources that post content about the given topics. Return JSON in this exact format:
+{
+  "sources": [
+    {
+      "name": "Source Name",
+      "url": "full https URL",
+      "type": "vk|telegram|youtube|reddit"
+    }
+  ]
+}`
           },
           {
             role: "user",
-            content: `Найди активные каналы и группы, которые публикуют контент по темам: ${keywordsList.join(", ")}\n\nТребования:\n1. Найди минимум 2-3 источника для КАЖДОГО ключевого слова\n2. Каждый источник должен регулярно публиковать контент по этой теме\n3. Источники должны быть на русском языке\n4. Обязательно верни URL для каждого источника`
+            content: `Find active social media sources for EACH of these topics:\n${keywordsList.map(kw => `- ${kw}`).join('\n')}\n\nRequirements:\n- Russian language content only\n- Return multiple sources per topic\n- Only include real, active accounts`
           }
         ],
         max_tokens: 1000,
@@ -158,7 +167,6 @@ export default function Trends() {
 
       const data = await response.json();
       console.log('API Response:', data);
-
       return data;
     },
     onSuccess: (data) => {
