@@ -6,7 +6,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { PublicationPanel } from "@/components/PublicationPanel";
-import type { Campaign, TrendTopic } from "@shared/schema";
+import { directusApi } from "@/lib/directus";
+import type { Campaign } from "@shared/schema";
+
+interface TrendTopic {
+  id: string;
+  title: string;
+  source: { id: string; name: string };
+  reactions: number;
+  comments: number;
+  views: number;
+  created_at: string;
+  is_bookmarked: boolean;
+}
 
 export default function ContentManagement() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>();
@@ -24,22 +36,25 @@ export default function ContentManagement() {
     }
   });
 
-  // Получаем тренды для выбранной кампании
+  // Получаем тренды для выбранной кампании через Directus
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
-    queryKey: ["/api/trends", selectedCampaignId],
+    queryKey: ["/api/campaign_trend_topics", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      const response = await directusApi.get('/items/campaign_trend_topics', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
+            }
+          },
+          fields: ['*', 'source.id', 'source.name'],
+          sort: ['-created_at']
+        }
+      });
 
-      const response = await fetch(`/api/trends?from=${weekAgo.toISOString()}&campaignId=${selectedCampaignId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch trends');
-      }
-      const data = await response.json();
-      console.log('Fetched trends:', data); // Debug log
-      return Array.isArray(data) ? data : [];
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
@@ -74,7 +89,7 @@ export default function ContentManagement() {
               </SelectTrigger>
               <SelectContent>
                 {campaigns.map((campaign) => (
-                  <SelectItem key={campaign.id} value={campaign.id.toString()}>
+                  <SelectItem key={campaign.id} value={campaign.id}>
                     {campaign.name}
                   </SelectItem>
                 ))}
@@ -100,7 +115,7 @@ export default function ContentManagement() {
                     <div className="flex justify-center p-4">
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  ) : trends.length === 0 ? (
+                  ) : !trends.length ? (
                     <p className="text-center text-muted-foreground">
                       Нет актуальных трендов для этой кампании
                     </p>
@@ -113,7 +128,7 @@ export default function ContentManagement() {
                               <div>
                                 <h3 className="font-medium">{trend.title}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Источник: {trend.sourceId}
+                                  Источник: {trend.source?.name}
                                 </p>
                                 <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
                                   <span>👍 {trend.reactions}</span>
