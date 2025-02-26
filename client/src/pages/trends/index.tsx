@@ -144,11 +144,11 @@ export default function Trends() {
       console.log('Keywords before request:', keywordsList); 
 
       const requestBody = {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: `Find social media accounts and channels that post content in Russian about the specified topics. Focus on these platforms:
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [
+          {
+            role: "system",
+            content: `Find social media accounts and channels that post content in Russian about the specified topics. Focus on these platforms:
 
 1. VK (ВКонтакте):
    - Groups and public pages
@@ -198,21 +198,21 @@ Return JSON in this format:
     }
   ]
 }`
-            },
-            {
-              role: "user",
-              content: `Найди популярные источники контента по темам: ${keywordsList}. 
-              Обязательно:
-              - Контент на русском языке
-              - Активные площадки с регулярными публикациями
-              - Только источники где видна статистика постов (просмотры, лайки и т.д.)
-              - Реальные метрики, не заглушки
-              Возвращай только источники с высокой вовлеченностью аудитории.`
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        };
+          },
+          {
+            role: "user",
+            content: `Найди популярные источники контента по темам: ${keywordsList}. 
+            Обязательно:
+            - Контент на русском языке
+            - Активные площадки с регулярными публикациями
+            - Только источники где видна статистика постов (просмотры, лайки и т.д.)
+            - Реальные метрики, не заглушки
+            Возвращай только источники с высокой вовлеченностью аудитории.`
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      };
 
       console.log('Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2)); 
 
@@ -254,22 +254,19 @@ Return JSON in this format:
             throw new Error('Ключевые слова не найдены в ответе API');
         }
 
-        setFoundSourcesData(data);
-        setIsSearchingNewSources(true);
-        toast({
-          title: "Найдены источники",
-          description: `Найдено ${parsedData.sources.length} источников с метриками`
-        });
+        return data;
       } catch (error) {
         console.error('Error parsing sources:', error);
-        toast({
-          variant: "destructive",
-          title: "Ошибка",
-          description: "Не удалось обработать результаты поиска"
-        });
+        throw new Error('Не удалось обработать результаты поиска');
       }
-
-      return data;
+    },
+    onSuccess: (data) => {
+      setFoundSourcesData(data);
+      setIsSearchingNewSources(true);
+      toast({
+        title: "Найдены источники",
+        description: `Найдено ${data.choices[0].message.content.match(/"url":/g)?.length || 0} источников с метриками`
+      });
     },
     onError: (error: Error) => {
       toast({
