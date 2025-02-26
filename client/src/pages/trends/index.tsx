@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import type { Campaign } from "@shared/schema";
-import { useAuthStore } from "@/lib/store";
 import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -81,7 +80,6 @@ export default function Trends() {
         });
         return response.data?.data || [];
       } catch (error) {
-        console.error("Error fetching sources:", error);
         throw error;
       }
     },
@@ -89,26 +87,10 @@ export default function Trends() {
   });
 
   // Получаем тренды через Directus
-  const { data: trendTopics = [], isLoading } = useQuery<TrendTopic[]>({
+  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-
-      const from = new Date();
-      switch (selectedPeriod) {
-        case "3days":
-          from.setDate(from.getDate() - 3);
-          break;
-        case "7days":
-          from.setDate(from.getDate() - 7);
-          break;
-        case "14days":
-          from.setDate(from.getDate() - 14);
-          break;
-        case "30days":
-          from.setDate(from.getDate() - 30);
-          break;
-      }
 
       try {
         const response = await directusApi.get('/items/campaign_trend_topics', {
@@ -116,15 +98,24 @@ export default function Trends() {
             filter: {
               campaign_id: {
                 _eq: selectedCampaignId
-              },
-              created_at: {
-                _gte: from.toISOString()
               }
             },
-            fields: ['id', 'title', 'source_id', 'reactions', 'comments', 'views', 'created_at', 'is_bookmarked', 'campaign_id'],
-            sort: ['-created_at']
+            fields: [
+              'id',
+              'title',
+              'source_id',
+              'reactions',
+              'comments',
+              'views',
+              'created_at',
+              'is_bookmarked',
+              'campaign_id'
+            ],
+            sort: ['-reactions']
           }
         });
+
+        console.log("Trends API response:", response.data);
         return response.data?.data || [];
       } catch (error) {
         console.error("Error fetching trends:", error);
@@ -160,9 +151,9 @@ export default function Trends() {
     },
     onError: (error: Error) => {
       toast({
+        variant: "destructive",
         title: "Ошибка",
-        description: error.message,
-        variant: "destructive"
+        description: error.message
       });
     }
   });
@@ -171,6 +162,14 @@ export default function Trends() {
   const isValidCampaignSelected = selectedCampaignId && 
     selectedCampaignId !== "loading" && 
     selectedCampaignId !== "empty";
+
+  if (isLoadingCampaigns) {
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -209,53 +208,40 @@ export default function Trends() {
         </div>
       </div>
 
-      {/* Campaign Selection */}
       <Card>
-        <CardHeader>
-          <CardTitle>Выбор кампании</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Select
             value={selectedCampaignId}
             onValueChange={setSelectedCampaignId}
           >
-            <SelectTrigger className="w-[300px]">
+            <SelectTrigger>
               <SelectValue placeholder="Выберите кампанию" />
             </SelectTrigger>
             <SelectContent>
-              {isLoadingCampaigns ? (
-                <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : !campaigns || campaigns.length === 0 ? (
-                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-              ) : (
-                campaigns.map((campaign) => (
-                  <SelectItem 
-                    key={campaign.id} 
-                    value={campaign.id}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))
-              )}
+              {campaigns.map((campaign) => (
+                <SelectItem 
+                  key={campaign.id} 
+                  value={campaign.id}
+                >
+                  {campaign.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </CardContent>
       </Card>
 
-      {isValidCampaignSelected ? (
+      {isValidCampaignSelected && (
         <>
-          {/* Sources List */}
           <Card>
-            <CardHeader>
-              <CardTitle>Источники данных</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
+              <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
               {isLoadingSources ? (
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center p-4">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : !sources.length ? (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground">
                   Нет добавленных источников
                 </p>
               ) : (
@@ -268,7 +254,7 @@ export default function Trends() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-sm text-muted-foreground">
-                          {source.type === 'website' ? 'Вебсайт' :
+                          {source.type === 'website' ? 'Веб-сайт' :
                             source.type === 'telegram' ? 'Telegram канал' :
                               source.type === 'vk' ? 'VK группа' : source.type}
                         </div>
@@ -280,7 +266,6 @@ export default function Trends() {
             </CardContent>
           </Card>
 
-          {/* Trends Table */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex gap-4">
@@ -307,7 +292,7 @@ export default function Trends() {
                 />
               </div>
 
-              {isLoading ? (
+              {isLoadingTrends ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
@@ -325,7 +310,7 @@ export default function Trends() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {trendTopics
+                    {trends
                       .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                       .map((topic) => (
                         <TableRow key={topic.id}>
@@ -337,7 +322,7 @@ export default function Trends() {
                           </TableCell>
                           <TableCell>{topic.title}</TableCell>
                           <TableCell>
-                            {sources.find(s => s.id === topic.source_id)?.name}
+                            {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
                           </TableCell>
                           <TableCell>
                             {campaigns.find(c => c.id === topic.campaign_id)?.name}
@@ -358,22 +343,14 @@ export default function Trends() {
               )}
             </CardContent>
           </Card>
-        </>
-      ) : (
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-center text-muted-foreground">
-              Пожалуйста, выберите кампанию для просмотра источников и трендов
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
-      {selectedTopics.length > 0 && (
-        <ContentGenerationPanel
-          selectedTopics={selectedTopics}
-          onGenerated={() => setSelectedTopics([])}
-        />
+          {selectedTopics.length > 0 && (
+            <ContentGenerationPanel
+              selectedTopics={selectedTopics}
+              onGenerated={() => setSelectedTopics([])}
+            />
+          )}
+        </>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

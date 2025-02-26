@@ -11,12 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import type { TrendTopic } from "@shared/schema";
+import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
+interface TrendTopic {
+  id: string;
+  title: string;
+  source_id: string;
+  reactions: number;
+  comments: number;
+  views: number;
+  created_at: string;
+  is_bookmarked: boolean;
+  campaign_id: string;
+}
+
 const generateContentSchema = z.object({
-  topics: z.array(z.number()),
+  topics: z.array(z.string()),
   prompt: z.string().min(1, "Требуется описание контента"),
   useAI: z.boolean().default(true),
   scheduledFor: z.date().optional(),
@@ -49,9 +60,10 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
 
   const { mutate: generateContent } = useMutation({
     mutationFn: async (values: GenerateContentForm) => {
-      return await apiRequest('/api/content/generate', {
-        method: 'POST',
-        data: values
+      return await directusApi.post('/items/content_generations', {
+        ...values,
+        campaign_id: selectedTopics[0]?.campaign_id,
+        status: 'pending'
       });
     },
     onSuccess: () => {
@@ -112,10 +124,7 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
                 <FormItem>
                   <FormLabel>Заголовок</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Введите заголовок публикации"
-                      {...field}
-                    />
+                    <Input {...field} placeholder="Введите заголовок публикации" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
