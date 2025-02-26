@@ -136,13 +136,12 @@ export default function Trends() {
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       const keywordsList = keywords.map((k: any) => k.keyword).join(", ");
-      console.log('Keywords before request:', keywordsList);
+      console.log('Keywords:', keywordsList);
 
       if (!keywordsList) {
+        console.error('No keywords found');
         throw new Error('Добавьте ключевые слова для поиска источников');
       }
-
-      console.log('Keywords to use:', keywordsList); 
 
       const requestBody = {
         model: "llama-3.1-sonar-small-128k-online",
@@ -215,46 +214,36 @@ Return JSON in this format:
         temperature: 0.7
       };
 
-      console.log('Keywords before request:', keywordsList); 
-
+      console.log('Keywords before request:', keywordsList);
       console.log('Sending request to Perplexity API:', JSON.stringify(requestBody, null, 2)); 
 
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer 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',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API request failed with status ${response.status}: ${errorText}`);
-        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('API Response:', data);
-
       try {
-        const content = data.choices[0].message.content;
-        let jsonStr = content.substring(
-          content.indexOf('{'),
-          content.lastIndexOf('}') + 1
-        );
-        const parsedData = JSON.parse(jsonStr);
-        if (!Array.isArray(parsedData.sources) || parsedData.sources.length === 0) {
-          throw new Error('Не найдено подходящих источников');
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer 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',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`API request failed with status ${response.status}: ${errorText}`);
+          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
         }
 
+        const data = await response.json();
+        console.log('API Response:', data);
         return data;
+
       } catch (error) {
-        console.error('Error parsing sources:', error);
-        throw new Error('Не удалось обработать результаты поиска');
+        console.error('API call error:', error);
+        throw error;
       }
     },
     onSuccess: (data) => {
+      console.log('Success data:', data);
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
       toast({
