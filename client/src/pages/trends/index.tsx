@@ -154,25 +154,32 @@ export default function Trends() {
           messages: [
             {
               role: "system",
-              content: `Find social media sources and websites that match these criteria:
-1. Regularly post content about the specified topics
-2. Have measurable engagement metrics (reactions, comments, views)
-3. Provide public access to post statistics
-4. Update content frequently
-5. Focus on platforms like Medium, Reddit, Twitter/X, or popular blogs with engagement metrics
+              content: `Find social media accounts and channels that match these criteria:
+1. Focus on these platforms: Twitter/X, VK, Telegram, Instagram, Facebook, YouTube
+2. Regularly post content about the specified topics
+3. Have public access to post metrics:
+   - Twitter/X: likes, retweets, replies, views
+   - VK: likes, reposts, comments, views
+   - Telegram: views, reactions, forwards
+   - Instagram: likes, comments
+   - Facebook: reactions, comments, shares
+   - YouTube: views, likes, comments
+4. Update content at least weekly
+5. Have significant engagement (>1000 followers/subscribers)
 
 Return the result as a JSON object with an array of sources. Format:
 {
   "sources": [
     {
-      "name": "Source Name",
-      "url": "https://example.com",
-      "type": "website|telegram|vk",
+      "name": "Account/Channel Name",
+      "url": "https://platform.com/account",
+      "type": "twitter|vk|telegram|instagram|facebook|youtube",
       "metrics_available": true,
-      "update_frequency": "daily|weekly",
+      "followers": "number of followers/subscribers",
+      "post_frequency": "daily|weekly",
       "example_stats": {
-        "avg_reactions": "numeric value if available",
-        "avg_comments": "numeric value if available",
+        "avg_reactions": "numeric value",
+        "avg_comments": "numeric value",
         "avg_views": "numeric value if available"
       }
     }
@@ -181,7 +188,7 @@ Return the result as a JSON object with an array of sources. Format:
             },
             {
               role: "user",
-              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views. Return sources with actual numeric values for metrics, not placeholders.`
+              content: `Find me content sources about these topics: ${keywordsList}. Only include sources where we can track reactions, comments, and views. Return sources with actual numeric values for metrics, not placeholders. Focus on finding accounts with high engagement rates.`
             }
           ],
           max_tokens: 1000,
