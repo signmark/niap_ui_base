@@ -9,12 +9,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
-import type { ContentSource, TrendTopic, Campaign } from "@shared/schema";
+import type { Campaign } from "@shared/schema";
 import { useAuthStore } from "@/lib/store";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+
+interface ContentSource {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  is_active: boolean;
+  campaign_id: string;
+  created_at: string;
+}
+
+interface TrendTopic {
+  id: string;
+  title: string;
+  source_id: string;
+  reactions: number;
+  comments: number;
+  views: number;
+  created_at: string;
+  is_bookmarked: boolean;
+  campaign_id: string;
+}
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
@@ -24,68 +45,93 @@ export default function Trends() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
-  const userId = useAuthStore((state) => state.userId);
   const { toast } = useToast();
 
-  const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
+  // Получаем список кампаний
+  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await apiRequest('/api/campaigns');
-      return response;
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
+      }
+      return response.json();
     }
   });
 
-  const { data: sources, isLoading: isLoadingSources } = useQuery({
-    queryKey: ["/api/sources", userId, selectedCampaignId],
+  // Получаем источники для выбранной кампании через Directus
+  const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
+    queryKey: ["campaign_content_sources", selectedCampaignId],
     queryFn: async () => {
-      const response = await apiRequest('/api/sources', {
-        params: { 
-          campaignId: selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" 
-            ? selectedCampaignId 
-            : undefined 
-        }
-      });
-      return response;
+      if (!selectedCampaignId) return [];
+
+      try {
+        const response = await directusApi.get('/items/campaign_content_sources', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              },
+              is_active: {
+                _eq: true
+              }
+            },
+            fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+          }
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching sources:", error);
+        throw error;
+      }
     },
-    enabled: !!userId
+    enabled: !!selectedCampaignId
   });
 
-  const { mutate: deleteSource } = useMutation({
-    mutationFn: async (sourceId: number) => {
-      return await apiRequest(`/api/sources/${sourceId}`, {
-        method: 'DELETE'
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
-      toast({
-        title: "Успешно",
-        description: "Источник удален"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Ошибка",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const { data: trendTopics, isLoading } = useQuery({
-    queryKey: ["/api/trends", selectedPeriod, selectedCampaignId],
+  // Получаем тренды через Directus
+  const { data: trendTopics = [], isLoading } = useQuery<TrendTopic[]>({
+    queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
-      const response = await apiRequest('/api/trends', {
-        params: { 
-          period: selectedPeriod,
-          campaignId: selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty" 
-            ? selectedCampaignId 
-            : undefined
-        }
-      });
-      return response;
+      if (!selectedCampaignId) return [];
+
+      const from = new Date();
+      switch (selectedPeriod) {
+        case "3days":
+          from.setDate(from.getDate() - 3);
+          break;
+        case "7days":
+          from.setDate(from.getDate() - 7);
+          break;
+        case "14days":
+          from.setDate(from.getDate() - 14);
+          break;
+        case "30days":
+          from.setDate(from.getDate() - 30);
+          break;
+      }
+
+      try {
+        const response = await directusApi.get('/items/campaign_trend_topics', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              },
+              created_at: {
+                _gte: from.toISOString()
+              }
+            },
+            fields: ['id', 'title', 'source_id', 'reactions', 'comments', 'views', 'created_at', 'is_bookmarked', 'campaign_id'],
+            sort: ['-created_at']
+          }
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching trends:", error);
+        throw error;
+      }
     },
-    enabled: !!userId
+    enabled: !!selectedCampaignId
   });
 
   const toggleTopicSelection = (topic: TrendTopic) => {
@@ -99,15 +145,14 @@ export default function Trends() {
     });
   };
 
+  // Запуск сбора трендов
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/trends/collect', {
-        method: 'POST',
-        data: { campaignId: selectedCampaignId }
+      return await directusApi.post('/utils/crawler/run', {
+        campaignId: selectedCampaignId
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trends"] });
       toast({
         title: "Успешно",
         description: "Запущен сбор трендов"
@@ -183,10 +228,10 @@ export default function Trends() {
               ) : !campaigns || campaigns.length === 0 ? (
                 <SelectItem value="empty">Нет доступных кампаний</SelectItem>
               ) : (
-                campaigns.map((campaign: Campaign) => (
+                campaigns.map((campaign) => (
                   <SelectItem 
                     key={campaign.id} 
-                    value={campaign.id.toString()}
+                    value={campaign.id}
                   >
                     {campaign.name}
                   </SelectItem>
@@ -209,13 +254,13 @@ export default function Trends() {
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              ) : sources?.data?.length === 0 ? (
+              ) : sources?.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">
                   Нет добавленных источников
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {sources?.data?.map((source: ContentSource) => (
+                  {sources.map((source) => (
                     <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                       <div>
                         <h3 className="font-medium">{source.name}</h3>
@@ -227,13 +272,6 @@ export default function Trends() {
                             source.type === 'telegram' ? 'Telegram канал' :
                               source.type === 'vk' ? 'VK группа' : source.type}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteSource(source.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -287,9 +325,9 @@ export default function Trends() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(trendTopics?.data || [])
+                    {trendTopics
                       .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((topic: TrendTopic) => (
+                      .map((topic) => (
                         <TableRow key={topic.id}>
                           <TableCell>
                             <Checkbox
@@ -299,10 +337,10 @@ export default function Trends() {
                           </TableCell>
                           <TableCell>{topic.title}</TableCell>
                           <TableCell>
-                            {sources?.data?.find(s => s.id === topic.sourceId)?.name}
+                            {sources.find(s => s.id === topic.source_id)?.name}
                           </TableCell>
                           <TableCell>
-                            {campaigns?.find(c => c.id === topic.campaignId)?.name}
+                            {campaigns.find(c => c.id === topic.campaign_id)?.name}
                           </TableCell>
                           <TableCell className="text-right">
                             {topic.reactions?.toLocaleString() ?? 0}
