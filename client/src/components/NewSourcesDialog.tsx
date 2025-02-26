@@ -8,17 +8,17 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
-interface NewSourcesDialogProps {
-  campaignId: string;
-  onClose: () => void;
-  sourcesData: any;
+interface Source {
+  name: string;
+  url: string;
+  type: string;
 }
 
 const ITEMS_PER_PAGE = 5;
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   const { toast } = useToast();
-  const [selectedSources, setSelectedSources] = useState<any[]>([]);
+  const [selectedSources, setSelectedSources] = useState<Source[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
@@ -66,12 +66,23 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentSources = sources.slice(startIndex, endIndex);
 
+  const isSourceSelected = (source: Source) => 
+    selectedSources.some(s => s.url === source.url);
+
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
-      setSelectedSources(sources);
+      const newSelected = [...selectedSources];
+      currentSources.forEach(source => {
+        if (!isSourceSelected(source)) {
+          newSelected.push(source);
+        }
+      });
+      setSelectedSources(newSelected);
     } else {
-      setSelectedSources([]);
+      setSelectedSources(selectedSources.filter(
+        selected => !currentSources.some(s => s.url === selected.url)
+      ));
     }
   };
 
@@ -121,24 +132,24 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           <>
             <div className="flex items-center gap-2 mb-4">
               <Checkbox
-                checked={selectAll}
-                onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
+                checked={currentSources.every(s => isSourceSelected(s))}
+                onCheckedChange={handleSelectAll}
               />
-              <span className="text-sm">Выбрать все источники</span>
+              <span className="text-sm">Выбрать все источники на этой странице</span>
             </div>
 
             <div className="space-y-2">
-              {currentSources.map((source: any, index: number) => (
+              {currentSources.map((source, index) => (
                 <Card key={index} className="p-4">
                   <div className="flex items-start gap-4">
                     <Checkbox
-                      checked={selectedSources.includes(source)}
+                      checked={isSourceSelected(source)}
                       onCheckedChange={(checked) => {
-                        setSelectedSources(prev =>
-                          checked
-                            ? [...prev, source]
-                            : prev.filter(s => s !== source)
-                        );
+                        if (checked) {
+                          setSelectedSources([...selectedSources, source]);
+                        } else {
+                          setSelectedSources(selectedSources.filter(s => s.url !== source.url));
+                        }
                       }}
                     />
                     <div className="flex-1">
