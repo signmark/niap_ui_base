@@ -48,49 +48,59 @@ export default function ContentManagement() {
 
   // Получаем источники контента для выбранной кампании через Directus
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
-    queryKey: ["/api/campaign_content_sources", selectedCampaignId],
+    queryKey: ["campaign_content_sources", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
       console.log("Fetching sources for campaign:", selectedCampaignId);
-      const response = await directusApi.get('/items/campaign_content_sources', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: ['*']
-        }
-      });
+      try {
+        const response = await directusApi.get('/items/campaign_content_sources', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              }
+            },
+            fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id'],
+          }
+        });
 
-      console.log("Sources response:", response.data);
-      return response.data?.data || [];
+        console.log("Sources API response:", response);
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching sources:", error);
+        throw error;
+      }
     },
     enabled: !!selectedCampaignId
   });
 
   // Получаем тренды для выбранной кампании через Directus
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
-    queryKey: ["/api/campaign_trend_topics", selectedCampaignId],
+    queryKey: ["campaign_trend_topics", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
       console.log("Fetching trends for campaign:", selectedCampaignId);
-      const response = await directusApi.get('/items/campaign_trend_topics', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: ['*'],
-          sort: ['-created_at']
-        }
-      });
+      try {
+        const response = await directusApi.get('/items/campaign_trend_topics', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              }
+            },
+            fields: ['id', 'title', 'source_id', 'reactions', 'comments', 'views', 'created_at', 'is_bookmarked', 'campaign_id'],
+            sort: ['-created_at']
+          }
+        });
 
-      console.log("Trends response:", response.data);
-      return response.data?.data || [];
+        console.log("Trends API response:", response);
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching trends:", error);
+        throw error;
+      }
     },
     enabled: !!selectedCampaignId
   });
@@ -116,6 +126,7 @@ export default function ContentManagement() {
             <Select
               value={selectedCampaignId}
               onValueChange={(value) => {
+                console.log("Selected campaign:", value);
                 setSelectedCampaignId(value);
                 setSelectedTopics([]); // Сбрасываем выбранные темы при смене кампании
               }}
