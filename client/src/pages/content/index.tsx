@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +64,6 @@ export default function ContentPage() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log("Fetching sources for campaign:", selectedCampaignId);
       try {
         const response = await directusApi.get('/items/campaign_content_sources', {
           params: {
@@ -80,11 +78,8 @@ export default function ContentPage() {
             fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
           }
         });
-
-        console.log("Sources API response:", response);
         return response.data?.data || [];
       } catch (error) {
-        console.error("Error fetching sources:", error);
         throw error;
       }
     },
@@ -102,8 +97,6 @@ export default function ContentPage() {
         campaign_id: selectedCampaignId,
         is_active: true
       });
-
-      console.log("Create source response:", response);
 
       toast({
         title: "Источник добавлен",
@@ -219,7 +212,6 @@ export default function ContentPage() {
           <Select
             value={selectedCampaignId}
             onValueChange={(value) => {
-              console.log("Selected campaign:", value);
               setSelectedCampaignId(value);
             }}
           >
