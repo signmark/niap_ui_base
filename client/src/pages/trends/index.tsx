@@ -115,11 +115,16 @@ export default function Trends() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
       try {
-        const response = await fetch(`/api/campaigns/${selectedCampaignId}/keywords`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch keywords');
-        }
-        return response.json();
+        const response = await directusApi.get('/items/user_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              }
+            }
+          }
+        });
+        return response.data?.data || [];
       } catch (error) {
         console.error("Error fetching keywords:", error);
         return [];
@@ -135,6 +140,8 @@ export default function Trends() {
       if (!keywordsList) {
         throw new Error('Добавьте ключевые слова для поиска источников');
       }
+
+      console.log('Searching sources for keywords:', keywordsList);
 
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
