@@ -8,20 +8,42 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
+interface NewSourcesDialogProps {
+  campaignId: string;
+  onClose: () => void;
+  sourcesData: any;
+}
+
 interface Source {
   name: string;
   url: string;
   type: string;
 }
 
+interface ParsedSource {
+  name: string;
+  url: string;
+  type: 'website' | 'telegram' | 'vk' | 'youtube' | 'reddit';
+}
+
 const ITEMS_PER_PAGE = 5;
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   const { toast } = useToast();
-  const [selectedSources, setSelectedSources] = useState<Source[]>([]);
+  const [selectedSources, setSelectedSources] = useState<ParsedSource[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
+
+  // Функция для определения типа источника по URL
+  const detectSourceType = (url: string): ParsedSource['type'] => {
+    const lowercaseUrl = url.toLowerCase();
+    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) return 'telegram';
+    if (lowercaseUrl.includes('vk.com')) return 'vk';
+    if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) return 'youtube';
+    if (lowercaseUrl.includes('reddit.com')) return 'reddit';
+    return 'website';
+  };
 
   // Парсинг ответа API
   const sources = (() => {
@@ -36,45 +58,39 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Try to extract JSON array first
-      const jsonMatch = content.match(/\[([\s\S]*?)\]/);
-      let keywords = [];
-      
-      if (jsonMatch) {
-        try {
-          const jsonArray = JSON.parse(jsonMatch[0]);
-          keywords = jsonArray.map(item => item.replace(/^#/, '')); // Remove # prefix if exists
-        } catch (e) {
-          console.error('Failed to parse JSON array:', e);
-        }
-      }
+      // Извлекаем URL из текста
+      const urlRegex = /https?:\/\/[^\s\)"]+/g;
+      const urls = content.match(urlRegex) || [];
 
-      // Fallback to extracting emphasized words if JSON parse failed
-      if (!keywords.length) {
-        const emphasisRegex = /\*\*([^*]+)\*\*/g;
-        const matches = [];
-        let match;
-        
-        while ((match = emphasisRegex.exec(content)) !== null) {
-          const keyword = match[1].trim();
-          if (keyword && !keyword.includes('http') && !keyword.includes('#')) {
-            matches.push(keyword);
+      // Создаем массив источников
+      const parsedSources = urls
+        .filter(url => {
+          // Фильтруем только валидные URL
+          try {
+            new URL(url);
+            return true;
+          } catch {
+            return false;
           }
-        }
-        keywords = matches;
-      }
+        })
+        .map(url => {
+          // Очищаем URL от лишних символов
+          const cleanUrl = url.replace(/[,\)"]+$/, '');
+          const type = detectSourceType(cleanUrl);
 
-      const uniqueKeywords = [...new Set(keywords)]
-        .filter(k => k && k.length > 0)
-        .map(k => k.replace(/["""]/g, '')); // Clean up quotes
+          // Создаем название из домена
+          const urlObj = new URL(cleanUrl);
+          const domain = urlObj.hostname.replace(/^www\./, '');
 
-      console.log('Extracted keywords:', uniqueKeywords);
+          return {
+            name: domain,
+            url: cleanUrl,
+            type
+          };
+        });
 
-      return uniqueKeywords.map(keyword => ({
-        keyword,
-        trend: 0,
-        selected: false
-      }));
+      console.log('Parsed sources:', parsedSources);
+      return parsedSources;
 
     } catch (e) {
       console.error('Error parsing sources:', e);
@@ -87,7 +103,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentSources = sources.slice(startIndex, endIndex);
 
-  const isSourceSelected = (source: Source) => 
+  const isSourceSelected = (source: ParsedSource) => 
     selectedSources.some(s => s.url === source.url);
 
   const handleSelectAll = (checked: boolean) => {
@@ -183,7 +199,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                             {source.type === 'vk' ? 'ВКонтакте' :
                               source.type === 'telegram' ? 'Telegram' :
                                 source.type === 'youtube' ? 'YouTube' :
-                                  source.type === 'reddit' ? 'Reddit' : source.type}
+                                  source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                           </span>
                         </div>
                       </div>
