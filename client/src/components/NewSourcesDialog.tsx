@@ -81,139 +81,36 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Сначала пытаемся извлечь JSON из текста
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        try {
-          const urls = JSON.parse(jsonMatch[0]);
-          if (Array.isArray(urls)) {
-            return urls
-              .filter(url => {
-                try {
-                  new URL(url);
-                  return true;
-                } catch {
-                  return false;
-                }
-              })
-              .map(url => {
-                const cleanUrl = url.trim();
-                const type = detectSourceType(cleanUrl);
-
-                // Извлекаем название из URL в зависимости от типа
-                let name = '';
-                try {
-                  const urlObj = new URL(cleanUrl);
-                  switch (type) {
-                    case 'telegram':
-                      name = urlObj.pathname.split('/').pop() || 'Telegram Channel';
-                      break;
-                    case 'vk':
-                      name = urlObj.pathname.split('/').pop() || 'VK Group';
-                      break;
-                    case 'youtube':
-                      name = urlObj.pathname.includes('/channel/') ?
-                        'YouTube Channel' : urlObj.pathname.split('/').pop() || 'YouTube';
-                      break;
-                    case 'reddit':
-                      name = urlObj.pathname.split('/r/')[1]?.split('/')[0] || 'Reddit';
-                      break;
-                    case 'twitter':
-                      name = urlObj.pathname.split('/').pop() || 'Twitter/X';
-                      break;
-                    case 'instagram':
-                      name = urlObj.pathname.split('/').pop() || 'Instagram';
-                      break;
-                    case 'facebook':
-                      name = urlObj.pathname.split('/').pop() || 'Facebook';
-                      break;
-                    case 'linkedin':
-                      name = urlObj.pathname.split('/').pop() || 'LinkedIn';
-                      break;
-                    default:
-                      name = urlObj.hostname.replace(/^www\./, '');
-                  }
-                } catch (e) {
-                  name = 'Unknown Source';
-                }
-
-                return {
-                  name,
-                  url: cleanUrl,
-                  type
-                };
-              });
-          }
-        } catch (e) {
-          console.error('Error parsing JSON from text:', e);
-        }
-      }
-
-      // Если не удалось извлечь JSON, ищем все URL в тексте
-      const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,})(?:\/[^\s]*)?/g;
-      const matches = [...content.matchAll(urlRegex)];
+      // Извлекаем все URL из текста с помощью простого регулярного выражения
+      const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,})(?:\/[^\s\)"]*)?/g;
+      const matches = content.match(urlRegex) || [];
 
       return matches
-        .map(match => match[0])
-        .filter(url => {
-          try {
-            if (!url.startsWith('http')) {
-              url = 'https://' + url;
-            }
-            new URL(url);
-            const type = detectSourceType(url);
-            return type !== 'website'; // Оставляем только URL социальных сетей
-          } catch {
-            return false;
-          }
-        })
         .map(url => {
-          if (!url.startsWith('http')) {
-            url = 'https://' + url;
+          // Добавляем протокол, если его нет
+          const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+          const type = detectSourceType(fullUrl);
+
+          // Игнорируем не-соцсети
+          if (type === 'website') {
+            return null;
           }
-          const type = detectSourceType(url);
+
           let name = '';
           try {
-            const urlObj = new URL(url);
-            switch (type) {
-              case 'telegram':
-                name = urlObj.pathname.split('/').pop() || 'Telegram Channel';
-                break;
-              case 'vk':
-                name = urlObj.pathname.split('/').pop() || 'VK Group';
-                break;
-              case 'youtube':
-                name = urlObj.pathname.includes('/channel/') ?
-                  'YouTube Channel' : urlObj.pathname.split('/').pop() || 'YouTube';
-                break;
-              case 'reddit':
-                name = urlObj.pathname.split('/r/')[1]?.split('/')[0] || 'Reddit';
-                break;
-              case 'twitter':
-                name = urlObj.pathname.split('/').pop() || 'Twitter/X';
-                break;
-              case 'instagram':
-                name = urlObj.pathname.split('/').pop() || 'Instagram';
-                break;
-              case 'facebook':
-                name = urlObj.pathname.split('/').pop() || 'Facebook';
-                break;
-              case 'linkedin':
-                name = urlObj.pathname.split('/').pop() || 'LinkedIn';
-                break;
-              default:
-                name = urlObj.hostname.replace(/^www\./, '');
-            }
+            const urlObj = new URL(fullUrl);
+            name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
           } catch (e) {
             name = 'Unknown Source';
           }
 
           return {
             name,
-            url,
+            url: fullUrl,
             type
           };
-        });
+        })
+        .filter(Boolean); // Удаляем null элементы
 
     } catch (e) {
       console.error('Error parsing sources:', e);
