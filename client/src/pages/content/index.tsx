@@ -15,17 +15,19 @@ interface ContentSource {
   url: string;
   type: string;
   is_active: boolean;
+  campaign_id: string;
 }
 
 interface TrendTopic {
   id: string;
   title: string;
-  source: ContentSource;
+  source_id: string;
   reactions: number;
   comments: number;
   views: number;
   created_at: string;
   is_bookmarked: boolean;
+  campaign_id: string;
 }
 
 export default function ContentManagement() {
@@ -44,36 +46,38 @@ export default function ContentManagement() {
     }
   });
 
-  // Получаем тренды для выбранной кампании через Directus
-  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
-    queryKey: ["/api/campaign_trend_topics", selectedCampaignId],
+  // Получаем источники контента для выбранной кампании через Directus
+  const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
+    queryKey: ["/api/campaign_content_sources", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      const response = await directusApi.get('/items/campaign_trend_topics', {
+      console.log("Fetching sources for campaign:", selectedCampaignId);
+      const response = await directusApi.get('/items/campaign_content_sources', {
         params: {
           filter: {
             campaign_id: {
               _eq: selectedCampaignId
             }
           },
-          fields: ['*', 'source.*'],
-          sort: ['-created_at']
+          fields: ['*']
         }
       });
 
+      console.log("Sources response:", response.data);
       return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
 
-  // Получаем источники контента для выбранной кампании
-  const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
-    queryKey: ["/api/campaign_content_sources", selectedCampaignId],
+  // Получаем тренды для выбранной кампании через Directus
+  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
+    queryKey: ["/api/campaign_trend_topics", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      const response = await directusApi.get('/items/campaign_content_sources', {
+      console.log("Fetching trends for campaign:", selectedCampaignId);
+      const response = await directusApi.get('/items/campaign_trend_topics', {
         params: {
           filter: {
             campaign_id: {
@@ -85,6 +89,7 @@ export default function ContentManagement() {
         }
       });
 
+      console.log("Trends response:", response.data);
       return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
@@ -159,7 +164,7 @@ export default function ContentManagement() {
                               <div>
                                 <h3 className="font-medium">{trend.title}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Источник: {trend.source?.name}
+                                  Источник: {sources.find(s => s.id === trend.source_id)?.name}
                                 </p>
                                 <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
                                   <span>👍 {trend.reactions}</span>
