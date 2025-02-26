@@ -36,24 +36,37 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       const content = sourcesData.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract keywords between backticks and from json arrays
-      const regex = /[`"]([^`"]+)[`"]|"([^"]+)"/g;
-      const matches = [];
-      let match;
+      // Try to extract JSON array first
+      const jsonMatch = content.match(/\[([\s\S]*?)\]/);
+      let keywords = [];
       
-      while ((match = regex.exec(content)) !== null) {
-        const keyword = match[1] || match[2];
-        if (keyword && !keyword.includes('#') && !keyword.startsWith('http')) {
-          matches.push(keyword);
+      if (jsonMatch) {
+        try {
+          const jsonArray = JSON.parse(jsonMatch[0]);
+          keywords = jsonArray.map(item => item.replace(/^#/, '')); // Remove # prefix if exists
+        } catch (e) {
+          console.error('Failed to parse JSON array:', e);
         }
       }
 
-      const uniqueKeywords = [...new Set(matches)].filter(k => 
-        k && k.length > 0 && 
-        !k.includes('{') && 
-        !k.includes('}') &&
-        !k.includes('...')
-      );
+      // Fallback to extracting emphasized words if JSON parse failed
+      if (!keywords.length) {
+        const emphasisRegex = /\*\*([^*]+)\*\*/g;
+        const matches = [];
+        let match;
+        
+        while ((match = emphasisRegex.exec(content)) !== null) {
+          const keyword = match[1].trim();
+          if (keyword && !keyword.includes('http') && !keyword.includes('#')) {
+            matches.push(keyword);
+          }
+        }
+        keywords = matches;
+      }
+
+      const uniqueKeywords = [...new Set(keywords)]
+        .filter(k => k && k.length > 0)
+        .map(k => k.replace(/["""]/g, '')); // Clean up quotes
 
       console.log('Extracted keywords:', uniqueKeywords);
 
