@@ -157,6 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity source collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
+      // Check authorization header
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
         console.error('Missing authorization header');
@@ -186,41 +187,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
-      // Get user's Perplexity API key
-      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
+      // Get user's Perplexity API key from settings
+      const settingsResponse = await directusApi.get('/items/user_settings', {
         params: {
           filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: 'perplexity' }
+            user_id: { _eq: userId }
           },
-          fields: ['api_key']
+          fields: ['perplexity_api_key']
         }
       });
 
-      const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
+      const perplexityKey = settingsResponse.data?.data?.[0]?.perplexity_api_key;
       if (!perplexityKey) {
         return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
 
-      // Call n8n webhook with the API key and keywords
+      // Call Perplexity API
       const response = await axios.post(
-        'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
+        'https://api.perplexity.ai/chat/completions',
         {
-          apiKey: perplexityKey,
-          keywords
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: "Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.\n\nФорматы URL:\ntwitter.com/username\nvk.com/group_name\nt.me/channel_name\ninstagram.com/username\nfacebook.com/page_name\nyoutube.com/c/channel_name\nlinkedin.com/company/company_name\nreddit.com/r/subreddit_name\n\nНайдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:\n[\"twitter.com/real_account\", \"vk.com/real_group\", \"t.me/real_channel\"]"
+            },
+            {
+              role: "user",
+              content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
+            }
+          ]
         },
         {
           headers: {
+            'Authorization': `Bearer ${perplexityKey}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
-      console.log('n8n response:', response.data);
+      console.log('Raw sourcesData:', response.data);
+
+      if (!response.data?.choices?.[0]?.message?.content) {
+        throw new Error('Invalid API response structure');
+      }
+
+      const content = response.data.choices[0].message.content;
+      console.log('API response content:', content);
+
+      // Extract URLs using regex
+      const urlPattern = /(https?:\/\/[^\s\)]+)/g;
+      const foundUrls = content.match(urlPattern) || [];
+      console.log('Found URLs:', foundUrls);
 
       res.json({
         success: true,
-        data: response.data
+        data: foundUrls
       });
 
     } catch (error) {
@@ -399,12 +421,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completed_at: new Date().toISOString()
         });
 
-        res.json({ 
-          message: "Source crawling completed successfully", 
-          data: { 
+        res.json({
+          message: "Source crawling completed successfully",
+          data: {
             taskId: taskResponse.data.data.id,
-            topicsCount: topics.length 
-          } 
+            topicsCount: topics.length
+          }
         });
 
       } catch (error) {
