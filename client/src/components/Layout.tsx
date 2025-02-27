@@ -64,6 +64,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {label}
         </Button>
       ))}
+      <Button
+        variant="ghost"
+        className="w-full justify-start"
+        onClick={() => setIsSettingsOpen(true)}
+      >
+        <Settings className="mr-2 h-4 w-4" />
+        Настройки
+      </Button>
     </div>
   );
 
@@ -114,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="h-16 border-b flex items-center px-4 lg:px-8 justify-between">
+        <div className="h-16 border-b flex items-center px-4 lg:px-8">
           <Button
             variant="ghost"
             size="icon"
@@ -123,17 +131,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-6 w-6" />
           </Button>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSettingsOpen(true)}
-              className="ml-auto"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
         </div>
         <main className="flex-1 p-4 lg:p-8">{children}</main>
       </div>
