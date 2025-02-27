@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
+import { useAuthStore } from "@/lib/store";
 
 export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
   const { toast } = useToast();
+  const userId = useAuthStore((state) => state.userId);
 
   const { data: apiKeys, isLoading } = useQuery({
     queryKey: ["user_api_keys"],
@@ -20,12 +22,25 @@ export function SettingsDialog() {
           fields: ['id', 'service_name', 'api_key']
         }
       });
-      return response.data?.data || [];
+
+      // Set initial values for form fields
+      const keys = response.data?.data || [];
+      const perplexityKeyData = keys.find(k => k.service_name === 'perplexity');
+      const apifyKeyData = keys.find(k => k.service_name === 'apify');
+
+      setPerplexityKey(perplexityKeyData?.api_key || '');
+      setApifyKey(apifyKeyData?.api_key || '');
+
+      return keys;
     }
   });
 
   const { mutate: saveSettings, isPending } = useMutation({
     mutationFn: async () => {
+      if (!userId) {
+        throw new Error("Пользователь не авторизован");
+      }
+
       const services = [
         { name: 'perplexity', key: perplexityKey },
         { name: 'apify', key: apifyKey }
@@ -44,6 +59,7 @@ export function SettingsDialog() {
         } else {
           // Создаем новый ключ
           await directusApi.post('/items/user_api_keys', {
+            user_id: userId,
             service_name: service.name,
             api_key: service.key
           });
