@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get API key from user settings
+      // Get API key from user settings in Directus
       const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -234,7 +234,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-
 
       const { url, sourceType } = req.body;
       if (!url || !sourceType) {
