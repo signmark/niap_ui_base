@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               content: "Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.\n\nФорматы URL:\ntwitter.com/username\nvk.com/group_name\nt.me/channel_name\ninstagram.com/username\nfacebook.com/page_name\nyoutube.com/c/channel_name\nlinkedin.com/company/company_name\nreddit.com/r/subreddit_name\n\nНайдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:\n[\"twitter.com/real_account\", \"vk.com/real_group\", \"t.me/real_channel\"]"
             },
             {
-              role: "user",
+              role: "user", 
               content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
             }
           ]
