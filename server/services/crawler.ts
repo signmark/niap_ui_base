@@ -5,23 +5,10 @@ import crypto from 'crypto';
 import { apifyService } from './apify';
 
 export class ContentCrawler {
-  private async initializeApify(userId: string) {
-    try {
-      console.log('Initializing Apify service for user:', userId);
-      await apifyService.initialize(userId);
-      console.log('Successfully initialized Apify service');
-    } catch (error) {
-      console.error('Error initializing Apify:', error);
-      throw error;
-    }
-  }
-
   async crawlInstagram(source: ContentSource, campaignId: number, userId: string): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Starting Instagram crawling process for source: ${source.name} (${source.url})`);
       console.log(`Campaign ID: ${campaignId}, User ID: ${userId}`);
-
-      await this.initializeApify(userId);
 
       // Extract username from URL
       const username = source.url.split('/').pop() || '';
