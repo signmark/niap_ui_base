@@ -99,12 +99,12 @@ export class ContentCrawler {
     }
   }
 
-  async crawlAllSources(userId: string, campaignId: number): Promise<void> {
+  async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
 
       // Get only sources for the specified campaign
-      const sources = await storage.getContentSources(userId, campaignId);
+      const sources = await storage.getContentSources(userId, Number(campaignId));
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
       for (const source of sources) {
@@ -118,37 +118,39 @@ export class ContentCrawler {
 
         // Create a crawler task with proper data validation
         const taskData = {
-          source_id: source.id, // source.id should already be a UUID string
-          campaign_id: campaignId.toString(), // Ensure string format for UUID
-          status: 'processing',
-          started_at: new Date().toISOString()
+          data: {
+            source_id: source.id,
+            campaign_id: campaignId,
+            status: 'processing',
+            started_at: new Date().toISOString()
+          }
         };
 
         console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
 
         let taskResponse;
         try {
-          taskResponse = await directusApi.post('/items/crawler_tasks', {
-            data: taskData
-          });
+          taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
           console.log('Created task:', taskResponse.data);
 
           console.log(`Crawling source: ${source.name} (${source.type})`);
-          const topics = await this.crawlSource(source, campaignId);
+          const topics = await this.crawlSource(source, Number(campaignId));
           console.log(`Found ${topics.length} topics for source ${source.name}`);
 
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
             try {
               await directusApi.post('/items/campaign_trend_topics', {
-                id: topic.directusId,
-                title: topic.title,
-                source_id: topic.sourceId,
-                campaign_id: topic.campaignId,
-                reactions: topic.reactions,
-                comments: topic.comments,
-                views: topic.views,
-                is_bookmarked: false
+                data: {
+                  id: topic.directusId,
+                  title: topic.title,
+                  source_id: topic.sourceId,
+                  campaign_id: campaignId,
+                  reactions: topic.reactions,
+                  comments: topic.comments,
+                  views: topic.views,
+                  is_bookmarked: false
+                }
               });
             } catch (error) {
               console.error(`Error saving topic to Directus:`, error);
@@ -156,9 +158,11 @@ export class ContentCrawler {
           }
 
           // Update task status to completed
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-            status: 'completed',
-            completed_at: new Date().toISOString()
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+            data: {
+              status: 'completed',
+              completed_at: new Date().toISOString()
+            }
           });
 
         } catch (error) {
@@ -166,12 +170,14 @@ export class ContentCrawler {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error details:', errorMessage);
 
-          if (taskResponse?.data?.id) {
+          if (taskResponse?.data?.data?.id) {
             // Update task status to error only if task was created
-            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-              status: 'error',
-              completed_at: new Date().toISOString(),
-              error_message: errorMessage
+            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+              data: {
+                status: 'error',
+                completed_at: new Date().toISOString(),
+                error_message: errorMessage
+              }
             });
           }
         }

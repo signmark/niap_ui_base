@@ -120,21 +120,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      const numericCampaignId = Number(campaignId);
-      if (isNaN(numericCampaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
+      // Get campaign UUID from Directus
+      const campaignResponse = await directusApi.get('/items/user_campaigns', {
+        params: {
+          filter: {
+            directus_id: { _eq: campaignId }
+          },
+          fields: ['id']
+        }
+      });
+
+      if (!campaignResponse.data?.data?.[0]?.id) {
+        return res.status(404).json({ message: "Campaign not found" });
       }
 
-      console.log('Starting trend collection for user:', userId, 'campaign:', numericCampaignId);
+      const directusCampaignId = campaignResponse.data.data[0].id;
+      console.log('Starting trend collection for user:', userId, 'campaign:', directusCampaignId);
 
       // Get sources for this campaign
-      const sources = await storage.getContentSources(userId, numericCampaignId);
+      const sources = await storage.getContentSources(userId, Number(campaignId));
       if (!sources || sources.length === 0) {
         return res.status(400).json({ message: "No sources found for this campaign" });
       }
 
       // Start crawling process
-      await crawler.crawlAllSources(userId, numericCampaignId);
+      await crawler.crawlAllSources(userId, directusCampaignId);
       console.log('Trend collection completed');
 
       res.json({ message: "Trend collection completed successfully" });
