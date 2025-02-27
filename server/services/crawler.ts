@@ -63,17 +63,17 @@ export class ContentCrawler {
       console.log(`Crawling VK group ${source.url} for campaign ${campaignId}`);
 
       // Get user settings to initialize Apify
-      const settingsResponse = await directusApi.get('/items/user_settings', {
+      const settingsResponse = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
-            user_id: { _eq: userId } //This line was missing in the edited snippet, and needs to be fixed.
+            service_name: { _eq: 'apify' }
           },
-          fields: ['user_id']
+          fields: ['api_key', 'user_id']
         }
       });
 
-      if (!settingsResponse.data?.data?.[0]?.user_id) {
-        throw new Error('User settings not found');
+      if (!settingsResponse.data?.data?.[0]?.api_key) {
+        throw new Error('Apify API key not found');
       }
 
       const userId = settingsResponse.data.data[0].user_id;
