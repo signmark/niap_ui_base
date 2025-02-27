@@ -236,24 +236,17 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      const response = await fetch(`/api/sources/${sourceId}/crawl`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${directusApi.token}`
-        },
-        body: JSON.stringify({
-          campaignId: selectedCampaignId
-        })
-      });
+      const taskData = {
+        source_id: sourceId,
+        campaign_id: selectedCampaignId,
+        status: "pending",
+        started_at: null,
+        completed_at: null,
+        error_message: null
+      };
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Error creating crawler task:', error);
-        throw new Error(error.message || 'Failed to create crawler task');
-      }
-
-      return response.json();
+      const response = await directusApi.post('/items/crawler_tasks', taskData);
+      return response.data;
     },
     onSuccess: (data, sourceId) => {
       const source = sources.find(s => s.id === sourceId);
@@ -266,7 +259,7 @@ export default function Trends() {
     onError: (error: Error) => {
       console.error('Mutation error:', error);
       toast({
-        variant: "destructive",
+        variant: "destructive", 
         title: "Ошибка",
         description: error.message || "Не удалось создать задачу"
       });
