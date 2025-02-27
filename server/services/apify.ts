@@ -48,11 +48,7 @@ export class ApifyService {
     try {
       const requestData = {
         username: [username],
-        resultsLimit: 10,
-        webhooks: [{
-          event: "ACTOR.RUN.SUCCEEDED",
-          requestUrl: `${process.env.REPLIT_URL}/api/apify/webhook`
-        }]
+        resultsLimit: 10
       };
 
       console.log('Starting Instagram scraper with request:', requestData);
