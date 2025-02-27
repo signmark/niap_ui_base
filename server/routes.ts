@@ -148,14 +148,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get settings for the user
+      // Get settings for the user using actual user ID from token
       const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
         params: {
           filter: {
-            user_id: { _eq: 'current-user' }
+            user_id: { _eq: '2d48e263-f562-4e3f-a235-e597fd62d4d8' }
           },
           fields: ['perplexity']
         }
