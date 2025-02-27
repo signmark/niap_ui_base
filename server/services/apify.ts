@@ -17,7 +17,7 @@ export class ApifyService {
 
   async initialize(userId: string) {
     try {
-      // Get API key from user settings
+      console.log('Initializing Apify service for user:', userId);
       const response = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
@@ -30,6 +30,7 @@ export class ApifyService {
 
       if (response.data?.data?.[0]?.api_key) {
         this.apiKey = response.data.data[0].api_key;
+        console.log('Successfully initialized Apify service with API key');
       } else {
         throw new Error('Apify API key not found in user settings');
       }
@@ -39,22 +40,26 @@ export class ApifyService {
     }
   }
 
-  async runActor(actorId: string, input: any): Promise<string> {
+  async runInstagramScraper(username: string): Promise<string> {
     if (!this.apiKey) {
       throw new Error('Apify API key not initialized');
     }
 
     try {
-      console.log(`Running Apify actor ${actorId} with input:`, input);
+      const requestData = {
+        username: [username],
+        resultsLimit: 10,
+        webhooks: [{
+          event: "ACTOR.RUN.SUCCEEDED",
+          requestUrl: `${process.env.REPLIT_URL}/api/apify/webhook`
+        }]
+      };
+
+      console.log('Starting Instagram scraper with request:', JSON.stringify(requestData, null, 2));
+
       const response = await axios.post(
-        `${this.baseUrl}/acts/${actorId}/runs`,
-        {
-          ...input,
-          webhooks: [{
-            event: "ACTOR.RUN.SUCCEEDED",
-            requestUrl: `${process.env.REPLIT_URL}/api/apify/webhook`
-          }]
-        },
+        `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
+        requestData,
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
@@ -64,10 +69,13 @@ export class ApifyService {
       );
 
       const runData = response.data as ApifyRunResponse;
-      console.log('Apify run created:', runData);
+      console.log('Apify Instagram scraper run created:', JSON.stringify(runData, null, 2));
       return runData.id;
     } catch (error) {
-      console.error('Error running Apify actor:', error);
+      console.error('Error running Instagram scraper:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('Apify API error response:', error.response.data);
+      }
       throw error;
     }
   }
@@ -78,6 +86,7 @@ export class ApifyService {
     }
 
     try {
+      console.log(`Checking status for run ${runId}`);
       const response = await axios.get(
         `${this.baseUrl}/actor-runs/${runId}`,
         {
@@ -87,9 +96,13 @@ export class ApifyService {
         }
       );
 
+      console.log(`Run ${runId} status:`, response.data.status);
       return response.data.status;
     } catch (error) {
       console.error('Error getting run status:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('Apify API error response:', error.response.data);
+      }
       throw error;
     }
   }
@@ -100,6 +113,7 @@ export class ApifyService {
     }
 
     try {
+      console.log(`Fetching results for run ${runId}`);
       const response = await axios.get(
         `${this.baseUrl}/actor-runs/${runId}/dataset/items`,
         {
@@ -110,17 +124,28 @@ export class ApifyService {
       );
 
       const results = response.data as ApifyRunResult;
+      console.log(`Retrieved ${results.items.length} items from run ${runId}`);
       return results.items;
     } catch (error) {
       console.error('Error getting run results:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('Apify API error response:', error.response.data);
+      }
       throw error;
     }
   }
 
   async waitForRunToFinish(runId: string, checkInterval = 5000): Promise<void> {
+    console.log(`Waiting for run ${runId} to finish`);
     while (true) {
       const status = await this.getRunStatus(runId);
+      console.log(`Current status for run ${runId}: ${status}`);
+
       if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED') {
+        if (status !== 'SUCCEEDED') {
+          throw new Error(`Run ${runId} failed with status: ${status}`);
+        }
+        console.log(`Run ${runId} completed successfully`);
         break;
       }
       await new Promise(resolve => setTimeout(resolve, checkInterval));
