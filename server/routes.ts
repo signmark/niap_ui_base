@@ -4,8 +4,10 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
+import { directusApi } from "./lib/directus";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log('Starting route registration...');
   const httpServer = createServer(app);
 
   // XMLRiver API proxy
@@ -144,21 +146,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity source collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
-      const { apiKey, keywords } = req.body;
-
-      if (!apiKey) {
-        return res.status(400).json({ error: "API key is required" });
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
+      const { keywords } = req.body;
       if (!Array.isArray(keywords) || keywords.length === 0) {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
-      // Call n8n webhook
+      // Get user's Perplexity API key
+      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            user_id: { _eq: userId },
+            service_name: { _eq: 'perplexity' }
+          },
+          fields: ['api_key']
+        }
+      });
+
+      const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
+      if (!perplexityKey) {
+        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
+      }
+
+      // Call n8n webhook with the API key and keywords
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          apiKey,
+          apiKey: perplexityKey,
           keywords
         },
         {
@@ -184,5 +202,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Apify social media parsing endpoint
+  app.post("/api/sources/parse", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { url, sourceType } = req.body;
+      if (!url || !sourceType) {
+        return res.status(400).json({ error: "URL and source type are required" });
+      }
+
+      // Get user's Apify API key
+      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            user_id: { _eq: userId },
+            service_name: { _eq: 'apify' }
+          },
+          fields: ['api_key']
+        }
+      });
+
+      const apifyKey = apiKeyResponse.data?.data?.[0]?.api_key;
+      if (!apifyKey) {
+        return res.status(400).json({ error: "Apify API key not found. Please add it in settings." });
+      }
+
+      // Call n8n webhook with the API key and source details
+      const response = await axios.post(
+        'https://n8n.nplanner.ru/webhook/apify-parser',
+        {
+          apiKey: apifyKey,
+          url: url,
+          sourceType: sourceType
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('n8n response:', response.data);
+
+      res.json({ 
+        success: true,
+        data: response.data 
+      });
+
+    } catch (error) {
+      console.error('Error parsing source:', error);
+      res.status(500).json({ 
+        error: "Failed to parse source",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  console.log('Route registration completed');
   return httpServer;
 }

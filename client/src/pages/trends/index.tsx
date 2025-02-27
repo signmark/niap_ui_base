@@ -137,49 +137,17 @@ export default function Trends() {
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Keywords for search:', keywordsList);
 
-      const requestBody = {
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          {
-            role: "system",
-            content: `Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.
-
-Форматы URL:
-twitter.com/username
-vk.com/group_name
-t.me/channel_name
-instagram.com/username
-facebook.com/page_name
-youtube.com/c/channel_name
-linkedin.com/company/company_name
-reddit.com/r/subreddit_name
-
-Найдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:
-["twitter.com/real_account", "vk.com/real_group", "t.me/real_channel"]`
-          },
-          {
-            role: "user",
-            content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywordsList.join(", ")}`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-        format: "json"
-      };
-
-      console.log('API Request:', requestBody);
-
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer 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',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({ keywords: keywordsList })
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка при поиске источников');
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка при поиске источников');
       }
 
       const data = await response.json();

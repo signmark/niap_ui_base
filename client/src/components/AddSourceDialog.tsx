@@ -28,6 +28,8 @@ type SourceForm = z.infer<typeof sourceSchema>;
 
 export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   const { toast } = useToast();
+  const [isParsingSource, setIsParsingSource] = useState(false);
+  const [parseResults, setParseResults] = useState<any>(null);
 
   const form = useForm<SourceForm>({
     resolver: zodResolver(sourceSchema),
@@ -64,6 +66,48 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
       });
     }
   });
+
+  const { mutate: parseSource, isPending: isParsing } = useMutation({
+    mutationFn: async (values: SourceForm) => {
+      setIsParsingSource(true);
+      const response = await fetch('/api/sources/parse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: values.url,
+          sourceType: values.type
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка при парсинге источника');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setParseResults(data);
+      toast({
+        title: "Успешно",
+        description: "Источник проанализирован"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+    onSettled: () => {
+      setIsParsingSource(false);
+    }
+  });
+
+  const isSocialMedia = (type: string) => ['telegram', 'vk'].includes(type);
 
   return (
     <DialogContent>
@@ -128,6 +172,23 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
             <Button variant="outline" onClick={onClose} type="button">
               Отмена
             </Button>
+            {isSocialMedia(form.getValues('type')) && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => parseSource(form.getValues())}
+                disabled={isParsing || !form.formState.isValid}
+              >
+                {isParsing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Анализ...
+                  </>
+                ) : (
+                  "Проанализировать"
+                )}
+              </Button>
+            )}
             <Button type="submit" disabled={isPending}>
               {isPending ? (
                 <>
