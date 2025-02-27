@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
+import { NewSourcesDialog } from "./NewSourcesDialog";
 
 interface AddSourceDialogProps {
   campaignId: string;
@@ -108,6 +109,19 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   });
 
   const isSocialMedia = (type: string) => ['telegram', 'vk'].includes(type);
+
+  if (parseResults) {
+    return (
+      <NewSourcesDialog
+        campaignId={campaignId}
+        onClose={() => {
+          setParseResults(null);
+          onClose();
+        }}
+        sourcesData={parseResults}
+      />
+    );
+  }
 
   return (
     <DialogContent>
