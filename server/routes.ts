@@ -367,12 +367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completed_at: new Date().toISOString()
         });
 
-        res.json({ 
-          message: "Source crawling completed successfully", 
-          data: { 
+        res.json({
+          message: "Source crawling completed successfully",
+          data: {
             taskId: taskResponse.data.data.id,
-            topicsCount: topics.length 
-          } 
+            topicsCount: topics.length
+          }
         });
 
       } catch (error) {
