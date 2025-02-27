@@ -14,27 +14,37 @@ export function SearchButton({ campaignId, keywords }: { campaignId: string; key
   const { token } = useStore((state) => state);
 
   const handleSearch = async () => {
-    setIsLoading(true);
-    try {
-      // Получаем токен из хранилища или из localStorage, если он не доступен в хранилище
-      const authToken = token || localStorage.getItem('auth_token');
+    if (!keywords.length) {
+      toast({
+        title: "Ошибка",
+        description: "Добавьте ключевые слова для поиска",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      if (!authToken) {
-        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+    setIsLoading(true);
+
+    try {
+      // Получаем токен напрямую из localStorage
+      const token = localStorage.getItem('auth_token');
+
+      if (!token) {
+        throw new Error('Не найден токен авторизации');
       }
 
-      const response = await fetch("/api/sources/collect", {
-        method: "POST",
+      const response = await fetch('/api/sources/collect', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ keywords }),
+        body: JSON.stringify({ keywords: keywords.map(k => k.keyword) }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || "API request failed");
+        throw new Error(errorData.message || 'Failed to start source collection');
       }
 
       const data = await response.json();

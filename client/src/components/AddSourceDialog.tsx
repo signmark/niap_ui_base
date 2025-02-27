@@ -91,7 +91,8 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Ошибка при парсинге источника');
+        const errorMessage = errorData.error || errorData.message || 'Ошибка при парсинге источника';
+        throw new Error(errorMessage); // Improved error handling
       }
 
       return await response.json();
