@@ -236,7 +236,10 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      const userId = directusApi.options?.auth?.id;
+      // Get current user session from Directus
+      const userResponse = await directusApi.get('/users/me');
+      const userId = userResponse.data?.data?.id;
+
       if (!userId) {
         throw new Error('User not authenticated');
       }
