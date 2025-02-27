@@ -17,7 +17,7 @@ export class ApifyService {
 
   async initialize(userId: string) {
     try {
-      // Получаем API ключ из настроек пользователя
+      // Get API key from user settings
       const response = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
@@ -45,9 +45,16 @@ export class ApifyService {
     }
 
     try {
+      console.log(`Running Apify actor ${actorId} with input:`, input);
       const response = await axios.post(
         `${this.baseUrl}/acts/${actorId}/runs`,
-        { ...input },
+        {
+          ...input,
+          webhooks: [{
+            event: "ACTOR.RUN.SUCCEEDED",
+            requestUrl: `${process.env.REPLIT_URL}/api/apify/webhook`
+          }]
+        },
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
@@ -57,6 +64,7 @@ export class ApifyService {
       );
 
       const runData = response.data as ApifyRunResponse;
+      console.log('Apify run created:', runData);
       return runData.id;
     } catch (error) {
       console.error('Error running Apify actor:', error);
@@ -71,7 +79,7 @@ export class ApifyService {
 
     try {
       const response = await axios.get(
-        `${this.baseUrl}/acts/runs/${runId}`,
+        `${this.baseUrl}/actor-runs/${runId}`,
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
@@ -93,7 +101,7 @@ export class ApifyService {
 
     try {
       const response = await axios.get(
-        `${this.baseUrl}/acts/runs/${runId}/dataset/items`,
+        `${this.baseUrl}/actor-runs/${runId}/dataset/items`,
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,

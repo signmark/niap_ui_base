@@ -320,8 +320,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const taskData = {
           source_id: sourceId,
           campaign_id: campaignId,
-          status: "pending",
-          started_at: null,
+          status: "processing",
+          started_at: new Date().toISOString(),
           completed_at: null,
           error_message: null
         };
@@ -331,16 +331,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Created task:', taskResponse.data);
 
         // Start crawling process
-        const topics = await crawler.crawlSource(source, Number(campaignId));
+        const topics = await crawler.crawlSource(source, Number(campaignId), userId);
         console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         if (topics.length > 0) {
-          // Update task to processing
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-            status: 'processing',
-            started_at: new Date().toISOString()
-          });
-
           // Save topics
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
