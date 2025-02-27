@@ -163,14 +163,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
+      // Get authorization token
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
       console.log('Starting source collection with keywords:', keywords);
 
-      // Call n8n webhook with keywords
+      // Call n8n webhook with keywords and auth token in body
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
           perplexity_api: "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",
-          keywords
+          keywords,
+          token
         }
       );
 
