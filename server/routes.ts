@@ -4,12 +4,10 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
-
-// Import only what we need from Directus SDK
 import { createDirectus, staticToken, rest } from '@directus/sdk';
 
 // Initialize Directus client
-const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://api.directus.ru').with(staticToken('your-token')).with(rest());
+const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://directus.nplanner.ru');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
