@@ -3,6 +3,7 @@ import { storage } from '../storage';
 import type { ContentSource, InsertTrendTopic } from '@shared/schema';
 import { directusApi } from '../lib/directus';
 import crypto from 'crypto';
+import { apifyService } from './apify';
 
 export class ContentCrawler {
   async crawlWebsite(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
@@ -60,23 +61,50 @@ export class ContentCrawler {
   async crawlVK(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling VK group ${source.url} for campaign ${campaignId}`);
-      const response = await directusApi.get(`/items/content_sources/${source.id}/vk_content`);
-      const content = response.data?.data;
 
-      if (!content) {
-        console.log(`No VK content found for source ${source.id}`);
-        return [];
+      // Get user settings to initialize Apify
+      const settingsResponse = await directusApi.get('/items/user_settings', {
+        params: {
+          fields: ['user_id']
+        }
+      });
+
+      if (!settingsResponse.data?.data?.[0]?.user_id) {
+        throw new Error('User settings not found');
       }
 
-      return [{
-        directusId: content.id || crypto.randomUUID(),
-        title: content.title || `Тренд из VK: ${source.name}`,
+      const userId = settingsResponse.data.data[0].user_id;
+
+      // Initialize Apify with user's API key
+      await apifyService.initialize(userId);
+
+      // Extract VK group ID or username from URL
+      const urlParts = source.url.split('/');
+      const groupIdentifier = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+
+      // Run VK scraper actor
+      const runId = await apifyService.runActor('apify/vk-posts-scraper', {
+        startUrls: [{ url: source.url }],
+        maxPosts: 10,
+      });
+
+      // Wait for the scraping to finish
+      await apifyService.waitForRunToFinish(runId);
+
+      // Get results
+      const posts = await apifyService.getRunResults(runId);
+
+      // Transform posts into trend topics
+      return posts.map(post => ({
+        directusId: crypto.randomUUID(),
+        title: post.text?.substring(0, 200) || `Пост из ${source.name}`,
         sourceId: source.id,
         campaignId: campaignId,
-        reactions: content.reactions || Math.floor(Math.random() * 300),
-        comments: content.comments || Math.floor(Math.random() * 150),
-        views: content.views || Math.floor(Math.random() * 3000)
-      }];
+        reactions: post.likes || 0,
+        comments: post.comments || 0,
+        views: post.views || 0,
+      }));
+
     } catch (error) {
       console.error(`Error crawling VK ${source.url}:`, error);
       return [];
