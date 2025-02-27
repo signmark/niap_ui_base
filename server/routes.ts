@@ -148,20 +148,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get settings for the user using actual user ID from token
-      const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
+      // Get Perplexity API key using correct endpoint and filter
+      const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
         params: {
           filter: {
+            service_name: { _eq: 'perplexity' },
             user_id: { _eq: '2d48e263-f562-4e3f-a235-e597fd62d4d8' }
-          },
-          fields: ['perplexity']
+          }
         }
       });
 
-      const perplexityKey = settings.data?.data?.[0]?.perplexity;
+      const perplexityKey = settings.data?.data?.[0]?.api_key;
       if (!perplexityKey) {
         return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
