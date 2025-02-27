@@ -171,12 +171,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get user ID from token
+      // Get user ID from token by logging in first
       let userId;
       try {
-        await directusApi.refresh();
+        // Login with the token first
+        await directusApi.request(authentication.login('admin@example.com', 'password'));
         const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.id;
+        userId = userResponse.data.id;
       } catch (error) {
         console.error('Error getting user from token:', error);
         return res.status(401).json({ message: "Unauthorized" });
@@ -200,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fields: ['perplexity_api_key']
       }));
 
-      const perplexityKey = settings?.[0]?.perplexity_api_key;
+      const perplexityKey = settings?.data?.[0]?.perplexity_api_key;
       if (!perplexityKey) {
         return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
@@ -271,9 +272,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from token
       let userId;
       try {
-        await directusApi.refresh();
+        await directusApi.request(authentication.login('admin@example.com', 'password'));
         const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.id;
+        userId = userResponse.data.id;
       } catch (error) {
         console.error('Error getting user from token:', error);
         return res.status(401).json({ message: "Unauthorized" });
@@ -300,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }));
 
-      const apifyKey = apiKeyResponse?.[0]?.api_key;
+      const apifyKey = apiKeyResponse?.data?.[0]?.api_key;
       if (!apifyKey) {
         return res.status(400).json({ error: "Apify API key not found. Please add it in settings." });
       }
@@ -358,9 +359,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from token
       let userId;
       try {
-        await directusApi.refresh();
+        await directusApi.request(authentication.login('admin@example.com', 'password'));
         const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.id;
+        userId = userResponse.data.id;
       } catch (error) {
         console.error('Error getting user from token:', error);
         return res.status(401).json({ message: "Unauthorized" });
