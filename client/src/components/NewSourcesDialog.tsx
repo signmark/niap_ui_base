@@ -33,76 +33,32 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
 
-    // Проверяем в порядке приоритета
-    if (lowercaseUrl.includes('twitter.com') || lowercaseUrl.includes('x.com')) {
-      return 'twitter';
-    }
-    if (lowercaseUrl.includes('vk.com')) {
-      return 'vk';
-    }
-    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) {
-      return 'telegram';
-    }
-    if (lowercaseUrl.includes('instagram.com')) {
-      return 'instagram';
-    }
-    if (lowercaseUrl.includes('facebook.com') || lowercaseUrl.includes('fb.com')) {
-      return 'facebook';
-    }
-    if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) {
-      return 'youtube';
-    }
-    if (lowercaseUrl.includes('linkedin.com')) {
-      return 'linkedin';
-    }
-    if (lowercaseUrl.includes('reddit.com')) {
-      return 'reddit';
-    }
-    // Если не нашли соответствий, значит это обычный веб-сайт
+    if (lowercaseUrl.includes('youtube.com')) return 'youtube';
+    if (lowercaseUrl.includes('vk.com')) return 'vk';
+    if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) return 'telegram';
+    if (lowercaseUrl.includes('instagram.com')) return 'instagram';
+    if (lowercaseUrl.includes('facebook.com')) return 'facebook';
+    if (lowercaseUrl.includes('twitter.com')) return 'twitter';
+    if (lowercaseUrl.includes('reddit.com')) return 'reddit';
     return 'website';
   };
 
   // Парсинг ответа API
   const sources = (() => {
     try {
-      console.log('Raw sourcesData:', sourcesData);
-
-      if (!sourcesData?.choices?.[0]?.message?.content) {
+      if (!sourcesData?.data) {
         console.error('Invalid API response structure');
         return [];
       }
 
-      const content = sourcesData.choices[0].message.content;
-      console.log('API response content:', content);
-
-      // Извлекаем URL из markdown-ссылок [text](url)
-      const markdownUrls = Array.from(content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g))
-        .map(match => match[2])
-        .filter(url => !url.includes('непосредственный URL отсутствует'));
-
-      // Извлекаем прямые упоминания URL
-      const directUrls = Array.from(content.matchAll(/(?:^|\s)((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}\/[^\s\)"',]+)/gm))
-        .map(match => match[1])
-        .filter(url => !url.includes('непосредственный URL отсутствует'));
-
-      // Объединяем все найденные URL
-      const allUrls = [...new Set([...markdownUrls, ...directUrls])];
-      console.log('Found URLs:', allUrls);
-
-      return allUrls
-        .map(url => {
-          // Добавляем протокол, если его нет
-          const fullUrl = url.startsWith('http') ? url : 'https://' + url;
-          const type = detectSourceType(fullUrl);
-
-          // Игнорируем не-соцсети
-          if (type === 'website') {
-            return null;
-          }
+      return sourcesData.data
+        .map((url: string) => {
+          const type = detectSourceType(url);
+          if (type === 'website') return null;
 
           let name = '';
           try {
-            const urlObj = new URL(fullUrl);
+            const urlObj = new URL(url);
             name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
           } catch (e) {
             name = 'Unknown Source';
@@ -110,7 +66,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
           return {
             name,
-            url: fullUrl,
+            url,
             type
           };
         })
