@@ -283,8 +283,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-
-      // Configure directus with the provided token
       directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       const sourceId = req.params.sourceId;
@@ -315,8 +313,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Source not found" });
       }
 
-      // Create crawler task
       try {
+        // Start crawling process first
+        console.log('Starting crawling process for source:', source.name);
+        const topics = await crawler.crawlSource(source, Number(campaignId), userId);
+        console.log(`Found ${topics.length} topics for source ${source.name}`);
+
+        if (topics.length === 0) {
+          console.error('No topics found for source:', source.name);
+          return res.status(404).json({ message: "No topics found for this source" });
+        }
+
+        // Create crawler task in Directus after successful crawl
+        console.log('Creating crawler task in Directus');
         const taskData = {
           source_id: sourceId,
           campaign_id: campaignId,
@@ -326,48 +335,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error_message: null
         };
 
-        console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
         const taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
         console.log('Created task:', taskResponse.data);
 
-        // Start crawling process
-        const topics = await crawler.crawlSource(source, Number(campaignId), userId);
-        console.log(`Found ${topics.length} topics for source ${source.name}`);
-
-        if (topics.length > 0) {
-          // Save topics
-          for (const topic of topics) {
-            console.log(`Saving topic: ${topic.title}`);
-            await directusApi.post('/items/campaign_trend_topics', {
-              id: topic.directusId,
-              title: topic.title,
-              source_id: topic.sourceId,
-              campaign_id: campaignId,
-              reactions: topic.reactions,
-              comments: topic.comments,
-              views: topic.views,
-              is_bookmarked: false
-            });
-          }
-
-          // Mark task as completed
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
-            status: 'completed',
-            completed_at: new Date().toISOString()
+        // Save topics
+        for (const topic of topics) {
+          console.log(`Saving topic: ${topic.title}`);
+          await directusApi.post('/items/campaign_trend_topics', {
+            id: topic.directusId,
+            title: topic.title,
+            source_id: topic.sourceId,
+            campaign_id: campaignId,
+            reactions: topic.reactions,
+            comments: topic.comments,
+            views: topic.views,
+            is_bookmarked: false
           });
+        }
 
-          res.json({ message: "Source crawling completed successfully", data: { taskId: taskResponse.data.data.id } });
-        } else {
-          // Mark task as error if no topics found
+        // Mark task as completed
+        await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        });
+
+        res.json({ 
+          message: "Source crawling completed successfully", 
+          data: { 
+            taskId: taskResponse.data.data.id,
+            topicsCount: topics.length 
+          } 
+        });
+
+      } catch (error) {
+        console.error("Error during crawling:", error);
+
+        // If task was created, mark it as failed
+        if (taskResponse?.data?.data?.id) {
           await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
             status: 'error',
             completed_at: new Date().toISOString(),
-            error_message: 'No topics found for this source'
+            error_message: error instanceof Error ? error.message : 'Unknown error'
           });
-          res.status(404).json({ message: "No topics found for this source" });
         }
-      } catch (error) {
-        console.error("Error during crawling:", error);
+
         res.status(500).json({ error: "Failed to complete crawling task" });
       }
     } catch (error) {
