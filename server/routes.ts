@@ -339,16 +339,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
             await directusApi.post('/items/campaign_trend_topics', {
-              data: {
-                id: topic.directusId,
-                title: topic.title,
-                source_id: topic.sourceId,
-                campaign_id: campaignId,
-                reactions: topic.reactions,
-                comments: topic.comments,
-                views: topic.views,
-                is_bookmarked: false
-              }
+              id: topic.directusId,
+              title: topic.title,
+              source_id: topic.sourceId,
+              campaign_id: campaignId,
+              reactions: topic.reactions,
+              comments: topic.comments,
+              views: topic.views,
+              is_bookmarked: false
             });
           }
 

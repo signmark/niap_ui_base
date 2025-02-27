@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { directusApi } from '@/lib/directus';
 
 interface ApifyRunResponse {
   id: string;
@@ -18,24 +17,15 @@ export class ApifyService {
   async initialize(userId: string) {
     try {
       console.log('Initializing Apify service for user:', userId);
-      const response = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: 'apify' }
-          },
-          fields: ['api_key']
-        }
-      });
+      this.apiKey = process.env.APIFY_API_KEY || '';
 
-      if (response.data?.data?.[0]?.api_key) {
-        this.apiKey = response.data.data[0].api_key;
-        console.log('Successfully initialized Apify service with API key');
-      } else {
-        throw new Error('Apify API key not found in user settings');
+      if (!this.apiKey) {
+        throw new Error('Apify API key not found in environment');
       }
+
+      console.log('Successfully initialized Apify service');
     } catch (error) {
-      console.error('Error getting Apify API key:', error);
+      console.error('Error initializing Apify:', error);
       throw error;
     }
   }
@@ -46,12 +36,19 @@ export class ApifyService {
     }
 
     try {
+      console.log(`Starting Instagram scraper for username: ${username}`);
+
+      // Simplified request body matching screenshot example
       const requestData = {
         username: [username],
         resultsLimit: 10
       };
 
-      console.log('Starting Instagram scraper with request:', requestData);
+      console.log('Apify API Request:', {
+        url: `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
+        headers: { 'Authorization': `Bearer ${this.apiKey}` },
+        data: requestData
+      });
 
       const response = await axios.post(
         `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
@@ -59,13 +56,13 @@ export class ApifyService {
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           }
         }
       );
 
       const runData = response.data as ApifyRunResponse;
-      console.log('Apify Instagram scraper run created:', runData);
+      console.log('Apify API Response:', response.data);
       return runData.id;
     } catch (error) {
       console.error('Error running Instagram scraper:', error);
@@ -88,6 +85,7 @@ export class ApifyService {
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -115,6 +113,7 @@ export class ApifyService {
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
           }
         }
       );
