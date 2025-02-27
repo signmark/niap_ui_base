@@ -4,12 +4,12 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
+
+// Import only what we need from Directus SDK
 import { createDirectus, staticToken, rest } from '@directus/sdk';
 
-// Initialize Directus client with the correct methods
-const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://api.directus.ru')
-  .with(staticToken())
-  .with(rest());
+// Initialize Directus client
+const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://api.directus.ru').with(staticToken('your-token')).with(rest());
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
@@ -170,39 +170,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-      let userId;
-      try {
-          const userResponse = await directusApi.request('/users', {
-              params: {
-                  filter: {
-                      access_token: { _eq: token }
-                  }
-              }
-          });
-          userId = userResponse.data[0].id;
-      } catch (error) {
-          console.error('Error getting user from token:', error);
-          return res.status(401).json({ message: "Unauthorized" });
+
+      // Get settings for the user
+      const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          filter: {
+            user_id: { _eq: 'current-user' }
+          },
+          fields: ['perplexity_api_key']
+        }
+      });
+
+      const perplexityKey = settings.data?.data?.[0]?.perplexity_api_key;
+      if (!perplexityKey) {
+        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
 
       const { keywords } = req.body;
       if (!Array.isArray(keywords) || keywords.length === 0) {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
-      }
-
-      // Get user's Perplexity API key from settings
-      const settings = await directusApi.request('/user_settings', {
-          params: {
-              filter: {
-                  user_id: { _eq: userId }
-              },
-              fields: ['perplexity_api_key']
-          }
-      });
-
-      const perplexityKey = settings?.data?.[0]?.perplexity_api_key;
-      if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
 
       // Call Perplexity API
