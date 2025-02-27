@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Trash2, Bot } from "lucide-react";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
@@ -352,12 +352,44 @@ export default function Trends() {
                           <h3 className="font-medium">{source.name}</h3>
                           <p className="text-sm text-muted-foreground">{source.url}</p>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                           <div className="text-sm text-muted-foreground">
                             {source.type === 'website' ? 'Веб-сайт' :
                               source.type === 'telegram' ? 'Telegram канал' :
                                 source.type === 'vk' ? 'VK группа' : source.type}
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              try {
+                                const taskData = {
+                                  source_id: source.id,
+                                  campaign_id: selectedCampaignId,
+                                  status: "pending",
+                                  started_at: null,
+                                  completed_at: null,
+                                  error_message: null
+                                };
+
+                                await directusApi.post('/items/crawler_tasks', taskData);
+
+                                toast({
+                                  title: "Задача создана",
+                                  description: "Начат сбор данных для источника " + source.name
+                                });
+                              } catch (error) {
+                                console.error('Error creating crawler task:', error);
+                                toast({
+                                  variant: "destructive",
+                                  title: "Ошибка",
+                                  description: "Не удалось создать задачу"
+                                });
+                              }
+                            }}
+                          >
+                            <Bot className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
