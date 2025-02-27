@@ -8,20 +8,6 @@ export class ContentCrawler {
   private async initializeApify(userId: string) {
     try {
       console.log('Initializing Apify service for user:', userId);
-      const response = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: 'apify' }
-          },
-          fields: ['api_key']
-        }
-      });
-
-      if (!response.data?.data?.[0]?.api_key) {
-        throw new Error('Apify API key not found');
-      }
-
       await apifyService.initialize(userId);
       console.log('Successfully initialized Apify service');
     } catch (error) {
@@ -38,7 +24,7 @@ export class ContentCrawler {
       await this.initializeApify(userId);
 
       // Extract username from URL
-      const username = source.url.split('/').filter(Boolean).pop() || '';
+      const username = source.url.split('/').pop() || '';
       if (!username) {
         throw new Error('Could not extract Instagram username from URL');
       }
@@ -110,16 +96,14 @@ export class ContentCrawler {
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
             await directusApi.post('/items/campaign_trend_topics', {
-              data: {
-                id: topic.directusId,
-                title: topic.title,
-                source_id: topic.sourceId,
-                campaign_id: campaignId,
-                reactions: topic.reactions,
-                comments: topic.comments,
-                views: topic.views,
-                is_bookmarked: false
-              }
+              id: topic.directusId,
+              title: topic.title,
+              source_id: topic.sourceId,
+              campaign_id: campaignId,
+              reactions: topic.reactions,
+              comments: topic.comments,
+              views: topic.views,
+              is_bookmarked: false
             });
           }
 
