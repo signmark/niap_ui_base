@@ -6,6 +6,29 @@ import crypto from 'crypto';
 import { apifyService } from './apify';
 
 export class ContentCrawler {
+  private async initializeApify(userId: string) {
+    try {
+      const response = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            user_id: { _eq: userId },
+            service_name: { _eq: 'apify' }
+          },
+          fields: ['api_key']
+        }
+      });
+
+      if (!response.data?.data?.[0]?.api_key) {
+        throw new Error('Apify API key not found');
+      }
+
+      await apifyService.initialize(userId);
+    } catch (error) {
+      console.error('Error initializing Apify:', error);
+      throw error;
+    }
+  }
+
   async crawlWebsite(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling website ${source.url} for campaign ${campaignId}`);
@@ -32,54 +55,51 @@ export class ContentCrawler {
     }
   }
 
-  async crawlTelegram(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
+  async crawlInstagram(source: ContentSource, campaignId: number, userId: string): Promise<InsertTrendTopic[]> {
     try {
-      console.log(`Crawling Telegram channel ${source.url} for campaign ${campaignId}`);
-      const response = await directusApi.get(`/items/content_sources/${source.id}/telegram_content`);
-      const content = response.data?.data;
+      console.log(`Crawling Instagram ${source.url} for campaign ${campaignId}`);
 
-      if (!content) {
-        console.log(`No Telegram content found for source ${source.id}`);
-        return [];
-      }
+      await this.initializeApify(userId);
 
-      return [{
-        directusId: content.id || crypto.randomUUID(),
-        title: content.title || `Тренд из Telegram: ${source.name}`,
+      // Extract username from URL
+      const username = source.url.split('/').filter(Boolean).pop() || '';
+
+      // Run Instagram scraper actor
+      const runId = await apifyService.runActor('zuzka/instagram-post-scraper', {
+        username: [username],
+        resultsLimit: 10,
+      });
+
+      console.log(`Started Instagram scraping task ${runId} for ${username}`);
+
+      // Wait for the scraping to finish
+      await apifyService.waitForRunToFinish(runId);
+
+      // Get results
+      const posts = await apifyService.getRunResults(runId);
+      console.log(`Retrieved ${posts.length} posts from Instagram`);
+
+      return posts.map(post => ({
+        directusId: crypto.randomUUID(),
+        title: post.caption?.substring(0, 200) || `Пост из ${source.name}`,
         sourceId: source.id,
         campaignId: campaignId,
-        reactions: content.reactions || Math.floor(Math.random() * 200),
-        comments: content.comments || Math.floor(Math.random() * 100),
-        views: content.views || Math.floor(Math.random() * 2000)
-      }];
+        reactions: post.likesCount || 0,
+        comments: post.commentsCount || 0,
+        views: post.viewsCount || 0
+      }));
+
     } catch (error) {
-      console.error(`Error crawling Telegram ${source.url}:`, error);
+      console.error(`Error crawling Instagram ${source.url}:`, error);
       return [];
     }
   }
 
-  async crawlVK(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
+  async crawlVK(source: ContentSource, campaignId: number, userId: string): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling VK group ${source.url} for campaign ${campaignId}`);
 
-      // Get user settings to initialize Apify
-      const settingsResponse = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            service_name: { _eq: 'apify' }
-          },
-          fields: ['api_key', 'user_id']
-        }
-      });
-
-      if (!settingsResponse.data?.data?.[0]?.api_key) {
-        throw new Error('Apify API key not found');
-      }
-
-      const userId = settingsResponse.data.data[0].user_id;
-
-      // Initialize Apify with user's API key
-      await apifyService.initialize(userId);
+      await this.initializeApify(userId);
 
       // Extract VK group ID or username from URL
       const urlParts = source.url.split('/');
@@ -91,13 +111,15 @@ export class ContentCrawler {
         maxPosts: 10,
       });
 
+      console.log(`Started VK scraping task ${runId} for ${groupIdentifier}`);
+
       // Wait for the scraping to finish
       await apifyService.waitForRunToFinish(runId);
 
       // Get results
       const posts = await apifyService.getRunResults(runId);
+      console.log(`Retrieved ${posts.length} posts from VK`);
 
-      // Transform posts into trend topics
       return posts.map(post => ({
         directusId: crypto.randomUUID(),
         title: post.text?.substring(0, 200) || `Пост из ${source.name}`,
@@ -114,21 +136,22 @@ export class ContentCrawler {
     }
   }
 
-  async crawlSource(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
+  async crawlSource(source: ContentSource, campaignId: number, userId: string): Promise<InsertTrendTopic[]> {
     console.log(`Crawling source: ${source.name} (${source.type}) for campaign ${campaignId}`);
 
     switch (source.type) {
       case 'website':
         return this.crawlWebsite(source, campaignId);
-      case 'telegram':
-        return this.crawlTelegram(source, campaignId);
+      case 'instagram':
+        return this.crawlInstagram(source, campaignId, userId);
       case 'vk':
-        return this.crawlVK(source, campaignId);
+        return this.crawlVK(source, campaignId, userId);
       default:
         console.error(`Unknown source type: ${source.type}`);
         return [];
     }
   }
+
   async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
@@ -140,71 +163,34 @@ export class ContentCrawler {
       for (const source of sources) {
         console.log(`Processing source: ${source.name}`);
 
-        // Validate source ID
-        if (!source.id) {
-          console.error(`Invalid source ID for ${source.name}`);
-          continue;
-        }
-
         // First, try to get trends for this source
-        const topics = await this.crawlSource(source, Number(campaignId));
+        const topics = await this.crawlSource(source, Number(campaignId), userId);
+
         if (topics.length === 0) {
           console.log(`No trends found for source ${source.name}, skipping task creation`);
           continue;
         }
 
-        // Create a crawler task for successful crawl
-        const taskData = {
-          source_id: source.id,
-          campaign_id: campaignId,
-          status: "pending",
-          started_at: null,
-          completed_at: null,
-          error_message: null
-        };
-
-        console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
-
         try {
-          // Create task and immediately mark as processing
-          const taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
-          console.log('Created task:', taskResponse.data);
-
-          // Mark as processing since we already have the trends
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-            status: 'processing',
-            started_at: new Date().toISOString()
-          });
-
           // Save the topics
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
-            try {
-              await directusApi.post('/items/campaign_trend_topics', {
-                data: {
-                  id: topic.directusId,
-                  title: topic.title,
-                  source_id: topic.sourceId,
-                  campaign_id: campaignId,
-                  reactions: topic.reactions,
-                  comments: topic.comments,
-                  views: topic.views,
-                  is_bookmarked: false
-                }
-              });
-            } catch (error) {
-              console.error(`Error saving topic to Directus:`, error);
-            }
+            await directusApi.post('/items/campaign_trend_topics', {
+              data: {
+                id: topic.directusId,
+                title: topic.title,
+                source_id: topic.sourceId,
+                campaign_id: campaignId,
+                reactions: topic.reactions,
+                comments: topic.comments,
+                views: topic.views,
+                is_bookmarked: false
+              }
+            });
           }
 
-          // Mark task as completed
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          });
-
         } catch (error) {
-          console.error(`Error processing source ${source.name}:`, error);
+          console.error(`Error saving topics for source ${source.name}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error details:', errorMessage);
         }
