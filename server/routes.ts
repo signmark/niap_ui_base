@@ -170,22 +170,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-
-      // Get user ID from token by logging in first
       let userId;
       try {
-        // Login with the token first
-        await directusApi.request(authentication.login('admin@example.com', 'password'));
-        const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.data.id;
+          const userResponse = await directusApi.items('users').readByQuery({
+              filter: {
+                  access_token: token
+              }
+          });
+          userId = userResponse.data[0].id;
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      if (!userId) {
-        console.error('Could not get user ID from token');
-        return res.status(401).json({ message: "Unauthorized" });
+          console.error('Error getting user from token:', error);
+          return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { keywords } = req.body;
@@ -194,12 +189,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user's Perplexity API key from settings
-      const settings = await directusApi.request(readItems('user_settings', {
+      const settings = await directusApi.items('user_settings').readByQuery({
         filter: {
           user_id: { _eq: userId }
         },
         fields: ['perplexity_api_key']
-      }));
+      });
 
       const perplexityKey = settings?.data?.[0]?.perplexity_api_key;
       if (!perplexityKey) {
@@ -272,13 +267,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from token
       let userId;
       try {
-        await directusApi.request(authentication.login('admin@example.com', 'password'));
-        const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.data.id;
+        const userResponse = await directusApi.items('users').readByQuery({
+            filter: {
+                access_token: token
+            }
+        });
+        userId = userResponse.data[0].id;
       } catch (error) {
         console.error('Error getting user from token:', error);
         return res.status(401).json({ message: "Unauthorized" });
       }
+
 
       if (!userId) {
         console.error('Could not get user ID from token');
@@ -291,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user's Apify API key
-      const apiKeyResponse = await directusApi.request(readItems('user_api_keys', {
+      const apiKeyResponse = await directusApi.items('user_api_keys').readByQuery({
         params: {
           filter: {
             user_id: { _eq: userId },
@@ -299,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           fields: ['api_key']
         }
-      }));
+      });
 
       const apifyKey = apiKeyResponse?.data?.[0]?.api_key;
       if (!apifyKey) {
@@ -359,9 +358,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from token
       let userId;
       try {
-        await directusApi.request(authentication.login('admin@example.com', 'password'));
-        const userResponse = await directusApi.request(readItems('users/me'));
-        userId = userResponse.data.id;
+        const userResponse = await directusApi.items('users').readByQuery({
+            filter: {
+                access_token: token
+            }
+        });
+        userId = userResponse.data[0].id;
       } catch (error) {
         console.error('Error getting user from token:', error);
         return res.status(401).json({ message: "Unauthorized" });
