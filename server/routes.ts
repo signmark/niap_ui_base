@@ -191,9 +191,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('Invalid response from n8n webhook');
       }
 
+      // Parse response for social media URLs
+      const content = response.data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('Invalid response format from n8n');
+      }
+
+      // Extract URLs from content and validate they're social media
+      const urlPattern = /(https?:\/\/[^\s]+)/g;
+      const urls = content.match(urlPattern) || [];
+
+      const validDomains = ['youtube.com', 'reddit.com', 'vk.com', 'linkedin.com', 't.me', 'diets.ru'];
+      const socialMediaUrls = urls.filter(url => 
+        validDomains.some(domain => url.includes(domain))
+      );
+
       res.json({
         success: true,
-        data: response.data
+        data: {
+          sources: socialMediaUrls,
+          rawContent: content
+        }
       });
 
     } catch (error) {
