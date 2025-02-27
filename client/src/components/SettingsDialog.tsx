@@ -11,23 +11,35 @@ export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const { toast } = useToast();
 
-  const { data: settings } = useQuery({
-    queryKey: ["user_settings"],
+  const { data: apiKeys, isLoading } = useQuery({
+    queryKey: ["user_api_keys"],
     queryFn: async () => {
-      const response = await directusApi.get('/items/user_settings', {
+      const response = await directusApi.get('/items/user_api_keys', {
         params: {
-          fields: ['perplexity_api_key']
+          fields: ['id', 'service_name', 'api_key']
         }
       });
-      return response.data?.data;
+      return response.data?.data || [];
     }
   });
 
   const { mutate: saveSettings, isPending } = useMutation({
     mutationFn: async () => {
-      await directusApi.patch('/items/user_settings', {
-        perplexity_api_key: perplexityKey
-      });
+      // Проверяем существование ключа для Perplexity
+      const existingKey = apiKeys?.find(key => key.service_name === 'perplexity');
+
+      if (existingKey) {
+        // Обновляем существующий ключ
+        await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
+          api_key: perplexityKey
+        });
+      } else {
+        // Создаем новый ключ
+        await directusApi.post('/items/user_api_keys', {
+          service_name: 'perplexity',
+          api_key: perplexityKey
+        });
+      }
     },
     onSuccess: () => {
       toast({
@@ -47,7 +59,7 @@ export function SettingsDialog() {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Настройки</DialogTitle>
+        <DialogTitle>Настройки API ключей</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2">
