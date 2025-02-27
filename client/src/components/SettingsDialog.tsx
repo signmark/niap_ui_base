@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
+import { Loader2 } from "lucide-react";
+
+interface ApiKey {
+  id: string;
+  service_name: string;
+  api_key: string;
+}
 
 export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
@@ -17,23 +24,39 @@ export function SettingsDialog() {
   const { data: apiKeys, isLoading } = useQuery({
     queryKey: ["user_api_keys"],
     queryFn: async () => {
-      const response = await directusApi.get('/items/user_api_keys', {
-        params: {
-          fields: ['id', 'service_name', 'api_key']
-        }
-      });
-
-      // Set initial values for form fields
-      const keys = response.data?.data || [];
-      const perplexityKeyData = keys.find(k => k.service_name === 'perplexity');
-      const apifyKeyData = keys.find(k => k.service_name === 'apify');
-
-      setPerplexityKey(perplexityKeyData?.api_key || '');
-      setApifyKey(apifyKeyData?.api_key || '');
-
-      return keys;
-    }
+      try {
+        const response = await directusApi.get('/items/user_api_keys', {
+          params: {
+            filter: {
+              user_id: {
+                _eq: userId
+              }
+            },
+            fields: ['id', 'service_name', 'api_key']
+          }
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        console.error('Error fetching API keys:', error);
+        throw error;
+      }
+    },
+    enabled: !!userId
   });
+
+  useEffect(() => {
+    if (apiKeys) {
+      const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
+      const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
+
+      if (perplexityKeyData) {
+        setPerplexityKey(perplexityKeyData.api_key);
+      }
+      if (apifyKeyData) {
+        setApifyKey(apifyKeyData.api_key);
+      }
+    }
+  }, [apiKeys]);
 
   const { mutate: saveSettings, isPending } = useMutation({
     mutationFn: async () => {
@@ -49,7 +72,7 @@ export function SettingsDialog() {
       for (const service of services) {
         if (!service.key) continue;
 
-        const existingKey = apiKeys?.find(key => key.service_name === service.name);
+        const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
         if (existingKey) {
           // Обновляем существующий ключ
@@ -72,14 +95,24 @@ export function SettingsDialog() {
         description: "Настройки сохранены"
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось сохранить настройки"
+        description: error.message || "Не удалось сохранить настройки"
       });
     }
   });
+
+  if (isLoading) {
+    return (
+      <DialogContent>
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DialogContent>
+    );
+  }
 
   return (
     <DialogContent>
@@ -118,7 +151,14 @@ export function SettingsDialog() {
           disabled={isPending}
           className="w-full"
         >
-          Сохранить
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Сохранение...
+            </>
+          ) : (
+            "Сохранить"
+          )}
         </Button>
       </div>
     </DialogContent>
