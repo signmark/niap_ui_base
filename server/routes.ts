@@ -4,12 +4,12 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
-import { createDirectus, rest, readItems, authentication } from '@directus/sdk';
+import { createDirectus, staticToken, rest } from '@directus/sdk';
 
-// Added directusApi initialization with environment variable fallback
+// Initialize Directus client with the correct methods
 const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://api.directus.ru')
-  .with(rest())
-  .with(authentication());
+  .with(staticToken())
+  .with(rest());
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
@@ -172,9 +172,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       let userId;
       try {
-          const userResponse = await directusApi.items('users').readByQuery({
-              filter: {
-                  access_token: token
+          const userResponse = await directusApi.request('/users', {
+              params: {
+                  filter: {
+                      access_token: { _eq: token }
+                  }
               }
           });
           userId = userResponse.data[0].id;
@@ -189,11 +191,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user's Perplexity API key from settings
-      const settings = await directusApi.items('user_settings').readByQuery({
-        filter: {
-          user_id: { _eq: userId }
-        },
-        fields: ['perplexity_api_key']
+      const settings = await directusApi.request('/user_settings', {
+          params: {
+              filter: {
+                  user_id: { _eq: userId }
+              },
+              fields: ['perplexity_api_key']
+          }
       });
 
       const perplexityKey = settings?.data?.[0]?.perplexity_api_key;
