@@ -15,18 +15,28 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       userId: null,
       isAuthenticated: false,
-      setAuth: (token, userId) => 
+      setAuth: (token, userId) => {
+        // Сохраняем токен и в localStorage для прямого доступа
+        if (token) {
+          localStorage.setItem('auth_token', token);
+        } else {
+          localStorage.removeItem('auth_token');
+        }
+        
         set({ 
           token, 
           userId, 
           isAuthenticated: !!token && !!userId,
-        }),
-      clearAuth: () => 
+        });
+      },
+      clearAuth: () => {
+        localStorage.removeItem('auth_token');
         set({ 
           token: null, 
           userId: null, 
           isAuthenticated: false,
-        }),
+        });
+      },
     }),
     {
       name: 'auth-storage',

@@ -47,6 +47,9 @@ export default function Login() {
         }
       });
 
+      // Сохраняем токен в localStorage и в хранилище состояния
+      localStorage.setItem('auth_token', authData.data.access_token);
+
       // Сохраняем токен и ID пользователя
       setAuth(token, userData.data.id);
 

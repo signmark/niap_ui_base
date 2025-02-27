@@ -37,9 +37,11 @@ export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps
         window.location.reload();
       }, 10000);
     } catch (error) {
+      //Improved error handling
+      const errorMessage = error.message.includes("API request failed") ? error.message : "Не удалось запустить поиск";
       toast({
         title: "Ошибка",
-        description: "Не удалось запустить поиск",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
