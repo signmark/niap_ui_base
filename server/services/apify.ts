@@ -61,8 +61,9 @@ export class ApifyService {
         }
       );
 
-      const runData = response.data as ApifyRunResponse;
       console.log('Apify API Response:', response.data);
+
+      const runData = response.data as ApifyRunResponse;
       return runData.id;
     } catch (error) {
       console.error('Error running Instagram scraper:', error);
@@ -129,7 +130,6 @@ export class ApifyService {
       throw error;
     }
   }
-
   async waitForRunToFinish(runId: string, checkInterval = 5000): Promise<void> {
     console.log(`Waiting for run ${runId} to finish`);
     while (true) {
