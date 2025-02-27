@@ -1,22 +1,29 @@
 import axios from 'axios';
 import { storage } from '../storage';
 import type { ContentSource, InsertTrendTopic } from '@shared/schema';
+import { directusApi } from '../lib/directus';
+import crypto from 'crypto';
 
 export class ContentCrawler {
   async crawlWebsite(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling website ${source.url} for campaign ${campaignId}`);
-      const response = await axios.get(source.url);
+      const response = await directusApi.get(`/items/content_sources/${source.id}/content`);
+      const content = response.data?.data;
 
-      // Генерируем реальные данные на основе контента сайта
-      const title = `Новый тренд с ${source.name}`;
+      if (!content) {
+        console.log(`No content found for source ${source.id}`);
+        return [];
+      }
+
       return [{
-        title,
+        directusId: content.id || crypto.randomUUID(),
+        title: content.title || `Новый тренд с ${source.name}`,
         sourceId: source.id,
         campaignId: campaignId,
-        reactions: Math.floor(Math.random() * 100),
-        comments: Math.floor(Math.random() * 50),
-        views: Math.floor(Math.random() * 1000)
+        reactions: content.reactions || Math.floor(Math.random() * 100),
+        comments: content.comments || Math.floor(Math.random() * 50),
+        views: content.views || Math.floor(Math.random() * 1000)
       }];
     } catch (error) {
       console.error(`Error crawling website ${source.url}:`, error);
@@ -27,15 +34,22 @@ export class ContentCrawler {
   async crawlTelegram(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling Telegram channel ${source.url} for campaign ${campaignId}`);
-      // В реальном приложении здесь будет интеграция с Telegram API
-      const title = `Тренд из Telegram: ${source.name}`;
+      const response = await directusApi.get(`/items/content_sources/${source.id}/telegram_content`);
+      const content = response.data?.data;
+
+      if (!content) {
+        console.log(`No Telegram content found for source ${source.id}`);
+        return [];
+      }
+
       return [{
-        title,
+        directusId: content.id || crypto.randomUUID(),
+        title: content.title || `Тренд из Telegram: ${source.name}`,
         sourceId: source.id,
         campaignId: campaignId,
-        reactions: Math.floor(Math.random() * 200),
-        comments: Math.floor(Math.random() * 100),
-        views: Math.floor(Math.random() * 2000)
+        reactions: content.reactions || Math.floor(Math.random() * 200),
+        comments: content.comments || Math.floor(Math.random() * 100),
+        views: content.views || Math.floor(Math.random() * 2000)
       }];
     } catch (error) {
       console.error(`Error crawling Telegram ${source.url}:`, error);
@@ -46,15 +60,22 @@ export class ContentCrawler {
   async crawlVK(source: ContentSource, campaignId: number): Promise<InsertTrendTopic[]> {
     try {
       console.log(`Crawling VK group ${source.url} for campaign ${campaignId}`);
-      // В реальном приложении здесь будет интеграция с VK API
-      const title = `Тренд из VK: ${source.name}`;
+      const response = await directusApi.get(`/items/content_sources/${source.id}/vk_content`);
+      const content = response.data?.data;
+
+      if (!content) {
+        console.log(`No VK content found for source ${source.id}`);
+        return [];
+      }
+
       return [{
-        title,
+        directusId: content.id || crypto.randomUUID(),
+        title: content.title || `Тренд из VK: ${source.name}`,
         sourceId: source.id,
         campaignId: campaignId,
-        reactions: Math.floor(Math.random() * 300),
-        comments: Math.floor(Math.random() * 150),
-        views: Math.floor(Math.random() * 3000)
+        reactions: content.reactions || Math.floor(Math.random() * 300),
+        comments: content.comments || Math.floor(Math.random() * 150),
+        views: content.views || Math.floor(Math.random() * 3000)
       }];
     } catch (error) {
       console.error(`Error crawling VK ${source.url}:`, error);
@@ -82,7 +103,7 @@ export class ContentCrawler {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
 
-      // Получаем только источники для указанной кампании
+      // Get only sources for the specified campaign
       const sources = await storage.getContentSources(userId, campaignId);
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
@@ -93,10 +114,7 @@ export class ContentCrawler {
 
         for (const topic of topics) {
           console.log(`Saving topic: ${topic.title} for campaign ${campaignId}`);
-          await storage.createTrendTopic({
-            ...topic,
-            campaignId: campaignId
-          });
+          await storage.createTrendTopic(topic);
         }
       }
       console.log(`Finished crawling all sources for campaign ${campaignId}`);
