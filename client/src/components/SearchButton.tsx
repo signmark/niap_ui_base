@@ -25,9 +25,7 @@ export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps
 
     try {
       setIsSearching(true);
-      await apiRequest("POST", "/api/perplexity/search", {
-        keywords: selectedKeywords
-      });
+      await apiRequest("POST", "/api/sources/collect", { keywords: selectedKeywords.map(kw => kw.keyword) });
 
       toast({
         title: "Поиск запущен",
