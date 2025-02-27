@@ -14,12 +14,6 @@ interface NewSourcesDialogProps {
   sourcesData: any;
 }
 
-interface Source {
-  name: string;
-  url: string;
-  type: string;
-}
-
 interface ParsedSource {
   name: string;
   url: string;
@@ -120,7 +114,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             type
           };
         })
-        .filter(Boolean); // Удаляем null элементы
+        .filter(Boolean);
 
     } catch (e) {
       console.error('Error parsing sources:', e);
