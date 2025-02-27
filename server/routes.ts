@@ -171,36 +171,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-      console.log('Starting source collection with keywords:', keywords);
+      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // Call n8n webhook with keywords and auth token in body
-      const response = await axios.post(
-        'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
+      // Get API key from user settings
+      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            service_name: { _eq: 'perplexity' }
+          },
+          fields: ['api_key']
+        }
+      });
+
+      const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
+      if (!perplexityKey) {
+        return res.status(400).json({ error: "Perplexity API key not found in user settings" });
+      }
+
+      // Call Perplexity API directly
+      const perplexityResponse = await axios.post(
+        'https://api.perplexity.ai/chat/completions',
         {
-          perplexity_api: "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",
-          keywords,
-          token,
-          query: `Find social media accounts, groups, and channels on YouTube, Reddit, VKontakte (VK), LinkedIn, and other platforms that frequently discuss these topics: ${keywords.join(', ')}. For each source, provide the platform name, URL, and brief description of their content focus.`
+          model: "sonar-pro",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant focused on finding relevant social media sources."
+            },
+            {
+              role: "user",
+              content: `Find social media accounts, groups, and channels on YouTube, Reddit, VKontakte (VK), LinkedIn, and other platforms that frequently discuss these topics: ${keywords.join(', ')}. For each source, provide the platform name, URL, and brief description of their content focus.`
+            }
+          ]
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${perplexityKey}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('n8n webhook response received:', response.status);
-
-      if (!response.data) {
-        console.error('Invalid response from n8n:', response.data);
-        throw new Error('Invalid response from n8n webhook');
-      }
-
-      // Parse Perplexity response from n8n
-      const choices = response.data?.[0]?.choices;
-      if (!Array.isArray(choices) || choices.length === 0) {
+      if (!perplexityResponse.data?.choices?.[0]?.message?.content) {
         throw new Error('Invalid response format from Perplexity API');
       }
 
-      const content = choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('No content found in Perplexity response');
-      }
+      const content = perplexityResponse.data.choices[0].message.content;
 
       // Extract URLs from content and validate they're social media
       const urlPattern = /(https?:\/\/[^\s]+)/g;
