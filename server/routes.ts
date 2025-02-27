@@ -273,6 +273,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Single source crawling endpoint
+  app.post("/api/sources/:sourceId/crawl", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      const sourceId = req.params.sourceId;
+      const { campaignId } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (!sourceId || !campaignId) {
+        return res.status(400).json({ message: "Source ID and Campaign ID are required" });
+      }
+
+      // Get campaign UUID from Directus
+      const campaignResponse = await directusApi.get('/items/user_campaigns', {
+        params: {
+          filter: {
+            directus_id: { _eq: campaignId }
+          },
+          fields: ['id']
+        }
+      });
+
+      if (!campaignResponse.data?.data?.[0]?.id) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      const directusCampaignId = campaignResponse.data.data[0].id;
+
+      // Get source for this campaign
+      const sources = await storage.getContentSources(userId, Number(campaignId));
+      const source = sources.find(s => s.id === sourceId);
+
+      if (!source) {
+        return res.status(404).json({ message: "Source not found" });
+      }
+
+      // Create crawler task
+      try {
+        const taskData = {
+          source_id: sourceId,
+          campaign_id: directusCampaignId,
+          status: "pending",
+          started_at: null,
+          completed_at: null,
+          error_message: null
+        };
+
+        console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
+        const taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
+        console.log('Created task:', taskResponse.data);
+
+        // Start crawling process
+        const topics = await crawler.crawlSource(source, Number(campaignId));
+
+        if (topics.length > 0) {
+          // Update task to processing
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
+            status: 'processing',
+            started_at: new Date().toISOString()
+          });
+
+          // Save topics
+          for (const topic of topics) {
+            await directusApi.post('/items/campaign_trend_topics', {
+              data: {
+                id: topic.directusId,
+                title: topic.title,
+                source_id: topic.sourceId,
+                campaign_id: directusCampaignId,
+                reactions: topic.reactions,
+                comments: topic.comments,
+                views: topic.views,
+                is_bookmarked: false
+              }
+            });
+          }
+
+          // Mark task as completed
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          });
+        } else {
+          // Mark task as error if no topics found
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
+            status: 'error',
+            completed_at: new Date().toISOString(),
+            error_message: 'No topics found for this source'
+          });
+        }
+
+        res.json({ message: "Source crawling completed successfully", taskId: taskResponse.data.id });
+      } catch (error) {
+        console.error("Error during crawling:", error);
+        res.status(500).json({ error: "Failed to complete crawling task" });
+      }
+    } catch (error) {
+      console.error("Error processing request:", error);
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  });
+
   console.log('Route registration completed');
   return httpServer;
 }
