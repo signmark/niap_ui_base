@@ -1,0 +1,41 @@
+[
+  {
+    "id": "58113f2a-1c1d-43d8-a384-aeb7362c71cb",
+    "model": "sonar-pro",
+    "created": 1740670451,
+    "usage": {
+      "prompt_tokens": 453,
+      "completion_tokens": 485,
+      "total_tokens": 938,
+      "citation_tokens": 5613,
+      "num_search_queries": 2
+    },
+    "citations": [
+      "https://restoplace.cc/blog/prodvizheniya-v-socsetyah",
+      "https://dzen.ru/a/X_Rd-68ULwsXCIuH",
+      "http://acecomments.mu.nu/?blog=157&post=192211",
+      "https://www.who.int/ru/news-room/fact-sheets/detail/healthy-diet",
+      "https://www.youtube.com/watch?v=jS78RBNCfhs",
+      "https://infomate.club/targetboy/",
+      "https://sdelano.media/menu-gruppy/",
+      "https://www.youtube.com/watch?v=0ERcoKnJ3sA",
+      "https://www.divaswigs.com/blog/what-is-different-between-a-55-lace-closure-wig-and-a-lace-front-wig.html",
+      "https://www.diets.ru"
+    ],
+    "object": "chat.completion",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "Here are some relevant social media accounts and groups discussing the topics you mentioned:\n\nYouTube:\n1. Victoria - Правильное Питание\nURL: https://www.youtube.com/@VictoriaSubbotina\nDescription: Channel focused on healthy eating, weight loss recipes, and balanced nutrition plans.\n\n2. Здоровое питание\nURL: https://www.youtube.com/@healthy_eating_ru\nDescription: Provides recipes and tips for a healthy diet, balanced nutrition, and weight management.\n\nVKontakte (VK):\n3. Правильное питание | Здоровый образ жизни\nURL: https://vk.com/proper_nutrition\nDescription: Group sharing healthy recipes, nutrition tips, and lifestyle advice for weight loss and balanced eating.\n\n4. Здоровое питание | ПП рецепты\nURL: https://vk.com/zdorovoe_pitanie_pp\nDescription: Community focused on healthy eating recipes, nutritional information, and meal planning.\n\nReddit:\n5. r/RussianFitness\nURL: https://www.reddit.com/r/RussianFitness/\nDescription: Subreddit discussing fitness, nutrition, and healthy lifestyles in Russian.\n\nLinkedIn:\n6. Нутрициология и диетология\nURL: https://www.linkedin.com/groups/12543198/\nDescription: Professional group for nutritionists and dietitians discussing latest trends in personalized nutrition and balanced diets.\n\nOther platforms:\n7. Diets.ru\nURL: https://www.diets.ru/\nDescription: Website and community focused on diets, weight loss, calorie counting, and healthy lifestyles.\n\n8. FoodDiary.ru\nURL: https://fooddiary.ru/\nDescription: Online food diary and nutrition tracking platform for creating personalized meal plans and analyzing nutrient intake.\n\nThese sources cover a wide range of topics related to nutrition, balanced diets, personalized meal planning, and healthy lifestyles. They provide valuable information, recipes, and community discussions for people interested in improving their diet and overall health."
+        },
+        "delta": {
+          "role": "assistant",
+          "content": ""
+        }
+      }
+    ]
+  }
+]
