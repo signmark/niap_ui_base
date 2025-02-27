@@ -118,12 +118,12 @@ export class ContentCrawler {
 
         // Create a crawler task with proper data validation
         const taskData = {
-          data: {
-            source_id: source.id,
-            campaign_id: campaignId,
-            status: 'processing',
-            started_at: new Date().toISOString()
-          }
+          source_id: source.id,
+          campaign_id: campaignId,
+          status: 'pending',
+          started_at: null,
+          completed_at: null,
+          error_message: null
         };
 
         console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
@@ -132,6 +132,12 @@ export class ContentCrawler {
         try {
           taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
           console.log('Created task:', taskResponse.data);
+
+          // Update task to processing
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+            status: 'processing',
+            started_at: new Date().toISOString()
+          });
 
           console.log(`Crawling source: ${source.name} (${source.type})`);
           const topics = await this.crawlSource(source, Number(campaignId));
@@ -159,10 +165,8 @@ export class ContentCrawler {
 
           // Update task status to completed
           await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
-            data: {
-              status: 'completed',
-              completed_at: new Date().toISOString()
-            }
+            status: 'completed',
+            completed_at: new Date().toISOString()
           });
 
         } catch (error) {
@@ -173,11 +177,9 @@ export class ContentCrawler {
           if (taskResponse?.data?.data?.id) {
             // Update task status to error only if task was created
             await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
-              data: {
-                status: 'error',
-                completed_at: new Date().toISOString(),
-                error_message: errorMessage
-              }
+              status: 'error',
+              completed_at: new Date().toISOString(),
+              error_message: errorMessage
             });
           }
         }
