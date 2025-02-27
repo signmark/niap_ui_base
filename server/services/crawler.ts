@@ -108,15 +108,22 @@ export class ContentCrawler {
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
       for (const source of sources) {
-        console.log(`Creating crawler task for source: ${source.name}`);
+        console.log(`Processing source: ${source.name}`);
 
-        // Validate source and campaign IDs
+        // Validate source ID
         if (!source.id) {
           console.error(`Invalid source ID for ${source.name}`);
           continue;
         }
 
-        // Create a crawler task
+        // First, try to get trends for this source
+        const topics = await this.crawlSource(source, Number(campaignId));
+        if (topics.length === 0) {
+          console.log(`No trends found for source ${source.name}, skipping task creation`);
+          continue;
+        }
+
+        // Create a crawler task for successful crawl
         const taskData = {
           source_id: source.id,
           campaign_id: campaignId,
@@ -128,21 +135,18 @@ export class ContentCrawler {
 
         console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
 
-        let taskResponse;
         try {
-          taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
+          // Create task and immediately mark as processing
+          const taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
           console.log('Created task:', taskResponse.data);
 
-          // Update task to processing
+          // Mark as processing since we already have the trends
           await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
             status: 'processing',
             started_at: new Date().toISOString()
           });
 
-          console.log(`Crawling source: ${source.name} (${source.type})`);
-          const topics = await this.crawlSource(source, Number(campaignId));
-          console.log(`Found ${topics.length} topics for source ${source.name}`);
-
+          // Save the topics
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
             try {
@@ -163,7 +167,7 @@ export class ContentCrawler {
             }
           }
 
-          // Update task status to completed
+          // Mark task as completed
           await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
             status: 'completed',
             completed_at: new Date().toISOString()
@@ -173,15 +177,6 @@ export class ContentCrawler {
           console.error(`Error processing source ${source.name}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error details:', errorMessage);
-
-          if (taskResponse?.data?.id) {
-            // Update task status to error only if task was created
-            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
-              status: 'error',
-              completed_at: new Date().toISOString(),
-              error_message: errorMessage
-            });
-          }
         }
       }
 
