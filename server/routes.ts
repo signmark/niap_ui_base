@@ -281,34 +281,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { campaignId } = req.body;
 
       if (!userId) {
+        console.error('Missing user ID in request headers');
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       if (!sourceId || !campaignId) {
+        console.error('Missing required parameters:', { sourceId, campaignId });
         return res.status(400).json({ message: "Source ID and Campaign ID are required" });
       }
-
-      // Get campaign UUID from Directus
-      const campaignResponse = await directusApi.get('/items/user_campaigns', {
-        params: {
-          filter: {
-            directus_id: { _eq: campaignId }
-          },
-          fields: ['id']
-        }
-      });
-
-      if (!campaignResponse.data?.data?.[0]?.id) {
-        return res.status(404).json({ message: "Campaign not found" });
-      }
-
-      const directusCampaignId = campaignResponse.data.data[0].id;
 
       // Get source for this campaign
       const sources = await storage.getContentSources(userId, Number(campaignId));
       const source = sources.find(s => s.id === sourceId);
 
       if (!source) {
+        console.error('Source not found:', { sourceId, campaignId });
         return res.status(404).json({ message: "Source not found" });
       }
 
@@ -316,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const taskData = {
           source_id: sourceId,
-          campaign_id: directusCampaignId,
+          campaign_id: campaignId,
           status: "pending",
           started_at: null,
           completed_at: null,
@@ -329,6 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Start crawling process
         const topics = await crawler.crawlSource(source, Number(campaignId));
+        console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         if (topics.length > 0) {
           // Update task to processing
@@ -339,12 +327,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Save topics
           for (const topic of topics) {
+            console.log(`Saving topic: ${topic.title}`);
             await directusApi.post('/items/campaign_trend_topics', {
               data: {
                 id: topic.directusId,
                 title: topic.title,
                 source_id: topic.sourceId,
-                campaign_id: directusCampaignId,
+                campaign_id: campaignId,
                 reactions: topic.reactions,
                 comments: topic.comments,
                 views: topic.views,

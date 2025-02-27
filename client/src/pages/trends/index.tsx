@@ -236,11 +236,16 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
+      const userId = directusApi.options?.auth?.id;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
       const response = await fetch(`/api/sources/${sourceId}/crawl`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': directusApi.options.value.auth?.id || ''
+          'x-user-id': userId
         },
         body: JSON.stringify({
           campaignId: selectedCampaignId
@@ -249,6 +254,7 @@ export default function Trends() {
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('Error creating crawler task:', error);
         throw new Error(error.message || 'Failed to create crawler task');
       }
 
@@ -263,6 +269,7 @@ export default function Trends() {
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
