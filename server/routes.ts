@@ -157,8 +157,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity source collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -167,29 +168,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
-      // Get user's Perplexity API key
-      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: 'perplexity' }
-          },
-          fields: ['api_key']
-        }
-      });
-
-      const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
-      if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
-      }
-
       console.log('Keywords for search:', keywords);
 
-      // Call n8n webhook with the API key and keywords
+      // Call n8n webhook with the Directus token and keywords
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          directusToken: perplexityKey, // Assuming perplexityKey is the Directus token.  Clarification needed if different.
+          directusToken: authHeader.replace('Bearer ', ''),
           keywords
         },
         {
