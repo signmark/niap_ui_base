@@ -157,9 +157,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity source collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Get user ID from token
+      let userId;
+      try {
+        const userResponse = await directusApi.get('/users/me');
+        userId = userResponse.data?.data?.id;
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        console.error('Could not get user ID from token');
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { keywords } = req.body;
@@ -216,9 +235,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apify social media parsing endpoint
   app.post("/api/sources/parse", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Get user ID from token
+      let userId;
+      try {
+        const userResponse = await directusApi.get('/users/me');
+        userId = userResponse.data?.data?.id;
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        console.error('Could not get user ID from token');
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { url, sourceType } = req.body;

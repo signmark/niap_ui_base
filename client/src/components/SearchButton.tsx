@@ -67,3 +67,25 @@ export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps
 }
 
 export default SearchButton;
+
+// Assuming this is in "@/lib/queryClient.ts" or a similar location.
+export const apiRequest = async (method: string, url: string, body?: any) => {
+  const token = localStorage.getItem('auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`API request failed with status ${response.status}: ${JSON.stringify(errorData)}`);
+  }
+
+  return response.json();
+};
