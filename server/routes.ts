@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Perplexity source collection endpoint
+  // Sources collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -192,8 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          directusToken: authHeader, // Передаем токен как есть, включая "Bearer "
-          perplexityKey: perplexityKey, // Добавляем ключ Perplexity
+          perplexity_api: perplexityKey,
           keywords
         },
         {
