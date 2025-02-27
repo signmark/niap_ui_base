@@ -157,12 +157,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sources collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        console.error('Missing authorization header');
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
       const { keywords } = req.body;
       if (!Array.isArray(keywords) || keywords.length === 0) {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
@@ -171,6 +165,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Starting source collection with keywords:', keywords);
 
       // Get Perplexity API key from user settings
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const token = authHeader.split(' ')[1];
       if (!token) {
         return res.status(401).json({ error: "Invalid authorization token" });
