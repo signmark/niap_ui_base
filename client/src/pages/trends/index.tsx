@@ -236,15 +236,11 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      // Get fresh auth token from directus
-      await directusApi.refresh();
-
       const response = await fetch(`/api/sources/${sourceId}/crawl`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': directusApi.options.auth?.id || '',
-          'Authorization': `Bearer ${directusApi.options.auth?.access_token}`
+          'Authorization': `Bearer ${directusApi.token}`
         },
         body: JSON.stringify({
           campaignId: selectedCampaignId

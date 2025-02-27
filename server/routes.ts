@@ -276,18 +276,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Single source crawling endpoint
   app.post("/api/sources/:sourceId/crawl", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      const sourceId = req.params.sourceId;
-      const { campaignId } = req.body;
-
-      if (!userId) {
-        console.error('Missing user ID in request headers');
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.error('Missing authorization header');
         return res.status(401).json({ message: "Unauthorized" });
       }
+
+      const token = authHeader.replace('Bearer ', '');
+
+      // Configure directus with the provided token
+      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      const sourceId = req.params.sourceId;
+      const { campaignId } = req.body;
 
       if (!sourceId || !campaignId) {
         console.error('Missing required parameters:', { sourceId, campaignId });
         return res.status(400).json({ message: "Source ID and Campaign ID are required" });
+      }
+
+      // Get user ID from token
+      const userResponse = await directusApi.get('/users/me');
+      const userId = userResponse.data?.data?.id;
+
+      if (!userId) {
+        console.error('Could not get user ID from token');
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
       // Get source for this campaign
