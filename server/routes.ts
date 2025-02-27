@@ -168,17 +168,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
         console.error('Missing authorization header');
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const token = authHeader.split(' ')[1];
-      if (!token) {
-        return res.status(401).json({ error: "Invalid authorization token" });
-      }
-
-      // Set authorization header for Directus API
+      const token = authHeader.replace('Bearer ', '');
       directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
+      // Get API key from user settings
       const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
@@ -190,17 +186,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
       if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
+        return res.status(400).json({ error: "Perplexity API key not found in user settings" });
       }
 
       console.log('Calling n8n webhook for source search...');
 
-      // Call n8n webhook with the format from Postman example
+      // Call n8n webhook with the exact format from Postman
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
           perplexity_api: perplexityKey,
-          keywords
+          keywords: keywords
         }
       );
 
