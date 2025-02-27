@@ -39,8 +39,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ data: { keywords } });
     } catch (error) {
       console.error('XMLRiver API error:', error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Error fetching keywords from XMLRiver" 
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Error fetching keywords from XMLRiver"
       });
     }
   });
@@ -199,14 +199,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('n8n response:', response.data);
 
-      res.json({ 
+      res.json({
         success: true,
-        data: response.data 
+        data: response.data
       });
 
     } catch (error) {
       console.error('Error collecting sources:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to collect sources",
         details: error instanceof Error ? error.message : "Unknown error"
       });
@@ -259,14 +259,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('n8n response:', response.data);
 
-      res.json({ 
+      res.json({
         success: true,
-        data: response.data 
+        data: response.data
       });
 
     } catch (error) {
       console.error('Error parsing source:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to parse source",
         details: error instanceof Error ? error.message : "Unknown error"
       });
@@ -353,20 +353,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Mark task as completed
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
             status: 'completed',
             completed_at: new Date().toISOString()
           });
+
+          res.json({ message: "Source crawling completed successfully", data: { taskId: taskResponse.data.data.id } });
         } else {
           // Mark task as error if no topics found
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
             status: 'error',
             completed_at: new Date().toISOString(),
             error_message: 'No topics found for this source'
           });
+          res.status(404).json({ message: "No topics found for this source" });
         }
-
-        res.json({ message: "Source crawling completed successfully", taskId: taskResponse.data.id });
       } catch (error) {
         console.error("Error during crawling:", error);
         res.status(500).json({ error: "Failed to complete crawling task" });
