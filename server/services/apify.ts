@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { directusApi } from '../lib/directus';
 
 interface ApifyRunResponse {
   id: string;
@@ -11,19 +12,41 @@ interface ApifyRunResult {
 }
 
 export class ApifyService {
-  private readonly apiKey: string;
+  private apiKey: string | null = null;
   private readonly baseUrl = 'https://api.apify.com/v2';
 
-  constructor() {
-    const apiKey = process.env.APIFY_API_KEY;
-    if (!apiKey) {
-      throw new Error('APIFY_API_KEY environment variable is not set');
+  async initialize(userId: string) {
+    try {
+      console.log('Initializing Apify service for user:', userId);
+
+      // Get API key from user settings
+      const response = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            user_id: { _eq: userId },
+            service_name: { _eq: 'apify' }
+          },
+          fields: ['api_key']
+        }
+      });
+
+      if (!response.data?.data?.[0]?.api_key) {
+        throw new Error('Apify API key not found in user settings');
+      }
+
+      this.apiKey = response.data.data[0].api_key;
+      console.log('Successfully initialized Apify service with API key from settings');
+    } catch (error) {
+      console.error('Error getting Apify API key:', error);
+      throw error;
     }
-    this.apiKey = apiKey;
-    console.log('Apify service initialized with API key');
   }
 
   async runInstagramScraper(username: string): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('Apify API key not initialized');
+    }
+
     try {
       console.log(`Starting Instagram scraper for username: ${username}`);
 
@@ -65,6 +88,10 @@ export class ApifyService {
   }
 
   async getRunStatus(runId: string): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('Apify API key not initialized');
+    }
+
     try {
       console.log(`Checking status for run ${runId}`);
       const response = await axios.get(
@@ -89,6 +116,10 @@ export class ApifyService {
   }
 
   async getRunResults(runId: string): Promise<any[]> {
+    if (!this.apiKey) {
+      throw new Error('Apify API key not initialized');
+    }
+
     try {
       console.log(`Fetching results for run ${runId}`);
       const response = await axios.get(
