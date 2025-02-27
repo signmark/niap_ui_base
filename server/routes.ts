@@ -194,11 +194,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           perplexity_api: perplexityKey,
           keywords
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
         }
       );
 
