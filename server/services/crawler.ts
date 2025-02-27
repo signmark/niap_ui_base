@@ -108,28 +108,56 @@ export class ContentCrawler {
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
       for (const source of sources) {
-        console.log(`Crawling source: ${source.name} (${source.type}) for campaign ${campaignId}`);
-        const topics = await this.crawlSource(source, campaignId);
-        console.log(`Found ${topics.length} topics for source ${source.name}`);
+        console.log(`Creating crawler task for source: ${source.name}`);
 
-        for (const topic of topics) {
-          console.log(`Saving topic: ${topic.title} for campaign ${campaignId}`);
-          try {
-            await directusApi.post('/items/campaign_trend_topics', {
-              id: topic.directusId,
-              title: topic.title,
-              source_id: topic.sourceId,
-              campaign_id: topic.campaignId,
-              reactions: topic.reactions,
-              comments: topic.comments,
-              views: topic.views,
-              is_bookmarked: false
-            });
-          } catch (error) {
-            console.error(`Error saving topic to Directus:`, error);
+        // Create a crawler task
+        const task = await directusApi.post('/items/crawler_tasks', {
+          campaign_id: campaignId,
+          source_id: source.id,
+          status: 'processing',
+          started_at: new Date().toISOString()
+        });
+
+        try {
+          console.log(`Crawling source: ${source.name} (${source.type})`);
+          const topics = await this.crawlSource(source, campaignId);
+          console.log(`Found ${topics.length} topics for source ${source.name}`);
+
+          for (const topic of topics) {
+            console.log(`Saving topic: ${topic.title}`);
+            try {
+              await directusApi.post('/items/campaign_trend_topics', {
+                id: topic.directusId,
+                title: topic.title,
+                source_id: topic.sourceId,
+                campaign_id: topic.campaignId,
+                reactions: topic.reactions,
+                comments: topic.comments,
+                views: topic.views,
+                is_bookmarked: false
+              });
+            } catch (error) {
+              console.error(`Error saving topic to Directus:`, error);
+            }
           }
+
+          // Update task status to completed
+          await directusApi.patch(`/items/crawler_tasks/${task.data.id}`, {
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          });
+
+        } catch (error) {
+          console.error(`Error processing source ${source.name}:`, error);
+          // Update task status to error
+          await directusApi.patch(`/items/crawler_tasks/${task.data.id}`, {
+            status: 'error',
+            completed_at: new Date().toISOString(),
+            error_message: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
+
       console.log(`Finished crawling all sources for campaign ${campaignId}`);
     } catch (error) {
       console.error('Error crawling sources:', error);
