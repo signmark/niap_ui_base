@@ -300,7 +300,7 @@ export default function CampaignDetails() {
 
         <AccordionItem value="trends" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Тренды и темы
+            Тренды
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
             <TrendsList campaignId={id} />
