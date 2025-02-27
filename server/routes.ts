@@ -127,16 +127,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Starting trend collection for user:', userId, 'campaign:', numericCampaignId);
 
-      // Получаем источники для данной кампании
+      // Get sources for this campaign
       const sources = await storage.getContentSources(userId, numericCampaignId);
       if (!sources || sources.length === 0) {
         return res.status(400).json({ message: "No sources found for this campaign" });
       }
 
+      // Start crawling process
       await crawler.crawlAllSources(userId, numericCampaignId);
       console.log('Trend collection completed');
 
-      res.json({ message: "Trend collection started" });
+      res.json({ message: "Trend collection completed successfully" });
     } catch (error) {
       console.error("Error collecting trends:", error);
       res.status(500).json({ error: "Failed to collect trends" });

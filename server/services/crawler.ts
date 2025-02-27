@@ -114,7 +114,20 @@ export class ContentCrawler {
 
         for (const topic of topics) {
           console.log(`Saving topic: ${topic.title} for campaign ${campaignId}`);
-          await storage.createTrendTopic(topic);
+          try {
+            await directusApi.post('/items/campaign_trend_topics', {
+              id: topic.directusId,
+              title: topic.title,
+              source_id: topic.sourceId,
+              campaign_id: topic.campaignId,
+              reactions: topic.reactions,
+              comments: topic.comments,
+              views: topic.views,
+              is_bookmarked: false
+            });
+          } catch (error) {
+            console.error(`Error saving topic to Directus:`, error);
+          }
         }
       }
       console.log(`Finished crawling all sources for campaign ${campaignId}`);
