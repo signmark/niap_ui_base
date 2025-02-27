@@ -163,6 +163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
+      console.log('Starting source collection with keywords:', keywords);
+
       // Call n8n webhook with keywords
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
@@ -172,7 +174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
 
-      console.log('n8n webhook response received');
+      console.log('n8n webhook response received:', response.status);
+
+      if (!response.data || response.status !== 200) {
+        console.error('Invalid response from n8n:', response.data);
+        throw new Error('Invalid response from n8n webhook');
+      }
 
       res.json({
         success: true,
