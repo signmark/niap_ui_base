@@ -9,6 +9,7 @@ import { directusApi } from "@/lib/directus";
 
 export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
+  const [apifyKey, setApifyKey] = useState("");
   const { toast } = useToast();
 
   const { data: apiKeys, isLoading } = useQuery({
@@ -25,20 +26,28 @@ export function SettingsDialog() {
 
   const { mutate: saveSettings, isPending } = useMutation({
     mutationFn: async () => {
-      // Проверяем существование ключа для Perplexity
-      const existingKey = apiKeys?.find(key => key.service_name === 'perplexity');
+      const services = [
+        { name: 'perplexity', key: perplexityKey },
+        { name: 'apify', key: apifyKey }
+      ];
 
-      if (existingKey) {
-        // Обновляем существующий ключ
-        await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
-          api_key: perplexityKey
-        });
-      } else {
-        // Создаем новый ключ
-        await directusApi.post('/items/user_api_keys', {
-          service_name: 'perplexity',
-          api_key: perplexityKey
-        });
+      for (const service of services) {
+        if (!service.key) continue;
+
+        const existingKey = apiKeys?.find(key => key.service_name === service.name);
+
+        if (existingKey) {
+          // Обновляем существующий ключ
+          await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
+            api_key: service.key
+          });
+        } else {
+          // Создаем новый ключ
+          await directusApi.post('/items/user_api_keys', {
+            service_name: service.name,
+            api_key: service.key
+          });
+        }
       }
     },
     onSuccess: () => {
@@ -74,6 +83,20 @@ export function SettingsDialog() {
             Ключ используется для поиска источников и генерации контента
           </p>
         </div>
+
+        <div className="space-y-2">
+          <Label>API Ключ Apify</Label>
+          <Input
+            type="password"
+            value={apifyKey}
+            onChange={(e) => setApifyKey(e.target.value)}
+            placeholder="Введите API ключ"
+          />
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для парсинга социальных сетей
+          </p>
+        </div>
+
         <Button
           onClick={() => saveSettings()}
           disabled={isPending}
