@@ -196,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
           perplexity_api: perplexityKey,
-          keywords: keywords
+          keywords
         }
       );
 
