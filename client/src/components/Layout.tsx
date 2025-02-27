@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
+import { Dialog } from "@/components/ui/dialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -111,7 +114,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="h-16 border-b flex items-center px-4 lg:px-8">
+        <div className="h-16 border-b flex items-center px-4 lg:px-8 justify-between">
           <Button
             variant="ghost"
             size="icon"
@@ -120,6 +123,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-6 w-6" />
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSettingsOpen(true)}
+              className="ml-auto"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         <main className="flex-1 p-4 lg:p-8">{children}</main>
       </div>
@@ -131,6 +145,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <SettingsDialog />
+      </Dialog>
     </div>
   );
 }

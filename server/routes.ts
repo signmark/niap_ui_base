@@ -141,5 +141,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Perplexity source collection endpoint
+  app.post("/api/sources/collect", async (req, res) => {
+    try {
+      const { apiKey, keywords } = req.body;
+
+      if (!apiKey) {
+        return res.status(400).json({ error: "API key is required" });
+      }
+
+      if (!Array.isArray(keywords) || keywords.length === 0) {
+        return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
+      }
+
+      // Call n8n webhook
+      const response = await axios.post(
+        'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
+        {
+          apiKey,
+          keywords
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('n8n response:', response.data);
+
+      res.json({ 
+        success: true,
+        data: response.data 
+      });
+
+    } catch (error) {
+      console.error('Error collecting sources:', error);
+      res.status(500).json({ 
+        error: "Failed to collect sources",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   return httpServer;
 }
