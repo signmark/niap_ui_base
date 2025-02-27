@@ -85,11 +85,12 @@ export class ContentCrawler {
 
     return this.crawlInstagram(source, campaignId, userId);
   }
+
   async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
 
-      // Get only sources for the specified campaign
+      // Get sources for this campaign
       const sources = await storage.getContentSources(userId, Number(campaignId));
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
