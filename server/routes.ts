@@ -168,8 +168,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
+      console.log('Starting source collection with keywords:', keywords);
+
       // Get Perplexity API key from user settings
-      const token = authHeader.replace('Bearer ', '');
+      const token = authHeader.split(' ')[1]; // Extract token correctly
+      if (!token) {
+        return res.status(401).json({ error: "Invalid authorization token" });
+      }
+
+      // Set authorization header for Directus API
       directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
@@ -186,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
 
-      console.log('Keywords for search:', keywords);
+      console.log('Calling n8n webhook for source search...');
 
       // Call n8n webhook to search for sources
       const response = await axios.post(
@@ -197,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
 
-      console.log('n8n response:', response.data);
+      console.log('n8n webhook response received');
 
       res.json({
         success: true,
