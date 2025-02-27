@@ -313,6 +313,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Source not found" });
       }
 
+      let taskResponse;
+
       try {
         // Start crawling process first
         console.log('Starting crawling process for source:', source.name);
@@ -335,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error_message: null
         };
 
-        const taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
+        taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
         console.log('Created task:', taskResponse.data);
 
         // Save topics

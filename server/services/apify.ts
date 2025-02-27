@@ -11,30 +11,19 @@ interface ApifyRunResult {
 }
 
 export class ApifyService {
-  private apiKey: string | null = null;
+  private readonly apiKey: string;
   private readonly baseUrl = 'https://api.apify.com/v2';
 
-  async initialize(userId: string) {
-    try {
-      console.log('Initializing Apify service for user:', userId);
-      this.apiKey = process.env.APIFY_API_KEY || '';
-
-      if (!this.apiKey) {
-        throw new Error('Apify API key not found in environment');
-      }
-
-      console.log('Successfully initialized Apify service');
-    } catch (error) {
-      console.error('Error initializing Apify:', error);
-      throw error;
+  constructor() {
+    const apiKey = process.env.APIFY_API_KEY;
+    if (!apiKey) {
+      throw new Error('APIFY_API_KEY environment variable is not set');
     }
+    this.apiKey = apiKey;
+    console.log('Apify service initialized with API key');
   }
 
   async runInstagramScraper(username: string): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Apify API key not initialized');
-    }
-
     try {
       console.log(`Starting Instagram scraper for username: ${username}`);
 
@@ -76,10 +65,6 @@ export class ApifyService {
   }
 
   async getRunStatus(runId: string): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Apify API key not initialized');
-    }
-
     try {
       console.log(`Checking status for run ${runId}`);
       const response = await axios.get(
@@ -104,10 +89,6 @@ export class ApifyService {
   }
 
   async getRunResults(runId: string): Promise<any[]> {
-    if (!this.apiKey) {
-      throw new Error('Apify API key not initialized');
-    }
-
     try {
       console.log(`Fetching results for run ${runId}`);
       const response = await axios.get(
