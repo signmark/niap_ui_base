@@ -159,43 +159,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { keywords } = req.body;
       if (!Array.isArray(keywords) || keywords.length === 0) {
+        console.error('Invalid keywords array:', keywords);
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
-
-      console.log('Starting source collection with keywords:', keywords);
-
-      // Get Perplexity API key from user settings
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        console.error('Missing authorization header');
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const token = authHeader.replace('Bearer ', '');
-      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Get API key from user settings
-      const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            service_name: { _eq: 'perplexity' }
-          },
-          fields: ['api_key']
-        }
-      });
-
-      const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
-      if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found in user settings" });
-      }
-
-      console.log('Calling n8n webhook for source search...');
 
       // Call n8n webhook with the exact format from Postman
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          perplexity_api: perplexityKey,
+          perplexity_api: "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",
           keywords
         }
       );
