@@ -71,10 +71,17 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   const { mutate: parseSource, isPending: isParsing } = useMutation({
     mutationFn: async (values: SourceForm) => {
       setIsParsingSource(true);
+      const authToken = localStorage.getItem('auth_token');
+
+      if (!authToken) {
+        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      }
+
       const response = await fetch('/api/sources/parse', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           url: values.url,
@@ -83,8 +90,9 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Ошибка при парсинге источника');
+        const errorData = await response.json();
+        const errorMessage = errorData.error || errorData.message || 'Ошибка при парсинге источника';
+        throw new Error(errorMessage); // Improved error handling
       }
 
       return await response.json();

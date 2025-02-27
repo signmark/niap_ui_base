@@ -136,18 +136,24 @@ export default function Trends() {
 
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Keywords for search:', keywordsList);
+      const authToken = localStorage.getItem('auth_token');
+
+      if (!authToken) {
+        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      }
 
       const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ keywords: keywordsList })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Ошибка при поиске источников');
+        throw new Error(error.message || 'Ошибка при поиске источников');
       }
 
       const data = await response.json();
@@ -236,6 +242,12 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
+      const authToken = localStorage.getItem('auth_token');
+
+      if (!authToken) {
+        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      }
+
       const taskData = {
         source_id: sourceId,
         campaign_id: selectedCampaignId,
@@ -245,7 +257,11 @@ export default function Trends() {
         error_message: null
       };
 
-      const response = await directusApi.post('/items/crawler_tasks', taskData);
+      const response = await directusApi.post('/items/crawler_tasks', taskData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
       return response.data;
     },
     onSuccess: (data, sourceId) => {
