@@ -236,19 +236,15 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      // Get current user session from Directus
-      const userResponse = await directusApi.get('/users/me');
-      const userId = userResponse.data?.data?.id;
-
-      if (!userId) {
-        throw new Error('User not authenticated');
-      }
+      // Get fresh auth token from directus
+      await directusApi.refresh();
 
       const response = await fetch(`/api/sources/${sourceId}/crawl`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userId
+          'x-user-id': directusApi.options.auth?.id || '',
+          'Authorization': `Bearer ${directusApi.options.auth?.access_token}`
         },
         body: JSON.stringify({
           campaignId: selectedCampaignId
