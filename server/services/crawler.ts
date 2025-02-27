@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { storage } from '../storage';
 import type { ContentSource, InsertTrendTopic } from '@shared/schema';
 import { directusApi } from '../lib/directus';
@@ -86,7 +85,6 @@ export class ContentCrawler {
 
     return this.crawlInstagram(source, campaignId, userId);
   }
-
   async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);

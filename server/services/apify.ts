@@ -55,7 +55,7 @@ export class ApifyService {
         }]
       };
 
-      console.log('Starting Instagram scraper with request:', JSON.stringify(requestData, null, 2));
+      console.log('Starting Instagram scraper with request:', requestData);
 
       const response = await axios.post(
         `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
@@ -69,7 +69,7 @@ export class ApifyService {
       );
 
       const runData = response.data as ApifyRunResponse;
-      console.log('Apify Instagram scraper run created:', JSON.stringify(runData, null, 2));
+      console.log('Apify Instagram scraper run created:', runData);
       return runData.id;
     } catch (error) {
       console.error('Error running Instagram scraper:', error);
