@@ -179,7 +179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           perplexity_api: "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",
           keywords,
-          token
+          token,
+          query: `Find social media accounts, groups, and channels on YouTube, Reddit, VKontakte (VK), LinkedIn, and other platforms that frequently discuss these topics: ${keywords.join(', ')}. For each source, provide the platform name, URL, and brief description of their content focus.`
         }
       );
 
