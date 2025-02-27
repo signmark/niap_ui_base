@@ -137,10 +137,19 @@ export default function Trends() {
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Keywords for search:', keywordsList);
 
+      // Get Directus token from API client
+      const token = directusApi.defaults.headers.common['Authorization'];
+      if (!token) {
+        throw new Error('Не удалось получить токен авторизации');
+      }
+
+      console.log('Making request to /api/sources/collect with token:', token);
+
       const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': token // Передаем токен как есть, без модификации
         },
         body: JSON.stringify({ keywords: keywordsList })
       });
@@ -259,7 +268,7 @@ export default function Trends() {
     onError: (error: Error) => {
       console.error('Mutation error:', error);
       toast({
-        variant: "destructive", 
+        variant: "destructive",
         title: "Ошибка",
         description: error.message || "Не удалось создать задачу"
       });
