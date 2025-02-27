@@ -154,29 +154,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sources collection endpoint
+  // Perplexity source collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const { keywords } = req.body;
       if (!Array.isArray(keywords) || keywords.length === 0) {
-        console.error('Invalid keywords array:', keywords);
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
-      // Get authorization token
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        console.error('Missing authorization header');
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const token = authHeader.replace('Bearer ', '');
-      directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Get API key from user settings
+      // Get user's Perplexity API key
       const apiKeyResponse = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
+            user_id: { _eq: userId },
             service_name: { _eq: 'perplexity' }
           },
           fields: ['api_key']
@@ -185,54 +180,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const perplexityKey = apiKeyResponse.data?.data?.[0]?.api_key;
       if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found in user settings" });
+        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
       }
 
-      // Call Perplexity API directly
-      const perplexityResponse = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
+      // Call n8n webhook with the API key and keywords
+      const response = await axios.post(
+        'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          model: "sonar-pro",
-          messages: [
-            {
-              role: "system",
-              content: "You are a helpful assistant focused on finding relevant social media sources."
-            },
-            {
-              role: "user",
-              content: `Find social media accounts, groups, and channels on YouTube, Reddit, VKontakte (VK), LinkedIn, and other platforms that frequently discuss these topics: ${keywords.join(', ')}. For each source, provide the platform name, URL, and brief description of their content focus.`
-            }
-          ]
+          apiKey: perplexityKey,
+          keywords
         },
         {
           headers: {
-            'Authorization': `Bearer ${perplexityKey}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
-      if (!perplexityResponse.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid response format from Perplexity API');
-      }
-
-      const content = perplexityResponse.data.choices[0].message.content;
-
-      // Extract URLs from content and validate they're social media
-      const urlPattern = /(https?:\/\/[^\s]+)/g;
-      const urls = content.match(urlPattern) || [];
-
-      const validDomains = ['youtube.com', '@', 'reddit.com', 'vk.com', 'linkedin.com', 't.me', 'diets.ru'];
-      const socialMediaUrls = urls.filter(url =>
-        validDomains.some(domain => url.includes(domain))
-      );
+      console.log('n8n response:', response.data);
 
       res.json({
         success: true,
-        data: {
-          sources: socialMediaUrls,
-          rawContent: content
-        }
+        data: response.data
       });
 
     } catch (error) {
@@ -392,12 +361,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completed_at: new Date().toISOString()
         });
 
-        res.json({
-          message: "Source crawling completed successfully",
-          data: {
+        res.json({ 
+          message: "Source crawling completed successfully", 
+          data: { 
             taskId: taskResponse.data.data.id,
-            topicsCount: topics.length
-          }
+            topicsCount: topics.length 
+          } 
         });
 
       } catch (error) {

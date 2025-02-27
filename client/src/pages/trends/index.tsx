@@ -15,8 +15,6 @@ import { directusApi } from "@/lib/directus";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { queryClient } from "@/lib/queryClient";
-import { useAuthStore } from "@/lib/store";
-import { useLocation } from "wouter";
 
 interface ContentSource {
   id: string;
@@ -43,7 +41,6 @@ interface TrendTopic {
 type Period = "3days" | "7days" | "14days" | "30days";
 
 export default function Trends() {
-  const [, navigate] = useLocation();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -52,9 +49,6 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const { toast } = useToast();
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const token = useAuthStore(state => state.token);
-
 
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns"],
@@ -132,12 +126,6 @@ export default function Trends() {
 
   const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated || !token) {
-        console.error('Not authenticated or missing token');
-        navigate('/auth/login');
-        throw new Error('Требуется авторизация');
-      }
-
       if (!selectedCampaignId) {
         throw new Error("Выберите кампанию");
       }
@@ -149,13 +137,10 @@ export default function Trends() {
       const keywordsList = keywords.map((k: any) => k.keyword);
       console.log('Keywords for search:', keywordsList);
 
-      console.log('Auth state:', { isAuthenticated, hasToken: !!token });
-
       const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ keywords: keywordsList })
       });
@@ -274,7 +259,7 @@ export default function Trends() {
     onError: (error: Error) => {
       console.error('Mutation error:', error);
       toast({
-        variant: "destructive",
+        variant: "destructive", 
         title: "Ошибка",
         description: error.message || "Не удалось создать задачу"
       });
