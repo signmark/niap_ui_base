@@ -189,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
-          apiKey: perplexityKey,
+          directusToken: perplexityKey, // Assuming perplexityKey is the Directus token.  Clarification needed if different.
           keywords
         },
         {
