@@ -230,6 +230,47 @@ export default function Trends() {
     }
   });
 
+  const { mutate: createCrawlerTask } = useMutation({
+    mutationFn: async (sourceId: string) => {
+      if (!selectedCampaignId) {
+        throw new Error('No campaign selected');
+      }
+
+      const response = await fetch(`/api/sources/${sourceId}/crawl`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create crawler task');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, sourceId) => {
+      const source = sources.find(s => s.id === sourceId);
+      toast({
+        title: "Задача создана",
+        description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных"
+      });
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: error.message || "Не удалось создать задачу"
+      });
+    }
+  });
+
+
   const toggleTopicSelection = (topic: TrendTopic) => {
     setSelectedTopics(prev => {
       const isSelected = prev.some(t => t.id === topic.id);
@@ -361,32 +402,7 @@ export default function Trends() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={async () => {
-                              try {
-                                const taskData = {
-                                  source_id: source.id,
-                                  campaign_id: selectedCampaignId,
-                                  status: "pending",
-                                  started_at: null,
-                                  completed_at: null,
-                                  error_message: null
-                                };
-
-                                await directusApi.post('/items/crawler_tasks', taskData);
-
-                                toast({
-                                  title: "Задача создана",
-                                  description: "Начат сбор данных для источника " + source.name
-                                });
-                              } catch (error) {
-                                console.error('Error creating crawler task:', error);
-                                toast({
-                                  variant: "destructive",
-                                  title: "Ошибка",
-                                  description: "Не удалось создать задачу"
-                                });
-                              }
-                            }}
+                            onClick={() => createCrawlerTask(source.id)}
                           >
                             <Bot className="h-4 w-4" />
                           </Button>
