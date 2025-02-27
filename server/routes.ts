@@ -149,71 +149,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get API key from user settings in Directus
-      const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        params: {
-          filter: {
-            user_id: { _eq: 'current-user' }
-          },
-          fields: ['perplexity_api_key']
-        }
-      });
-
-      const perplexityKey = settings.data?.data?.[0]?.perplexity_api_key;
-      if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
-      }
-
-      const { keywords } = req.body;
-      if (!Array.isArray(keywords) || keywords.length === 0) {
-        return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
-      }
-
-      // Call Perplexity API
-      const response = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
-        {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: "Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.\n\nФорматы URL:\ntwitter.com/username\nvk.com/group_name\nt.me/channel_name\ninstagram.com/username\nfacebook.com/page_name\nyoutube.com/c/channel_name\nlinkedin.com/company/company_name\nreddit.com/r/subreddit_name\n\nНайдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:\n[\"twitter.com/real_account\", \"vk.com/real_group\", \"t.me/real_channel\"]"
-            },
-            {
-              role: "user",
-              content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
-            }
-          ]
-        },
-        {
+      // First get current user
+      try {
+        const userResponse = await axios.get(`${process.env.DIRECTUS_URL}/users/me`, {
           headers: {
-            'Authorization': `Bearer ${perplexityKey}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
           }
+        });
+
+        const userId = userResponse.data.data.id;
+
+        // Now get user settings with actual user ID
+        const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_settings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              user_id: { _eq: userId }
+            },
+            fields: ['perplexity_api_key']
+          }
+        });
+
+        const perplexityKey = settings.data?.data?.[0]?.perplexity_api_key;
+        if (!perplexityKey) {
+          return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
         }
-      );
 
-      console.log('Raw sourcesData:', response.data);
+        const { keywords } = req.body;
+        if (!Array.isArray(keywords) || keywords.length === 0) {
+          return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
+        }
 
-      if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid API response structure');
+        // Call Perplexity API
+        const response = await axios.post(
+          'https://api.perplexity.ai/chat/completions',
+          {
+            model: "llama-3.1-sonar-small-128k-online",
+            messages: [
+              {
+                role: "system",
+                content: "Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.\n\nФорматы URL:\ntwitter.com/username\nvk.com/group_name\nt.me/channel_name\ninstagram.com/username\nfacebook.com/page_name\nyoutube.com/c/channel_name\nlinkedin.com/company/company_name\nreddit.com/r/subreddit_name\n\nНайдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:\n[\"twitter.com/real_account\", \"vk.com/real_group\", \"t.me/real_channel\"]"
+              },
+              {
+                role: "user",
+                content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
+              }
+            ]
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${perplexityKey}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (!response.data?.choices?.[0]?.message?.content) {
+          throw new Error('Invalid API response structure');
+        }
+
+        const content = response.data.choices[0].message.content;
+        console.log('API response content:', content);
+
+        // Extract URLs using regex
+        const urlPattern = /(https?:\/\/[^\s\)]+)/g;
+        const foundUrls = content.match(urlPattern) || [];
+        console.log('Found URLs:', foundUrls);
+
+        res.json({
+          success: true,
+          data: foundUrls
+        });
+
+      } catch (error) {
+        console.error('Error getting user data:', error);
+        return res.status(401).json({ message: "Unauthorized" });
       }
-
-      const content = response.data.choices[0].message.content;
-      console.log('API response content:', content);
-
-      // Extract URLs using regex
-      const urlPattern = /(https?:\/\/[^\s\)]+)/g;
-      const foundUrls = content.match(urlPattern) || [];
-      console.log('Found URLs:', foundUrls);
-
-      res.json({
-        success: true,
-        data: foundUrls
-      });
 
     } catch (error) {
       console.error('Error collecting sources:', error);
