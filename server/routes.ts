@@ -4,7 +4,11 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
-import { directusApi } from "./lib/directus";
+import { createDirectus } from '@directus/sdk'; // Added import for createDirectus
+
+// Added directusApi initialization with environment variable fallback
+const directusApi = createDirectus(process.env.DIRECTUS_URL || 'https://api.directus.ru');
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');

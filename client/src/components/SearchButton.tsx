@@ -26,7 +26,6 @@ export function SearchButton({ campaignId, keywords }: { campaignId: string; key
     setIsLoading(true);
 
     try {
-      // Получаем токен напрямую из localStorage
       const token = localStorage.getItem('auth_token');
 
       if (!token) {
@@ -56,7 +55,6 @@ export function SearchButton({ campaignId, keywords }: { campaignId: string; key
         window.location.reload();
       }, 10000);
     } catch (error) {
-      //Improved error handling
       const errorMessage = error.message || "Не удалось запустить поиск";
       toast({
         title: "Ошибка",
