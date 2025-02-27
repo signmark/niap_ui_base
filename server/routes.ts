@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Starting source collection with keywords:', keywords);
 
       // Get Perplexity API key from user settings
-      const token = authHeader.split(' ')[1]; // Extract token correctly
+      const token = authHeader.split(' ')[1];
       if (!token) {
         return res.status(401).json({ error: "Invalid authorization token" });
       }
@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Calling n8n webhook for source search...');
 
-      // Call n8n webhook to search for sources
+      // Call n8n webhook with the format from Postman example
       const response = await axios.post(
         'https://n8n.nplanner.ru/webhook/e2a3fcb2-1427-40e7-b61a-38eacfaeb8c9',
         {
