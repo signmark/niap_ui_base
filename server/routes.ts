@@ -119,23 +119,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      //This section is removed because directusApi is removed.  The logic to get the campaign UUID is not provided in the edited snippet.  Fallback to original functionality is not possible because it uses the removed directusApi.
-      // Get campaign UUID from Directus
-      // const campaignResponse = await directusApi.get('/items/user_campaigns', {
-      //   params: {
-      //     filter: {
-      //       directus_id: { _eq: campaignId }
-      //     },
-      //     fields: ['id']
-      //   }
-      // });
-
-      // if (!campaignResponse.data?.data?.[0]?.id) {
-      //   return res.status(404).json({ message: "Campaign not found" });
-      // }
-
-      // const directusCampaignId = campaignResponse.data.data[0].id;
-      // console.log('Starting trend collection for user:', userId, 'campaign:', directusCampaignId);
 
       // Get sources for this campaign
       const sources = await storage.getContentSources(userId, Number(campaignId));
@@ -144,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Start crawling process
-      await crawler.crawlAllSources(userId, campaignId); //using campaignId instead of directusCampaignId.  Assumption made based on context.
+      await crawler.crawlAllSources(userId, campaignId);
       console.log('Trend collection completed');
 
       res.json({ message: "Trend collection completed successfully" });
@@ -252,70 +235,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
 
-      // Get user ID from token. This section is removed because directusApi is removed. The logic to get the user ID is not provided in the edited snippet.
-      // let userId;
-      // try {
-      //   const userResponse = await directusApi.items('users').readByQuery({
-      //       filter: {
-      //           access_token: token
-      //       }
-      //   });
-      //   userId = userResponse.data[0].id;
-      // } catch (error) {
-      //   console.error('Error getting user from token:', error);
-      //   return res.status(401).json({ message: "Unauthorized" });
-      // }
-
-
-      // if (!userId) {
-      //   console.error('Could not get user ID from token');
-      //   return res.status(401).json({ message: "Unauthorized" });
-      // }
 
       const { url, sourceType } = req.body;
       if (!url || !sourceType) {
         return res.status(400).json({ error: "URL and source type are required" });
       }
 
-      // Get user's Apify API key. This section is removed because directusApi is removed. The logic to get the API key is not provided in the edited snippet.
-      // const apiKeyResponse = await directusApi.items('user_api_keys').readByQuery({
-      //   params: {
-      //     filter: {
-      //       user_id: { _eq: userId },
-      //       service_name: { _eq: 'apify' }
-      //     },
-      //     fields: ['api_key']
-      //   }
-      // });
-
-      // const apifyKey = apiKeyResponse?.data?.[0]?.api_key;
-      // if (!apifyKey) {
-      //   return res.status(400).json({ error: "Apify API key not found. Please add it in settings." });
-      // }
-
-      // Call n8n webhook with the API key and source details
-      // const response = await axios.post(
-      //   'https://n8n.nplanner.ru/webhook/apify-parser',
-      //   {
-      //     apiKey: apifyKey,
-      //     url: url,
-      //     sourceType: sourceType
-      //   },
-      //   {
-      //     headers: {
-      //       'Content-Type': 'application/json'
-      //     }
-      //   }
-      // );
-
-      // console.log('n8n response:', response.data);
-
-      // res.json({
-      //   success: true,
-      //   data: response.data
-      // });
-
-      res.status(501).json({error: "Not Implemented"}); //Placeholder for removed functionality
+      res.status(501).json({error: "Not Implemented"}); 
 
     } catch (error) {
       console.error('Error parsing source:', error);
@@ -345,28 +271,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Source ID and Campaign ID are required" });
       }
 
-      // Get user ID from token. This section is removed because directusApi is removed. The logic to get the user ID is not provided in the edited snippet.
-      // let userId;
-      // try {
-      //   const userResponse = await directusApi.items('users').readByQuery({
-      //       filter: {
-      //           access_token: token
-      //       }
-      //   });
-      //   userId = userResponse.data[0].id;
-      // } catch (error) {
-      //   console.error('Error getting user from token:', error);
-      //   return res.status(401).json({ message: "Unauthorized" });
-      // }
-
-
-      // if (!userId) {
-      //   console.error('Could not get user ID from token');
-      //   return res.status(401).json({ message: "Unauthorized" });
-      // }
-
       // Get source for this campaign
-      const sources = await storage.getContentSources(userId, Number(campaignId)); //userId is not defined
+      const sources = await storage.getContentSources(undefined, Number(campaignId)); 
       console.log('Found sources:', sources);
 
       const source = sources.find(s => String(s.id) === String(sourceId));
@@ -381,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Start crawling process first
         console.log('Starting crawling process for source:', source.name);
-        const topics = await crawler.crawlSource(source, Number(campaignId), userId); //userId is not defined
+        const topics = await crawler.crawlSource(source, Number(campaignId), undefined); 
         console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         if (topics.length === 0) {
@@ -389,55 +295,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "No topics found for this source" });
         }
 
-        // Create crawler task in Directus after successful crawl. This section is removed because directusApi is removed. The logic to create the task is not provided in the edited snippet.
-        // console.log('Creating crawler task in Directus');
-        // const taskData = {
-        //   source_id: sourceId,
-        //   campaign_id: campaignId,
-        //   status: "processing",
-        //   started_at: new Date().toISOString(),
-        //   completed_at: null,
-        //   error_message: null
-        // };
-
-        // taskResponse = await directusApi.post('/items/crawler_tasks', taskData);
-        // console.log('Created task:', taskResponse.data);
-
-        // Save topics. This section is removed because directusApi is removed. The logic to save the topics is not provided in the edited snippet.
-        // for (const topic of topics) {
-        //   console.log(`Saving topic: ${topic.title}`);
-        //   await directusApi.post('/items/campaign_trend_topics', {
-        //     id: topic.directusId,
-        //     title: topic.title,
-        //     source_id: topic.sourceId,
-        //     campaign_id: campaignId,
-        //     reactions: topic.reactions,
-        //     comments: topic.comments,
-        //     views: topic.views,
-        //     is_bookmarked: false
-        //   });
-        // }
-
-        // Mark task as completed. This section is removed because directusApi is removed. The logic to mark the task as completed is not provided in the edited snippet.
-        // await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
-        //   status: 'completed',
-        //   completed_at: new Date().toISOString()
-        // });
-
-        res.status(501).json({error: "Not Implemented"}); // Placeholder
-
+        res.status(501).json({error: "Not Implemented"}); 
 
       } catch (error) {
         console.error("Error during crawling:", error);
-
-        // If task was created, mark it as failed.  This section is removed because directusApi is removed. The logic to mark the task as failed is not provided in the edited snippet.
-        // if (taskResponse?.data?.data?.id) {
-        //   await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
-        //     status: 'error',
-        //     completed_at: new Date().toISOString(),
-        //     error_message: error instanceof Error ? error.message : 'Unknown error'
-        //   });
-        // }
 
         res.status(500).json({ error: "Failed to complete crawling task" });
       }
