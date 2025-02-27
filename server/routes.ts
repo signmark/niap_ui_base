@@ -186,23 +186,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('n8n webhook response received:', response.status);
 
-      if (!response.data || response.status !== 200) {
+      if (!response.data) {
         console.error('Invalid response from n8n:', response.data);
         throw new Error('Invalid response from n8n webhook');
       }
 
-      // Parse response for social media URLs
-      const content = response.data?.choices?.[0]?.message?.content;
+      // Parse Perplexity response from n8n
+      const choices = response.data?.[0]?.choices;
+      if (!Array.isArray(choices) || choices.length === 0) {
+        throw new Error('Invalid response format from Perplexity API');
+      }
+
+      const content = choices[0]?.message?.content;
       if (!content) {
-        throw new Error('Invalid response format from n8n');
+        throw new Error('No content found in Perplexity response');
       }
 
       // Extract URLs from content and validate they're social media
       const urlPattern = /(https?:\/\/[^\s]+)/g;
       const urls = content.match(urlPattern) || [];
 
-      const validDomains = ['youtube.com', 'reddit.com', 'vk.com', 'linkedin.com', 't.me', 'diets.ru'];
-      const socialMediaUrls = urls.filter(url => 
+      const validDomains = ['youtube.com', '@', 'reddit.com', 'vk.com', 'linkedin.com', 't.me', 'diets.ru'];
+      const socialMediaUrls = urls.filter(url =>
         validDomains.some(domain => url.includes(domain))
       );
 
