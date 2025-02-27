@@ -1,40 +1,41 @@
-
 /**
  * Универсальный метод для выполнения запросов к API
  * с автоматическим добавлением токена авторизации
  */
-export const apiRequest = async (
-  method: string, 
-  url: string, 
-  body?: any, 
-  additionalHeaders: Record<string, string> = {}
-) => {
-  const token = localStorage.getItem('auth_token');
-  const headers = { 
-    'Content-Type': 'application/json',
-    ...additionalHeaders
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+export async function apiRequest(url: string, options: any = {}) {
+  try {
+    // Получаем токен из localStorage
+    const token = localStorage.getItem('auth_token');
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
+    // Добавляем заголовок Authorization, если есть токен
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    };
 
-  if (!response.ok) {
-    let errorMessage;
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorData.error || `Ошибка ${response.status}`;
-    } catch (e) {
-      errorMessage = `Ошибка ${response.status}`;
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || 'API request failed');
     }
-    throw new Error(errorMessage);
-  }
 
-  return response.json();
-};
+    return await response.json();
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
+  }
+}
+
+// Вспомогательная функция для проверки авторизации
+export function checkAuth() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    throw new Error('Требуется авторизация');
+  }
+  return token;
+}

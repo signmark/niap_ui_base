@@ -236,6 +236,12 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
+      const authToken = localStorage.getItem('auth_token');
+
+      if (!authToken) {
+        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      }
+
       const taskData = {
         source_id: sourceId,
         campaign_id: selectedCampaignId,
@@ -245,7 +251,11 @@ export default function Trends() {
         error_message: null
       };
 
-      const response = await directusApi.post('/items/crawler_tasks', taskData);
+      const response = await directusApi.post('/items/crawler_tasks', taskData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
       return response.data;
     },
     onSuccess: (data, sourceId) => {

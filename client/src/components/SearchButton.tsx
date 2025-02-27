@@ -1,59 +1,69 @@
-import { Button } from "./ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Search, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/api";
+import { useStore } from "@/lib/store";
+import { NewSourcesDialog } from "./NewSourcesDialog";
 
-interface SearchButtonProps {
-  campaignId: string;
-  selectedKeywords: string[];
-}
-
-export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps) {
-  const [isSearching, setIsSearching] = useState(false);
+export function SearchButton({ campaignId, keywords }: { campaignId: string; keywords: string[] }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sourcesData, setSourcesData] = useState(null);
   const { toast } = useToast();
+  const { token } = useStore((state) => state);
 
   const handleSearch = async () => {
-    if (selectedKeywords.length === 0) {
-      toast({
-        title: "Внимание",
-        description: "Выберите ключевые слова для поиска",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    setIsLoading(true);
     try {
-      setIsSearching(true);
-      await apiRequest("POST", "/api/sources/collect", { keywords: selectedKeywords.map(kw => kw.keyword) });
+      // Получаем токен из хранилища или из localStorage, если он не доступен в хранилище
+      const authToken = token || localStorage.getItem('auth_token');
 
-      toast({
-        title: "Поиск запущен",
-        description: "Результаты будут доступны через несколько секунд"
+      if (!authToken) {
+        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      }
+
+      const response = await fetch("/api/sources/collect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ keywords }),
       });
 
-      // Обновление через 10 секунд
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "API request failed");
+      }
+
+      const data = await response.json();
+      setSourcesData(data);
+      setIsDialogOpen(true);
+
+      // Refresh page after dialog close
       setTimeout(() => {
         window.location.reload();
       }, 10000);
     } catch (error) {
       //Improved error handling
-      const errorMessage = error.message.includes("API request failed") ? error.message : "Не удалось запустить поиск";
+      const errorMessage = error.message || "Не удалось запустить поиск";
       toast({
         title: "Ошибка",
         description: errorMessage,
         variant: "destructive"
       });
+      console.error("Search error:", error);
     } finally {
-      setIsSearching(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Button onClick={handleSearch} disabled={isSearching}>
-      {isSearching ? (
+    <Button onClick={handleSearch} disabled={isLoading}>
+      {isLoading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Search className="animate-spin mr-2 h-4 w-4" />
           Поиск...
         </>
       ) : (
@@ -67,25 +77,3 @@ export function SearchButton({ campaignId, selectedKeywords }: SearchButtonProps
 }
 
 export default SearchButton;
-
-// Assuming this is in "@/lib/queryClient.ts" or a similar location.
-export const apiRequest = async (method: string, url: string, body?: any) => {
-  const token = localStorage.getItem('auth_token');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`API request failed with status ${response.status}: ${JSON.stringify(errorData)}`);
-  }
-
-  return response.json();
-};
