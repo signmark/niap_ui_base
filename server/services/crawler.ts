@@ -110,13 +110,17 @@ export class ContentCrawler {
       for (const source of sources) {
         console.log(`Creating crawler task for source: ${source.name}`);
 
-        // Create a crawler task
-        const task = await directusApi.post('/items/crawler_tasks', {
+        // Create a crawler task with proper source_id
+        const taskData = {
           campaign_id: campaignId,
           source_id: source.id,
           status: 'processing',
           started_at: new Date().toISOString()
-        });
+        };
+        console.log('Creating task with data:', taskData);
+
+        const task = await directusApi.post('/items/crawler_tasks', taskData);
+        console.log('Created task:', task.data);
 
         try {
           console.log(`Crawling source: ${source.name} (${source.type})`);
