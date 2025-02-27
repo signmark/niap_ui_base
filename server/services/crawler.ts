@@ -118,17 +118,20 @@ export class ContentCrawler {
 
         // Create a crawler task with proper data validation
         const taskData = {
-          campaign_id: campaignId.toString(), // Ensure string format for UUID
           source_id: source.id, // source.id should already be a UUID string
+          campaign_id: campaignId.toString(), // Ensure string format for UUID
           status: 'processing',
           started_at: new Date().toISOString()
         };
 
         console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
 
+        let taskResponse;
         try {
-          const task = await directusApi.post('/items/crawler_tasks', taskData);
-          console.log('Created task:', task.data);
+          taskResponse = await directusApi.post('/items/crawler_tasks', {
+            data: taskData
+          });
+          console.log('Created task:', taskResponse.data);
 
           console.log(`Crawling source: ${source.name} (${source.type})`);
           const topics = await this.crawlSource(source, campaignId);
@@ -153,7 +156,7 @@ export class ContentCrawler {
           }
 
           // Update task status to completed
-          await directusApi.patch(`/items/crawler_tasks/${task.data.id}`, {
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
             status: 'completed',
             completed_at: new Date().toISOString()
           });
@@ -163,9 +166,9 @@ export class ContentCrawler {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error details:', errorMessage);
 
-          if (task?.data?.id) {
+          if (taskResponse?.data?.id) {
             // Update task status to error only if task was created
-            await directusApi.patch(`/items/crawler_tasks/${task.data.id}`, {
+            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
               status: 'error',
               completed_at: new Date().toISOString(),
               error_message: errorMessage
