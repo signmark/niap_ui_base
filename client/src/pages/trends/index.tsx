@@ -239,7 +239,8 @@ export default function Trends() {
       const response = await fetch(`/api/sources/${sourceId}/crawl`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-user-id': directusApi.options.value.auth?.id || ''
         },
         body: JSON.stringify({
           campaignId: selectedCampaignId
