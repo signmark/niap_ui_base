@@ -179,11 +179,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: "Вы ищете конкретные рабочие URL существующих каналов, групп и аккаунтов в социальных сетях.\n\nФорматы URL:\ntwitter.com/username\nvk.com/group_name\nt.me/channel_name\ninstagram.com/username\nfacebook.com/page_name\nyoutube.com/c/channel_name\nlinkedin.com/company/company_name\nreddit.com/r/subreddit_name\n\nНайдите КОНКРЕТНЫЕ рабочие URL по ключевым словам. Верните массив URL в формате:\n[\"twitter.com/real_account\", \"vk.com/real_group\", \"t.me/real_channel\"]"
+              content: "Возвращайте только массив существующих URL, без пояснений и дополнительного текста. Формат ответа должен быть строго JSON массивом: [\"url1\", \"url2\", \"url3\"]. Не используйте слова 'предположительный' или '@username'. Включайте только полные URL адреса с доменом."
             },
             {
               role: "user",
-              content: `Нужны КОНКРЕТНЫЕ рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
+              content: `Найдите рабочие URL каналов и групп в соцсетях по теме: ${keywords.join(', ')}`
             }
           ]
         },
@@ -202,14 +202,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const content = response.data.choices[0].message.content;
       console.log('API response content:', content);
 
-      // Extract URLs using regex
-      const urlPattern = /(https?:\/\/[^\s\)]+)/g;
-      const foundUrls = content.match(urlPattern) || [];
-      console.log('Found URLs:', foundUrls);
+      const socialUrlPattern = /((?:https?:\/\/)?(?:www\.)?(?:twitter\.com|vk\.com|t\.me|instagram\.com|facebook\.com|youtube\.com|linkedin\.com|reddit\.com)\/[^\s"'\)\]]+)/g;
+      const foundUrls = content.match(socialUrlPattern) || [];
+
+      // Add https:// if missing
+      const normalizedUrls = foundUrls.map(url => {
+        if (!url.startsWith('http')) {
+          return `https://${url}`;
+        }
+        return url;
+      });
+
+      console.log('Found social media URLs:', normalizedUrls);
 
       res.json({
         success: true,
-        data: foundUrls
+        data: normalizedUrls
       });
 
     } catch (error) {
