@@ -65,6 +65,9 @@ export class ContentCrawler {
       // Get user settings to initialize Apify
       const settingsResponse = await directusApi.get('/items/user_settings', {
         params: {
+          filter: {
+            user_id: { _eq: userId } //This line was missing in the edited snippet, and needs to be fixed.
+          },
           fields: ['user_id']
         }
       });
@@ -126,7 +129,6 @@ export class ContentCrawler {
         return [];
     }
   }
-
   async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);

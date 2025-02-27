@@ -292,7 +292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get source for this campaign
       const sources = await storage.getContentSources(userId, Number(campaignId));
-      const source = sources.find(s => s.id === sourceId);
+      console.log('Found sources:', sources);
+
+      const source = sources.find(s => String(s.id) === String(sourceId));
 
       if (!source) {
         console.error('Source not found:', { sourceId, campaignId });
