@@ -116,11 +116,11 @@ export class ContentCrawler {
           continue;
         }
 
-        // Create a crawler task with proper data validation
+        // Create a crawler task
         const taskData = {
           source_id: source.id,
           campaign_id: campaignId,
-          status: 'pending',
+          status: "pending",
           started_at: null,
           completed_at: null,
           error_message: null
@@ -134,7 +134,7 @@ export class ContentCrawler {
           console.log('Created task:', taskResponse.data);
 
           // Update task to processing
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
             status: 'processing',
             started_at: new Date().toISOString()
           });
@@ -164,7 +164,7 @@ export class ContentCrawler {
           }
 
           // Update task status to completed
-          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+          await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
             status: 'completed',
             completed_at: new Date().toISOString()
           });
@@ -174,9 +174,9 @@ export class ContentCrawler {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error details:', errorMessage);
 
-          if (taskResponse?.data?.data?.id) {
+          if (taskResponse?.data?.id) {
             // Update task status to error only if task was created
-            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.data.id}`, {
+            await directusApi.patch(`/items/crawler_tasks/${taskResponse.data.id}`, {
               status: 'error',
               completed_at: new Date().toISOString(),
               error_message: errorMessage
