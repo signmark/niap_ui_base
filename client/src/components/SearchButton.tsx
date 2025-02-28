@@ -2,20 +2,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/api";
-import { useStore } from "@/lib/store";
-import { NewSourcesDialog } from "./NewSourcesDialog";
+import { directusApi } from "@/lib/directus";
 
-export function SearchButton({ campaignId, keywords }: { campaignId: string; keywords: string[] }) {
+interface SearchButtonProps {
+  campaignId: string;
+  keywords: Array<{ keyword: string }>;
+}
+
+export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sourcesData, setSourcesData] = useState(null);
-  const { toast } = useToast();
-  const { token } = useStore((state) => state);
+  const toast = useToast();
 
   const handleSearch = async () => {
     if (!keywords.length) {
-      toast({
+      toast.add({
         title: "Ошибка",
         description: "Добавьте ключевые слова для поиска",
         variant: "destructive"
@@ -55,12 +57,19 @@ export function SearchButton({ campaignId, keywords }: { campaignId: string; key
         window.location.reload();
       }, 10000);
     } catch (error) {
-      const errorMessage = error.message || "Не удалось запустить поиск";
-      toast({
-        title: "Ошибка",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      if (error instanceof Error) {
+        toast.add({
+          title: "Ошибка",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast.add({
+          title: "Ошибка",
+          description: "Не удалось запустить поиск",
+          variant: "destructive"
+        });
+      }
       console.error("Search error:", error);
     } finally {
       setIsLoading(false);
