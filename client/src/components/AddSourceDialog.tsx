@@ -28,7 +28,7 @@ const sourceSchema = z.object({
 type SourceForm = z.infer<typeof sourceSchema>;
 
 export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const [isParsingSource, setIsParsingSource] = useState(false);
   const [parseResults, setParseResults] = useState<any>(null);
 
@@ -53,14 +53,14 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast({
+      toast.add({
         title: "Успешно",
         description: "Источник добавлен"
       });
       onClose();
     },
     onError: (error: Error) => {
-      toast({
+      toast.add({
         title: "Ошибка",
         description: error.message,
         variant: "destructive"
@@ -91,21 +91,20 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage = errorData.error || errorData.message || 'Ошибка при парсинге источника';
-        throw new Error(errorMessage); // Improved error handling
+        throw new Error(errorData.message || 'Ошибка при парсинге источника');
       }
 
       return await response.json();
     },
     onSuccess: (data) => {
       setParseResults(data);
-      toast({
+      toast.add({
         title: "Успешно",
         description: "Источник проанализирован"
       });
     },
     onError: (error: Error) => {
-      toast({
+      toast.add({
         title: "Ошибка",
         description: error.message,
         variant: "destructive"

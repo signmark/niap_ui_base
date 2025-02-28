@@ -23,7 +23,7 @@ interface ParsedSource {
 const ITEMS_PER_PAGE = 5;
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const [selectedSources, setSelectedSources] = useState<ParsedSource[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,14 +117,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       }
 
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast({
+      toast.add({
         title: "Успешно",
         description: "Источники добавлены"
       });
       onClose();
     } catch (error) {
       console.error('Error adding sources:', error);
-      toast({
+      toast.add({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось добавить источники"
@@ -178,12 +178,12 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                           <span className="font-medium">
                             {source.type === 'twitter' ? 'Twitter/X' :
                               source.type === 'vk' ? 'ВКонтакте' :
-                              source.type === 'telegram' ? 'Telegram' :
-                              source.type === 'instagram' ? 'Instagram' :
-                              source.type === 'facebook' ? 'Facebook' :
-                              source.type === 'youtube' ? 'YouTube' :
-                              source.type === 'linkedin' ? 'LinkedIn' :
-                              source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
+                                source.type === 'telegram' ? 'Telegram' :
+                                  source.type === 'instagram' ? 'Instagram' :
+                                    source.type === 'facebook' ? 'Facebook' :
+                                      source.type === 'youtube' ? 'YouTube' :
+                                        source.type === 'linkedin' ? 'LinkedIn' :
+                                          source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                           </span>
                         </div>
                       </div>
