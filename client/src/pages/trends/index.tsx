@@ -10,6 +10,8 @@ import { directusApi } from "@/lib/api";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
+import { AddSourceDialog } from "@/components/AddSourceDialog";
+import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 
 interface ContentSource {
   id: string;
