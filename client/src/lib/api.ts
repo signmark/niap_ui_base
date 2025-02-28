@@ -1,39 +1,20 @@
-/**
- * Универсальный метод для выполнения запросов к API
- * с автоматическим добавлением токена авторизации
- */
-export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  // Добавляем токен авторизации, если он есть
-  const token = localStorage.getItem('auth_token');
-  const headers = {
+import axios from 'axios';
+
+// Create an instance of axios for Directus API
+export const directusApi = axios.create({
+  baseURL: 'https://directus.nplanner.ru',
+  headers: {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...(options.headers || {})
-  };
-
-  const response = await fetch(`/api${endpoint}`, {
-    ...options,
-    headers
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'API request failed');
+    'Accept': 'application/json, text/plain, */*'
   }
+});
 
-  return response.json();
-}
-
-// Вспомогательная функция для проверки авторизации
-export function isAuthenticated() {
-  return !!localStorage.getItem('auth_token');
-}
-
-// Вспомогательная функция для проверки авторизации
-export function checkAuth() {
-  const token = localStorage.getItem('auth_token');
-  if (!token) {
-    throw new Error('Требуется авторизация');
+// Create a general API instance
+export const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json'
   }
-  return token;
-}
+});
+
+export default api;
