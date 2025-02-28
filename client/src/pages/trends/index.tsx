@@ -11,6 +11,7 @@ import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
+import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import {
   Table,
   TableBody,
@@ -74,6 +75,23 @@ export default function Trends() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  // Get user information for filtering
+  const { data: userData } = useQuery({
+    queryKey: ["user_data"],
+    queryFn: async () => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      const response = await directusApi.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      return response.data?.data;
+    }
+  });
+
   // Получаем список кампаний через Directus API
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["user_campaigns"],
@@ -85,6 +103,13 @@ export default function Trends() {
         }
 
         const response = await directusApi.get('/items/user_campaigns', {
+          params: {
+            filter: {
+              user_created: {
+                _eq: userData?.id
+              }
+            }
+          },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -96,7 +121,8 @@ export default function Trends() {
         console.error("Error fetching campaigns:", error);
         throw error;
       }
-    }
+    },
+    enabled: !!userData?.id
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
