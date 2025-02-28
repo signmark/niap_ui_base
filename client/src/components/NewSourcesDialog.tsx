@@ -28,6 +28,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
+  const [addedCount, setAddedCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
 
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
@@ -44,7 +46,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const sources = (() => {
     try {
       if (!sourcesData?.data) {
-        console.error('Invalid API response structure');
+        console.error('Invalid API response structure:', sourcesData);
         return [];
       }
 
@@ -58,6 +60,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             const urlObj = new URL(url);
             name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
           } catch (e) {
+            console.error('Error parsing URL:', e);
             name = 'Unknown Source';
           }
 
@@ -81,17 +84,19 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
-      const newSelected = [...selectedSources];
-      currentSources.forEach(source => {
-        if (!isSourceSelected(source)) {
-          newSelected.push(source);
-        }
+      setSelectedSources(prev => {
+        const newSelected = [...prev];
+        currentSources.forEach(source => {
+          if (!isSourceSelected(source)) {
+            newSelected.push(source);
+          }
+        });
+        return newSelected;
       });
-      setSelectedSources(newSelected);
     } else {
-      setSelectedSources(selectedSources.filter(
-        selected => !currentSources.some(s => s.url === selected.url)
-      ));
+      setSelectedSources(prev =>
+        prev.filter(selected => !currentSources.some(s => s.url === selected.url))
+      );
     }
   };
 
@@ -106,40 +111,69 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
 
     setIsAdding(true);
+    setAddedCount(0);
+    setFailedCount(0);
+
     try {
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
 
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Show initial toast for starting the process
+      toast.add({
+        title: "Добавление источников",
+        description: "Начинаем добавление выбранных источников..."
+      });
+
       for (const source of selectedSources) {
-        await directusApi.post('/items/campaign_content_sources', {
-          name: source.name,
-          url: source.url,
-          type: source.type,
-          campaign_id: campaignId,
-          is_active: true
-        }, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
+        try {
+          await directusApi.post('/items/campaign_content_sources', {
+            name: source.name,
+            url: source.url,
+            type: source.type,
+            campaign_id: campaignId,
+            is_active: true
+          }, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          successCount++;
+          setAddedCount(successCount);
+        } catch (error) {
+          console.error(`Error adding source ${source.url}:`, error);
+          failureCount++;
+          setFailedCount(failureCount);
+        }
       }
 
       await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
 
-      toast.add({
-        title: "Успешно",
-        description: `Добавлено ${selectedSources.length} источников`
-      });
+      // Show final status toast
+      if (successCount > 0) {
+        toast.add({
+          title: "Успешно",
+          description: `Добавлено ${successCount} из ${selectedSources.length} источников${failureCount > 0 ? `, не удалось добавить ${failureCount}` : ''}`
+        });
 
-      onClose();
+        // Close dialog after short delay to show the success message
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      } else {
+        throw new Error("Не удалось добавить источники");
+      }
+
     } catch (error) {
       console.error('Error adding sources:', error);
       toast.add({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось добавить источники"
+        description: error instanceof Error ? error.message : "Не удалось добавить источники"
       });
     } finally {
       setIsAdding(false);
@@ -242,7 +276,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                 {isAdding ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Добавление...
+                    {addedCount > 0 
+                      ? `Добавлено ${addedCount}${failedCount > 0 ? `, ошибок: ${failedCount}` : ''}...` 
+                      : 'Добавление...'}
                   </>
                 ) : (
                   `Добавить ${selectedSources.length} источников`
