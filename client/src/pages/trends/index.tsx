@@ -1,20 +1,13 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 import { Input } from "@/components/ui/input";
-import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw, Search, Trash2, Bot } from "lucide-react";
-import { AddSourceDialog } from "@/components/AddSourceDialog";
-import { NewSourcesDialog } from "@/components/NewSourcesDialog";
-import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
-import type { Campaign } from "@shared/schema";
-import { directusApi } from "@/lib/directus";
-import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
-import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/components/ui/use-toast";
+import { directusApi } from "@/lib/api";
+import { SourcePostsList } from "@/components/SourcePostsList";
 
 interface ContentSource {
   id: string;
@@ -38,6 +31,15 @@ interface TrendTopic {
   campaign_id: string;
 }
 
+interface SourcePost {
+  id: string;
+  postContent: string | null;
+  source_id: string;
+  campaign_id: string;
+  created_at: string;
+
+}
+
 type Period = "3days" | "7days" | "14days" | "30days";
 
 export default function Trends() {
@@ -48,6 +50,7 @@ export default function Trends() {
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState('trends'); // Add state for active tab
   const { toast } = useToast();
 
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
@@ -209,6 +212,26 @@ export default function Trends() {
     },
     enabled: !!selectedCampaignId
   });
+
+  const { data: sourcePosts = [], isLoading: isLoadingSourcePosts } = useQuery<SourcePost[]>({
+    queryKey: ['source_posts', selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+      const response = await directusApi.get('/items/source_posts', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
+            }
+          },
+          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at']
+        }
+      });
+      return response.data?.data || [];
+    },
+    enabled: !!selectedCampaignId
+  });
+
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
@@ -439,6 +462,24 @@ export default function Trends() {
 
             <Card>
               <CardContent className="p-6 space-y-4">
+                {/* Вкладки для переключения между трендами и постами из источников */}
+                <div className="border-b mb-4">
+                  <div className="flex">
+                    <button
+                      className={`px-4 py-2 border-b-2 ${activeTab === 'trends' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
+                      onClick={() => setActiveTab('trends')}
+                    >
+                      Тренды
+                    </button>
+                    <button
+                      className={`px-4 py-2 border-b-2 ${activeTab === 'source-posts' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
+                      onClick={() => setActiveTab('source-posts')}
+                    >
+                      Посты из источников
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex gap-4">
                   <Select
                     value={selectedPeriod}
@@ -456,61 +497,74 @@ export default function Trends() {
                   </Select>
 
                   <Input
-                    placeholder="Поиск по темам"
+                    placeholder={activeTab === 'trends' ? "Поиск по темам" : "Поиск постов"}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
                   />
                 </div>
 
-                {isLoadingTrends ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[30px]"></TableHead>
-                        <TableHead>Тема</TableHead>
-                        <TableHead>Источник</TableHead>
-                        <TableHead>Кампания</TableHead>
-                        <TableHead className="text-right">Реакции</TableHead>
-                        <TableHead className="text-right">Комментарии</TableHead>
-                        <TableHead className="text-right">Просмотры</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {trends
-                        .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((topic) => (
-                          <TableRow key={topic.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedTopics.some(t => t.id === topic.id)}
-                                onCheckedChange={() => toggleTopicSelection(topic)}
-                              />
-                            </TableCell>
-                            <TableCell>{topic.title}</TableCell>
-                            <TableCell>
-                              {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
-                            </TableCell>
-                            <TableCell>
-                              {campaigns.find(c => c.id === topic.campaign_id)?.name}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {topic.reactions?.toLocaleString() ?? 0}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {topic.comments?.toLocaleString() ?? 0}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {topic.views?.toLocaleString() ?? 0}
-                            </TableCell>
+                {activeTab === 'trends' ? (
+                  <>
+                    {isLoadingTrends ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[30px]"></TableHead>
+                            <TableHead>Тема</TableHead>
+                            <TableHead>Источник</TableHead>
+                            <TableHead>Кампания</TableHead>
+                            <TableHead className="text-right">Реакции</TableHead>
+                            <TableHead className="text-right">Комментарии</TableHead>
+                            <TableHead className="text-right">Просмотры</TableHead>
                           </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {trends
+                            .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map((topic) => (
+                              <TableRow key={topic.id}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedTopics.some(t => t.id === topic.id)}
+                                    onCheckedChange={() => toggleTopicSelection(topic)}
+                                  />
+                                </TableCell>
+                                <TableCell>{topic.title}</TableCell>
+                                <TableCell>
+                                  {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
+                                </TableCell>
+                                <TableCell>
+                                  {campaigns.find(c => c.id === topic.campaign_id)?.name}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {topic.reactions?.toLocaleString() ?? 0}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {topic.comments?.toLocaleString() ?? 0}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {topic.views?.toLocaleString() ?? 0}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    <SourcePostsList
+                      posts={sourcePosts.filter(post =>
+                        post.postContent?.toLowerCase().includes(searchQuery.toLowerCase())
+                      )}
+                      isLoading={isLoadingSourcePosts}
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>

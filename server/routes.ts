@@ -106,6 +106,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Source Posts routes - для получения постов из источников
+  app.get("/api/source-posts", async (req, res) => {
+    try {
+      const period = req.query.period as string;
+      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+      const sourceId = req.query.sourceId ? Number(req.query.sourceId) : undefined;
+
+      console.log("Fetching source posts with params:", { period, campaignId, sourceId });
+
+      if (campaignId && isNaN(campaignId)) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+
+      const from = new Date();
+      switch (period) {
+        case "3days":
+          from.setDate(from.getDate() - 3);
+          break;
+        case "7days":
+          from.setDate(from.getDate() - 7);
+          break;
+        case "14days":
+          from.setDate(from.getDate() - 14);
+          break;
+        case "30days":
+          from.setDate(from.getDate() - 30);
+          break;
+        default:
+          from.setDate(from.getDate() - 7);
+      }
+
+      // Временно возвращаем пустой массив, т.к. функция хранилища будет добавлена позже
+      // const sourcePosts = await storage.getSourcePosts({ from, campaignId, sourceId });
+      const sourcePosts = [];
+      console.log('Found source posts:', sourcePosts);
+      res.json({ data: sourcePosts });
+    } catch (error) {
+      console.error("Error fetching source posts:", error);
+      res.status(500).json({ error: "Failed to fetch source posts" });
+    }
+  });
+
   // Trend collection endpoint
   app.post("/api/trends/collect", async (req, res) => {
     try {
