@@ -67,12 +67,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       }));
 
       setSearchResults(results);
-      toast({
+      toast.add({
         description: "Ключевые слова найдены"
       });
     },
     onError: (error: Error) => {
-      toast({
+      toast.add({
         description: error.message,
         variant: "destructive"
       });
@@ -95,7 +95,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       await Promise.all(promises);
     },
     onSuccess: () => {
-      toast({
+      toast.add({
         description: "Ключевые слова сохранены"
       });
       setSearchResults([]);
@@ -103,7 +103,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onError: (error) => {
       console.error("Error saving keywords:", error);
-      toast({
+      toast.add({
         description: "Не удалось сохранить ключевые слова",
         variant: "destructive"
       });
@@ -126,7 +126,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
-      toast({
+      toast.add({
         description: "Выберите хотя бы одно ключевое слово",
         variant: "destructive"
       });
@@ -140,13 +140,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
       try {
         await directusApi.delete(`/items/user_keywords/${keywordId}`);
-        toast({
+        toast.add({
           description: "Ключевое слово удалено"
         });
         refetchKeywords();
       } catch (error) {
         console.error("Error deleting keyword:", error);
-        toast({
+        toast.add({
           description: "Не удалось удалить ключевое слово",
           variant: "destructive"
         });
