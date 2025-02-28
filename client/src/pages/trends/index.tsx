@@ -71,7 +71,7 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [activeTab, setActiveTab] = useState('trends');
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   // Получаем список кампаний через Directus API
@@ -84,7 +84,12 @@ export default function Trends() {
           throw new Error("Требуется авторизация");
         }
 
-        const response = await directusApi.get('/items/user_campaigns');
+        const response = await directusApi.get('/items/user_campaigns', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
         console.log("Campaigns response:", response.data);
         return response.data?.data || [];
       } catch (error) {
@@ -99,6 +104,11 @@ export default function Trends() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
       const response = await directusApi.get('/items/campaign_content_sources', {
         params: {
           filter: {
@@ -110,8 +120,12 @@ export default function Trends() {
             }
           },
           fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
         }
       });
+
       return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
@@ -119,8 +133,16 @@ export default function Trends() {
 
   const { mutate: deleteSource } = useMutation({
     mutationFn: async (sourceId: string) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
       return await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
         is_active: false
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
       });
     },
     onSuccess: () => {
@@ -143,6 +165,10 @@ export default function Trends() {
     queryKey: ["campaign_keywords", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
       const response = await directusApi.get('/items/user_keywords', {
         params: {
           filter: {
@@ -150,6 +176,9 @@ export default function Trends() {
               _eq: selectedCampaignId
             }
           }
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
         }
       });
       return response.data?.data || [];
@@ -217,6 +246,11 @@ export default function Trends() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
       const response = await directusApi.get('/items/campaign_trend_topics', {
         params: {
           filter: {
@@ -236,6 +270,9 @@ export default function Trends() {
             'campaign_id'
           ],
           sort: ['-reactions']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
         }
       });
       return response.data?.data || [];
@@ -247,6 +284,10 @@ export default function Trends() {
     queryKey: ['source_posts', selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
       const response = await directusApi.get('/items/source_posts', {
         params: {
           filter: {
@@ -255,6 +296,9 @@ export default function Trends() {
             }
           },
           fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
         }
       });
       return response.data?.data || [];
@@ -265,10 +309,18 @@ export default function Trends() {
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
       const response = await directusApi.post('/items/crawler_tasks', {
         campaign_id: selectedCampaignId,
         status: 'pending',
         type: 'trend_collection'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
       });
 
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
