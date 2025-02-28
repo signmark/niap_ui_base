@@ -17,7 +17,7 @@ const loginSchema = z.object({
 });
 
 export default function Login() {
-  const { toast } = useToast();
+  const toast = useToast();
   const [, navigate] = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -31,7 +31,6 @@ export default function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      // Шаг 1: Получаем токен
       const { data: authData } = await directusApi.post('/auth/login', values);
 
       if (!authData?.data?.access_token) {
@@ -40,30 +39,24 @@ export default function Login() {
 
       const token = authData.data.access_token;
 
-      // Шаг 2: Получаем данные пользователя
       const { data: userData } = await directusApi.get('/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      // Сохраняем токен в localStorage и в хранилище состояния
       localStorage.setItem('auth_token', authData.data.access_token);
-
-      // Сохраняем токен и ID пользователя
       setAuth(token, userData.data.id);
-
-      // Перенаправляем на страницу кампаний
       navigate("/campaigns");
 
-      toast({
+      toast.add({
         title: "Успешный вход",
         description: "Добро пожаловать в SMM Manager",
       });
 
     } catch (error) {
       console.error('Login error:', error);
-      toast({
+      toast.add({
         title: "Ошибка входа",
         description: error instanceof Error ? error.message : "Проверьте email и пароль",
         variant: "destructive",

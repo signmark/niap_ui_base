@@ -12,7 +12,7 @@ interface KeywordListProps {
 
 export function KeywordList({ campaignId }: KeywordListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   const { data: keywords, isLoading } = useQuery({
@@ -33,12 +33,12 @@ export function KeywordList({ campaignId }: KeywordListProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/keywords', campaignId] });
-      toast({
+      toast.add({
         description: "Ключевое слово удалено"
       });
     },
     onError: () => {
-      toast({
+      toast.add({
         description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
