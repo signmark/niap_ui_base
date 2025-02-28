@@ -109,26 +109,24 @@ export default function Trends() {
         }
 
         const response = await directusApi.get('/items/user_campaigns', {
-          params: {
-            filter: {
-              user_created: {
-                _eq: userData?.id
-              }
-            }
-          },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
 
         console.log("Campaigns response:", response.data);
-        return response.data?.data || [];
+
+        if (!response.data?.data) {
+          console.error("No campaigns data in response:", response);
+          return [];
+        }
+
+        return response.data.data;
       } catch (error) {
         console.error("Error fetching campaigns:", error);
         throw error;
       }
-    },
-    enabled: Boolean(userData?.id)
+    }
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
