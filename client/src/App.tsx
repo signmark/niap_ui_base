@@ -1,4 +1,4 @@
-import { Switch, Route, Link, useLocation } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,45 +11,20 @@ import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import NotFound from "@/pages/not-found";
-import { useAuthStore } from "@/lib/store";
 import { Layout } from "@/components/Layout";
 
-function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
-  const token = useAuthStore((state) => state.token);
-  const [, navigate] = useLocation();
-
-  if (!token) {
-    navigate("/auth/login");
-    return null;
-  }
-
-  return (
-    <Layout>
-      <Component />
-    </Layout>
-  );
-}
-
 function Router() {
-  const [location, navigate] = useLocation();
-  const token = useAuthStore((state) => state.token);
-
-  // Redirect from root to appropriate page
-  if (location === "/") {
-    navigate(token ? "/campaigns" : "/auth/login");
-    return null;
-  }
-
   return (
     <Switch>
       <Route path="/auth/login" component={Login} />
-      <Route path="/campaigns" component={() => <PrivateRoute component={Campaigns} />} />
-      <Route path="/campaigns/:id" component={() => <PrivateRoute component={CampaignDetails} />} />
-      <Route path="/keywords" component={() => <PrivateRoute component={Keywords} />} />
-      <Route path="/content" component={() => <PrivateRoute component={Content} />} />
-      <Route path="/posts" component={() => <PrivateRoute component={Posts} />} />
-      <Route path="/trends" component={() => <PrivateRoute component={Trends} />} />
-      <Route path="/analytics" component={() => <PrivateRoute component={Analytics} />} />
+      <Route path="/campaigns" component={() => <Layout><Campaigns /></Layout>} />
+      <Route path="/campaigns/:id" component={() => <Layout><CampaignDetails /></Layout>} />
+      <Route path="/keywords" component={() => <Layout><Keywords /></Layout>} />
+      <Route path="/content" component={() => <Layout><Content /></Layout>} />
+      <Route path="/posts" component={() => <Layout><Posts /></Layout>} />
+      <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
+      <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
+      <Route path="/api/*" component={() => null} /> {/* Allow API routes to pass through */}
       <Route component={NotFound} />
     </Switch>
   );
