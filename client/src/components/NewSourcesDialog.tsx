@@ -29,10 +29,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Функция для определения типа источника по URL
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
-
     if (lowercaseUrl.includes('youtube.com')) return 'youtube';
     if (lowercaseUrl.includes('vk.com')) return 'vk';
     if (lowercaseUrl.includes('telegram.me') || lowercaseUrl.includes('t.me')) return 'telegram';
@@ -43,7 +41,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     return 'website';
   };
 
-  // Парсинг ответа API
   const sources = (() => {
     try {
       if (!sourcesData?.data) {
@@ -64,14 +61,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             name = 'Unknown Source';
           }
 
-          return {
-            name,
-            url,
-            type
-          };
+          return { name, url, type };
         })
         .filter(Boolean);
-
     } catch (e) {
       console.error('Error parsing sources:', e);
       return [];
@@ -104,8 +96,22 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   };
 
   const addSelectedSources = async () => {
+    if (selectedSources.length === 0) {
+      toast.add({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите хотя бы один источник"
+      });
+      return;
+    }
+
     setIsAdding(true);
     try {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
       for (const source of selectedSources) {
         await directusApi.post('/items/campaign_content_sources', {
           name: source.name,
@@ -113,14 +119,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           type: source.type,
           campaign_id: campaignId,
           is_active: true
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+      await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+
       toast.add({
         title: "Успешно",
-        description: "Источники добавлены"
+        description: `Добавлено ${selectedSources.length} источников`
       });
+
       onClose();
     } catch (error) {
       console.error('Error adding sources:', error);
@@ -135,7 +147,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Найденные источники</DialogTitle>
       </DialogHeader>
@@ -149,17 +161,21 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           <>
             <div className="flex items-center gap-2 mb-4">
               <Checkbox
+                id="select-all"
                 checked={currentSources.every(s => isSourceSelected(s))}
                 onCheckedChange={handleSelectAll}
               />
-              <span className="text-sm">Выбрать все источники на этой странице</span>
+              <label htmlFor="select-all" className="text-sm">
+                Выбрать все источники на этой странице
+              </label>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {currentSources.map((source, index) => (
                 <Card key={index} className="p-4">
                   <div className="flex items-start gap-4">
                     <Checkbox
+                      id={`source-${index}`}
                       checked={isSourceSelected(source)}
                       onCheckedChange={(checked) => {
                         if (checked) {
@@ -171,7 +187,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                     />
                     <div className="flex-1">
                       <h3 className="font-medium">{source.name}</h3>
-                      <p className="text-sm text-muted-foreground">{source.url}</p>
+                      <p className="text-sm text-muted-foreground break-all">{source.url}</p>
                       <div className="mt-2 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Платформа:</span>
@@ -215,7 +231,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
               </span>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
               <Button variant="outline" onClick={onClose}>
                 Отмена
               </Button>
