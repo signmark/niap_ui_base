@@ -76,19 +76,25 @@ export default function Trends() {
   const queryClient = useQueryClient();
 
   // Get user information for filtering
-  const { data: userData } = useQuery({
+  const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ["user_data"],
     queryFn: async () => {
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      const response = await directusApi.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      return response.data?.data;
+      try {
+        const response = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        console.log("User data response:", response.data);
+        return response.data?.data;
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        throw error;
+      }
     }
   });
 
@@ -122,7 +128,7 @@ export default function Trends() {
         throw error;
       }
     },
-    enabled: !!userData?.id
+    enabled: Boolean(userData?.id)
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
@@ -428,7 +434,7 @@ export default function Trends() {
     selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";
 
-  if (isLoadingCampaigns) {
+  if (isLoadingUser || isLoadingCampaigns) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -504,7 +510,7 @@ export default function Trends() {
                 {campaigns.map((campaign) => (
                   <SelectItem
                     key={campaign.id}
-                    value={campaign.id.toString()}
+                    value={campaign.id}
                   >
                     {campaign.name}
                   </SelectItem>
@@ -569,7 +575,6 @@ export default function Trends() {
 
             <Card>
               <CardContent className="p-6 space-y-4">
-                {/* Вкладки для переключения между трендами и постами из источников */}
                 <div className="border-b mb-4">
                   <div className="flex">
                     <button
