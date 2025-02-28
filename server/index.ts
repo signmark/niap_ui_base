@@ -57,13 +57,35 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve the app on port 3030 because many common ports already in use
-  const port = 3030;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // Try ports 5000, 5001, 5002, etc. until we find an available one
+  const tryPort = async (port: number): Promise<void> => {
+    try {
+      await new Promise((resolve, reject) => {
+        server.listen({
+          port,
+          host: "0.0.0.0",
+          reusePort: true,
+        }, () => {
+          log(`serving on port ${port}`);
+          resolve(undefined);
+        }).once('error', (err) => {
+          if (err.code === 'EADDRINUSE') {
+            reject(err);
+          } else {
+            reject(err);
+          }
+        });
+      });
+    } catch (err) {
+      if (err.code === 'EADDRINUSE') {
+        // Try next port
+        await tryPort(port + 1);
+      } else {
+        throw err;
+      }
+    }
+  };
+
+  // Start with port 5000
+  await tryPort(5000);
 })();
