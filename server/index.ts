@@ -57,8 +57,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve the app on port 8080 because ports 5000-5003 уже заняты
-  const port = 8080;
+  // Serve the app on port 3030 because many common ports already in use
+  const port = 3030;
   server.listen({
     port,
     host: "0.0.0.0",
