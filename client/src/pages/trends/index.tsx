@@ -98,7 +98,6 @@ export default function Trends() {
     }
   });
 
-  // Получаем список кампаний через Directus API
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
     queryKey: ["user_campaigns", userData?.id],
     queryFn: async () => {
@@ -108,27 +107,33 @@ export default function Trends() {
           throw new Error("Требуется авторизация");
         }
 
+        console.log("Fetching campaigns for user ID:", userData?.id);
+
         const response = await directusApi.get('/items/user_campaigns', {
           params: {
             filter: {
-              user_created: {
+              user_id: {
                 _eq: userData?.id
               }
-            }
+            },
+            fields: ['id', 'name', 'description', 'link', 'created_at', 'updated_at']
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
 
-        console.log("Campaigns response:", response.data);
+        console.log("Raw campaigns response:", response.data);
 
         if (!response.data?.data) {
           console.error("No campaigns data in response:", response);
           return [];
         }
 
-        return response.data.data;
+        const campaigns = response.data.data;
+        console.log("Processed campaigns:", campaigns);
+
+        return campaigns;
       } catch (error) {
         console.error("Error fetching campaigns:", error);
         throw error;
