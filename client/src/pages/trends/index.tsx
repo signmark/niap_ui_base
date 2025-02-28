@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/api";
 import { SourcePostsList } from "@/components/SourcePostsList";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
 
 interface ContentSource {
   id: string;
@@ -95,13 +97,13 @@ export default function Trends() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast({
+      toast.add({
         title: "Успешно",
         description: "Источник удален"
       });
     },
     onError: (error: Error) => {
-      toast({
+      toast.add({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось удалить источник"
@@ -167,14 +169,14 @@ export default function Trends() {
       console.log('Success Data:', data);
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
-      toast({
+      toast.add({
         title: "Найдены источники",
         description: "Проверьте список найденных источников"
       });
     },
     onError: (error: Error) => {
       console.error('Search Error:', error);
-      toast({
+      toast.add({
         variant: "destructive",
         title: "Ошибка",
         description: error.message
@@ -245,13 +247,13 @@ export default function Trends() {
       return response.data;
     },
     onSuccess: () => {
-      toast({
+      toast.add({
         title: "Успешно",
         description: "Запущен сбор трендов. Результаты появятся в течение нескольких минут."
       });
     },
     onError: (error: Error) => {
-      toast({
+      toast.add({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось запустить сбор трендов"
@@ -289,7 +291,7 @@ export default function Trends() {
     },
     onSuccess: (data, sourceId) => {
       const source = sources.find(s => s.id === sourceId);
-      toast({
+      toast.add({
         title: "Задача создана",
         description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных"
       });
@@ -297,8 +299,8 @@ export default function Trends() {
     },
     onError: (error: Error) => {
       console.error('Mutation error:', error);
-      toast({
-        variant: "destructive", 
+      toast.add({
+        variant: "destructive",
         title: "Ошибка",
         description: error.message || "Не удалось создать задачу"
       });
