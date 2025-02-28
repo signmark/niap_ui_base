@@ -100,7 +100,7 @@ export default function Trends() {
 
   // Получаем список кампаний через Directus API
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
-    queryKey: ["user_campaigns"],
+    queryKey: ["user_campaigns", userData?.id],
     queryFn: async () => {
       try {
         const authToken = localStorage.getItem('auth_token');
@@ -109,6 +109,13 @@ export default function Trends() {
         }
 
         const response = await directusApi.get('/items/user_campaigns', {
+          params: {
+            filter: {
+              user_created: {
+                _eq: userData?.id
+              }
+            }
+          },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -126,7 +133,8 @@ export default function Trends() {
         console.error("Error fetching campaigns:", error);
         throw error;
       }
-    }
+    },
+    enabled: Boolean(userData?.id)
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
