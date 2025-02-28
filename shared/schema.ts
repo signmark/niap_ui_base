@@ -1,6 +1,26 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Таблица source_posts для хранения постов из источников
+export const sourcePosts = pgTable("source_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceId: uuid("source_id").references(() => contentSources.id),
+  campaignId: uuid("campaign_id").references(() => campaigns.id),
+  postContent: text("post_content"),
+  postType: text("post_type").notNull(),
+  originalId: text("original_id"),
+  url: text("url"),
+  imageUrl: text("image_url"),
+  videoUrl: text("video_url"),
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  views: integer("views").default(0),
+  shares: integer("shares").default(0),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata").default({})
+});
 
 // Updated campaigns table with social media settings
 export const campaigns = pgTable("user_campaigns", {
@@ -101,6 +121,24 @@ export interface SocialMediaSettings {
   };
 }
 
+export const insertSourcePostSchema = createInsertSchema(sourcePosts)
+  .pick({
+    sourceId: true,
+    campaignId: true,
+    postContent: true,
+    postType: true,
+    originalId: true,
+    url: true,
+    imageUrl: true,
+    videoUrl: true,
+    likes: true,
+    comments: true,
+    views: true,
+    shares: true,
+    publishedAt: true,
+    metadata: true
+  });
+
 // Export types
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
@@ -108,6 +146,8 @@ export type ContentSource = typeof contentSources.$inferSelect;
 export type InsertContentSource = z.infer<typeof insertContentSourceSchema>;
 export type TrendTopic = typeof trendTopics.$inferSelect;
 export type InsertTrendTopic = z.infer<typeof insertTrendTopicSchema>;
+export type SourcePost = typeof sourcePosts.$inferSelect;
+export type InsertSourcePost = z.infer<typeof insertSourcePostSchema>;
 
 export interface KeywordSearchResult {
   keyword: string;
