@@ -24,7 +24,9 @@ function Router() {
       <Route path="/posts" component={() => <Layout><Posts /></Layout>} />
       <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
-      <Route path="/api/*" component={() => null} /> {/* Allow API routes to pass through */}
+      {/* Добавляем корневой роут */}
+      <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
+      {/* NotFound должен быть последним */}
       <Route component={NotFound} />
     </Switch>
   );
