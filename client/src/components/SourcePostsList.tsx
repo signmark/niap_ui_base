@@ -70,22 +70,6 @@ export function SourcePostsList({ campaignId, isLoading: parentLoading }: Source
         <Card key={post.id}>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              {(post.post_type === 'image' || post.post_type === 'image-text') && post.image_url && (
-                <div className="w-full h-48 overflow-hidden rounded-md mb-3">
-                  <img src={post.image_url} alt="Post image" className="w-full h-full object-cover" />
-                </div>
-              )}
-
-              {post.post_type === 'video' && post.video_url && (
-                <div className="w-full h-48 overflow-hidden rounded-md mb-3 relative bg-black">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white h-10 w-10 opacity-80">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center justify-between">
                 <Badge variant="outline">{post.post_type}</Badge>
                 {post.published_at && (
