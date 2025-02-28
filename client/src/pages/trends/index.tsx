@@ -20,8 +20,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Header } from "@/components/Header";
 
+interface Campaign {
+  id: string;
+  name: string;
+  description: string;
+  link: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ContentSource {
   id: string;
@@ -51,7 +58,6 @@ interface SourcePost {
   source_id: string;
   campaign_id: string;
   created_at: string;
-
 }
 
 type Period = "3days" | "7days" | "14days" | "30days";
@@ -64,17 +70,27 @@ export default function Trends() {
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState('trends'); // Add state for active tab
+  const [activeTab, setActiveTab] = useState('trends');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
+  // Получаем список кампаний через Directus API
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["user_campaigns"],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          throw new Error("Требуется авторизация");
+        }
+
+        const response = await directusApi.get('/items/user_campaigns');
+        console.log("Campaigns response:", response.data);
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching campaigns:", error);
+        throw error;
       }
-      return response.json();
     }
   });
 
@@ -318,7 +334,6 @@ export default function Trends() {
       });
     }
   });
-
 
   const toggleTopicSelection = (topic: TrendTopic) => {
     setSelectedTopics(prev => {
