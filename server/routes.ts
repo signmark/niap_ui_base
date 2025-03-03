@@ -122,7 +122,7 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         key: socialSearcherKey,
         network: 'instagram,youtube,telegram,vk,reddit,twitter',
         lang: 'ru,en',
-        size: 20 // Request more results to account for filtering
+        size: 20
       },
       headers: {
         'Accept': 'application/json'
