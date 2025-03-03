@@ -55,7 +55,7 @@ interface TrendTopic {
 
 interface SourcePost {
   id: string;
-  postContent: string | null;
+  post_content: string | null;
   source_id: string;
   campaign_id: string;
   created_at: string;
@@ -353,16 +353,10 @@ export default function Trends() {
 
       const response = await directusApi.get('/items/source_posts', {
         params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            },
-            created_at: {
-              _gte: from.toISOString()
-            }
-          },
-          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at'],
-          sort: ['-created_at']
+          'filter[campaign_id][_eq]': selectedCampaignId,
+          'filter[created_at][_gte]': from.toISOString(),
+          'fields[]': ['id', 'post_content', 'source_id', 'campaign_id', 'created_at'],
+          'sort[]': ['-created_at']
         },
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -370,6 +364,7 @@ export default function Trends() {
       });
 
       console.log("Source posts response:", {
+        status: response.status,
         dataLength: response.data?.data?.length,
         firstPost: response.data?.data?.[0]
       });
@@ -722,7 +717,7 @@ export default function Trends() {
                   <div>
                     <SourcePostsList
                       posts={sourcePosts.filter(post =>
-                        post.postContent?.toLowerCase().includes(searchQuery.toLowerCase())
+                        post.post_content?.toLowerCase().includes(searchQuery.toLowerCase())
                       )}
                       isLoading={isLoadingSourcePosts}
                     />
