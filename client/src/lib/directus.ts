@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from './store';
+import { refreshAccessToken } from './auth';
 
 export const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
@@ -13,16 +14,12 @@ export const directusApi = axios.create({
 // Add a request interceptor
 directusApi.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+      const token = useAuthStore.getState().token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-    console.log('Directus API Request:', {
-      url: config.url,
-      method: config.method,
-      params: config.params,
-      headers: config.headers,
-    });
     return config;
   },
   (error) => {
@@ -33,25 +30,32 @@ directusApi.interceptors.request.use(
 // Add a response interceptor
 directusApi.interceptors.response.use(
   (response) => {
-    console.log('Directus API Response:', {
-      status: response.status,
-      data: response.data,
-      headers: response.headers,
-    });
     return response;
   },
-  (error) => {
-    console.error('Directus API Error:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config,
-    });
+  async (error) => {
+    const originalRequest = error.config;
 
-    if (error.response?.status === 401) {
-      useAuthStore.getState().clearAuth();
-      window.location.href = '/auth/login';
+    // Если ошибка 401 и это не запрос на обновление токена
+    if (error.response?.status === 401 && !originalRequest._retry && 
+        !originalRequest.url?.includes('/auth/refresh') &&
+        typeof window !== 'undefined') {
+      originalRequest._retry = true;
+
+      try {
+        // Пробуем обновить токен
+        const newToken = await refreshAccessToken();
+
+        // Повторяем исходный запрос с новым токеном
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return directusApi(originalRequest);
+      } catch (refreshError) {
+        console.error('Failed to refresh token:', refreshError);
+        // Если не удалось обновить токен, очищаем авторизацию
+        useAuthStore.getState().clearAuth();
+        window.location.href = '/auth/login';
+      }
     }
+
     return Promise.reject(error);
   }
 );
