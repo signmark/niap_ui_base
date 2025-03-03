@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 
@@ -12,12 +12,15 @@ interface NewSourcesDialogProps {
   campaignId: string;
   onClose: () => void;
   sourcesData: {
-    data: {
-      sources: Array<{
-        url: string;
-        rank: number;
-        keyword: string;
-      }>;
+    success?: boolean;
+    data?: {
+      data?: {
+        sources: Array<{
+          url: string;
+          rank: number;
+          keyword: string;
+        }>;
+      };
     };
   };
 }
@@ -55,12 +58,13 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
   const sources = (() => {
     try {
-      if (!sourcesData?.data?.sources) {
+      console.log('sourcesData:', sourcesData);
+      if (!sourcesData?.data?.data?.sources) {
         console.error('Invalid API response structure:', sourcesData);
         return [];
       }
 
-      return sourcesData.data.sources.map(source => {
+      return sourcesData.data.data.sources.map(source => {
         const type = detectSourceType(source.url);
         let name = '';
         try {
@@ -217,51 +221,53 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {currentSources.map((source, index) => (
                 <Card key={index} className="p-4">
-                  <div className="flex items-start gap-4">
-                    <Checkbox
-                      id={`source-${index}`}
-                      checked={isSourceSelected(source)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedSources([...selectedSources, source]);
-                        } else {
-                          setSelectedSources(selectedSources.filter(s => s.url !== source.url));
-                        }
-                      }}
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-medium">{source.name}</h3>
-                      <p className="text-sm text-muted-foreground break-all">
-                        <a 
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          {source.url}
-                        </a>
-                      </p>
-                      <div className="mt-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Платформа:</span>
-                          <span className="font-medium">
-                            {source.type === 'twitter' ? 'Twitter/X' :
-                              source.type === 'vk' ? 'ВКонтакте' :
-                                source.type === 'telegram' ? 'Telegram' :
-                                  source.type === 'instagram' ? 'Instagram' :
-                                    source.type === 'facebook' ? 'Facebook' :
-                                      source.type === 'youtube' ? 'YouTube' :
-                                        source.type === 'linkedin' ? 'LinkedIn' :
-                                          source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
-                          </span>
-                          <span className="text-muted-foreground ml-2">Релевантность:</span>
-                          <span className="font-medium">{source.rank}/10</span>
-                          <span className="text-muted-foreground ml-2">Ключевое слово:</span>
-                          <span className="font-medium">{source.keyword}</span>
+                  <CardContent className="p-0">
+                    <div className="flex items-start gap-4">
+                      <Checkbox
+                        id={`source-${index}`}
+                        checked={isSourceSelected(source)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedSources([...selectedSources, source]);
+                          } else {
+                            setSelectedSources(selectedSources.filter(s => s.url !== source.url));
+                          }
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium">{source.name}</h3>
+                        <p className="text-sm text-muted-foreground break-all">
+                          <a 
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            {source.url}
+                          </a>
+                        </p>
+                        <div className="mt-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Платформа:</span>
+                            <span className="font-medium">
+                              {source.type === 'twitter' ? 'Twitter/X' :
+                                source.type === 'vk' ? 'ВКонтакте' :
+                                  source.type === 'telegram' ? 'Telegram' :
+                                    source.type === 'instagram' ? 'Instagram' :
+                                      source.type === 'facebook' ? 'Facebook' :
+                                        source.type === 'youtube' ? 'YouTube' :
+                                          source.type === 'linkedin' ? 'LinkedIn' :
+                                            source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
+                            </span>
+                            <span className="text-muted-foreground ml-2">Релевантность:</span>
+                            <span className="font-medium">{source.rank}/10</span>
+                            <span className="text-muted-foreground ml-2">Ключевое слово:</span>
+                            <span className="font-medium">{source.keyword}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
