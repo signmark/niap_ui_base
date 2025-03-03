@@ -176,6 +176,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ data: response.data?.data || [] });
     } catch (error) {
       console.error("Error fetching source posts:", error);
+      if (axios.isAxiosError(error)) {
+        console.error('Directus API error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            params: error.config?.params
+          }
+        });
+      }
       res.status(500).json({ error: "Failed to fetch source posts" });
     }
   });
