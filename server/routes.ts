@@ -4,12 +4,27 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
-import { directusApi } from './directus'; // Assuming this is defined elsewhere
+import { directusApi } from './directus';
 import * as crypto from 'crypto';
+
+// Add type for follower requirements
+type PlatformRequirements = {
+  [key: string]: number;
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
+
+  const followerRequirements: PlatformRequirements = {
+    'youtube.com': 100000,
+    'reddit.com': 50000,
+    'vk.com': 10000,
+    't.me': 5000,
+    'instagram.com': 50000,
+    'twitter.com': 10000,
+    'x.com': 10000
+  };
 
   // XMLRiver API proxy
   app.get("/api/wordstat/:keyword", async (req, res) => {
@@ -401,31 +416,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const validSources = sources.filter(source => {
                   try {
                     if (!source.url || !source.followers) {
+                      console.log(`Skipping source - missing url or followers:`, source);
                       return false;
                     }
 
                     const url = new URL(source.url);
 
-                    // Platform-specific follower requirements
-                    const followerRequirements = {
-                      'youtube.com': 100000,
-                      'reddit.com': 50000,
-                      'vk.com': 10000,
-                      't.me': 5000,
-                      'instagram.com': 50000,
-                      'twitter.com': 10000,
-                      'x.com': 10000
-                    };
-
-                    // Check if URL is from supported platform
+                    // Find matching platform requirement
                     const platform = Object.keys(followerRequirements).find(p => url.hostname.includes(p));
                     if (!platform) {
+                      console.log(`Skipping ${url.href} - unsupported platform`);
                       return false;
                     }
 
                     // Check follower count requirement
-                    if (source.followers < followerRequirements[platform]) {
-                      console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${followerRequirements[platform]}`);
+                    const minFollowers = followerRequirements[platform];
+                    if (source.followers < minFollowers) {
+                      console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${minFollowers}`);
                       return false;
                     }
 
@@ -435,7 +442,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       !url.pathname.includes('search') &&
                       !url.pathname.includes('explore');
 
-                    return hasValidPath;
+                    if (!hasValidPath) {
+                      console.log(`Skipping ${url.href} - invalid path structure`);
+                      return false;
+                    }
+
+                    return true;
                   } catch (error) {
                     console.error(`Error validating source:`, error);
                     return false;

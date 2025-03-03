@@ -6,6 +6,7 @@ import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
 interface NewSourcesDialogProps {
@@ -19,6 +20,7 @@ interface NewSourcesDialogProps {
           url: string;
           rank: number;
           keyword: string;
+          followers?: number;
         }>;
       };
     };
@@ -31,9 +33,17 @@ interface ParsedSource {
   type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'facebook' | 'youtube' | 'linkedin' | 'reddit' | 'website';
   rank: number;
   keyword: string;
+  followers?: number;
 }
 
 const ITEMS_PER_PAGE = 5;
+
+const formatFollowers = (count?: number) => {
+  if (!count) return 'Неизвестно';
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
+};
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   const { add: toast } = useToast();
@@ -81,7 +91,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           url: source.url, 
           type,
           rank: source.rank,
-          keyword: source.keyword
+          keyword: source.keyword,
+          followers: source.followers
         };
       }).filter(Boolean);
     } catch (e) {
@@ -115,6 +126,12 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         prev.filter(selected => !currentSources.some(s => s.url === selected.url))
       );
     }
+  };
+
+  const getRankColor = (rank: number) => {
+    if (rank <= 3) return 'bg-green-100 text-green-800';
+    if (rank <= 6) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
   };
 
   const addSelectedSources = async () => {
@@ -235,8 +252,18 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                         }}
                       />
                       <div className="flex-1">
-                        <h3 className="font-medium">{source.name}</h3>
-                        <p className="text-sm text-muted-foreground break-all">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{source.name}</h3>
+                          <Badge className={getRankColor(source.rank)}>
+                            Рейтинг: {source.rank}/10
+                          </Badge>
+                          {source.followers && (
+                            <Badge variant="outline">
+                              {formatFollowers(source.followers)} подписчиков
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground break-all mt-1">
                           <a 
                             href={source.url}
                             target="_blank"
@@ -247,9 +274,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                           </a>
                         </p>
                         <div className="mt-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">Платформа:</span>
-                            <span className="font-medium">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">
                               {source.type === 'twitter' ? 'Twitter/X' :
                                 source.type === 'vk' ? 'ВКонтакте' :
                                   source.type === 'telegram' ? 'Telegram' :
@@ -258,11 +284,10 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                                         source.type === 'youtube' ? 'YouTube' :
                                           source.type === 'linkedin' ? 'LinkedIn' :
                                             source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
-                            </span>
-                            <span className="text-muted-foreground ml-2">Релевантность:</span>
-                            <span className="font-medium">{source.rank}/10</span>
-                            <span className="text-muted-foreground ml-2">Ключевое слово:</span>
-                            <span className="font-medium">{source.keyword}</span>
+                            </Badge>
+                            <Badge variant="outline">
+                              {source.keyword}
+                            </Badge>
                           </div>
                         </div>
                       </div>
