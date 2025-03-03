@@ -5,6 +5,7 @@ import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
 import { directusApi } from './directus'; // Assuming this is defined elsewhere
+import * as crypto from 'crypto';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
@@ -332,7 +333,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Starting source search for keywords:', keywords);
 
-      // Поиск источников для каждого ключевого слова отдельно
       const searchPromises = keywords.map(async keyword => {
         console.log(`Searching sources for keyword: ${keyword}`);
 
@@ -341,11 +341,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `Вы - эксперт по поиску качественных источников в социальных сетях. Возвращайте только массив URL самых популярных и авторитетных каналов/групп, без пояснений и текста. Формат ответа строго JSON массив: [{"url":"url1","rank":1}, {"url":"url2","rank":2}]. Ранг от 1 до 10, где 1 - самый качественный источник. Ищите ТОЛЬКО в:\n- youtube.com/c/ (каналы с >100K подписчиков)\n- reddit.com/r/ (сабреддиты с >50K участников)\n- vk.com/ (группы с >10K подписчиков)\n- t.me/ (каналы с >5K подписчиков)\n- facebook.com/groups/ (группы с >10K участников)\n- instagram.com/ (аккаунты с >50K подписчиков)\n- twitter.com/ (аккаунты с >10K подписчиков)\nДругие сайты НЕ включайте в результат.`
+              content: `Вы - эксперт по поиску качественных источников в социальных сетях. Строго проверяйте требования к количеству подписчиков:
+- YouTube каналы (youtube.com/c/ или youtube.com/channel/): ТОЛЬКО с более чем 100,000 подписчиков
+- Reddit (reddit.com/r/): ТОЛЬКО сабреддиты с более чем 50,000 участников
+- VK (vk.com/): ТОЛЬКО группы/паблики с более чем 10,000 подписчиков
+- Telegram (t.me/): ТОЛЬКО каналы с более чем 5,000 подписчиков
+- Instagram (instagram.com/): ТОЛЬКО аккаунты с более чем 50,000 подписчиков
+- Twitter/X (twitter.com/ или x.com/): ТОЛЬКО аккаунты с более чем 10,000 подписчиков
+
+ВАЖНО:
+1. Возвращайте ТОЛЬКО реальные, активные и популярные каналы/группы
+2. Всегда используйте полные URL с https://
+3. Проверяйте существование и активность каждого источника
+4. НЕ включайте источники с меньшим числом подписчиков
+5. Формат ответа строго JSON массив: [{"url":"https://platform.com/account","rank":1,"followers":100000}]
+6. Ранг от 1 до 10, где 1 - самый качественный источник`
             },
             {
               role: "user",
-              content: `Найдите ТОП-3 самых популярных и качественных канала/группы ТОЛЬКО в указанных социальных сетях по теме: ${keyword}`
+              content: `Найдите ТОП-5 самых популярных и качественных источников по теме: ${keyword}. 
+ОБЯЗАТЕЛЬНО:
+1. Проверьте количество подписчиков
+2. Убедитесь, что канал активен
+3. Используйте только полные URL с https://
+4. Укажите точное количество подписчиков в поле followers`
             }
           ],
           max_tokens: 1000,
@@ -372,27 +391,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Raw API response for keyword ${keyword}:`, content);
 
         try {
-          // Попытка найти JSON массив в ответе
-          const match = content.match(/\[([\s\S]*?)\]/);
-          if (!match) {
-            console.error(`No JSON array found in response for keyword ${keyword}`);
-            throw new Error('Не удалось найти массив источников в ответе');
+          const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
+
+          for (const match of jsonMatches) {
+            try {
+              const sources = JSON.parse(match);
+
+              if (Array.isArray(sources)) {
+                const validSources = sources.filter(source => {
+                  try {
+                    if (!source.url || !source.followers) {
+                      return false;
+                    }
+
+                    const url = new URL(source.url);
+
+                    // Platform-specific follower requirements
+                    const followerRequirements = {
+                      'youtube.com': 100000,
+                      'reddit.com': 50000,
+                      'vk.com': 10000,
+                      't.me': 5000,
+                      'instagram.com': 50000,
+                      'twitter.com': 10000,
+                      'x.com': 10000
+                    };
+
+                    // Check if URL is from supported platform
+                    const platform = Object.keys(followerRequirements).find(p => url.hostname.includes(p));
+                    if (!platform) {
+                      return false;
+                    }
+
+                    // Check follower count requirement
+                    if (source.followers < followerRequirements[platform]) {
+                      console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${followerRequirements[platform]}`);
+                      return false;
+                    }
+
+                    // Validate URL structure
+                    const hasValidPath = url.pathname.length > 1 && 
+                      !url.pathname.includes('?') && 
+                      !url.pathname.includes('search') &&
+                      !url.pathname.includes('explore');
+
+                    return hasValidPath;
+                  } catch (error) {
+                    console.error(`Error validating source:`, error);
+                    return false;
+                  }
+                }).map(source => ({
+                  url: source.url,
+                  rank: Math.min(Math.max(1, source.rank || 5), 10),
+                  followers: source.followers,
+                  keyword
+                }));
+
+                if (validSources.length > 0) {
+                  console.log(`Found ${validSources.length} valid sources for ${keyword}:`, validSources);
+                  return validSources;
+                }
+              }
+            } catch (parseError) {
+              console.error(`Error parsing JSON match for ${keyword}:`, parseError);
+              continue;
+            }
           }
 
-          // Парсим найденный массив
-          const sources = JSON.parse(`[${match[1]}]`);
-
-          if (!Array.isArray(sources)) {
-            console.error(`Invalid data format for keyword ${keyword}:`, sources);
-            throw new Error('Некорректный формат данных');
-          }
-
-          // Проверяем и нормализуем URL
-          return sources.map(source => ({
-            url: source.url.startsWith('http') ? source.url : `https://${source.url}`,
-            rank: source.rank,
-            keyword
-          }));
+          console.error(`No valid sources found in response for ${keyword}`);
+          return [];
 
         } catch (e) {
           console.error(`Error processing sources for ${keyword}:`, e, content);
@@ -407,13 +474,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('All search results:', results);
 
-      // Объединяем все результаты
+      // Объединяем все результаты и удаляем дубликаты
       const allSources = results.flat();
       console.log('Combined sources:', allSources);
 
-      // Сортируем по рангу и удаляем дубликаты
+      // Сортируем по рангу и количеству подписчиков
       const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
-        .sort((a, b) => (a.rank || 10) - (b.rank || 10));
+        .sort((a, b) => {
+          // Сначала сортируем по рангу
+          const rankDiff = (a.rank || 10) - (b.rank || 10);
+          if (rankDiff !== 0) return rankDiff;
+          // При равном ранге сортируем по количеству подписчиков
+          return (b.followers || 0) - (a.followers || 0);
+        });
 
       console.log('Unique sources:', uniqueSources);
 
@@ -421,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         data: {
           data: {
-            sources: uniqueSources,
+            sources: uniqueSources.map(({ url, rank, keyword }) => ({ url, rank, keyword })),
             totalResults: results.length,
             combinedSourcesCount: allSources.length,
             topSourcesCount: uniqueSources.length
