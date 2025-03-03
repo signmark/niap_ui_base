@@ -21,24 +21,62 @@ function normalizeSourceUrl(url: string, platform: string): string | null {
     // Platform-specific normalization
     switch (platform) {
       case 'youtube.com':
-        // Convert /c/ format to /@
-        normalizedUrl = normalizedUrl.replace(/\/c\/([^\/]+)/, '/@$1');
+        // Convert all YouTube URL formats to @username
+        const youtubePathRegex = /\/(c|channel|user)\/([^\/\?]+)/;
+        const match = normalizedUrl.match(youtubePathRegex);
+        if (match) {
+          normalizedUrl = `https://youtube.com/@${match[2]}`;
+        }
+        // If URL already uses @username format, ensure it's properly formatted
+        if (!normalizedUrl.includes('/@')) {
+          const username = normalizedUrl.split('/').pop();
+          if (username) {
+            normalizedUrl = `https://youtube.com/@${username}`;
+          }
+        }
         break;
       case 't.me':
-        // Remove /s/ from Telegram URLs
+        // Remove /s/ from Telegram URLs and ensure proper format
         normalizedUrl = normalizedUrl.replace('/s/', '/');
+        if (!normalizedUrl.includes('t.me/')) {
+          return null;
+        }
         break;
       case 'reddit.com':
-        // Add proper reddit.com prefix to r/ format
+        // Properly format Reddit URLs
         if (normalizedUrl.includes('r/')) {
-          normalizedUrl = `https://reddit.com/${normalizedUrl.split('r/')[1]}`;
+          const subreddit = normalizedUrl.split('r/')[1]?.split('/')[0];
+          if (subreddit) {
+            normalizedUrl = `https://reddit.com/r/${subreddit}`;
+          }
+        }
+        break;
+      case 'vk.com':
+        // Ensure VK URLs don't contain @ symbol
+        normalizedUrl = normalizedUrl.replace('@', '');
+        break;
+      case 'instagram.com':
+        // Normalize Instagram URLs
+        if (normalizedUrl.includes('instagram.com/')) {
+          const username = normalizedUrl.split('instagram.com/')[1]?.split('/')[0];
+          if (username) {
+            normalizedUrl = `https://instagram.com/${username}`;
+          }
         }
         break;
     }
 
     // Validate URL format
     const urlObj = new URL(normalizedUrl);
-    return normalizedUrl;
+
+    // Additional validation
+    if (!urlObj.pathname || urlObj.pathname === '/') {
+      console.log(`Invalid URL path: ${normalizedUrl}`);
+      return null;
+    }
+
+    // Remove any trailing slashes
+    return normalizedUrl.replace(/\/$/, '');
   } catch (error) {
     console.error(`Error normalizing URL ${url}:`, error);
     return null;
@@ -409,15 +447,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 4. Формат URL:
    - Всегда используйте https://
    - Для YouTube используйте ТОЛЬКО формат youtube.com/@username
-   - Не используйте кириллицу в URL
-   - Проверяйте существование канала перед включением
+   - НЕ используйте кириллицу в URL
+   - ОБЯЗАТЕЛЬНО проверьте существование канала перед включением в список
 
 5. Формат ответа строго JSON:
 [{
   "url": "https://youtube.com/@example",
   "rank": 2,
   "followers": 150000,
-  "description": "Канал дипломированного диетолога с научным подходом"
+  "description": "Подробное описание канала: тематика, экспертиза автора"
 }]`
             },
             {
@@ -425,9 +463,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               content: `Найдите ТОП-5 самых авторитетных источников по теме: ${keyword}.
 ОБЯЗАТЕЛЬНО:
 1. Проверьте реальное существование канала
-2. Проверьте точное количество подписчиков
+2. Укажите точное количество подписчиков
 3. Оцените профессионализм автора для точного ранжирования
-4. Исключите заброшенные каналы и спам`
+4. Исключите заброшенные каналы
+5. Добавьте подробное описание для каждого источника`
             }
           ],
           max_tokens: 1000,
