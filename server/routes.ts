@@ -12,6 +12,39 @@ type PlatformRequirements = {
   [key: string]: number;
 };
 
+// Helper function to normalize URLs
+function normalizeSourceUrl(url: string, platform: string): string | null {
+  try {
+    // Ensure URL starts with https://
+    let normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+
+    // Platform-specific normalization
+    switch (platform) {
+      case 'youtube.com':
+        // Convert /c/ format to /@
+        normalizedUrl = normalizedUrl.replace(/\/c\/([^\/]+)/, '/@$1');
+        break;
+      case 't.me':
+        // Remove /s/ from Telegram URLs
+        normalizedUrl = normalizedUrl.replace('/s/', '/');
+        break;
+      case 'reddit.com':
+        // Add proper reddit.com prefix to r/ format
+        if (normalizedUrl.includes('r/')) {
+          normalizedUrl = `https://reddit.com/${normalizedUrl.split('r/')[1]}`;
+        }
+        break;
+    }
+
+    // Validate URL format
+    const urlObj = new URL(normalizedUrl);
+    return normalizedUrl;
+  } catch (error) {
+    console.error(`Error normalizing URL ${url}:`, error);
+    return null;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
@@ -356,30 +389,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `Вы - эксперт по поиску качественных источников в социальных сетях. Строго проверяйте требования к количеству подписчиков:
-- YouTube каналы (youtube.com/c/ или youtube.com/channel/): ТОЛЬКО с более чем 100,000 подписчиков
-- Reddit (reddit.com/r/): ТОЛЬКО сабреддиты с более чем 50,000 участников
-- VK (vk.com/): ТОЛЬКО группы/паблики с более чем 10,000 подписчиков
-- Telegram (t.me/): ТОЛЬКО каналы с более чем 5,000 подписчиков
-- Instagram (instagram.com/): ТОЛЬКО аккаунты с более чем 50,000 подписчиков
-- Twitter/X (twitter.com/ или x.com/): ТОЛЬКО аккаунты с более чем 10,000 подписчиков
+              content: `Вы - эксперт по поиску высококачественных источников по теме здорового питания и нутрициологии.
 
-ВАЖНО:
-1. Возвращайте ТОЛЬКО реальные, активные и популярные каналы/группы
-2. Всегда используйте полные URL с https://
-3. Проверяйте существование и активность каждого источника
-4. НЕ включайте источники с меньшим числом подписчиков
-5. Формат ответа строго JSON массив: [{"url":"https://platform.com/account","rank":1,"followers":100000}]
-6. Ранг от 1 до 10, где 1 - самый качественный источник`
+ВАЖНЫЕ ТРЕБОВАНИЯ К ИСТОЧНИКАМ:
+1. Возвращайте ТОЛЬКО существующие и активные каналы с регулярными публикациями
+2. Тщательно проверяйте количество подписчиков:
+   - YouTube: строго > 100,000 подписчиков
+   - Instagram: строго > 50,000 подписчиков
+   - Telegram: строго > 5,000 подписчиков
+   - VK: строго > 10,000 подписчиков
+   - Reddit: строго > 50,000 участников
+   - Twitter/X: строго > 10,000 подписчиков
+
+3. Оценка качества (ранг от 1 до 10):
+   - 1-3: Профессиональные диетологи, врачи, эксперты с научным подходом
+   - 4-6: Популярные фитнес-тренеры и практикующие специалисты
+   - 7-10: Качественные тематические каналы
+
+4. Формат URL:
+   - Всегда используйте https://
+   - Для YouTube используйте ТОЛЬКО формат youtube.com/@username
+   - Не используйте кириллицу в URL
+   - Проверяйте существование канала перед включением
+
+5. Формат ответа строго JSON:
+[{
+  "url": "https://youtube.com/@example",
+  "rank": 2,
+  "followers": 150000,
+  "description": "Канал дипломированного диетолога с научным подходом"
+}]`
             },
             {
               role: "user",
-              content: `Найдите ТОП-5 самых популярных и качественных источников по теме: ${keyword}. 
+              content: `Найдите ТОП-5 самых авторитетных источников по теме: ${keyword}.
 ОБЯЗАТЕЛЬНО:
-1. Проверьте количество подписчиков
-2. Убедитесь, что канал активен
-3. Используйте только полные URL с https://
-4. Укажите точное количество подписчиков в поле followers`
+1. Проверьте реальное существование канала
+2. Проверьте точное количество подписчиков
+3. Оцените профессионализм автора для точного ранжирования
+4. Исключите заброшенные каналы и спам`
             }
           ],
           max_tokens: 1000,
@@ -415,18 +463,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (Array.isArray(sources)) {
                 const validSources = sources.filter(source => {
                   try {
-                    if (!source.url || !source.followers) {
-                      console.log(`Skipping source - missing url or followers:`, source);
+                    if (!source.url || !source.followers || !source.description) {
+                      console.log(`Skipping source - missing required fields:`, source);
                       return false;
                     }
 
-                    const url = new URL(source.url);
-
-                    // Find matching platform requirement
-                    const platform = Object.keys(followerRequirements).find(p => url.hostname.includes(p));
+                    // Find matching platform
+                    const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
                     if (!platform) {
-                      console.log(`Skipping ${url.href} - unsupported platform`);
+                      console.log(`Skipping source - unsupported platform: ${source.url}`);
                       return false;
+                    }
+
+                    // Normalize URL
+                    const normalizedUrl = normalizeSourceUrl(source.url, platform);
+                    if (!normalizedUrl) {
+                      console.log(`Skipping source - invalid URL format: ${source.url}`);
+                      return false;
+                    }
+
+                    const url = new URL(normalizedUrl);
+
+                    // Check for cyrillic characters
+                    if (/[а-яА-Я]/.test(url.href)) {
+                      console.log(`Skipping URL with cyrillic characters: ${url.href}`);
+                      return false;
+                    }
+
+                    // Platform-specific validations
+                    if (platform === 'youtube.com') {
+                      // Only accept /@username format
+                      if (!url.pathname.startsWith('/@')) {
+                        console.log(`Skipping invalid YouTube URL format: ${url.href}`);
+                        return false;
+                      }
                     }
 
                     // Check follower count requirement
@@ -437,8 +507,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     }
 
                     // Validate URL structure
-                    const hasValidPath = url.pathname.length > 1 && 
-                      !url.pathname.includes('?') && 
+                    const hasValidPath = url.pathname.length > 1 &&
+                      !url.pathname.includes('?') &&
                       !url.pathname.includes('search') &&
                       !url.pathname.includes('explore');
 
@@ -447,6 +517,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       return false;
                     }
 
+                    // Store normalized URL back in source
+                    source.url = normalizedUrl;
                     return true;
                   } catch (error) {
                     console.error(`Error validating source:`, error);
@@ -456,7 +528,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   url: source.url,
                   rank: Math.min(Math.max(1, source.rank || 5), 10),
                   followers: source.followers,
-                  keyword
+                  keyword,
+                  description: source.description
                 }));
 
                 if (validSources.length > 0) {
@@ -506,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         data: {
           data: {
-            sources: uniqueSources.map(({ url, rank, keyword }) => ({ url, rank, keyword })),
+            sources: uniqueSources.map(({ url, rank, keyword, description }) => ({ url, rank, keyword, description })),
             totalResults: results.length,
             combinedSourcesCount: allSources.length,
             topSourcesCount: uniqueSources.length
