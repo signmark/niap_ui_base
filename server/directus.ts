@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create a Directus API client instance
 export const directusApi = axios.create({
-  baseURL: process.env.DIRECTUS_URL || 'http://localhost:8055',
+  baseURL: process.env.DIRECTUS_URL || 'https://directus.nplanner.ru',
   headers: {
     'Content-Type': 'application/json',
   },
