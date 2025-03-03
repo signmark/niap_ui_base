@@ -85,16 +85,12 @@ function normalizeSourceUrl(url: string, platform: string): string | null {
 
 // Add interface for Social Searcher response
 interface SocialSearcherResponse {
-  posts?: Array<{
+  users?: Array<{
     url: string;
     network: string;
-    title?: string;
     description?: string;
-    stats?: {
-      followers?: number;
-      following?: number;
-      posts?: number;
-    };
+    bio?: string;
+    followers?: number;
   }>;
 }
 
@@ -120,44 +116,69 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     }
 
     // Make request to Social Searcher API
-    const response = await axios.get('https://api.social-searcher.com/v2/search', {
+    const response = await axios.get('https://api.social-searcher.com/v2/users', {
       params: {
-        q: keyword,
+        q: encodeURIComponent(keyword),
         key: socialSearcherKey,
-        type: 'user',
+        network: 'instagram,youtube,telegram,vk,reddit,twitter',
         lang: 'ru,en',
-        limit: 10
+        size: 20 // Request more results to account for filtering
+      },
+      headers: {
+        'Accept': 'application/json'
       }
     });
 
-    const data = response.data as SocialSearcherResponse;
+    console.log('Social Searcher API response:', response.data);
 
-    if (!data.posts) {
+    if (!response.data?.users) {
       return [];
     }
 
     // Process and validate results
-    return data.posts
-      .filter(post => {
-        // Only include posts with required stats
-        if (!post.stats?.followers) {
+    return response.data.users
+      .filter(user => {
+        try {
+          // Only include users with required stats
+          if (!user.url || !user.followers) {
+            console.log(`Skipping user - missing required fields:`, user);
+            return false;
+          }
+
+          // Find matching platform requirement
+          const platform = Object.keys(followerRequirements).find(p => user.url.includes(p));
+          if (!platform) {
+            console.log(`Skipping user - unsupported platform: ${user.url}`);
+            return false;
+          }
+
+          // Normalize URL
+          const normalizedUrl = normalizeSourceUrl(user.url, platform);
+          if (!normalizedUrl) {
+            console.log(`Skipping user - invalid URL format: ${user.url}`);
+            return false;
+          }
+
+          // Check follower requirements
+          const minFollowers = followerRequirements[platform];
+          if (user.followers < minFollowers) {
+            console.log(`Skipping ${user.url} - insufficient followers: ${user.followers} < ${minFollowers}`);
+            return false;
+          }
+
+          // Store normalized URL
+          user.url = normalizedUrl;
+          return true;
+        } catch (error) {
+          console.error(`Error validating user:`, error);
           return false;
         }
-
-        // Find matching platform
-        const platform = Object.keys(followerRequirements).find(p => post.url.includes(p));
-        if (!platform) {
-          return false;
-        }
-
-        // Check follower requirements
-        return post.stats.followers >= followerRequirements[platform];
       })
-      .map(post => ({
-        url: post.url,
-        followers: post.stats?.followers || 0,
-        rank: Math.min(Math.max(1, Math.ceil(10 - (Math.log10(post.stats?.followers || 1) / 2))), 10),
-        description: post.description || post.title || '',
+      .map(user => ({
+        url: user.url,
+        followers: user.followers,
+        rank: Math.min(Math.max(1, Math.ceil(10 - (Math.log10(user.followers) / 2))), 10),
+        description: user.description || user.bio || `Активный ${user.network} канал по теме ${keyword}`,
         keyword
       }));
 
