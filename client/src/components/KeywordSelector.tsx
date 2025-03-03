@@ -21,7 +21,7 @@ interface KeywordResult {
 export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<KeywordResult[]>([]);
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
   // Обновленный запрос для получения существующих ключевых слов
