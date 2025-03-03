@@ -48,22 +48,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sources routes
   app.get("/api/sources", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+      const campaignId = req.query.campaignId as string;
+      console.log("Fetching sources for campaign:", campaignId);
 
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      console.log("Fetching sources for user:", userId, "campaign:", campaignId);
-
-      if (campaignId && isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
+      // Get sources from Directus
+      const authToken = req.headers.authorization;
+      if (!authToken) {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const sources = await storage.getContentSources(userId, campaignId);
-      console.log("Found sources:", sources);
-      res.json({ data: sources });
+      const response = await directusApi.get('/items/campaign_content_sources', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            },
+            is_active: {
+              _eq: true
+            }
+          },
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+        },
+        headers: {
+          'Authorization': authToken
+        }
+      });
+
+      console.log('Directus sources API response:', {
+        status: response.status,
+        dataLength: response.data?.data?.length,
+        firstSource: response.data?.data?.[0]
+      });
+
+      res.json({ data: response.data?.data || [] });
     } catch (error) {
       console.error("Error fetching sources:", error);
+      if (axios.isAxiosError(error)) {
+        console.error('Directus API error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            params: error.config?.params
+          }
+        });
+      }
       res.status(500).json({ error: "Failed to fetch sources" });
     }
   });

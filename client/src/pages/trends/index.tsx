@@ -142,6 +142,8 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
+      console.log('Fetching sources for campaign:', selectedCampaignId);
+
       const response = await directusApi.get('/items/campaign_content_sources', {
         params: {
           filter: {
@@ -157,6 +159,12 @@ export default function Trends() {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
+      });
+
+      console.log('Sources API response:', {
+        status: response.status,
+        dataLength: response.data?.data?.length,
+        firstSource: response.data?.data?.[0]
       });
 
       return response.data?.data || [];
