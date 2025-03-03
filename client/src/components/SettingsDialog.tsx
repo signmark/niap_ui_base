@@ -18,6 +18,7 @@ interface ApiKey {
 export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
+  const [socialSearcherKey, setSocialSearcherKey] = useState("");
   const toast = useToast();
   const userId = useAuthStore((state) => state.userId);
 
@@ -48,12 +49,16 @@ export function SettingsDialog() {
     if (apiKeys) {
       const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
       const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
+      const socialSearcherKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'social_searcher');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
       }
       if (apifyKeyData) {
         setApifyKey(apifyKeyData.api_key);
+      }
+      if (socialSearcherKeyData) {
+        setSocialSearcherKey(socialSearcherKeyData.api_key);
       }
     }
   }, [apiKeys]);
@@ -66,7 +71,8 @@ export function SettingsDialog() {
 
       const services = [
         { name: 'perplexity', key: perplexityKey },
-        { name: 'apify', key: apifyKey }
+        { name: 'apify', key: apifyKey },
+        { name: 'social_searcher', key: socialSearcherKey }
       ];
 
       for (const service of services) {
@@ -75,12 +81,10 @@ export function SettingsDialog() {
         const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
         if (existingKey) {
-          // Обновляем существующий ключ
           await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
             api_key: service.key
           });
         } else {
-          // Создаем новый ключ
           await directusApi.post('/items/user_api_keys', {
             user_id: userId,
             service_name: service.name,
@@ -129,7 +133,20 @@ export function SettingsDialog() {
             placeholder="Введите API ключ"
           />
           <p className="text-sm text-muted-foreground">
-            Ключ используется для поиска источников и генерации контента
+            Ключ используется для поиска источников и генерации контента через Perplexity
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>API Ключ Social Searcher</Label>
+          <Input
+            type="password"
+            value={socialSearcherKey}
+            onChange={(e) => setSocialSearcherKey(e.target.value)}
+            placeholder="Введите API ключ"
+          />
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для поиска источников и анализа социальных сетей через Social Searcher
           </p>
         </div>
 
