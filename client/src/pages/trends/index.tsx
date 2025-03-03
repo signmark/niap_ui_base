@@ -105,14 +105,14 @@ export default function Trends() {
           throw new Error("Требуется авторизация");
         }
 
-        const response = await directusApi.get('/items/campaign_access', {
+        const response = await directusApi.get('/items/user_campaigns', {
           params: {
             filter: {
               user_id: {
                 _eq: userData?.id
               }
             },
-            fields: ['campaign_id.id', 'campaign_id.name', 'campaign_id.description', 'campaign_id.link', 'campaign_id.created_at', 'campaign_id.updated_at']
+            fields: ['id', 'name', 'description', 'link', 'created_at', 'updated_at']
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -123,15 +123,7 @@ export default function Trends() {
           return [];
         }
 
-        // Transform the response to match Campaign interface
-        return response.data.data.map((access: any) => ({
-          id: access.campaign_id.id,
-          name: access.campaign_id.name,
-          description: access.campaign_id.description,
-          link: access.campaign_id.link,
-          created_at: access.campaign_id.created_at,
-          updated_at: access.campaign_id.updated_at
-        }));
+        return response.data.data;
       } catch (error) {
         console.error("Error fetching campaigns:", error);
         throw error;
