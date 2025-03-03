@@ -21,6 +21,7 @@ interface NewSourcesDialogProps {
           rank: number;
           keyword: string;
           followers?: number;
+          description?: string; // Added description field
         }>;
       };
     };
@@ -30,13 +31,21 @@ interface NewSourcesDialogProps {
 interface ParsedSource {
   name: string;
   url: string;
-  type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'facebook' | 'youtube' | 'linkedin' | 'reddit' | 'website';
+  type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'youtube' | 'reddit' | 'website';
   rank: number;
   keyword: string;
   followers?: number;
+  description?: string;
 }
 
 const ITEMS_PER_PAGE = 5;
+
+// Helper functions
+const getRankBadge = (rank: number) => {
+  if (rank <= 3) return { color: 'bg-green-100 text-green-800', text: 'Эксперт' };
+  if (rank <= 6) return { color: 'bg-yellow-100 text-yellow-800', text: 'Специалист' };
+  return { color: 'bg-blue-100 text-blue-800', text: 'Тематический канал' };
+};
 
 const formatFollowers = (count?: number) => {
   if (!count) return 'Неизвестно';
@@ -86,13 +95,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           name = source.keyword || 'Unknown Source';
         }
 
-        return { 
-          name, 
-          url: source.url, 
+        return {
+          name,
+          url: source.url,
           type,
           rank: source.rank,
           keyword: source.keyword,
-          followers: source.followers
+          followers: source.followers,
+          description: source.description // Include description
         };
       }).filter(Boolean);
     } catch (e) {
@@ -128,11 +138,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   };
 
-  const getRankColor = (rank: number) => {
-    if (rank <= 3) return 'bg-green-100 text-green-800';
-    if (rank <= 6) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
-  };
 
   const addSelectedSources = async () => {
     if (selectedSources.length === 0) {
@@ -252,19 +257,26 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                         }}
                       />
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-medium">{source.name}</h3>
-                          <Badge className={getRankColor(source.rank)}>
-                            Рейтинг: {source.rank}/10
-                          </Badge>
                           {source.followers && (
-                            <Badge variant="outline">
+                            <Badge variant="outline" className="whitespace-nowrap">
                               {formatFollowers(source.followers)} подписчиков
                             </Badge>
                           )}
+                          <Badge className={getRankBadge(source.rank).color}>
+                            {getRankBadge(source.rank).text} • Рейтинг {source.rank}/10
+                          </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground break-all mt-1">
-                          <a 
+
+                        {source.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {source.description}
+                          </p>
+                        )}
+
+                        <p className="text-sm break-all mt-2">
+                          <a
                             href={source.url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -273,17 +285,16 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                             {source.url}
                           </a>
                         </p>
-                        <div className="mt-2 text-sm">
+
+                        <div className="mt-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">
                               {source.type === 'twitter' ? 'Twitter/X' :
-                                source.type === 'vk' ? 'ВКонтакте' :
-                                  source.type === 'telegram' ? 'Telegram' :
-                                    source.type === 'instagram' ? 'Instagram' :
-                                      source.type === 'facebook' ? 'Facebook' :
-                                        source.type === 'youtube' ? 'YouTube' :
-                                          source.type === 'linkedin' ? 'LinkedIn' :
-                                            source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
+                               source.type === 'vk' ? 'ВКонтакте' :
+                                 source.type === 'telegram' ? 'Telegram' :
+                                   source.type === 'instagram' ? 'Instagram' :
+                                     source.type === 'youtube' ? 'YouTube' :
+                                       source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                             </Badge>
                             <Badge variant="outline">
                               {source.keyword}
@@ -330,8 +341,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                 {isAdding ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {addedCount > 0 
-                      ? `Добавлено ${addedCount}${failedCount > 0 ? `, ошибок: ${failedCount}` : ''}...` 
+                    {addedCount > 0
+                      ? `Добавлено ${addedCount}${failedCount > 0 ? `, ошибок: ${failedCount}` : ''}...`
                       : 'Добавление...'}
                   </>
                 ) : (
