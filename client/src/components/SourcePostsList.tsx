@@ -6,7 +6,7 @@ import { ru } from 'date-fns/locale';
 
 interface SourcePost {
   id: string;
-  postContent: string | null;
+  post_content: string | null;
   source_id: string;
   campaign_id: string;
   created_at: string;
@@ -50,7 +50,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                 )}
               </div>
 
-              <p className="text-sm line-clamp-3">{post.postContent}</p>
+              <p className="text-sm line-clamp-3">{post.post_content}</p>
             </div>
           </CardContent>
         </Card>
