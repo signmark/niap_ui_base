@@ -314,7 +314,7 @@ export default function Trends() {
   });
 
   const { data: sourcePosts = [], isLoading: isLoadingSourcePosts } = useQuery<SourcePost[]>({
-    queryKey: ['source_posts', selectedCampaignId],
+    queryKey: ['source_posts', selectedCampaignId, selectedPeriod],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
       const authToken = localStorage.getItem('auth_token');
@@ -322,30 +322,29 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
-      console.log("Fetching source posts for campaign:", selectedCampaignId);
+      console.log("Fetching source posts with params:", {
+        campaignId: selectedCampaignId,
+        period: selectedPeriod
+      });
 
-      const response = await directusApi.get('/items/source_posts', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at'],
-          sort: ['-created_at']
-        },
+      // Use the server endpoint instead of direct Directus call
+      const response = await fetch(`/api/source-posts?campaignId=${selectedCampaignId}&period=${selectedPeriod}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to fetch source posts');
+      }
+
+      const data = await response.json();
       console.log("Source posts response:", {
-        status: response.status,
-        dataLength: response.data?.data?.length,
-        campaignId: selectedCampaignId
+        dataLength: data?.data?.length,
+        firstPost: data?.data?.[0]
       });
 
-      return response.data?.data || [];
+      return data.data || [];
     },
     enabled: !!selectedCampaignId
   });
