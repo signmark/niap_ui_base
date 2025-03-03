@@ -115,12 +115,12 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
       return [];
     }
 
-    // Make request to Social Searcher API
+    // Make request to Social Searcher API - только для YouTube
     const response = await axios.get('https://api.social-searcher.com/v2/users', {
       params: {
         q: encodeURIComponent(keyword),
         key: socialSearcherKey,
-        network: 'instagram,youtube,telegram,vk,reddit,twitter',
+        network: 'youtube', // Используем только YouTube
         lang: 'ru,en',
         size: 20
       },
@@ -129,7 +129,15 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
       }
     });
 
-    console.log('Social Searcher API response:', response.data);
+    console.log('Social Searcher API response:', {
+      status: response.status,
+      data: response.data,
+      params: {
+        keyword,
+        network: 'youtube',
+        lang: 'ru,en'
+      }
+    });
 
     if (!response.data?.users) {
       return [];
@@ -139,30 +147,21 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     return response.data.users
       .filter(user => {
         try {
-          // Only include users with required stats
           if (!user.url || !user.followers) {
-            console.log(`Skipping user - missing required fields:`, user);
+            console.log(`Skipping YouTube user - missing required fields:`, user);
             return false;
           }
 
-          // Find matching platform requirement
-          const platform = Object.keys(followerRequirements).find(p => user.url.includes(p));
-          if (!platform) {
-            console.log(`Skipping user - unsupported platform: ${user.url}`);
-            return false;
-          }
-
-          // Normalize URL
-          const normalizedUrl = normalizeSourceUrl(user.url, platform);
+          // Normalize YouTube URL
+          const normalizedUrl = normalizeSourceUrl(user.url, 'youtube.com');
           if (!normalizedUrl) {
-            console.log(`Skipping user - invalid URL format: ${user.url}`);
+            console.log(`Skipping invalid YouTube URL format: ${user.url}`);
             return false;
           }
 
-          // Check follower requirements
-          const minFollowers = followerRequirements[platform];
-          if (user.followers < minFollowers) {
-            console.log(`Skipping ${user.url} - insufficient followers: ${user.followers} < ${minFollowers}`);
+          // Проверка минимального количества подписчиков
+          if (user.followers < followerRequirements['youtube.com']) {
+            console.log(`Skipping ${normalizedUrl} - insufficient followers: ${user.followers} < ${followerRequirements['youtube.com']}`);
             return false;
           }
 
@@ -170,7 +169,7 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
           user.url = normalizedUrl;
           return true;
         } catch (error) {
-          console.error(`Error validating user:`, error);
+          console.error(`Error validating YouTube user:`, error);
           return false;
         }
       })
@@ -178,7 +177,7 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         url: user.url,
         followers: user.followers,
         rank: Math.min(Math.max(1, Math.ceil(10 - (Math.log10(user.followers) / 2))), 10),
-        description: user.description || user.bio || `Активный ${user.network} канал по теме ${keyword}`,
+        description: user.description || user.bio || `YouTube канал по теме ${keyword}`,
         keyword
       }));
 
