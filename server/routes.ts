@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertContentSourceSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
+import { directusApi } from './directus'; // Assuming this is defined elsewhere
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
@@ -110,13 +111,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/source-posts", async (req, res) => {
     try {
       const period = req.query.period as string;
-      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
-      const sourceId = req.query.sourceId ? Number(req.query.sourceId) : undefined;
+      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      const sourceId = req.query.sourceId ? String(req.query.sourceId) : undefined;
 
       console.log("Fetching source posts with params:", { period, campaignId, sourceId });
 
-      if (campaignId && isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
+      if (!campaignId) {
+        return res.status(400).json({ error: "Campaign ID is required" });
       }
 
       const from = new Date();
@@ -137,11 +138,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from.setDate(from.getDate() - 7);
       }
 
-      // Временно возвращаем пустой массив, т.к. функция хранилища будет добавлена позже
-      // const sourcePosts = await storage.getSourcePosts({ from, campaignId, sourceId });
-      const sourcePosts = [];
-      console.log('Found source posts:', sourcePosts);
-      res.json({ data: sourcePosts });
+      // Get posts from Directus
+      const authToken = req.headers.authorization;
+      if (!authToken) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      console.log("Making request to Directus with filter:", {
+        campaign_id: campaignId,
+        from: from.toISOString()
+      });
+
+      const response = await directusApi.get('/items/source_posts', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            },
+            created_at: {
+              _gte: from.toISOString()
+            }
+          },
+          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at'],
+          sort: ['-created_at']
+        },
+        headers: {
+          'Authorization': authToken
+        }
+      });
+
+      console.log('Directus API response:', {
+        status: response.status,
+        dataLength: response.data?.data?.length,
+        firstPost: response.data?.data?.[0]
+      });
+
+      res.json({ data: response.data?.data || [] });
     } catch (error) {
       console.error("Error fetching source posts:", error);
       res.status(500).json({ error: "Failed to fetch source posts" });
@@ -175,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const source of sources) {
         try {
           console.log(`Processing source: ${source.name} (${source.url})`);
-          
+
           // Генерация демонстрационных трендов для заполнения таблицы
           const sampleTopics = [
             {
@@ -197,13 +229,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               views: Math.floor(Math.random() * 8000) + 300
             }
           ];
-          
+
           // Сохранение трендов в базу данных
           for (const topic of sampleTopics) {
             await storage.createTrendTopic(topic);
             collectedTopicsCount++;
           }
-          
+
           console.log(`Added ${sampleTopics.length} sample trends for source ${source.name}`);
         } catch (sourceError) {
           console.error(`Error processing source ${source.name}:`, sourceError);
@@ -213,9 +245,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Trend collection completed. Added ${collectedTopicsCount} topics.`);
 
-      res.json({ 
-        message: "Trend collection completed successfully", 
-        topicsCollected: collectedTopicsCount 
+      res.json({
+        message: "Trend collection completed successfully",
+        topicsCollected: collectedTopicsCount
       });
     } catch (error) {
       console.error("Error collecting trends:", error);
@@ -331,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "URL and source type are required" });
       }
 
-      res.status(501).json({error: "Not Implemented"}); 
+      res.status(501).json({ error: "Not Implemented" });
 
     } catch (error) {
       console.error('Error parsing source:', error);
@@ -362,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get source for this campaign
-      const sources = await storage.getContentSources(undefined, Number(campaignId)); 
+      const sources = await storage.getContentSources(undefined, Number(campaignId));
       console.log('Found sources:', sources);
 
       const source = sources.find(s => String(s.id) === String(sourceId));
@@ -377,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Start crawling process first
         console.log('Starting crawling process for source:', source.name);
-        const topics = await crawler.crawlSource(source, Number(campaignId), undefined); 
+        const topics = await crawler.crawlSource(source, Number(campaignId), undefined);
         console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         if (topics.length === 0) {
@@ -385,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "No topics found for this source" });
         }
 
-        res.status(501).json({error: "Not Implemented"}); 
+        res.status(501).json({ error: "Not Implemented" });
 
       } catch (error) {
         console.error("Error during crawling:", error);
