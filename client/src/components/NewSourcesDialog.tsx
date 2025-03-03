@@ -221,7 +221,16 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                     />
                     <div className="flex-1">
                       <h3 className="font-medium">{source.name}</h3>
-                      <p className="text-sm text-muted-foreground break-all">{source.url}</p>
+                      <p className="text-sm text-muted-foreground break-all">
+                        <a 
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          {source.url}
+                        </a>
+                      </p>
                       <div className="mt-2 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Платформа:</span>

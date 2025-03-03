@@ -550,7 +550,16 @@ export default function Trends() {
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div>
                           <h3 className="font-medium">{source.name}</h3>
-                          <p className="text-sm text-muted-foreground">{source.url}</p>
+                          <p className="text-sm text-muted-foreground">
+                            <a 
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:underline"
+                            >
+                              {source.url}
+                            </a>
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-sm text-muted-foreground">
