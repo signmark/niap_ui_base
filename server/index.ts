@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Middleware для логирования запросов
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -38,54 +39,79 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    log("Starting server initialization...");
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    log("Registering routes...");
+    const server = await registerRoutes(app);
+    log("Routes registered successfully");
 
-    res.status(status).json({ message });
-    throw err;
-  });
+    // Глобальный обработчик ошибок
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+      log(`Error encountered: ${status} - ${message}`);
+      res.status(status).json({ message });
+    });
 
-  // Try ports 5000, 5001, 5002, etc. until we find an available one
-  const tryPort = async (port: number): Promise<void> => {
-    try {
-      await new Promise((resolve, reject) => {
-        server.listen({
-          port,
-          host: "0.0.0.0",
-          reusePort: true,
-        }, () => {
-          log(`serving on port ${port}`);
-          resolve(undefined);
-        }).once('error', (err) => {
-          if (err.code === 'EADDRINUSE') {
-            reject(err);
-          } else {
-            reject(err);
-          }
-        });
-      });
-    } catch (err) {
-      if (err.code === 'EADDRINUSE') {
-        // Try next port
-        await tryPort(port + 1);
-      } else {
-        throw err;
-      }
+    if (app.get("env") === "development") {
+      log("Setting up Vite in development mode...");
+      await setupVite(app, server);
+      log("Vite setup completed");
+    } else {
+      log("Setting up static file serving...");
+      serveStatic(app);
+      log("Static file serving setup completed");
     }
-  };
 
-  // Start with port 5000
-  await tryPort(5000);
+    // Try ports 5000, 5001, 5002, etc. until we find an available one
+    const tryPort = async (port: number): Promise<void> => {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          log(`Attempting to start server on port ${port}...`);
+          server.listen({
+            port,
+            host: "0.0.0.0",
+            reusePort: true,
+          }, () => {
+            log(`Server successfully started on port ${port}`);
+            resolve();
+          }).once('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying next port...`);
+              reject(err);
+            } else {
+              log(`Error starting server: ${err.message}`);
+              reject(err);
+            }
+          });
+        });
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+          await tryPort(port + 1);
+        } else {
+          throw err;
+        }
+      }
+    };
+
+    log("Initiating port binding sequence...");
+    await tryPort(5000);
+  } catch (error) {
+    log(`Fatal error during server startup: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    process.exit(1);
+  }
 })();
+
+// Глобальный обработчик необработанных исключений
+process.on('uncaughtException', (error) => {
+  log(`Uncaught Exception: ${error.message}`);
+  process.exit(1);
+});
+
+// Глобальный обработчик необработанных отклонений промисов
+process.on('unhandledRejection', (reason) => {
+  log(`Unhandled Promise Rejection: ${reason instanceof Error ? reason.message : 'Unknown reason'}`);
+  process.exit(1);
+});

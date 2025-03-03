@@ -10,6 +10,7 @@ import { useAuthStore } from "@/lib/store";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
+import { setupTokenRefresh } from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -37,16 +38,21 @@ export default function Login() {
         throw new Error("Неверный формат ответа от сервера");
       }
 
-      const token = authData.data.access_token;
+      const { access_token, refresh_token, expires } = authData.data;
 
       const { data: userData } = await directusApi.get('/users/me', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${access_token}`
         }
       });
 
-      localStorage.setItem('auth_token', authData.data.access_token);
-      setAuth(token, userData.data.id);
+      localStorage.setItem('auth_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      setAuth(access_token, userData.data.id);
+
+      // Устанавливаем автоматическое обновление токена
+      setupTokenRefresh(expires);
+
       navigate("/campaigns");
 
       toast.add({

@@ -1,17 +1,16 @@
 import axios from 'axios';
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.example.com';
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
 
 export const directusApi = axios.create({
   baseURL: DIRECTUS_URL,
   headers: {
-    'Authorization': `Bearer ${DIRECTUS_TOKEN}`,
     'Content-Type': 'application/json'
   }
 });
 
-// Add response interceptor for error handling
+// Обработка ошибок
 directusApi.interceptors.response.use(
   response => response,
   error => {
