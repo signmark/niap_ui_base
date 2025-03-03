@@ -83,6 +83,90 @@ function normalizeSourceUrl(url: string, platform: string): string | null {
   }
 }
 
+// Add interface for Social Searcher response
+interface SocialSearcherResponse {
+  posts?: Array<{
+    url: string;
+    network: string;
+    title?: string;
+    description?: string;
+    stats?: {
+      followers?: number;
+      following?: number;
+      posts?: number;
+    };
+  }>;
+}
+
+// Helper function for Social Searcher API
+async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
+  try {
+    // Get Social Searcher API key
+    const settings = await directusApi.get('/items/user_api_keys', {
+      params: {
+        filter: {
+          service_name: { _eq: 'social_searcher' }
+        }
+      },
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+
+    const socialSearcherKey = settings.data?.data?.[0]?.api_key;
+    if (!socialSearcherKey) {
+      console.log('Social Searcher API key not found');
+      return [];
+    }
+
+    // Make request to Social Searcher API
+    const response = await axios.get('https://api.social-searcher.com/v2/search', {
+      params: {
+        q: keyword,
+        key: socialSearcherKey,
+        type: 'user',
+        lang: 'ru,en',
+        limit: 10
+      }
+    });
+
+    const data = response.data as SocialSearcherResponse;
+
+    if (!data.posts) {
+      return [];
+    }
+
+    // Process and validate results
+    return data.posts
+      .filter(post => {
+        // Only include posts with required stats
+        if (!post.stats?.followers) {
+          return false;
+        }
+
+        // Find matching platform
+        const platform = Object.keys(followerRequirements).find(p => post.url.includes(p));
+        if (!platform) {
+          return false;
+        }
+
+        // Check follower requirements
+        return post.stats.followers >= followerRequirements[platform];
+      })
+      .map(post => ({
+        url: post.url,
+        followers: post.stats?.followers || 0,
+        rank: Math.min(Math.max(1, Math.ceil(10 - (Math.log10(post.stats?.followers || 1) / 2))), 10),
+        description: post.description || post.title || '',
+        keyword
+      }));
+
+  } catch (error) {
+    console.error('Error searching Social Searcher:', error);
+    return [];
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
@@ -393,202 +477,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
-
-      // Get Perplexity API key using correct endpoint and filter
-      const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        params: {
-          filter: {
-            service_name: { _eq: 'perplexity' },
-            user_id: { _eq: '2d48e263-f562-4e3f-a235-e597fd62d4d8' }
-          }
-        }
-      });
-
-      const perplexityKey = settings.data?.data?.[0]?.api_key;
-      if (!perplexityKey) {
-        return res.status(400).json({ error: "Perplexity API key not found. Please add it in settings." });
-      }
-
       const { keywords } = req.body;
+
       if (!Array.isArray(keywords) || keywords.length === 0) {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
       console.log('Starting source search for keywords:', keywords);
 
+      // Search using both APIs in parallel
       const searchPromises = keywords.map(async keyword => {
-        console.log(`Searching sources for keyword: ${keyword}`);
-
-        const requestBody = {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: `Вы - эксперт по поиску высококачественных источников по теме здорового питания и нутрициологии.
-
-ВАЖНЫЕ ТРЕБОВАНИЯ К ИСТОЧНИКАМ:
-1. Возвращайте ТОЛЬКО существующие и активные каналы с регулярными публикациями
-2. Тщательно проверяйте количество подписчиков:
-   - YouTube: строго > 100,000 подписчиков
-   - Instagram: строго > 50,000 подписчиков
-   - Telegram: строго > 5,000 подписчиков
-   - VK: строго > 10,000 подписчиков
-   - Reddit: строго > 50,000 участников
-   - Twitter/X: строго > 10,000 подписчиков
-
-3. Оценка качества (ранг от 1 до 10):
-   - 1-3: Профессиональные диетологи, врачи, эксперты с научным подходом
-   - 4-6: Популярные фитнес-тренеры и практикующие специалисты
-   - 7-10: Качественные тематические каналы
-
-4. Формат URL:
-   - Всегда используйте https://
-   - Для YouTube используйте ТОЛЬКО формат youtube.com/@username
-   - НЕ используйте кириллицу в URL
-   - ОБЯЗАТЕЛЬНО проверьте существование канала перед включением в список
-
-5. Формат ответа строго JSON:
-[{
-  "url": "https://youtube.com/@example",
-  "rank": 2,
-  "followers": 150000,
-  "description": "Подробное описание канала: тематика, экспертиза автора"
-}]`
-            },
-            {
-              role: "user",
-              content: `Найдите ТОП-5 самых авторитетных источников по теме: ${keyword}.
-ОБЯЗАТЕЛЬНО:
-1. Проверьте реальное существование канала
-2. Укажите точное количество подписчиков
-3. Оцените профессионализм автора для точного ранжирования
-4. Исключите заброшенные каналы
-5. Добавьте подробное описание для каждого источника`
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        };
-
-        const response = await axios.post(
-          'https://api.perplexity.ai/chat/completions',
-          requestBody,
-          {
-            headers: {
-              'Authorization': `Bearer ${perplexityKey}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (!response.data?.choices?.[0]?.message?.content) {
-          console.error(`Invalid API response for keyword ${keyword}:`, response.data);
-          throw new Error('Invalid API response structure');
-        }
-
-        const content = response.data.choices[0].message.content;
-        console.log(`Raw API response for keyword ${keyword}:`, content);
-
-        try {
-          const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
-
-          for (const match of jsonMatches) {
+        const [perplexityResults, socialSearcherResults] = await Promise.all([
+          // Existing Perplexity search
+          (async () => {
             try {
-              const sources = JSON.parse(match);
-
-              if (Array.isArray(sources)) {
-                const validSources = sources.filter(source => {
-                  try {
-                    if (!source.url || !source.followers || !source.description) {
-                      console.log(`Skipping source - missing required fields:`, source);
-                      return false;
-                    }
-
-                    // Find matching platform
-                    const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
-                    if (!platform) {
-                      console.log(`Skipping source - unsupported platform: ${source.url}`);
-                      return false;
-                    }
-
-                    // Normalize URL
-                    const normalizedUrl = normalizeSourceUrl(source.url, platform);
-                    if (!normalizedUrl) {
-                      console.log(`Skipping source - invalid URL format: ${source.url}`);
-                      return false;
-                    }
-
-                    const url = new URL(normalizedUrl);
-
-                    // Check for cyrillic characters
-                    if (/[а-яА-Я]/.test(url.href)) {
-                      console.log(`Skipping URL with cyrillic characters: ${url.href}`);
-                      return false;
-                    }
-
-                    // Platform-specific validations
-                    if (platform === 'youtube.com') {
-                      // Only accept /@username format
-                      if (!url.pathname.startsWith('/@')) {
-                        console.log(`Skipping invalid YouTube URL format: ${url.href}`);
-                        return false;
-                      }
-                    }
-
-                    // Check follower count requirement
-                    const minFollowers = followerRequirements[platform];
-                    if (source.followers < minFollowers) {
-                      console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${minFollowers}`);
-                      return false;
-                    }
-
-                    // Validate URL structure
-                    const hasValidPath = url.pathname.length > 1 &&
-                      !url.pathname.includes('?') &&
-                      !url.pathname.includes('search') &&
-                      !url.pathname.includes('explore');
-
-                    if (!hasValidPath) {
-                      console.log(`Skipping ${url.href} - invalid path structure`);
-                      return false;
-                    }
-
-                    // Store normalized URL back in source
-                    source.url = normalizedUrl;
-                    return true;
-                  } catch (error) {
-                    console.error(`Error validating source:`, error);
-                    return false;
-                  }
-                }).map(source => ({
-                  url: source.url,
-                  rank: Math.min(Math.max(1, source.rank || 5), 10),
-                  followers: source.followers,
-                  keyword,
-                  description: source.description
-                }));
-
-                if (validSources.length > 0) {
-                  console.log(`Found ${validSources.length} valid sources for ${keyword}:`, validSources);
-                  return validSources;
-                }
-              }
-            } catch (parseError) {
-              console.error(`Error parsing JSON match for ${keyword}:`, parseError);
-              continue;
+              // Existing Perplexity search code extracted to a separate function
+              const results = await existingPerplexitySearch(keyword, token);
+              return results;
+            } catch (error) {
+              console.error('Error in Perplexity search:', error);
+              return [];
             }
+          })(),
+          // New Social Searcher search
+          searchSocialSourcesByKeyword(keyword, token)
+        ]);
+
+        // Combine and deduplicate results
+        const combinedResults = [...perplexityResults, ...socialSearcherResults];
+
+        // Remove duplicates based on normalized URLs
+        const uniqueUrls = new Set();
+        return combinedResults.filter(source => {
+          const platform = Object.keys(followerRequirements).find(p => source.url.includes(p)) || '';
+          const normalizedUrl = normalizeSourceUrl(source.url, platform);
+
+          if (!normalizedUrl || uniqueUrls.has(normalizedUrl)) {
+            return false;
           }
 
-          console.error(`No valid sources found in response for ${keyword}`);
-          return [];
-
-        } catch (e) {
-          console.error(`Error processing sources for ${keyword}:`, e, content);
-          return [];
-        }
+          uniqueUrls.add(normalizedUrl);
+          return true;
+        });
       });
 
       const results = await Promise.all(searchPromises.map(p => p.catch(e => {
@@ -618,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         data: {
           data: {
-            sources: uniqueSources.map(({ url, rank, keyword, description }) => ({ url, rank, keyword, description })),
+            sources: uniqueSources,
             totalResults: results.length,
             combinedSourcesCount: allSources.length,
             topSourcesCount: uniqueSources.length
@@ -720,4 +650,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   console.log('Route registration completed');
   return httpServer;
+}
+
+// Helper function to handle Perplexity search (extracted from existing code)
+async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
+  const followerRequirements: PlatformRequirements = {
+    'youtube.com': 100000,
+    'reddit.com': 50000,
+    'vk.com': 10000,
+    't.me': 5000,
+    'instagram.com': 50000,
+    'twitter.com': 10000,
+    'x.com': 10000
+  };
+
+  const requestBody = {
+    model: "llama-3.1-sonar-small-128k-online",
+    messages: [
+      {
+        role: "system",
+        content: `Вы - эксперт по поиску высококачественных источников по теме здорового питания и нутрициологии.
+
+ВАЖНЫЕ ТРЕБОВАНИЯ К ИСТОЧНИКАМ:
+1. Возвращайте ТОЛЬКО существующие и активные каналы с регулярными публикациями
+2. Тщательно проверяйте количество подписчиков:
+   - YouTube: строго > 100,000 подписчиков
+   - Instagram: строго > 50,000 подписчиков
+   - Telegram: строго > 5,000 подписчиков
+   - VK: строго > 10,000 подписчиков
+   - Reddit: строго > 50,000 участников
+   - Twitter/X: строго > 10,000 подписчиков
+
+3. Оценка качества (ранг от 1 до 10):
+   - 1-3: Профессиональные диетологи, врачи, эксперты с научным подходом
+   - 4-6: Популярные фитнес-тренеры и практикующие специалисты
+   - 7-10: Качественные тематические каналы
+
+4. Формат URL:
+   - Всегда используйте https://
+   - Для YouTube используйте ТОЛЬКО формат youtube.com/@username
+   - НЕ используйте кириллицу в URL
+   - ОБЯЗАТЕЛЬНО проверьте существование канала перед включением в список
+
+5. Формат ответа строго JSON:
+[{
+  "url": "https://youtube.com/@example",
+  "rank": 2,
+  "followers": 150000,
+  "description": "Подробное описание канала: тематика, экспертиза автора"
+}]`
+      },
+      {
+        role: "user",
+        content: `Найдите ТОП-5 самых авторитетных источников по теме: ${keyword}.
+ОБЯЗАТЕЛЬНО:
+1. Проверьте реальное существование канала
+2. Укажите точное количество подписчиков
+3. Оцените профессионализм автора для точного ранжирования
+4. Исключите заброшенные каналы
+5. Добавьте подробное описание для каждого источника`
+      }
+    ],
+    max_tokens: 1000,
+    temperature: 0.7
+  };
+
+  const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    params: {
+      filter: {
+        service_name: { _eq: 'perplexity' },
+        user_id: { _eq: '2d48e263-f562-4e3f-a235-e597fd62d4d8' }
+      }
+    }
+  });
+
+  const perplexityKey = settings.data?.data?.[0]?.api_key;
+  if (!perplexityKey) {
+    return [];
+  }
+
+  const response = await axios.post(
+    'https://api.perplexity.ai/chat/completions',
+    requestBody,
+    {
+      headers: {
+        'Authorization': `Bearer ${perplexityKey}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  if (!response.data?.choices?.[0]?.message?.content) {
+    console.error(`Invalid API response for keyword ${keyword}:`, response.data);
+    throw new Error('Invalid API response structure');
+  }
+
+  const content = response.data.choices[0].message.content;
+  console.log(`Raw API response for keyword ${keyword}:`, content);
+
+  try {
+    const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
+
+    let results: any[] = [];
+    for (const match of jsonMatches) {
+      try {
+        const sources = JSON.parse(match);
+
+        if (Array.isArray(sources)) {
+          const validSources = sources.filter(source => {
+            try {
+              if (!source.url || !source.followers || !source.description) {
+                console.log(`Skipping source - missing required fields:`, source);
+                return false;
+              }
+
+              // Find matching platform
+              const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
+              if (!platform) {
+                console.log(`Skipping source - unsupported platform: ${source.url}`);
+                return false;
+              }
+
+              // Normalize URL
+              const normalizedUrl = normalizeSourceUrl(source.url, platform);
+              if (!normalizedUrl) {
+                console.log(`Skipping source - invalid URL format: ${source.url}`);
+                return false;
+              }
+
+              const url = new URL(normalizedUrl);
+
+              // Check for cyrillic characters
+              if (/[а-яА-Я]/.test(url.href)) {
+                console.log(`Skipping URL with cyrillic characters: ${url.href}`);
+                return false;
+              }
+
+              // Platform-specific validations
+              if (platform === 'youtube.com') {
+                // Only accept /@username format
+                if (!url.pathname.startsWith('/@')) {
+                  console.log(`Skipping invalid YouTube URL format: ${url.href}`);
+                  return false;
+                }
+              }
+
+              // Check follower count requirement
+              const minFollowers = followerRequirements[platform];
+              if (source.followers < minFollowers) {
+                console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${minFollowers}`);
+                return false;
+              }
+
+              // Validate URL structure
+              const hasValidPath = url.pathname.length > 1 &&
+                !url.pathname.includes('?') &&
+                !url.pathname.includes('search') &&
+                !url.pathname.includes('explore');
+
+              if (!hasValidPath) {
+                console.log(`Skipping ${url.href} - invalid path structure`);
+                return false;
+              }
+
+              // Store normalized URL back in source
+              source.url = normalizedUrl;
+              return true;
+            } catch (error) {
+              console.error(`Error validating source:`, error);
+              return false;
+            }
+          }).map(source => ({
+            url: source.url,
+            rank: Math.min(Math.max(1, source.rank || 5), 10),
+            followers: source.followers,
+            keyword,
+            description: source.description
+          }));
+
+          results = [...results,...validSources];
+        }
+      } catch (parseError) {
+        console.error(`Error parsing JSON match for ${keyword}:`, parseError);
+        continue;
+      }
+    }
+
+    return results;
+  } catch (e) {
+    console.error(`Error processing sources for ${keyword}:`, e, content);
+    return [];
+  }
 }
