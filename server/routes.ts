@@ -296,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Perplexity source collection endpoint
+  // Sources collection endpoint
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -330,53 +330,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Keywords array is required and cannot be empty" });
       }
 
-      // Call Perplexity API
-      const response = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
-        {
+      console.log('Starting source search for keywords:', keywords);
+
+      // Поиск источников для каждого ключевого слова отдельно
+      const searchPromises = keywords.map(async keyword => {
+        console.log(`Searching sources for keyword: ${keyword}`);
+
+        const requestBody = {
           model: "llama-3.1-sonar-small-128k-online",
           messages: [
             {
               role: "system",
-              content: "Возвращайте только массив существующих URL, без пояснений и дополнительного текста. Формат ответа должен быть строго JSON массивом: [\"url1\", \"url2\", \"url3\"]. Ищите ТОЛЬКО в следующих социальных сетях:\n- youtube.com/c/\n- reddit.com/r/\n- vk.com/\n- t.me/\n- facebook.com/groups/\n- instagram.com/\n- twitter.com/\nДругие сайты НЕ включайте в результат."
+              content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Отвечайте ТОЛЬКО массивом ключевых слов в формате JSON, без пояснений. Пример: ["ключевое слово 1", "ключевое слово 2"]. Все слова должны быть на русском языке.`
             },
             {
               role: "user",
-              content: `Найдите рабочие URL каналов и групп ТОЛЬКО в социальных сетях (YouTube, Reddit, VK, Telegram, Facebook, Instagram, Twitter) по теме: ${keywords.join(', ')}`
+              content: `Проанализируйте сайт ${keyword} и сгенерируйте список из 10-15 самых релевантных ключевых слов для его продвижения в социальных сетях, учитывая тематику и целевую аудиторию. Верните только JSON-массив.`
             }
-          ]
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${perplexityKey}`,
-            'Content-Type': 'application/json'
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        };
+
+        const response = await axios.post(
+          'https://api.perplexity.ai/chat/completions',
+          requestBody,
+          {
+            headers: {
+              'Authorization': `Bearer ${perplexityKey}`,
+              'Content-Type': 'application/json'
+            }
           }
+        );
+
+        if (!response.data?.choices?.[0]?.message?.content) {
+          console.error(`Invalid API response for keyword ${keyword}:`, response.data);
+          throw new Error('Invalid API response structure');
         }
-      );
 
-      if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid API response structure');
-      }
+        const content = response.data.choices[0].message.content;
+        console.log(`Raw API response for keyword ${keyword}:`, content);
 
-      const content = response.data.choices[0].message.content;
-      console.log('API response content:', content);
+        try {
+          // Попытка найти JSON массив в ответе
+          const match = content.match(/\[([\s\S]*?)\]/);
+          if (!match) {
+            console.error(`No JSON array found in response for keyword ${keyword}`);
+            throw new Error('Не удалось найти массив источников в ответе');
+          }
 
-      const socialUrlPattern = /((?:https?:\/\/)?(?:www\.)?(?:twitter\.com|vk\.com|t\.me|instagram\.com|facebook\.com|youtube\.com\/c|reddit\.com\/r)[^\s"'\)\]]+)/g;
-      const foundUrls = content.match(socialUrlPattern) || [];
+          // Парсим найденный массив
+          const keywords = JSON.parse(`[${match[1]}]`);
 
-      // Add https:// if missing
-      const normalizedUrls = foundUrls.map(url => {
-        if (!url.startsWith('http')) {
-          return `https://${url}`;
+          if (!Array.isArray(keywords)) {
+            console.error(`Invalid data format for keyword ${keyword}:`, keywords);
+            throw new Error('Некорректный формат данных');
+          }
+
+          // Проверяем и очищаем ключевые слова
+          const cleanedKeywords = keywords
+            .filter(kw => typeof kw === 'string' && kw.trim().length > 0)
+            .map(kw => kw.trim());
+
+          console.log(`Processed keywords for ${keyword}:`, cleanedKeywords);
+          return cleanedKeywords;
+
+        } catch (e) {
+          console.error(`Error processing keywords for ${keyword}:`, e, content);
+          throw new Error('Не удалось обработать ответ API. Пожалуйста, попробуйте еще раз.');
         }
-        return url;
       });
 
-      console.log('Found social media URLs:', normalizedUrls);
+      const results = await Promise.all(searchPromises.map(p => p.catch(e => {
+        console.error('Search promise error:', e);
+        return [];
+      })));
+
+      console.log('All search results:', results);
+
+      // Объединяем все результаты
+      const allKeywords = results.flat();
+      console.log('Combined keywords:', allKeywords);
+
+      // Удаляем дубликаты и сортируем
+      const uniqueKeywords = [...new Set(allKeywords)];
+      console.log('Unique keywords:', uniqueKeywords);
 
       res.json({
         success: true,
-        data: normalizedUrls
+        data: {
+          keywords: uniqueKeywords
+        }
       });
 
     } catch (error) {

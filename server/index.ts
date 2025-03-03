@@ -67,34 +67,24 @@ app.use((req, res, next) => {
       log("Static file serving setup completed");
     }
 
-    // Try ports 5000, 5001, 5002, etc. until we find an available one
-    let currentPort = 5000;
-    const startServer = () => {
-      return new Promise<void>((resolve, reject) => {
-        log(`Attempting to start server on port ${currentPort}...`);
-        const serverInstance = server.listen({
-          port: currentPort,
-          host: "0.0.0.0",
-        }, () => {
-          log(`Server successfully started on port ${currentPort}`);
-          resolve();
-        });
+    // Always bind to port 5000
+    const PORT = 5000;
+    log(`Attempting to start server on port ${PORT}...`);
 
-        serverInstance.once('error', (err: NodeJS.ErrnoException) => {
-          if (err.code === 'EADDRINUSE') {
-            log(`Port ${currentPort} is in use, trying next port...`);
-            currentPort++;
-            startServer().then(resolve).catch(reject);
-          } else {
-            log(`Error starting server: ${err.message}`);
-            reject(err);
-          }
-        });
-      });
-    };
+    server.listen({
+      port: PORT,
+      host: "0.0.0.0",
+    }, () => {
+      log(`Server successfully started on port ${PORT}`);
+    }).on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        log(`Fatal error: Port ${PORT} is already in use. Please ensure no other process is using this port.`);
+      } else {
+        log(`Fatal error starting server: ${err.message}`);
+      }
+      process.exit(1);
+    });
 
-    log("Initiating port binding sequence...");
-    await startServer();
   } catch (error) {
     log(`Fatal error during server startup: ${error instanceof Error ? error.message : 'Unknown error'}`);
     process.exit(1);

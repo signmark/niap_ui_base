@@ -245,23 +245,53 @@ export default function Trends() {
         throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
       }
 
-      const response = await fetch('/api/sources/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ keywords: keywordsList })
+      // Поиск источников для каждого ключевого слова отдельно
+      const searchPromises = keywordsList.map(keyword =>
+        fetch('/api/sources/collect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ keywords: [keyword], topSourcesOnly: true })
+        }).then(res => res.json())
+      );
+
+      const results = await Promise.all(searchPromises);
+
+      // Объединяем и фильтруем результаты
+      const combinedSources = results.reduce((acc, result) => {
+        if (result.data && Array.isArray(result.data.sources)) {
+          result.data.sources.forEach(source => {
+            const existingSource = acc.find(s => s.url === source.url);
+            if (existingSource) {
+              // Обновляем рейтинг, если источник уже существует
+              existingSource.rank = Math.min(existingSource.rank, source.rank);
+              existingSource.keywords = [...new Set([...existingSource.keywords, ...source.keywords])];
+            } else {
+              // Добавляем новый источник
+              acc.push({
+                ...source,
+                keywords: [source.keyword]
+              });
+            }
+          });
+        }
+        return acc;
+      }, []);
+
+      // Сортируем по рейтингу и берем только топовые источники
+      const topSources = combinedSources
+        .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+        .slice(0, 10);
+
+      console.log('API Response:', { 
+        totalResults: results.length,
+        combinedSourcesCount: combinedSources.length,
+        topSourcesCount: topSources.length
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Ошибка при поиске источников');
-      }
-
-      const data = await response.json();
-      console.log('API Response:', data);
-      return data;
+      return { data: { sources: topSources } };
     },
     onSuccess: (data) => {
       console.log('Success Data:', data);
@@ -269,7 +299,7 @@ export default function Trends() {
       setIsSearchingNewSources(true);
       toast.add({
         title: "Найдены источники",
-        description: "Проверьте список найденных источников"
+        description: `Найдено ${data.data.sources.length} качественных источников`
       });
     },
     onError: (error: Error) => {
