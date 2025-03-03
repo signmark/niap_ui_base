@@ -15,11 +15,9 @@ type Period = "3days" | "7days" | "14days" | "30days";
 export function TrendsList({ campaignId }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
 
-  // Получаем тренды напрямую, используя campaign_id
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign_trend_topics", campaignId, selectedPeriod],
     queryFn: async () => {
-      console.log("Fetching trends for campaign:", campaignId);
       try {
         const response = await directusApi.get('/items/campaign_trend_topics', {
           params: {
@@ -33,6 +31,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
               'title',
               'source_id',
               'source_id.name',
+              'source_id.url',
               'reactions',
               'comments',
               'views',
@@ -43,7 +42,6 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           }
         });
 
-        console.log("Trends response:", response.data);
         return response.data?.data || [];
       } catch (error) {
         console.error("Error fetching trends:", error);
@@ -114,6 +112,16 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 <h3 className="font-medium">{trend.title}</h3>
                 <p className="text-sm text-muted-foreground">
                   Источник: {trend.source_id?.name || 'Неизвестный источник'}
+                  {trend.source_id?.url && (
+                    <a 
+                      href={trend.source_id.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-500 hover:underline"
+                    >
+                      (открыть)
+                    </a>
+                  )}
                 </p>
                 <div className="flex gap-4 text-sm">
                   <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>

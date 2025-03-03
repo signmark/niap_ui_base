@@ -93,7 +93,7 @@ export function SourcePostsList({ campaignId, isLoading: parentLoading }: Source
                   href={post.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-500 hover:underline"
+                  className="text-blue-500 hover:underline text-xs"
                 >
                   Открыть оригинал
                 </a>
