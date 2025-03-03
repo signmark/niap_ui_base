@@ -43,7 +43,9 @@ app.use((req, res, next) => {
     log("Starting server initialization...");
 
     log("Registering routes...");
+    console.log("Starting route registration...");
     const server = await registerRoutes(app);
+    console.log("Route registration completed");
     log("Routes registered successfully");
 
     // Глобальный обработчик ошибок
@@ -66,38 +68,33 @@ app.use((req, res, next) => {
     }
 
     // Try ports 5000, 5001, 5002, etc. until we find an available one
-    const tryPort = async (port: number): Promise<void> => {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          log(`Attempting to start server on port ${port}...`);
-          server.listen({
-            port,
-            host: "0.0.0.0",
-            reusePort: true,
-          }, () => {
-            log(`Server successfully started on port ${port}`);
-            resolve();
-          }).once('error', (err: NodeJS.ErrnoException) => {
-            if (err.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying next port...`);
-              reject(err);
-            } else {
-              log(`Error starting server: ${err.message}`);
-              reject(err);
-            }
-          });
+    let currentPort = 5000;
+    const startServer = () => {
+      return new Promise<void>((resolve, reject) => {
+        log(`Attempting to start server on port ${currentPort}...`);
+        const serverInstance = server.listen({
+          port: currentPort,
+          host: "0.0.0.0",
+        }, () => {
+          log(`Server successfully started on port ${currentPort}`);
+          resolve();
         });
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-          await tryPort(port + 1);
-        } else {
-          throw err;
-        }
-      }
+
+        serverInstance.once('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            log(`Port ${currentPort} is in use, trying next port...`);
+            currentPort++;
+            startServer().then(resolve).catch(reject);
+          } else {
+            log(`Error starting server: ${err.message}`);
+            reject(err);
+          }
+        });
+      });
     };
 
     log("Initiating port binding sequence...");
-    await tryPort(5000);
+    await startServer();
   } catch (error) {
     log(`Fatal error during server startup: ${error instanceof Error ? error.message : 'Unknown error'}`);
     process.exit(1);

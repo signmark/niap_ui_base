@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/api";
+import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
@@ -75,7 +75,6 @@ export default function Trends() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  // Get user information for filtering
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ["user_data"],
     queryFn: async () => {
@@ -89,7 +88,6 @@ export default function Trends() {
             'Authorization': `Bearer ${authToken}`
           }
         });
-        console.log("User data response:", response.data);
         return response.data?.data;
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -107,33 +105,33 @@ export default function Trends() {
           throw new Error("Требуется авторизация");
         }
 
-        console.log("Fetching campaigns for user ID:", userData?.id);
-
-        const response = await directusApi.get('/items/user_campaigns', {
+        const response = await directusApi.get('/items/campaign_access', {
           params: {
             filter: {
               user_id: {
                 _eq: userData?.id
               }
             },
-            fields: ['id', 'name', 'description', 'link', 'created_at', 'updated_at']
+            fields: ['campaign_id.id', 'campaign_id.name', 'campaign_id.description', 'campaign_id.link', 'campaign_id.created_at', 'campaign_id.updated_at']
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
 
-        console.log("Raw campaigns response:", response.data);
-
         if (!response.data?.data) {
-          console.error("No campaigns data in response:", response);
           return [];
         }
 
-        const campaigns = response.data.data;
-        console.log("Processed campaigns:", campaigns);
-
-        return campaigns;
+        // Transform the response to match Campaign interface
+        return response.data.data.map((access: any) => ({
+          id: access.campaign_id.id,
+          name: access.campaign_id.name,
+          description: access.campaign_id.description,
+          link: access.campaign_id.link,
+          created_at: access.campaign_id.created_at,
+          updated_at: access.campaign_id.updated_at
+        }));
       } catch (error) {
         console.error("Error fetching campaigns:", error);
         throw error;
@@ -551,7 +549,7 @@ export default function Trends() {
                         <div>
                           <h3 className="font-medium">{source.name}</h3>
                           <p className="text-sm text-muted-foreground">
-                            <a 
+                            <a
                               href={source.url}
                               target="_blank"
                               rel="noopener noreferrer"
