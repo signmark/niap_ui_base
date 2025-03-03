@@ -52,8 +52,15 @@ function normalizeSourceUrl(url: string, platform: string): string | null {
         }
         break;
       case 'vk.com':
-        // Ensure VK URLs don't contain @ symbol
+        // Ensure VK URLs don't contain @ symbol and handle Cyrillic
         normalizedUrl = normalizedUrl.replace('@', '');
+        if (normalizedUrl.includes('%')) {
+          try {
+            normalizedUrl = decodeURIComponent(normalizedUrl);
+          } catch (e) {
+            console.log('Error decoding VK URL:', e);
+          }
+        }
         break;
       case 'instagram.com':
         // Normalize Instagram URLs
