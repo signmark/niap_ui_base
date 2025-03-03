@@ -331,28 +331,50 @@ export default function Trends() {
       }
 
       console.log("Fetching source posts with params:", {
+        period: selectedPeriod,
         campaignId: selectedCampaignId,
-        period: selectedPeriod
+        sourceId: undefined
       });
 
-      // Use the server endpoint instead of direct Directus call
-      const response = await fetch(`/api/source-posts?campaignId=${selectedCampaignId}&period=${selectedPeriod}`, {
+      const from = new Date();
+      switch (selectedPeriod) {
+        case '3days':
+          from.setDate(from.getDate() - 3);
+          break;
+        case '14days':
+          from.setDate(from.getDate() - 14);
+          break;
+        case '30days':
+          from.setDate(from.getDate() - 30);
+          break;
+        default: // '7days'
+          from.setDate(from.getDate() - 7);
+      }
+
+      const response = await directusApi.get('/items/source_posts', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaignId
+            },
+            created_at: {
+              _gte: from.toISOString()
+            }
+          },
+          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at'],
+          sort: ['-created_at']
+        },
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch source posts');
-      }
-
-      const data = await response.json();
       console.log("Source posts response:", {
-        dataLength: data?.data?.length,
-        firstPost: data?.data?.[0]
+        dataLength: response.data?.data?.length,
+        firstPost: response.data?.data?.[0]
       });
 
-      return data.data || [];
+      return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
   });
