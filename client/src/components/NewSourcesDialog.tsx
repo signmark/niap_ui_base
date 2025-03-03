@@ -11,19 +11,29 @@ import { Loader2 } from "lucide-react";
 interface NewSourcesDialogProps {
   campaignId: string;
   onClose: () => void;
-  sourcesData: any;
+  sourcesData: {
+    data: {
+      sources: Array<{
+        url: string;
+        rank: number;
+        keyword: string;
+      }>;
+    };
+  };
 }
 
 interface ParsedSource {
   name: string;
   url: string;
   type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'facebook' | 'youtube' | 'linkedin' | 'reddit' | 'website';
+  rank: number;
+  keyword: string;
 }
 
 const ITEMS_PER_PAGE = 5;
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  const toast = useToast();
+  const { toast } = useToast();
   const [selectedSources, setSelectedSources] = useState<ParsedSource[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,28 +55,31 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
   const sources = (() => {
     try {
-      if (!sourcesData?.data) {
+      if (!sourcesData?.data?.sources) {
         console.error('Invalid API response structure:', sourcesData);
         return [];
       }
 
-      return sourcesData.data
-        .map((url: string) => {
-          const type = detectSourceType(url);
-          if (type === 'website') return null;
+      return sourcesData.data.sources.map(source => {
+        const type = detectSourceType(source.url);
+        let name = '';
+        try {
+          const urlObj = new URL(source.url);
+          name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
+          name = decodeURIComponent(name);
+        } catch (e) {
+          console.error('Error parsing URL:', e);
+          name = source.keyword || 'Unknown Source';
+        }
 
-          let name = '';
-          try {
-            const urlObj = new URL(url);
-            name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
-          } catch (e) {
-            console.error('Error parsing URL:', e);
-            name = 'Unknown Source';
-          }
-
-          return { name, url, type };
-        })
-        .filter(Boolean);
+        return { 
+          name, 
+          url: source.url, 
+          type,
+          rank: source.rank,
+          keyword: source.keyword
+        };
+      }).filter(Boolean);
     } catch (e) {
       console.error('Error parsing sources:', e);
       return [];
@@ -102,7 +115,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
   const addSelectedSources = async () => {
     if (selectedSources.length === 0) {
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Выберите хотя бы один источник"
@@ -123,8 +136,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       let successCount = 0;
       let failureCount = 0;
 
-      // Show initial toast for starting the process
-      toast.add({
+      toast({
         title: "Добавление источников",
         description: "Начинаем добавление выбранных источников..."
       });
@@ -153,14 +165,12 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
       await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
 
-      // Show final status toast
       if (successCount > 0) {
-        toast.add({
+        toast({
           title: "Успешно",
           description: `Добавлено ${successCount} из ${selectedSources.length} источников${failureCount > 0 ? `, не удалось добавить ${failureCount}` : ''}`
         });
 
-        // Close dialog after short delay to show the success message
         setTimeout(() => {
           onClose();
         }, 1500);
@@ -170,7 +180,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
     } catch (error) {
       console.error('Error adding sources:', error);
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: error instanceof Error ? error.message : "Не удалось добавить источники"
@@ -244,6 +254,10 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                                         source.type === 'linkedin' ? 'LinkedIn' :
                                           source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                           </span>
+                          <span className="text-muted-foreground ml-2">Релевантность:</span>
+                          <span className="font-medium">{source.rank}/10</span>
+                          <span className="text-muted-foreground ml-2">Ключевое слово:</span>
+                          <span className="font-medium">{source.keyword}</span>
                         </div>
                       </div>
                     </div>

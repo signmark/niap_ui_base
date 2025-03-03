@@ -341,11 +341,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Отвечайте ТОЛЬКО массивом ключевых слов в формате JSON, без пояснений. Пример: ["ключевое слово 1", "ключевое слово 2"]. Все слова должны быть на русском языке.`
+              content: `Вы - эксперт по поиску качественных источников в социальных сетях. Возвращайте только массив URL самых популярных и авторитетных каналов/групп, без пояснений и текста. Формат ответа строго JSON массив: [{"url":"url1","rank":1}, {"url":"url2","rank":2}]. Ранг от 1 до 10, где 1 - самый качественный источник. Ищите ТОЛЬКО в:\n- youtube.com/c/ (каналы с >100K подписчиков)\n- reddit.com/r/ (сабреддиты с >50K участников)\n- vk.com/ (группы с >10K подписчиков)\n- t.me/ (каналы с >5K подписчиков)\n- facebook.com/groups/ (группы с >10K участников)\n- instagram.com/ (аккаунты с >50K подписчиков)\n- twitter.com/ (аккаунты с >10K подписчиков)\nДругие сайты НЕ включайте в результат.`
             },
             {
               role: "user",
-              content: `Проанализируйте сайт ${keyword} и сгенерируйте список из 10-15 самых релевантных ключевых слов для его продвижения в социальных сетях, учитывая тематику и целевую аудиторию. Верните только JSON-массив.`
+              content: `Найдите ТОП-3 самых популярных и качественных канала/группы ТОЛЬКО в указанных социальных сетях по теме: ${keyword}`
             }
           ],
           max_tokens: 1000,
@@ -380,24 +380,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Парсим найденный массив
-          const keywords = JSON.parse(`[${match[1]}]`);
+          const sources = JSON.parse(`[${match[1]}]`);
 
-          if (!Array.isArray(keywords)) {
-            console.error(`Invalid data format for keyword ${keyword}:`, keywords);
+          if (!Array.isArray(sources)) {
+            console.error(`Invalid data format for keyword ${keyword}:`, sources);
             throw new Error('Некорректный формат данных');
           }
 
-          // Проверяем и очищаем ключевые слова
-          const cleanedKeywords = keywords
-            .filter(kw => typeof kw === 'string' && kw.trim().length > 0)
-            .map(kw => kw.trim());
-
-          console.log(`Processed keywords for ${keyword}:`, cleanedKeywords);
-          return cleanedKeywords;
+          // Проверяем и нормализуем URL
+          return sources.map(source => ({
+            url: source.url.startsWith('http') ? source.url : `https://${source.url}`,
+            rank: source.rank,
+            keyword
+          }));
 
         } catch (e) {
-          console.error(`Error processing keywords for ${keyword}:`, e, content);
-          throw new Error('Не удалось обработать ответ API. Пожалуйста, попробуйте еще раз.');
+          console.error(`Error processing sources for ${keyword}:`, e, content);
+          return [];
         }
       });
 
@@ -409,17 +408,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('All search results:', results);
 
       // Объединяем все результаты
-      const allKeywords = results.flat();
-      console.log('Combined keywords:', allKeywords);
+      const allSources = results.flat();
+      console.log('Combined sources:', allSources);
 
-      // Удаляем дубликаты и сортируем
-      const uniqueKeywords = [...new Set(allKeywords)];
-      console.log('Unique keywords:', uniqueKeywords);
+      // Сортируем по рангу и удаляем дубликаты
+      const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
+        .sort((a, b) => (a.rank || 10) - (b.rank || 10));
+
+      console.log('Unique sources:', uniqueSources);
 
       res.json({
         success: true,
         data: {
-          keywords: uniqueKeywords
+          sources: uniqueSources,
+          totalResults: results.length,
+          combinedSourcesCount: allSources.length,
+          topSourcesCount: uniqueSources.length
         }
       });
 
