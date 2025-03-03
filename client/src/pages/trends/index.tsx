@@ -253,45 +253,49 @@ export default function Trends() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify({ keywords: [keyword], topSourcesOnly: true })
+          body: JSON.stringify({ keywords: [keyword] })
         }).then(res => res.json())
       );
 
       const results = await Promise.all(searchPromises);
 
-      // Объединяем и фильтруем результаты
-      const combinedSources = results.reduce((acc, result) => {
-        if (result.data && Array.isArray(result.data.sources)) {
-          result.data.sources.forEach(source => {
+      // Объединяем все результаты
+      const allSources = results.reduce((acc, result) => {
+        if (result.data?.data?.sources && Array.isArray(result.data.data.sources)) {
+          result.data.data.sources.forEach(source => {
             const existingSource = acc.find(s => s.url === source.url);
             if (existingSource) {
               // Обновляем рейтинг, если источник уже существует
               existingSource.rank = Math.min(existingSource.rank, source.rank);
-              existingSource.keywords = [...new Set([...existingSource.keywords, ...source.keywords])];
             } else {
               // Добавляем новый источник
-              acc.push({
-                ...source,
-                keywords: [source.keyword]
-              });
+              acc.push(source);
             }
           });
         }
         return acc;
       }, []);
 
-      // Сортируем по рейтингу и берем только топовые источники
-      const topSources = combinedSources
-        .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+      // Сортируем по рангу и берем только топовые источники
+      const topSources = allSources
+        .sort((a, b) => (a.rank || 10) - (b.rank || 10))
         .slice(0, 10);
 
-      console.log('API Response:', { 
+      console.log('Search results:', {
         totalResults: results.length,
-        combinedSourcesCount: combinedSources.length,
-        topSourcesCount: topSources.length
+        combinedSourcesCount: allSources.length,
+        topSourcesCount: topSources.length,
+        sources: topSources
       });
 
-      return { data: { sources: topSources } };
+      return {
+        success: true,
+        data: {
+          data: {
+            sources: topSources
+          }
+        }
+      };
     },
     onSuccess: (data) => {
       console.log('Success Data:', data);
@@ -299,7 +303,7 @@ export default function Trends() {
       setIsSearchingNewSources(true);
       toast.add({
         title: "Найдены источники",
-        description: `Найдено ${data.data.sources.length} качественных источников`
+        description: `Найдено ${data.data.data.sources.length} качественных источников`
       });
     },
     onError: (error: Error) => {

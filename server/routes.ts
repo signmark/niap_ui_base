@@ -420,10 +420,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         data: {
-          sources: uniqueSources,
-          totalResults: results.length,
-          combinedSourcesCount: allSources.length,
-          topSourcesCount: uniqueSources.length
+          data: {
+            sources: uniqueSources,
+            totalResults: results.length,
+            combinedSourcesCount: allSources.length,
+            topSourcesCount: uniqueSources.length
+          }
         }
       });
 
