@@ -321,6 +321,9 @@ export default function Trends() {
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
+
+      console.log("Fetching source posts for campaign:", selectedCampaignId);
+
       const response = await directusApi.get('/items/source_posts', {
         params: {
           filter: {
@@ -328,12 +331,20 @@ export default function Trends() {
               _eq: selectedCampaignId
             }
           },
-          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at']
+          fields: ['id', 'postContent', 'source_id', 'campaign_id', 'created_at'],
+          sort: ['-created_at']
         },
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
+
+      console.log("Source posts response:", {
+        status: response.status,
+        dataLength: response.data?.data?.length,
+        campaignId: selectedCampaignId
+      });
+
       return response.data?.data || [];
     },
     enabled: !!selectedCampaignId
