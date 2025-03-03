@@ -36,7 +36,7 @@ interface ParsedSource {
 const ITEMS_PER_PAGE = 5;
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const [selectedSources, setSelectedSources] = useState<ParsedSource[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
