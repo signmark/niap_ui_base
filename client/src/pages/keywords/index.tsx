@@ -108,7 +108,7 @@ export default function Keywords() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
-      setSearchResults([]); // Очищаем результаты поиска после успешного добавления
+      setSearchResults([]); 
       toast({
         description: "Ключевые слова добавлены"
       });
@@ -127,25 +127,24 @@ export default function Keywords() {
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }
-      const data = await response.json();
-      return data;
+      return await response.json();
     },
     onSuccess: (data) => {
-      console.log("Search response:", data);
       if (!data?.content?.includingPhrases?.items) {
         throw new Error("Некорректный формат данных от API");
       }
 
+      // Извлекаем только нужные поля и преобразуем их
       const keywords = data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
-        trend: parseInt(item.number.replace(/,/g, ''), 10) || 0,
+        trend: parseInt(item.number.replace(/\D/g, ''), 10),
         selected: false
       }));
 
       setSearchResults(keywords);
       setIsSearching(false);
       toast({
-        description: "Найдены ключевые слова"
+        description: `Найдено ${keywords.length} ключевых слов`
       });
     },
     onError: (error: Error) => {
