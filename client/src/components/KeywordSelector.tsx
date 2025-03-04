@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Исправлен импорт
 import { directusApi } from "@/lib/directus";
 import { Search, Loader2 } from "lucide-react";
 import { KeywordTable } from "@/components/KeywordTable";
@@ -16,8 +16,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast(); // Правильное использование хука
 
   // Обработчик клика вне компонента
   useEffect(() => {
@@ -63,13 +63,22 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     setIsSearching(true);
 
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Ошибка при поиске ключевых слов");
+        }
+        return response.json();
+      })
       .then(rawData => {
         console.log("Raw API Response:", rawData);
-        const keywords = rawData?.data?.keywords || [];
-        console.log("Processed keywords:", keywords);
+        if (!rawData?.data?.keywords) {
+          throw new Error("Некорректный формат данных от API");
+        }
 
-        const formattedResults = keywords.map(kw => ({
+        const keywords = rawData.data.keywords;
+        console.log("Extracted keywords:", keywords);
+
+        const formattedResults = keywords.map((kw: any) => ({
           keyword: kw.keyword,
           trend: kw.trend,
           competition: kw.competition,
@@ -86,7 +95,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         console.error("Search error:", error);
         toast({
           variant: "destructive",
-          description: "Ошибка при поиске ключевых слов"
+          description: error.message || "Ошибка при поиске ключевых слов"
         });
       })
       .finally(() => {
