@@ -7,10 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
-import { directusApi } from "@/lib/directus";
+import { Loader2 } from "lucide-react";
 
 interface Keyword {
   id: string;
@@ -21,21 +18,13 @@ interface Keyword {
 
 interface KeywordTableProps {
   keywords: Keyword[];
-  existingKeywords: any[];
   isLoading: boolean;
-  campaignId?: string;
-  onDelete: (id: string) => void;
 }
 
 export function KeywordTable({
   keywords = [],
-  existingKeywords = [],
-  isLoading,
-  campaignId,
-  onDelete
+  isLoading
 }: KeywordTableProps) {
-  const { add: toast } = useToast();
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -44,7 +33,7 @@ export function KeywordTable({
     );
   }
 
-  if (keywords.length === 0 && (!campaignId || existingKeywords.length === 0)) {
+  if (keywords.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         Нет ключевых слов
@@ -54,64 +43,24 @@ export function KeywordTable({
 
   return (
     <div className="space-y-8">
-      {keywords.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Ключевые слова</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keywords.map((keyword) => (
-                <TableRow key={keyword.id}>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend_score}</TableCell>
-                  <TableCell>{keyword.mentions_count}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete(keyword.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* Таблица существующих ключевых слов */}
-      {campaignId && existingKeywords.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {existingKeywords.map((keyword:any) => (
-                <TableRow key={keyword.id}>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend_score}</TableCell>
-                  <TableCell>{keyword.mentions_count}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Ключевое слово</TableHead>
+            <TableHead>Тренд</TableHead>
+            <TableHead>Конкуренция</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {keywords.map((keyword) => (
+            <TableRow key={keyword.id}>
+              <TableCell>{keyword.keyword}</TableCell>
+              <TableCell>{keyword.trend_score}</TableCell>
+              <TableCell>{keyword.mentions_count}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
