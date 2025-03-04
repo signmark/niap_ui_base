@@ -659,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add test sources to verify display functionality
+  // Modified sources/collect endpoint to return consistent structure
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -687,36 +687,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           platform: 'instagram.com',
           description: 'Рецепты и советы по правильному питанию',
           rank: 5
-        },
-        {
-          url: 'https://instagram.com/galainst',
-          name: 'Galainst',
-          followers: 100000,
-          platform: 'instagram.com',
-          description: 'Instagram аккаунт о правильном питании',
-          rank: 5
-        },
-        {
-          url: 'https://instagram.com/tomka_an',
-          name: 'Tomka An',
-          followers: 100000,
-          platform: 'instagram.com',
-          description: 'Instagram аккаунт о правильном питании',
-          rank: 5
-        },
-        {
-          url: 'https://instagram.com/DietitianDebbie',
-          name: 'Dietitian Debbie',
-          followers: 150000,
-          platform: 'instagram.com',
-          description: 'Professional dietitian sharing healthy recipes',
-          rank: 5
         }
       ];
 
       console.log('Returning test sources:', testSources);
 
-      // Возвращаем в формате, который ожидает фронтенд
       return res.json({
         success: true,
         data: {

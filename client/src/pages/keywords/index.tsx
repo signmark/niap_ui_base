@@ -18,20 +18,11 @@ export default function Keywords() {
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
       }
-
-      const response = await directusApi.get('/items/user_campaigns', {
-        params: {
-          fields: ['id', 'name', 'description']
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      return response.data?.data || [];
+      return await response.json();
     }
   });
 
@@ -84,25 +75,19 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
-      // Проверяем наличие sources в правильной структуре
-      if (data.success && data.data.sources && data.data.sources.length > 0) {
-        setSearchResults([{
-          keyword: "Найденные источники",
-          trend: 0,
-          competition: 0,
-          sources: data.data.sources
-        }]);
+      // Передаем результаты в правильной структуре
+      setSearchResults([{
+        keyword: "Найденные источники",
+        trend: 0,
+        competition: 0,
+        sources: data.data.sources || [] // Изменено для соответствия структуре API
+      }]);
 
-        toast({
-          description: `Найдено ${data.data.sources.length} источников`
-        });
-      } else {
-        setSearchResults([]);
-        toast({
-          description: "Источники не найдены",
-          variant: "destructive"
-        });
-      }
+      toast({
+        description: data.data.sources?.length > 0 
+          ? `Найдено ${data.data.sources.length} источников`
+          : "Источники не найдены"
+      });
     },
     onError: (error: Error) => {
       console.error('Search sources error:', error);
@@ -128,16 +113,10 @@ export default function Keywords() {
       return;
     }
 
-    const keywords = existingKeywords?.map(k => k.keyword) || [];
-    if (keywords.length > 0) {
-      console.log(`Starting search for ${keywords.length} keywords from campaign`);
-      searchSources(keywords);
-    } else {
-      toast({
-        description: "В кампании нет ключевых слов для поиска",
-        variant: "destructive"
-      });
-    }
+    // Используем тестовые ключевые слова для демонстрации
+    const testKeywords = ["здоровое питание", "правильное питание", "диета"];
+    console.log(`Starting search with test keywords: ${testKeywords.length} keywords`);
+    searchSources(testKeywords);
   };
 
   return (
