@@ -80,9 +80,9 @@ export default function Keywords() {
       return await response.json();
     },
     onSuccess: (data) => {
-      // Map API response to the format KeywordTable expects
+      // Объединяем все найденные источники в один список
       const results = [{
-        keyword: "Найденные источники",
+        keyword: "Найденные источники для кампании",
         trend: 0,
         competition: 0,
         sources: data.sources || []
