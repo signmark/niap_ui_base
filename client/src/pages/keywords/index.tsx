@@ -65,10 +65,12 @@ export default function Keywords() {
   // Поиск источников для всех ключевых слов кампании
   const { mutate: searchSources, isPending: isSearching } = useMutation({
     mutationFn: async (keywords: string[]) => {
+      console.log('Searching sources for keywords:', keywords);
       const response = await fetch(`/api/sources/collect`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({ keywords })
       });
@@ -81,19 +83,25 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       // Объединяем все найденные источники в один список
-      const results = [{
-        keyword: "Найденные источники для кампании",
-        trend: 0,
-        competition: 0,
-        sources: data.sources || []
-      }];
+      if (data.sources && data.sources.length > 0) {
+        const results = [{
+          keyword: "Найденные источники для кампании",
+          trend: 0,
+          competition: 0,
+          sources: data.sources
+        }];
 
-      setSearchResults(results);
-      toast({
-        description: data.sources?.length ? 
-          `Найдено ${data.sources.length} источников` :
-          "Источники не найдены"
-      });
+        setSearchResults(results);
+        toast({
+          description: `Найдено ${data.sources.length} источников`
+        });
+      } else {
+        setSearchResults([]);
+        toast({
+          description: "Источники не найдены",
+          variant: "destructive"
+        });
+      }
     },
     onError: (error: Error) => {
       setSearchResults([]);
@@ -112,6 +120,7 @@ export default function Keywords() {
     if (value && value !== "loading" && value !== "empty") {
       const keywords = existingKeywords?.map(k => k.keyword) || [];
       if (keywords.length > 0) {
+        console.log(`Starting search for ${keywords.length} keywords from campaign`);
         searchSources(keywords);
       }
     }
@@ -144,7 +153,7 @@ export default function Keywords() {
                 campaigns.map((campaign: Campaign) => (
                   <SelectItem 
                     key={campaign.id} 
-                    value={campaign.id}
+                    value={String(campaign.id)}
                   >
                     {campaign.name}
                   </SelectItem>
