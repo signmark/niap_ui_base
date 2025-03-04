@@ -13,6 +13,7 @@ import type { Campaign } from "@shared/schema";
 interface SearchResult {
   keyword: string;
   trend: number;
+  competition: number;
   selected: boolean;
 }
 
@@ -60,6 +61,41 @@ export default function Keywords() {
     enabled: !!selectedCampaign
   });
 
+  const { mutate: addKeywords } = useMutation({
+    mutationFn: async (keywords: SearchResult[]) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      const promises = keywords.map(keyword =>
+        directusApi.post('/items/user_keywords', {
+          campaign_id: selectedCampaign,
+          keyword: keyword.keyword,
+          trend_score: keyword.trend,
+          mentions_count: keyword.competition,
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+      setSearchResults([]); 
+      toast({
+        description: "Ключевые слова добавлены"
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Не удалось добавить ключевые слова"
+      });
+    }
+  });
+
   const { mutate: deleteKeyword } = useMutation({
     mutationFn: async (keywordId: string) => {
       const authToken = localStorage.getItem('auth_token');
@@ -86,41 +122,6 @@ export default function Keywords() {
     }
   });
 
-  const { mutate: addKeywords } = useMutation({
-    mutationFn: async (keywords: SearchResult[]) => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
-      const promises = keywords.map(keyword =>
-        directusApi.post('/items/user_keywords', {
-          campaign_id: selectedCampaign,
-          keyword: keyword.keyword,
-          trend_score: keyword.trend,
-          mentions_count: 0
-        }, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        })
-      );
-      await Promise.all(promises);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
-      setSearchResults([]); 
-      toast({
-        description: "Ключевые слова добавлены"
-      });
-    },
-    onError: () => {
-      toast({
-        variant: "destructive",
-        description: "Не удалось добавить ключевые слова"
-      });
-    }
-  });
-
   const { mutate: searchKeywords } = useMutation({
     mutationFn: async (query: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
@@ -138,6 +139,7 @@ export default function Keywords() {
       const keywords = data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
         trend: parseInt(item.number.replace(/\D/g, ''), 10),
+        competition: item.competition || 0,
         selected: false
       }));
 
