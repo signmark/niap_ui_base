@@ -231,21 +231,21 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
 
 // Helper function to handle Perplexity search - специализируется на Instagram и других платформах
 async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
-  const followerRequirements: PlatformRequirements = {
-    'instagram.com': 50000,
-    'vk.com': 10000,
-    't.me': 5000,
-    'reddit.com': 50000,
-    'twitter.com': 10000,
-    'x.com': 10000
-  };
+    const followerRequirements: PlatformRequirements = {
+      'instagram.com': 50000,
+      'vk.com': 10000,
+      't.me': 5000,
+      'reddit.com': 50000,
+      'twitter.com': 10000,
+      'x.com': 10000
+    };
 
-  const requestBody = {
-    model: "llama-3.1-sonar-small-128k-online",
-    messages: [
-      {
-        role: "system",
-        content: `Вы - эксперт по поиску высококачественных источников в социальных сетях, специализирующийся на Instagram, Telegram, VK и Reddit.
+    const requestBody = {
+      model: "llama-3.1-sonar-small-128k-online",
+      messages: [
+        {
+          role: "system",
+          content: `Вы - эксперт по поиску высококачественных источников в социальных сетях, специализирующийся на Instagram, Telegram, VK и Reddit.
 
 ВАЖНЫЕ ТРЕБОВАНИЯ К ИСТОЧНИКАМ:
 1. Возвращайте ТОЛЬКО существующие и активные аккаунты с регулярными публикациями
@@ -273,143 +273,133 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
   "followers": 150000,
   "description": "Подробное описание аккаунта: тематика, экспертиза автора"
 }]`
-      },
-      {
-        role: "user",
-        content: `Найдите ТОП-5 самых авторитетных источников в Instagram и других социальных сетях (кроме YouTube) по теме: ${keyword}.
+        },
+        {
+          role: "user",
+          content: `Найдите ТОП-5 самых авторитетных источников в Instagram и других социальных сетях (кроме YouTube) по теме: ${keyword}.
 ОБЯЗАТЕЛЬНО:
 1. Проверьте реальное существование аккаунта
 2. Укажите точное количество подписчиков
 3. Оцените профессионализм автора для точного ранжирования
 4. Исключите заброшенные аккаунты
 5. Добавьте подробное описание для каждого источника`
-      }
-    ],
-    max_tokens: 1000,
-    temperature: 0.7
-  };
-
-  const settings = await axios.get(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    params: {
-      filter: {
-        service_name: { _eq: 'perplexity' }
-      }
-    }
-  });
-
-  const perplexityKey = settings.data?.data?.[0]?.api_key;
-  if (!perplexityKey) {
-    return [];
-  }
-
-  const response = await axios.post(
-    'https://api.perplexity.ai/chat/completions',
-    requestBody,
-    {
-      headers: {
-        'Authorization': `Bearer ${perplexityKey}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
-
-  if (!response.data?.choices?.[0]?.message?.content) {
-    console.error(`Invalid API response for keyword ${keyword}:`, response.data);
-    throw new Error('Invalid API response structure');
-  }
-
-  const content = response.data.choices[0].message.content;
-  console.log(`Raw API response for keyword ${keyword}:`, content);
-
-  try {
-    const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
-
-    let results: any[] = [];
-    for (const match of jsonMatches) {
-      try {
-        const sources = JSON.parse(match);
-
-        if (Array.isArray(sources)) {
-          const validSources = sources.filter(source => {
-            try {
-              if (!source.url || !source.followers || !source.description) {
-                console.log(`Skipping source - missing required fields:`, source);
-                return false;
-              }
-
-              // Find matching platform
-              const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
-              if (!platform) {
-                console.log(`Skipping source - unsupported platform: ${source.url}`);
-                return false;
-              }
-
-              // Normalize URL
-              const normalizedUrl = normalizeSourceUrl(source.url, platform);
-              if (!normalizedUrl) {
-                console.log(`Skipping source - invalid URL format: ${source.url}`);
-                return false;
-              }
-
-              const url = new URL(normalizedUrl);
-
-              // Check for cyrillic characters
-              if (/[а-яА-Я]/.test(url.href)) {
-                console.log(`Skipping URL with cyrillic characters: ${url.href}`);
-                return false;
-              }
-
-              // Check follower count requirement
-              const minFollowers = followerRequirements[platform];
-              if (source.followers < minFollowers) {
-                console.log(`Skipping ${url.href} - insufficient followers: ${source.followers} < ${minFollowers}`);
-                return false;
-              }
-
-              // Validate URL structure
-              const hasValidPath = url.pathname.length > 1 &&
-                !url.pathname.includes('?') &&
-                !url.pathname.includes('search') &&
-                !url.pathname.includes('explore');
-
-              if (!hasValidPath) {
-                console.log(`Skipping ${url.href} - invalid path structure`);
-                return false;
-              }
-
-              // Store normalized URL back in source
-              source.url = normalizedUrl;
-              return true;
-            } catch (error) {
-              console.error(`Error validating source:`, error);
-              return false;
-            }
-          }).map(source => ({
-            url: source.url,
-            rank: Math.min(Math.max(1, source.rank || 5), 10),
-            followers: source.followers,
-            keyword,
-            description: source.description,
-            platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
-          }));
-
-          results = [...results,...validSources];
         }
-      } catch (parseError) {
-        console.error(`Error parsing JSON match for ${keyword}:`, parseError);
-        continue;
-      }
-    }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    };
 
-    return results;
-  } catch (e) {
-    console.error(`Error processing sources for ${keyword}:`, e, content);
-    return [];
+    try {
+      const settings = await directusApi.get('/items/user_api_keys', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          filter: {
+            service_name: { _eq: 'perplexity' }
+          }
+        }
+      });
+
+      const perplexityKey = settings.data?.data?.[0]?.api_key;
+      if (!perplexityKey) {
+        console.error('Perplexity API key not found');
+        return [];
+      }
+
+      const response = await axios.post(
+        'https://api.perplexity.ai/chat/completions',
+        requestBody,
+        {
+          headers: {
+            'Authorization': `Bearer ${perplexityKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.data?.choices?.[0]?.message?.content) {
+        console.error(`Invalid API response for keyword ${keyword}:`, response.data);
+        throw new Error('Invalid API response structure');
+      }
+
+      const content = response.data.choices[0].message.content;
+      console.log(`Raw API response for keyword ${keyword}:`, content);
+
+      try {
+        // Extract JSON arrays from the content
+        const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
+        let results: any[] = [];
+
+        for (const match of jsonMatches) {
+          try {
+            const sources = JSON.parse(match);
+            if (!Array.isArray(sources)) continue;
+
+            const validSources = sources.filter(source => {
+              try {
+                // Basic validation
+                if (!source.url || !source.followers || !source.description) {
+                  console.log(`Skipping source - missing required fields:`, source);
+                  return false;
+                }
+
+                // Normalize URL
+                let normalizedUrl = source.url;
+                if (!normalizedUrl.startsWith('http')) {
+                  normalizedUrl = `https://${normalizedUrl}`;
+                }
+
+                // Find matching platform
+                const platform = Object.keys(followerRequirements).find(p => normalizedUrl.includes(p));
+                if (!platform) {
+                  console.log(`Skipping source - unsupported platform: ${normalizedUrl}`);
+                  return false;
+                }
+
+                // Check follower count requirement
+                const minFollowers = followerRequirements[platform];
+                if (source.followers < minFollowers) {
+                  console.log(`Skipping ${normalizedUrl} - insufficient followers: ${source.followers} < ${minFollowers}`);
+                  return false;
+                }
+
+                // Store normalized URL back in source
+                source.url = normalizedUrl;
+                return true;
+              } catch (error) {
+                console.error(`Error validating source:`, error);
+                return false;
+              }
+            });
+
+            const mappedSources = validSources.map(source => ({
+              url: source.url,
+              rank: Math.min(Math.max(1, source.rank || 5), 10),
+              followers: source.followers,
+              keyword,
+              description: source.description,
+              platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
+            }));
+
+            results = [...results, ...mappedSources];
+          } catch (parseError) {
+            console.error(`Error parsing JSON match for ${keyword}:`, parseError);
+            continue;
+          }
+        }
+
+        console.log(`Found ${results.length} valid sources for keyword ${keyword}`);
+        return results;
+      } catch (e) {
+        console.error(`Error processing sources for ${keyword}:`, e, content);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error in Perplexity search:', error);
+      return [];
+    }
   }
-}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
@@ -756,46 +746,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })()
         ]);
 
-      // Combine results
-      const combinedResults = [...perplexityResults, ...socialSearcherResults];
+        // Combine results
+        const combinedResults = [...perplexityResults, ...socialSearcherResults];
 
-      console.log(`Combined results for ${keyword}:`, {
-        perplexityCount: perplexityResults.length,
-        socialSearcherCount: socialSearcherResults.length,
-        totalCount: combinedResults.length
+        console.log(`Combined results for ${keyword}:`, {
+          perplexityCount: perplexityResults.length,
+          socialSearcherCount: socialSearcherResults.length,
+          totalCount: combinedResults.length
+        });
+
+        return combinedResults;
       });
 
-      return combinedResults;
-    });
+      const results = await Promise.all(searchPromises);
+      const allSources = results.flat();
 
-    const results = await Promise.all(searchPromises);
-    const allSources = results.flat();
+      console.log('All sources count:', allSources.length);
 
-    console.log('All sources count:', allSources.length);
+      // Remove duplicates and sort by rank and followers
+      const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
+        .sort((a, b) => {
+          // First sort by rank
+          const rankDiff = (a.rank || 5) - (b.rank || 5);
+          if (rankDiff !== 0) return rankDiff;
+          // Then by followers if ranks are equal
+          return (b.followers || 0) - (a.followers || 0);
+        });
 
-    // Remove duplicates and sort by rank and followers
-    const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
-      .sort((a, b) => {
-        // First sort by rank
-        const rankDiff = (a.rank || 5) - (b.rank || 5);
-        if (rankDiff !== 0) return rankDiff;
-        // Then by followers if ranks are equal
-        return (b.followers || 0) - (a.followers || 0);
+      console.log('Unique sources count:', uniqueSources.length);
+
+      // Return data in the format expected by frontend
+      res.json({ sources: uniqueSources });
+
+    } catch (error) {
+      console.error('Error collecting sources:', error);
+      res.status(500).json({
+        error: "Failed to collect sources",
+        details: error instanceof Error ? error.message : "Unknown error"
       });
-
-    console.log('Unique sources count:', uniqueSources.length);
-
-    // Return data in the format expected by frontend
-    res.json({ sources: uniqueSources });
-
-  } catch (error) {
-    console.error('Error collecting sources:', error);
-    res.status(500).json({
-      error: "Failed to collect sources",
-      details: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
+    }
+  });
 
   // Apify social media parsing endpoint
   app.post("/api/sources/parse", async (req, res) => {
