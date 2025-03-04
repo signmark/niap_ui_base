@@ -27,12 +27,7 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  // Debug logging
-  console.log('NewSourcesDialog received data:', sourcesData);
-
   const sources = sourcesData?.data?.sources || [];
-  console.log('Processed sources:', sources);
-
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const { add: toast } = useToast();
@@ -78,9 +73,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   };
 
-  // Debug logging
-  console.log('Rendering with sources count:', sources.length);
-
   return (
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
@@ -88,18 +80,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {/* Debug info */}
-        <div className="text-xs bg-gray-100 p-2 rounded mb-4">
-          <pre>
-            {JSON.stringify({
-              hasSourcesData: !!sourcesData,
-              success: sourcesData?.success,
-              sourceCount: sources.length,
-              firstSource: sources[0]
-            }, null, 2)}
-          </pre>
-        </div>
-
         {sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Нет подходящих источников
@@ -107,8 +87,8 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         ) : (
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {sources.map((source, index) => (
-              <Card key={index} className="p-4">
-                <CardContent className="p-0">
+              <Card key={index}>
+                <CardContent>
                   <div className="flex items-start gap-4">
                     <Checkbox
                       checked={selectedSources.includes(source.url)}
