@@ -659,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Modified sources/collect endpoint to return consistent structure
+  // Modified sources/collect endpoint to use real search
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -667,52 +667,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
+      const token = authHeader.replace('Bearer ', '');
       const { keywords } = req.body;
       console.log('Starting source search for keywords:', keywords);
 
-      // Test data with real accounts
-      const testSources = [
-        {
-          url: 'https://instagram.com/bewellbykelly',
-          name: 'Kelly LeVeque',
-          followers: 550700,
-          platform: 'instagram.com',
-          description: 'Clinical nutritionist, best-selling author, and mom',
-          rank: 5
-        },
-        {
-          url: 'https://instagram.com/pp_mari_food',
-          name: 'Марина',
-          followers: 200000,
-          platform: 'instagram.com',
-          description: 'Рецепты и советы по правильному питанию',
-          rank: 5
-        },
-        {
-          url: 'https://instagram.com/galainst',
-          name: 'Galainst',
-          followers: 150000,
-          platform: 'instagram.com',
-          description: 'Health and wellness advocate',
-          rank: 5
-        },
-        {
-          url: 'https://instagram.com/tomka_an',
-          name: 'Tomka An',
-          followers: 180000,
-          platform: 'instagram.com',
-          description: 'Fitness and nutrition expert',
-          rank: 5
+      // Check cache for each keyword first
+      const cachedResults = keywords.map(keyword => {
+        const cached = getCachedResults(keyword);
+        if (cached) {
+          console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
+          return cached;
         }
-      ];
+        return null;
+      });
 
-      console.log('Returning test sources:', testSources);
+      // If all keywords have cached results, merge and return them
+      if (cachedResults.every(result => result !== null)) {
+        console.log('All results found in cache');
+        const uniqueSources = cachedResults.flat().reduce((acc: any[], source) => {
+          if (!acc.some(s => s.url === source.url)) {
+            acc.push(source);
+          }
+          return acc;
+        }, []);
 
-      // Return in the expected format
+        return res.json({
+          success: true,
+          data: {
+            sources: uniqueSources
+          }
+        });
+      }
+
+      // Collect sources from multiple services for keywords without cache
+      const allResults = await Promise.all(
+        keywords.map(async (keyword: string, index: number) => {
+          if (cachedResults[index]) {
+            return cachedResults[index];
+          }
+
+          const [socialResults, perplexityResults] = await Promise.all([
+            searchSocialSourcesByKeyword(keyword, token),
+            existingPerplexitySearch(keyword, token)
+          ]);
+
+          const results = [...socialResults, ...perplexityResults];
+
+          // Cache the results
+          if (results.length > 0) {
+            console.log(`Caching ${results.length} results for keyword: ${keyword}`);
+            searchCache.set(keyword, {
+              timestamp: Date.now(),
+              results
+            });
+          }
+
+          return results;
+        })
+      );
+
+      // Merge all results and remove duplicates
+      const uniqueSources = allResults.flat().reduce((acc: any[], source) => {
+        const exists = acc.some(s => s.url === source.url);
+        if (!exists) {
+          acc.push(source);
+        }
+        return acc;
+      }, []);
+
+      console.log(`Found ${uniqueSources.length} unique sources across all keywords`);
+
       return res.json({
         success: true,
         data: {
-          sources: testSources
+          sources: uniqueSources
         }
       });
 
