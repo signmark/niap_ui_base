@@ -9,21 +9,31 @@ import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
-import { useAuthStore } from "@/lib/store";
 
 export default function Keywords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.userId);
 
   // Получаем список кампаний пользователя
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await directusApi.get('/items/user_campaigns');
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      const response = await directusApi.get('/items/user_campaigns', {
+        params: {
+          fields: ['id', 'name', 'description']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
       return response.data?.data || [];
     }
   });
@@ -33,6 +43,12 @@ export default function Keywords() {
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
       if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") return [];
+
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
       const response = await directusApi.get('/items/user_keywords', {
         params: {
           filter: {
@@ -40,6 +56,9 @@ export default function Keywords() {
               _eq: selectedCampaign
             }
           }
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
         }
       });
       return response.data?.data || [];
@@ -83,7 +102,7 @@ export default function Keywords() {
   });
 
   const handleSearch = () => {
-    if (!searchTerm || !selectedCampaign) return;
+    if (!searchTerm) return;
     searchKeywords(searchTerm);
   };
 
@@ -114,73 +133,75 @@ export default function Keywords() {
       </div>
 
       <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex gap-4">
-            <Select 
-              value={selectedCampaign} 
-              onValueChange={handleCampaignChange}
-            >
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Выберите кампанию" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingCampaigns ? (
-                  <SelectItem value="loading">Загрузка...</SelectItem>
-                ) : !campaigns || campaigns.length === 0 ? (
-                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-                ) : (
-                  campaigns.map((campaign: Campaign) => (
-                    <SelectItem 
-                      key={campaign.id} 
-                      value={campaign.id}
-                    >
-                      {campaign.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-4">
-            <Input
-              placeholder="Введите ключевое слово для поиска"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSearch} 
-              disabled={isSearching || !searchTerm || !isValidCampaignSelected}
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Поиск...
-                </>
+        <CardContent className="p-6">
+          <Select 
+            value={selectedCampaign} 
+            onValueChange={handleCampaignChange}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Выберите кампанию" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingCampaigns ? (
+                <SelectItem value="loading">Загрузка...</SelectItem>
+              ) : !campaigns || campaigns.length === 0 ? (
+                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
               ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Искать
-                </>
+                campaigns.map((campaign: Campaign) => (
+                  <SelectItem 
+                    key={campaign.id} 
+                    value={campaign.id}
+                  >
+                    {campaign.name}
+                  </SelectItem>
+                ))
               )}
-            </Button>
-          </div>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
       {isValidCampaignSelected && (
-        <KeywordTable 
-          keywords={searchResults}
-          existingKeywords={existingKeywords || []}
-          isLoading={isLoadingKeywords || isSearching}
-          campaignId={selectedCampaign}
-          onKeywordsUpdated={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
-          }}
-        />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex gap-4">
+              <Input
+                placeholder="Введите ключевое слово для поиска"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleSearch} 
+                disabled={isSearching || !searchTerm}
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Поиск...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Искать
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
+
+      <KeywordTable 
+        keywords={searchResults}
+        existingKeywords={existingKeywords || []}
+        isLoading={isLoadingKeywords || isSearching}
+        campaignId={selectedCampaign}
+        onKeywordsUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
+        }}
+      />
     </div>
   );
 }
