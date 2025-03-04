@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +109,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Найденные источники</DialogTitle>
+        <DialogDescription>
+          Выберите источники для добавления в кампанию
+        </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-4">
@@ -121,10 +124,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             <div className="flex items-center justify-between px-4">
               <div className="flex items-center gap-2">
                 <Checkbox
+                  id="select-all"
                   checked={currentSources.every(source => selectedSources.includes(source.url))}
                   onCheckedChange={handleSelectAll}
+                  aria-label="Выбрать все источники на текущей странице"
                 />
-                <span className="text-sm font-medium">Выбрать все на странице</span>
+                <label htmlFor="select-all" className="text-sm font-medium">
+                  Выбрать все на странице
+                </label>
               </div>
               <div className="text-sm text-muted-foreground">
                 {sources.length} источников
@@ -132,10 +139,11 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             </div>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {currentSources.map((source, index) => (
-                <Card key={index}>
+                <Card key={source.url}>
                   <CardContent className="py-4">
                     <div className="flex items-start gap-4">
                       <Checkbox
+                        id={`source-${index}`}
                         checked={selectedSources.includes(source.url)}
                         onCheckedChange={(checked) => {
                           if (checked) {
@@ -144,6 +152,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                             setSelectedSources(selectedSources.filter(url => url !== source.url));
                           }
                         }}
+                        aria-label={`Выбрать источник ${source.name}`}
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -188,6 +197,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                   size="icon"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Предыдущая страница"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -199,6 +209,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                   size="icon"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Следующая страница"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

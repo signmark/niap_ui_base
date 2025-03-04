@@ -120,37 +120,28 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         return [];
       }
 
-      const validSources = await Promise.all(
-        (response.data?.posts || [])
-          .filter((post: any) => {
-            // Фильтруем посты на русском языке
-            const hasRussianText = /[а-яА-ЯёЁ]/.test(post.text || '') || /[а-яА-ЯёЁ]/.test(post.title || '');
-            return hasRussianText;
-          })
-          .map(async (post: any) => {
-            const url = normalizeSourceUrl(post.user?.url, post.network);
-            if (!url) return null;
+      const validSources = (response.data?.posts || [])
+        .filter((post: any) => {
+          // Фильтруем посты на русском языке
+          const hasRussianText = /[а-яА-ЯёЁ]/.test(post.text || '') || /[а-яА-ЯёЁ]/.test(post.title || '');
+          return hasRussianText;
+        })
+        .map((post: any) => {
+          const url = normalizeSourceUrl(post.user?.url, post.network);
+          if (!url) return null;
 
-            try {
-              const profileCheck = await axios.head(url);
-              if (profileCheck.status !== 200) return null;
+          return {
+            url,
+            name: post.user?.name || '',
+            followers: 100000, // Заглушка, в реальности нужно парсить
+            platform: post.network,
+            description: post.text || `${post.network === 'youtube' ? 'YouTube канал' : 'Instagram аккаунт'}: ${post.user?.name}`,
+            rank: 5
+          };
+        })
+        .filter(Boolean);
 
-              return {
-                url,
-                name: post.user?.name || '',
-                followers: 100000, // Заглушка, в реальности нужно парсить
-                platform: post.network,
-                description: post.text || `${post.network === 'youtube' ? 'YouTube канал' : 'Instagram аккаунт'}: ${post.user?.name}`,
-                rank: 5
-              };
-            } catch (error) {
-              console.log(`Profile ${url} not found or not accessible`);
-              return null;
-            }
-          })
-      );
-
-      return validSources.filter(Boolean);
+      return validSources;
 
     } catch (apiError: any) {
       if (apiError.response?.status === 403) {
@@ -325,23 +316,9 @@ https://www.instagram.com/username/ - description`
     const content = response.data.choices[0].message.content;
     console.log(`Raw API response for keyword ${keyword}:`, content);
 
-    // Извлекаем источники из текста и проверяем их существование
-    const extractedSources = extractSourcesFromText(content);
-    const validatedSources = await Promise.all(
-      extractedSources.map(async (source) => {
-        try {
-          const profileCheck = await axios.head(source.url);
-          if (profileCheck.status !== 200) return null;
-          return source;
-        } catch (error) {
-          console.log(`Profile ${source.url} not found or not accessible`);
-          return null;
-        }
-      })
-    );
-
-    const sources = validatedSources.filter(Boolean);
-    console.log(`Found ${sources.length} valid sources for keyword ${keyword}`);
+    // Извлекаем источники из текста
+    const sources = extractSourcesFromText(content);
+    console.log(`Found ${sources.length} sources for keyword ${keyword}`);
 
     // Кешируем результаты
     if (sources.length > 0) {
