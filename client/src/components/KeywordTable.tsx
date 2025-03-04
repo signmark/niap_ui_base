@@ -7,7 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface Keyword {
   id: string;
@@ -19,11 +20,13 @@ interface Keyword {
 interface KeywordTableProps {
   keywords: Keyword[];
   isLoading: boolean;
+  onDelete: (id: string) => void;
 }
 
 export function KeywordTable({
   keywords = [],
-  isLoading
+  isLoading,
+  onDelete
 }: KeywordTableProps) {
   if (isLoading) {
     return (
@@ -49,6 +52,7 @@ export function KeywordTable({
             <TableHead>Ключевое слово</TableHead>
             <TableHead>Тренд</TableHead>
             <TableHead>Конкуренция</TableHead>
+            <TableHead className="w-[80px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -57,6 +61,15 @@ export function KeywordTable({
               <TableCell>{keyword.keyword}</TableCell>
               <TableCell>{keyword.trend_score}</TableCell>
               <TableCell>{keyword.mentions_count}</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(keyword.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
