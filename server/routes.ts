@@ -5,7 +5,7 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 function getCachedResults(keyword: string): any[] | null {
   const cached = searchCache.get(keyword);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`Using cached results for keyword: ${keyword}`);
+    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
     return cached.results;
   }
   return null;
@@ -741,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check cache first
         const cached = getCachedResults(keyword);
         if (cached) {
-          console.log(`Found ${cached.length} cached results for ${keyword}`);
+          console.log(`Using ${cached.length} cached results for ${keyword}`);
           allResults.push(...cached);
           continue;
         }
@@ -749,16 +749,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Add delay between keyword searches
         await delay(1000);
 
-        const perplexityResults = await existingPerplexitySearch(keyword, token)
+        const results = await existingPerplexitySearch(keyword, token)
           .catch(error => {
             console.error('Perplexity search error:', error);
             return [];
           });
 
-        console.log(`Found ${perplexityResults.length} results for keyword ${keyword}`);
+        console.log(`Found ${results.length} results for keyword ${keyword}`);
 
-        if (perplexityResults.length > 0) {
-          allResults.push(...perplexityResults);
+        if (results.length > 0) {
+          // Cache the results
+          searchCache.set(keyword, {
+            timestamp: Date.now(),
+            results
+          });
+          allResults.push(...results);
         }
       }
 
