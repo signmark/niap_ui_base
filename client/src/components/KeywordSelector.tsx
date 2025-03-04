@@ -16,8 +16,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { toast: toastFn } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", campaignId],
@@ -50,10 +50,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      toastFn({ description: "Ключевое слово удалено" });
+      toast({
+        description: "Ключевое слово удалено"
+      });
     },
     onError: () => {
-      toastFn({ variant: "destructive", description: "Не удалось удалить ключевое слово" });
+      toast({
+        variant: "destructive",
+        description: "Не удалось удалить ключевое слово"
+      });
     }
   });
 
@@ -65,10 +70,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(response => response.json())
       .then(data => {
         setSearchResults(data.map((item: any) => ({ ...item, selected: false })));
-        toastFn({ description: `Найдено ${data.length} ключевых слов` });
+        toast({
+          description: `Найдено ${data.length} ключевых слов`
+        });
       })
       .catch(() => {
-        toastFn({ variant: "destructive", description: "Ошибка при поиске ключевых слов" });
+        toast({
+          variant: "destructive",
+          description: "Ошибка при поиске ключевых слов"
+        });
       })
       .finally(() => {
         setIsSearching(false);
@@ -88,7 +98,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter((kw: any) => kw.selected);
     if (selectedKeywords.length === 0) {
-      toastFn({ description: "Выберите хотя бы одно ключевое слово", variant: "destructive" });
+      toast({
+        variant: "destructive",
+        description: "Выберите хотя бы одно ключевое слово"
+      });
       return;
     }
 
@@ -107,10 +120,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
         setSearchResults([]);
-        toastFn({ description: "Ключевые слова добавлены" });
+        toast({
+          description: "Ключевые слова добавлены"
+        });
       })
       .catch(() => {
-        toastFn({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
+        toast({
+          variant: "destructive",
+          description: "Не удалось добавить ключевые слова"
+        });
       });
   };
 
