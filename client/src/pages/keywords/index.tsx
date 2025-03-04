@@ -84,7 +84,7 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
-      // Обновлено: Проверяем наличие sources в правильной структуре
+      // Проверяем наличие sources в правильной структуре
       if (data.success && data.data.sources && data.data.sources.length > 0) {
         setSearchResults([{
           keyword: "Найденные источники",
