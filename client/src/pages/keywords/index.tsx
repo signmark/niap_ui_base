@@ -82,16 +82,17 @@ export default function Keywords() {
       return await response.json();
     },
     onSuccess: (data) => {
-      // Объединяем все найденные источники в один список
+      // Получаем все найденные источники
       if (data.sources && data.sources.length > 0) {
-        const results = [{
-          keyword: "Найденные источники для кампании",
+        // Создаем один результат со всеми найденными источниками
+        const result = {
+          keyword: "Все найденные источники",
           trend: 0,
           competition: 0,
-          sources: data.sources
-        }];
+          sources: data.sources.sort((a: any, b: any) => (b.followers || 0) - (a.followers || 0))
+        };
 
-        setSearchResults(results);
+        setSearchResults([result]);
         toast({
           description: `Найдено ${data.sources.length} источников`
         });
