@@ -458,6 +458,18 @@ Requirements for followers:
   }
 }
 
+// Helper function to merge sources and remove duplicates
+function mergeSources(sources: any[]): any[] {
+  const uniqueSourcesMap = new Map();
+  sources.forEach(source => {
+    const key = source.url.toLowerCase().trim();
+    if (!uniqueSourcesMap.has(key) || source.rank < uniqueSourcesMap.get(key).rank) {
+      uniqueSourcesMap.set(key, source);
+    }
+  });
+  return Array.from(uniqueSourcesMap.values());
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
@@ -781,6 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check cache first
         const cached = getCachedResults(keyword);
         if (cached) {
+          console.log(`Using cached results for keyword: ${keyword}`);
           results.push(...cached);
           continue;
         }
@@ -810,35 +823,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         results.push(...combinedResults);
       }
 
-      // Remove duplicates and normalize URLs
-      const uniqueSourcesMap = new Map();
-      results.forEach(source => {
-        const key = source.url.toLowerCase().trim();
-        if (!uniqueSourcesMap.has(key) || source.rank < uniqueSourcesMap.get(key).rank) {
-          uniqueSourcesMap.set(key, source);
-        }
-      });
+      // Merge and deduplicate sources
+      const uniqueSources = mergeSources(results);
 
-      const uniqueSources = Array.from(uniqueSourcesMap.values())
-        .sort((a, b) => {
-          const rankDiff = (a.rank || 5) - (b.rank || 5);
-          return rankDiff !== 0 ? rankDiff : (b.followers || 0) - (a.followers || 0);
-        });
+      // Sort by followers count and rank
+      const sortedSources = uniqueSources.sort((a, b) => {
+        // First sort by followers
+        const followersDiff = (b.followers || 0) - (a.followers || 0);
+        if (followersDiff !== 0) return followersDiff;
+
+        // Then by rank if followers are equal
+        return (a.rank || 5) - (b.rank || 5);
+      });
 
       console.log('Found sources:', {
         total: results.length,
-        unique: uniqueSources.length,
-        platforms: uniqueSources.reduce((acc: any, src: any) => {
+        unique: sortedSources.length,
+        platforms: sortedSources.reduce((acc: any, src: any) => {
           acc[src.platform] = (acc[src.platform] || 0) + 1;
           return acc;
         }, {})
       });
 
       res.json({
-        sources: uniqueSources,
+        sources: sortedSources,
         meta: {
           total: results.length,
-          unique: uniqueSources.length,
+          unique: sortedSources.length,
           cached: searchCache.size
         }
       });
