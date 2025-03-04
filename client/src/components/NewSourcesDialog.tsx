@@ -182,124 +182,69 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   };
 
+  // Тестовые данные для отладки отображения
+  const testSources = [
+    {
+      url: 'https://instagram.com/bewellbykelly',
+      name: 'Kelly LeVeque',
+      followers: 550700,
+      platform: 'instagram.com',
+      description: 'Clinical nutritionist, best-selling author, and mom',
+      rank: 5
+    },
+    {
+      url: 'https://instagram.com/pp_mari_food',
+      name: 'Марина',
+      followers: 200000,
+      platform: 'instagram.com',
+      description: 'Рецепты и советы по правильному питанию',
+      rank: 5
+    }
+  ];
+
   return (
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle>Найденные источники</DialogTitle>
+        <DialogTitle>Тестовый вывод источников</DialogTitle>
       </DialogHeader>
 
       <div className="space-y-4">
-        {!sourcesData?.success ? (
-          <p className="text-center text-muted-foreground">
-            Ошибка при получении источников
-          </p>
-        ) : sources.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            Не удалось найти подходящие источники
-          </p>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 mb-4">
-              <Checkbox
-                id="select-all"
-                checked={currentSources.every(s => isSourceSelected(s))}
-                onCheckedChange={handleSelectAll}
-              />
-              <label htmlFor="select-all" className="text-sm">
-                Выбрать все источники на этой странице
-              </label>
-            </div>
-
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {currentSources.map((source, index) => (
-                <Card key={index} className="p-4">
-                  <CardContent className="p-0">
-                    <div className="flex items-start gap-4">
-                      <Checkbox
-                        id={`source-${index}`}
-                        checked={isSourceSelected(source)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedSources([...selectedSources, source]);
-                          } else {
-                            setSelectedSources(selectedSources.filter(s => s.url !== source.url));
-                          }
-                        }}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-medium">{source.name}</h3>
-                          {source.followers && (
-                            <Badge variant="outline" className="whitespace-nowrap">
-                              {formatFollowers(source.followers)} подписчиков
-                            </Badge>
-                          )}
-                          <Badge className={getRankBadge(source.rank).color}>
-                            {getRankBadge(source.rank).text} • Рейтинг {source.rank}/10
-                          </Badge>
-                        </div>
-
-                        {source.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {source.description}
-                          </p>
-                        )}
-
-                        <p className="text-sm break-all mt-2">
-                          <a
-                            href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            {source.url}
-                          </a>
-                        </p>
-                        <div className="mt-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">
-                              {source.type === 'twitter' ? 'Twitter/X' :
-                                source.type === 'vk' ? 'ВКонтакте' :
-                                  source.type === 'telegram' ? 'Telegram' :
-                                    source.type === 'instagram' ? 'Instagram' :
-                                      source.type === 'youtube' ? 'YouTube' :
-                                        source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
-                            </Badge>
-                            <Badge variant="outline">
-                              {source.keyword}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {testSources.map((source, index) => (
+            <Card key={index} className="p-4">
+              <CardContent className="p-0">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-medium">{source.name}</h3>
+                      <Badge variant="outline" className="whitespace-nowrap">
+                        {source.followers} подписчиков
+                      </Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
 
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Назад
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Вперед
-                </Button>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                Страница {currentPage} из {totalPages}
-              </span>
-            </div>
+                    {source.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {source.description}
+                      </p>
+                    )}
 
-            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+                    <p className="text-sm break-all mt-2">
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {source.url}
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
               <Button variant="outline" onClick={onClose}>
                 Отмена
               </Button>
@@ -319,8 +264,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                 )}
               </Button>
             </div>
-          </>
-        )}
       </div>
     </DialogContent>
   );
