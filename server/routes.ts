@@ -717,11 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Returning test sources:', testSources);
 
       // Return ONLY the sources array in data.sources
-      return res.json({
-        data: {
-          sources: testSources
-        }
-      });
+      return res.json({ sources: testSources });
 
     } catch (error) {
       console.error('Error in /api/sources/collect:', error);
