@@ -31,7 +31,7 @@ interface KeywordTableProps {
   }>;
   existingKeywords: Keyword[];
   isLoading: boolean;
-  campaignId: string;
+  campaignId?: string; // Make campaignId optional
   onKeywordsUpdated: () => void;
 }
 
@@ -54,6 +54,10 @@ export function KeywordTable({
   // Мутация для добавления ключевых слов
   const { mutate: addToKeywords, isPending: isAdding } = useMutation({
     mutationFn: async (keywordsToAdd: string[]) => {
+      if (!campaignId) {
+        throw new Error("Выберите кампанию");
+      }
+
       await Promise.all(
         keywordsToAdd.map(async (keywordText) => {
           const keywordData = keywords.find(k => k.keyword === keywordText);
@@ -75,11 +79,13 @@ export function KeywordTable({
       });
       setSelectedKeywords([]);
       onKeywordsUpdated();
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      if (campaignId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      }
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
-        description: "Не удалось добавить ключевые слова",
+        description: error.message || "Не удалось добавить ключевые слова",
         variant: "destructive"
       });
     }
@@ -95,7 +101,9 @@ export function KeywordTable({
         description: "Ключевое слово удалено"
       });
       onKeywordsUpdated();
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      if (campaignId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      }
     },
     onError: () => {
       toast({
@@ -127,13 +135,13 @@ export function KeywordTable({
     );
   }
 
-  // Фильтруем доступные для добавления ключевые слова
+  // Show search results even without campaign selection
   const availableKeywords = keywords.filter(k => !isKeywordAdded(k.keyword));
 
   return (
     <div className="space-y-4">
-      {/* Таблица существующих ключевых слов */}
-      {existingKeywords.length > 0 && (
+      {/* Таблица существующих ключевых слов - показываем только если выбрана кампания */}
+      {campaignId && existingKeywords.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
           <Table>
@@ -172,7 +180,7 @@ export function KeywordTable({
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Найденные ключевые слова</h3>
-            {selectedKeywords.length > 0 && (
+            {selectedKeywords.length > 0 && campaignId && (
               <Button
                 onClick={handleAddSelected}
                 disabled={isAdding}
@@ -196,19 +204,21 @@ export function KeywordTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={
-                      availableKeywords.length > 0 &&
-                      selectedKeywords.length === availableKeywords.length
-                    }
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedKeywords(availableKeywords.map(k => k.keyword));
-                      } else {
-                        setSelectedKeywords([]);
+                  {campaignId && (
+                    <Checkbox
+                      checked={
+                        availableKeywords.length > 0 &&
+                        selectedKeywords.length === availableKeywords.length
                       }
-                    }}
-                  />
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedKeywords(availableKeywords.map(k => k.keyword));
+                        } else {
+                          setSelectedKeywords([]);
+                        }
+                      }}
+                    />
+                  )}
                 </TableHead>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
@@ -220,34 +230,44 @@ export function KeywordTable({
               {availableKeywords.map((keyword) => (
                 <TableRow key={keyword.keyword}>
                   <TableCell>
-                    <Checkbox
-                      checked={selectedKeywords.includes(keyword.keyword)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedKeywords([...selectedKeywords, keyword.keyword]);
-                        } else {
-                          setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
-                        }
-                      }}
-                    />
+                    {campaignId && (
+                      <Checkbox
+                        checked={selectedKeywords.includes(keyword.keyword)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedKeywords([...selectedKeywords, keyword.keyword]);
+                          } else {
+                            setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
+                          }
+                        }}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
                   <TableCell>{keyword.competition}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => addToKeywords([keyword.keyword])}
-                      disabled={isAdding}
-                    >
-                      Добавить
-                    </Button>
+                    {campaignId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addToKeywords([keyword.keyword])}
+                        disabled={isAdding}
+                      >
+                        Добавить
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {!campaignId && availableKeywords.length > 0 && (
+        <div className="text-center text-muted-foreground mt-4">
+          Выберите кампанию, чтобы добавить ключевые слова
         </div>
       )}
     </div>
