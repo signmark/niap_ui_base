@@ -230,158 +230,163 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
   }
 }
 
-// Helper function to handle Perplexity search - специализируется на Instagram и других платформах
+// Helper function to extract sources from text content
+function extractSourcesFromText(content: string): any[] {
+  const sources: any[] = [];
+
+  // Extract Instagram handles with stats
+  const instagramPattern = /@([a-zA-Z0-9._]+).*?(\d[\d,]*\s*(тысяч|тыс|k|K|млн|million|M)).*?подписчиков/g;
+  let match;
+
+  while ((match = instagramPattern.exec(content)) !== null) {
+    const handle = match[1];
+    const followersText = match[2];
+    let followers = parseInt(followersText.replace(/[^0-9]/g, ''));
+
+    // Convert to actual numbers
+    if (followersText.toLowerCase().includes('млн') || followersText.toLowerCase().includes('m')) {
+      followers *= 1000000;
+    } else if (followersText.toLowerCase().includes('тыс') || followersText.toLowerCase().includes('k')) {
+      followers *= 1000;
+    }
+
+    sources.push({
+      url: `https://instagram.com/${handle}`,
+      rank: 5,
+      followers,
+      platform: 'instagram.com',
+      description: `Instagram аккаунт @${handle}`
+    });
+  }
+
+  return sources;
+}
+
+// Helper function to handle Perplexity search
 async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
-    const followerRequirements: PlatformRequirements = {
-      'instagram.com': 50000,
-      'vk.com': 10000,
-      't.me': 5000,
-      'reddit.com': 50000,
-      'twitter.com': 10000,
-      'x.com': 10000
-    };
+  const followerRequirements: PlatformRequirements = {
+    'instagram.com': 50000,
+    'vk.com': 10000,
+    't.me': 5000,
+    'reddit.com': 50000,
+    'twitter.com': 10000,
+    'x.com': 10000
+  };
 
-    const requestBody = {
-      model: "llama-3.1-sonar-small-128k-online",
-      messages: [
-        {
-          role: "system",
-          content: `Вы - эксперт по поиску высококачественных источников в социальных сетях, специализирующийся на Instagram, Telegram, VK и Reddit.
-
-ВАЖНЫЕ ТРЕБОВАНИЯ К ИСТОЧНИКАМ:
-1. Возвращайте ТОЛЬКО существующие и активные аккаунты с регулярными публикациями
-2. Тщательно проверяйте количество подписчиков:
-   - Instagram: строго > 50,000 подписчиков
-   - Telegram: строго > 5,000 подписчиков
-   - VK: строго > 10,000 подписчиков
-   - Reddit: строго > 50,000 участников
-   - Twitter/X: строго > 10,000 подписчиков
-
-3. Формат JSON ответа строго:
-[{
-  "url": "https://instagram.com/example",
-  "rank": 2,
-  "followers": 150000,
-  "description": "Подробное описание аккаунта"
-}]`
-        },
-        {
-          role: "user",
-          content: `Найдите ТОП-5 самых авторитетных источников в Instagram и других социальных сетях (кроме YouTube) по теме: ${keyword}`
+  try {
+    const settings = await directusApi.get('/items/user_api_keys', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        filter: {
+          service_name: { _eq: 'perplexity' }
         }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7
-    };
-
-    try {
-      const settings = await directusApi.get('/items/user_api_keys', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        params: {
-          filter: {
-            service_name: { _eq: 'perplexity' }
-          }
-        }
-      });
-
-      const perplexityKey = settings.data?.data?.[0]?.api_key;
-      if (!perplexityKey) {
-        console.error('Perplexity API key not found');
-        return [];
       }
+    });
 
-      const response = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
-        requestBody,
-        {
-          headers: {
-            'Authorization': `Bearer ${perplexityKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.data?.choices?.[0]?.message?.content) {
-        console.error(`Invalid API response for keyword ${keyword}:`, response.data);
-        throw new Error('Invalid API response structure');
-      }
-
-      const content = response.data.choices[0].message.content;
-      console.log(`Raw API response for keyword ${keyword}:`, content);
-
-      try {
-        const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
-        let results: any[] = [];
-
-        for (const match of jsonMatches) {
-          try {
-            const sources = JSON.parse(match);
-            if (!Array.isArray(sources)) continue;
-
-            const validSources = sources.filter(source => {
-              if (!source.url) return false;
-
-              // Convert Instagram handles to full URLs
-              if (source.url.startsWith('@')) {
-                source.url = `https://instagram.com/${source.url.substring(1)}`;
-              }
-
-              // Normalize URL
-              let normalizedUrl = source.url;
-              if (!normalizedUrl.startsWith('http')) {
-                normalizedUrl = `https://${normalizedUrl}`;
-              }
-
-              // Find matching platform
-              const platform = Object.keys(followerRequirements).find(p => normalizedUrl.includes(p));
-              if (!platform) return false;
-
-              // Check follower count requirement if specified
-              if (source.followers && source.followers < followerRequirements[platform]) {
-                return false;
-              }
-
-              // Store normalized URL back in source
-              source.url = normalizedUrl;
-              return true;
-            });
-
-            const mappedSources = validSources.map(source => ({
-              url: source.url,
-              rank: Math.min(Math.max(1, source.rank || 5), 10),
-              followers: source.followers || followerRequirements[source.url.includes('instagram.com') ? 'instagram.com' : 'twitter.com'],
-              keyword,
-              description: source.description || '',
-              platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
-            }));
-
-            results = [...results, ...mappedSources];
-          } catch (parseError) {
-            console.error(`Error parsing JSON match for ${keyword}:`, parseError);
-            continue;
-          }
-        }
-
-        // Cache valid results
-        if (results.length > 0) {
-          searchCache.set(keyword, {
-            timestamp: Date.now(),
-            results
-          });
-        }
-
-        console.log(`Found ${results.length} valid sources for keyword ${keyword}`);
-        return results;
-      } catch (e) {
-        console.error(`Error processing sources for ${keyword}:`, e, content);
-        return [];
-      }
-    } catch (error) {
-      console.error('Error in Perplexity search:', error);
+    const perplexityKey = settings.data?.data?.[0]?.api_key;
+    if (!perplexityKey) {
+      console.error('Perplexity API key not found');
       return [];
     }
+
+    const response = await axios.post(
+      'https://api.perplexity.ai/chat/completions',
+      {
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at finding high-quality social media sources.
+Provide information about Instagram, Telegram, VK, and Reddit accounts.
+Return ONLY active accounts with regular posts.
+Requirements for followers:
+- Instagram: > 50,000
+- Telegram: > 5,000
+- VK: > 10,000
+- Reddit: > 50,000`
+          },
+          {
+            role: "user",
+            content: `Find TOP-5 most authoritative sources in Instagram and other social networks (except YouTube) for: ${keyword}`
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${perplexityKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.data?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid API response structure');
+    }
+
+    const content = response.data.choices[0].message.content;
+    console.log(`Raw API response for keyword ${keyword}:`, content);
+
+    let allSources: any[] = [];
+
+    // Try parsing JSON arrays first
+    const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
+    for (const match of jsonMatches) {
+      try {
+        const sources = JSON.parse(match);
+        if (Array.isArray(sources)) {
+          allSources.push(...sources);
+        }
+      } catch (e) {
+        console.log('Failed to parse JSON, will try text extraction');
+      }
+    }
+
+    // Extract sources from narrative text
+    const textSources = extractSourcesFromText(content);
+    allSources.push(...textSources);
+
+    // Validate and normalize sources
+    const validSources = allSources
+      .filter(source => {
+        if (!source.url) return false;
+
+        // Handle Instagram handles
+        if (source.url.startsWith('@')) {
+          source.url = `https://instagram.com/${source.url.substring(1)}`;
+        }
+
+        // Normalize URL
+        if (!source.url.startsWith('http')) {
+          source.url = `https://${source.url}`;
+        }
+
+        // Find matching platform
+        const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
+        if (!platform) return false;
+
+        // Check followers requirement
+        return !source.followers || source.followers >= followerRequirements[platform];
+      })
+      .map(source => ({
+        url: source.url,
+        rank: Math.min(Math.max(1, source.rank || 5), 10),
+        followers: source.followers || followerRequirements[source.url.includes('instagram.com') ? 'instagram.com' : source.url.includes('vk.com') ? 'vk.com' : 't.me'],
+        keyword,
+        description: source.description || '',
+        platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
+      }));
+
+    console.log(`Found ${validSources.length} valid sources for keyword ${keyword}`);
+    return validSources;
+
+  } catch (error) {
+    console.error('Error in Perplexity search:', error);
+    return [];
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
