@@ -75,26 +75,16 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
-      if (!data.sources) {
-        console.error('Invalid API response structure:', data);
-        setSearchResults([]);
-        toast({
-          description: "Неверный формат данных от API",
-          variant: "destructive"
-        });
-        return;
-      }
-
       setSearchResults([{
         keyword: "Найденные источники",
         trend: 0,
         competition: 0,
-        sources: data.sources
+        sources: data.data.sources
       }]);
 
       toast({
-        description: data.sources.length > 0
-          ? `Найдено ${data.sources.length} источников`
+        description: data.data.sources.length > 0 
+          ? `Найдено ${data.data.sources.length} источников`
           : "Источники не найдены"
       });
     },
