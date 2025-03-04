@@ -1,19 +1,20 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2 } from "lucide-react";
-import { directusApi } from "@/lib/directus";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog } from "@/components/ui/dialog";
+import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import type { Campaign } from "@shared/schema";
 
 export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [isShowingResults, setIsShowingResults] = useState(false);
   const { add: toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
@@ -24,33 +25,6 @@ export default function Keywords() {
       }
       return await response.json();
     }
-  });
-
-  const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["/api/keywords", selectedCampaign],
-    queryFn: async () => {
-      if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") return [];
-
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
-
-      const response = await directusApi.get('/items/user_keywords', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaign
-            }
-          }
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
   const { mutate: searchSources, isPending: isSearching } = useMutation({
@@ -66,7 +40,7 @@ export default function Keywords() {
       });
 
       if (!response.ok) {
-        throw new Error("Ошибка при поиске источников");
+        throw new Error("Failed to collect sources");
       }
 
       const data = await response.json();
@@ -74,34 +48,34 @@ export default function Keywords() {
       return data;
     },
     onSuccess: (data) => {
-      console.log('Search sources response:', data);
-      setSearchResults([{
-        keyword: "Найденные источники",
-        trend: 0,
-        competition: 0,
-        sources: data.data.sources
-      }]);
+      console.log('Search success - full data:', data);
+
+      // Debug check
+      if (!data || !data.success || !data.data || !data.data.sources) {
+        console.error('Invalid data structure:', data);
+        toast({
+          description: "Неверный формат данных от сервера",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSearchResults(data);
+      setIsShowingResults(true);
 
       toast({
-        description: data.data.sources.length > 0 
-          ? `Найдено ${data.data.sources.length} источников`
-          : "Источники не найдены"
+        description: `Найдено ${data.data.sources.length} источников`
       });
     },
     onError: (error: Error) => {
       console.error('Search sources error:', error);
-      setSearchResults([]);
+      setSearchResults(null);
       toast({
         description: error.message,
         variant: "destructive"
       });
     }
   });
-
-  const handleCampaignChange = (value: string) => {
-    setSelectedCampaign(value);
-    setSearchResults([]);
-  };
 
   const handleSearch = () => {
     if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") {
@@ -132,7 +106,7 @@ export default function Keywords() {
           <div className="flex gap-4 items-center">
             <Select
               value={selectedCampaign}
-              onValueChange={handleCampaignChange}
+              onValueChange={setSelectedCampaign}
             >
               <SelectTrigger className="w-[300px]">
                 <SelectValue placeholder="Выберите кампанию" />
@@ -175,14 +149,28 @@ export default function Keywords() {
         </CardContent>
       </Card>
 
+      {/* Sources Results Dialog */}
+      {isShowingResults && searchResults && (
+        <Dialog open={isShowingResults} onOpenChange={setIsShowingResults}>
+          <NewSourcesDialog
+            campaignId={selectedCampaign}
+            onClose={() => setIsShowingResults(false)}
+            sourcesData={searchResults}
+          />
+        </Dialog>
+      )}
+
       <KeywordTable
-        keywords={searchResults}
-        existingKeywords={existingKeywords || []}
-        isLoading={isLoadingKeywords || isSearching}
+        keywords={[{
+          keyword: "Найденные источники",
+          trend: 0,
+          competition: 0,
+          sources: searchResults?.data?.sources || []
+        }]}
+        existingKeywords={[]}
+        isLoading={isLoadingCampaigns || isSearching}
         campaignId={selectedCampaign}
-        onKeywordsUpdated={() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaign] });
-        }}
+        onKeywordsUpdated={() => {}}
       />
     </div>
   );

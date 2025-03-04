@@ -687,13 +687,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           platform: 'instagram.com',
           description: 'Рецепты и советы по правильному питанию',
           rank: 5
+        },
+        {
+          url: 'https://instagram.com/galainst',
+          name: 'Galainst',
+          followers: 150000,
+          platform: 'instagram.com',
+          description: 'Health and wellness advocate',
+          rank: 5
+        },
+        {
+          url: 'https://instagram.com/tomka_an',
+          name: 'Tomka An',
+          followers: 180000,
+          platform: 'instagram.com',
+          description: 'Fitness and nutrition expert',
+          rank: 5
         }
       ];
 
       console.log('Returning test sources:', testSources);
 
       // Return in the expected format
-      return res.json({ 
+      return res.json({
         success: true,
         data: {
           sources: testSources

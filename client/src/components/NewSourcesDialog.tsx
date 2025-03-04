@@ -12,6 +12,7 @@ interface NewSourcesDialogProps {
   campaignId: string;
   onClose: () => void;
   sourcesData: {
+    success: boolean;
     data: {
       sources: Array<{
         url: string;
@@ -26,9 +27,11 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  console.log('Dialog received sourcesData:', sourcesData);
+  // Debug logging
+  console.log('NewSourcesDialog received data:', sourcesData);
+
   const sources = sourcesData?.data?.sources || [];
-  console.log('Available sources:', sources);
+  console.log('Processed sources:', sources);
 
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -75,6 +78,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   };
 
+  // Debug logging
+  console.log('Rendering with sources count:', sources.length);
+
   return (
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
@@ -82,6 +88,18 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
+        {/* Debug info */}
+        <div className="text-xs bg-gray-100 p-2 rounded mb-4">
+          <pre>
+            {JSON.stringify({
+              hasSourcesData: !!sourcesData,
+              success: sourcesData?.success,
+              sourceCount: sources.length,
+              firstSource: sources[0]
+            }, null, 2)}
+          </pre>
+        </div>
+
         {sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Нет подходящих источников
@@ -137,6 +155,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             ))}
           </div>
         )}
+
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Отмена
