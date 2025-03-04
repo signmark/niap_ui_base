@@ -130,7 +130,7 @@ export function KeywordTable({
   if (!keywords.length && !existingKeywords.length) {
     return (
       <div className="text-center p-8 text-muted-foreground">
-        Введите ключевое слово для поиска
+        {campaignId ? "Введите ключевое слово для поиска" : ""}
       </div>
     );
   }
