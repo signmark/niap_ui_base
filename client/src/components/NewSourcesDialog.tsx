@@ -15,15 +15,14 @@ interface NewSourcesDialogProps {
   sourcesData: {
     success?: boolean;
     data?: {
-      data?: {
-        sources: Array<{
-          url: string;
-          rank: number;
-          keyword: string;
-          followers?: number;
-          description?: string;
-        }>;
-      };
+      sources: Array<{
+        url: string;
+        rank: number;
+        keyword: string;
+        followers?: number;
+        description?: string;
+        name: string;
+      }>;
     };
   };
 }
@@ -40,7 +39,6 @@ interface ParsedSource {
 
 const ITEMS_PER_PAGE = 5;
 
-// Helper functions
 const getRankBadge = (rank: number) => {
   if (rank <= 3) return { color: 'bg-green-100 text-green-800', text: 'Эксперт' };
   if (rank <= 6) return { color: 'bg-yellow-100 text-yellow-800', text: 'Специалист' };
@@ -55,13 +53,17 @@ const formatFollowers = (count?: number) => {
 };
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  const { add: toast } = useToast();
+  console.log('Dialog received sourcesData:', sourcesData);
+  const sources = sourcesData?.data?.sources || [];
+  console.log('Parsed sources:', sources);
+
   const [selectedSources, setSelectedSources] = useState<ParsedSource[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
   const [addedCount, setAddedCount] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
+  const { add: toast } = useToast();
 
   const detectSourceType = (url: string): ParsedSource['type'] => {
     const lowercaseUrl = url.toLowerCase();
@@ -74,42 +76,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     if (lowercaseUrl.includes('reddit.com')) return 'reddit';
     return 'website';
   };
-
-  const sources = (() => {
-    try {
-      console.log('sourcesData:', sourcesData);
-      if (!sourcesData?.data?.data?.sources) {
-        console.error('Invalid API response structure:', sourcesData);
-        return [];
-      }
-
-      return sourcesData.data.data.sources.map(source => {
-        const type = detectSourceType(source.url);
-        let name = '';
-        try {
-          const urlObj = new URL(source.url);
-          name = urlObj.pathname.split('/').pop() || urlObj.hostname.replace('www.', '');
-          name = decodeURIComponent(name);
-        } catch (e) {
-          console.error('Error parsing URL:', e);
-          name = source.keyword || 'Unknown Source';
-        }
-
-        return {
-          name,
-          url: source.url,
-          type,
-          rank: source.rank,
-          keyword: source.keyword,
-          followers: source.followers,
-          description: source.description 
-        };
-      }).filter(Boolean);
-    } catch (e) {
-      console.error('Error parsing sources:', e);
-      return [];
-    }
-  })();
 
   const totalPages = Math.ceil(sources.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -223,7 +189,11 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {sources.length === 0 ? (
+        {!sourcesData?.success ? (
+          <p className="text-center text-muted-foreground">
+            Ошибка при получении источников
+          </p>
+        ) : sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Не удалось найти подходящие источники
           </p>
@@ -277,7 +247,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
                         <p className="text-sm break-all mt-2">
                           <a
-                            href={source.url}
+                            href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
@@ -285,7 +255,6 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                             {source.url}
                           </a>
                         </p>
-
                         <div className="mt-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">
