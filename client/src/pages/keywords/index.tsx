@@ -72,7 +72,7 @@ export default function Keywords() {
           campaign_id: selectedCampaign,
           keyword: keyword.keyword,
           trend_score: keyword.trend,
-          mentions_count: keyword.competition,
+          mentions_count: keyword.competition
         }, {
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -83,7 +83,7 @@ export default function Keywords() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
-      setSearchResults([]); 
+      setSearchResults([]);
       toast({
         description: "Ключевые слова добавлены"
       });
@@ -128,18 +128,19 @@ export default function Keywords() {
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }
-      return await response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: (data) => {
-      if (!data?.content?.includingPhrases?.items) {
+      // Проверяем наличие processed_keywords в данных
+      if (!Array.isArray(data.processed_keywords)) {
         throw new Error("Некорректный формат данных от API");
       }
 
-      // Извлекаем только нужные поля и преобразуем их
-      const keywords = data.content.includingPhrases.items.map((item: any) => ({
-        keyword: item.phrase,
-        trend: parseInt(item.number.replace(/\D/g, ''), 10),
-        competition: item.competition || 0,
+      const keywords = data.processed_keywords.map((item: any) => ({
+        keyword: item.keyword,
+        trend: item.trend,
+        competition: item.competition,
         selected: false
       }));
 
