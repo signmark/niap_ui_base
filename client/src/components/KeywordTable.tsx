@@ -12,7 +12,7 @@ import { Loader2, Trash2 } from "lucide-react";
 
 interface KeywordTableProps {
   keywords: any[];
-  searchResults?: any[];
+  searchResults: any[];
   isLoading: boolean;
   onDelete: (id: string) => void;
   onKeywordToggle?: (index: number) => void;
@@ -29,7 +29,7 @@ export function KeywordTable({
   onSelectAll,
   onSaveSelected
 }: KeywordTableProps) {
-  console.log("KeywordTable props:", { keywords, searchResults }); // Отладочный вывод
+  console.log("KeywordTable props:", { keywords, searchResults });
 
   if (isLoading) {
     return (
@@ -57,8 +57,8 @@ export function KeywordTable({
               {keywords.map((keyword) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend_score || keyword.trend}</TableCell>
-                  <TableCell>{keyword.mentions_count || keyword.competition}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>{keyword.mentions_count}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
