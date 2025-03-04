@@ -12,23 +12,20 @@ interface NewSourcesDialogProps {
   campaignId: string;
   onClose: () => void;
   sourcesData: {
-    success?: boolean;
-    data?: {
-      sources: Array<{
-        url: string;
-        name: string;
-        followers: number;
-        platform: string;
-        description: string;
-        rank: number;
-      }>;
-    };
+    sources: Array<{
+      url: string;
+      name: string;
+      followers: number;
+      platform: string;
+      description: string;
+      rank: number;
+    }>;
   };
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   console.log('Dialog received sourcesData:', sourcesData);
-  const sources = sourcesData?.data?.sources || [];
+  const sources = sourcesData?.sources || [];
   console.log('Available sources:', sources);
 
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
@@ -83,22 +80,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {/* Debug output */}
-        <pre className="text-xs bg-gray-100 p-2 rounded">
-          {JSON.stringify({
-            success: sourcesData?.success,
-            hasData: !!sourcesData?.data,
-            sourcesLength: sources?.length,
-            firstSource: sources[0]
-          }, null, 2)}
-        </pre>
-
-        {/* Content */}
-        {!sourcesData?.data?.sources ? (
-          <p className="text-center text-muted-foreground">
-            Ошибка при получении источников
-          </p>
-        ) : sources.length === 0 ? (
+        {sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Нет подходящих источников
           </p>

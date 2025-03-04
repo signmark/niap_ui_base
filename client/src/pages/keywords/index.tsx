@@ -75,8 +75,7 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
-      // Обновлено для проверки структуры данных
-      if (!data.success || !data.data || !data.data.sources) {
+      if (!data.sources) {
         console.error('Invalid API response structure:', data);
         setSearchResults([]);
         toast({
@@ -90,12 +89,12 @@ export default function Keywords() {
         keyword: "Найденные источники",
         trend: 0,
         competition: 0,
-        sources: data.data.sources
+        sources: data.sources
       }]);
 
       toast({
-        description: data.data.sources.length > 0 
-          ? `Найдено ${data.data.sources.length} источников`
+        description: data.sources.length > 0
+          ? `Найдено ${data.sources.length} источников`
           : "Источники не найдены"
       });
     },
