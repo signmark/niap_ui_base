@@ -17,12 +17,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { add } = useToast(); 
+  const { toast } = useToast();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setSearchResults([]); 
+        setSearchResults([]);
       }
     }
 
@@ -40,66 +40,62 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      const response = await directusApi.get('/items/user_keywords', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
+
+      try {
+        const response = await directusApi.get('items/user_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
             }
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
           }
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      return response.data?.data || [];
+        });
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching keywords:", error);
+        throw new Error("Не удалось загрузить ключевые слова");
+      }
     },
     enabled: !!campaignId
   });
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
 
-    fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Ошибка при поиске ключевых слов");
-        }
-        return response.json();
-      })
-      .then(rawData => {
-        console.log("Raw API Response:", rawData);
-        if (!rawData?.data?.keywords) {
-          throw new Error("Некорректный формат ответа от API");
-        }
+    try {
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}`);
+      if (!response.ok) {
+        throw new Error("Ошибка при поиске ключевых слов");
+      }
 
-        const keywords = rawData.data.keywords;
-        console.log("Extracted keywords:", keywords);
+      const data = await response.json();
+      const keywords = data?.data?.keywords || [];
 
-        const formattedResults = keywords.map((kw: any) => ({
-          keyword: kw.keyword,
-          trend: kw.trend,
-          competition: kw.competition,
-          selected: false
-        }));
-        console.log("Formatted results:", formattedResults);
+      const formattedResults = keywords.map((kw: any) => ({
+        keyword: kw.keyword,
+        trend: kw.trend,
+        competition: kw.competition,
+        selected: false
+      }));
 
-        setSearchResults(formattedResults);
-        add({
-          description: `Найдено ${formattedResults.length} ключевых слов`
-        });
-      })
-      .catch((error) => {
-        console.error("Search error:", error);
-        add({
-          variant: "destructive",
-          description: error.message || "Ошибка при поиске ключевых слов"
-        });
-      })
-      .finally(() => {
-        setIsSearching(false);
+      setSearchResults(formattedResults);
+      toast({
+        description: `Найдено ${formattedResults.length} ключевых слов`
       });
+    } catch (error: any) {
+      console.error("Search error:", error);
+      toast({
+        variant: "destructive",
+        description: error.message || "Ошибка при поиске ключевых слов"
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -118,41 +114,51 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
   };
 
-  const handleSaveSelected = () => {
+  const handleSaveSelected = async () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
-      add({
+      toast({
         variant: "destructive",
         description: "Выберите хотя бы одно ключевое слово"
       });
       return;
     }
 
-    Promise.all(selectedKeywords.map(keyword =>
-      directusApi.post('/items/user_keywords', {
-        campaign_id: campaignId,
-        keyword: keyword.keyword,
-        trend_score: keyword.trend,
-        mentions_count: keyword.competition
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-    ))
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-        setSearchResults([]); 
-        add({
-          description: "Ключевые слова добавлены"
-        });
-      })
-      .catch(() => {
-        add({
-          variant: "destructive",
-          description: "Не удалось добавить ключевые слова"
-        });
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
+      toast({
+        variant: "destructive",
+        description: "Требуется авторизация"
       });
+      return;
+    }
+
+    try {
+      await Promise.all(selectedKeywords.map(keyword =>
+        directusApi.post('items/user_keywords', {
+          campaign_id: campaignId,
+          keyword: keyword.keyword,
+          trend_score: keyword.trend,
+          mentions_count: keyword.competition
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+      ));
+
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      setSearchResults([]);
+      toast({
+        description: "Ключевые слова добавлены"
+      });
+    } catch (error) {
+      console.error("Error saving keywords:", error);
+      toast({
+        variant: "destructive",
+        description: "Не удалось добавить ключевые слова"
+      });
+    }
   };
 
   return (
@@ -184,22 +190,28 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         keywords={keywords}
         searchResults={searchResults}
         isLoading={isLoadingKeywords || isSearching}
-        onDelete={id => {
-          directusApi.delete(`/items/user_keywords/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-            }
-          }).then(() => {
+        onDelete={async (id) => {
+          try {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) throw new Error("Требуется авторизация");
+
+            await directusApi.delete(`items/user_keywords/${id}`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`
+              }
+            });
+
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            add({
+            toast({
               description: "Ключевое слово удалено"
             });
-          }).catch(() => {
-            add({
+          } catch (error) {
+            console.error("Error deleting keyword:", error);
+            toast({
               variant: "destructive",
               description: "Не удалось удалить ключевое слово"
             });
-          });
+          }
         }}
         onKeywordToggle={handleKeywordToggle}
         onSelectAll={handleSelectAll}
