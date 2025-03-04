@@ -83,7 +83,18 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {!sourcesData?.success ? (
+        {/* Debug output */}
+        <pre className="text-xs bg-gray-100 p-2 rounded">
+          {JSON.stringify({
+            success: sourcesData?.success,
+            hasData: !!sourcesData?.data,
+            sourcesLength: sources?.length,
+            firstSource: sources[0]
+          }, null, 2)}
+        </pre>
+
+        {/* Content */}
+        {!sourcesData?.data?.sources ? (
           <p className="text-center text-muted-foreground">
             Ошибка при получении источников
           </p>
