@@ -89,17 +89,15 @@ export default function Keywords() {
       return await response.json();
     },
     onSuccess: (data) => {
-      if (!Array.isArray(data.processed_keywords)) {
-        throw new Error("Некорректный формат данных от API");
-      }
-
-      setSearchResults(data.processed_keywords.map((kw: any) => ({
+      // Обработка результатов поиска
+      const processedKeywords = Array.isArray(data) ? data : (data?.processed_keywords || []);
+      setSearchResults(processedKeywords.map((kw: any) => ({
         ...kw,
         selected: false
       })));
       setIsSearching(false);
       toast({
-        description: `Найдено ${data.processed_keywords.length} ключевых слов`
+        description: `Найдено ${processedKeywords.length} ключевых слов`
       });
     },
     onError: (error: Error) => {
