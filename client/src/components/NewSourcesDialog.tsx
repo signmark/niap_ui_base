@@ -21,7 +21,7 @@ interface NewSourcesDialogProps {
           rank: number;
           keyword: string;
           followers?: number;
-          description?: string; // Added description field
+          description?: string;
         }>;
       };
     };
@@ -31,7 +31,7 @@ interface NewSourcesDialogProps {
 interface ParsedSource {
   name: string;
   url: string;
-  type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'youtube' | 'reddit' | 'website';
+  type: 'twitter' | 'vk' | 'telegram' | 'instagram' | 'youtube' | 'reddit' | 'website' | 'facebook';
   rank: number;
   keyword: string;
   followers?: number;
@@ -102,7 +102,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           rank: source.rank,
           keyword: source.keyword,
           followers: source.followers,
-          description: source.description // Include description
+          description: source.description 
         };
       }).filter(Boolean);
     } catch (e) {
@@ -290,11 +290,11 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">
                               {source.type === 'twitter' ? 'Twitter/X' :
-                               source.type === 'vk' ? 'ВКонтакте' :
-                                 source.type === 'telegram' ? 'Telegram' :
-                                   source.type === 'instagram' ? 'Instagram' :
-                                     source.type === 'youtube' ? 'YouTube' :
-                                       source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
+                                source.type === 'vk' ? 'ВКонтакте' :
+                                  source.type === 'telegram' ? 'Telegram' :
+                                    source.type === 'instagram' ? 'Instagram' :
+                                      source.type === 'youtube' ? 'YouTube' :
+                                        source.type === 'reddit' ? 'Reddit' : 'Веб-сайт'}
                             </Badge>
                             <Badge variant="outline">
                               {source.keyword}

@@ -137,20 +137,18 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   };
 
   const handleDelete = async (keywordId: string) => {
-    if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
-      try {
-        await directusApi.delete(`/items/user_keywords/${keywordId}`);
-        toast({
-          description: "Ключевое слово удалено"
-        });
-        refetchKeywords();
-      } catch (error) {
-        console.error("Error deleting keyword:", error);
-        toast({
-          description: "Не удалось удалить ключевое слово",
-          variant: "destructive"
-        });
-      }
+    try {
+      await directusApi.delete(`/items/user_keywords/${keywordId}`);
+      toast({
+        description: "Ключевое слово удалено"
+      });
+      refetchKeywords();
+    } catch (error) {
+      console.error("Error deleting keyword:", error);
+      toast({
+        description: "Не удалось удалить ключевое слово",
+        variant: "destructive"
+      });
     }
   };
 

@@ -237,7 +237,7 @@ export default function Trends() {
         throw new Error("Добавьте ключевые слова в кампанию");
       }
 
-      const keywordsList = keywords.map((k: any) => k.keyword);
+      const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
       console.log('Keywords for search:', keywordsList);
       const authToken = localStorage.getItem('auth_token');
 
@@ -246,7 +246,7 @@ export default function Trends() {
       }
 
       // Поиск источников для каждого ключевого слова отдельно
-      const searchPromises = keywordsList.map(keyword =>
+      const searchPromises = keywordsList.map((keyword: string) =>
         fetch('/api/sources/collect', {
           method: 'POST',
           headers: {
@@ -260,10 +260,10 @@ export default function Trends() {
       const results = await Promise.all(searchPromises);
 
       // Объединяем все результаты
-      const allSources = results.reduce((acc, result) => {
+      const allSources = results.reduce((acc: { url: string; rank: number }[], result: any) => {
         if (result.data?.data?.sources && Array.isArray(result.data.data.sources)) {
-          result.data.data.sources.forEach(source => {
-            const existingSource = acc.find(s => s.url === source.url);
+          result.data.data.sources.forEach((source: { url: string; rank: number }) => {
+            const existingSource = acc.find((s: { url: string }) => s.url === source.url);
             if (existingSource) {
               // Обновляем рейтинг, если источник уже существует
               existingSource.rank = Math.min(existingSource.rank, source.rank);
@@ -278,7 +278,7 @@ export default function Trends() {
 
       // Сортируем по рангу и берем только топовые источники
       const topSources = allSources
-        .sort((a, b) => (a.rank || 10) - (b.rank || 10))
+        .sort((a: { rank?: number }, b: { rank?: number }) => (a.rank || 10) - (b.rank || 10))
         .slice(0, 10);
 
       console.log('Search results:', {
@@ -636,11 +636,7 @@ export default function Trends() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              if (confirm('Вы уверены, что хотите удалить этот источник?')) {
-                                deleteSource(source.id);
-                              }
-                            }}
+                            onClick={() => deleteSource(source.id)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
