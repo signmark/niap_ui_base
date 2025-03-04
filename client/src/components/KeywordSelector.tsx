@@ -68,14 +68,14 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        setSearchResults(data.processed_keywords.map((kw: any) => ({
+        setSearchResults(data.map((kw: any) => ({
           keyword: kw.keyword,
           trend: kw.trend,
           competition: kw.competition,
           selected: false
         })));
         toast({
-          description: `Найдено ${data.processed_keywords.length} ключевых слов`
+          description: `Найдено ${data.length} ключевых слов`
         });
       })
       .catch(error => {
