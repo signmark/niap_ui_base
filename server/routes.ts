@@ -155,7 +155,10 @@ function delay(ms: number) {
 async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
   // Check cache first
   const cached = getCachedResults(keyword);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
+    return cached;
+  }
 
   try {
     const settings = await directusApi.get('/items/user_api_keys', {
@@ -185,14 +188,11 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
           key: socialSearcherKey,
           network: 'youtube',
           lang: 'ru,en'
-        },
-        headers: {
-          'Accept': 'application/json'
         }
       });
 
       if (response.data?.meta?.http_code === 403) {
-        console.log('Social Searcher API daily limit reached, skipping YouTube search');
+        console.log('Social Searcher API daily limit reached');
         return [];
       }
 
@@ -208,19 +208,18 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
       })).filter(Boolean) || [];
 
       // Cache the results
-      searchCache.set(keyword, {
-        timestamp: Date.now(),
-        results
-      });
+      if (results.length > 0) {
+        console.log(`Caching ${results.length} results for keyword: ${keyword}`);
+        searchCache.set(keyword, {
+          timestamp: Date.now(),
+          results
+        });
+      }
 
       return results;
 
     } catch (apiError: any) {
-      if (apiError.response?.data?.meta?.http_code === 403 || apiError.response?.status === 403) {
-        console.log('Social Searcher API limit reached, continuing with Perplexity results only');
-      } else {
-        console.error('Social Searcher API error:', apiError.message);
-      }
+      console.error('Social Searcher API error:', apiError.message);
       return [];
     }
 
@@ -313,16 +312,14 @@ function extractSourcesFromText(content: string): any[] {
   return Array.from(new Map(sources.map(s => [s.url, s])).values());
 }
 
-// Helper function to handle Perplexity search
+// Helper function for Perplexity search
 async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
-  const followerRequirements: PlatformRequirements = {
-    'instagram.com': 50000,
-    'vk.com': 10000,
-    't.me': 5000,
-    'reddit.com': 50000,
-    'twitter.com': 10000,
-    'x.com': 10000
-  };
+  // Check cache first
+  const cached = getCachedResults(keyword);
+  if (cached) {
+    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
+    return cached;
+  }
 
   try {
     const settings = await directusApi.get('/items/user_api_keys', {
@@ -386,6 +383,15 @@ Format each account as:
     // Extract sources from text response
     const sources = extractSourcesFromText(content);
     console.log(`Extracted ${sources.length} sources for keyword ${keyword}:`, sources);
+
+    // Cache the results if we found any
+    if (sources.length > 0) {
+      console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
+      searchCache.set(keyword, {
+        timestamp: Date.now(),
+        results: sources
+      });
+    }
 
     return sources;
 
