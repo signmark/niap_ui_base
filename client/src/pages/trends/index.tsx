@@ -261,14 +261,9 @@ export default function Trends() {
 
       // Объединяем все результаты
       const allSources = results.reduce((acc: { url: string; rank: number }[], result: any) => {
-        if (result.data?.data?.sources && Array.isArray(result.data.data.sources)) {
-          result.data.data.sources.forEach((source: { url: string; rank: number }) => {
-            const existingSource = acc.find((s: { url: string }) => s.url === source.url);
-            if (existingSource) {
-              // Обновляем рейтинг, если источник уже существует
-              existingSource.rank = Math.min(existingSource.rank, source.rank);
-            } else {
-              // Добавляем новый источник
+        if (result?.success && result?.data?.sources) {
+          result.data.sources.forEach((source: { url: string; rank: number }) => {
+            if (!acc.some(s => s.url === source.url)) {
               acc.push(source);
             }
           });
@@ -276,24 +271,10 @@ export default function Trends() {
         return acc;
       }, []);
 
-      // Сортируем по рангу и берем только топовые источники
-      const topSources = allSources
-        .sort((a: { rank?: number }, b: { rank?: number }) => (a.rank || 10) - (b.rank || 10))
-        .slice(0, 10);
-
-      console.log('Search results:', {
-        totalResults: results.length,
-        combinedSourcesCount: allSources.length,
-        topSourcesCount: topSources.length,
-        sources: topSources
-      });
-
       return {
         success: true,
         data: {
-          data: {
-            sources: topSources
-          }
+          sources: allSources
         }
       };
     },
@@ -303,7 +284,7 @@ export default function Trends() {
       setIsSearchingNewSources(true);
       toast.add({
         title: "Найдены источники",
-        description: `Найдено ${data.data.data.sources.length} качественных источников`
+        description: `Найдено ${data.data.sources.length} качественных источников`
       });
     },
     onError: (error: Error) => {
