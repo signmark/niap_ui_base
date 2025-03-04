@@ -68,18 +68,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        setSearchResults(data.map((kw: any) => ({
-          keyword: kw.keyword,
-          trend: kw.trend,
-          competition: kw.competition,
-          selected: false
-        })));
+        setSearchResults(data);
         toast({
           description: `Найдено ${data.length} ключевых слов`
         });
       })
-      .catch(error => {
-        console.error("Search error:", error);
+      .catch(() => {
         toast({
           variant: "destructive",
           description: "Ошибка при поиске ключевых слов"
