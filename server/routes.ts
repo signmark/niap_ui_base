@@ -670,7 +670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { keywords } = req.body;
       console.log('Starting source search for keywords:', keywords);
 
-      // Test data with real accounts from logs
+      // Test data with real accounts
       const testSources = [
         {
           url: 'https://instagram.com/bewellbykelly',
