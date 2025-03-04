@@ -705,15 +705,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         url: normalizeInstagramUrl(source.url)
       }));
 
-      // Remove duplicates by URL
+      // Remove duplicates by URL and ensure all fields are present
       const uniqueSources = Array.from(
-        new Map(normalizedResults.map(s => [s.url, s])).values()
+        new Map(normalizedResults.filter(s => s.url && s.name && s.followers).map(s => [s.url, s])).values()
       );
 
       // Sort by followers count
-      const sortedSources = uniqueSources.sort((a, b) => {
-        return (b.followers || 0) - (a.followers || 0);
-      });
+      const sortedSources = uniqueSources.sort((a, b) => (b.followers || 0) - (a.followers || 0));
 
       console.log('Final sorted sources:', sortedSources.length);
 
