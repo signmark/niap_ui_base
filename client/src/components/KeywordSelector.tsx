@@ -71,12 +71,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         if (!Array.isArray(data.processed_keywords)) {
           throw new Error("Некорректный формат данных от API");
         }
-        setSearchResults(data.processed_keywords.map((kw: any) => ({
-          ...kw,
+        const processedKeywords = data.processed_keywords.map((kw: any) => ({
+          keyword: kw.keyword,
+          trend: kw.trend,
+          competition: kw.competition,
           selected: false
-        })));
+        }));
+        setSearchResults(processedKeywords);
         toast({
-          description: `Найдено ${data.processed_keywords.length} ключевых слов`
+          description: `Найдено ${processedKeywords.length} ключевых слов`
         });
       })
       .catch(error => {
@@ -107,6 +110,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
+
     if (selectedKeywords.length === 0) {
       toast({
         description: "Выберите хотя бы одно ключевое слово",
