@@ -78,10 +78,12 @@ export default function Keywords() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Ошибка при поиске источников");
+        throw new Error("Ошибка при поиске источников");
       }
-      return await response.json();
+
+      const data = await response.json();
+      console.log('Search response:', data);
+      return data;
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
