@@ -16,7 +16,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { toast } = useToast();
+  const { toast: toastFn } = useToast();
   const queryClient = useQueryClient();
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
@@ -50,10 +50,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      toast({ description: "Ключевое слово удалено" });
+      toastFn({ description: "Ключевое слово удалено" });
     },
     onError: () => {
-      toast({ variant: "destructive", description: "Не удалось удалить ключевое слово" });
+      toastFn({ variant: "destructive", description: "Не удалось удалить ключевое слово" });
     }
   });
 
@@ -65,10 +65,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(response => response.json())
       .then(data => {
         setSearchResults(data.map((item: any) => ({ ...item, selected: false })));
-        toast({ description: `Найдено ${data.length} ключевых слов` });
+        toastFn({ description: `Найдено ${data.length} ключевых слов` });
       })
       .catch(() => {
-        toast({ variant: "destructive", description: "Ошибка при поиске ключевых слов" });
+        toastFn({ variant: "destructive", description: "Ошибка при поиске ключевых слов" });
       })
       .finally(() => {
         setIsSearching(false);
@@ -77,22 +77,22 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleKeywordToggle = (index: number) => {
     setSearchResults(prev =>
-      prev.map((kw, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
+      prev.map((kw: any, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
+    setSearchResults(prev => prev.map((kw: any) => ({ ...kw, selected: checked })));
   };
 
   const handleSaveSelected = () => {
-    const selectedKeywords = searchResults.filter(kw => kw.selected);
+    const selectedKeywords = searchResults.filter((kw: any) => kw.selected);
     if (selectedKeywords.length === 0) {
-      toast({ description: "Выберите хотя бы одно ключевое слово", variant: "destructive" });
+      toastFn({ description: "Выберите хотя бы одно ключевое слово", variant: "destructive" });
       return;
     }
 
-    Promise.all(selectedKeywords.map(keyword =>
+    Promise.all(selectedKeywords.map((keyword: any) =>
       directusApi.post('/items/user_keywords', {
         campaign_id: campaignId,
         keyword: keyword.keyword,
@@ -107,10 +107,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
         setSearchResults([]);
-        toast({ description: "Ключевые слова добавлены" });
+        toastFn({ description: "Ключевые слова добавлены" });
       })
       .catch(() => {
-        toast({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
+        toastFn({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
       });
   };
 
@@ -176,7 +176,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
-                  checked={searchResults.every(kw => kw.selected)}
+                  checked={searchResults.every((kw: any) => kw.selected)}
                   onCheckedChange={checked => handleSelectAll(!!checked)}
                   id="select-all"
                 />
@@ -184,8 +184,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                   Выбрать все
                 </label>
               </div>
-              <Button onClick={handleSaveSelected} disabled={!searchResults.some(kw => kw.selected)}>
-                Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
+              <Button onClick={handleSaveSelected} disabled={!searchResults.some((kw: any) => kw.selected)}>
+                Добавить выбранные ({searchResults.filter((kw: any) => kw.selected).length})
               </Button>
             </div>
           </div>
