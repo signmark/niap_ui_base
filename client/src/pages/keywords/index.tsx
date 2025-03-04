@@ -68,7 +68,7 @@ export default function Keywords() {
   const { mutate: searchSources, isPending: isSearching } = useMutation({
     mutationFn: async (keywords: string[]) => {
       console.log('Searching sources for keywords:', keywords);
-      const response = await fetch(`/api/sources/collect`, {
+      const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,18 +88,13 @@ export default function Keywords() {
     onSuccess: (data) => {
       console.log('Search sources response:', data);
 
-      // Проверяем наличие источников в ответе
-      if (data.sources) {
-        // Создаем один результат со всеми найденными источниками
-        const result = {
-          keyword: "Все найденные источники",
+      if (data.sources && data.sources.length > 0) {
+        setSearchResults([{
+          keyword: "Найденные источники",
           trend: 0,
           competition: 0,
-          sources: data.sources.sort((a: any, b: any) => (b.followers || 0) - (a.followers || 0))
-        };
-
-        console.log('Setting search results:', result);
-        setSearchResults([result]);
+          sources: data.sources
+        }]);
 
         toast({
           description: `Найдено ${data.sources.length} источников`

@@ -749,29 +749,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Add delay between keyword searches
         await delay(1000);
 
-        const [perplexityResults, socialSearcherResults] = await Promise.all([
-          existingPerplexitySearch(keyword, token).catch(error => {
+        const perplexityResults = await existingPerplexitySearch(keyword, token)
+          .catch(error => {
             console.error('Perplexity search error:', error);
             return [];
-          }),
-          searchSocialSourcesByKeyword(keyword, token).catch(error => {
-            console.error('Social Searcher error:', error);
-            return [];
-          })
-        ]);
-
-        const combinedResults = [...perplexityResults, ...socialSearcherResults];
-        console.log(`Found ${combinedResults.length} results for keyword ${keyword}`);
-
-        // Cache the combined results
-        if (combinedResults.length > 0) {
-          searchCache.set(keyword, {
-            timestamp: Date.now(),
-            results: combinedResults
           });
-        }
 
-        allResults.push(...combinedResults);
+        console.log(`Found ${perplexityResults.length} results for keyword ${keyword}`);
+
+        if (perplexityResults.length > 0) {
+          allResults.push(...perplexityResults);
+        }
       }
 
       console.log('Total results before merging:', allResults.length);
