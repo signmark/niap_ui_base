@@ -68,9 +68,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        if (!data.processed_keywords) {
-          throw new Error("Ошибка при поиске ключевых слов");
-        }
         setSearchResults(data.processed_keywords.map((kw: any) => ({
           keyword: kw.keyword,
           trend: kw.trend,
