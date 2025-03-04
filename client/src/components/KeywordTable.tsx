@@ -9,29 +9,22 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 
-interface Source {
-  url: string;
-  name: string;
-  followers: number;
-  description: string;
-  platform: string;
+interface Keyword {
+  id: string;
+  keyword: string;
+  trend_score: number;
+  mentions_count: number;
 }
 
 interface KeywordTableProps {
-  keywords: Array<{
-    keyword: string;
-    trend: number;
-    competition: number;
-    sources?: Source[];
-  }>;
+  keywords: Keyword[];
   existingKeywords: any[];
   isLoading: boolean;
   campaignId?: string;
-  onKeywordsUpdated: () => void;
+  onDelete: (id: string) => void;
 }
 
 export function KeywordTable({
@@ -39,13 +32,9 @@ export function KeywordTable({
   existingKeywords = [],
   isLoading,
   campaignId,
-  onKeywordsUpdated
+  onDelete
 }: KeywordTableProps) {
   const { add: toast } = useToast();
-  const queryClient = useQueryClient();
-
-  console.log("KeywordTable received keywords:", keywords);
-  console.log("Sources from first keyword:", keywords[0]?.sources);
 
   if (isLoading) {
     return (
@@ -55,69 +44,45 @@ export function KeywordTable({
     );
   }
 
-  // Собираем все уникальные источники из всех ключевых слов
-  const allSources = keywords.reduce((acc: Source[], kw) => {
-    if (kw.sources) {
-      console.log("Processing sources for keyword:", kw.keyword, kw.sources);
-      const uniqueSources = kw.sources.filter(source => 
-        !acc.some(existing => existing.url === source.url)
-      );
-      return [...acc, ...uniqueSources];
-    }
-    return acc;
-  }, []);
-
-  console.log("All unique sources:", allSources);
-
-  // Сортируем источники по количеству подписчиков
-  const sortedSources = allSources.sort((a, b) => (b.followers || 0) - (a.followers || 0));
+  if (keywords.length === 0 && (!campaignId || existingKeywords.length === 0)) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Нет ключевых слов
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* Таблица результатов поиска источников */}
-      {sortedSources.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Найденные источники</h3>
-          </div>
-
+      {keywords.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Ключевые слова</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Источник</TableHead>
-                <TableHead>Имя</TableHead>
-                <TableHead>Подписчики</TableHead>
-                <TableHead>Платформа</TableHead>
-                <TableHead>Описание</TableHead>
+                <TableHead>Ключевое слово</TableHead>
+                <TableHead>Тренд</TableHead>
+                <TableHead>Конкуренция</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedSources.map((source, index) => {
-                const formattedFollowers = source.followers >= 1000000 
-                  ? `${(source.followers / 1000000).toFixed(1)}M`
-                  : source.followers >= 1000 
-                  ? `${(source.followers / 1000).toFixed(1)}K`
-                  : source.followers.toString();
-
-                return (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <a 
-                        href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {source.name}
-                      </a>
-                    </TableCell>
-                    <TableCell>{source.name}</TableCell>
-                    <TableCell>{formattedFollowers}</TableCell>
-                    <TableCell>{source.platform}</TableCell>
-                    <TableCell>{source.description}</TableCell>
-                  </TableRow>
-                );
-              })}
+              {keywords.map((keyword) => (
+                <TableRow key={keyword.id}>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>{keyword.mentions_count}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(keyword.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
@@ -136,7 +101,7 @@ export function KeywordTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {existingKeywords.map((keyword) => (
+              {existingKeywords.map((keyword:any) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
