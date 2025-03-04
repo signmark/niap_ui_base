@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast"; 
 import { directusApi } from "@/lib/directus";
 import { Search, Loader2 } from "lucide-react";
 import { KeywordTable } from "@/components/KeywordTable";
+import { useToast } from "@/hooks/use-toast";
 
 interface KeywordSelectorProps {
   campaignId: string;
@@ -19,37 +19,24 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { add: toast } = useToast();
 
+  // Закрытие результатов по клику вне компонента
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setSearchResults([]);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", campaignId],
     queryFn: async () => {
       if (!campaignId) return [];
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
       const response = await directusApi.get('/items/user_keywords', {
         params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
-            }
-          }
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+          filter: { campaign_id: { _eq: campaignId } }
         }
       });
       return response.data?.data || [];
@@ -63,48 +50,29 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
     try {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}`);
-      if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
-      }
-
       const data = await response.json();
-      console.log("API Response:", data);
 
-      if (!data?.data?.keywords) {
-        throw new Error("Некорректный формат данных от API");
+      if (!data?.data?.keywords?.length) {
+        toast({ description: "Не найдено ключевых слов" });
+        return;
       }
 
-      const keywords = data.data.keywords;
-      console.log("Extracted keywords:", keywords);
-
-      const formattedResults = keywords.map((kw: any) => ({
+      const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
         trend: kw.trend,
         competition: kw.competition,
         selected: false
       }));
-      console.log("Formatted results:", formattedResults);
 
       setSearchResults(formattedResults);
-      toast({
-        title: "Поиск завершен",
-        description: `Найдено ${formattedResults.length} ключевых слов`
-      });
-    } catch (error: any) {
-      console.error("Search error:", error);
+      toast({ description: `Найдено ${formattedResults.length} ключевых слов` });
+    } catch (error) {
       toast({
         variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Ошибка при поиске ключевых слов"
+        description: "Не удалось выполнить поиск"
       });
     } finally {
       setIsSearching(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
     }
   };
 
@@ -120,11 +88,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleSaveSelected = async () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
-    if (selectedKeywords.length === 0) {
+    if (!selectedKeywords.length) {
       toast({
         variant: "destructive",
-        title: "Ошибка",
-        description: "Выберите хотя бы одно ключевое слово"
+        description: "Выберите ключевые слова"
       });
       return;
     }
@@ -133,7 +100,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     if (!authToken) {
       toast({
         variant: "destructive",
-        title: "Ошибка",
         description: "Требуется авторизация"
       });
       return;
@@ -141,30 +107,27 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
     try {
       await Promise.all(selectedKeywords.map(keyword =>
-        directusApi.post('items/user_keywords', {
+        directusApi.post('/items/user_keywords', {
           campaign_id: campaignId,
           keyword: keyword.keyword,
           trend_score: keyword.trend,
           mentions_count: keyword.competition
         }, {
           headers: {
-            'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
           }
         })
       ));
 
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       setSearchResults([]);
-      toast({
-        title: "Успешно",
-        description: "Ключевые слова добавлены"
-      });
+      toast({ description: "Ключевые слова добавлены" });
     } catch (error) {
-      console.error("Error saving keywords:", error);
+      console.error('Error saving keywords:', error);
       toast({
         variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось добавить ключевые слова"
+        description: "Не удалось сохранить ключевые слова"
       });
     }
   };
@@ -176,7 +139,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           placeholder="Введите запрос для поиска ключевых слов"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           className="flex-1"
         />
         <Button onClick={handleSearch} disabled={isSearching}>
@@ -200,25 +163,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         isLoading={isLoadingKeywords || isSearching}
         onDelete={async (id) => {
           try {
-            const authToken = localStorage.getItem('auth_token');
-            if (!authToken) throw new Error("Требуется авторизация");
-
-            await directusApi.delete(`items/user_keywords/${id}`, {
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            });
-
+            await directusApi.delete(`/items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            toast({
-              title: "Успешно",
-              description: "Ключевое слово удалено"
-            });
-          } catch (error) {
-            console.error("Error deleting keyword:", error);
+            toast({ description: "Ключевое слово удалено" });
+          } catch {
             toast({
               variant: "destructive",
-              title: "Ошибка",
               description: "Не удалось удалить ключевое слово"
             });
           }
