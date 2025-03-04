@@ -708,13 +708,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Starting source search for keywords:', keywords);
 
       // Process keywords sequentially to avoid rate limits
-      const results = [];
+      const allResults = [];
       for (const keyword of keywords) {
+        console.log(`Processing keyword: ${keyword}`);
+
         // Check cache first
         const cached = getCachedResults(keyword);
         if (cached) {
-          console.log(`Found cached results for ${keyword}:`, cached.length);
-          results.push(...cached);
+          console.log(`Found ${cached.length} cached results for ${keyword}`);
+          allResults.push(...cached);
           continue;
         }
 
@@ -743,13 +745,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        results.push(...combinedResults);
+        allResults.push(...combinedResults);
       }
 
-      console.log('Total results before merging:', results.length);
+      console.log('Total results before merging:', allResults.length);
 
       // Merge and deduplicate sources
-      const uniqueSources = mergeSources(results);
+      const uniqueSources = mergeSources(allResults);
 
       // Sort by followers count
       const sortedSources = uniqueSources.sort((a, b) => {
@@ -761,8 +763,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         sources: sortedSources,
         meta: {
-          total: results.length,
+          total: allResults.length,
           unique: sortedSources.length,
+          platforms: sortedSources.reduce((acc, src) => {
+            acc[src.platform] = (acc[src.platform] || 0) + 1;
+            return acc;
+          }, {}),
           cached: searchCache.size
         }
       });
