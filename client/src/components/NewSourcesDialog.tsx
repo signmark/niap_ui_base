@@ -82,6 +82,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedSources(sources.map(source => source.url));
+    } else {
+      setSelectedSources([]);
+    }
+  };
+
   return (
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
@@ -94,55 +102,64 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             Нет подходящих источников
           </p>
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {sources.map((source, index) => (
-              <Card key={index}>
-                <CardContent className="py-4">
-                  <div className="flex items-start gap-4">
-                    <Checkbox
-                      checked={selectedSources.includes(source.url)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedSources([...selectedSources, source.url]);
-                        } else {
-                          setSelectedSources(selectedSources.filter(url => url !== source.url));
-                        }
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium">{source.name}</h3>
-                        <Badge variant="outline" className="whitespace-nowrap">
-                          {source.followers >= 1000000 
-                            ? `${(source.followers / 1000000).toFixed(1)}M`
-                            : source.followers >= 1000 
-                            ? `${(source.followers / 1000).toFixed(1)}K`
-                            : source.followers} подписчиков
-                        </Badge>
-                      </div>
+          <>
+            <div className="flex items-center gap-2 px-4">
+              <Checkbox
+                checked={selectedSources.length === sources.length}
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm font-medium">Выбрать все</span>
+            </div>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {sources.map((source, index) => (
+                <Card key={index}>
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-4">
+                      <Checkbox
+                        checked={selectedSources.includes(source.url)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedSources([...selectedSources, source.url]);
+                          } else {
+                            setSelectedSources(selectedSources.filter(url => url !== source.url));
+                          }
+                        }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium">{source.name}</h3>
+                          <Badge variant="outline" className="whitespace-nowrap">
+                            {source.followers >= 1000000 
+                              ? `${(source.followers / 1000000).toFixed(1)}M`
+                              : source.followers >= 1000 
+                              ? `${(source.followers / 1000).toFixed(1)}K`
+                              : source.followers} подписчиков
+                          </Badge>
+                        </div>
 
-                      {source.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {source.description}
+                        {source.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {source.description}
+                          </p>
+                        )}
+
+                        <p className="text-sm break-all mt-2">
+                          <a
+                            href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            {source.url}
+                          </a>
                         </p>
-                      )}
-
-                      <p className="text-sm break-all mt-2">
-                        <a
-                          href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          {source.url}
-                        </a>
-                      </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
 
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
