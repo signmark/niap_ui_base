@@ -11,9 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
-import type { Keyword } from "@shared/schema";
+
+// Define the Keyword interface locally
+interface Keyword {
+  id: string;
+  keyword: string;
+  trend_score: number;
+  mentions_count: number;
+  campaign_id: string;
+}
 
 interface KeywordTableProps {
   keywords: Array<{
@@ -27,12 +35,12 @@ interface KeywordTableProps {
   onKeywordsUpdated: () => void;
 }
 
-export function KeywordTable({ 
-  keywords = [], 
-  existingKeywords = [], 
-  isLoading, 
+export function KeywordTable({
+  keywords = [],
+  existingKeywords = [],
+  isLoading,
   campaignId,
-  onKeywordsUpdated 
+  onKeywordsUpdated
 }: KeywordTableProps) {
   const { toast } = useToast();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
@@ -72,6 +80,26 @@ export function KeywordTable({
     onError: () => {
       toast({
         description: "Не удалось добавить ключевые слова",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Мутация для удаления ключевого слова
+  const { mutate: deleteKeyword } = useMutation({
+    mutationFn: async (keywordId: string) => {
+      await directusApi.delete(`/items/user_keywords/${keywordId}`);
+    },
+    onSuccess: () => {
+      toast({
+        description: "Ключевое слово удалено"
+      });
+      onKeywordsUpdated();
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+    },
+    onError: () => {
+      toast({
+        description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
     }
@@ -148,22 +176,15 @@ export function KeywordTable({
             <TableHead>Ключевое слово</TableHead>
             <TableHead>Тренд</TableHead>
             <TableHead>Конкуренция</TableHead>
-            <TableHead className="text-right">Статус</TableHead>
+            <TableHead className="text-right">Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {[
             ...keywords.map(k => ({
-              keyword: k.keyword,
-              trend: k.trend,
-              competition: k.competition,
-              isExisting: false
-            })),
-            ...existingKeywords.map(k => ({
-              keyword: k.keyword,
-              trend: k.trend_score,
-              competition: k.mentions_count,
-              isExisting: true
+              ...k,
+              isExisting: isKeywordAdded(k.keyword),
+              id: existingKeywords.find(ek => ek.keyword === k.keyword)?.id
             }))
           ].map((keyword) => (
             <TableRow key={`${keyword.keyword}-${keyword.isExisting ? 'existing' : 'new'}`}>
@@ -186,9 +207,15 @@ export function KeywordTable({
               <TableCell>{keyword.competition}</TableCell>
               <TableCell className="text-right">
                 {keyword.isExisting ? (
-                  <Button variant="ghost" size="sm" disabled>
-                    Добавлено
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => keyword.id && deleteKeyword(keyword.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 ) : (
                   <Button
                     variant="ghost"
