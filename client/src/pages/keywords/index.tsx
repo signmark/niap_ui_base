@@ -113,28 +113,22 @@ export default function Keywords() {
 
   const { mutate: searchKeywords } = useMutation({
     mutationFn: async (query: string) => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }
-      return await response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: (data) => {
-      if (!data.data || !Array.isArray(data.data.keywords)) {
+      console.log("Search response:", data);
+      if (!data?.content?.includingPhrases?.items) {
         throw new Error("Некорректный формат данных от API");
       }
 
-      const keywords = data.data.keywords.map((kw: any) => ({
-        keyword: kw.keyword,
-        trend: kw.trend
+      const keywords = data.content.includingPhrases.items.map((item: any) => ({
+        keyword: item.phrase,
+        trend: parseInt(item.number.replace(/,/g, ''), 10) || 0
       }));
 
       setSearchResults(keywords);
@@ -144,6 +138,7 @@ export default function Keywords() {
       });
     },
     onError: (error: Error) => {
+      console.error("Search error:", error);
       setIsSearching(false);
       toast({
         description: error.message,
