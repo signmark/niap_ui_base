@@ -73,14 +73,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(response => response.json())
       .then(rawData => {
         console.log("Raw API Response:", rawData);
-        // Проверяем структуру данных
-        if (!rawData?.data?.keywords || !Array.isArray(rawData.data.keywords)) {
-          throw new Error("Некорректный формат данных от API");
-        }
 
-        const keywords = rawData.data.keywords;
+        // Извлекаем данные из правильной структуры ответа API
+        const keywords = rawData?.data?.keywords || [];
         console.log("Extracted keywords:", keywords);
 
+        // Форматируем данные для отображения
         const formattedResults = keywords.map(kw => ({
           keyword: kw.keyword,
           trend: kw.trend,
