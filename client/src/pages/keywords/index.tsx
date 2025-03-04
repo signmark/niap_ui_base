@@ -89,7 +89,8 @@ export default function Keywords() {
       console.log('Search sources response:', data);
 
       // Проверяем наличие источников в ответе
-      if (data.sources && Array.isArray(data.sources)) {
+      if (data.sources) {
+        // Создаем один результат со всеми найденными источниками
         const result = {
           keyword: "Все найденные источники",
           trend: 0,
