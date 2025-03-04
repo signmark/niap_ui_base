@@ -14,16 +14,14 @@ interface NewSourcesDialogProps {
   sourcesData: {
     success: boolean;
     data: {
-      data: {
-        sources: Array<{
-          url: string;
-          name: string;
-          followers: number;
-          platform: string;
-          description: string;
-          rank: number;
-        }>;
-      };
+      sources: Array<{
+        url: string;
+        name: string;
+        followers: number;
+        platform: string;
+        description: string;
+        rank: number;
+      }>;
     };
   };
 }
@@ -31,7 +29,7 @@ interface NewSourcesDialogProps {
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   console.log('NewSourcesDialog sourcesData:', sourcesData);
 
-  const sources = sourcesData?.data?.data?.sources || [];
+  const sources = sourcesData?.data?.sources || [];
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const { add: toast } = useToast();
