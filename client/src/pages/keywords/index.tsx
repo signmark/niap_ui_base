@@ -66,30 +66,39 @@ export default function Keywords() {
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
-  // Поиск ключевых слов через WordStat
+  // Поиск ключевых слов через API
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (query: string) => {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/sources/collect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          keywords: [query]
+        })
+      });
+
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Ошибка при поиске ключевых слов");
+        throw new Error(error.message || "Ошибка при поиске источников");
       }
       return await response.json();
     },
     onSuccess: (data) => {
-      if (!data.data || !Array.isArray(data.data.keywords)) {
-        throw new Error("Некорректный формат данных от API");
-      }
-
-      const results = data.data.keywords.map((kw: any) => ({
-        keyword: kw.keyword,
-        trend: kw.trend,
-        competition: kw.competition
-      }));
+      // Map API response to the format KeywordTable expects
+      const results = [{
+        keyword: searchTerm,
+        trend: 0,
+        competition: 0,
+        sources: data.sources || []
+      }];
 
       setSearchResults(results);
       toast({
-        description: "Ключевые слова найдены"
+        description: data.sources?.length ? 
+          `Найдено ${data.sources.length} источников` :
+          "Источники не найдены"
       });
     },
     onError: (error: Error) => {
@@ -128,67 +137,67 @@ export default function Keywords() {
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Ключевые слова</h1>
         <p className="text-muted-foreground mt-2">
-          Выберите кампанию и найдите релевантные ключевые слова
+          Найдите релевантные источники по ключевым словам
         </p>
       </div>
 
       <Card>
         <CardContent className="p-6">
-          <Select 
-            value={selectedCampaign} 
-            onValueChange={handleCampaignChange}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingCampaigns ? (
-                <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : !campaigns || campaigns.length === 0 ? (
-                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+          <div className="flex gap-4">
+            <Input
+              placeholder="Введите ключевое слово для поиска"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSearch} 
+              disabled={isSearching || !searchTerm}
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Поиск...
+                </>
               ) : (
-                campaigns.map((campaign: Campaign) => (
-                  <SelectItem 
-                    key={campaign.id} 
-                    value={campaign.id}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))
+                <>
+                  <Search className="mr-2 h-4 w-4" />
+                  Искать
+                </>
               )}
-            </SelectContent>
-          </Select>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {isValidCampaignSelected && (
+      {searchResults.length > 0 && (
         <Card>
           <CardContent className="p-6">
-            <div className="flex gap-4">
-              <Input
-                placeholder="Введите ключевое слово для поиска"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSearch} 
-                disabled={isSearching || !searchTerm}
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Поиск...
-                  </>
+            <Select 
+              value={selectedCampaign} 
+              onValueChange={handleCampaignChange}
+            >
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Выберите кампанию для добавления" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingCampaigns ? (
+                  <SelectItem value="loading">Загрузка...</SelectItem>
+                ) : !campaigns || campaigns.length === 0 ? (
+                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
                 ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Искать
-                  </>
+                  campaigns.map((campaign: Campaign) => (
+                    <SelectItem 
+                      key={campaign.id} 
+                      value={campaign.id}
+                    >
+                      {campaign.name}
+                    </SelectItem>
+                  ))
                 )}
-              </Button>
-            </div>
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
       )}
