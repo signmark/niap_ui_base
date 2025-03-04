@@ -27,9 +27,11 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  console.log('NewSourcesDialog sourcesData:', sourcesData);
+  console.log('NewSourcesDialog received sourcesData:', sourcesData);
 
   const sources = sourcesData?.data?.sources || [];
+  console.log('Extracted sources:', sources);
+
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const { add: toast } = useToast();
