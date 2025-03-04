@@ -68,9 +68,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        console.log("Raw API Response:", data); // Отладочный вывод
-        const keywords = data?.keywords || [];
-        console.log("Processed keywords:", keywords); // Отладочный вывод
+        console.log("Raw API Response:", data);
+        const keywords = data?.data?.keywords || [];
+        console.log("Processed keywords:", keywords);
 
         const formattedResults = keywords.map((kw: any) => ({
           keyword: kw.keyword,
@@ -78,7 +78,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           competition: kw.competition,
           selected: false
         }));
-        console.log("Formatted results:", formattedResults); // Отладочный вывод
+        console.log("Formatted results:", formattedResults);
 
         setSearchResults(formattedResults);
         toast({
