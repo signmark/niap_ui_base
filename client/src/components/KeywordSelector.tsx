@@ -142,7 +142,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
-      {/* Поиск */}
       <div className="flex gap-2">
         <Input
           placeholder="Введите запрос для поиска ключевых слов"
@@ -166,7 +165,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         </Button>
       </div>
 
-      {/* Существующие ключевые слова */}
       {keywords.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
@@ -201,7 +199,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         </div>
       )}
 
-      {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <>
           <div className="flex justify-between items-center mb-4">
