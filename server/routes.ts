@@ -257,33 +257,17 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
    - Reddit: строго > 50,000 участников
    - Twitter/X: строго > 10,000 подписчиков
 
-3. Оценка качества (ранг от 1 до 10):
-   - 1-3: Профессиональные диетологи, врачи, эксперты с научным подходом
-   - 4-6: Популярные фитнес-тренеры и практикующие специалисты
-   - 7-10: Качественные тематические каналы
-
-4. Формат URL:
-   - Всегда используйте https://
-   - НЕ используйте кириллицу в URL
-   - ОБЯЗАТЕЛЬНО проверьте существование аккаунта перед включением в список
-
-5. Формат ответа строго JSON:
+3. Формат JSON ответа строго:
 [{
   "url": "https://instagram.com/example",
   "rank": 2,
   "followers": 150000,
-  "description": "Подробное описание аккаунта: тематика, экспертиза автора"
+  "description": "Подробное описание аккаунта"
 }]`
         },
         {
           role: "user",
-          content: `Найдите ТОП-5 самых авторитетных источников в Instagram и других социальных сетях (кроме YouTube) по теме: ${keyword}.
-ОБЯЗАТЕЛЬНО:
-1. Проверьте реальное существование аккаунта
-2. Укажите точное количество подписчиков
-3. Оцените профессионализм автора для точного ранжирования
-4. Исключите заброшенные аккаунты
-5. Добавьте подробное описание для каждого источника`
+          content: `Найдите ТОП-5 самых авторитетных источников в Instagram и других социальных сетях (кроме YouTube) по теме: ${keyword}`
         }
       ],
       max_tokens: 1000,
@@ -337,11 +321,11 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
             const sources = JSON.parse(match);
             if (!Array.isArray(sources)) continue;
 
+            // Process each source
             const validSources = sources.filter(source => {
               try {
                 // Basic validation
-                if (!source.url || !source.followers || !source.description) {
-                  console.log(`Skipping source - missing required fields:`, source);
+                if (!source.url || !source.followers) {
                   return false;
                 }
 
@@ -354,14 +338,12 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
                 // Find matching platform
                 const platform = Object.keys(followerRequirements).find(p => normalizedUrl.includes(p));
                 if (!platform) {
-                  console.log(`Skipping source - unsupported platform: ${normalizedUrl}`);
                   return false;
                 }
 
                 // Check follower count requirement
                 const minFollowers = followerRequirements[platform];
                 if (source.followers < minFollowers) {
-                  console.log(`Skipping ${normalizedUrl} - insufficient followers: ${source.followers} < ${minFollowers}`);
                   return false;
                 }
 
@@ -379,7 +361,7 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
               rank: Math.min(Math.max(1, source.rank || 5), 10),
               followers: source.followers,
               keyword,
-              description: source.description,
+              description: source.description || '',
               platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
             }));
 
@@ -388,6 +370,14 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
             console.error(`Error parsing JSON match for ${keyword}:`, parseError);
             continue;
           }
+        }
+
+        // Cache valid results
+        if (results.length > 0) {
+          searchCache.set(keyword, {
+            timestamp: Date.now(),
+            results
+          });
         }
 
         console.log(`Found ${results.length} valid sources for keyword ${keyword}`);
@@ -400,7 +390,7 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
       console.error('Error in Perplexity search:', error);
       return [];
     }
-  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
