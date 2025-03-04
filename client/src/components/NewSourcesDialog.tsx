@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 
@@ -30,7 +30,15 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const sources = sourcesData?.data?.sources || [];
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const sourcesPerPage = 10;
   const { add: toast } = useToast();
+
+  // Вычисляем пагинацию
+  const totalPages = Math.ceil(sources.length / sourcesPerPage);
+  const startIndex = (currentPage - 1) * sourcesPerPage;
+  const endIndex = startIndex + sourcesPerPage;
+  const currentSources = sources.slice(startIndex, endIndex);
 
   const handleAddSources = async () => {
     if (selectedSources.length === 0) {
@@ -84,9 +92,16 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedSources(sources.map(source => source.url));
+      // Выбираем только текущие отображаемые источники
+      const currentPageUrls = currentSources.map(source => source.url);
+      setSelectedSources(prev => {
+        const otherPages = prev.filter(url => !currentPageUrls.includes(url));
+        return checked ? [...otherPages, ...currentPageUrls] : otherPages;
+      });
     } else {
-      setSelectedSources([]);
+      // Снимаем выделение только с текущих отображаемых источников
+      const currentPageUrls = currentSources.map(source => source.url);
+      setSelectedSources(prev => prev.filter(url => !currentPageUrls.includes(url)));
     }
   };
 
@@ -103,15 +118,20 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           </p>
         ) : (
           <>
-            <div className="flex items-center gap-2 px-4">
-              <Checkbox
-                checked={selectedSources.length === sources.length}
-                onCheckedChange={handleSelectAll}
-              />
-              <span className="text-sm font-medium">Выбрать все</span>
+            <div className="flex items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={currentSources.every(source => selectedSources.includes(source.url))}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm font-medium">Выбрать все на странице</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {sources.length} источников
+              </div>
             </div>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {sources.map((source, index) => (
+              {currentSources.map((source, index) => (
                 <Card key={index}>
                   <CardContent className="py-4">
                     <div className="flex items-start gap-4">
@@ -159,6 +179,31 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                 </Card>
               ))}
             </div>
+
+            {/* Пагинация */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  Страница {currentPage} из {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </>
         )}
 

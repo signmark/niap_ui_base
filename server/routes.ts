@@ -87,7 +87,7 @@ function delay(ms: number) {
 
 // Helper function for Social Searcher API
 async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
-  // Check cache first
+  // Проверяем кеш
   const cached = getCachedResults(keyword);
   if (cached) {
     console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
@@ -113,15 +113,14 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     }
 
     try {
-      // Add delay to prevent rate limiting
       await delay(2000);
 
       const response = await axios.get('https://api.social-searcher.com/v2/users', {
         params: {
           q: encodeURIComponent(keyword),
           key: socialSearcherKey,
-          network: 'youtube',
-          lang: 'ru,en'
+          network: 'youtube,instagram',
+          lang: 'ru', // Только русский язык
         }
       });
 
@@ -130,27 +129,51 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         return [];
       }
 
-      const results = response.data?.posts?.map((post: any) => ({
-        url: normalizeSourceUrl(post.user?.url, 'youtube.com') || post.user?.url,
-        name: post.user?.name || '',
-        rank: 5,
-        followers: 100000,
-        title: post.title || '',
-        description: post.text || `YouTube канал: ${post.user?.name}`,
-        keyword,
-        platform: 'youtube'
-      })).filter(Boolean) || [];
+      const results = await Promise.all(
+        (response.data?.posts || [])
+          .filter((post: any) => {
+            // Фильтруем посты на русском языке
+            const hasRussianText = /[а-яА-ЯёЁ]/.test(post.text || '') || /[а-яА-ЯёЁ]/.test(post.title || '');
+            return hasRussianText;
+          })
+          .map(async (post: any) => {
+            const url = normalizeSourceUrl(post.user?.url, post.network) || post.user?.url;
+            if (!url) return null;
 
-      // Cache the results
-      if (results.length > 0) {
-        console.log(`Caching ${results.length} results for keyword: ${keyword}`);
+            // Проверяем существование профиля
+            try {
+              const profileCheck = await axios.head(url);
+              if (profileCheck.status !== 200) return null;
+            } catch (error) {
+              console.log(`Profile ${url} not found or not accessible`);
+              return null;
+            }
+
+            return {
+              url,
+              name: post.user?.name || '',
+              rank: 5,
+              followers: 100000, // Заглушка, в реальности нужно парсить
+              title: post.title || '',
+              description: post.text || `${post.network === 'youtube' ? 'YouTube канал' : 'Instagram аккаунт'}: ${post.user?.name}`,
+              keyword,
+              platform: post.network
+            };
+          })
+      );
+
+      const validResults = results.filter(Boolean);
+
+      // Кешируем результаты
+      if (validResults.length > 0) {
+        console.log(`Caching ${validResults.length} results for keyword: ${keyword}`);
         searchCache.set(keyword, {
           timestamp: Date.now(),
-          results
+          results: validResults
         });
       }
 
-      return results;
+      return validResults;
 
     } catch (apiError: any) {
       console.error('Social Searcher API error:', apiError.message);
@@ -254,7 +277,6 @@ function extractSourcesFromText(content: string): any[] {
 
 // Helper function for Perplexity search
 async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
-  // Check cache first
   const cached = getCachedResults(keyword);
   if (cached) {
     console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
@@ -286,11 +308,11 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
         messages: [
           {
             role: "system",
-            content: `You are an expert at finding high-quality Instagram accounts.
-Focus only on Instagram accounts with >50K followers.
+            content: `You are an expert at finding high-quality Russian Instagram accounts.
+Focus only on Instagram accounts with >50K followers that post in Russian.
 For each account provide:
 1. Username with @ symbol 
-2. Full name in Russian and English
+2. Full name in Russian
 3. Follower count with K or M
 4. Brief description in Russian
 
@@ -302,7 +324,7 @@ https://www.instagram.com/username/ - description`
           },
           {
             role: "user",
-            content: `Find TOP-5 most authoritative Instagram accounts for: ${keyword}`
+            content: `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`
           }
         ],
         max_tokens: 1000,
@@ -323,11 +345,25 @@ https://www.instagram.com/username/ - description`
     const content = response.data.choices[0].message.content;
     console.log(`Raw API response for keyword ${keyword}:`, content);
 
-    // Extract sources from text response
-    const sources = extractSourcesFromText(content);
-    console.log(`Extracted ${sources.length} sources for keyword ${keyword}:`, sources);
+    // Извлекаем источники из текста и проверяем их существование
+    const extractedSources = extractSourcesFromText(content);
+    const validatedSources = await Promise.all(
+      extractedSources.map(async (source) => {
+        try {
+          const profileCheck = await axios.head(source.url);
+          if (profileCheck.status !== 200) return null;
+          return source;
+        } catch (error) {
+          console.log(`Profile ${source.url} not found or not accessible`);
+          return null;
+        }
+      })
+    );
 
-    // Cache the results if we found any
+    const sources = validatedSources.filter(Boolean);
+    console.log(`Found ${sources.length} valid sources for keyword ${keyword}`);
+
+    // Кешируем результаты
     if (sources.length > 0) {
       console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
       searchCache.set(keyword, {
