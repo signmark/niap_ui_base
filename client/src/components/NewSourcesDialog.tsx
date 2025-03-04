@@ -12,20 +12,22 @@ interface NewSourcesDialogProps {
   campaignId: string;
   onClose: () => void;
   sourcesData: {
-    sources: Array<{
-      url: string;
-      name: string;
-      followers: number;
-      platform: string;
-      description: string;
-      rank: number;
-    }>;
+    data: {
+      sources: Array<{
+        url: string;
+        name: string;
+        followers: number;
+        platform: string;
+        description: string;
+        rank: number;
+      }>;
+    };
   };
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   console.log('Dialog received sourcesData:', sourcesData);
-  const sources = sourcesData?.sources || [];
+  const sources = sourcesData?.data?.sources || [];
   console.log('Available sources:', sources);
 
   const [selectedSources, setSelectedSources] = useState<string[]>([]);

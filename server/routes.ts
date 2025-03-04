@@ -692,7 +692,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Returning test sources:', testSources);
 
-      return res.json({ sources: testSources });
+      // Return in the expected format
+      return res.json({ 
+        success: true,
+        data: {
+          sources: testSources
+        }
+      });
 
     } catch (error) {
       console.error('Error in /api/sources/collect:', error);
