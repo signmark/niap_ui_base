@@ -22,6 +22,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     queryKey: ["/api/keywords", campaignId],
     queryFn: async () => {
       if (!campaignId) return [];
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
       const response = await directusApi.get('/items/user_keywords', {
         params: {
           filter: {
@@ -31,7 +35,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           }
         },
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       return response.data?.data || [];
@@ -67,12 +71,17 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
-      .then(data => {
-        console.log("Raw API Response:", data);
-        const keywords = data?.data?.keywords || [];
-        console.log("Processed keywords:", keywords);
+      .then(rawData => {
+        console.log("Raw API Response:", rawData);
+        // Проверяем структуру данных
+        if (!rawData?.data?.keywords || !Array.isArray(rawData.data.keywords)) {
+          throw new Error("Некорректный формат данных от API");
+        }
 
-        const formattedResults = keywords.map((kw: any) => ({
+        const keywords = rawData.data.keywords;
+        console.log("Extracted keywords:", keywords);
+
+        const formattedResults = keywords.map(kw => ({
           keyword: kw.keyword,
           trend: kw.trend,
           competition: kw.competition,
