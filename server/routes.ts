@@ -244,6 +244,7 @@ function parseFollowerCount(text: string): number {
     }
     return number;
   } catch (e) {
+    console.error('Error parsing follower count:', e);
     return 0;
   }
 }
@@ -252,11 +253,11 @@ function parseFollowerCount(text: string): number {
 function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
-  // Match patterns like "@username - Name (500K followers) - Description"
-  const pattern = /@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\(([0-9.]+[KkMm])[^)]*\)\s*-\s*([^@\n]+)/g;
+  // Match detailed patterns like "@collegenutritionist - Rachel Paul (1M followers)"
+  const detailedPattern = /@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm])[^)]*\)[^-]*-\s*([^@\n]+)/g;
   let match;
 
-  while ((match = pattern.exec(content)) !== null) {
+  while ((match = detailedPattern.exec(content)) !== null) {
     const [_, username, name, followers, description] = match;
     const followersCount = parseFollowerCount(followers);
 
@@ -272,25 +273,44 @@ function extractSourcesFromText(content: string): any[] {
     }
   }
 
-  // Also try to match simpler patterns
-  const simplePattern = /@([a-zA-Z0-9._]+).*?([0-9.]+\s*[KkMm])\s*(?:followers|подписчиков)/gi;
-  while ((match = simplePattern.exec(content)) !== null) {
-    const [_, username, followers] = match;
+  // Match patterns with **bold** formatting
+  const boldPattern = /\*\*@([a-zA-Z0-9._]+)\s*-\s*([^*]+)\*\*[^(]*\(([0-9.]+[KkMm])[^)]*\)/g;
+  while ((match = boldPattern.exec(content)) !== null) {
+    const [_, username, name, followers] = match;
     const followersCount = parseFollowerCount(followers);
 
     if (followersCount >= 50000 && !sources.some(s => s.url.includes(username))) {
       sources.push({
         url: `instagram.com/${username}`,
-        name: username,
+        name: name.trim(),
         rank: 5,
         followers: followersCount,
         platform: 'instagram.com',
-        description: `Instagram аккаунт @${username}`
+        description: `Популярный Instagram аккаунт о здоровом питании`
       });
     }
   }
 
-  return sources;
+  // Match bullet points
+  const bulletPattern = /[•\-\*]\s*@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm])[^)]*\)/g;
+  while ((match = bulletPattern.exec(content)) !== null) {
+    const [_, username, name, followers] = match;
+    const followersCount = parseFollowerCount(followers);
+
+    if (followersCount >= 50000 && !sources.some(s => s.url.includes(username))) {
+      sources.push({
+        url: `instagram.com/${username}`,
+        name: name.trim(),
+        rank: 5,
+        followers: followersCount,
+        platform: 'instagram.com',
+        description: `Instagram эксперт по питанию и здоровому образу жизни`
+      });
+    }
+  }
+
+  // Убираем дубликаты по URL
+  return Array.from(new Map(sources.map(s => [s.url, s])).values());
 }
 
 // Helper function to handle Perplexity search

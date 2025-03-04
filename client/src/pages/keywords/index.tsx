@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Search, Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
@@ -120,14 +122,26 @@ export default function Keywords() {
   const handleCampaignChange = (value: string) => {
     setSelectedCampaign(value);
     setSearchResults([]);
+  };
 
-    // Если выбрана кампания, запускаем поиск по всем её ключевым словам
-    if (value && value !== "loading" && value !== "empty") {
-      const keywords = existingKeywords?.map(k => k.keyword) || [];
-      if (keywords.length > 0) {
-        console.log(`Starting search for ${keywords.length} keywords from campaign`);
-        searchSources(keywords);
-      }
+  const handleSearch = () => {
+    if (!selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty") {
+      toast({
+        description: "Выберите кампанию для поиска источников",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const keywords = existingKeywords?.map(k => k.keyword) || [];
+    if (keywords.length > 0) {
+      console.log(`Starting search for ${keywords.length} keywords from campaign`);
+      searchSources(keywords);
+    } else {
+      toast({
+        description: "В кампании нет ключевых слов для поиска",
+        variant: "destructive"
+      });
     }
   };
 
@@ -142,30 +156,49 @@ export default function Keywords() {
 
       <Card>
         <CardContent className="p-6">
-          <Select
-            value={selectedCampaign}
-            onValueChange={handleCampaignChange}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingCampaigns ? (
-                <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : !campaigns || campaigns.length === 0 ? (
-                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+          <div className="flex gap-4 items-center">
+            <Select
+              value={selectedCampaign}
+              onValueChange={handleCampaignChange}
+            >
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Выберите кампанию" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingCampaigns ? (
+                  <SelectItem value="loading">Загрузка...</SelectItem>
+                ) : !campaigns || campaigns.length === 0 ? (
+                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+                ) : (
+                  campaigns.map((campaign: Campaign) => (
+                    <SelectItem
+                      key={campaign.id}
+                      value={String(campaign.id)}
+                    >
+                      {campaign.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+
+            <Button
+              onClick={handleSearch}
+              disabled={isSearching || !selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty"}
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Поиск...
+                </>
               ) : (
-                campaigns.map((campaign: Campaign) => (
-                  <SelectItem
-                    key={campaign.id}
-                    value={String(campaign.id)}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))
+                <>
+                  <Search className="mr-2 h-4 w-4" />
+                  Найти источники
+                </>
               )}
-            </SelectContent>
-          </Select>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

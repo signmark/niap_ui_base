@@ -30,11 +30,6 @@ function normalizeInstagramUrl(url: string): string {
     normalized = `instagram.com/${normalized}`;
   }
 
-  // Handle instagram.com/username format
-  if (normalized.startsWith('instagram.com/')) {
-    return normalized;
-  }
-
   return normalized;
 }
 
@@ -48,6 +43,7 @@ interface Keyword {
 
 interface Source {
   url: string;
+  name: string;
   followers: number;
   description: string;
   platform: string;
@@ -76,50 +72,6 @@ export function KeywordTable({
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Проверяем, добавлено ли слово уже
-  const isKeywordAdded = (keyword: string) => {
-    return existingKeywords.some(k => k.keyword === keyword);
-  };
-
-  // Мутация для добавления ключевых слов
-  const { mutate: addToKeywords, isPending: isAdding } = useMutation({
-    mutationFn: async (keywordsToAdd: string[]) => {
-      if (!campaignId) {
-        throw new Error("Выберите кампанию");
-      }
-
-      await Promise.all(
-        keywordsToAdd.map(async (keywordText) => {
-          const keywordData = keywords.find(k => k.keyword === keywordText);
-          if (!keywordData) return;
-
-          await directusApi.post('/items/user_keywords', {
-            campaign_id: campaignId,
-            keyword: keywordText,
-            trend_score: keywordData.trend,
-            mentions_count: keywordData.competition,
-            last_checked: new Date().toISOString()
-          });
-        })
-      );
-    },
-    onSuccess: () => {
-      toast({
-        description: "Ключевые слова добавлены в кампанию"
-      });
-      onKeywordsUpdated();
-      if (campaignId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        description: error.message || "Не удалось добавить ключевые слова",
-        variant: "destructive"
-      });
-    }
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -139,14 +91,15 @@ export function KeywordTable({
     return acc;
   }, []);
 
-  if (!allSources.length && !existingKeywords.length) {
-    return null;
-  }
+  // Сортируем источники по количеству подписчиков
+  const sortedSources = allSources.sort((a, b) => (b.followers || 0) - (a.followers || 0));
+
+  console.log('Rendering sources:', sortedSources);
 
   return (
     <div className="space-y-8">
       {/* Таблица результатов поиска источников */}
-      {allSources.length > 0 && (
+      {sortedSources.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Найденные источники</h3>
@@ -156,16 +109,20 @@ export function KeywordTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Источник</TableHead>
+                <TableHead>Имя</TableHead>
                 <TableHead>Подписчики</TableHead>
                 <TableHead>Платформа</TableHead>
                 <TableHead>Описание</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allSources.map((source, index) => {
-                const normalizedUrl = source.platform === 'instagram.com' ? 
-                  normalizeInstagramUrl(source.url) : 
-                  source.url;
+              {sortedSources.map((source, index) => {
+                const normalizedUrl = normalizeInstagramUrl(source.url);
+                const formattedFollowers = source.followers >= 1000000 
+                  ? `${(source.followers / 1000000).toFixed(1)}M`
+                  : source.followers >= 1000 
+                  ? `${(source.followers / 1000).toFixed(1)}K`
+                  : source.followers.toString();
 
                 return (
                   <TableRow key={index}>
@@ -176,10 +133,11 @@ export function KeywordTable({
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline"
                       >
-                        {normalizedUrl}
+                        @{normalizedUrl.split('/').pop()}
                       </a>
                     </TableCell>
-                    <TableCell>{source.followers.toLocaleString()}</TableCell>
+                    <TableCell>{source.name}</TableCell>
+                    <TableCell>{formattedFollowers}</TableCell>
                     <TableCell>{source.platform}</TableCell>
                     <TableCell>{source.description}</TableCell>
                   </TableRow>
