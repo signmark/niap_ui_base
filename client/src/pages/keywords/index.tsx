@@ -89,10 +89,12 @@ export default function Keywords() {
       return await response.json();
     },
     onSuccess: (data) => {
-      // Обработка результатов поиска
-      const processedKeywords = Array.isArray(data) ? data : (data?.processed_keywords || []);
+      // В логах видно, что data содержит массив ключевых слов в processed_keywords
+      const processedKeywords = data?.processed_keywords || [];
       setSearchResults(processedKeywords.map((kw: any) => ({
-        ...kw,
+        keyword: kw.keyword,
+        trend: kw.trend,
+        competition: kw.competition,
         selected: false
       })));
       setIsSearching(false);

@@ -68,8 +68,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        // Обработка результатов в любом формате
-        const processedKeywords = Array.isArray(data) ? data : (data?.processed_keywords || []);
+        // Поправлено в соответствии с форматом API
+        const processedKeywords = data?.processed_keywords || [];
         setSearchResults(processedKeywords.map((kw: any) => ({
           keyword: kw.keyword,
           trend: kw.trend || 0,
