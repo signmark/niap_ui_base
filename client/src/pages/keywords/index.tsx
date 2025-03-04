@@ -6,13 +6,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
 export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]); // Added state for search results
+  const [isSearching, setIsSearching] = useState(false);
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -78,9 +80,53 @@ export default function Keywords() {
     }
   });
 
-  const filteredKeywords = keywords.filter(keyword => 
-    keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { mutate: searchKeywords } = useMutation({
+    mutationFn: async (query: string) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error("Ошибка при поиске ключевых слов");
+      }
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (!data.data || !Array.isArray(data.data.keywords)) {
+        throw new Error("Некорректный формат данных от API");
+      }
+
+      const keywords = data.data.keywords.map((kw: any) => ({
+        keyword: kw.keyword,
+        trend: kw.trend,
+        selected: false
+      }));
+
+      setSearchResults(keywords);
+      setIsSearching(false);
+      toast({
+        description: "Найдены ключевые слова"
+      });
+    },
+    onError: (error: Error) => {
+      setIsSearching(false);
+      toast({
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    searchKeywords(searchQuery);
+  };
 
   return (
     <div className="space-y-4 p-6">
@@ -93,54 +139,65 @@ export default function Keywords() {
 
       <Card>
         <CardContent className="p-6">
-          <div className="flex gap-4 items-center">
-            <Select
-              value={selectedCampaign}
-              onValueChange={setSelectedCampaign}
-            >
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Выберите кампанию" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingCampaigns ? (
-                  <SelectItem value="loading">Загрузка...</SelectItem>
-                ) : !campaigns || campaigns.length === 0 ? (
-                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-                ) : (
-                  campaigns.map((campaign: Campaign) => (
-                    <SelectItem
-                      key={campaign.id}
-                      value={String(campaign.id)}
-                    >
-                      {campaign.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-
-            {selectedCampaign && (
-              <div className="flex-1">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Поиск ключевых слов..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
-                  />
-                  <Button variant="ghost" size="icon" className="shrink-0">
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <Select
+            value={selectedCampaign}
+            onValueChange={setSelectedCampaign}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Выберите кампанию" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingCampaigns ? (
+                <SelectItem value="loading">Загрузка...</SelectItem>
+              ) : !campaigns || campaigns.length === 0 ? (
+                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
+              ) : (
+                campaigns.map((campaign: Campaign) => (
+                  <SelectItem
+                    key={campaign.id}
+                    value={String(campaign.id)}
+                  >
+                    {campaign.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
+      {selectedCampaign && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Введите запрос для поиска ключевых слов"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1"
+              />
+              <Button onClick={handleSearch} disabled={isSearching}>
+                {isSearching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Поиск...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Искать
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <KeywordTable
-        keywords={filteredKeywords}
-        isLoading={isLoadingCampaigns || isLoadingKeywords}
+        keywords={searchResults} // Use searchResults instead of keywords
+        isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching} // Add isSearching to loading state
         onDelete={deleteKeyword}
       />
     </div>
