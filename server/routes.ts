@@ -253,7 +253,7 @@ function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
   // Extract structured account information with followers count
-  const structuredPattern = /\*\*([^*]+)\(@([a-zA-Z0-9._]+)\)\*\*[^*]*\*\*Followers:\*\*\s*([0-9.]+\s*[KkMm])/g;
+  const structuredPattern = /\*\*([^*]+)\(@([a-zA-Z0-9._]+)\)\*\*[^*]*?\*\*Followers:\*\*\s*([0-9.]+\s*[KkMm])/g;
   let match;
 
   while ((match = structuredPattern.exec(content)) !== null) {
@@ -262,7 +262,7 @@ function extractSourcesFromText(content: string): any[] {
 
     if (followers >= 50000) { // Minimum follower requirement for Instagram
       sources.push({
-        url: `https://instagram.com/${handle}`,
+        url: `instagram.com/${handle}`,
         name: name.trim(),
         rank: 5,
         followers,
@@ -272,21 +272,58 @@ function extractSourcesFromText(content: string): any[] {
     }
   }
 
-  // Extract Instagram handles with follower counts
-  const instagramPattern = /@([a-zA-Z0-9._]+)[^@]*?([0-9.]+\s*(?:тысяч|тыс|k|K|млн|million|M|м))/gi;
+  // Extract handles and follower counts from bullet points
+  const bulletPattern = /[•*-]\s*(?:@([a-zA-Z0-9._]+)|([a-zA-Z0-9._]+)(?:@[a-zA-Z0-9._]+)?)[^\n]*?([0-9.]+\s*(?:K|k|M|m|тыс|млн))[^\n]*(?:followers|подписчиков)/gi;
 
-  while ((match = instagramPattern.exec(content)) !== null) {
-    const [_, handle, followersText] = match;
+  while ((match = bulletPattern.exec(content)) !== null) {
+    const handle = match[1] || match[2];
+    const followersText = match[3];
     const followers = parseFollowerCount(followersText);
 
     if (followers >= 50000 && !sources.some(s => s.url.includes(handle))) {
       sources.push({
-        url: `https://instagram.com/${handle}`,
+        url: `instagram.com/${handle}`,
         name: handle,
         rank: 5,
         followers,
         platform: 'instagram.com',
         description: `Instagram аккаунт @${handle}`
+      });
+    }
+  }
+
+  // Extract simple mentions with numbers
+  const simplePattern = /@([a-zA-Z0-9._]+)[^@]*?([0-9.]+\s*(?:K|k|M|m|тыс|млн))[^@]*?(?:followers|подписчиков)/gi;
+
+  while ((match = simplePattern.exec(content)) !== null) {
+    const [_, handle, followersText] = match;
+    const followers = parseFollowerCount(followersText);
+
+    if (followers >= 50000 && !sources.some(s => s.url.includes(handle))) {
+      sources.push({
+        url: `instagram.com/${handle}`,
+        name: handle,
+        rank: 5,
+        followers,
+        platform: 'instagram.com',
+        description: `Instagram аккаунт @${handle}`
+      });
+    }
+  }
+
+  // Extract mentioned handles with description
+  const mentionPattern = /@([a-zA-Z0-9._]+)\s*[-–]\s*([^@\n]+)/g;
+
+  while ((match = mentionPattern.exec(content)) !== null) {
+    const [_, handle, description] = match;
+    if (!sources.some(s => s.url.includes(handle))) {
+      sources.push({
+        url: `instagram.com/${handle}`,
+        name: handle,
+        rank: 5,
+        followers: 100000, // Default follower count if not specified
+        platform: 'instagram.com',
+        description: description.trim()
       });
     }
   }
