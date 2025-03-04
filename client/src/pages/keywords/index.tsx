@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
 export default function Keywords() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { add: toast } = useToast();
@@ -66,17 +62,15 @@ export default function Keywords() {
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
-  // Поиск ключевых слов через API
-  const { mutate: searchKeywords, isPending: isSearching } = useMutation({
-    mutationFn: async (query: string) => {
+  // Поиск источников для всех ключевых слов кампании
+  const { mutate: searchSources, isPending: isSearching } = useMutation({
+    mutationFn: async (keywords: string[]) => {
       const response = await fetch(`/api/sources/collect`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          keywords: [query]
-        })
+        body: JSON.stringify({ keywords })
       });
 
       if (!response.ok) {
@@ -88,7 +82,7 @@ export default function Keywords() {
     onSuccess: (data) => {
       // Map API response to the format KeywordTable expects
       const results = [{
-        keyword: searchTerm,
+        keyword: "Найденные источники",
         trend: 0,
         competition: 0,
         sources: data.sources || []
@@ -110,97 +104,56 @@ export default function Keywords() {
     }
   });
 
-  const handleSearch = () => {
-    if (!searchTerm) return;
-    searchKeywords(searchTerm);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // Валидируем выбранную кампанию
-  const isValidCampaignSelected = selectedCampaign && 
-    selectedCampaign !== "loading" && 
-    selectedCampaign !== "empty";
-
   const handleCampaignChange = (value: string) => {
     setSelectedCampaign(value);
     setSearchResults([]);
-    setSearchTerm("");
+
+    // Если выбрана кампания, запускаем поиск по всем её ключевым словам
+    if (value && value !== "loading" && value !== "empty") {
+      const keywords = existingKeywords?.map(k => k.keyword) || [];
+      if (keywords.length > 0) {
+        searchSources(keywords);
+      }
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">Ключевые слова</h1>
+        <h1 className="text-2xl font-bold">Источники</h1>
         <p className="text-muted-foreground mt-2">
-          Найдите релевантные источники по ключевым словам
+          Выберите кампанию для поиска источников по её ключевым словам
         </p>
       </div>
 
       <Card>
         <CardContent className="p-6">
-          <div className="flex gap-4">
-            <Input
-              placeholder="Введите ключевое слово для поиска"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSearch} 
-              disabled={isSearching || !searchTerm}
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Поиск...
-                </>
+          <Select 
+            value={selectedCampaign} 
+            onValueChange={handleCampaignChange}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Выберите кампанию" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingCampaigns ? (
+                <SelectItem value="loading">Загрузка...</SelectItem>
+              ) : !campaigns || campaigns.length === 0 ? (
+                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
               ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Искать
-                </>
+                campaigns.map((campaign: Campaign) => (
+                  <SelectItem 
+                    key={campaign.id} 
+                    value={campaign.id}
+                  >
+                    {campaign.name}
+                  </SelectItem>
+                ))
               )}
-            </Button>
-          </div>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
-
-      {searchResults.length > 0 && (
-        <Card>
-          <CardContent className="p-6">
-            <Select 
-              value={selectedCampaign} 
-              onValueChange={handleCampaignChange}
-            >
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Выберите кампанию для добавления" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingCampaigns ? (
-                  <SelectItem value="loading">Загрузка...</SelectItem>
-                ) : !campaigns || campaigns.length === 0 ? (
-                  <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-                ) : (
-                  campaigns.map((campaign: Campaign) => (
-                    <SelectItem 
-                      key={campaign.id} 
-                      value={campaign.id}
-                    >
-                      {campaign.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      )}
 
       <KeywordTable 
         keywords={searchResults}
