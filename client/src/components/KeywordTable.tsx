@@ -105,7 +105,7 @@ export function KeywordTable({
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead> {/* Added competition header */}
+                <TableHead>Конкуренция</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -119,7 +119,7 @@ export function KeywordTable({
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
-                  <TableCell>{keyword.competition}</TableCell> {/* Added competition cell */}
+                  <TableCell>{keyword.competition}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
