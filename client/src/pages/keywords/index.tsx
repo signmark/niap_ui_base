@@ -82,9 +82,10 @@ export default function Keywords() {
       return await response.json();
     },
     onSuccess: (data) => {
+      console.log('Search sources response:', data);
+
       // Получаем все найденные источники
       if (data.sources && data.sources.length > 0) {
-        // Создаем один результат со всеми найденными источниками
         const result = {
           keyword: "Все найденные источники",
           trend: 0,
@@ -92,7 +93,9 @@ export default function Keywords() {
           sources: data.sources.sort((a: any, b: any) => (b.followers || 0) - (a.followers || 0))
         };
 
+        console.log('Setting search results:', result);
         setSearchResults([result]);
+
         toast({
           description: `Найдено ${data.sources.length} источников`
         });
@@ -105,6 +108,7 @@ export default function Keywords() {
       }
     },
     onError: (error: Error) => {
+      console.error('Search sources error:', error);
       setSearchResults([]);
       toast({
         description: error.message,
@@ -138,8 +142,8 @@ export default function Keywords() {
 
       <Card>
         <CardContent className="p-6">
-          <Select 
-            value={selectedCampaign} 
+          <Select
+            value={selectedCampaign}
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger className="w-[300px]">
@@ -152,8 +156,8 @@ export default function Keywords() {
                 <SelectItem value="empty">Нет доступных кампаний</SelectItem>
               ) : (
                 campaigns.map((campaign: Campaign) => (
-                  <SelectItem 
-                    key={campaign.id} 
+                  <SelectItem
+                    key={campaign.id}
                     value={String(campaign.id)}
                   >
                     {campaign.name}
@@ -165,7 +169,7 @@ export default function Keywords() {
         </CardContent>
       </Card>
 
-      <KeywordTable 
+      <KeywordTable
         keywords={searchResults}
         existingKeywords={existingKeywords || []}
         isLoading={isLoadingKeywords || isSearching}
