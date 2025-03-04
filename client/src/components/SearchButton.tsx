@@ -50,9 +50,14 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       }
 
       const data = await response.json();
-      console.log('Search response before dialog:', data);
-      setSourcesData(data);
-      setIsDialogOpen(true);
+      console.log('Search response:', data);
+
+      if (data?.success && data?.data?.sources) {
+        setSourcesData(data);
+        setIsDialogOpen(true);
+      } else {
+        throw new Error('Некорректный формат данных от сервера');
+      }
 
     } catch (error) {
       if (error instanceof Error) {
