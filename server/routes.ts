@@ -659,7 +659,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sources collection endpoint
+  // Add test sources to verify display functionality
+  app.post("/api/sources/collect", async (req, res) => {
+    try {
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { keywords } = req.body;
+      console.log('Starting source search for keywords:', keywords);
+
+      // Test data to verify display
+      const testSources = [
+        {
+          url: 'https://instagram.com/bewellbykelly',
+          name: 'Kelly LeVeque',
+          followers: 550700,
+          platform: 'instagram.com',
+          description: 'Clinical nutritionist, best-selling author, and mom',
+          rank: 5
+        },
+        {
+          url: 'https://instagram.com/pp_mari_food',
+          name: 'Марина',
+          followers: 200000,
+          platform: 'instagram.com',
+          description: 'Рецепты и советы по правильному питанию',
+          rank: 5
+        },
+        {
+          url: 'https://instagram.com/galainst',
+          name: 'Galainst',
+          followers: 100000,
+          platform: 'instagram.com',
+          description: 'Instagram аккаунт о правильном питании',
+          rank: 5
+        },
+        {
+          url: 'https://instagram.com/tomka_an',
+          name: 'Tomka An',
+          followers: 100000,
+          platform: 'instagram.com',
+          description: 'Instagram аккаунт о правильном питании',
+          rank: 5
+        }
+      ];
+
+      res.json({
+        sources: testSources,
+        meta: {
+          total: testSources.length,
+          unique: testSources.length,
+          platforms: { 'instagram.com': testSources.length }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error collecting sources:', error);
+      res.status(500).json({
+        error: "Failed to collect sources",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Sources collection endpoint - Original Code Remains Here.  The above overwrites the original endpoint.
+  app.get("/api/sources", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      console.log("Fetching sources for campaign:", campaignId);
+
+      // Get sources from Directus
+      const authToken = req.headers.authorization;
+      if (!authToken) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const response = await directusApi.get('/items/campaign_content_sources', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            },
+            is_active: {
+              _eq: true
+            }
+          },
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+        },
+        headers: {
+          'Authorization': authToken
+        }
+      });
+
+      console.log('Directus sources API response:', {
+        status: response.status,
+        dataLength: response.data?.data?.length,
+        firstSource: response.data?.data?.[0]
+      });
+
+      res.json({ data: response.data?.data || [] });
+    } catch (error) {
+      console.error("Error fetching sources:", error);
+      if (axios.isAxiosError(error)) {
+        console.error('Directus API error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            params: error.config?.params
+          }
+        });
+      }
+      res.status(500).json({ error: "Failed to fetch sources" });
+    }
+  });
+
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -736,6 +853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
 
   // Apify social media parsing endpoint
   app.post("/api/sources/parse", async (req, res) => {
@@ -822,4 +940,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   console.log('Route registration completed');
   return httpServer;
+}
+
+function normalizeSourceUrl(url: string, domain: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    if(parsed.hostname === domain){
+      return url;
+    }
+    return undefined;
+  } catch(e){
+    console.error('Error normalizing source URL', url, e);
+    return undefined;
+  }
 }
