@@ -39,7 +39,6 @@ export function KeywordTable({
 
   return (
     <div className="space-y-8">
-      {/* Существующие ключевые слова */}
       {keywords.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
@@ -74,7 +73,6 @@ export function KeywordTable({
         </div>
       )}
 
-      {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -82,9 +80,9 @@ export function KeywordTable({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
+                  id="select-all"
                   checked={searchResults.every(kw => kw.selected)}
                   onCheckedChange={(checked) => onSelectAll?.(!!checked)}
-                  id="select-all"
                 />
                 <label htmlFor="select-all" className="text-sm">
                   Выбрать все

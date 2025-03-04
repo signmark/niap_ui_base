@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { KeywordTable } from "@/components/KeywordTable";
 
 interface KeywordSelectorProps {
@@ -68,9 +68,18 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        setSearchResults(data.map((item: any) => ({ ...item, selected: false })));
+        if (data?.keywords) {
+          setSearchResults(data.keywords.map((kw: any) => ({
+            keyword: kw.keyword,
+            trend: kw.trend,
+            competition: kw.competition,
+            selected: false
+          })));
+        } else {
+          setSearchResults([]);
+        }
         toast({
-          description: `Найдено ${data.length} ключевых слов`
+          description: `Найдено ${data?.keywords?.length || 0} ключевых слов`
         });
       })
       .catch(() => {
@@ -142,15 +151,24 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           className="flex-1"
         />
         <Button onClick={handleSearch} disabled={isSearching}>
-          <Search className="mr-2 h-4 w-4" />
-          Искать
+          {isSearching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Поиск...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Искать
+            </>
+          )}
         </Button>
       </div>
 
       <KeywordTable
         keywords={keywords}
         searchResults={searchResults}
-        isLoading={isLoadingKeywords}
+        isLoading={isLoadingKeywords || isSearching}
         onDelete={deleteKeyword}
         onKeywordToggle={handleKeywordToggle}
         onSelectAll={handleSelectAll}
