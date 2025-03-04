@@ -155,11 +155,6 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     }
 
     // Make request to Social Searcher API - currently only YouTube
-    // TODO: When full API access is available, add support for:
-    // - Instagram
-    // - X (Twitter)
-    // - LinkedIn
-    // - Reddit
     const response = await axios.get('https://api.social-searcher.com/v2/users', {
       params: {
         q: encodeURIComponent(keyword),
@@ -181,9 +176,6 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         lang: 'ru,en'
       }
     });
-
-    // Подробное логирование каждого поста
-    console.log('Raw posts data:', JSON.stringify(response.data.posts, null, 2));
 
     if (!response.data?.posts) {
       return [];
@@ -216,18 +208,19 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
 
     console.log('Valid posts after filtering:', JSON.stringify(validPosts, null, 2));
 
-    const mappedPosts = validPosts.map(post => {
-      const mappedPost = {
-        url: post.url,
-        name: post.user?.name || '',
-        title: post.title || '',
-        description: post.text || `YouTube канал: ${post.user?.name} - ${post.title || 'Контент по теме ' + keyword}`,
-        keyword
-      };
-      console.log('Mapped post:', JSON.stringify(mappedPost, null, 2));
-      return mappedPost;
-    });
+    // Map to consistent format that matches Perplexity results
+    const mappedPosts = validPosts.map(post => ({
+      url: post.url,
+      name: post.user?.name || '',
+      rank: 5, // Default rank for now
+      followers: 100000, // We don't get this from Social Searcher yet
+      title: post.title || '',
+      description: post.text || `YouTube канал: ${post.user?.name} - ${post.title || 'Контент по теме ' + keyword}`,
+      keyword,
+      platform: 'youtube'
+    }));
 
+    console.log('Mapped posts:', JSON.stringify(mappedPosts, null, 2));
     return mappedPosts;
 
   } catch (error) {
@@ -399,7 +392,8 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
             rank: Math.min(Math.max(1, source.rank || 5), 10),
             followers: source.followers,
             keyword,
-            description: source.description
+            description: source.description,
+            platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
           }));
 
           results = [...results,...validSources];
@@ -738,82 +732,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Search using both APIs in parallel
       const searchPromises = keywords.map(async keyword => {
         const [perplexityResults, socialSearcherResults] = await Promise.all([
-          // Existing Perplexity search
+          // Perplexity search for Instagram and other platforms
           (async () => {
             try {
-              // Existing Perplexity search code extracted to a separate function
               const results = await existingPerplexitySearch(keyword, token);
+              console.log(`Perplexity search results for ${keyword}:`, results.length);
               return results;
             } catch (error) {
               console.error('Error in Perplexity search:', error);
               return [];
             }
           })(),
-          // New Social Searcher search
-          searchSocialSourcesByKeyword(keyword, token)
+          // Social Searcher for YouTube channels
+          (async () => {
+            try {
+              const results = await searchSocialSourcesByKeyword(keyword, token);
+              console.log(`Social Searcher results for ${keyword}:`, results.length);
+              return results;
+            } catch (error) {
+              console.error('Error in Social Searcher:', error);
+              return [];
+            }
+          })()
         ]);
 
-        // Combine and deduplicate results
-        const combinedResults = [...perplexityResults, ...socialSearcherResults];
+      // Combine results
+      const combinedResults = [...perplexityResults, ...socialSearcherResults];
 
-        // Remove duplicates based on normalized URLs
-        const uniqueUrls = new Set();
-        return combinedResults.filter(source => {
-          const platform = Object.keys(followerRequirements).find(p => source.url.includes(p)) || '';
-          const normalizedUrl = normalizeSourceUrl(source.url, platform);
-
-          if (!normalizedUrl || uniqueUrls.has(normalizedUrl)) {
-            return false;
-          }
-
-          uniqueUrls.add(normalizedUrl);
-          return true;
-        });
+      console.log(`Combined results for ${keyword}:`, {
+        perplexityCount: perplexityResults.length,
+        socialSearcherCount: socialSearcherResults.length,
+        totalCount: combinedResults.length
       });
 
-      const results = await Promise.all(searchPromises.map(p => p.catch(e => {
-        console.error('Search promise error:', e);
-        return [];
-      })));
+      return combinedResults;
+    });
 
-      console.log('All search results:', results);
+    const results = await Promise.all(searchPromises);
+    const allSources = results.flat();
 
-      // Объединяем все результаты и удаляем дубликаты
-      const allSources = results.flat();
-      console.log('Combined sources:', allSources);
+    console.log('All sources count:', allSources.length);
 
-      // Сортируем по рангу и количеству подписчиков
-      const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
-        .sort((a, b) => {
-          // Сначала сортируем по рангу
-          const rankDiff = (a.rank || 10) - (b.rank || 10);
-          if (rankDiff !== 0) return rankDiff;
-          // При равном ранге сортируем по количеству подписчиков
-          return (b.followers || 0) - (a.followers || 0);
-        });
-
-      console.log('Unique sources:', uniqueSources);
-
-      res.json({
-        success: true,
-        data: {
-          data: {
-            sources: uniqueSources,
-            totalResults: results.length,
-            combinedSourcesCount: allSources.length,
-            topSourcesCount: uniqueSources.length
-          }
-        }
+    // Remove duplicates and sort by rank and followers
+    const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
+      .sort((a, b) => {
+        // First sort by rank
+        const rankDiff = (a.rank || 5) - (b.rank || 5);
+        if (rankDiff !== 0) return rankDiff;
+        // Then by followers if ranks are equal
+        return (b.followers || 0) - (a.followers || 0);
       });
 
-    } catch (error) {
-      console.error('Error collecting sources:', error);
-      res.status(500).json({
-        error: "Failed to collect sources",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+    console.log('Unique sources count:', uniqueSources.length);
+
+    // Return data in the format expected by frontend
+    res.json({ sources: uniqueSources });
+
+  } catch (error) {
+    console.error('Error collecting sources:', error);
+    res.status(500).json({
+      error: "Failed to collect sources",
+      details: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
 
   // Apify social media parsing endpoint
   app.post("/api/sources/parse", async (req, res) => {
