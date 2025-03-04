@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Search, Trash2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Search } from "lucide-react";
+import { KeywordTable } from "@/components/KeywordTable";
 
 interface KeywordSelectorProps {
   campaignId: string;
@@ -17,7 +16,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { add: toast } = useToast();
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", campaignId],
@@ -87,16 +86,16 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleKeywordToggle = (index: number) => {
     setSearchResults(prev =>
-      prev.map((kw: any, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
+      prev.map((kw, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev => prev.map((kw: any) => ({ ...kw, selected: checked })));
+    setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
   };
 
   const handleSaveSelected = () => {
-    const selectedKeywords = searchResults.filter((kw: any) => kw.selected);
+    const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
       toast({
         variant: "destructive",
@@ -105,7 +104,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       return;
     }
 
-    Promise.all(selectedKeywords.map((keyword: any) =>
+    Promise.all(selectedKeywords.map(keyword =>
       directusApi.post('/items/user_keywords', {
         campaign_id: campaignId,
         keyword: keyword.keyword,
@@ -143,101 +142,20 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           className="flex-1"
         />
         <Button onClick={handleSearch} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск...
-            </>
-          ) : (
-            <>
-              <Search className="mr-2 h-4 w-4" />
-              Искать
-            </>
-          )}
+          <Search className="mr-2 h-4 w-4" />
+          Искать
         </Button>
       </div>
 
-      {keywords.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keywords.map((keyword: any) => (
-                <TableRow key={keyword.id}>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend_score}</TableCell>
-                  <TableCell>{keyword.mentions_count}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => deleteKeyword(keyword.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {searchResults.length > 0 && (
-        <>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Результаты поиска</h3>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={searchResults.every((kw: any) => kw.selected)}
-                  onCheckedChange={checked => handleSelectAll(!!checked)}
-                  id="select-all"
-                />
-                <label htmlFor="select-all" className="text-sm">
-                  Выбрать все
-                </label>
-              </div>
-              <Button onClick={handleSaveSelected} disabled={!searchResults.some((kw: any) => kw.selected)}>
-                Добавить выбранные ({searchResults.filter((kw: any) => kw.selected).length})
-              </Button>
-            </div>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]"></TableHead>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {searchResults.map((keyword: any, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Checkbox checked={keyword.selected} onCheckedChange={() => handleKeywordToggle(index)} />
-                  </TableCell>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend}</TableCell>
-                  <TableCell>{keyword.competition}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </>
-      )}
-
-      {isLoadingKeywords && (
-        <div className="flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      )}
+      <KeywordTable
+        keywords={keywords}
+        searchResults={searchResults}
+        isLoading={isLoadingKeywords}
+        onDelete={deleteKeyword}
+        onKeywordToggle={handleKeywordToggle}
+        onSelectAll={handleSelectAll}
+        onSaveSelected={handleSaveSelected}
+      />
     </div>
   );
 }
