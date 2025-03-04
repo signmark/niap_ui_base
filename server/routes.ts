@@ -716,12 +716,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Returning test sources:', testSources);
 
+      // Важно! Возвращаем данные в структуре { data: { sources: [...] } }
       return res.json({
-        sources: testSources,
-        meta: {
-          total: testSources.length,
-          unique: testSources.length,
-          platforms: { 'instagram.com': testSources.length }
+        data: {
+          sources: testSources
         }
       });
 
