@@ -86,7 +86,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         console.error("Search error:", error);
         toast({
           variant: "destructive",
-          description: error.message
+          description: "Ошибка при поиске ключевых слов"
         });
       })
       .finally(() => {
