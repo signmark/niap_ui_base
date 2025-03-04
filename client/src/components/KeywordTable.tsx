@@ -128,72 +128,67 @@ export function KeywordTable({
     );
   }
 
-  if (!keywords.length && !existingKeywords.length) {
+  // Собираем все уникальные источники из всех ключевых слов
+  const allSources = keywords.reduce((acc: Source[], kw) => {
+    if (kw.sources) {
+      const uniqueSources = kw.sources.filter(source => 
+        !acc.some(existing => existing.url === source.url)
+      );
+      return [...acc, ...uniqueSources];
+    }
+    return acc;
+  }, []);
+
+  if (!allSources.length && !existingKeywords.length) {
     return null;
   }
 
   return (
     <div className="space-y-8">
       {/* Таблица результатов поиска источников */}
-      {keywords.map((keyword) => (
-        <div key={keyword.keyword} className="space-y-4">
+      {allSources.length > 0 && (
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Источники для "{keyword.keyword}"</h3>
-            {campaignId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => addToKeywords([keyword.keyword])}
-                disabled={isAdding}
-              >
-                Добавить ключевое слово
-              </Button>
-            )}
+            <h3 className="text-lg font-semibold">Найденные источники</h3>
           </div>
 
-          {keyword.sources && keyword.sources.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Источник</TableHead>
-                  <TableHead>Подписчики</TableHead>
-                  <TableHead>Платформа</TableHead>
-                  <TableHead>Описание</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {keyword.sources.map((source, index) => {
-                  const normalizedUrl = source.platform === 'instagram.com' ? 
-                    normalizeInstagramUrl(source.url) : 
-                    source.url;
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Источник</TableHead>
+                <TableHead>Подписчики</TableHead>
+                <TableHead>Платформа</TableHead>
+                <TableHead>Описание</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allSources.map((source, index) => {
+                const normalizedUrl = source.platform === 'instagram.com' ? 
+                  normalizeInstagramUrl(source.url) : 
+                  source.url;
 
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <a 
-                          href={`https://${normalizedUrl}`}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {normalizedUrl}
-                        </a>
-                      </TableCell>
-                      <TableCell>{source.followers.toLocaleString()}</TableCell>
-                      <TableCell>{source.platform}</TableCell>
-                      <TableCell>{source.description}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center p-4 text-muted-foreground">
-              Не найдено подходящих источников
-            </div>
-          )}
+                return (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <a 
+                        href={`https://${normalizedUrl}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {normalizedUrl}
+                      </a>
+                    </TableCell>
+                    <TableCell>{source.followers.toLocaleString()}</TableCell>
+                    <TableCell>{source.platform}</TableCell>
+                    <TableCell>{source.description}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
-      ))}
+      )}
 
       {/* Таблица существующих ключевых слов */}
       {campaignId && existingKeywords.length > 0 && (
