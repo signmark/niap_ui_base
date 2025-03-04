@@ -49,13 +49,10 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       }
 
       const data = await response.json();
+      console.log('Search response:', data);
       setSourcesData(data);
       setIsDialogOpen(true);
 
-      // Refresh page after dialog close
-      setTimeout(() => {
-        window.location.reload();
-      }, 10000);
     } catch (error) {
       if (error instanceof Error) {
         toast.add({
