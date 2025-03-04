@@ -17,7 +17,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { add: toast } = useToast();
+  const { add } = useToast();
 
   // Закрытие результатов по клику вне компонента
   useEffect(() => {
@@ -53,7 +53,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       const data = await response.json();
 
       if (!data?.data?.keywords?.length) {
-        toast({ description: "Не найдено ключевых слов" });
+        add({ description: "Не найдено ключевых слов" });
         return;
       }
 
@@ -65,9 +65,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       }));
 
       setSearchResults(formattedResults);
-      toast({ description: `Найдено ${formattedResults.length} ключевых слов` });
+      add({ description: `Найдено ${formattedResults.length} ключевых слов` });
     } catch (error) {
-      toast({
+      add({
         variant: "destructive",
         description: "Не удалось выполнить поиск"
       });
@@ -89,7 +89,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSaveSelected = async () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (!selectedKeywords.length) {
-      toast({
+      add({
         variant: "destructive",
         description: "Выберите ключевые слова"
       });
@@ -98,7 +98,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
     const authToken = localStorage.getItem('auth_token');
     if (!authToken) {
-      toast({
+      add({
         variant: "destructive",
         description: "Требуется авторизация"
       });
@@ -106,28 +106,37 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
 
     try {
-      await Promise.all(selectedKeywords.map(keyword =>
-        directusApi.post('/items/user_keywords', {
-          campaign_id: campaignId,
+      // Добавляем отладочный вывод
+      console.log('Отправляемые ключевые слова:', selectedKeywords);
+
+      for (const keyword of selectedKeywords) {
+        const data = {
           keyword: keyword.keyword,
-          trend_score: keyword.trend,
-          mentions_count: keyword.competition
-        }, {
+          campaign_id: campaignId,
+          trend_score: Number(keyword.trend),
+          mentions_count: Number(keyword.competition)
+        };
+
+        console.log('Отправляем в Directus:', data);
+
+        await directusApi.post('/items/user_keywords', data, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           }
-        })
-      ));
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       setSearchResults([]);
-      toast({ description: "Ключевые слова добавлены" });
-    } catch (error) {
+      add({ description: "Ключевые слова добавлены" });
+    } catch (error: any) {
       console.error('Error saving keywords:', error);
-      toast({
+      console.error('Response data:', error.response?.data);
+
+      add({
         variant: "destructive",
-        description: "Не удалось сохранить ключевые слова"
+        description: error.response?.data?.errors?.[0]?.message || "Не удалось сохранить ключевые слова"
       });
     }
   };
@@ -165,9 +174,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           try {
             await directusApi.delete(`/items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            toast({ description: "Ключевое слово удалено" });
+            add({ description: "Ключевое слово удалено" });
           } catch {
-            toast({
+            add({
               variant: "destructive",
               description: "Не удалось удалить ключевое слово"
             });
