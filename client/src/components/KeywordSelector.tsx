@@ -104,14 +104,14 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         }
       })
     ))
-    .then(() => {
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      setSearchResults([]);
-      toast({ description: "Ключевые слова добавлены" });
-    })
-    .catch(() => {
-      toast({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
-    });
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+        setSearchResults([]);
+        toast({ description: "Ключевые слова добавлены" });
+      })
+      .catch(() => {
+        toast({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
+      });
   };
 
   return (
@@ -200,7 +200,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchResults.map((keyword, index) => (
+              {searchResults.map((keyword: any, index) => (
                 <TableRow key={index}>
                   <TableCell>
                     <Checkbox checked={keyword.selected} onCheckedChange={() => handleKeywordToggle(index)} />
