@@ -54,38 +54,29 @@ export default function Keywords() {
     enabled: !!selectedCampaign
   });
 
-  const { mutate: searchKeywords } = useMutation({
-    mutationFn: async (query: string) => {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
+  // Восстанавливаем мутацию для удаления ключевых слов
+  const { mutate: deleteKeyword } = useMutation({
+    mutationFn: async (keywordId: string) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
       }
-      const data = await response.json();
-      console.log("API Response:", data); // Отладочный вывод
-      return data;
-    },
-    onSuccess: (data) => {
-      console.log("Processing data:", data); // Отладочный вывод
-      const processedKeywords = data?.data?.processed_keywords || [];
-      console.log("Processed keywords:", processedKeywords); // Отладочный вывод
-
-      setSearchResults(processedKeywords.map((kw: any) => ({
-        keyword: kw.keyword,
-        trend: kw.trend,
-        competition: kw.competition,
-        selected: false
-      })));
-      setIsSearching(false);
-      toast({
-        description: `Найдено ${processedKeywords.length} ключевых слов`
+      await directusApi.delete(`/items/user_keywords/${keywordId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
       });
     },
-    onError: (error: Error) => {
-      console.error("Search error:", error);
-      setIsSearching(false);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+      toast({
+        description: "Ключевое слово удалено"
+      });
+    },
+    onError: () => {
       toast({
         variant: "destructive",
-        description: error.message
+        description: "Не удалось удалить ключевое слово"
       });
     }
   });
@@ -93,34 +84,55 @@ export default function Keywords() {
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
-    searchKeywords(searchQuery);
-  };
 
-  const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev =>
-      prev.map(kw => ({ ...kw, selected: checked }))
-    );
+    fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log("Search API response:", data);
+        const processedKeywords = data?.data?.processed_keywords || [];
+        setSearchResults(processedKeywords.map((kw: any) => ({
+          keyword: kw.keyword,
+          trend: kw.trend,
+          competition: kw.competition,
+          selected: false
+        })));
+        toast({
+          description: `Найдено ${processedKeywords.length} ключевых слов`
+        });
+      })
+      .catch((error) => {
+        console.error("Search error:", error);
+        toast({
+          variant: "destructive",
+          description: "Ошибка при поиске ключевых слов"
+        });
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
   };
 
   const handleKeywordToggle = (index: number) => {
     setSearchResults(prev =>
-      prev.map((kw, i) =>
-        i === index ? { ...kw, selected: !kw.selected } : kw
-      )
+      prev.map((kw, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
     );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
   };
 
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
       toast({
-        description: "Выберите хотя бы одно ключевое слово",
-        variant: "destructive"
+        variant: "destructive",
+        description: "Выберите хотя бы одно ключевое слово"
       });
       return;
     }
 
-    selectedKeywords.forEach(keyword => {
+    Promise.all(selectedKeywords.map(keyword =>
       directusApi.post('/items/user_keywords', {
         campaign_id: selectedCampaign,
         keyword: keyword.keyword,
@@ -130,19 +142,21 @@ export default function Keywords() {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
-      }).then(() => {
+      })
+    ))
+      .then(() => {
         queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
         setSearchResults([]);
         toast({
           description: "Ключевые слова добавлены"
         });
-      }).catch(() => {
+      })
+      .catch(() => {
         toast({
           variant: "destructive",
           description: "Не удалось добавить ключевые слова"
         });
       });
-    });
   };
 
   return (
