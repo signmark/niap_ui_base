@@ -16,7 +16,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
@@ -50,34 +50,25 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      toast({
-        description: "Ключевое слово удалено"
-      });
+      toast({ description: "Ключевое слово удалено" });
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        description: "Не удалось удалить ключевое слово"
-      });
+      toast({ variant: "destructive", description: "Не удалось удалить ключевое слово" });
     }
   });
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
+
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        setSearchResults(data);
-        toast({
-          description: `Найдено ${data.length} ключевых слов`
-        });
+        setSearchResults(data.map((item: any) => ({ ...item, selected: false })));
+        toast({ description: `Найдено ${data.length} ключевых слов` });
       })
       .catch(() => {
-        toast({
-          variant: "destructive",
-          description: "Ошибка при поиске ключевых слов"
-        });
+        toast({ variant: "destructive", description: "Ошибка при поиске ключевых слов" });
       })
       .finally(() => {
         setIsSearching(false);
@@ -86,30 +77,22 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   const handleKeywordToggle = (index: number) => {
     setSearchResults(prev =>
-      prev.map((kw, i) =>
-        i === index ? { ...kw, selected: !kw.selected } : kw
-      )
+      prev.map((kw, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev =>
-      prev.map(kw => ({ ...kw, selected: checked }))
-    );
+    setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
   };
 
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
-
     if (selectedKeywords.length === 0) {
-      toast({
-        description: "Выберите хотя бы одно ключевое слово",
-        variant: "destructive"
-      });
+      toast({ description: "Выберите хотя бы одно ключевое слово", variant: "destructive" });
       return;
     }
 
-    selectedKeywords.forEach(keyword => {
+    Promise.all(selectedKeywords.map(keyword =>
       directusApi.post('/items/user_keywords', {
         campaign_id: campaignId,
         keyword: keyword.keyword,
@@ -119,18 +102,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-        setSearchResults([]);
-        toast({
-          description: "Ключевые слова добавлены"
-        });
-      }).catch(() => {
-        toast({
-          variant: "destructive",
-          description: "Не удалось добавить ключевые слова"
-        });
-      });
+      })
+    ))
+    .then(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+      setSearchResults([]);
+      toast({ description: "Ключевые слова добавлены" });
+    })
+    .catch(() => {
+      toast({ variant: "destructive", description: "Не удалось добавить ключевые слова" });
     });
   };
 
@@ -178,11 +158,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
                   <TableCell>{keyword.trend_score}</TableCell>
                   <TableCell>{keyword.mentions_count}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteKeyword(keyword.id)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => deleteKeyword(keyword.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -201,17 +177,14 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={searchResults.every(kw => kw.selected)}
-                  onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                  onCheckedChange={checked => handleSelectAll(!!checked)}
                   id="select-all"
                 />
                 <label htmlFor="select-all" className="text-sm">
                   Выбрать все
                 </label>
               </div>
-              <Button
-                onClick={handleSaveSelected}
-                disabled={!searchResults.some(kw => kw.selected)}
-              >
+              <Button onClick={handleSaveSelected} disabled={!searchResults.some(kw => kw.selected)}>
                 Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
               </Button>
             </div>
@@ -230,10 +203,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               {searchResults.map((keyword, index) => (
                 <TableRow key={index}>
                   <TableCell>
-                    <Checkbox
-                      checked={keyword.selected}
-                      onCheckedChange={() => handleKeywordToggle(index)}
-                    />
+                    <Checkbox checked={keyword.selected} onCheckedChange={() => handleKeywordToggle(index)} />
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
