@@ -45,38 +45,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     enabled: !!campaignId
   });
 
-  const { mutate: searchKeywords } = useMutation({
-    mutationFn: async (query: string) => {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
-      }
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      if (!Array.isArray(data.processed_keywords)) {
-        throw new Error("Некорректный формат данных от API");
-      }
-
-      setSearchResults(data.processed_keywords.map((kw: any) => ({
-        ...kw,
-        selected: false
-      })));
-      setIsSearching(false);
-      toast({
-        description: `Найдено ${data.processed_keywords.length} ключевых слов`
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Search error:", error);
-      setIsSearching(false);
-      toast({
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   const { mutate: deleteKeyword } = useMutation({
     mutationFn: async (keywordId: number) => {
       await directusApi.delete(`/items/user_keywords/${keywordId}`, {
@@ -102,7 +70,42 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
-    searchKeywords(searchQuery);
+    fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Ошибка при поиске ключевых слов");
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data.processed_keywords)) {
+          throw new Error("Некорректный формат данных от API");
+        }
+        const keywords = data.processed_keywords.map((kw: any) => ({
+          ...kw,
+          selected: false
+        }));
+        setSearchResults(keywords);
+        toast({
+          description: `Найдено ${keywords.length} ключевых слов`
+        });
+      })
+      .catch(error => {
+        console.error("Search error:", error);
+        toast({
+          description: error.message,
+          variant: "destructive"
+        });
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSearchResults(prev =>
+      prev.map(kw => ({ ...kw, selected: checked }))
+    );
   };
 
   const handleKeywordToggle = (index: number) => {
@@ -110,12 +113,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       prev.map((kw, i) =>
         i === index ? { ...kw, selected: !kw.selected } : kw
       )
-    );
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev =>
-      prev.map(kw => ({ ...kw, selected: checked }))
     );
   };
 
@@ -218,23 +215,26 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={searchResults.every(kw => kw.selected)}
-                onCheckedChange={(checked) => handleSelectAll(!!checked)}
-                id="select-all"
-              />
-              <label htmlFor="select-all" className="text-sm">
-                Выбрать все
-              </label>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Результаты поиска</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={searchResults.every(kw => kw.selected)}
+                  onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                  id="select-all"
+                />
+                <label htmlFor="select-all" className="text-sm">
+                  Выбрать все
+                </label>
+              </div>
+              <Button
+                onClick={handleSaveSelected}
+                disabled={!searchResults.some(kw => kw.selected)}
+              >
+                Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
+              </Button>
             </div>
-            <Button
-              onClick={handleSaveSelected}
-              disabled={!searchResults.some(kw => kw.selected)}
-            >
-              Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
-            </Button>
           </div>
 
           <Table>
