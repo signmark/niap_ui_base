@@ -10,10 +10,16 @@ import { Loader2, Search } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
+interface SearchResult {
+  keyword: string;
+  trend: number;
+  selected: boolean;
+}
+
 export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]); 
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]); 
   const [isSearching, setIsSearching] = useState(false);
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,33 +86,37 @@ export default function Keywords() {
     }
   });
 
-  const { mutate: addKeyword } = useMutation({
-    mutationFn: async (keyword: any) => {
+  const { mutate: addKeywords } = useMutation({
+    mutationFn: async (keywords: SearchResult[]) => {
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      await directusApi.post('/items/user_keywords', {
-        campaign_id: selectedCampaign,
-        keyword: keyword.keyword,
-        trend_score: keyword.trend,
-        mentions_count: 0
-      }, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      const promises = keywords.map(keyword =>
+        directusApi.post('/items/user_keywords', {
+          campaign_id: selectedCampaign,
+          keyword: keyword.keyword,
+          trend_score: keyword.trend,
+          mentions_count: 0
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+      );
+      await Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+      setSearchResults([]); // Очищаем результаты поиска после успешного добавления
       toast({
-        description: "Ключевое слово добавлено"
+        description: "Ключевые слова добавлены"
       });
     },
     onError: () => {
       toast({
         variant: "destructive",
-        description: "Не удалось добавить ключевое слово"
+        description: "Не удалось добавить ключевые слова"
       });
     }
   });
@@ -128,7 +138,8 @@ export default function Keywords() {
 
       const keywords = data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
-        trend: parseInt(item.number.replace(/,/g, ''), 10) || 0
+        trend: parseInt(item.number.replace(/,/g, ''), 10) || 0,
+        selected: false
       }));
 
       setSearchResults(keywords);
@@ -151,6 +162,32 @@ export default function Keywords() {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     searchKeywords(searchQuery);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSearchResults(prev =>
+      prev.map(kw => ({ ...kw, selected: checked }))
+    );
+  };
+
+  const handleKeywordToggle = (index: number) => {
+    setSearchResults(prev =>
+      prev.map((kw, i) =>
+        i === index ? { ...kw, selected: !kw.selected } : kw
+      )
+    );
+  };
+
+  const handleSaveSelected = () => {
+    const selectedKeywords = searchResults.filter(kw => kw.selected);
+    if (selectedKeywords.length === 0) {
+      toast({
+        description: "Выберите хотя бы одно ключевое слово",
+        variant: "destructive"
+      });
+      return;
+    }
+    addKeywords(selectedKeywords);
   };
 
   return (
@@ -225,7 +262,9 @@ export default function Keywords() {
         searchResults={searchResults}
         isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching}
         onDelete={deleteKeyword}
-        onAdd={addKeyword}
+        onKeywordToggle={handleKeywordToggle}
+        onSelectAll={handleSelectAll}
+        onSaveSelected={handleSaveSelected}
       />
     </div>
   );

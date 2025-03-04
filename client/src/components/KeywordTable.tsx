@@ -7,7 +7,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface Keyword {
   id: string;
@@ -23,7 +24,9 @@ interface KeywordTableProps {
   searchResults?: Keyword[];
   isLoading: boolean;
   onDelete: (id: string) => void;
-  onAdd?: (keyword: Keyword) => void;
+  onKeywordToggle: (index: number) => void;
+  onSelectAll: (checked: boolean) => void;
+  onSaveSelected: () => void;
 }
 
 export function KeywordTable({
@@ -31,7 +34,9 @@ export function KeywordTable({
   searchResults = [],
   isLoading,
   onDelete,
-  onAdd
+  onKeywordToggle,
+  onSelectAll,
+  onSaveSelected
 }: KeywordTableProps) {
   if (isLoading) {
     return (
@@ -81,29 +86,47 @@ export function KeywordTable({
       {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">Результаты поиска</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Результаты поиска</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={searchResults.every(kw => kw.selected)}
+                  onCheckedChange={(checked) => onSelectAll(!!checked)}
+                  id="select-all"
+                />
+                <label htmlFor="select-all" className="text-sm">
+                  Выбрать все
+                </label>
+              </div>
+              <Button
+                onClick={onSaveSelected}
+                disabled={!searchResults.some(kw => kw.selected)}
+              >
+                Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
+              </Button>
+            </div>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {searchResults.map((keyword, index) => (
                 <TableRow key={index}>
+                  <TableCell>
+                    <Checkbox
+                      checked={keyword.selected}
+                      onCheckedChange={() => onKeywordToggle(index)}
+                    />
+                  </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend || 0}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAdd?.(keyword)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
