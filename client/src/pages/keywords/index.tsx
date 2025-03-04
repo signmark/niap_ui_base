@@ -13,7 +13,7 @@ import type { Campaign } from "@shared/schema";
 export default function Keywords() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]); // Added state for search results
+  const [searchResults, setSearchResults] = useState([]); 
   const [isSearching, setIsSearching] = useState(false);
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
@@ -80,6 +80,37 @@ export default function Keywords() {
     }
   });
 
+  const { mutate: addKeyword } = useMutation({
+    mutationFn: async (keyword: any) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      await directusApi.post('/items/user_keywords', {
+        campaign_id: selectedCampaign,
+        keyword: keyword.keyword,
+        trend_score: keyword.trend,
+        mentions_count: 0
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+      toast({
+        description: "Ключевое слово добавлено"
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Не удалось добавить ключевое слово"
+      });
+    }
+  });
+
   const { mutate: searchKeywords } = useMutation({
     mutationFn: async (query: string) => {
       const authToken = localStorage.getItem('auth_token');
@@ -103,8 +134,7 @@ export default function Keywords() {
 
       const keywords = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: kw.trend,
-        selected: false
+        trend: kw.trend
       }));
 
       setSearchResults(keywords);
@@ -196,9 +226,11 @@ export default function Keywords() {
       )}
 
       <KeywordTable
-        keywords={searchResults} // Use searchResults instead of keywords
-        isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching} // Add isSearching to loading state
+        keywords={keywords}
+        searchResults={searchResults}
+        isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching}
         onDelete={deleteKeyword}
+        onAdd={addKeyword}
       />
     </div>
   );
