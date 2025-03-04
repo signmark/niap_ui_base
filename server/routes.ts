@@ -712,7 +712,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json({
         success: true,
         data: {
-          sources: testSources
+          data: {
+            sources: testSources
+          }
         }
       });
 
