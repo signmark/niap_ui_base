@@ -312,7 +312,6 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
       console.log(`Raw API response for keyword ${keyword}:`, content);
 
       try {
-        // Extract JSON arrays from the content
         const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
         let results: any[] = [];
 
@@ -321,45 +320,38 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
             const sources = JSON.parse(match);
             if (!Array.isArray(sources)) continue;
 
-            // Process each source
             const validSources = sources.filter(source => {
-              try {
-                // Basic validation
-                if (!source.url || !source.followers) {
-                  return false;
-                }
+              if (!source.url) return false;
 
-                // Normalize URL
-                let normalizedUrl = source.url;
-                if (!normalizedUrl.startsWith('http')) {
-                  normalizedUrl = `https://${normalizedUrl}`;
-                }
+              // Convert Instagram handles to full URLs
+              if (source.url.startsWith('@')) {
+                source.url = `https://instagram.com/${source.url.substring(1)}`;
+              }
 
-                // Find matching platform
-                const platform = Object.keys(followerRequirements).find(p => normalizedUrl.includes(p));
-                if (!platform) {
-                  return false;
-                }
+              // Normalize URL
+              let normalizedUrl = source.url;
+              if (!normalizedUrl.startsWith('http')) {
+                normalizedUrl = `https://${normalizedUrl}`;
+              }
 
-                // Check follower count requirement
-                const minFollowers = followerRequirements[platform];
-                if (source.followers < minFollowers) {
-                  return false;
-                }
+              // Find matching platform
+              const platform = Object.keys(followerRequirements).find(p => normalizedUrl.includes(p));
+              if (!platform) return false;
 
-                // Store normalized URL back in source
-                source.url = normalizedUrl;
-                return true;
-              } catch (error) {
-                console.error(`Error validating source:`, error);
+              // Check follower count requirement if specified
+              if (source.followers && source.followers < followerRequirements[platform]) {
                 return false;
               }
+
+              // Store normalized URL back in source
+              source.url = normalizedUrl;
+              return true;
             });
 
             const mappedSources = validSources.map(source => ({
               url: source.url,
               rank: Math.min(Math.max(1, source.rank || 5), 10),
-              followers: source.followers,
+              followers: source.followers || followerRequirements[source.url.includes('instagram.com') ? 'instagram.com' : 'twitter.com'],
               keyword,
               description: source.description || '',
               platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
