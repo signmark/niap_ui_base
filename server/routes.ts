@@ -716,8 +716,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Returning test sources:', testSources);
 
-      // Return ONLY the sources array in data.sources
-      return res.json({ sources: testSources });
+      // Возвращаем в формате, который ожидает фронтенд
+      return res.json({
+        success: true,
+        data: {
+          sources: testSources
+        }
+      });
 
     } catch (error) {
       console.error('Error in /api/sources/collect:', error);
