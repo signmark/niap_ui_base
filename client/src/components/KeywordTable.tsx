@@ -8,13 +8,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 
-// Define the Keyword interface locally
+// Normalize Instagram URLs
+function normalizeInstagramUrl(url: string): string {
+  if (!url) return '';
+
+  // Remove http/https and www
+  let normalized = url.replace(/^https?:\/\/(www\.)?/, '');
+
+  // Handle @username format
+  if (normalized.startsWith('@')) {
+    normalized = `instagram.com/${normalized.substring(1)}`;
+  }
+
+  // Handle just username format
+  if (!normalized.includes('/')) {
+    normalized = `instagram.com/${normalized}`;
+  }
+
+  // Handle instagram.com/username format
+  if (normalized.startsWith('instagram.com/')) {
+    return normalized;
+  }
+
+  return normalized;
+}
+
 interface Keyword {
   id: string;
   keyword: string;
@@ -51,7 +74,6 @@ export function KeywordTable({
   onKeywordsUpdated
 }: KeywordTableProps) {
   const { add: toast } = useToast();
-  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   // Проверяем, добавлено ли слово уже
@@ -85,7 +107,6 @@ export function KeywordTable({
       toast({
         description: "Ключевые слова добавлены в кампанию"
       });
-      setSelectedKeywords([]);
       onKeywordsUpdated();
       if (campaignId) {
         queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
@@ -99,34 +120,6 @@ export function KeywordTable({
     }
   });
 
-  // Мутация для удаления ключевого слова
-  const { mutate: deleteKeyword } = useMutation({
-    mutationFn: async (keywordId: string) => {
-      await directusApi.delete(`/items/user_keywords/${keywordId}`);
-    },
-    onSuccess: () => {
-      toast({
-        description: "Ключевое слово удалено"
-      });
-      onKeywordsUpdated();
-      if (campaignId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      }
-    },
-    onError: () => {
-      toast({
-        description: "Не удалось удалить ключевое слово",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleAddSelected = () => {
-    if (selectedKeywords.length > 0) {
-      addToKeywords(selectedKeywords);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -139,13 +132,10 @@ export function KeywordTable({
     return null;
   }
 
-  // Show search results even without campaign selection
-  const availableKeywords = keywords.filter(k => !isKeywordAdded(k.keyword));
-
   return (
     <div className="space-y-8">
       {/* Таблица результатов поиска источников */}
-      {availableKeywords.map((keyword) => (
+      {keywords.map((keyword) => (
         <div key={keyword.keyword} className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Источники для "{keyword.keyword}"</h3>
@@ -172,23 +162,29 @@ export function KeywordTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {keyword.sources.map((source, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <a 
-                        href={source.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {source.url.replace(/https?:\/\/(www\.)?/, '')}
-                      </a>
-                    </TableCell>
-                    <TableCell>{source.followers.toLocaleString()}</TableCell>
-                    <TableCell>{source.platform}</TableCell>
-                    <TableCell>{source.description}</TableCell>
-                  </TableRow>
-                ))}
+                {keyword.sources.map((source, index) => {
+                  const normalizedUrl = source.platform === 'instagram.com' ? 
+                    normalizeInstagramUrl(source.url) : 
+                    source.url;
+
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <a 
+                          href={`https://${normalizedUrl}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {normalizedUrl}
+                        </a>
+                      </TableCell>
+                      <TableCell>{source.followers.toLocaleString()}</TableCell>
+                      <TableCell>{source.platform}</TableCell>
+                      <TableCell>{source.description}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
@@ -199,7 +195,7 @@ export function KeywordTable({
         </div>
       ))}
 
-      {/* Таблица существующих ключевых слов - показываем только если выбрана кампания */}
+      {/* Таблица существующих ключевых слов */}
       {campaignId && existingKeywords.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
@@ -209,7 +205,6 @@ export function KeywordTable({
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
                 <TableHead>Конкуренция</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,15 +213,6 @@ export function KeywordTable({
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
                   <TableCell>{keyword.mentions_count}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteKeyword(keyword.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
