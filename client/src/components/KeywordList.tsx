@@ -6,13 +6,20 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
+interface Keyword {
+  id: number;
+  keyword: string;
+  trendScore: number;
+  campaign_id: string;
+}
+
 interface KeywordListProps {
   campaignId: string;
 }
 
 export function KeywordList({ campaignId }: KeywordListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const toast = useToast();
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: keywords, isLoading } = useQuery({
@@ -25,7 +32,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
     enabled: !!campaignId && campaignId !== "loading" && campaignId !== "empty"
   });
 
-  const { mutate: deleteKeyword } = useMutation({
+  const { mutate: deleteKeyword, isPending: isDeleting } = useMutation({
     mutationFn: async (keywordId: number) => {
       return await apiRequest(`/api/keywords/${keywordId}`, {
         method: 'DELETE'
@@ -33,12 +40,12 @@ export function KeywordList({ campaignId }: KeywordListProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/keywords', campaignId] });
-      toast.add({
+      toast({
         description: "Ключевое слово удалено"
       });
     },
     onError: () => {
-      toast.add({
+      toast({
         description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
@@ -51,7 +58,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
     }
   };
 
-  const filteredKeywords = keywords?.filter(kw => 
+  const filteredKeywords = keywords?.filter((kw: Keyword) => 
     kw.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
@@ -81,7 +88,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
             Нет добавленных ключевых слов
           </div>
         ) : (
-          filteredKeywords.map((keyword) => (
+          filteredKeywords.map((keyword: Keyword) => (
             <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 items-center hover:bg-muted/50">
               <div>{keyword.keyword}</div>
               <div>{keyword.trendScore}</div>
@@ -89,6 +96,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleDelete(keyword.id)}
+                disabled={isDeleting}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
