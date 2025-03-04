@@ -29,6 +29,8 @@ export function KeywordTable({
   onSelectAll,
   onSaveSelected
 }: KeywordTableProps) {
+  console.log("KeywordTable props:", { keywords, searchResults }); // Отладочный вывод
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -36,13 +38,6 @@ export function KeywordTable({
       </div>
     );
   }
-
-  const formatKeyword = (keyword: any) => ({
-    id: keyword.id,
-    keyword: keyword.keyword,
-    trend: keyword.trend_score || keyword.trend || 0,
-    competition: keyword.mentions_count || keyword.competition || 0
-  });
 
   return (
     <div className="space-y-8">
@@ -59,25 +54,22 @@ export function KeywordTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {keywords.map((keyword) => {
-                const formattedKeyword = formatKeyword(keyword);
-                return (
-                  <TableRow key={formattedKeyword.id}>
-                    <TableCell>{formattedKeyword.keyword}</TableCell>
-                    <TableCell>{formattedKeyword.trend}</TableCell>
-                    <TableCell>{formattedKeyword.competition}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDelete(formattedKeyword.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {keywords.map((keyword) => (
+                <TableRow key={keyword.id}>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend_score || keyword.trend}</TableCell>
+                  <TableCell>{keyword.mentions_count || keyword.competition}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(keyword.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
@@ -117,22 +109,19 @@ export function KeywordTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchResults.map((keyword, index) => {
-                const formattedKeyword = formatKeyword(keyword);
-                return (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Checkbox
-                        checked={keyword.selected}
-                        onCheckedChange={() => onKeywordToggle?.(index)}
-                      />
-                    </TableCell>
-                    <TableCell>{formattedKeyword.keyword}</TableCell>
-                    <TableCell>{formattedKeyword.trend}</TableCell>
-                    <TableCell>{formattedKeyword.competition}</TableCell>
-                  </TableRow>
-                );
-              })}
+              {searchResults.map((keyword, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Checkbox
+                      checked={keyword.selected}
+                      onCheckedChange={() => onKeywordToggle?.(index)}
+                    />
+                  </TableCell>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend}</TableCell>
+                  <TableCell>{keyword.competition}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>

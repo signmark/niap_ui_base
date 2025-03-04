@@ -54,42 +54,21 @@ export default function Keywords() {
     enabled: !!selectedCampaign
   });
 
-  const { mutate: deleteKeyword } = useMutation({
-    mutationFn: async (keywordId: string) => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
-      await directusApi.delete(`/items/user_keywords/${keywordId}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
-      toast({
-        description: "Ключевое слово удалено"
-      });
-    },
-    onError: () => {
-      toast({
-        variant: "destructive",
-        description: "Не удалось удалить ключевое слово"
-      });
-    }
-  });
-
   const { mutate: searchKeywords } = useMutation({
     mutationFn: async (query: string) => {
       const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }
-      return await response.json();
+      const data = await response.json();
+      console.log("API Response:", data); // Отладочный вывод
+      return data;
     },
     onSuccess: (data) => {
-      const processedKeywords = data?.processed_keywords || [];
+      console.log("Processing data:", data); // Отладочный вывод
+      const processedKeywords = data?.data?.processed_keywords || [];
+      console.log("Processed keywords:", processedKeywords); // Отладочный вывод
+
       setSearchResults(processedKeywords.map((kw: any) => ({
         keyword: kw.keyword,
         trend: kw.trend,
@@ -105,8 +84,8 @@ export default function Keywords() {
       console.error("Search error:", error);
       setIsSearching(false);
       toast({
-        description: error.message,
-        variant: "destructive"
+        variant: "destructive",
+        description: error.message
       });
     }
   });
