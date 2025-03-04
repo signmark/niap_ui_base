@@ -10,23 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Trash2 } from "lucide-react";
 
-interface Keyword {
-  id: string;
-  keyword: string;
-  trend_score?: number;
-  trend?: number;
-  mentions_count?: number;
-  selected?: boolean;
-}
-
 interface KeywordTableProps {
-  keywords: Keyword[];
-  searchResults?: Keyword[];
+  keywords: any[];
+  searchResults?: any[];
   isLoading: boolean;
   onDelete: (id: string) => void;
-  onKeywordToggle: (index: number) => void;
-  onSelectAll: (checked: boolean) => void;
-  onSaveSelected: () => void;
+  onKeywordToggle?: (index: number) => void;
+  onSelectAll?: (checked: boolean) => void;
+  onSaveSelected?: () => void;
 }
 
 export function KeywordTable({
@@ -92,7 +83,7 @@ export function KeywordTable({
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={searchResults.every(kw => kw.selected)}
-                  onCheckedChange={(checked) => onSelectAll(!!checked)}
+                  onCheckedChange={(checked) => onSelectAll?.(!!checked)}
                   id="select-all"
                 />
                 <label htmlFor="select-all" className="text-sm">
@@ -122,11 +113,11 @@ export function KeywordTable({
                   <TableCell>
                     <Checkbox
                       checked={keyword.selected}
-                      onCheckedChange={() => onKeywordToggle(index)}
+                      onCheckedChange={() => onKeywordToggle?.(index)}
                     />
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend || 0}</TableCell>
+                  <TableCell>{keyword.trend}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
