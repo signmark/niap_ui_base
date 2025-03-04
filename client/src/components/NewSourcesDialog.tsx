@@ -14,20 +14,22 @@ interface NewSourcesDialogProps {
   sourcesData: {
     success: boolean;
     data: {
-      sources: Array<{
-        url: string;
-        name: string;
-        followers: number;
-        platform: string;
-        description: string;
-        rank: number;
-      }>;
+      data: {
+        sources: Array<{
+          url: string;
+          name: string;
+          followers: number;
+          platform: string;
+          description: string;
+          rank: number;
+        }>;
+      };
     };
   };
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  const sources = sourcesData?.data?.sources || [];
+  const sources = sourcesData?.data?.data?.sources || [];
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const { add: toast } = useToast();
@@ -88,7 +90,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {sources.map((source, index) => (
               <Card key={index}>
-                <CardContent>
+                <CardContent className="py-4">
                   <div className="flex items-start gap-4">
                     <Checkbox
                       checked={selectedSources.includes(source.url)}

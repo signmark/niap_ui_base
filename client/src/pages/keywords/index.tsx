@@ -8,6 +8,7 @@ import { Search, Loader2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 
 export default function Keywords() {
@@ -27,11 +28,44 @@ export default function Keywords() {
     }
   });
 
-  const { mutate: searchSources, isPending: isSearching } = useMutation({
+  // Get campaign keywords
+  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
+    queryKey: ["campaign_keywords", selectedCampaign],
+    queryFn: async () => {
+      if (!selectedCampaign) return [];
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: selectedCampaign
+            }
+          }
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      return response.data?.data || [];
+    },
+    enabled: !!selectedCampaign
+  });
+
+  const { mutate: searchNewSources, isPending: isSearching } = useMutation({
     mutationFn: async () => {
       if (!selectedCampaign) {
         throw new Error("Выберите кампанию");
       }
+
+      if (!keywords?.length) {
+        throw new Error("Добавьте ключевые слова в кампанию");
+      }
+
+      const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
+      console.log('Keywords for search:', keywordsList);
 
       const response = await fetch('/api/sources/collect', {
         method: 'POST',
@@ -39,7 +73,7 @@ export default function Keywords() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
-        body: JSON.stringify({ keywords: ["здоровое питание", "правильное питание"] })
+        body: JSON.stringify({ keywords: keywordsList })
       });
 
       if (!response.ok) {
@@ -105,8 +139,8 @@ export default function Keywords() {
             </Select>
 
             <Button
-              onClick={() => searchSources()}
-              disabled={isSearching || !selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty"}
+              onClick={() => searchNewSources()}
+              disabled={isSearching || !selectedCampaign || selectedCampaign === "loading" || selectedCampaign === "empty" || isLoadingKeywords}
             >
               {isSearching ? (
                 <>
@@ -124,7 +158,6 @@ export default function Keywords() {
         </CardContent>
       </Card>
 
-      {/* Sources Results Dialog */}
       <Dialog open={isSearchingNewSources} onOpenChange={setIsSearchingNewSources}>
         {selectedCampaign && foundSourcesData && (
           <NewSourcesDialog
@@ -146,7 +179,7 @@ export default function Keywords() {
           sources: foundSourcesData?.data?.sources || []
         }]}
         existingKeywords={[]}
-        isLoading={isLoadingCampaigns || isSearching}
+        isLoading={isLoadingCampaigns || isSearching || isLoadingKeywords}
         campaignId={selectedCampaign}
         onKeywordsUpdated={() => {}}
       />
