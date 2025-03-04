@@ -1,3 +1,16 @@
+const searchCache = new Map<string, { timestamp: number, results: any[] }>();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+// Add helper function to check and get cached results
+function getCachedResults(keyword: string): any[] | null {
+  const cached = searchCache.get(keyword);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`Using cached results for keyword: ${keyword}`);
+    return cached.results;
+  }
+  return null;
+}
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -133,10 +146,18 @@ interface SocialSearcherResponse {
   };
 }
 
-// Helper function for Social Searcher API - currently only YouTube, will expand to other platforms later
+// Helper function to add delay between requests
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper function for Social Searcher API
 async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
+  // Check cache first
+  const cached = getCachedResults(keyword);
+  if (cached) return cached;
+
   try {
-    // Get Social Searcher API key
     const settings = await directusApi.get('/items/user_api_keys', {
       params: {
         filter: {
@@ -155,7 +176,9 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     }
 
     try {
-      // Make request to Social Searcher API
+      // Add delay to prevent rate limiting
+      await delay(2000);
+
       const response = await axios.get('https://api.social-searcher.com/v2/users', {
         params: {
           q: encodeURIComponent(keyword),
@@ -168,37 +191,13 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         }
       });
 
-      if (!response.data?.posts) {
-        console.log('No posts found in Social Searcher response');
+      if (response.data?.meta?.http_code === 403) {
+        console.log('Social Searcher API daily limit reached, skipping YouTube search');
         return [];
       }
 
-      // Process and validate results
-      const validPosts = response.data.posts
-        .filter((post: any) => {
-          try {
-            if (!post.user?.url || !post.user?.name) {
-              return false;
-            }
-
-            // Normalize YouTube URL
-            const normalizedUrl = normalizeSourceUrl(post.user.url, 'youtube.com');
-            if (!normalizedUrl) {
-              return false;
-            }
-
-            // Store normalized URL
-            post.url = normalizedUrl;
-            return true;
-          } catch (error) {
-            console.error(`Error validating YouTube post:`, error);
-            return false;
-          }
-        });
-
-      // Map to consistent format
-      return validPosts.map((post: any) => ({
-        url: post.url,
+      const results = response.data?.posts?.map((post: any) => ({
+        url: normalizeSourceUrl(post.user?.url, 'youtube.com') || post.user?.url,
         name: post.user?.name || '',
         rank: 5,
         followers: 100000,
@@ -206,12 +205,22 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         description: post.text || `YouTube канал: ${post.user?.name}`,
         keyword,
         platform: 'youtube'
-      }));
+      })).filter(Boolean) || [];
+
+      // Cache the results
+      searchCache.set(keyword, {
+        timestamp: Date.now(),
+        results
+      });
+
+      return results;
 
     } catch (apiError: any) {
-      // Handle 403 and other API errors gracefully
-      console.log(`Social Searcher API error (${apiError.response?.status || 'unknown'}):`,
-        apiError.response?.data || apiError.message);
+      if (apiError.response?.data?.meta?.http_code === 403 || apiError.response?.status === 403) {
+        console.log('Social Searcher API limit reached, continuing with Perplexity results only');
+      } else {
+        console.error('Social Searcher API error:', apiError.message);
+      }
       return [];
     }
 
@@ -698,7 +707,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
-        console.error('Missing authorization header');
         return res.status(401).json({ message: "Unauthorized" });
       }
 
@@ -711,8 +719,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Starting source search for keywords:', keywords);
 
-      // Search using both APIs in parallel
-      const searchPromises = keywords.map(async keyword => {
+      // Process keywords sequentially to avoid rate limits
+      const results = [];
+      for (const keyword of keywords) {
+        // Check cache first
+        const cached = getCachedResults(keyword);
+        if (cached) {
+          results.push(...cached);
+          continue;
+        }
+
+        // Add delay between keyword searches
+        await delay(1000);
+
         const [perplexityResults, socialSearcherResults] = await Promise.all([
           existingPerplexitySearch(keyword, token).catch(error => {
             console.error('Perplexity search error:', error);
@@ -724,21 +743,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         ]);
 
-        // Log results for debugging
-        console.log(`Results for keyword "${keyword}":`, {
-          perplexity: perplexityResults.length,
-          socialSearcher: socialSearcherResults.length
+        const combinedResults = [...perplexityResults, ...socialSearcherResults];
+
+        // Cache the combined results
+        searchCache.set(keyword, {
+          timestamp: Date.now(),
+          results: combinedResults
         });
 
-        return [...perplexityResults, ...socialSearcherResults];
-      });
+        results.push(...combinedResults);
+      }
 
-      const results = await Promise.all(searchPromises);
-      const allSources = results.flat();
-
-      // Improved duplicate removal with URL normalization
+      // Remove duplicates and normalize URLs
       const uniqueSourcesMap = new Map();
-      allSources.forEach(source => {
+      results.forEach(source => {
         const key = source.url.toLowerCase().trim();
         if (!uniqueSourcesMap.has(key) || source.rank < uniqueSourcesMap.get(key).rank) {
           uniqueSourcesMap.set(key, source);
@@ -752,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
       console.log('Found sources:', {
-        total: allSources.length,
+        total: results.length,
         unique: uniqueSources.length,
         platforms: uniqueSources.reduce((acc: any, src: any) => {
           acc[src.platform] = (acc[src.platform] || 0) + 1;
@@ -763,8 +781,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         sources: uniqueSources,
         meta: {
-          total: allSources.length,
-          unique: uniqueSources.length
+          total: results.length,
+          unique: uniqueSources.length,
+          cached: searchCache.size
         }
       });
 
