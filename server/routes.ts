@@ -252,11 +252,12 @@ function parseFollowerCount(text: string): number {
 function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
-  // Match detailed patterns like "@collegenutritionist - Rachel Paul (1M followers)"
-  const detailedPattern = /@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm])[^)]*\)[^-]*-\s*([^@\n]+)/g;
+  // Паттерн для обработки форматированного списка с описанием
+  // Например: "1. **@bewellbykelly** - Kelly LeVeque (550.7K followers) - Clinical nutritionist..."
+  const numberedPattern = /\d+\.\s*\*\*@([a-zA-Z0-9._]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)([^-]*-\s*[^.\n]+)/g;
   let match;
 
-  while ((match = detailedPattern.exec(content)) !== null) {
+  while ((match = numberedPattern.exec(content)) !== null) {
     const [_, username, name, followers, description] = match;
     const followersCount = parseFollowerCount(followers);
 
@@ -264,17 +265,39 @@ function extractSourcesFromText(content: string): any[] {
       sources.push({
         url: `instagram.com/${username}`,
         name: name.trim(),
-        rank: 5,
         followers: followersCount,
         platform: 'instagram.com',
-        description: description.trim()
+        description: description.replace(/^[^-]*-\s*/, '').trim(),
+        rank: 5
       });
     }
   }
 
-  // Match patterns with **bold** formatting
-  const boldPattern = /\*\*@([a-zA-Z0-9._]+)\s*-\s*([^*]+)\*\*[^(]*\(([0-9.]+[KkMm])[^)]*\)/g;
+  // Паттерн для форматированных записей без нумерации
+  // Например: "**@nutritionstripped** - McKel Kooienga (344.8K followers) - Balances nourishment..."
+  const boldPattern = /\*\*@([a-zA-Z0-9._]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)([^-]*-\s*[^.\n]+)/g;
+
   while ((match = boldPattern.exec(content)) !== null) {
+    const [_, username, name, followers, description] = match;
+    const followersCount = parseFollowerCount(followers);
+
+    if (followersCount >= 50000 && !sources.some(s => s.url.includes(username))) {
+      sources.push({
+        url: `instagram.com/${username}`,
+        name: name.trim(),
+        followers: followersCount,
+        platform: 'instagram.com',
+        description: description.replace(/^[^-]*-\s*/, '').trim(),
+        rank: 5
+      });
+    }
+  }
+
+  // Паттерн для простых записей
+  // Например: "@mamaknowsnutrition - Kacie Barnes (517.6K followers)"
+  const simplePattern = /@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
+
+  while ((match = simplePattern.exec(content)) !== null) {
     const [_, username, name, followers] = match;
     const followersCount = parseFollowerCount(followers);
 
@@ -282,34 +305,16 @@ function extractSourcesFromText(content: string): any[] {
       sources.push({
         url: `instagram.com/${username}`,
         name: name.trim(),
-        rank: 5,
         followers: followersCount,
         platform: 'instagram.com',
-        description: `Популярный Instagram аккаунт о здоровом питании`
+        description: 'Instagram эксперт по питанию и здоровому образу жизни',
+        rank: 5
       });
     }
   }
 
-  // Match bullet points
-  const bulletPattern = /[•\-\*]\s*@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm])[^)]*\)/g;
-  while ((match = bulletPattern.exec(content)) !== null) {
-    const [_, username, name, followers] = match;
-    const followersCount = parseFollowerCount(followers);
-
-    if (followersCount >= 50000 && !sources.some(s => s.url.includes(username))) {
-      sources.push({
-        url: `instagram.com/${username}`,
-        name: name.trim(),
-        rank: 5,
-        followers: followersCount,
-        platform: 'instagram.com',
-        description: `Instagram эксперт по питанию и здоровому образу жизни`
-      });
-    }
-  }
-
-  // Убираем дубликаты по URL
-  return Array.from(new Map(sources.map(s => [s.url, s])).values());
+  console.log(`Extracted ${sources.length} Instagram sources:`, sources);
+  return sources;
 }
 
 // Helper function for Perplexity search
