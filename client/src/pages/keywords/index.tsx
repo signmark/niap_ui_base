@@ -15,7 +15,6 @@ export default function Keywords() {
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Получаем список кампаний пользователя
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
@@ -36,7 +35,6 @@ export default function Keywords() {
     }
   });
 
-  // Получаем существующие ключевые слова кампании
   const { data: existingKeywords, isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", selectedCampaign],
     queryFn: async () => {
@@ -64,7 +62,6 @@ export default function Keywords() {
     enabled: !!selectedCampaign && selectedCampaign !== "loading" && selectedCampaign !== "empty"
   });
 
-  // Поиск источников для всех ключевых слов кампании
   const { mutate: searchSources, isPending: isSearching } = useMutation({
     mutationFn: async (keywords: string[]) => {
       console.log('Searching sources for keywords:', keywords);
@@ -87,17 +84,17 @@ export default function Keywords() {
     },
     onSuccess: (data) => {
       console.log('Search sources response:', data);
-
-      if (data.sources && data.sources.length > 0) {
+      // Обновлено: Проверяем наличие sources в правильной структуре
+      if (data.success && data.data.sources && data.data.sources.length > 0) {
         setSearchResults([{
           keyword: "Найденные источники",
           trend: 0,
           competition: 0,
-          sources: data.sources
+          sources: data.data.sources
         }]);
 
         toast({
-          description: `Найдено ${data.sources.length} источников`
+          description: `Найдено ${data.data.sources.length} источников`
         });
       } else {
         setSearchResults([]);
