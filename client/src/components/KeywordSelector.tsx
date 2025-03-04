@@ -68,30 +68,19 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
       .then(response => response.json())
       .then(data => {
-        console.log("Raw API Response:", data); // Полный ответ от API
-        console.log("Data structure:", { 
-          hasData: !!data,
-          hasDataProperty: !!data?.data,
-          hasProcessedKeywords: !!data?.data?.processed_keywords,
-          dataType: typeof data,
-          dataPropertyType: typeof data?.data,
-          processedKeywordsType: typeof data?.data?.processed_keywords
-        });
+        console.log("Raw API Response:", data); // Отладочный вывод
+        const keywords = data?.keywords || [];
+        console.log("Processed keywords:", keywords); // Отладочный вывод
 
-        // Получаем массив ключевых слов из правильной структуры данных
-        const processedKeywords = data?.data?.processed_keywords || [];
-        console.log("Processed keywords:", processedKeywords);
-
-        const formattedResults = processedKeywords.map((kw: any) => ({
+        const formattedResults = keywords.map((kw: any) => ({
           keyword: kw.keyword,
           trend: kw.trend,
           competition: kw.competition,
           selected: false
         }));
-        console.log("Formatted results:", formattedResults);
+        console.log("Formatted results:", formattedResults); // Отладочный вывод
 
         setSearchResults(formattedResults);
-
         toast({
           description: `Найдено ${formattedResults.length} ключевых слов`
         });
