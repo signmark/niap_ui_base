@@ -26,32 +26,25 @@ type PlatformRequirements = {
 };
 
 // Helper function to normalize URLs
-function normalizeSourceUrl(url: string, platform: string): string | null {
+function normalizeInstagramUrl(url: string): string {
   try {
-    // Handle Instagram-specific URL normalization
-    if (platform === 'instagram.com') {
-      let username = url;
+    // Remove http/https and www
+    let username = url.replace(/^(https?:\/\/)?(www\.)?instagram\.com\//, '');
 
-      // Remove @ if present
-      if (username.startsWith('@')) {
-        username = username.substring(1);
-      }
-
-      // Remove domain part if present
-      username = username.replace(/^(https?:\/\/)?(www\.)?instagram\.com\//, '');
-
-      // Remove trailing slash and query params
-      username = username.split('/')[0].split('?')[0];
-
-      if (!username) return null;
-
-      return `https://instagram.com/${username}`;
+    // Remove @ if present
+    if (username.startsWith('@')) {
+      username = username.substring(1);
     }
 
-    return null;
+    // Remove trailing slash and query params
+    username = username.split('/')[0].split('?')[0];
+
+    if (!username) return '';
+
+    return `https://instagram.com/${username}`;
   } catch (error) {
-    console.error(`Error normalizing URL ${url}:`, error);
-    return null;
+    console.error(`Error normalizing Instagram URL ${url}:`, error);
+    return url;
   }
 }
 
@@ -193,41 +186,61 @@ function parseFollowerCount(text: string): number {
 function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
-  // Паттерн для форматированных записей с номерами и звездочками
-  // Например: "1. **@raychelpaul** - Рейчел Паул (500K followers) - Публикует рецепты..."
-  const fullPattern = /(?:\d+\.)?\s*\*\*@([a-zA-Z0-9._]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
-
+  // 1. Direct Instagram URLs
+  // Example: https://www.instagram.com/pp_mari_food/ - хороший аккаунт
+  const urlPattern = /https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._-]+)\/?/g;
   let match;
-  while ((match = fullPattern.exec(content)) !== null) {
-    const [_, username, name, followers, description] = match;
-    const followersCount = parseFollowerCount(followers);
 
-    if (followersCount >= 50000) {
-      const url = normalizeSourceUrl(username, 'instagram.com');
-      if (url) {
-        sources.push({
-          url,
-          name: name.trim(),
-          followers: followersCount,
-          platform: 'instagram.com',
-          description: description.trim(),
-          rank: 5
-        });
-      }
-    }
-  }
-
-  // Паттерн для упоминаний с URL
-  // Например: "https://www.instagram.com/pp_mari_food/ - хороший аккаунт"
-  const urlPattern = /https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._]+)/g;
   while ((match = urlPattern.exec(content)) !== null) {
     const username = match[1];
-    const url = normalizeSourceUrl(username, 'instagram.com');
-    if (url && !sources.some(s => s.url === url)) {
+    const url = normalizeInstagramUrl(`instagram.com/${username}`);
+    if (!sources.some(s => s.url === url)) {
       sources.push({
         url,
         name: username,
-        followers: 100000, // Значение по умолчанию
+        followers: 100000, // Default value
+        platform: 'instagram.com',
+        description: 'Instagram аккаунт о правильном питании',
+        rank: 5
+      });
+    }
+  }
+
+  // 2. Formatted lists with stars
+  // Example: "1. **@raychelpaul** - Рейчел Паул (500K followers) - Публикует рецепты..."
+  const formattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
+
+  while ((match = formattedPattern.exec(content)) !== null) {
+    const [_, username, name, followers, description] = match;
+    const followersCount = parseFollowerCount(followers);
+    const url = normalizeInstagramUrl(`instagram.com/${username}`);
+
+    if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
+      sources.push({
+        url,
+        name: name.trim(),
+        followers: followersCount,
+        platform: 'instagram.com',
+        description: description.trim(),
+        rank: 5
+      });
+    }
+  }
+
+  // 3. Simple @ mentions
+  // Example: "@username (500K followers)"
+  const simplePattern = /@([a-zA-Z0-9._-]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
+
+  while ((match = simplePattern.exec(content)) !== null) {
+    const [_, username, followers] = match;
+    const followersCount = parseFollowerCount(followers);
+    const url = normalizeInstagramUrl(`instagram.com/${username}`);
+
+    if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
+      sources.push({
+        url,
+        name: username,
+        followers: followersCount,
         platform: 'instagram.com',
         description: 'Instagram аккаунт о правильном питании',
         rank: 5
@@ -282,7 +295,10 @@ For each account provide:
 4. Brief description in Russian
 
 Format each account as:
-1. **@username** - Name (500K followers) - Description`
+1. **@username** - Name (500K followers) - Description
+
+Also include direct Instagram URLs in the response like:
+https://www.instagram.com/username/ - description`
           },
           {
             role: "user",
@@ -677,20 +693,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Found ${results.length} results for keyword ${keyword}`);
 
         if (results.length > 0) {
-          // Cache results for this keyword
-          searchCache.set(keyword, {
-            timestamp: Date.now(),
-            results
-          });
           allResults.push(...results);
         }
       }
 
       console.log('Total results before merging:', allResults.length);
 
-      // Merge and deduplicate sources by URL
+      // Normalize all URLs and merge duplicates
+      const normalizedResults = allResults.map(source => ({
+        ...source,
+        url: normalizeInstagramUrl(source.url)
+      }));
+
+      // Remove duplicates by URL
       const uniqueSources = Array.from(
-        new Map(allResults.map(s => [s.url, s])).values()
+        new Map(normalizedResults.map(s => [s.url, s])).values()
       );
 
       // Sort by followers count
