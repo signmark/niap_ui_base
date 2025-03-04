@@ -42,7 +42,7 @@ export function KeywordTable({
   campaignId,
   onKeywordsUpdated
 }: KeywordTableProps) {
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
@@ -132,105 +132,124 @@ export function KeywordTable({
 
   return (
     <div className="space-y-4">
-      {availableKeywords.length > 0 && selectedKeywords.length > 0 && (
-        <div className="flex justify-end">
-          <Button
-            onClick={handleAddSelected}
-            disabled={isAdding}
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Добавление...
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" />
-                Добавить выбранные ({selectedKeywords.length})
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              {availableKeywords.length > 0 && (
-                <Checkbox
-                  checked={
-                    selectedKeywords.length === availableKeywords.length &&
-                    availableKeywords.length > 0
-                  }
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedKeywords(availableKeywords.map(k => k.keyword));
-                    } else {
-                      setSelectedKeywords([]);
-                    }
-                  }}
-                />
-              )}
-            </TableHead>
-            <TableHead>Ключевое слово</TableHead>
-            <TableHead>Тренд</TableHead>
-            <TableHead>Конкуренция</TableHead>
-            <TableHead className="text-right">Действия</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {[
-            ...keywords.map(k => ({
-              ...k,
-              isExisting: isKeywordAdded(k.keyword),
-              id: existingKeywords.find(ek => ek.keyword === k.keyword)?.id
-            }))
-          ].map((keyword) => (
-            <TableRow key={`${keyword.keyword}-${keyword.isExisting ? 'existing' : 'new'}`}>
-              <TableCell>
-                {!keyword.isExisting && (
-                  <Checkbox
-                    checked={selectedKeywords.includes(keyword.keyword)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedKeywords([...selectedKeywords, keyword.keyword]);
-                      } else {
-                        setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
-                      }
-                    }}
-                  />
-                )}
-              </TableCell>
-              <TableCell>{keyword.keyword}</TableCell>
-              <TableCell>{keyword.trend}</TableCell>
-              <TableCell>{keyword.competition}</TableCell>
-              <TableCell className="text-right">
-                {keyword.isExisting ? (
-                  <div className="flex justify-end gap-2">
+      {/* Таблица существующих ключевых слов */}
+      {existingKeywords.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ключевое слово</TableHead>
+                <TableHead>Тренд</TableHead>
+                <TableHead>Конкуренция</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {existingKeywords.map((keyword) => (
+                <TableRow key={keyword.id}>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>{keyword.mentions_count}</TableCell>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => keyword.id && deleteKeyword(keyword.id)}
+                      onClick={() => deleteKeyword(keyword.id)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                  </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Таблица новых ключевых слов */}
+      {availableKeywords.length > 0 && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Найденные ключевые слова</h3>
+            {selectedKeywords.length > 0 && (
+              <Button
+                onClick={handleAddSelected}
+                disabled={isAdding}
+              >
+                {isAdding ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Добавление...
+                  </>
                 ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addToKeywords([keyword.keyword])}
-                    disabled={isAdding}
-                  >
-                    {isAdding ? "Добавление..." : "Добавить"}
-                  </Button>
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Добавить выбранные ({selectedKeywords.length})
+                  </>
                 )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </Button>
+            )}
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={
+                      availableKeywords.length > 0 &&
+                      selectedKeywords.length === availableKeywords.length
+                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedKeywords(availableKeywords.map(k => k.keyword));
+                      } else {
+                        setSelectedKeywords([]);
+                      }
+                    }}
+                  />
+                </TableHead>
+                <TableHead>Ключевое слово</TableHead>
+                <TableHead>Тренд</TableHead>
+                <TableHead>Конкуренция</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {availableKeywords.map((keyword) => (
+                <TableRow key={keyword.keyword}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedKeywords.includes(keyword.keyword)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedKeywords([...selectedKeywords, keyword.keyword]);
+                        } else {
+                          setSelectedKeywords(selectedKeywords.filter(k => k !== keyword.keyword));
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend}</TableCell>
+                  <TableCell>{keyword.competition}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addToKeywords([keyword.keyword])}
+                      disabled={isAdding}
+                    >
+                      Добавить
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
