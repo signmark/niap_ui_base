@@ -41,40 +41,7 @@ export function KeywordTable({
 
   return (
     <div className="space-y-8">
-      {keywords.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keywords.map((keyword) => (
-                <TableRow key={keyword.id}>
-                  <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{keyword.trend_score}</TableCell>
-                  <TableCell>{keyword.mentions_count}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete(keyword.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
+      {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -120,6 +87,41 @@ export function KeywordTable({
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
                   <TableCell>{keyword.competition}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Добавленные ключевые слова */}
+      {keywords.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ключевое слово</TableHead>
+                <TableHead>Тренд</TableHead>
+                <TableHead>Конкуренция</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {keywords.map((keyword) => (
+                <TableRow key={keyword.id}>
+                  <TableCell>{keyword.keyword}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
+                  <TableCell>{keyword.mentions_count}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(keyword.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
