@@ -88,8 +88,8 @@ export default function Keywords() {
     onSuccess: (data) => {
       console.log('Search sources response:', data);
 
-      // Получаем все найденные источники
-      if (data.sources && data.sources.length > 0) {
+      // Проверяем наличие источников в ответе
+      if (data.sources && Array.isArray(data.sources)) {
         const result = {
           keyword: "Все найденные источники",
           trend: 0,
