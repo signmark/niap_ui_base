@@ -50,8 +50,6 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       }
 
       const data = await response.json();
-      console.log('Search response:', data);
-
       if (data?.success && data?.data?.sources) {
         setSourcesData(data);
         setIsDialogOpen(true);
