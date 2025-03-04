@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Returning test sources:', testSources);
 
-      // Важно! Возвращаем данные в структуре { data: { sources: [...] } }
+      // Return ONLY the sources array in data.sources
       return res.json({
         data: {
           sources: testSources
