@@ -3,7 +3,10 @@ import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { directusApi } from "@/lib/directus";
 
 interface NewSourcesDialogProps {
   campaignId: string;
@@ -25,6 +28,9 @@ interface NewSourcesDialogProps {
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   console.log('Dialog received sourcesData:', sourcesData);
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const { add: toast } = useToast();
 
   // Тестовые данные для отладки отображения
   const testSources = [
@@ -46,6 +52,47 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     }
   ];
 
+  const handleAddSources = async () => {
+    if (selectedSources.length === 0) {
+      toast({
+        description: "Выберите хотя бы один источник",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      const sourcesToAdd = testSources.filter(source => 
+        selectedSources.includes(source.url)
+      );
+
+      for (const source of sourcesToAdd) {
+        await directusApi.post('/items/campaign_content_sources', {
+          name: source.name,
+          url: source.url,
+          type: 'instagram',
+          campaign_id: campaignId,
+          is_active: true
+        });
+      }
+
+      toast({
+        description: `Добавлено ${sourcesToAdd.length} источников`
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error adding sources:', error);
+      toast({
+        description: "Ошибка при добавлении источников",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
     <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
@@ -58,6 +105,16 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
             <Card key={index} className="p-4">
               <CardContent className="p-0">
                 <div className="flex items-start gap-4">
+                  <Checkbox
+                    checked={selectedSources.includes(source.url)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedSources([...selectedSources, source.url]);
+                      } else {
+                        setSelectedSources(selectedSources.filter(url => url !== source.url));
+                      }
+                    }}
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-medium">{source.name}</h3>
@@ -91,6 +148,19 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Отмена
+          </Button>
+          <Button 
+            onClick={handleAddSources} 
+            disabled={selectedSources.length === 0 || isAdding}
+          >
+            {isAdding ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Добавление...
+              </>
+            ) : (
+              `Добавить ${selectedSources.length} источников`
+            )}
           </Button>
         </div>
       </div>
