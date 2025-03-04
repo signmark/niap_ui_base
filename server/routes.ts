@@ -230,33 +230,65 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
   }
 }
 
+// Helper function to convert follower count text to number
+function parseFollowerCount(text: string): number {
+  try {
+    // Remove any non-numeric characters except K, M, k, m
+    const cleanText = text.toLowerCase().replace(/[^0-9km]/g, '');
+    const number = parseFloat(cleanText.replace(/[km]/g, ''));
+
+    if (cleanText.includes('m')) {
+      return number * 1000000;
+    } else if (cleanText.includes('k')) {
+      return number * 1000;
+    }
+    return number;
+  } catch (e) {
+    return 0;
+  }
+}
+
 // Helper function to extract sources from text content
 function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
-  // Extract Instagram handles with stats
-  const instagramPattern = /@([a-zA-Z0-9._]+).*?(\d[\d,]*\s*(тысяч|тыс|k|K|млн|million|M)).*?подписчиков/g;
+  // Extract structured account information with followers count
+  const structuredPattern = /\*\*([^*]+)\(@([a-zA-Z0-9._]+)\)\*\*[^*]*\*\*Followers:\*\*\s*([0-9.]+\s*[KkMm])/g;
   let match;
 
-  while ((match = instagramPattern.exec(content)) !== null) {
-    const handle = match[1];
-    const followersText = match[2];
-    let followers = parseInt(followersText.replace(/[^0-9]/g, ''));
+  while ((match = structuredPattern.exec(content)) !== null) {
+    const [_, name, handle, followersText] = match;
+    const followers = parseFollowerCount(followersText);
 
-    // Convert to actual numbers
-    if (followersText.toLowerCase().includes('млн') || followersText.toLowerCase().includes('m')) {
-      followers *= 1000000;
-    } else if (followersText.toLowerCase().includes('тыс') || followersText.toLowerCase().includes('k')) {
-      followers *= 1000;
+    if (followers >= 50000) { // Minimum follower requirement for Instagram
+      sources.push({
+        url: `https://instagram.com/${handle}`,
+        name: name.trim(),
+        rank: 5,
+        followers,
+        platform: 'instagram.com',
+        description: `Instagram аккаунт @${handle} - ${name.trim()}`
+      });
     }
+  }
 
-    sources.push({
-      url: `https://instagram.com/${handle}`,
-      rank: 5,
-      followers,
-      platform: 'instagram.com',
-      description: `Instagram аккаунт @${handle}`
-    });
+  // Extract Instagram handles with follower counts
+  const instagramPattern = /@([a-zA-Z0-9._]+)[^@]*?([0-9.]+\s*(?:тысяч|тыс|k|K|млн|million|M|м))/gi;
+
+  while ((match = instagramPattern.exec(content)) !== null) {
+    const [_, handle, followersText] = match;
+    const followers = parseFollowerCount(followersText);
+
+    if (followers >= 50000 && !sources.some(s => s.url.includes(handle))) {
+      sources.push({
+        url: `https://instagram.com/${handle}`,
+        name: handle,
+        rank: 5,
+        followers,
+        platform: 'instagram.com',
+        description: `Instagram аккаунт @${handle}`
+      });
+    }
   }
 
   return sources;
