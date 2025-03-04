@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,34 +19,29 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Получаем существующие ключевые слова для кампании
-  const { data: existingKeywords = [], isLoading: isLoadingKeywords } = useQuery({
+  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["/api/keywords", campaignId],
     queryFn: async () => {
-      try {
-        const response = await directusApi.get('/items/user_keywords', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              }
+      if (!campaignId) return [];
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
             }
-          },
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
           }
-        });
-        return response.data?.data || [];
-      } catch (error) {
-        console.error("Error fetching keywords:", error);
-        throw new Error("Не удалось загрузить ключевые слова");
-      }
+        },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      return response.data?.data || [];
     },
     enabled: !!campaignId
   });
 
   const { mutate: deleteKeyword } = useMutation({
-    mutationFn: async (keywordId: number) => {
+    mutationFn: async (keywordId: string) => {
       await directusApi.delete(`/items/user_keywords/${keywordId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -71,30 +66,24 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     fetch(`/api/wordstat/${encodeURIComponent(searchQuery)}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Ошибка при поиске ключевых слов");
-        }
-        return response.json();
-      })
+      .then(response => response.json())
       .then(data => {
         if (!Array.isArray(data.processed_keywords)) {
           throw new Error("Некорректный формат данных от API");
         }
-        const keywords = data.processed_keywords.map((kw: any) => ({
+        setSearchResults(data.processed_keywords.map((kw: any) => ({
           ...kw,
           selected: false
-        }));
-        setSearchResults(keywords);
+        })));
         toast({
-          description: `Найдено ${keywords.length} ключевых слов`
+          description: `Найдено ${data.processed_keywords.length} ключевых слов`
         });
       })
       .catch(error => {
         console.error("Search error:", error);
         toast({
-          description: error.message,
-          variant: "destructive"
+          variant: "destructive",
+          description: error.message
         });
       })
       .finally(() => {
@@ -102,17 +91,17 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       });
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev =>
-      prev.map(kw => ({ ...kw, selected: checked }))
-    );
-  };
-
   const handleKeywordToggle = (index: number) => {
     setSearchResults(prev =>
       prev.map((kw, i) =>
         i === index ? { ...kw, selected: !kw.selected } : kw
       )
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSearchResults(prev =>
+      prev.map(kw => ({ ...kw, selected: checked }))
     );
   };
 
@@ -153,7 +142,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
-      {/* Поиск новых ключевых слов */}
+      {/* Поиск */}
       <div className="flex gap-2">
         <Input
           placeholder="Введите запрос для поиска ключевых слов"
@@ -178,7 +167,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       </div>
 
       {/* Существующие ключевые слова */}
-      {existingKeywords.length > 0 && (
+      {keywords.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4">Добавленные ключевые слова</h3>
           <Table>
@@ -191,7 +180,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {existingKeywords.map((keyword: any) => (
+              {keywords.map((keyword: any) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
@@ -240,7 +229,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
                 <TableHead>Конкуренция</TableHead>
