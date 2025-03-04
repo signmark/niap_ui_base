@@ -13,34 +13,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 
-// Normalize Instagram URLs
-function normalizeInstagramUrl(url: string): string {
-  if (!url) return '';
-
-  // Remove http/https and www
-  let normalized = url.replace(/^https?:\/\/(www\.)?/, '');
-
-  // Handle @username format
-  if (normalized.startsWith('@')) {
-    normalized = `instagram.com/${normalized.substring(1)}`;
-  }
-
-  // Handle just username format
-  if (!normalized.includes('/')) {
-    normalized = `instagram.com/${normalized}`;
-  }
-
-  return normalized;
-}
-
-interface Keyword {
-  id: string;
-  keyword: string;
-  trend_score: number;
-  mentions_count: number;
-  campaign_id: string;
-}
-
 interface Source {
   url: string;
   name: string;
@@ -56,7 +28,7 @@ interface KeywordTableProps {
     competition: number;
     sources?: Source[];
   }>;
-  existingKeywords: Keyword[];
+  existingKeywords: any[];
   isLoading: boolean;
   campaignId?: string;
   onKeywordsUpdated: () => void;
@@ -72,6 +44,9 @@ export function KeywordTable({
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log("KeywordTable received keywords:", keywords);
+  console.log("Sources from first keyword:", keywords[0]?.sources);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -83,6 +58,7 @@ export function KeywordTable({
   // Собираем все уникальные источники из всех ключевых слов
   const allSources = keywords.reduce((acc: Source[], kw) => {
     if (kw.sources) {
+      console.log("Processing sources for keyword:", kw.keyword, kw.sources);
       const uniqueSources = kw.sources.filter(source => 
         !acc.some(existing => existing.url === source.url)
       );
@@ -91,10 +67,10 @@ export function KeywordTable({
     return acc;
   }, []);
 
+  console.log("All unique sources:", allSources);
+
   // Сортируем источники по количеству подписчиков
   const sortedSources = allSources.sort((a, b) => (b.followers || 0) - (a.followers || 0));
-
-  console.log('Rendering sources:', sortedSources);
 
   return (
     <div className="space-y-8">
@@ -117,7 +93,6 @@ export function KeywordTable({
             </TableHeader>
             <TableBody>
               {sortedSources.map((source, index) => {
-                const normalizedUrl = normalizeInstagramUrl(source.url);
                 const formattedFollowers = source.followers >= 1000000 
                   ? `${(source.followers / 1000000).toFixed(1)}M`
                   : source.followers >= 1000 
@@ -128,12 +103,12 @@ export function KeywordTable({
                   <TableRow key={index}>
                     <TableCell>
                       <a 
-                        href={`https://${normalizedUrl}`}
+                        href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline"
                       >
-                        @{normalizedUrl.split('/').pop()}
+                        {source.name}
                       </a>
                     </TableCell>
                     <TableCell>{source.name}</TableCell>
