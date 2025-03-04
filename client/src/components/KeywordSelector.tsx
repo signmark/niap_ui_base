@@ -19,7 +19,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { add } = useToast();
 
-  // Закрытие результатов по клику вне компонента
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -59,8 +58,8 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: kw.trend,
-        competition: kw.competition,
+        trend: parseInt(kw.trend),
+        competition: parseInt(kw.competition),
         selected: false
       }));
 
@@ -106,25 +105,21 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
 
     try {
-      // Добавляем отладочный вывод
-      console.log('Отправляемые ключевые слова:', selectedKeywords);
+      const now = new Date().toISOString();
 
       for (const keyword of selectedKeywords) {
         const data = {
           keyword: keyword.keyword,
           campaign_id: campaignId,
-          trend_score: Number(keyword.trend),
-          mentions_count: Number(keyword.competition)
+          trend_score: keyword.trend,
+          mentions_count: keyword.competition,
+          date_created: now,
+          last_checked: now
         };
 
         console.log('Отправляем в Directus:', data);
 
-        await directusApi.post('/items/user_keywords', data, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        await directusApi.post('items/user_keywords', data);
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
@@ -132,11 +127,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       add({ description: "Ключевые слова добавлены" });
     } catch (error: any) {
       console.error('Error saving keywords:', error);
-      console.error('Response data:', error.response?.data);
-
       add({
         variant: "destructive",
-        description: error.response?.data?.errors?.[0]?.message || "Не удалось сохранить ключевые слова"
+        description: "Не удалось сохранить ключевые слова"
       });
     }
   };
@@ -172,7 +165,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         isLoading={isLoadingKeywords || isSearching}
         onDelete={async (id) => {
           try {
-            await directusApi.delete(`/items/user_keywords/${id}`);
+            await directusApi.delete(`items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
             add({ description: "Ключевое слово удалено" });
           } catch {
