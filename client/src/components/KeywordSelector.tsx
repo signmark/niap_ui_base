@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast"; // Исправлен импорт
+import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Search, Loader2 } from "lucide-react";
 import { KeywordTable } from "@/components/KeywordTable";
@@ -17,13 +17,12 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast(); // Правильное использование хука
+  const { add } = useToast(); 
 
-  // Обработчик клика вне компонента
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setSearchResults([]); // Очищаем результаты поиска
+        setSearchResults([]); 
       }
     }
 
@@ -72,7 +71,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       .then(rawData => {
         console.log("Raw API Response:", rawData);
         if (!rawData?.data?.keywords) {
-          throw new Error("Некорректный формат данных от API");
+          throw new Error("Некорректный формат ответа от API");
         }
 
         const keywords = rawData.data.keywords;
@@ -87,13 +86,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         console.log("Formatted results:", formattedResults);
 
         setSearchResults(formattedResults);
-        toast({
+        add({
           description: `Найдено ${formattedResults.length} ключевых слов`
         });
       })
       .catch((error) => {
         console.error("Search error:", error);
-        toast({
+        add({
           variant: "destructive",
           description: error.message || "Ошибка при поиске ключевых слов"
         });
@@ -122,7 +121,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSaveSelected = () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (selectedKeywords.length === 0) {
-      toast({
+      add({
         variant: "destructive",
         description: "Выберите хотя бы одно ключевое слово"
       });
@@ -143,13 +142,13 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     ))
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-        setSearchResults([]); // Очищаем результаты после успешного сохранения
-        toast({
+        setSearchResults([]); 
+        add({
           description: "Ключевые слова добавлены"
         });
       })
       .catch(() => {
-        toast({
+        add({
           variant: "destructive",
           description: "Не удалось добавить ключевые слова"
         });
@@ -192,11 +191,11 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             }
           }).then(() => {
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            toast({
+            add({
               description: "Ключевое слово удалено"
             });
           }).catch(() => {
-            toast({
+            add({
               variant: "destructive",
               description: "Не удалось удалить ключевое слово"
             });
