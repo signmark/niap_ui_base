@@ -154,77 +154,69 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
       return [];
     }
 
-    // Make request to Social Searcher API - currently only YouTube
-    const response = await axios.get('https://api.social-searcher.com/v2/users', {
-      params: {
-        q: encodeURIComponent(keyword),
-        key: socialSearcherKey,
-        network: 'youtube',
-        lang: 'ru,en'
-      },
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-
-    console.log('Social Searcher API response:', {
-      status: response.status,
-      data: response.data,
-      params: {
-        keyword,
-        network: 'youtube',
-        lang: 'ru,en'
-      }
-    });
-
-    if (!response.data?.posts) {
-      return [];
-    }
-
-    // Process and validate results
-    const validPosts = response.data.posts
-      .filter(post => {
-        try {
-          if (!post.user?.url || !post.user?.name) {
-            console.log(`Skipping YouTube post - missing required fields:`, JSON.stringify(post, null, 2));
-            return false;
-          }
-
-          // Normalize YouTube URL
-          const normalizedUrl = normalizeSourceUrl(post.user.url, 'youtube.com');
-          if (!normalizedUrl) {
-            console.log(`Skipping invalid YouTube URL format: ${post.user.url}`);
-            return false;
-          }
-
-          // Store normalized URL
-          post.url = normalizedUrl;
-          return true;
-        } catch (error) {
-          console.error(`Error validating YouTube post:`, error);
-          return false;
+    try {
+      // Make request to Social Searcher API
+      const response = await axios.get('https://api.social-searcher.com/v2/users', {
+        params: {
+          q: encodeURIComponent(keyword),
+          key: socialSearcherKey,
+          network: 'youtube',
+          lang: 'ru,en'
+        },
+        headers: {
+          'Accept': 'application/json'
         }
       });
 
-    console.log('Valid posts after filtering:', JSON.stringify(validPosts, null, 2));
+      if (!response.data?.posts) {
+        console.log('No posts found in Social Searcher response');
+        return [];
+      }
 
-    // Map to consistent format that matches Perplexity results
-    const mappedPosts = validPosts.map(post => ({
-      url: post.url,
-      name: post.user?.name || '',
-      rank: 5, // Default rank for now
-      followers: 100000, // We don't get this from Social Searcher yet
-      title: post.title || '',
-      description: post.text || `YouTube канал: ${post.user?.name} - ${post.title || 'Контент по теме ' + keyword}`,
-      keyword,
-      platform: 'youtube'
-    }));
+      // Process and validate results
+      const validPosts = response.data.posts
+        .filter((post: any) => {
+          try {
+            if (!post.user?.url || !post.user?.name) {
+              return false;
+            }
 
-    console.log('Mapped posts:', JSON.stringify(mappedPosts, null, 2));
-    return mappedPosts;
+            // Normalize YouTube URL
+            const normalizedUrl = normalizeSourceUrl(post.user.url, 'youtube.com');
+            if (!normalizedUrl) {
+              return false;
+            }
+
+            // Store normalized URL
+            post.url = normalizedUrl;
+            return true;
+          } catch (error) {
+            console.error(`Error validating YouTube post:`, error);
+            return false;
+          }
+        });
+
+      // Map to consistent format
+      return validPosts.map((post: any) => ({
+        url: post.url,
+        name: post.user?.name || '',
+        rank: 5,
+        followers: 100000,
+        title: post.title || '',
+        description: post.text || `YouTube канал: ${post.user?.name}`,
+        keyword,
+        platform: 'youtube'
+      }));
+
+    } catch (apiError: any) {
+      // Handle 403 and other API errors gracefully
+      console.log(`Social Searcher API error (${apiError.response?.status || 'unknown'}):`,
+        apiError.response?.data || apiError.message);
+      return [];
+    }
 
   } catch (error) {
-    console.error('Error searching Social Searcher:', error);
+    console.error('Error in Social Searcher setup:', error);
     return [];
   }
 }
@@ -722,61 +714,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Search using both APIs in parallel
       const searchPromises = keywords.map(async keyword => {
         const [perplexityResults, socialSearcherResults] = await Promise.all([
-          // Perplexity search for Instagram and other platforms
-          (async () => {
-            try {
-              const results = await existingPerplexitySearch(keyword, token);
-              console.log(`Perplexity search results for ${keyword}:`, results.length);
-              return results;
-            } catch (error) {
-              console.error('Error in Perplexity search:', error);
-              return [];
-            }
-          })(),
-          // Social Searcher for YouTube channels
-          (async () => {
-            try {
-              const results = await searchSocialSourcesByKeyword(keyword, token);
-              console.log(`Social Searcher results for ${keyword}:`, results.length);
-              return results;
-            } catch (error) {
-              console.error('Error in Social Searcher:', error);
-              return [];
-            }
-          })()
+          existingPerplexitySearch(keyword, token).catch(error => {
+            console.error('Perplexity search error:', error);
+            return [];
+          }),
+          searchSocialSourcesByKeyword(keyword, token).catch(error => {
+            console.error('Social Searcher error:', error);
+            return [];
+          })
         ]);
 
-        // Combine results
-        const combinedResults = [...perplexityResults, ...socialSearcherResults];
-
-        console.log(`Combined results for ${keyword}:`, {
-          perplexityCount: perplexityResults.length,
-          socialSearcherCount: socialSearcherResults.length,
-          totalCount: combinedResults.length
+        // Log results for debugging
+        console.log(`Results for keyword "${keyword}":`, {
+          perplexity: perplexityResults.length,
+          socialSearcher: socialSearcherResults.length
         });
 
-        return combinedResults;
+        return [...perplexityResults, ...socialSearcherResults];
       });
 
       const results = await Promise.all(searchPromises);
       const allSources = results.flat();
 
-      console.log('All sources count:', allSources.length);
+      // Improved duplicate removal with URL normalization
+      const uniqueSourcesMap = new Map();
+      allSources.forEach(source => {
+        const key = source.url.toLowerCase().trim();
+        if (!uniqueSourcesMap.has(key) || source.rank < uniqueSourcesMap.get(key).rank) {
+          uniqueSourcesMap.set(key, source);
+        }
+      });
 
-      // Remove duplicates and sort by rank and followers
-      const uniqueSources = [...new Map(allSources.map(source => [source.url, source])).values()]
+      const uniqueSources = Array.from(uniqueSourcesMap.values())
         .sort((a, b) => {
-          // First sort by rank
           const rankDiff = (a.rank || 5) - (b.rank || 5);
-          if (rankDiff !== 0) return rankDiff;
-          // Then by followers if ranks are equal
-          return (b.followers || 0) - (a.followers || 0);
+          return rankDiff !== 0 ? rankDiff : (b.followers || 0) - (a.followers || 0);
         });
 
-      console.log('Unique sources count:', uniqueSources.length);
+      console.log('Found sources:', {
+        total: allSources.length,
+        unique: uniqueSources.length,
+        platforms: uniqueSources.reduce((acc: any, src: any) => {
+          acc[src.platform] = (acc[src.platform] || 0) + 1;
+          return acc;
+        }, {})
+      });
 
-      // Return data in the format expected by frontend
-      res.json({ sources: uniqueSources });
+      res.json({
+        sources: uniqueSources,
+        meta: {
+          total: allSources.length,
+          unique: uniqueSources.length
+        }
+      });
 
     } catch (error) {
       console.error('Error collecting sources:', error);
