@@ -29,6 +29,8 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
+  console.log('NewSourcesDialog sourcesData:', sourcesData);
+
   const sources = sourcesData?.data?.data?.sources || [];
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -46,6 +48,11 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
     setIsAdding(true);
 
     try {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
       const sourcesToAdd = sources.filter(source => 
         selectedSources.includes(source.url)
       );
@@ -57,6 +64,10 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           type: source.platform,
           campaign_id: campaignId,
           is_active: true
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
         });
       }
 

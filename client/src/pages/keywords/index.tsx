@@ -28,7 +28,6 @@ export default function Keywords() {
     }
   });
 
-  // Get campaign keywords
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["campaign_keywords", selectedCampaign],
     queryFn: async () => {
@@ -67,11 +66,17 @@ export default function Keywords() {
       const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
       console.log('Keywords for search:', keywordsList);
 
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      // Sending all keywords in a single request
       const response = await fetch('/api/sources/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ keywords: keywordsList })
       });
@@ -89,7 +94,7 @@ export default function Keywords() {
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
       toast({
-        description: `Найдено ${data.data.sources.length} источников`
+        description: `Найдено ${data.data.data.sources.length} источников`
       });
     },
     onError: (error: Error) => {
@@ -176,7 +181,7 @@ export default function Keywords() {
           keyword: "Найденные источники",
           trend: 0,
           competition: 0,
-          sources: foundSourcesData?.data?.sources || []
+          sources: foundSourcesData?.data?.data?.sources || []
         }]}
         existingKeywords={[]}
         isLoading={isLoadingCampaigns || isSearching || isLoadingKeywords}
