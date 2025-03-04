@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/directus";
+import { Dialog } from "@/components/ui/dialog";
+import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 
 interface SearchButtonProps {
   campaignId: string;
@@ -13,11 +14,11 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sourcesData, setSourcesData] = useState(null);
-  const toast = useToast();
+  const { add: toast } = useToast();
 
   const handleSearch = async () => {
     if (!keywords.length) {
-      toast.add({
+      toast({
         title: "Ошибка",
         description: "Добавьте ключевые слова для поиска",
         variant: "destructive"
@@ -55,13 +56,13 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
 
     } catch (error) {
       if (error instanceof Error) {
-        toast.add({
+        toast({
           title: "Ошибка",
           description: error.message,
           variant: "destructive"
         });
       } else {
-        toast.add({
+        toast({
           title: "Ошибка",
           description: "Не удалось запустить поиск",
           variant: "destructive"
@@ -74,19 +75,31 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   };
 
   return (
-    <Button onClick={handleSearch} disabled={isLoading}>
-      {isLoading ? (
-        <>
-          <Search className="animate-spin mr-2 h-4 w-4" />
-          Поиск...
-        </>
-      ) : (
-        <>
-          <Search className="mr-2 h-4 w-4" />
-          Искать упоминания
-        </>
-      )}
-    </Button>
+    <>
+      <Button onClick={handleSearch} disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Search className="animate-spin mr-2 h-4 w-4" />
+            Поиск...
+          </>
+        ) : (
+          <>
+            <Search className="mr-2 h-4 w-4" />
+            Искать упоминания
+          </>
+        )}
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {sourcesData && (
+          <NewSourcesDialog
+            campaignId={campaignId}
+            onClose={() => setIsDialogOpen(false)}
+            sourcesData={sourcesData}
+          />
+        )}
+      </Dialog>
+    </>
   );
 }
 
