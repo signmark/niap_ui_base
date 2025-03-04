@@ -15,6 +15,7 @@ interface KeywordSelectorProps {
 export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,6 +45,38 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     enabled: !!campaignId
   });
 
+  const { mutate: searchKeywords } = useMutation({
+    mutationFn: async (query: string) => {
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error("Ошибка при поиске ключевых слов");
+      }
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (!Array.isArray(data.processed_keywords)) {
+        throw new Error("Некорректный формат данных от API");
+      }
+
+      setSearchResults(data.processed_keywords.map((kw: any) => ({
+        ...kw,
+        selected: false
+      })));
+      setIsSearching(false);
+      toast({
+        description: `Найдено ${data.processed_keywords.length} ключевых слов`
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Search error:", error);
+      setIsSearching(false);
+      toast({
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   const { mutate: deleteKeyword } = useMutation({
     mutationFn: async (keywordId: number) => {
       await directusApi.delete(`/items/user_keywords/${keywordId}`, {
@@ -66,39 +99,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     }
   });
 
-  const { mutate: searchKeywords, isPending: isSearching } = useMutation({
-    mutationFn: async (query: string) => {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
-      }
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      if (!Array.isArray(data.processed_keywords)) {
-        throw new Error("Некорректный формат данных от API");
-      }
-
-      setSearchResults(data.processed_keywords.map((kw: any) => ({
-        ...kw,
-        selected: false
-      })));
-
-      toast({
-        description: `Найдено ${data.processed_keywords.length} ключевых слов`
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Search error:", error);
-      toast({
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
+    setIsSearching(true);
     searchKeywords(searchQuery);
   };
 
@@ -153,6 +156,30 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-4">
+      {/* Поиск новых ключевых слов */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Введите запрос для поиска ключевых слов"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="flex-1"
+        />
+        <Button onClick={handleSearch} disabled={isSearching}>
+          {isSearching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Поиск...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Искать
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Существующие ключевые слова */}
       {existingKeywords.length > 0 && (
         <div>
@@ -188,30 +215,6 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
         </div>
       )}
 
-      {/* Поиск новых ключевых слов */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Введите запрос для поиска ключевых слов"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1"
-        />
-        <Button onClick={handleSearch} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск...
-            </>
-          ) : (
-            <>
-              <Search className="mr-2 h-4 w-4" />
-              Искать
-            </>
-          )}
-        </Button>
-      </div>
-
       {/* Результаты поиска */}
       {searchResults.length > 0 && (
         <>
@@ -219,15 +222,18 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={searchResults.every(kw => kw.selected)}
-                onCheckedChange={handleSelectAll}
+                onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                id="select-all"
               />
-              <span className="text-sm">Выбрать все</span>
+              <label htmlFor="select-all" className="text-sm">
+                Выбрать все
+              </label>
             </div>
             <Button
               onClick={handleSaveSelected}
               disabled={!searchResults.some(kw => kw.selected)}
             >
-              Сохранить выбранные ({searchResults.filter(kw => kw.selected).length})
+              Добавить выбранные ({searchResults.filter(kw => kw.selected).length})
             </Button>
           </div>
 
