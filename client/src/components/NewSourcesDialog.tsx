@@ -27,11 +27,7 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  console.log('NewSourcesDialog received sourcesData:', sourcesData);
-
   const sources = sourcesData?.data?.sources || [];
-  console.log('Extracted sources:', sources);
-
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const { add: toast } = useToast();
@@ -93,7 +89,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {sources.length === 0 ? (
+        {!sources || sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Нет подходящих источников
           </p>
