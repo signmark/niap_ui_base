@@ -252,78 +252,40 @@ function parseFollowerCount(text: string): number {
 function extractSourcesFromText(content: string): any[] {
   const sources: any[] = [];
 
-  // Extract structured account information with followers count
-  const structuredPattern = /\*\*([^*]+)\(@([a-zA-Z0-9._]+)\)\*\*[^*]*?\*\*Followers:\*\*\s*([0-9.]+\s*[KkMm])/g;
+  // Match patterns like "@username - Name (500K followers) - Description"
+  const pattern = /@([a-zA-Z0-9._]+)\s*-\s*([^(]+)\(([0-9.]+[KkMm])[^)]*\)\s*-\s*([^@\n]+)/g;
   let match;
 
-  while ((match = structuredPattern.exec(content)) !== null) {
-    const [_, name, handle, followersText] = match;
-    const followers = parseFollowerCount(followersText);
+  while ((match = pattern.exec(content)) !== null) {
+    const [_, username, name, followers, description] = match;
+    const followersCount = parseFollowerCount(followers);
 
-    if (followers >= 50000) { // Minimum follower requirement for Instagram
+    if (followersCount >= 50000) {
       sources.push({
-        url: `instagram.com/${handle}`,
+        url: `instagram.com/${username}`,
         name: name.trim(),
         rank: 5,
-        followers,
-        platform: 'instagram.com',
-        description: `Instagram аккаунт @${handle} - ${name.trim()}`
-      });
-    }
-  }
-
-  // Extract handles and follower counts from bullet points
-  const bulletPattern = /[•*-]\s*(?:@([a-zA-Z0-9._]+)|([a-zA-Z0-9._]+)(?:@[a-zA-Z0-9._]+)?)[^\n]*?([0-9.]+\s*(?:K|k|M|m|тыс|млн))[^\n]*(?:followers|подписчиков)/gi;
-
-  while ((match = bulletPattern.exec(content)) !== null) {
-    const handle = match[1] || match[2];
-    const followersText = match[3];
-    const followers = parseFollowerCount(followersText);
-
-    if (followers >= 50000 && !sources.some(s => s.url.includes(handle))) {
-      sources.push({
-        url: `instagram.com/${handle}`,
-        name: handle,
-        rank: 5,
-        followers,
-        platform: 'instagram.com',
-        description: `Instagram аккаунт @${handle}`
-      });
-    }
-  }
-
-  // Extract simple mentions with numbers
-  const simplePattern = /@([a-zA-Z0-9._]+)[^@]*?([0-9.]+\s*(?:K|k|M|m|тыс|млн))[^@]*?(?:followers|подписчиков)/gi;
-
-  while ((match = simplePattern.exec(content)) !== null) {
-    const [_, handle, followersText] = match;
-    const followers = parseFollowerCount(followersText);
-
-    if (followers >= 50000 && !sources.some(s => s.url.includes(handle))) {
-      sources.push({
-        url: `instagram.com/${handle}`,
-        name: handle,
-        rank: 5,
-        followers,
-        platform: 'instagram.com',
-        description: `Instagram аккаунт @${handle}`
-      });
-    }
-  }
-
-  // Extract mentioned handles with description
-  const mentionPattern = /@([a-zA-Z0-9._]+)\s*[-–]\s*([^@\n]+)/g;
-
-  while ((match = mentionPattern.exec(content)) !== null) {
-    const [_, handle, description] = match;
-    if (!sources.some(s => s.url.includes(handle))) {
-      sources.push({
-        url: `instagram.com/${handle}`,
-        name: handle,
-        rank: 5,
-        followers: 100000, // Default follower count if not specified
+        followers: followersCount,
         platform: 'instagram.com',
         description: description.trim()
+      });
+    }
+  }
+
+  // Also try to match simpler patterns
+  const simplePattern = /@([a-zA-Z0-9._]+).*?([0-9.]+\s*[KkMm])\s*(?:followers|подписчиков)/gi;
+  while ((match = simplePattern.exec(content)) !== null) {
+    const [_, username, followers] = match;
+    const followersCount = parseFollowerCount(followers);
+
+    if (followersCount >= 50000 && !sources.some(s => s.url.includes(username))) {
+      sources.push({
+        url: `instagram.com/${username}`,
+        name: username,
+        rank: 5,
+        followers: followersCount,
+        platform: 'instagram.com',
+        description: `Instagram аккаунт @${username}`
       });
     }
   }
@@ -368,17 +330,19 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
           {
             role: "system",
             content: `You are an expert at finding high-quality social media sources.
-Provide information about Instagram, Telegram, VK, and Reddit accounts.
-Return ONLY active accounts with regular posts.
-Requirements for followers:
-- Instagram: > 50,000
-- Telegram: > 5,000
-- VK: > 10,000
-- Reddit: > 50,000`
+Find top Instagram accounts (>50K followers) related to the given topic.
+For each account provide:
+1. Username with @ symbol
+2. Full name or description
+3. Follower count with K or M
+4. Brief description of content
+
+Format each account as:
+@username - Full Name (500K followers) - Description of content`
           },
           {
             role: "user",
-            content: `Find TOP-5 most authoritative sources in Instagram and other social networks (except YouTube) for: ${keyword}`
+            content: `Find TOP-5 most authoritative Instagram accounts for topic: ${keyword}`
           }
         ],
         max_tokens: 1000,
@@ -399,58 +363,11 @@ Requirements for followers:
     const content = response.data.choices[0].message.content;
     console.log(`Raw API response for keyword ${keyword}:`, content);
 
-    let allSources: any[] = [];
+    // Extract sources from text response
+    const sources = extractSourcesFromText(content);
+    console.log(`Extracted ${sources.length} sources for keyword ${keyword}:`, sources);
 
-    // Try parsing JSON arrays first
-    const jsonMatches = content.match(/\[[\s\S]*?\]/g) || [];
-    for (const match of jsonMatches) {
-      try {
-        const sources = JSON.parse(match);
-        if (Array.isArray(sources)) {
-          allSources.push(...sources);
-        }
-      } catch (e) {
-        console.log('Failed to parse JSON, will try text extraction');
-      }
-    }
-
-    // Extract sources from narrative text
-    const textSources = extractSourcesFromText(content);
-    allSources.push(...textSources);
-
-    // Validate and normalize sources
-    const validSources = allSources
-      .filter(source => {
-        if (!source.url) return false;
-
-        // Handle Instagram handles
-        if (source.url.startsWith('@')) {
-          source.url = `https://instagram.com/${source.url.substring(1)}`;
-        }
-
-        // Normalize URL
-        if (!source.url.startsWith('http')) {
-          source.url = `https://${source.url}`;
-        }
-
-        // Find matching platform
-        const platform = Object.keys(followerRequirements).find(p => source.url.includes(p));
-        if (!platform) return false;
-
-        // Check followers requirement
-        return !source.followers || source.followers >= followerRequirements[platform];
-      })
-      .map(source => ({
-        url: source.url,
-        rank: Math.min(Math.max(1, source.rank || 5), 10),
-        followers: source.followers || followerRequirements[source.url.includes('instagram.com') ? 'instagram.com' : source.url.includes('vk.com') ? 'vk.com' : 't.me'],
-        keyword,
-        description: source.description || '',
-        platform: Object.keys(followerRequirements).find(p => source.url.includes(p)) || ""
-      }));
-
-    console.log(`Found ${validSources.length} valid sources for keyword ${keyword}`);
-    return validSources;
+    return sources;
 
   } catch (error) {
     console.error('Error in Perplexity search:', error);
