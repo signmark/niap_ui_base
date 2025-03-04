@@ -87,13 +87,6 @@ function delay(ms: number) {
 
 // Helper function for Social Searcher API
 async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
-  // Проверяем кеш
-  const cached = getCachedResults(keyword);
-  if (cached) {
-    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
-    return cached;
-  }
-
   try {
     const settings = await directusApi.get('/items/user_api_keys', {
       params: {
@@ -113,14 +106,12 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
     }
 
     try {
-      await delay(2000);
-
       const response = await axios.get('https://api.social-searcher.com/v2/users', {
         params: {
           q: encodeURIComponent(keyword),
           key: socialSearcherKey,
           network: 'youtube,instagram',
-          lang: 'ru', // Только русский язык
+          lang: 'ru'
         }
       });
 
@@ -129,7 +120,7 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
         return [];
       }
 
-      const results = await Promise.all(
+      const validSources = await Promise.all(
         (response.data?.posts || [])
           .filter((post: any) => {
             // Фильтруем посты на русском языке
@@ -137,49 +128,38 @@ async function searchSocialSourcesByKeyword(keyword: string, authToken: string):
             return hasRussianText;
           })
           .map(async (post: any) => {
-            const url = normalizeSourceUrl(post.user?.url, post.network) || post.user?.url;
+            const url = normalizeSourceUrl(post.user?.url, post.network);
             if (!url) return null;
 
-            // Проверяем существование профиля
             try {
               const profileCheck = await axios.head(url);
               if (profileCheck.status !== 200) return null;
+
+              return {
+                url,
+                name: post.user?.name || '',
+                followers: 100000, // Заглушка, в реальности нужно парсить
+                platform: post.network,
+                description: post.text || `${post.network === 'youtube' ? 'YouTube канал' : 'Instagram аккаунт'}: ${post.user?.name}`,
+                rank: 5
+              };
             } catch (error) {
               console.log(`Profile ${url} not found or not accessible`);
               return null;
             }
-
-            return {
-              url,
-              name: post.user?.name || '',
-              rank: 5,
-              followers: 100000, // Заглушка, в реальности нужно парсить
-              title: post.title || '',
-              description: post.text || `${post.network === 'youtube' ? 'YouTube канал' : 'Instagram аккаунт'}: ${post.user?.name}`,
-              keyword,
-              platform: post.network
-            };
           })
       );
 
-      const validResults = results.filter(Boolean);
-
-      // Кешируем результаты
-      if (validResults.length > 0) {
-        console.log(`Caching ${validResults.length} results for keyword: ${keyword}`);
-        searchCache.set(keyword, {
-          timestamp: Date.now(),
-          results: validResults
-        });
-      }
-
-      return validResults;
+      return validSources.filter(Boolean);
 
     } catch (apiError: any) {
+      if (apiError.response?.status === 403) {
+        console.log('Social Searcher API limit reached or access denied');
+        return [];
+      }
       console.error('Social Searcher API error:', apiError.message);
       return [];
     }
-
   } catch (error) {
     console.error('Error in Social Searcher setup:', error);
     return [];
@@ -742,6 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return cachedResults[index];
           }
 
+          // В случае если Social Searcher недоступен, используем только Perplexity
           const [socialResults, perplexityResults] = await Promise.all([
             searchSocialSourcesByKeyword(keyword, token),
             existingPerplexitySearch(keyword, token)
