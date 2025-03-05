@@ -23,7 +23,8 @@ export default function CrawlerTasks() {
     queryFn: async () => {
       const response = await directusApi.get('/items/crawler_tasks', {
         params: {
-          sort: ['-created_at']
+          sort: ['-created_at'],
+          fields: ['*', 'source.url']
         }
       });
       return response.data?.data || [];
@@ -77,6 +78,7 @@ export default function CrawlerTasks() {
                 <TableRow>
                   <TableHead>ID кампании</TableHead>
                   <TableHead>ID источника</TableHead>
+                  <TableHead>URL источника</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Время начала</TableHead>
                   <TableHead>Время создания</TableHead>
@@ -88,6 +90,18 @@ export default function CrawlerTasks() {
                   <TableRow key={task.id}>
                     <TableCell>{task.campaign_id}</TableCell>
                     <TableCell>{task.source_id}</TableCell>
+                    <TableCell>
+                      {task.source?.url ? (
+                        <a 
+                          href={task.source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          {task.source.url}
+                        </a>
+                      ) : '—'}
+                    </TableCell>
                     <TableCell>{task.status}</TableCell>
                     <TableCell>{task.started_at ? formatDate(task.started_at) : '—'}</TableCell>
                     <TableCell>{formatDate(task.created_at)}</TableCell>
