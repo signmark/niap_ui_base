@@ -24,7 +24,15 @@ export default function CrawlerTasks() {
       const response = await directusApi.get('/items/crawler_tasks', {
         params: {
           sort: ['-created_at'],
-          fields: ['*', 'campaign.name', 'campaign_content_sources.url']
+          fields: ['*'],
+          deep: {
+            campaign: {
+              _fields: ['name']
+            },
+            campaign_content_sources: {
+              _fields: ['url']
+            }
+          }
         }
       });
       return response.data?.data || [];
