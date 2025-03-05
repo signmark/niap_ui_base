@@ -23,6 +23,7 @@ directusApi.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -42,8 +43,10 @@ directusApi.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        console.log('Token expired, attempting to refresh...');
         // Пробуем обновить токен
         const newToken = await refreshAccessToken();
+        console.log('Token refresh successful, retrying original request');
 
         // Повторяем исходный запрос с новым токеном
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -52,7 +55,9 @@ directusApi.interceptors.response.use(
         console.error('Failed to refresh token:', refreshError);
         // Если не удалось обновить токен, очищаем авторизацию
         useAuthStore.getState().clearAuth();
-        window.location.href = '/auth/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
       }
     }
 

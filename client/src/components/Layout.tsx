@@ -16,22 +16,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!token) {
+      console.log('No auth token found, redirecting to login');
       navigate("/auth/login");
     }
   }, [token, navigate]);
 
   const handleLogout = async () => {
     try {
-      await fetch(`${DIRECTUS_URL}/auth/logout`, {
+      console.log('Attempting to logout...');
+      const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
+
+      if (!response.ok) {
+        throw new Error('Logout request failed');
+      }
+
+      console.log('Logout successful, clearing auth state');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Очищаем токены из localStorage
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      // Очищаем состояние авторизации
       setAuth(null, null);
+      // Перенаправляем на страницу входа
+      navigate("/auth/login");
     }
   };
 

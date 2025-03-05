@@ -29,11 +29,13 @@ export const refreshAccessToken = async (): Promise<string> => {
   try {
     refreshPromise = new Promise(async (resolve, reject) => {
       try {
+        console.log('Attempting to refresh access token...');
         const response = await directusApi.post<AuthResponse>('/auth/refresh', {
           refresh_token: refreshToken,
         });
 
         const { access_token, refresh_token, expires } = response.data.data;
+        console.log(`Token refresh successful. New token expires in ${expires} ms`);
 
         // Сохраняем новые токены
         localStorage.setItem('auth_token', access_token);
@@ -43,11 +45,15 @@ export const refreshAccessToken = async (): Promise<string> => {
         const auth = useAuthStore.getState();
         auth.setAuth(access_token, auth.userId);
 
-        // Планируем следующее обновление за 1 минуту до истечения
-        const refreshIn = expires - 60000; // 1 минута до истечения
+        // Планируем следующее обновление за 5 минут до истечения
+        const refreshIn = Math.max(expires - 300000, 1000); // Минимум 1 секунда, если токен скоро истекает
+        console.log(`Scheduling next token refresh in ${refreshIn} ms`);
+
         setTimeout(() => {
           refreshPromise = null;
-          refreshAccessToken();
+          refreshAccessToken().catch(error => {
+            console.error('Failed to refresh token in scheduled refresh:', error);
+          });
         }, refreshIn);
 
         resolve(access_token);
@@ -71,8 +77,15 @@ export const refreshAccessToken = async (): Promise<string> => {
 export const setupTokenRefresh = (expires: number) => {
   if (typeof window === 'undefined') return;
 
-  const refreshIn = expires - 60000; // Обновляем за 1 минуту до истечения
+  console.log('Setting up token refresh. Token expires in:', expires, 'ms');
+
+  // Устанавливаем обновление токена за 5 минут до истечения
+  const refreshIn = Math.max(expires - 300000, 1000); // Минимум 1 секунда
+  console.log(`Scheduling initial token refresh in ${refreshIn} ms`);
+
   setTimeout(() => {
-    refreshAccessToken();
+    refreshAccessToken().catch(error => {
+      console.error('Failed to refresh token in initial setup:', error);
+    });
   }, refreshIn);
 };
