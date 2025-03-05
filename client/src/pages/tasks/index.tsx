@@ -50,7 +50,7 @@ export default function CrawlerTasks() {
         }
       });
 
-      return (response.data?.data || []).reduce((acc, campaign) => {
+      return (response.data?.data || []).reduce((acc: Record<string, string>, campaign: { id: string; name: string }) => {
         acc[campaign.id] = campaign.name;
         return acc;
       }, {});
@@ -76,7 +76,7 @@ export default function CrawlerTasks() {
         }
       });
 
-      return (response.data?.data || []).reduce((acc, source) => {
+      return (response.data?.data || []).reduce((acc: Record<string, string>, source: { id: string; url: string }) => {
         acc[source.id] = source.url;
         return acc;
       }, {});
