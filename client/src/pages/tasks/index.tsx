@@ -18,25 +18,70 @@ export default function CrawlerTasks() {
   const { add } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading } = useQuery({
+  // Получаем список задач
+  const { data: tasks = [], isLoading: isTasksLoading } = useQuery({
     queryKey: ["/api/crawler-tasks"],
     queryFn: async () => {
       const response = await directusApi.get('/items/crawler_tasks', {
         params: {
           sort: ['-created_at'],
-          fields: ['*'],
-          deep: {
-            campaign: {
-              _fields: ['name']
-            },
-            campaign_content_sources: {
-              _fields: ['url']
-            }
-          }
+          fields: ['*']
         }
       });
       return response.data?.data || [];
     }
+  });
+
+  // Получаем названия кампаний
+  const { data: campaigns = {} } = useQuery({
+    queryKey: ["/api/campaigns"],
+    queryFn: async () => {
+      const campaignIds = [...new Set(tasks.map(task => task.campaign_id))];
+      if (campaignIds.length === 0) return {};
+
+      const response = await directusApi.get('/items/user_campaigns', {
+        params: {
+          filter: {
+            id: {
+              _in: campaignIds
+            }
+          },
+          fields: ['id', 'name']
+        }
+      });
+
+      return (response.data?.data || []).reduce((acc, campaign) => {
+        acc[campaign.id] = campaign.name;
+        return acc;
+      }, {});
+    },
+    enabled: tasks.length > 0
+  });
+
+  // Получаем URLs источников
+  const { data: sources = {} } = useQuery({
+    queryKey: ["/api/sources"],
+    queryFn: async () => {
+      const sourceIds = [...new Set(tasks.map(task => task.source_id))];
+      if (sourceIds.length === 0) return {};
+
+      const response = await directusApi.get('/items/campaign_content_sources', {
+        params: {
+          filter: {
+            id: {
+              _in: sourceIds
+            }
+          },
+          fields: ['id', 'url']
+        }
+      });
+
+      return (response.data?.data || []).reduce((acc, source) => {
+        acc[source.id] = source.url;
+        return acc;
+      }, {});
+    },
+    enabled: tasks.length > 0
   });
 
   const handleDelete = async (taskId: string) => {
@@ -89,7 +134,7 @@ export default function CrawlerTasks() {
 
       <Card>
         <CardContent className="p-6">
-          {isLoading ? (
+          {isTasksLoading ? (
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
@@ -110,16 +155,16 @@ export default function CrawlerTasks() {
               <TableBody>
                 {tasks.map((task: any) => (
                   <TableRow key={task.id}>
-                    <TableCell>{task.campaign?.name || '—'}</TableCell>
+                    <TableCell>{campaigns[task.campaign_id] || '—'}</TableCell>
                     <TableCell>
-                      {task.campaign_content_sources?.url ? (
+                      {sources[task.source_id] ? (
                         <a 
-                          href={task.campaign_content_sources.url} 
+                          href={sources[task.source_id]} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:underline"
                         >
-                          {task.campaign_content_sources.url}
+                          {sources[task.source_id]}
                         </a>
                       ) : '—'}
                     </TableCell>
