@@ -61,26 +61,30 @@ export default function CrawlerTasks() {
 
       console.log('Fetching campaigns for IDs:', campaignIds);
 
-      const response = await directusApi.get('/items/user_campaigns', {
-        params: {
-          filter: {
-            id: {
-              _in: campaignIds
+      try {
+        const response = await directusApi.get('/items/user_campaigns', {
+          params: {
+            filter: {
+              id: {
+                _in: campaignIds
+              }
             }
-          },
-          fields: ['id', 'name']
-        }
-      });
+          }
+        });
 
-      console.log('Campaigns response:', response.data);
+        console.log('Campaigns response:', response.data);
 
-      const campaignsMap = (response.data?.data || []).reduce((acc: Record<string, string>, campaign: Campaign) => {
-        acc[campaign.id] = campaign.name;
-        return acc;
-      }, {});
+        const campaignsMap = (response.data?.data || []).reduce((acc: Record<string, string>, campaign: Campaign) => {
+          acc[campaign.id] = campaign.name;
+          return acc;
+        }, {});
 
-      console.log('Campaigns map:', campaignsMap);
-      return campaignsMap;
+        console.log('Campaigns map:', campaignsMap);
+        return campaignsMap;
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        return {};
+      }
     },
     enabled: tasks.length > 0
   });
