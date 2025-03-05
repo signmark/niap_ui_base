@@ -24,7 +24,7 @@ export default function CrawlerTasks() {
       const response = await directusApi.get('/items/crawler_tasks', {
         params: {
           sort: ['-created_at'],
-          fields: ['*', 'source.url']
+          fields: ['*', 'campaign.name', 'campaign_content_sources.url']
         }
       });
       return response.data?.data || [];
@@ -55,6 +55,21 @@ export default function CrawlerTasks() {
     });
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'В ожидании';
+      case 'processing':
+        return 'Выполняется';
+      case 'completed':
+        return 'Завершено';
+      case 'failed':
+        return 'Ошибка';
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="space-y-4 p-6">
       <div className="flex flex-col">
@@ -76,8 +91,7 @@ export default function CrawlerTasks() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID кампании</TableHead>
-                  <TableHead>ID источника</TableHead>
+                  <TableHead>Кампания</TableHead>
                   <TableHead>URL источника</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Время начала</TableHead>
@@ -88,21 +102,20 @@ export default function CrawlerTasks() {
               <TableBody>
                 {tasks.map((task: any) => (
                   <TableRow key={task.id}>
-                    <TableCell>{task.campaign_id}</TableCell>
-                    <TableCell>{task.source_id}</TableCell>
+                    <TableCell>{task.campaign?.name || '—'}</TableCell>
                     <TableCell>
-                      {task.source?.url ? (
+                      {task.campaign_content_sources?.url ? (
                         <a 
-                          href={task.source.url} 
+                          href={task.campaign_content_sources.url} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:underline"
                         >
-                          {task.source.url}
+                          {task.campaign_content_sources.url}
                         </a>
                       ) : '—'}
                     </TableCell>
-                    <TableCell>{task.status}</TableCell>
+                    <TableCell>{getStatusText(task.status)}</TableCell>
                     <TableCell>{task.started_at ? formatDate(task.started_at) : '—'}</TableCell>
                     <TableCell>{formatDate(task.created_at)}</TableCell>
                     <TableCell className="text-right">
