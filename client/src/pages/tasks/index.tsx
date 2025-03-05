@@ -32,7 +32,7 @@ export default function CrawlerTasks() {
 
   const handleDelete = async (taskId: string) => {
     try {
-      await directusApi.delete(`items/crawler_tasks/${taskId}`);
+      await directusApi.delete(`/items/crawler_tasks/${taskId}`);
       queryClient.invalidateQueries({ queryKey: ["/api/crawler-tasks"] });
       add({ description: "Задача успешно удалена" });
     } catch (error) {
