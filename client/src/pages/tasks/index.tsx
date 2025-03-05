@@ -73,7 +73,7 @@ export default function CrawlerTasks() {
   const { data: campaigns = {} } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const campaignIds = [...new Set(tasks.map(task => task.campaign_id))];
+      const campaignIds = tasks.map(task => task.campaign_id).filter(Boolean);
       if (campaignIds.length === 0) return {};
 
       console.log('Fetching campaigns for IDs:', campaignIds);
@@ -86,18 +86,26 @@ export default function CrawlerTasks() {
                 _in: campaignIds
               }
             },
-            fields: ['id', 'name'] // Явно указываем поле name
+            fields: 'id,name' // Изменили формат fields на строку
           }
         });
 
-        console.log('Campaigns response:', response.data);
+        console.log('Raw campaigns response:', response.data);
 
-        const campaignsMap = (response.data?.data || []).reduce((acc: Record<string, string>, campaign: Campaign) => {
-          acc[campaign.id] = campaign.name;
-          return acc;
-        }, {});
+        if (!response.data?.data || !Array.isArray(response.data.data)) {
+          console.error('Invalid campaigns response format:', response.data);
+          return {};
+        }
 
-        console.log('Campaigns map:', campaignsMap);
+        const campaignsMap = {};
+        for (const campaign of response.data.data) {
+          if (campaign?.id && campaign?.name) {
+            console.log('Adding campaign to map:', campaign);
+            campaignsMap[campaign.id] = campaign.name;
+          }
+        }
+
+        console.log('Final campaigns map:', campaignsMap);
         return campaignsMap;
       } catch (error) {
         console.error('Error fetching campaigns:', error);
@@ -111,7 +119,7 @@ export default function CrawlerTasks() {
   const { data: sources = {} } = useQuery({
     queryKey: ["/api/sources"],
     queryFn: async () => {
-      const sourceIds = [...new Set(tasks.map(task => task.source_id))];
+      const sourceIds = tasks.map(task => task.source_id).filter(Boolean);
       if (sourceIds.length === 0) return {};
 
       const response = await directusApi.get('/items/campaign_content_sources', {
@@ -192,9 +200,9 @@ export default function CrawlerTasks() {
                     <TableCell>{campaigns[task.campaign_id] || '—'}</TableCell>
                     <TableCell>
                       {sources[task.source_id] ? (
-                        <a 
-                          href={sources[task.source_id]} 
-                          target="_blank" 
+                        <a
+                          href={sources[task.source_id]}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:underline"
                         >
