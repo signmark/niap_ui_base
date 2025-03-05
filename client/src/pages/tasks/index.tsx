@@ -86,7 +86,7 @@ export default function CrawlerTasks() {
                 _in: campaignIds
               }
             },
-            fields: 'id,name' // Изменили формат fields на строку
+            fields: 'id,name'
           }
         });
 
@@ -98,12 +98,14 @@ export default function CrawlerTasks() {
         }
 
         const campaignsMap = {};
-        for (const campaign of response.data.data) {
+        response.data.data.forEach(campaign => {
           if (campaign?.id && campaign?.name) {
             console.log('Adding campaign to map:', campaign);
             campaignsMap[campaign.id] = campaign.name;
+          } else {
+            console.warn('Skipping invalid campaign:', campaign);
           }
-        }
+        });
 
         console.log('Final campaigns map:', campaignsMap);
         return campaignsMap;
