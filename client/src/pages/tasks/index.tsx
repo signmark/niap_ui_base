@@ -14,6 +14,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Campaign {
+  id: string;
+  name: string;
+}
+
+interface Source {
+  id: string;
+  url: string;
+}
+
+interface Task {
+  id: string;
+  campaign_id: string;
+  source_id: string;
+  status: string;
+  started_at: string | null;
+  created_at: string;
+}
+
 export default function CrawlerTasks() {
   const { add } = useToast();
   const queryClient = useQueryClient();
@@ -28,6 +47,7 @@ export default function CrawlerTasks() {
           fields: ['*']
         }
       });
+      console.log('Tasks response:', response.data);
       return response.data?.data || [];
     }
   });
@@ -38,6 +58,8 @@ export default function CrawlerTasks() {
     queryFn: async () => {
       const campaignIds = [...new Set(tasks.map(task => task.campaign_id))];
       if (campaignIds.length === 0) return {};
+
+      console.log('Fetching campaigns for IDs:', campaignIds);
 
       const response = await directusApi.get('/items/user_campaigns', {
         params: {
@@ -50,10 +72,15 @@ export default function CrawlerTasks() {
         }
       });
 
-      return (response.data?.data || []).reduce((acc: Record<string, string>, campaign: { id: string; name: string }) => {
+      console.log('Campaigns response:', response.data);
+
+      const campaignsMap = (response.data?.data || []).reduce((acc: Record<string, string>, campaign: Campaign) => {
         acc[campaign.id] = campaign.name;
         return acc;
       }, {});
+
+      console.log('Campaigns map:', campaignsMap);
+      return campaignsMap;
     },
     enabled: tasks.length > 0
   });
@@ -76,7 +103,7 @@ export default function CrawlerTasks() {
         }
       });
 
-      return (response.data?.data || []).reduce((acc: Record<string, string>, source: { id: string; url: string }) => {
+      return (response.data?.data || []).reduce((acc: Record<string, string>, source: Source) => {
         acc[source.id] = source.url;
         return acc;
       }, {});
@@ -153,7 +180,7 @@ export default function CrawlerTasks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map((task: any) => (
+                {tasks.map((task: Task) => (
                   <TableRow key={task.id}>
                     <TableCell>{campaigns[task.campaign_id] || '—'}</TableCell>
                     <TableCell>
