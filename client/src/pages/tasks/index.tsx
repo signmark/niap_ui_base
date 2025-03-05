@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -32,6 +32,23 @@ interface Task {
   started_at: string | null;
   created_at: string;
 }
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return 'В ожидании';
+    case 'processing':
+      return 'Выполняется';
+    case 'complete':
+      return 'Завершено';
+    case 'completed':
+      return 'Завершено';
+    case 'failed':
+      return 'Ошибка';
+    default:
+      return status;
+  }
+};
 
 export default function CrawlerTasks() {
   const { add } = useToast();
@@ -137,21 +154,6 @@ export default function CrawlerTasks() {
       hour: 'numeric',
       minute: 'numeric'
     });
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'В ожидании';
-      case 'processing':
-        return 'Выполняется';
-      case 'completed':
-        return 'Завершено';
-      case 'failed':
-        return 'Ошибка';
-      default:
-        return status;
-    }
   };
 
   return (
