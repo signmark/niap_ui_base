@@ -10,6 +10,7 @@ import Posts from "@/pages/posts";
 import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
 import Content from "@/pages/content";
+import Tasks from "@/pages/tasks";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/posts" component={() => <Layout><Posts /></Layout>} />
       <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
+      <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
