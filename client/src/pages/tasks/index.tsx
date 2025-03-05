@@ -85,7 +85,8 @@ export default function CrawlerTasks() {
               id: {
                 _in: campaignIds
               }
-            }
+            },
+            fields: ['id', 'name'] // Явно указываем поле name
           }
         });
 
