@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ThumbsUp, Eye, RefreshCw, Calendar } from "lucide-react";
+import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface SourcePost {
@@ -30,6 +30,7 @@ interface SourcePostsListProps {
 
 export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   if (isLoading) {
     return (
@@ -68,6 +69,12 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     setOpenPopover(open ? postId : null);
   };
 
+  // Обработчик ошибки загрузки изображения
+  const handleImageError = (imageUrl: string) => {
+    console.warn("Failed to load image:", imageUrl);
+    setFailedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   return (
     <div className="space-y-2">
       {posts.map((post: SourcePost) => (
@@ -76,15 +83,23 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
-                  {post.image_url && (
+                  {post.image_url && !failedImages.has(post.image_url) ? (
                     <div className="flex-shrink-0">
                       <img
                         src={post.image_url}
                         alt="Миниатюра поста"
                         className="h-16 w-16 object-cover rounded-md"
+                        onError={() => handleImageError(post.image_url!)}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                       />
                     </div>
-                  )}
+                  ) : post.image_url ? (
+                    <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
+                      <ImageOff className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  ) : null}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
@@ -139,16 +154,27 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
           </PopoverTrigger>
           <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
             <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
-              {post.image_url && (
+              {post.image_url && !failedImages.has(post.image_url) ? (
                 <div className="mb-4">
                   <img
                     src={post.image_url}
                     alt="Изображение поста"
                     className="w-full h-auto max-w-full rounded-md object-cover"
                     style={{ maxHeight: '300px' }}
+                    onError={() => handleImageError(post.image_url!)}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
                   />
                 </div>
-              )}
+              ) : post.image_url ? (
+                <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '200px' }}>
+                  <div className="text-center">
+                    <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
+                  </div>
+                </div>
+              ) : null}
               {post.post_content ? (
                 <div
                   className="text-sm prose prose-sm max-w-none dark:prose-invert
