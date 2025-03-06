@@ -18,10 +18,8 @@ interface SourcePost {
   campaign_id: string;
   url: string | null;
   post_type: string | null;
-  original_id: string | null;
   video_url: string | null;
   date: string | null;
-  link: string | null;
   metadata: any | null;
 }
 
