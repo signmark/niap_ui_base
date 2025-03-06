@@ -199,7 +199,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
             <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
               {post.image_url && !failedImages.has(post.image_url) ? (
                 isVideoUrl(post.image_url) ? (
-                  <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '200px' }}>
+                  <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '150px' }}>
                     <div className="text-center">
                       <span className="text-lg mb-2 block">📹</span>
                       <p className="text-sm text-muted-foreground">Видео контент</p>
