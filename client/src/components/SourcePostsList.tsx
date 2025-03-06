@@ -16,7 +16,6 @@ interface SourcePost {
   shares: number | null;
   source_id: string;
   campaign_id: string;
-  created_at: string;
   url: string | null;
   post_type: string | null;
   original_id: string | null;
@@ -85,10 +84,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                         <Badge variant="outline" className="text-xs py-0 h-5">
                           {post.post_type || (post.image_url ? "Фото" : "Текст")}
                         </Badge>
-                        {post.date || post.created_at ? (
+                        {post.date ? (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(post.date || post.created_at), { addSuffix: true, locale: ru })}
+                            {formatDistanceToNow(new Date(post.date), { addSuffix: true, locale: ru })}
                           </span>
                         ) : null}
                       </div>
@@ -185,17 +184,17 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     </div>
                   )}
                 </div>
-                {post.date || post.created_at ? (
+                {post.date ? (
                   <span className="text-xs">
-                    {new Date(post.date || post.created_at).toLocaleDateString('ru-RU')}
+                    {new Date(post.date).toLocaleDateString('ru-RU')}
                   </span>
                 ) : null}
               </div>
               {post.url && (
                 <div className="mt-2 text-xs">
-                  <a 
-                    href={post.url} 
-                    target="_blank" 
+                  <a
+                    href={post.url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
