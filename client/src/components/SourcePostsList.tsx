@@ -70,10 +70,16 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
     // Определяем источник изображения
     if (url.includes('instagram.') || url.includes('fbcdn.net')) {
-      // Только для Instagram используем прокси
+      // Для Instagram используем weserv.nl
       return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
     }
-    // Для Telegram и других источников используем прямую ссылку
+
+    // Для Telegram используем наш собственный прокси-сервер
+    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
+      return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+    }
+
+    // Для других источников используем прямую ссылку
     return url;
   };
 

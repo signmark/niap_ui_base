@@ -5,7 +5,7 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 function getCachedResults(keyword: string): any[] | null {
   const cached = searchCache.get(keyword);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
+    console.log(`Using cached results for keyword: ${keyword}`);
     return cached.results;
   }
   return null;
@@ -24,6 +24,29 @@ import * as crypto from 'crypto';
 type PlatformRequirements = {
   [key: string]: number;
 };
+
+// Image proxy function to handle Telegram images
+async function fetchAndProxyImage(url: string, res: any) {
+  try {
+    // Set a timeout to prevent hanging requests
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 5000
+    });
+
+    // Set appropriate headers based on content type
+    const contentType = response.headers['content-type'];
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+
+    // Send the image data
+    res.send(response.data);
+  } catch (error) {
+    console.error(`Error proxying image ${url}:`, error);
+    res.status(404).send('Image not found');
+  }
+}
 
 // Helper function to normalize URLs
 function normalizeInstagramUrl(url: string): string {
@@ -48,37 +71,6 @@ function normalizeInstagramUrl(url: string): string {
   }
 }
 
-// Add interface for Social Searcher response
-interface SocialSearcherResponse {
-  status: number;
-  data: {
-    meta: {
-      http_code: number;
-      network: string;
-      query_type: string;
-    };
-    posts: Array<{
-      network: string;
-      posted: string;
-      postid: string;
-      title?: string;
-      text?: string;
-      type?: string;
-      image?: string;
-      url: string;
-      user?: {
-        userid: string;
-        name: string;
-        url: string;
-      };
-    }>;
-  };
-  params: {
-    keyword: string;
-    network: string;
-    lang: string;
-  };
-}
 
 // Helper function to add delay between requests
 function delay(ms: number) {
@@ -356,15 +348,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
 
-  const followerRequirements: PlatformRequirements = {
-    'youtube.com': 100000,
-    'reddit.com': 50000,
-    'vk.com': 10000,
-    't.me': 5000,
-    'instagram.com': 50000,
-    'twitter.com': 10000,
-    'x.com': 10000
-  };
+  // New endpoint for proxying images
+  app.get("/api/proxy-image", async (req, res) => {
+    const imageUrl = req.query.url as string;
+    if (!imageUrl) {
+      return res.status(400).send('URL parameter is required');
+    }
+
+    try {
+      // Decode the URL if it's encoded
+      const decodedUrl = decodeURIComponent(imageUrl);
+      await fetchAndProxyImage(decodedUrl, res);
+    } catch (error) {
+      console.error('Error in image proxy:', error);
+      res.status(500).send('Failed to proxy image');
+    }
+  });
 
   // XMLRiver API proxy
   app.get("/api/wordstat/:keyword", async (req, res) => {
@@ -830,6 +829,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to process request" });
     }
   });
+
+  const followerRequirements: PlatformRequirements = {
+    'youtube.com': 100000,
+    'reddit.com': 50000,
+    'vk.com': 10000,
+    't.me': 5000,
+    'instagram.com': 50000,
+    'twitter.com': 10000,
+    'x.com': 10000
+  };
 
   console.log('Route registration completed');
   return httpServer;
