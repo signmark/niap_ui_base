@@ -664,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Starting source search for keywords:', keywords);
 
       // Check cache for each keyword first
-      const cachedResults = keywords.map(keyword => {
+      const cachedResults = keywords.map((keyword: any) => {
         const cached = getCachedResults(keyword);
         if (cached) {
           console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
@@ -674,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // If all keywords have cached results, merge and return them
-      if (cachedResults.every(result => result !== null)) {
+      if (cachedResults.every((result: any) => result !== null)) {
         console.log('All results found in cache');
         const uniqueSources = cachedResults.flat().reduce((acc: any[], source) => {
           if (!acc.some(s => s.url === source.url)) {
@@ -794,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get source for this campaign
-      const sources = await storage.getContentSources(undefined, Number(campaignId));
+      const sources = await storage.getContentSources("", Number(campaignId));
       console.log('Found sources:', sources);
 
       const source = sources.find(s => String(s.id) === String(sourceId));
@@ -809,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Start crawling process first
         console.log('Starting crawling process for source:', source.name);
-        const topics = await crawler.crawlSource(source, Number(campaignId), undefined);
+        const topics = await crawler.crawlSource(source, Number(campaignId), "");
         console.log(`Found ${topics.length} topics for source ${source.name}`);
 
         if (topics.length === 0) {
