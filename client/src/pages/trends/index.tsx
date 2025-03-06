@@ -72,6 +72,11 @@ interface SourcePost {
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
+const isValidPeriod = (period: string): period is Period => {
+  return ['3days', '7days', '14days', '30days'].includes(period);
+};
+
+
 export default function Trends() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const [searchQuery, setSearchQuery] = useState("");
@@ -362,12 +367,35 @@ export default function Trends() {
       try {
         // Используем точный формат запроса, который работает
         console.log("Using exact API URL format that works");
+
+        // Подготовка параметров для фильтрации по дате в зависимости от периода
+        const dateParams: Record<string, any> = {};
+        if (isValidPeriod(selectedPeriod)) {
+          const from = new Date();
+          switch (selectedPeriod) {
+            case '3days':
+              from.setDate(from.getDate() - 3);
+              break;
+            case '14days':
+              from.setDate(from.getDate() - 14);
+              break;
+            case '30days':
+              from.setDate(from.getDate() - 30);
+              break;
+            default: // '7days'
+              from.setDate(from.getDate() - 7);
+          }
+          // Добавляем фильтр только если выбран период
+          dateParams['filter[date][_gte]'] = from.toISOString();
+        }
+
         const response = await directusApi.get('/items/source_posts', {
           params: {
             'fields[]': ['id', 'post_content', 'image_url', 'likes', 'views', 'comments', 'shares', 'source_id', 'campaign_id', 'url', 'post_type', 'video_url', 'date', 'metadata'],
             'limit': 50,
             'sort[]': ['-date'],
-            'filter[campaign_id][_eq]': selectedCampaignId
+            'filter[campaign_id][_eq]': selectedCampaignId,
+            ...dateParams
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -699,7 +727,7 @@ export default function Trends() {
                         </TableHeader>
                         <TableBody>
                           {trends
-                            .filter(topic => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .filter((topic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                             .map((topic) => (
                               <TableRow key={topic.id}>
                                 <TableCell>
