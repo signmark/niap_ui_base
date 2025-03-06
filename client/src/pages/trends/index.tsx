@@ -56,7 +56,7 @@ interface TrendTopic {
 interface SourcePost {
   id: string;
   post_content: string | null;
-  image_url: string | null;  // Изменили с post_image на image_url
+  image_url: string | null;  
   likes: number | null;
   views: number | null;
   comments: number | null;
@@ -68,7 +68,9 @@ interface SourcePost {
   post_type: string | null;
   original_id: string | null;
   video_url: string | null;
-  // Убрали поля date, reposts и link, которых нет в таблице
+  date: string | null;
+  link: string | null;
+  metadata: any | null;
 }
 
 type Period = "3days" | "7days" | "14days" | "30days";
@@ -392,11 +394,17 @@ export default function Trends() {
               'source_id', 
               'campaign_id', 
               'created_at',
+              'published_at',
               'url',
               'post_type',
               'original_id',
-              'video_url'
-            ]
+              'video_url',
+              'date',
+              'link',
+              'metadata'
+            ],
+            'sort[]': ['-created_at'],
+            'limit': 50
           },
           headers: {
             'Authorization': `Bearer ${authToken}`

@@ -21,6 +21,9 @@ interface SourcePost {
   post_type: string | null;
   original_id: string | null;
   video_url: string | null;
+  date: string | null;
+  link: string | null;
+  metadata: any | null;
 }
 
 interface SourcePostsListProps {
@@ -82,10 +85,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                         <Badge variant="outline" className="text-xs py-0 h-5">
                           {post.post_type || (post.image_url ? "Фото" : "Текст")}
                         </Badge>
-                        {post.created_at ? (
+                        {post.date || post.created_at ? (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ru })}
+                            {formatDistanceToNow(new Date(post.date || post.created_at), { addSuffix: true, locale: ru })}
                           </span>
                         ) : null}
                       </div>
@@ -110,7 +113,18 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                           <span>{post.views.toLocaleString('ru-RU')}</span>
                         </div>
                       )}
-                      {/* Убрали reposts, т.к. нет в БД */}
+                      {post.comments !== null && post.comments !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <span>💬</span>
+                          <span>{post.comments.toLocaleString('ru-RU')}</span>
+                        </div>
+                      )}
+                      {post.shares !== null && post.shares !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <RefreshCw className="h-3 w-3" />
+                          <span>{post.shares.toLocaleString('ru-RU')}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -158,14 +172,37 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                       <span>{post.views.toLocaleString('ru-RU')} просмотров</span>
                     </div>
                   )}
-                  {/* Убрали reposts, т.к. нет в БД */}
+                  {post.comments !== null && post.comments !== undefined && (
+                    <div className="flex items-center gap-1">
+                      <span>💬</span>
+                      <span>{post.comments.toLocaleString('ru-RU')} комментариев</span>
+                    </div>
+                  )}
+                  {post.shares !== null && post.shares !== undefined && (
+                    <div className="flex items-center gap-1">
+                      <RefreshCw className="h-4 w-4" />
+                      <span>{post.shares.toLocaleString('ru-RU')} репостов</span>
+                    </div>
+                  )}
                 </div>
-                {post.created_at ? (
+                {post.date || post.created_at ? (
                   <span className="text-xs">
-                    {new Date(post.created_at).toLocaleDateString('ru-RU')}
+                    {new Date(post.date || post.created_at).toLocaleDateString('ru-RU')}
                   </span>
                 ) : null}
               </div>
+              {post.url && (
+                <div className="mt-2 text-xs">
+                  <a 
+                    href={post.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Открыть оригинал
+                  </a>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>
