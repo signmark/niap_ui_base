@@ -80,6 +80,16 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return url;
   };
 
+  // Проверка, является ли URL видео-файлом
+  const isVideoUrl = (url: string | null): boolean => {
+    if (!url) return false;
+    return url.toLowerCase().endsWith('.mp4') || 
+           url.toLowerCase().endsWith('.mov') || 
+           url.toLowerCase().endsWith('.avi') ||
+           url.toLowerCase().endsWith('.webm') ||
+           url.toLowerCase().includes('video');
+  };
+
   // Обработчик для открытия/закрытия всплывающего окна
   const handlePopoverChange = (open: boolean, postId: string) => {
     setOpenPopover(open ? postId : null);
@@ -100,17 +110,23 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
                   {post.image_url && !failedImages.has(post.image_url) ? (
-                    <div className="flex-shrink-0">
-                      <img
-                        src={processImageUrl(post.image_url)}
-                        alt="Миниатюра поста"
-                        className="h-16 w-16 object-cover rounded-md"
-                        onError={() => handleImageError(post.image_url!)}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        crossOrigin="anonymous"
-                      />
-                    </div>
+                    isVideoUrl(post.image_url) ? (
+                      <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
+                        <span className="text-xs text-muted-foreground">Видео</span>
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={processImageUrl(post.image_url)}
+                          alt="Миниатюра поста"
+                          className="h-16 w-16 object-cover rounded-md"
+                          onError={() => handleImageError(post.image_url!)}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                        />
+                      </div>
+                    )
                   ) : post.image_url ? (
                     <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
                       <ImageOff className="h-6 w-6 text-muted-foreground" />
@@ -171,18 +187,37 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
           <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
             <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
               {post.image_url && !failedImages.has(post.image_url) ? (
-                <div className="mb-4">
-                  <img
-                    src={processImageUrl(post.image_url)}
-                    alt="Изображение поста"
-                    className="w-full h-auto max-w-full rounded-md object-cover"
-                    style={{ maxHeight: '300px' }}
-                    onError={() => handleImageError(post.image_url!)}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    crossOrigin="anonymous"
-                  />
-                </div>
+                isVideoUrl(post.image_url) ? (
+                  <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="text-center">
+                      <span className="text-lg mb-2 block">📹</span>
+                      <p className="text-sm text-muted-foreground">Видео контент</p>
+                      {post.url && (
+                        <a 
+                          href={ensureValidUrl(post.url)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:underline mt-2 block"
+                        >
+                          Открыть источник для просмотра
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <img
+                      src={processImageUrl(post.image_url)}
+                      alt="Изображение поста"
+                      className="w-full h-auto max-w-full rounded-md object-cover"
+                      style={{ maxHeight: '300px' }}
+                      onError={() => handleImageError(post.image_url!)}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                )
               ) : post.image_url ? (
                 <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '200px' }}>
                   <div className="text-center">
