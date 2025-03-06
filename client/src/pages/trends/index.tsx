@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/directus";
+import { directusApi, getAuthHeaders } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
@@ -76,7 +76,7 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [activeTab, setActiveTab] = useState('trends');
-  const toast = useToast();
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -192,13 +192,13 @@ export default function Trends() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast.add({
+      toast({
         title: "Успешно",
         description: "Источник удален"
       });
     },
     onError: (error: Error) => {
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось удалить источник"
@@ -286,14 +286,14 @@ export default function Trends() {
       console.log('Success Data:', data);
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
-      toast.add({
+      toast({
         title: "Найдены источники",
         description: `Найдено ${data.data.sources.length} качественных источников`
       });
     },
     onError: (error: Error) => {
       console.error('Search Error:', error);
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: error.message
@@ -352,7 +352,6 @@ export default function Trends() {
       console.log("Fetching source posts with params:", {
         period: selectedPeriod,
         campaignId: selectedCampaignId,
-        sourceId: undefined
       });
 
       const from = new Date();
@@ -370,39 +369,56 @@ export default function Trends() {
           from.setDate(from.getDate() - 7);
       }
 
-      const response = await directusApi.get('/items/source_posts', {
-        params: {
-          'filter[campaign_id][_eq]': selectedCampaignId,
-          'filter[created_at][_gte]': from.toISOString(),
-          'fields[]': [
-            'id', 
-            'post_content', 
-            'post_image', 
-            'likes', 
-            'views', 
-            'reposts', 
-            'source_id', 
-            'campaign_id', 
-            'created_at'
-          ],
-          'sort[]': ['-created_at']
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      try {
+        const response = await directusApi.get('/items/source_posts', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: selectedCampaignId
+              },
+              created_at: {
+                _gte: from.toISOString()
+              }
+            },
+            fields: [
+              'id', 
+              'post_content', 
+              'post_image', 
+              'likes', 
+              'views', 
+              'reposts', 
+              'source_id', 
+              'campaign_id', 
+              'created_at'
+            ],
+            sort: ['-created_at'],
+            limit: 50
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
 
-      console.log("Source posts response:", {
-        status: response.status,
-        dataLength: response.data?.data?.length,
-        firstPost: response.data?.data?.[0]
-      });
+        console.log("Source posts response:", {
+          status: response.status,
+          dataLength: response.data?.data?.length,
+          firstPost: response.data?.data?.[0]
+        });
 
-      return response.data?.data || [];
+        return response.data?.data || [];
+      } catch (error) {
+        console.error("Error fetching source posts:", error);
+        toast({
+          variant: "destructive",
+          description: "Ошибка загрузки постов из источников"
+        });
+        return [];
+      }
     },
-    enabled: !!selectedCampaignId
+    enabled: !!selectedCampaignId,
+    retry: 1, 
+    staleTime: 1000 * 60 * 5 
   });
-
 
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
@@ -425,13 +441,13 @@ export default function Trends() {
       return response.data;
     },
     onSuccess: () => {
-      toast.add({
+      toast({
         title: "Успешно",
         description: "Запущен сбор трендов. Результаты появятся в течение нескольких минут."
       });
     },
     onError: (error: Error) => {
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось запустить сбор трендов"
@@ -469,7 +485,7 @@ export default function Trends() {
     },
     onSuccess: (data, sourceId) => {
       const source = sources.find(s => s.id === sourceId);
-      toast.add({
+      toast({
         title: "Задача создана",
         description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных"
       });
@@ -477,7 +493,7 @@ export default function Trends() {
     },
     onError: (error: Error) => {
       console.error('Mutation error:', error);
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: error.message || "Не удалось создать задачу"
