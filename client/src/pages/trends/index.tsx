@@ -62,8 +62,6 @@ interface SourcePost {
   comments: number | null;
   shares: number | null;
   source_id: string;
-  campaign_id: string;
-  created_at: string;
   url: string | null;
   post_type: string | null;
   original_id: string | null;
@@ -378,10 +376,29 @@ export default function Trends() {
       }
 
       try {
-        // Используем точный формат запроса, как в рабочем URL
-        const response = await directusApi.get('/items/source_posts', {
+        // Сначала получим список источников для кампании
+        const sourcesResponse = await directusApi.get('/items/campaign_content_sources', {
           params: {
             'filter[campaign_id][_eq]': selectedCampaignId,
+            'filter[is_active][_eq]': true,
+            'fields[]': ['id']
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        const sourceIds = sourcesResponse.data?.data?.map((s: {id: string}) => s.id) || [];
+
+        if (sourceIds.length === 0) {
+          console.log("No active sources found for campaign");
+          return [];
+        }
+
+        // Затем получим посты для этих источников
+        const response = await directusApi.get('/items/source_posts', {
+          params: {
+            'filter[source_id][_in]': sourceIds.join(','),
             'filter[date][_gte]': from.toISOString(),
             'fields[]': [
               'id',
@@ -392,8 +409,6 @@ export default function Trends() {
               'comments',
               'shares',
               'source_id',
-              'campaign_id',
-              'created_at',
               'url',
               'post_type',
               'original_id',
@@ -402,7 +417,7 @@ export default function Trends() {
               'link',
               'metadata'
             ],
-            'sort[]': ['-created_at'],
+            'sort[]': ['-date'],
             'limit': 50
           },
           headers: {
