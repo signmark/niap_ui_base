@@ -94,8 +94,8 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     }
 
     // Для других ссылок проверяем расширение файла
-    return url.toLowerCase().endsWith('.mp4') || 
-           url.toLowerCase().endsWith('.mov') || 
+    return url.toLowerCase().endsWith('.mp4') ||
+           url.toLowerCase().endsWith('.mov') ||
            url.toLowerCase().endsWith('.avi') ||
            url.toLowerCase().endsWith('.webm') ||
            url.toLowerCase().includes('video');
@@ -204,9 +204,9 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                       <span className="text-lg mb-2 block">📹</span>
                       <p className="text-sm text-muted-foreground">Видео контент</p>
                       {post.url && (
-                        <a 
-                          href={ensureValidUrl(post.url) || "#"} 
-                          target="_blank" 
+                        <a
+                          href={ensureValidUrl(post.url) || "#"}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-500 hover:underline mt-2 block"
                         >
