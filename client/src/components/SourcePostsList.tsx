@@ -73,10 +73,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
       // Только для Instagram используем прокси
       return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
     }
-    // Для Telegram и других источников используем прокси
-    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
-      return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
-    }
+    // Для Telegram и других источников используем прямую ссылку
     return url;
   };
 
@@ -105,7 +102,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
   // Обработчик ошибки загрузки изображения
   const handleImageError = (imageUrl: string) => {
-    console.warn("Failed to load image:", imageUrl);
+    console.log("Failed to load image:", imageUrl);
     setFailedImages(prev => new Set(prev).add(imageUrl));
   };
 
