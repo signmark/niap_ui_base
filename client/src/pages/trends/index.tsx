@@ -56,7 +56,7 @@ interface TrendTopic {
 interface SourcePost {
   id: string;
   post_content: string | null;
-  image_url: string | null;  
+  image_url: string | null;
   likes: number | null;
   views: number | null;
   comments: number | null;
@@ -309,7 +309,7 @@ export default function Trends() {
     }
   });
 
-  const { data: trends = [], isLoading: isLoadingTrends } = useQuery<TrendTopic[]>({
+  const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
@@ -382,19 +382,18 @@ export default function Trends() {
         const response = await directusApi.get('/items/source_posts', {
           params: {
             'filter[campaign_id][_eq]': selectedCampaignId,
-            'filter[created_at][_gte]': from.toISOString(),
+            'filter[date][_gte]': from.toISOString(),
             'fields[]': [
-              'id', 
-              'post_content', 
+              'id',
+              'post_content',
               'image_url',
-              'likes', 
-              'views', 
+              'likes',
+              'views',
               'comments',
               'shares',
-              'source_id', 
-              'campaign_id', 
+              'source_id',
+              'campaign_id',
               'created_at',
-              'published_at',
               'url',
               'post_type',
               'original_id',
@@ -428,8 +427,8 @@ export default function Trends() {
       }
     },
     enabled: !!selectedCampaignId,
-    retry: 1, 
-    staleTime: 1000 * 60 * 5 
+    retry: 1,
+    staleTime: 1000 * 60 * 5
   });
 
 
