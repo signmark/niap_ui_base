@@ -28,17 +28,37 @@ type PlatformRequirements = {
 // Image proxy function to handle Telegram images
 async function fetchAndProxyImage(url: string, res: any) {
   try {
+    console.log(`Proxying image: ${url}`);
     // Set a timeout to prevent hanging requests
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
-      timeout: 5000
+      timeout: 5000,
+      headers: {
+        // Add common browser headers to avoid being blocked
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      }
     });
 
     // Set appropriate headers based on content type
-    const contentType = response.headers['content-type'];
-    res.setHeader('Content-Type', contentType);
+    let contentType = response.headers['content-type'];
+
+    // Special handling for Telegram MP4 files which are actually GIFs
+    if (url.includes('tgcnt.ru') && url.toLowerCase().endsWith('.mp4')) {
+      // Force content type to be video/mp4 for Telegram MP4 files
+      contentType = 'video/mp4';
+    }
+
+    // Set headers
+    res.setHeader('Content-Type', contentType || 'application/octet-stream');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+
+    // Log success
+    console.log(`Successfully proxied image ${url} with content type ${contentType}`);
 
     // Send the image data
     res.send(response.data);
