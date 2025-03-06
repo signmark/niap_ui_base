@@ -135,7 +135,8 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                   <img
                     src={post.image_url}
                     alt="Изображение поста"
-                    className="w-full h-auto rounded-md"
+                    className="w-full h-auto max-w-full rounded-md object-cover"
+                    style={{ maxHeight: '300px' }}
                   />
                 </div>
               )}
@@ -148,15 +149,14 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     prose-ul:my-1
                     prose-ol:my-1
                     prose-li:my-0.5
-                    prose-img:rounded-md
-                  "
+                    prose-img:rounded-md overflow-x-auto"
                   dangerouslySetInnerHTML={{ __html: post.post_content }}
                 />
               ) : (
                 <p className="text-center text-muted-foreground">Нет текстового содержания</p>
               )}
-              <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground border-t pt-3">
-                <div className="flex items-center gap-4">
+              <div className="mt-4 flex flex-wrap items-center justify-between text-sm text-muted-foreground border-t pt-3">
+                <div className="flex flex-wrap items-center gap-4 mb-2">
                   {post.likes !== null && post.likes !== undefined && (
                     <div className="flex items-center gap-1">
                       <ThumbsUp className="h-4 w-4" />
