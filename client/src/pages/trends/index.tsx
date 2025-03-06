@@ -355,56 +355,26 @@ export default function Trends() {
       }
 
       console.log("Fetching source posts with params:", {
-        period: selectedPeriod,
         campaignId: selectedCampaignId,
+        period: selectedPeriod
       });
 
-      const from = new Date();
-      switch (selectedPeriod) {
-        case '3days':
-          from.setDate(from.getDate() - 3);
-          break;
-        case '14days':
-          from.setDate(from.getDate() - 14);
-          break;
-        case '30days':
-          from.setDate(from.getDate() - 30);
-          break;
-        default: // '7days'
-          from.setDate(from.getDate() - 7);
-      }
-
       try {
-        // Используем точный формат запроса, как в рабочем URL, который предоставил пользователь
+        // Используем точный формат запроса, который работает
+        console.log("Using exact API URL format that works");
         const response = await directusApi.get('/items/source_posts', {
           params: {
-            'filter[campaign_id][_eq]': selectedCampaignId,
-            'filter[date][_gte]': from.toISOString(),
-            'fields[]': [
-              'id',
-              'post_content',
-              'image_url',
-              'likes',
-              'views',
-              'comments',
-              'shares',
-              'source_id',
-              'campaign_id',
-              'url',
-              'post_type',
-              'video_url',
-              'date',
-              'metadata'
-            ],
+            'fields[]': ['id', 'post_content', 'image_url', 'likes', 'views', 'comments', 'shares', 'source_id', 'campaign_id', 'url', 'post_type', 'video_url', 'date', 'metadata'],
+            'limit': 50,
             'sort[]': ['-date'],
-            'limit': 50
+            'filter[campaign_id][_eq]': selectedCampaignId
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
 
-        console.log("Source posts response:", {
+        console.log("Source posts API response:", {
           status: response.status,
           dataLength: response.data?.data?.length,
           firstPost: response.data?.data?.[0]
