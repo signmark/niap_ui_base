@@ -54,6 +54,15 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return html.replace(/<[^>]*>?/gm, '');
   };
 
+  // Функция для обеспечения правильного отображения URL
+  const ensureValidUrl = (url: string | null) => {
+    if (!url) return null;
+    if (url.match(/^https?:\/\//i)) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
   // Обработчик для открытия/закрытия всплывающего окна
   const handlePopoverChange = (open: boolean, postId: string) => {
     setOpenPopover(open ? postId : null);
@@ -128,8 +137,8 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               </CardContent>
             </Card>
           </PopoverTrigger>
-          <PopoverContent className="w-[450px] p-0" align="start">
-            <div className="p-4 max-h-[600px] overflow-auto">
+          <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
+            <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
               {post.image_url && (
                 <div className="mb-4">
                   <img
@@ -149,7 +158,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     prose-ul:my-1
                     prose-ol:my-1
                     prose-li:my-0.5
-                    prose-img:rounded-md overflow-x-auto"
+                    prose-img:rounded-md overflow-x-auto whitespace-pre-line"
                   dangerouslySetInnerHTML={{ __html: post.post_content }}
                 />
               ) : (
@@ -191,7 +200,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               {post.url && (
                 <div className="mt-2 text-xs">
                   <a
-                    href={post.url}
+                    href={ensureValidUrl(post.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
