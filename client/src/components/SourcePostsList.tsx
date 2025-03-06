@@ -64,6 +64,19 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return `https://${url}`;
   };
 
+  // Функция для преобразования URL изображения, чтобы обойти CORS
+  const processImageUrl = (url: string | null) => {
+    if (!url) return null;
+
+    // Обработка для Instagram изображений
+    if (url.includes('instagram.') || url.includes('fbcdn.net')) {
+      // Используем прокси для обхода CORS
+      return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
+    }
+
+    return url;
+  };
+
   // Обработчик для открытия/закрытия всплывающего окна
   const handlePopoverChange = (open: boolean, postId: string) => {
     setOpenPopover(open ? postId : null);
@@ -86,7 +99,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                   {post.image_url && !failedImages.has(post.image_url) ? (
                     <div className="flex-shrink-0">
                       <img
-                        src={post.image_url}
+                        src={processImageUrl(post.image_url)}
                         alt="Миниатюра поста"
                         className="h-16 w-16 object-cover rounded-md"
                         onError={() => handleImageError(post.image_url!)}
@@ -157,7 +170,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               {post.image_url && !failedImages.has(post.image_url) ? (
                 <div className="mb-4">
                   <img
-                    src={post.image_url}
+                    src={processImageUrl(post.image_url)}
                     alt="Изображение поста"
                     className="w-full h-auto max-w-full rounded-md object-cover"
                     style={{ maxHeight: '300px' }}
