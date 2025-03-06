@@ -64,7 +64,6 @@ export default function CrawlerTasks() {
           fields: ['*']
         }
       });
-      console.log('Tasks response:', response.data);
       return response.data?.data || [];
     }
   });
@@ -73,10 +72,13 @@ export default function CrawlerTasks() {
   const { data: campaigns = {} } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const campaignIds = tasks.map(task => task.campaign_id).filter(Boolean);
-      if (campaignIds.length === 0) return {};
+      const campaignIds = tasks
+        .filter((task: Task) => task.campaign_id && task.campaign_id.trim() !== '')
+        .map((task: Task) => task.campaign_id);
 
-      console.log('Fetching campaigns for IDs:', campaignIds);
+      if (!campaignIds.length) {
+        return {};
+      }
 
       try {
         const response = await directusApi.get('/items/user_campaigns', {
@@ -86,31 +88,33 @@ export default function CrawlerTasks() {
                 _in: campaignIds
               }
             },
-            fields: 'id,name'
+            fields: ['id', 'name'],
+            limit: -1
           }
         });
-
-        console.log('Raw campaigns response:', response.data);
 
         if (!response.data?.data || !Array.isArray(response.data.data)) {
-          console.error('Invalid campaigns response format:', response.data);
-          return {};
+          throw new Error('Invalid response format from campaigns API');
         }
 
-        const campaignsMap = {};
-        response.data.data.forEach(campaign => {
-          if (campaign?.id && campaign?.name) {
-            console.log('Adding campaign to map:', campaign);
+        const campaignsMap: Record<string, string> = {};
+        response.data.data.forEach((campaign: any) => {
+          if (campaign?.id && typeof campaign.name === 'string') {
             campaignsMap[campaign.id] = campaign.name;
-          } else {
-            console.warn('Skipping invalid campaign:', campaign);
           }
         });
 
-        console.log('Final campaigns map:', campaignsMap);
+        if (Object.keys(campaignsMap).length > 0) {
+          add({ description: "Названия кампаний успешно загружены" });
+        }
+
         return campaignsMap;
       } catch (error) {
-        console.error('Error fetching campaigns:', error);
+        console.error('Failed to fetch campaigns:', error);
+        add({
+          variant: "destructive",
+          description: "Не удалось загрузить названия кампаний"
+        });
         return {};
       }
     },
@@ -121,24 +125,47 @@ export default function CrawlerTasks() {
   const { data: sources = {} } = useQuery({
     queryKey: ["/api/sources"],
     queryFn: async () => {
-      const sourceIds = tasks.map(task => task.source_id).filter(Boolean);
-      if (sourceIds.length === 0) return {};
+      const sourceIds = tasks
+        .filter((task: Task) => task.source_id && task.source_id.trim() !== '')
+        .map((task: Task) => task.source_id);
 
-      const response = await directusApi.get('/items/campaign_content_sources', {
-        params: {
-          filter: {
-            id: {
-              _in: sourceIds
-            }
-          },
-          fields: ['id', 'url']
+      if (!sourceIds.length) {
+        return {};
+      }
+
+      try {
+        const response = await directusApi.get('/items/campaign_content_sources', {
+          params: {
+            filter: {
+              id: {
+                _in: sourceIds
+              }
+            },
+            fields: ['id', 'url'],
+            limit: -1
+          }
+        });
+
+        if (!response.data?.data || !Array.isArray(response.data.data)) {
+          throw new Error('Invalid response format from sources API');
         }
-      });
 
-      return (response.data?.data || []).reduce((acc: Record<string, string>, source: Source) => {
-        acc[source.id] = source.url;
-        return acc;
-      }, {});
+        const sourcesMap: Record<string, string> = {};
+        response.data.data.forEach((source: any) => {
+          if (source?.id && typeof source.url === 'string') {
+            sourcesMap[source.id] = source.url;
+          }
+        });
+
+        return sourcesMap;
+      } catch (error) {
+        console.error('Failed to fetch sources:', error);
+        add({
+          variant: "destructive",
+          description: "Не удалось загрузить URL источников"
+        });
+        return {};
+      }
     },
     enabled: tasks.length > 0
   });

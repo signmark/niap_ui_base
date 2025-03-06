@@ -56,6 +56,10 @@ interface TrendTopic {
 interface SourcePost {
   id: string;
   post_content: string | null;
+  post_image: string | null;
+  likes: number | null;
+  views: number | null;
+  reposts: number | null;
   source_id: string;
   campaign_id: string;
   created_at: string;
@@ -370,7 +374,17 @@ export default function Trends() {
         params: {
           'filter[campaign_id][_eq]': selectedCampaignId,
           'filter[created_at][_gte]': from.toISOString(),
-          'fields[]': ['id', 'post_content', 'source_id', 'campaign_id', 'created_at'],
+          'fields[]': [
+            'id', 
+            'post_content', 
+            'post_image', 
+            'likes', 
+            'views', 
+            'reposts', 
+            'source_id', 
+            'campaign_id', 
+            'created_at'
+          ],
           'sort[]': ['-created_at']
         },
         headers: {
@@ -388,6 +402,7 @@ export default function Trends() {
     },
     enabled: !!selectedCampaignId
   });
+
 
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
