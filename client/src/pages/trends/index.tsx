@@ -59,19 +59,16 @@ interface SourcePost {
   image_url: string | null;  // Изменили с post_image на image_url
   likes: number | null;
   views: number | null;
-  reposts: number | null;
-  comments: number | null; // Добавили поле
-  shares: number | null;   // Добавили поле
+  comments: number | null;
+  shares: number | null;
   source_id: string;
   campaign_id: string;
   created_at: string;
-  published_at: string | null; // Добавили поле
-  url: string | null;          // Добавили поле
-  post_type: string | null;    // Добавили поле
-  original_id: string | null;  // Добавили поле
-  video_url: string | null;    // Добавили поле
-  date: string | null;         // Добавили поле
-  link: string | null;         // Добавили поле
+  url: string | null;
+  post_type: string | null;
+  original_id: string | null;
+  video_url: string | null;
+  // Убрали поля date, reposts и link, которых нет в таблице
 }
 
 type Period = "3days" | "7days" | "14days" | "30days";
@@ -379,7 +376,7 @@ export default function Trends() {
       }
 
       try {
-        // Используем простой подход без вложенных фильтров
+        // Используем точный формат запроса, как в рабочем URL
         const response = await directusApi.get('/items/source_posts', {
           params: {
             'filter[campaign_id][_eq]': selectedCampaignId,
@@ -387,25 +384,19 @@ export default function Trends() {
             'fields[]': [
               'id', 
               'post_content', 
-              'image_url',  // Изменили с post_image на image_url 
+              'image_url',
               'likes', 
               'views', 
-              'reposts',
               'comments',
               'shares',
               'source_id', 
               'campaign_id', 
               'created_at',
-              'published_at',
               'url',
               'post_type',
               'original_id',
-              'video_url',
-              'date',
-              'link'
-            ],
-            'sort[]': ['-created_at'],
-            'limit': 50
+              'video_url'
+            ]
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
