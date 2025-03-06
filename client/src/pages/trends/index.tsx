@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi, getAuthHeaders } from "@/lib/directus";
+import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
@@ -370,11 +370,37 @@ export default function Trends() {
       }
 
       try {
-        const response = await directusApi.get('/items/source_posts', {
+        // Сначала попробуем получить список ID источников для кампании
+        const sourcesResponse = await directusApi.get('/items/campaign_content_sources', {
           params: {
             filter: {
               campaign_id: {
                 _eq: selectedCampaignId
+              },
+              is_active: {
+                _eq: true
+              }
+            },
+            fields: ['id']
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        const sourceIds = sourcesResponse.data?.data?.map((s: {id: string}) => s.id) || [];
+
+        if (sourceIds.length === 0) {
+          console.log('No active sources found for campaign');
+          return [];
+        }
+
+        // Теперь получаем посты по ID источников
+        const response = await directusApi.get('/items/source_posts', {
+          params: {
+            filter: {
+              source_id: {
+                _in: sourceIds
               },
               created_at: {
                 _gte: from.toISOString()
