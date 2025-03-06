@@ -56,13 +56,22 @@ interface TrendTopic {
 interface SourcePost {
   id: string;
   post_content: string | null;
-  post_image: string | null;
+  image_url: string | null;  // Изменили с post_image на image_url
   likes: number | null;
   views: number | null;
   reposts: number | null;
+  comments: number | null; // Добавили поле
+  shares: number | null;   // Добавили поле
   source_id: string;
   campaign_id: string;
   created_at: string;
+  published_at: string | null; // Добавили поле
+  url: string | null;          // Добавили поле
+  post_type: string | null;    // Добавили поле
+  original_id: string | null;  // Добавили поле
+  video_url: string | null;    // Добавили поле
+  date: string | null;         // Добавили поле
+  link: string | null;         // Добавили поле
 }
 
 type Period = "3days" | "7days" | "14days" | "30days";
@@ -370,55 +379,33 @@ export default function Trends() {
       }
 
       try {
-        // Сначала попробуем получить список ID источников для кампании
-        const sourcesResponse = await directusApi.get('/items/campaign_content_sources', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: selectedCampaignId
-              },
-              is_active: {
-                _eq: true
-              }
-            },
-            fields: ['id']
-          },
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-
-        const sourceIds = sourcesResponse.data?.data?.map((s: {id: string}) => s.id) || [];
-
-        if (sourceIds.length === 0) {
-          console.log('No active sources found for campaign');
-          return [];
-        }
-
-        // Теперь получаем посты по ID источников
+        // Используем простой подход без вложенных фильтров
         const response = await directusApi.get('/items/source_posts', {
           params: {
-            filter: {
-              source_id: {
-                _in: sourceIds
-              },
-              created_at: {
-                _gte: from.toISOString()
-              }
-            },
-            fields: [
+            'filter[campaign_id][_eq]': selectedCampaignId,
+            'filter[created_at][_gte]': from.toISOString(),
+            'fields[]': [
               'id', 
               'post_content', 
-              'post_image', 
+              'image_url',  // Изменили с post_image на image_url 
               'likes', 
               'views', 
-              'reposts', 
+              'reposts',
+              'comments',
+              'shares',
               'source_id', 
               'campaign_id', 
-              'created_at'
+              'created_at',
+              'published_at',
+              'url',
+              'post_type',
+              'original_id',
+              'video_url',
+              'date',
+              'link'
             ],
-            sort: ['-created_at'],
-            limit: 50
+            'sort[]': ['-created_at'],
+            'limit': 50
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
