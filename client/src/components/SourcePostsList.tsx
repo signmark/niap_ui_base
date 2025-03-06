@@ -73,7 +73,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
       // Только для Instagram используем прокси
       return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
     }
-    // Для Telegram и других источников используем прямую ссылку
+    // Для Telegram и других источников используем прокси
+    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
+      return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
+    }
     return url;
   };
 
