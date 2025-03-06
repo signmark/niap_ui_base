@@ -9,13 +9,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 interface SourcePost {
   id: string;
   post_content: string | null;
-  post_image: string | null;
+  image_url: string | null;  // Изменили с post_image на image_url
   likes: number | null;
   views: number | null;
   reposts: number | null;
+  comments: number | null; // Добавили поле
+  shares: number | null;   // Добавили поле
   source_id: string;
   campaign_id: string;
   created_at: string;
+  published_at: string | null; // Добавили поле
+  url: string | null;          // Добавили поле
+  post_type: string | null;    // Добавили поле
 }
 
 interface SourcePostsListProps {
@@ -62,10 +67,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
-                  {post.post_image && (
+                  {post.image_url && (
                     <div className="flex-shrink-0">
                       <img
-                        src={post.post_image}
+                        src={post.image_url}
                         alt="Миниатюра поста"
                         className="h-16 w-16 object-cover rounded-md"
                       />
@@ -75,14 +80,14 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs py-0 h-5">
-                          {post.post_image ? "Фото" : "Текст"}
+                          {post.post_type || (post.image_url ? "Фото" : "Текст")}
                         </Badge>
-                        {post.created_at && (
+                        {post.published_at || post.created_at ? (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ru })}
+                            {formatDistanceToNow(new Date(post.published_at || post.created_at), { addSuffix: true, locale: ru })}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
@@ -119,10 +124,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
           </PopoverTrigger>
           <PopoverContent className="w-[450px] p-0" align="start">
             <div className="p-4 max-h-[600px] overflow-auto">
-              {post.post_image && (
+              {post.image_url && (
                 <div className="mb-4">
                   <img
-                    src={post.post_image}
+                    src={post.image_url}
                     alt="Изображение поста"
                     className="w-full h-auto rounded-md"
                   />
@@ -165,11 +170,11 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     </div>
                   )}
                 </div>
-                {post.created_at && (
+                {post.published_at || post.created_at ? (
                   <span className="text-xs">
-                    {new Date(post.created_at).toLocaleDateString('ru-RU')}
+                    {new Date(post.published_at || post.created_at).toLocaleDateString('ru-RU')}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </PopoverContent>
