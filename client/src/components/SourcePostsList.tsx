@@ -83,6 +83,14 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   // Проверка, является ли URL видео-файлом
   const isVideoUrl = (url: string | null): boolean => {
     if (!url) return false;
+
+    // Для ссылок из Telegram (tgcnt.ru) не считаем .mp4 как видео,
+    // так как они часто используют это расширение для изображений
+    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
+      return false;
+    }
+
+    // Для других ссылок проверяем расширение файла
     return url.toLowerCase().endsWith('.mp4') || 
            url.toLowerCase().endsWith('.mov') || 
            url.toLowerCase().endsWith('.avi') ||
