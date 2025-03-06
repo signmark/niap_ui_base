@@ -205,7 +205,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                       <p className="text-sm text-muted-foreground">Видео контент</p>
                       {post.url && (
                         <a 
-                          href={ensureValidUrl(post.url)} 
+                          href={ensureValidUrl(post.url) || "#"} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-xs text-blue-500 hover:underline mt-2 block"
@@ -218,7 +218,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                 ) : (
                   <div className="mb-4">
                     <img
-                      src={processImageUrl(post.image_url)}
+                      src={processImageUrl(post.image_url) || ""}
                       alt="Изображение поста"
                       className="w-full h-auto max-w-full rounded-md object-cover"
                       style={{ maxHeight: '300px' }}
@@ -288,7 +288,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               {post.url && (
                 <div className="mt-2 text-xs">
                   <a
-                    href={ensureValidUrl(post.url)}
+                    href={ensureValidUrl(post.url) || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
