@@ -68,9 +68,12 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   const processImageUrl = (url: string | null) => {
     if (!url) return null;
 
-    // Обработка для Instagram изображений
+    // Определяем источник изображения
     if (url.includes('instagram.') || url.includes('fbcdn.net')) {
-      // Используем прокси для обхода CORS
+      // Для Instagram используем прокси
+      return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
+    } else if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
+      // Для Telegram также используем прокси
       return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
     }
 
