@@ -464,48 +464,36 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch('https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sourceId })
+      });
 
-      if (!authToken) {
-        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
+      if (!response.ok) {
+        throw new Error(`Failed to start crawler task: ${response.statusText}`);
       }
 
-      const taskData = {
-        source_id: sourceId,
-        campaign_id: selectedCampaignId,
-        status: "pending",
-        started_at: null,
-        completed_at: null,
-        error_message: null
-      };
-
-      const response = await directusApi.post('/items/crawler_tasks', taskData, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      return response.data;
+      return response.json();
     },
     onSuccess: (data, sourceId) => {
       const source = sources.find(s => s.id === sourceId);
-      // Сначала показываем уведомление
+      // Показываем уведомление
       toast({
-        title: "Задача создана",
-        description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных",
+        title: "Задача запущена",
+        description: source ? `Запущен сбор данных для источника ${source.name}` : "Запущен сбор данных",
         variant: "default",
         duration: 5000
       });
-
-      // Затем инвалидируем кеши
-      queryClient.invalidateQueries({ queryKey: ["/api/crawler-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
     onError: (error: Error) => {
       console.error('Mutation error:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: error.message || "Не удалось создать задачу"
+        description: error.message || "Не удалось запустить задачу"
       });
     }
   });
