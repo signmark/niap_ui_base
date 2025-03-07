@@ -73,6 +73,19 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return `https://${url}`;
   };
 
+  // Функция для получения правильного URL поста
+  const getPostUrl = (post: SourcePost) => {
+    if (!post.url) {
+      // Если URL отсутствует в посте, но это пост из Telegram
+      if (post.source_id && (post.source_id.includes('telegram') || post.source_id.includes('t.me'))) {
+        // Создаем базовый URL для Telegram канала
+        return `https://t.me/s/${post.source_id.split('/').pop()}`;
+      }
+      return null;
+    }
+    return ensureValidUrl(post.url);
+  };
+
   // Function to process image URLs to handle CORS
   const processImageUrl = (url: string | null) => {
     if (!url) return null;
@@ -154,9 +167,9 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                           </span>
                         )}
                       </div>
-                      {post.url && (
+                      {getPostUrl(post) && (
                         <a
-                          href={ensureValidUrl(post.url) || "#"}
+                          href={getPostUrl(post)!}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-500 hover:underline"
@@ -218,10 +231,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"
                   />
-                  {post.url && (
+                  {getPostUrl(post) && (
                     <div className="mt-2 text-right">
                       <a
-                        href={ensureValidUrl(post.url) || "#"}
+                        href={getPostUrl(post)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline"
@@ -236,9 +249,9 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                   <div className="text-center">
                     <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
-                    {post.url && (
+                    {getPostUrl(post) && (
                       <a
-                        href={ensureValidUrl(post.url) || "#"}
+                        href={getPostUrl(post)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline mt-2 block"
@@ -297,10 +310,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                   </span>
                 )}
               </div>
-              {post.url && (
+              {getPostUrl(post) && (
                 <div className="mt-2 text-xs">
                   <a
-                    href={ensureValidUrl(post.url) || "#"}
+                    href={getPostUrl(post)!}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
