@@ -86,7 +86,7 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [activeTab, setActiveTab] = useState('trends');
-  const { toast } = useToast();
+  const { add: toast } = useToast(); 
   const queryClient = useQueryClient();
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -488,11 +488,15 @@ export default function Trends() {
     },
     onSuccess: (data, sourceId) => {
       const source = sources.find(s => s.id === sourceId);
+      // Сначала показываем уведомление
       toast({
         title: "Задача создана",
-        description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных"
+        description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных",
+        variant: "default",
+        duration: 5000
       });
-      // Инвалидируем оба кеша
+
+      // Затем инвалидируем кеши
       queryClient.invalidateQueries({ queryKey: ["/api/crawler-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
