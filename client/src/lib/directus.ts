@@ -55,9 +55,10 @@ directusApi.interceptors.response.use(
         console.error('Failed to refresh token:', refreshError);
         // Если не удалось обновить токен, очищаем авторизацию
         useAuthStore.getState().clearAuth();
-        if (typeof window !== 'undefined') {
+        if (window.location.pathname !== '/auth/login') {
           window.location.href = '/auth/login';
         }
+        return Promise.reject(refreshError);
       }
     }
 
