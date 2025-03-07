@@ -17,6 +17,7 @@ interface SourcePost {
   source_id: string;
   campaign_id: string;
   url: string | null;
+  link: string | null; // Добавляем поле link
   post_type: string | null;
   video_url: string | null;
   date: string | null;
@@ -55,6 +56,43 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return html.replace(/<[^>]*>?/gm, '');
   };
 
+  // Функция для получения правильного URL поста
+  const getPostUrl = (post: SourcePost) => {
+    // Если это пост из Telegram (определяем по source_id)
+    if (post.source_id && (
+      post.source_id.includes('t.me') || 
+      post.source_id.includes('telegram') || 
+      !post.source_id.includes('/')
+    )) {
+      // Убираем лишние слэши и протокол
+      const cleanSourceId = post.source_id.replace(/^https?:\/\//, '').replace(/^\/+|\/+$/g, '');
+
+      // Если это уже t.me ссылка
+      if (cleanSourceId.startsWith('t.me/')) {
+        return `https://${cleanSourceId}`;
+      }
+
+      // Если это просто название канала без слешей и точек
+      if (!cleanSourceId.includes('/') && !cleanSourceId.includes('.')) {
+        return `https://t.me/${cleanSourceId}`;
+      }
+
+      // В остальных случаях пытаемся извлечь название канала
+      const channelName = cleanSourceId.split('/').pop();
+      if (channelName) {
+        return `https://t.me/${channelName.split('?')[0]}`;
+      }
+    }
+
+    // Проверяем оба поля url и link
+    const postUrl = post.url || post.link;
+    if (postUrl) {
+      return ensureValidUrl(postUrl);
+    }
+
+    return null;
+  };
+
   // Функция для обеспечения правильного отображения URL
   const ensureValidUrl = (url: string | null) => {
     if (!url) return null;
@@ -71,19 +109,6 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
     // For other URLs, standard handling
     return `https://${url}`;
-  };
-
-  // Функция для получения правильного URL поста
-  const getPostUrl = (post: SourcePost) => {
-    if (!post.url) {
-      // Если URL отсутствует в посте, но это пост из Telegram
-      if (post.source_id && (post.source_id.includes('telegram') || post.source_id.includes('t.me'))) {
-        // Создаем базовый URL для Telegram канала
-        return `https://t.me/s/${post.source_id.split('/').pop()}`;
-      }
-      return null;
-    }
-    return ensureValidUrl(post.url);
   };
 
   // Function to process image URLs to handle CORS
@@ -131,201 +156,209 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
   return (
     <div className="space-y-2">
-      {posts.map((post: SourcePost) => (
-        <Popover key={post.id} open={openPopover === post.id} onOpenChange={(open) => handlePopoverChange(open, post.id)}>
-          <PopoverTrigger asChild>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="py-3 px-4">
-                <div className="flex items-start gap-3">
-                  {post.image_url && !failedImages.has(post.image_url) ? (
-                    <div className="flex-shrink-0">
-                      <img
-                        src={processImageUrl(post.image_url)}
-                        alt="Миниатюра поста"
-                        className="h-16 w-16 object-cover rounded-md"
-                        onError={() => handleImageError(post.image_url!)}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        crossOrigin="anonymous"
-                      />
-                    </div>
-                  ) : post.image_url ? (
-                    <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
-                      <ImageOff className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  ) : null}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs py-0 h-5">
-                          {post.post_type || (post.image_url ? isVideoUrl(post.image_url) ? "Видео" : "Фото" : "Текст")}
-                        </Badge>
-                        {post.date && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(post.date), { addSuffix: true, locale: ru })}
-                          </span>
+      {posts.map((post: SourcePost) => {
+        console.log("Post data:", {
+          id: post.id,
+          url: post.url,
+          source_id: post.source_id,
+          generatedUrl: getPostUrl(post)
+        });
+        return (
+          <Popover key={post.id} open={openPopover === post.id} onOpenChange={(open) => handlePopoverChange(open, post.id)}>
+            <PopoverTrigger asChild>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-start gap-3">
+                    {post.image_url && !failedImages.has(post.image_url) ? (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={processImageUrl(post.image_url)}
+                          alt="Миниатюра поста"
+                          className="h-16 w-16 object-cover rounded-md"
+                          onError={() => handleImageError(post.image_url!)}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                        />
+                      </div>
+                    ) : post.image_url ? (
+                      <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
+                        <ImageOff className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    ) : null}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs py-0 h-5">
+                            {post.post_type || (post.image_url ? isVideoUrl(post.image_url) ? "Видео" : "Фото" : "Текст")}
+                          </Badge>
+                          {post.date && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDistanceToNow(new Date(post.date), { addSuffix: true, locale: ru })}
+                            </span>
+                          )}
+                        </div>
+                        {getPostUrl(post) && (
+                          <a
+                            href={getPostUrl(post)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-500 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Открыть оригинал
+                          </a>
                         )}
                       </div>
-                      {getPostUrl(post) && (
+
+                      {post.post_content ? (
+                        <p className="text-sm line-clamp-2">{stripHtml(post.post_content)}</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Нет текстового описания</p>
+                      )}
+
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        {post.likes !== null && post.likes !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <ThumbsUp className="h-3 w-3" />
+                            <span>{post.likes.toLocaleString('ru-RU')}</span>
+                          </div>
+                        )}
+                        {post.views !== null && post.views !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{post.views.toLocaleString('ru-RU')}</span>
+                          </div>
+                        )}
+                        {post.comments !== null && post.comments !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <span>💬</span>
+                            <span>{post.comments.toLocaleString('ru-RU')}</span>
+                          </div>
+                        )}
+                        {post.shares !== null && post.shares !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <RefreshCw className="h-3 w-3" />
+                            <span>{post.shares.toLocaleString('ru-RU')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </PopoverTrigger>
+            <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
+              <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
+                {post.image_url && !failedImages.has(post.image_url) ? (
+                  <div className="mb-4">
+                    <img
+                      src={processImageUrl(post.image_url)}
+                      alt="Изображение поста"
+                      className="w-full h-auto max-w-full rounded-md object-cover"
+                      style={{ maxHeight: '300px' }}
+                      onError={() => handleImageError(post.image_url!)}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                    />
+                    {getPostUrl(post) && (
+                      <div className="mt-2 text-right">
                         <a
                           href={getPostUrl(post)!}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-blue-500 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Открыть оригинал
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : post.image_url ? (
+                  <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '100px' }}>
+                    <div className="text-center">
+                      <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
+                      {getPostUrl(post) && (
+                        <a
+                          href={getPostUrl(post)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:underline mt-2 block"
                         >
                           Открыть оригинал
                         </a>
                       )}
                     </div>
-
-                    {post.post_content ? (
-                      <p className="text-sm line-clamp-2">{stripHtml(post.post_content)}</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Нет текстового описания</p>
-                    )}
-
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                      {post.likes !== null && post.likes !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="h-3 w-3" />
-                          <span>{post.likes.toLocaleString('ru-RU')}</span>
-                        </div>
-                      )}
-                      {post.views !== null && post.views !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{post.views.toLocaleString('ru-RU')}</span>
-                        </div>
-                      )}
-                      {post.comments !== null && post.comments !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <span>💬</span>
-                          <span>{post.comments.toLocaleString('ru-RU')}</span>
-                        </div>
-                      )}
-                      {post.shares !== null && post.shares !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <RefreshCw className="h-3 w-3" />
-                          <span>{post.shares.toLocaleString('ru-RU')}</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </PopoverTrigger>
-          <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
-            <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
-              {post.image_url && !failedImages.has(post.image_url) ? (
-                <div className="mb-4">
-                  <img
-                    src={processImageUrl(post.image_url)}
-                    alt="Изображение поста"
-                    className="w-full h-auto max-w-full rounded-md object-cover"
-                    style={{ maxHeight: '300px' }}
-                    onError={() => handleImageError(post.image_url!)}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    crossOrigin="anonymous"
+                ) : null}
+                {post.post_content ? (
+                  <div
+                    className="text-sm prose prose-sm max-w-none dark:prose-invert
+                      prose-headings:font-semibold
+                      prose-p:my-1
+                      prose-a:text-blue-500
+                      prose-ul:my-1
+                      prose-ol:my-1
+                      prose-li:my-0.5
+                      prose-img:rounded-md overflow-x-auto whitespace-pre-line"
+                    dangerouslySetInnerHTML={{ __html: post.post_content }}
                   />
-                  {getPostUrl(post) && (
-                    <div className="mt-2 text-right">
-                      <a
-                        href={getPostUrl(post)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:underline"
-                      >
-                        Открыть оригинал
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ) : post.image_url ? (
-                <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '100px' }}>
-                  <div className="text-center">
-                    <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
-                    {getPostUrl(post) && (
-                      <a
-                        href={getPostUrl(post)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:underline mt-2 block"
-                      >
-                        Открыть оригинал
-                      </a>
+                ) : (
+                  <p className="text-center text-muted-foreground">Нет текстового содержания</p>
+                )}
+                <div className="mt-4 flex flex-wrap items-center justify-between text-sm text-muted-foreground border-t pt-3">
+                  <div className="flex flex-wrap items-center gap-4 mb-2">
+                    {post.likes !== null && post.likes !== undefined && (
+                      <div className="flex items-center gap-1">
+                        <ThumbsUp className="h-4 w-4" />
+                        <span>{post.likes.toLocaleString('ru-RU')} лайков</span>
+                      </div>
+                    )}
+                    {post.views !== null && post.views !== undefined && (
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        <span>{post.views.toLocaleString('ru-RU')} просмотров</span>
+                      </div>
+                    )}
+                    {post.comments !== null && post.comments !== undefined && (
+                      <div className="flex items-center gap-1">
+                        <span>💬</span>
+                        <span>{post.comments.toLocaleString('ru-RU')} комментариев</span>
+                      </div>
+                    )}
+                    {post.shares !== null && post.shares !== undefined && (
+                      <div className="flex items-center gap-1">
+                        <RefreshCw className="h-4 w-4" />
+                        <span>{post.shares.toLocaleString('ru-RU')} репостов</span>
+                      </div>
                     )}
                   </div>
-                </div>
-              ) : null}
-              {post.post_content ? (
-                <div
-                  className="text-sm prose prose-sm max-w-none dark:prose-invert
-                    prose-headings:font-semibold
-                    prose-p:my-1
-                    prose-a:text-blue-500
-                    prose-ul:my-1
-                    prose-ol:my-1
-                    prose-li:my-0.5
-                    prose-img:rounded-md overflow-x-auto whitespace-pre-line"
-                  dangerouslySetInnerHTML={{ __html: post.post_content }}
-                />
-              ) : (
-                <p className="text-center text-muted-foreground">Нет текстового содержания</p>
-              )}
-              <div className="mt-4 flex flex-wrap items-center justify-between text-sm text-muted-foreground border-t pt-3">
-                <div className="flex flex-wrap items-center gap-4 mb-2">
-                  {post.likes !== null && post.likes !== undefined && (
-                    <div className="flex items-center gap-1">
-                      <ThumbsUp className="h-4 w-4" />
-                      <span>{post.likes.toLocaleString('ru-RU')} лайков</span>
-                    </div>
-                  )}
-                  {post.views !== null && post.views !== undefined && (
-                    <div className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      <span>{post.views.toLocaleString('ru-RU')} просмотров</span>
-                    </div>
-                  )}
-                  {post.comments !== null && post.comments !== undefined && (
-                    <div className="flex items-center gap-1">
-                      <span>💬</span>
-                      <span>{post.comments.toLocaleString('ru-RU')} комментариев</span>
-                    </div>
-                  )}
-                  {post.shares !== null && post.shares !== undefined && (
-                    <div className="flex items-center gap-1">
-                      <RefreshCw className="h-4 w-4" />
-                      <span>{post.shares.toLocaleString('ru-RU')} репостов</span>
-                    </div>
+                  {post.date && (
+                    <span className="text-xs">
+                      {new Date(post.date).toLocaleDateString('ru-RU')}
+                    </span>
                   )}
                 </div>
-                {post.date && (
-                  <span className="text-xs">
-                    {new Date(post.date).toLocaleDateString('ru-RU')}
-                  </span>
+                {getPostUrl(post) && (
+                  <div className="mt-2 text-xs">
+                    <a
+                      href={getPostUrl(post)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Открыть оригинал
+                    </a>
+                  </div>
                 )}
               </div>
-              {getPostUrl(post) && (
-                <div className="mt-2 text-xs">
-                  <a
-                    href={getPostUrl(post)!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    Открыть оригинал
-                  </a>
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      ))}
+            </PopoverContent>
+          </Popover>
+        );
+      })}
     </div>
   );
 }
