@@ -17,7 +17,7 @@ interface SourcePost {
   source_id: string;
   campaign_id: string;
   url: string | null;
-  link: string | null; // Добавляем поле link
+  link: string | null; 
   post_type: string | null;
   video_url: string | null;
   date: string | null;
@@ -56,59 +56,16 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return html.replace(/<[^>]*>?/gm, '');
   };
 
-  // Функция для получения правильного URL поста
-  const getPostUrl = (post: SourcePost) => {
-    // Если это пост из Telegram (определяем по source_id)
-    if (post.source_id && (
-      post.source_id.includes('t.me') || 
-      post.source_id.includes('telegram') || 
-      !post.source_id.includes('/')
-    )) {
-      // Убираем лишние слэши и протокол
-      const cleanSourceId = post.source_id.replace(/^https?:\/\//, '').replace(/^\/+|\/+$/g, '');
-
-      // Если это уже t.me ссылка
-      if (cleanSourceId.startsWith('t.me/')) {
-        return `https://${cleanSourceId}`;
-      }
-
-      // Если это просто название канала без слешей и точек
-      if (!cleanSourceId.includes('/') && !cleanSourceId.includes('.')) {
-        return `https://t.me/${cleanSourceId}`;
-      }
-
-      // В остальных случаях пытаемся извлечь название канала
-      const channelName = cleanSourceId.split('/').pop();
-      if (channelName) {
-        return `https://t.me/${channelName.split('?')[0]}`;
-      }
-    }
-
-    // Проверяем оба поля url и link
-    const postUrl = post.url || post.link;
-    if (postUrl) {
-      return ensureValidUrl(postUrl);
-    }
-
-    return null;
-  };
-
   // Функция для обеспечения правильного отображения URL
   const ensureValidUrl = (url: string | null) => {
     if (!url) return null;
+    return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+  };
 
-    // If already starts with http/https, return as is
-    if (url.match(/^https?:\/\//i)) {
-      return url;
-    }
-
-    // For Telegram URLs specifically ensure we add https://
-    if (url.includes('t.me') || url.includes('tgcnt.ru') || url.includes('telegram')) {
-      return `https://${url}`;
-    }
-
-    // For other URLs, standard handling
-    return `https://${url}`;
+  // Функция для получения правильного URL поста
+  const getPostUrl = (post: SourcePost) => {
+    const postUrl = post.url || post.link;
+    return postUrl ? ensureValidUrl(postUrl) : null;
   };
 
   // Function to process image URLs to handle CORS
