@@ -64,22 +64,17 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return `https://${url}`;
   };
 
-  // Функция для преобразования URL изображения, чтобы обойти CORS
+  // Function to process image URLs to handle CORS
   const processImageUrl = (url: string | null) => {
     if (!url) return null;
 
-    // Определяем источник изображения
-    if (url.includes('instagram.') || url.includes('fbcdn.net')) {
-      // Для Instagram используем weserv.nl
+    // For both Instagram and Telegram use weserv.nl proxy
+    if (url.includes('instagram.') || url.includes('fbcdn.net') ||
+        url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
       return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
     }
 
-    // Для Telegram используем наш собственный прокси-сервер
-    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
-      return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-    }
-
-    // Для других источников используем прямую ссылку
+    // For other sources use direct link
     return url;
   };
 
@@ -88,17 +83,17 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     if (!url) return false;
 
     // Для ссылок из Telegram (tgcnt.ru) не считаем .mp4 как видео,
-    // так как они часто используют это расширение для изображений
+    // так как они часто используют это расширение для GIF-анимаций
     if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
       return false;
     }
 
-    // Для других ссылок проверяем расширение файла
-    return url.toLowerCase().endsWith('.mp4') ||
-           url.toLowerCase().endsWith('.mov') ||
-           url.toLowerCase().endsWith('.avi') ||
-           url.toLowerCase().endsWith('.webm') ||
-           url.toLowerCase().includes('video');
+    // Для других ссылок проверяем расширение файла и явные признаки видео
+    return url.toLowerCase().includes('video/') || 
+           (url.toLowerCase().endsWith('.mp4') && !url.includes('tgcnt.ru')) || 
+           url.toLowerCase().endsWith('.mov') || 
+           url.toLowerCase().endsWith('.avi') || 
+           url.toLowerCase().endsWith('.webm');
   };
 
   // Обработчик для открытия/закрытия всплывающего окна
@@ -121,23 +116,17 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
                   {post.image_url && !failedImages.has(post.image_url) ? (
-                    isVideoUrl(post.image_url) ? (
-                      <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
-                        <span className="text-xs text-muted-foreground">Видео</span>
-                      </div>
-                    ) : (
-                      <div className="flex-shrink-0">
-                        <img
-                          src={processImageUrl(post.image_url)}
-                          alt="Миниатюра поста"
-                          className="h-16 w-16 object-cover rounded-md"
-                          onError={() => handleImageError(post.image_url!)}
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                          crossOrigin="anonymous"
-                        />
-                      </div>
-                    )
+                    <div className="flex-shrink-0">
+                      <img
+                        src={processImageUrl(post.image_url)}
+                        alt="Миниатюра поста"
+                        className="h-16 w-16 object-cover rounded-md"
+                        onError={() => handleImageError(post.image_url!)}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                      />
+                    </div>
                   ) : post.image_url ? (
                     <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
                       <ImageOff className="h-6 w-6 text-muted-foreground" />
@@ -147,24 +136,24 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs py-0 h-5">
-                          {post.post_type || (post.image_url ? "Фото" : "Текст")}
+                          {post.post_type || (post.image_url ? isVideoUrl(post.image_url) ? "Видео" : "Фото" : "Текст")}
                         </Badge>
-                        {post.date ? (
+                        {post.date && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {formatDistanceToNow(new Date(post.date), { addSuffix: true, locale: ru })}
                           </span>
-                        ) : null}
+                        )}
                       </div>
                     </div>
 
                     {post.post_content ? (
-                      <p className="text-sm line-clamp-2 mb-2">{stripHtml(post.post_content)}</p>
+                      <p className="text-sm line-clamp-2">{stripHtml(post.post_content)}</p>
                     ) : (
-                      <p className="text-xs text-muted-foreground mb-2">Нет текстового описания</p>
+                      <p className="text-xs text-muted-foreground">Нет текстового описания</p>
                     )}
 
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       {post.likes !== null && post.likes !== undefined && (
                         <div className="flex items-center gap-1">
                           <ThumbsUp className="h-3 w-3" />
@@ -198,39 +187,20 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
           <PopoverContent className="w-[450px] p-0 max-h-[80vh] overflow-hidden" align="start">
             <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
               {post.image_url && !failedImages.has(post.image_url) ? (
-                isVideoUrl(post.image_url) ? (
-                  <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '150px' }}>
-                    <div className="text-center">
-                      <span className="text-lg mb-2 block">📹</span>
-                      <p className="text-sm text-muted-foreground">Видео контент</p>
-                      {post.url && (
-                        <a
-                          href={ensureValidUrl(post.url) || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-500 hover:underline mt-2 block"
-                        >
-                          Открыть источник для просмотра
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mb-4">
-                    <img
-                      src={processImageUrl(post.image_url) || ""}
-                      alt="Изображение поста"
-                      className="w-full h-auto max-w-full rounded-md object-cover"
-                      style={{ maxHeight: '300px' }}
-                      onError={() => handleImageError(post.image_url!)}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
-                    />
-                  </div>
-                )
+                <div className="mb-4">
+                  <img
+                    src={processImageUrl(post.image_url)}
+                    alt="Изображение поста"
+                    className="w-full h-auto max-w-full rounded-md object-cover"
+                    style={{ maxHeight: '300px' }}
+                    onError={() => handleImageError(post.image_url!)}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                  />
+                </div>
               ) : post.image_url ? (
-                <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '200px' }}>
+                <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '100px' }}>
                   <div className="text-center">
                     <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
@@ -279,11 +249,11 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     </div>
                   )}
                 </div>
-                {post.date ? (
+                {post.date && (
                   <span className="text-xs">
                     {new Date(post.date).toLocaleDateString('ru-RU')}
                   </span>
-                ) : null}
+                )}
               </div>
               {post.url && (
                 <div className="mt-2 text-xs">
