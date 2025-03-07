@@ -492,6 +492,8 @@ export default function Trends() {
         title: "Задача создана",
         description: source ? `Начат сбор данных для источника ${source.name}` : "Начат сбор данных"
       });
+      // Инвалидируем оба кеша
+      queryClient.invalidateQueries({ queryKey: ["/api/crawler-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
     onError: (error: Error) => {
