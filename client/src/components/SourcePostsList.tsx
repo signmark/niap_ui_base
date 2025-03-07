@@ -58,9 +58,18 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   // Функция для обеспечения правильного отображения URL
   const ensureValidUrl = (url: string | null) => {
     if (!url) return null;
+
+    // If already starts with http/https, return as is
     if (url.match(/^https?:\/\//i)) {
       return url;
     }
+
+    // For Telegram URLs specifically ensure we add https://
+    if (url.includes('t.me') || url.includes('tgcnt.ru') || url.includes('telegram')) {
+      return `https://${url}`;
+    }
+
+    // For other URLs, standard handling
     return `https://${url}`;
   };
 
@@ -145,6 +154,17 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                           </span>
                         )}
                       </div>
+                      {post.url && (
+                        <a
+                          href={ensureValidUrl(post.url) || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Открыть оригинал
+                        </a>
+                      )}
                     </div>
 
                     {post.post_content ? (
@@ -198,12 +218,34 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"
                   />
+                  {post.url && (
+                    <div className="mt-2 text-right">
+                      <a
+                        href={ensureValidUrl(post.url) || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline"
+                      >
+                        Открыть оригинал
+                      </a>
+                    </div>
+                  )}
                 </div>
               ) : post.image_url ? (
                 <div className="mb-4 p-4 bg-muted rounded-md flex items-center justify-center" style={{ height: '100px' }}>
                   <div className="text-center">
                     <ImageOff className="h-12 w-12 mx-auto text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">Не удалось загрузить изображение</p>
+                    {post.url && (
+                      <a
+                        href={ensureValidUrl(post.url) || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline mt-2 block"
+                      >
+                        Открыть оригинал
+                      </a>
+                    )}
                   </div>
                 </div>
               ) : null}
