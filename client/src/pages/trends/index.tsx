@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2 } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
@@ -39,6 +39,7 @@ interface ContentSource {
   is_active: boolean;
   campaign_id: string;
   created_at: string;
+  status: string | null; // Added status field
 }
 
 interface TrendTopic {
@@ -86,7 +87,7 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [activeTab, setActiveTab] = useState('trends');
-  const { add: toast } = useToast(); 
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -168,7 +169,7 @@ export default function Trends() {
               _eq: true
             }
           },
-          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status'] // Added status field
         },
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -464,6 +465,7 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
+      // 1. Отправляем запрос в n8n
       const response = await fetch('https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c', {
         method: 'POST',
         headers: {
@@ -476,6 +478,20 @@ export default function Trends() {
         throw new Error(`Failed to start crawler task: ${response.statusText}`);
       }
 
+      // 2. Обновляем статус источника
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
+        status: 'start'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
       return response.json();
     },
     onSuccess: (data, sourceId) => {
@@ -487,6 +503,9 @@ export default function Trends() {
         variant: "default",
         duration: 5000
       });
+
+      // Инвалидируем кеш источников чтобы обновить статусы
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
     },
     onError: (error: Error) => {
       console.error('Mutation error:', error);
@@ -497,6 +516,19 @@ export default function Trends() {
       });
     }
   });
+
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case 'start':
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'processing':
+        return <RefreshCw className="h-4 w-4 text-yellow-500" />;
+      case 'finished':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default:
+        return null;
+    }
+  };
 
   const toggleTopicSelection = (topic: TrendTopic) => {
     setSelectedTopics(prev => {
@@ -616,18 +648,21 @@ export default function Trends() {
                   <div className="space-y-2">
                     {sources.map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
-                        <div>
-                          <h3 className="font-medium">{source.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            <a
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline"
-                            >
-                              {source.url}
-                            </a>
-                          </p>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(source.status)} {/* Added status icon */}
+                          <div>
+                            <h3 className="font-medium">{source.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                {source.url}
+                              </a>
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-sm text-muted-foreground">
@@ -639,6 +674,7 @@ export default function Trends() {
                             variant="ghost"
                             size="icon"
                             onClick={() => createCrawlerTask(source.id)}
+                            disabled={source.status === 'start' || source.status === 'processing'}
                           >
                             <Bot className="h-4 w-4" />
                           </Button>
