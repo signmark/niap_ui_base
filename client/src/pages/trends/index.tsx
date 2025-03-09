@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,7 @@ interface ContentSource {
   is_active: boolean;
   campaign_id: string;
   created_at: string;
-  status: string | null; // Added status field
+  status: string | null;
 }
 
 interface TrendTopic {
@@ -86,9 +86,60 @@ export default function Trends() {
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Эффект для очистки интервала при размонтировании
+  useEffect(() => {
+    return () => {
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+    };
+  }, []);
+
+  // Функция для проверки статуса конкретного источника
+  const checkSourceStatus = async (sourceId: string) => {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return;
+
+      const response = await directusApi.get(`/items/campaign_content_sources/${sourceId}`, {
+        params: {
+          fields: ['status']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      const status = response.data?.data?.status;
+
+      // Если статус finished или null, останавливаем проверку
+      if (status === 'finished' || !status) {
+        if (statusCheckInterval.current) {
+          clearInterval(statusCheckInterval.current);
+          statusCheckInterval.current = undefined;
+        }
+        setActiveSourceId(null);
+      }
+
+      // Обновляем кеш с новым статусом
+      queryClient.setQueryData(
+        ["campaign_content_sources", selectedCampaignId],
+        (old: any[]) => old?.map(source =>
+          source.id === sourceId
+            ? { ...source, status }
+            : source
+        )
+      );
+    } catch (error) {
+      console.error('Error checking source status:', error);
+    }
+  };
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ["user_data"],
@@ -169,7 +220,7 @@ export default function Trends() {
               _eq: true
             }
           },
-          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status'] // Added status field
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status']
         },
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -366,10 +417,8 @@ export default function Trends() {
       });
 
       try {
-        // Используем точный формат запроса, который работает
         console.log("Using exact API URL format that works");
 
-        // Подготовка параметров для фильтрации по дате в зависимости от периода
         const dateParams: Record<string, any> = {};
         if (isValidPeriod(selectedPeriod)) {
           const from = new Date();
@@ -386,7 +435,6 @@ export default function Trends() {
             default: // '7days'
               from.setDate(from.getDate() - 7);
           }
-          // Добавляем фильтр только если выбран период
           dateParams['filter[date][_gte]'] = from.toISOString();
         }
 
@@ -503,6 +551,13 @@ export default function Trends() {
         variant: "default",
         duration: 5000
       });
+
+      // Устанавливаем активный источник и запускаем проверку статуса
+      setActiveSourceId(sourceId);
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+      statusCheckInterval.current = setInterval(() => checkSourceStatus(sourceId), 3000);
 
       // Инвалидируем кеш источников чтобы обновить статусы
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
@@ -649,7 +704,7 @@ export default function Trends() {
                     {sources.map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(source.status)} {/* Added status icon */}
+                          {getStatusIcon(source.status)}
                           <div>
                             <h3 className="font-medium">{source.name}</h3>
                             <p className="text-sm text-muted-foreground">
