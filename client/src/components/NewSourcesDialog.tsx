@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NewSourcesDialogProps {
   campaignId: string;
@@ -33,6 +34,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [currentPage, setCurrentPage] = useState(1);
   const sourcesPerPage = 10;
   const { add: toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Вычисляем пагинацию
   const totalPages = Math.ceil(sources.length / sourcesPerPage);
@@ -74,6 +76,9 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
           }
         });
       }
+
+      // Инвалидируем запрос на получение источников для выбранной кампании
+      await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", campaignId] });
 
       toast({
         description: `Добавлено ${sourcesToAdd.length} источников`
