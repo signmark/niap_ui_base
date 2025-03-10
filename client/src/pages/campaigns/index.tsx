@@ -34,9 +34,21 @@ export default function Campaigns() {
 
   const { mutate: updateCampaign } = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      await directusApi.patch(`/items/user_campaigns/${id}`, {
-        name: name.trim()
+      // Используем REST API вместо прямого обращения к Directus
+      const response = await fetch(`/api/campaigns/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: name.trim() })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Не удалось обновить название");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
@@ -50,14 +62,24 @@ export default function Campaigns() {
       add({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось обновить название"
+        description: error.message || "Не удалось обновить название"
       });
     }
   });
 
   const { mutate: deleteCampaign } = useMutation({
-    mutationFn: async (id: number) => {
-      await directusApi.delete(`/items/user_campaigns/${id}`);
+    mutationFn: async (id: string) => {
+      // Используем REST API вместо прямого обращения к Directus
+      const response = await fetch(`/api/campaigns/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Не удалось удалить кампанию");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
