@@ -66,7 +66,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         };
         console.log('Request payload:', payload);
 
-        const response = await directusApi.post('/items/campaigns', payload);
+        const response = await directusApi.post('/items/user_campaigns', payload);
         console.log('Directus API response:', response);
 
         if (!response.data?.data) {
