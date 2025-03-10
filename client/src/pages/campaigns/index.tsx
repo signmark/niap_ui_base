@@ -18,7 +18,7 @@ export default function Campaigns() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState("");
   const { userId } = useAuthStore();
-  const { toast: add } = useToast();
+  const { toast } = useToast();
 
   const { data: campaignsResponse, isLoading } = useQuery<{data: Campaign[]}>({
     queryKey: ["/api/campaigns"],
@@ -52,14 +52,14 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      add({
+      toast({
         title: "Успешно",
         description: "Название кампании обновлено"
       });
       setEditingId(null);
     },
     onError: (error: Error) => {
-      add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: error.message || "Не удалось обновить название"
@@ -83,13 +83,13 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      add({
+      toast({
         title: "Успешно",
         description: "Кампания удалена"
       });
     },
     onError: (error: Error) => {
-      add({
+      toast({
         title: "Ошибка",
         description: error.message,
         variant: "destructive",
