@@ -102,7 +102,7 @@ export default function Keywords() {
   };
 
   const handleSaveSelected = async () => {
-    if (!selectedCampaign) {
+    if (!selectedCampaign || !campaignId) {
       add({
         variant: "destructive",
         description: "Выберите кампанию"
@@ -125,7 +125,7 @@ export default function Keywords() {
       for (const keyword of selectedKeywords) {
         const data = {
           keyword: keyword.keyword,
-          campaign_id: selectedCampaign,
+          campaign_id: campaignId,
           trend_score: keyword.trend,
           mentions_count: keyword.competition,
           date_created: now,
@@ -135,7 +135,7 @@ export default function Keywords() {
         await directusApi.post('items/user_keywords', data);
       }
 
-      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
       setSearchResults([]);
       add({ description: "Ключевые слова добавлены" });
     } catch (error) {
@@ -147,43 +147,37 @@ export default function Keywords() {
     }
   };
 
+  // Получаем setSelectedCampaign из глобального хранилища
+  const { setSelectedCampaign } = useCampaignStore();
+
+  // Функция для обновления выбранной кампании
+  const handleCampaignSelect = (campaignId: string) => {
+    const campaign = campaigns?.find((c: Campaign) => String(c.id) === campaignId);
+    if (campaign) {
+      setSelectedCampaign(campaign);
+    }
+  };
+
   return (
     <div className="space-y-4 p-6">
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Ключевые слова</h1>
         <p className="text-muted-foreground mt-2">
-          Выберите кампанию для управления ключевыми словами
+          {selectedCampaign 
+            ? `Ключевые слова для кампании "${selectedCampaign.name}"` 
+            : "Выберите кампанию для управления ключевыми словами"}
         </p>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <Select
-            value={selectedCampaign}
-            onValueChange={setSelectedCampaign}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingCampaigns ? (
-                <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : !campaigns || campaigns.length === 0 ? (
-                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-              ) : (
-                campaigns.map((campaign: Campaign) => (
-                  <SelectItem
-                    key={campaign.id}
-                    value={String(campaign.id)}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {!selectedCampaign && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="mb-4">Пожалуйста, выберите кампанию в селекторе в верхней части страницы</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {selectedCampaign && (
         <Card>
@@ -221,7 +215,7 @@ export default function Keywords() {
         onDelete={async (id) => {
           try {
             await directusApi.delete(`items/user_keywords/${id}`);
-            queryClient.invalidateQueries({ queryKey: ["campaign_keywords", selectedCampaign] });
+            queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
             add({ description: "Ключевое слово удалено" });
           } catch {
             add({
