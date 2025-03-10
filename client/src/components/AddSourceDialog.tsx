@@ -12,7 +12,6 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
-import { NewSourcesDialog } from "./NewSourcesDialog";
 
 interface AddSourceDialogProps {
   campaignId: string;
@@ -29,8 +28,6 @@ type SourceForm = z.infer<typeof sourceSchema>;
 
 export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   const toast = useToast();
-  const [isParsingSource, setIsParsingSource] = useState(false);
-  const [parseResults, setParseResults] = useState<any>(null);
   const [detectedSourceType, setDetectedSourceType] = useState<string | null>(null);
 
   const form = useForm<SourceForm>({
@@ -68,55 +65,6 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
       });
     }
   });
-
-  const { mutate: parseSource, isPending: isParsing } = useMutation({
-    mutationFn: async (values: SourceForm) => {
-      setIsParsingSource(true);
-      const authToken = localStorage.getItem('auth_token');
-
-      if (!authToken) {
-        throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
-      }
-
-      const response = await fetch('/api/sources/parse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          url: values.url,
-          sourceType: values.type
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка при парсинге источника');
-      }
-
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      setParseResults(data);
-      toast.add({
-        title: "Успешно",
-        description: "Источник проанализирован"
-      });
-    },
-    onError: (error: Error) => {
-      toast.add({
-        title: "Ошибка",
-        description: error.message,
-        variant: "destructive"
-      });
-    },
-    onSettled: () => {
-      setIsParsingSource(false);
-    }
-  });
-
-  const isSocialMedia = (type: string) => ['telegram', 'vk', 'instagram', 'facebook'].includes(type);
   
   // Функция для автоматического определения типа источника по URL
   const detectSourceType = (url: string): string => {
@@ -134,19 +82,6 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
       return 'website';
     }
   };
-
-  if (parseResults) {
-    return (
-      <NewSourcesDialog
-        campaignId={campaignId}
-        onClose={() => {
-          setParseResults(null);
-          onClose();
-        }}
-        sourcesData={parseResults}
-      />
-    );
-  }
 
   return (
     <DialogContent>
@@ -245,33 +180,6 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
             <Button variant="outline" onClick={onClose} type="button">
               Отмена
             </Button>
-            {(isSocialMedia(form.getValues('type')) || 
-              (form.getValues('type') === 'auto' && detectedSourceType && isSocialMedia(detectedSourceType))) && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (form.getValues('type') === 'auto') {
-                    // Создаем копию значений формы и устанавливаем реальный тип источника
-                    const values = { ...form.getValues() };
-                    values.type = detectedSourceType || 'website';
-                    parseSource(values);
-                  } else {
-                    parseSource(form.getValues());
-                  }
-                }}
-                disabled={isParsing || !form.formState.isValid}
-              >
-                {isParsing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Анализ...
-                  </>
-                ) : (
-                  "Проанализировать"
-                )}
-              </Button>
-            )}
             <Button type="submit" disabled={isPending}>
               {isPending ? (
                 <>
