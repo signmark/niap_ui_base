@@ -860,6 +860,275 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'x.com': 10000
   };
 
+  // Campaign Content routes
+  app.get("/api/campaign-content", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        const content = await storage.getCampaignContent(userId, campaignId);
+        
+        res.json({ data: content });
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error fetching campaign content:", error);
+      res.status(500).json({ error: "Failed to fetch campaign content" });
+    }
+  });
+
+  app.get("/api/campaign-content/:id", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        const content = await storage.getCampaignContentById(contentId);
+        
+        if (!content) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+        
+        if (content.userId !== userId) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        
+        res.json({ data: content });
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error fetching campaign content:", error);
+      res.status(500).json({ error: "Failed to fetch campaign content" });
+    }
+  });
+
+  app.post("/api/campaign-content", async (req, res) => {
+    try {
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        // Валидация данных
+        const contentData = insertCampaignContentSchema.parse({
+          ...req.body,
+          userId: userId
+        });
+        
+        const content = await storage.createCampaignContent(contentData);
+        
+        res.status(201).json({ data: content });
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error creating campaign content:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create campaign content" });
+    }
+  });
+
+  app.patch("/api/campaign-content/:id", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        // Проверить, принадлежит ли контент пользователю
+        const existingContent = await storage.getCampaignContentById(contentId);
+        
+        if (!existingContent) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+        
+        if (existingContent.userId !== userId) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        
+        // Обновить контент
+        const updatedContent = await storage.updateCampaignContent(contentId, req.body);
+        
+        res.json({ data: updatedContent });
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error updating campaign content:", error);
+      res.status(500).json({ error: "Failed to update campaign content" });
+    }
+  });
+
+  app.delete("/api/campaign-content/:id", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        // Проверить, принадлежит ли контент пользователю
+        const existingContent = await storage.getCampaignContentById(contentId);
+        
+        if (!existingContent) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+        
+        if (existingContent.userId !== userId) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        
+        // Удалить контент
+        await storage.deleteCampaignContent(contentId);
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error deleting campaign content:", error);
+      res.status(500).json({ error: "Failed to delete campaign content" });
+    }
+  });
+
+  app.get("/api/campaign-content/scheduled", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получить данные пользователя
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        const scheduledContent = await storage.getScheduledContent(userId, campaignId);
+        
+        res.json({ data: scheduledContent });
+      } catch (error) {
+        console.error('Error getting user from token:', error);
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("Error fetching scheduled content:", error);
+      res.status(500).json({ error: "Failed to fetch scheduled content" });
+    }
+  });
+
   console.log('Route registration completed');
   return httpServer;
 }
