@@ -860,6 +860,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'x.com': 10000
   };
 
+  // Campaign Keywords routes
+  app.get("/api/keywords", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "Campaign ID is required" });
+      }
+      
+      console.log("Fetching keywords for campaign:", campaignId);
+      
+      // Здесь можно получить keywords из базы данных
+      // В тестовых целях используем моковые данные
+      const keywords = [
+        { id: "1", keyword: "магазин дачной мебели", trendScore: 98 },
+        { id: "2", keyword: "ротанговая мебель", trendScore: 87 },
+        { id: "3", keyword: "плетеная мебель", trendScore: 76 },
+        { id: "4", keyword: "мебель для сада", trendScore: 65 },
+        { id: "5", keyword: "столы и стулья для дачи", trendScore: 54 },
+        { id: "6", keyword: "дачный интерьер", trendScore: 43 },
+        { id: "7", keyword: "садовые кресла", trendScore: 32 },
+        { id: "8", keyword: "уличная мебель", trendScore: 21 },
+        { id: "9", keyword: "диван для террасы", trendScore: 10 },
+        { id: "10", keyword: "деревянная мебель", trendScore: 9 }
+      ];
+      
+      res.json({ data: keywords });
+    } catch (error) {
+      console.error("Error fetching keywords:", error);
+      res.status(500).json({ error: "Failed to fetch keywords" });
+    }
+  });
+
   // Campaign Content routes
   app.get("/api/campaign-content", async (req, res) => {
     try {
