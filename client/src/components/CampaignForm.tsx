@@ -25,7 +25,7 @@ const campaignFormSchema = z.object({
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const { userId } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
@@ -54,10 +54,12 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({ description: "Кампания создана" });
-      form.reset();
-      onClose(); // Ensure we close the form after successful creation
+      queryClient.invalidateQueries({ queryKey: ["user_campaigns"] });
+      onClose(); // First close the dialog
+      toast({
+        description: "Кампания создана"
+      });
+      form.reset(); // Then reset the form
     },
     onError: (error: Error) => {
       toast({
