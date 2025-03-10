@@ -54,21 +54,19 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       return response.data.data;
     },
     onSuccess: (newCampaign) => {
-      // Update the cache directly
+      // First update the cache with new data
       queryClient.setQueryData(["user_campaigns", userId], (oldData: any[] = []) => {
         return [...oldData, newCampaign];
       });
-
-      // Close the dialog first
-      onClose();
 
       // Show success message
       toast({
         description: "Кампания создана"
       });
 
-      // Reset form
+      // Reset form and close dialog after everything else
       form.reset();
+      onClose();
     },
     onError: (error: Error) => {
       toast({

@@ -196,7 +196,8 @@ export default function Trends() {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    refetchInterval: false
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
