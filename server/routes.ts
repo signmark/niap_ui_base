@@ -973,6 +973,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'x.com': 10000
   };
 
+  // Массив для хранения кампаний в разработке
+  const devCampaigns: any[] = [
+    {
+      id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
+      name: "Правильное питание",
+      description: "Кампания о правильном питании и здоровом образе жизни",
+      userId: "user123",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "76d7eb6e-dc8b-4d4f-a8b0-aa72bf6136f0",
+      name: "Фитнес тренировки",
+      description: "Кампания о фитнесе и спортивных тренировках",
+      userId: "user123",
+      createdAt: new Date().toISOString()
+    }
+  ];
+
   // Endpoint to get all campaigns for the user
   app.get("/api/campaigns", async (req, res) => {
     try {
@@ -981,24 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!authHeader) {
         console.log("No authorization header provided");
         // Для тестирования в разработке возвращаем тестовые данные
-        return res.json({ 
-          data: [
-            {
-              id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
-              name: "Правильное питание",
-              description: "Кампания о правильном питании и здоровом образе жизни",
-              userId: "user123",
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: "76d7eb6e-dc8b-4d4f-a8b0-aa72bf6136f0",
-              name: "Фитнес тренировки",
-              description: "Кампания о фитнесе и спортивных тренировках",
-              userId: "user123",
-              createdAt: new Date().toISOString()
-            }
-          ] 
-        });
+        return res.json({ data: devCampaigns });
       }
       
       const token = authHeader.replace('Bearer ', '');
@@ -1027,24 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Directus API error details:', error.response.data);
         }
         // Для тестирования в разработке возвращаем тестовые данные при ошибке API
-        return res.json({ 
-          data: [
-            {
-              id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
-              name: "Правильное питание",
-              description: "Кампания о правильном питании и здоровом образе жизни",
-              userId: "user123",
-              createdAt: new Date().toISOString()
-            },
-            {
-              id: "76d7eb6e-dc8b-4d4f-a8b0-aa72bf6136f0",
-              name: "Фитнес тренировки",
-              description: "Кампания о фитнесе и спортивных тренировках",
-              userId: "user123",
-              createdAt: new Date().toISOString()
-            }
-          ] 
-        });
+        return res.json({ data: devCampaigns });
       }
     } catch (error) {
       console.error("Error in campaigns route:", error);
@@ -1545,6 +1529,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching scheduled content:", error);
       res.status(500).json({ error: "Failed to fetch scheduled content" });
+    }
+  });
+
+  // Добавляем маршрут для создания кампаний
+  app.post("/api/campaigns", async (req, res) => {
+    try {
+      const { name, description } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ error: "Название кампании обязательно" });
+      }
+      
+      // В реальном приложении здесь бы происходила авторизация и проверка прав
+      // Для разработки используем мок данные
+      const newCampaignId = crypto.randomUUID();
+      
+      // Добавляем новую кампанию в существующий список
+      const newCampaign = {
+        id: newCampaignId,
+        name: name,
+        description: description || null,
+        userId: "user123", // Должно быть заменено реальным ID пользователя
+        createdAt: new Date().toISOString()
+      };
+      
+      // Добавляем новую кампанию в наш массив кампаний для разработки
+      devCampaigns.push(newCampaign);
+      
+      // Возвращаем результат
+      return res.status(201).json({ 
+        success: true,
+        data: newCampaign
+      });
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      res.status(500).json({ error: "Failed to create campaign" });
     }
   });
 

@@ -42,16 +42,25 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         throw new Error("Необходима авторизация");
       }
 
-      const response = await directusApi.post('items/user_campaigns', {
-        name: values.name.trim(),
-        description: values.description?.trim() || null,
-        user_id: userId,
-        status: 'active',
-        date_created: new Date().toISOString(),
-        date_updated: new Date().toISOString()
+      // Используем наш новый серверный маршрут вместо прямого обращения к Directus
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: values.name.trim(),
+          description: values.description?.trim() || null,
+          userId: userId
+        })
       });
 
-      return response.data.data;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Не удалось создать кампанию");
+      }
+
+      return await response.json();
     },
     onSuccess: (newCampaign) => {
       // Immediately update the cache to show the new campaign
