@@ -475,11 +475,7 @@ export default function ContentPage() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => {
-                              if (window.confirm("Вы уверены, что хотите удалить этот контент?")) {
-                                deleteContentMutation.mutate(content.id);
-                              }
-                            }}
+                            onClick={() => deleteContentMutation.mutate(content.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
