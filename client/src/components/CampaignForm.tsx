@@ -56,8 +56,8 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       toast({ description: "Кампания создана" });
-      onClose();
       form.reset();
+      onClose(); // Ensure we close the form after successful creation
     },
     onError: (error: Error) => {
       toast({
