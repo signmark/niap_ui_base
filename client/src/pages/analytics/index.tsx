@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useCampaignStore } from "@/lib/campaignStore";
+import { directusApi } from "@/lib/directus";
+import { Loader2 } from "lucide-react";
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState({
@@ -33,14 +35,54 @@ export default function Analytics() {
   
   // Получаем список кампаний из ответа API
   const campaigns = campaignsResponse?.data || [];
+  
+  // Получаем общее количество ключевых слов
+  const { data: totalKeywords, isLoading: isLoadingKeywords } = useQuery({
+    queryKey: ["total_keywords"],
+    queryFn: async () => {
+      const response = await directusApi.get('/items/user_keywords', {
+        params: {
+          aggregate: {
+            count: "*"
+          }
+        }
+      });
+      return response.data?.data?.[0]?.count || 0;
+    }
+  });
+  
+  // Получаем общее количество сгенерированного контента
+  const { data: totalContent, isLoading: isLoadingContent } = useQuery({
+    queryKey: ["total_content"],
+    queryFn: async () => {
+      const response = await directusApi.get('/items/campaign_content', {
+        params: {
+          aggregate: {
+            count: "*"
+          }
+        }
+      });
+      return response.data?.data?.[0]?.count || 0;
+    }
+  });
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
 
-        <div className="flex gap-4">
-          {/* Используем глобальный селектор кампаний в навигационной панели */}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            {formatDate(dateRange.from)} - {formatDate(dateRange.to)}
+          </div>
           <DateRangePicker
             from={dateRange.from}
             to={dateRange.to}
@@ -59,7 +101,14 @@ export default function Analytics() {
             <CardTitle>Total Keywords</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">0</p>
+            {isLoadingKeywords ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <span>Loading...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold">{totalKeywords}</p>
+            )}
           </CardContent>
         </Card>
 
@@ -77,7 +126,14 @@ export default function Analytics() {
             <CardTitle>Generated Contents</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">0</p>
+            {isLoadingContent ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <span>Loading...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold">{totalContent}</p>
+            )}
           </CardContent>
         </Card>
       </div>
