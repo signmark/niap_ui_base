@@ -54,12 +54,19 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user_campaigns"] });
-      onClose(); // First close the dialog
+      // First invalidate the query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["user_campaigns", userId] });
+
+      // Then close the dialog
+      onClose();
+
+      // Show success toast
       toast({
         description: "Кампания создана"
       });
-      form.reset(); // Then reset the form
+
+      // Finally reset the form
+      form.reset();
     },
     onError: (error: Error) => {
       toast({
