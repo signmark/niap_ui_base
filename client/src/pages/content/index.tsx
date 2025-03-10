@@ -476,16 +476,28 @@ export default function ContentPage() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                           {content.status === "draft" && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setCurrentContent(content);
-                                setIsScheduleDialogOpen(true);
-                              }}
-                            >
-                              <Calendar className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentContent(content);
+                                  setIsScheduleDialogOpen(true);
+                                }}
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentContent(content);
+                                  setIsAdaptDialogOpen(true);
+                                }}
+                              >
+                                <Share className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                           <Button 
                             variant="outline" 
@@ -1026,6 +1038,31 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Диалог генерации контента через AI */}
+      {isGenerateDialogOpen && (
+        <ContentGenerationDialog
+          campaignId={selectedCampaignId || ''}
+          keywords={campaignKeywords}
+          onClose={() => {
+            setIsGenerateDialogOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', selectedCampaignId] });
+          }}
+        />
+      )}
+
+      {/* Диалог адаптации контента для социальных сетей */}
+      {isAdaptDialogOpen && currentContent && (
+        <SocialContentAdaptationDialog
+          contentId={currentContent.id}
+          originalContent={currentContent.content}
+          onClose={() => {
+            setIsAdaptDialogOpen(false);
+            setCurrentContent(null);
+            queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', selectedCampaignId] });
+          }}
+        />
+      )}
     </div>
   );
 }

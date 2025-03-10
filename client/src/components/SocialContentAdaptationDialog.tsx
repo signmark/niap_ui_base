@@ -1,29 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Loader2, Instagram, MessageCircle, Send, Calendar } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { directusApi } from '@/lib/directus';
-import { queryClient } from '@/lib/queryClient';
-import { SiVk, SiFacebook } from 'react-icons/si';
-import type { SocialPlatform } from '@shared/schema';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle2, Instagram, MessageCircle, Facebook, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { directusApi } from "@/lib/directus";
+
+// Определение типов
+type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook';
 
 interface SocialContentAdaptationDialogProps {
   contentId: string;
   originalContent: string;
   onClose: () => void;
+}
+
+interface PlatformContent {
+  content: string;
+  isEnabled: boolean;
+  isEdited: boolean;
 }
 
 export function SocialContentAdaptationDialog({ 
@@ -32,264 +30,201 @@ export function SocialContentAdaptationDialog({
   onClose 
 }: SocialContentAdaptationDialogProps) {
   const { add: toast } = useToast();
-  const [selectedPlatforms, setSelectedPlatforms] = useState<SocialPlatform[]>([]);
-  const [adaptedContent, setAdaptedContent] = useState<Record<SocialPlatform, string>>({
-    instagram: '',
-    telegram: '',
-    vk: '',
-    facebook: ''
+  const [activeTab, setActiveTab] = useState<SocialPlatform>('instagram');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Состояние для каждой платформы
+  const [platformsContent, setPlatformsContent] = useState<{[key in SocialPlatform]: PlatformContent}>({
+    instagram: { content: adaptContentForPlatform('instagram', originalContent), isEnabled: true, isEdited: false },
+    telegram: { content: adaptContentForPlatform('telegram', originalContent), isEnabled: false, isEdited: false },
+    vk: { content: adaptContentForPlatform('vk', originalContent), isEnabled: false, isEdited: false },
+    facebook: { content: adaptContentForPlatform('facebook', originalContent), isEnabled: false, isEdited: false }
   });
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
 
-  // При первой загрузке адаптируем контент для всех платформ
-  useEffect(() => {
-    if (originalContent) {
-      setAdaptedContent({
-        instagram: adaptContentForPlatform('instagram', originalContent),
-        telegram: adaptContentForPlatform('telegram', originalContent),
-        vk: adaptContentForPlatform('vk', originalContent),
-        facebook: adaptContentForPlatform('facebook', originalContent)
-      });
-    }
-  }, [originalContent]);
-
-  const { mutate: schedulePublication, isPending } = useMutation({
+  // Мутация для сохранения адаптированного контента
+  const { mutate: saveAdaptedContent, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      if (selectedPlatforms.length === 0) {
-        throw new Error('Выберите хотя бы одну платформу для публикации');
-      }
-
-      if (!scheduledDate || !scheduledTime) {
-        throw new Error('Выберите дату и время публикации');
-      }
-
-      // Формируем дату публикации
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      
-      // Создаем объект публикаций для каждой выбранной платформы
-      const publications = selectedPlatforms.reduce((acc, platform) => {
-        acc[platform] = {
+      const enabledPlatforms = Object.entries(platformsContent)
+        .filter(([_, data]) => data.isEnabled)
+        .map(([platform, data]) => ({
           platform,
-          status: 'pending',
-          publishedAt: null,
-          adaptedContent: adaptedContent[platform]
-        };
-        return acc;
-      }, {} as Record<string, any>);
+          content: data.content
+        }));
 
-      // Обновляем контент с информацией о публикациях
+      if (enabledPlatforms.length === 0) {
+        throw new Error("Выберите хотя бы одну платформу для публикации");
+      }
+
       return await directusApi.patch(`/items/campaign_content/${contentId}`, {
-        social_platforms: publications,
-        status: 'scheduled',
-        scheduled_at: scheduledDateTime.toISOString()
+        social_publications: enabledPlatforms.map(p => ({
+          platform: p.platform,
+          content: p.content,
+          status: 'pending'
+        }))
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
       toast({
-        title: 'Успешно',
-        description: 'Публикации запланированы'
+        title: "Успешно",
+        description: "Контент адаптирован для выбранных платформ",
       });
       onClose();
     },
     onError: (error: Error) => {
       toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: error.message || 'Не удалось запланировать публикации'
+        variant: "destructive",
+        title: "Ошибка",
+        description: error.message || "Не удалось сохранить адаптированный контент",
       });
     }
   });
 
+  // Переключение активности платформы
   const handleTogglePlatform = (platform: SocialPlatform) => {
-    if (selectedPlatforms.includes(platform)) {
-      setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
-    } else {
-      setSelectedPlatforms([...selectedPlatforms, platform]);
-    }
+    setPlatformsContent(prev => ({
+      ...prev,
+      [platform]: {
+        ...prev[platform],
+        isEnabled: !prev[platform].isEnabled
+      }
+    }));
   };
 
+  // Изменение контента для платформы
   const handleContentChange = (platform: SocialPlatform, newContent: string) => {
-    setAdaptedContent({
-      ...adaptedContent,
-      [platform]: newContent
-    });
+    setPlatformsContent(prev => ({
+      ...prev,
+      [platform]: {
+        ...prev[platform],
+        content: newContent,
+        isEdited: true
+      }
+    }));
   };
 
-  // Адаптируем контент для разных платформ
+  // Адаптация контента для разных платформ
   function adaptContentForPlatform(platform: SocialPlatform, content: string): string {
+    // Базовая логика адаптации контента для разных платформ
     switch (platform) {
       case 'instagram':
-        // Instagram: добавляем хэштеги и эмодзи для стильного представления
-        return `${content}\n\n#контент #smm #instagram`;
-        
+        // Для Instagram добавляем хэштеги и эмодзи
+        return content + "\n\n#контент #smm #маркетинг";
       case 'telegram':
-        // Telegram: поддерживает markdown форматирование
-        return content;
-        
+        // Для Telegram добавляем форматирование и ссылки
+        return content + "\n\nПодписывайтесь на наш канал! 👉";
       case 'vk':
-        // ВКонтакте: можно добавить хэштеги
-        return `${content}\n\n#вк #контент`;
-        
+        // Для VK стандартный формат
+        return content + "\n\nСтавьте лайки и делитесь с друзьями! ❤";
       case 'facebook':
-        // Facebook: более формальный стиль
-        return content;
-        
+        // Для Facebook более формальный стиль
+        return content + "\n\nНе забудьте подписаться на нашу страницу, чтобы не пропустить новые публикации.";
       default:
         return content;
     }
   }
 
-  // Перегенерировать контент для конкретной платформы
+  // Регенерация контента для платформы
   const regenerateForPlatform = (platform: SocialPlatform) => {
-    const adapted = adaptContentForPlatform(platform, originalContent);
-    setAdaptedContent({
-      ...adaptedContent,
-      [platform]: adapted
-    });
+    setPlatformsContent(prev => ({
+      ...prev,
+      [platform]: {
+        ...prev[platform],
+        content: adaptContentForPlatform(platform, originalContent),
+        isEdited: false
+      }
+    }));
+  };
+
+  // Получить иконку для платформы
+  const getPlatformIcon = (platform: SocialPlatform) => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="h-4 w-4" />;
+      case 'telegram':
+        return <MessageCircle className="h-4 w-4" />;
+      case 'vk':
+        return <MessageCircle className="h-4 w-4" />;
+      case 'facebook':
+        return <Facebook className="h-4 w-4" />;
+      default:
+        return null;
+    }
   };
 
   return (
     <DialogContent className="sm:max-w-[700px]">
       <DialogHeader>
-        <DialogTitle>Адаптация контента для соцсетей</DialogTitle>
-        <DialogDescription>
-          Настройте контент для публикации в разных социальных сетях
-        </DialogDescription>
+        <DialogTitle>Адаптация контента для социальных сетей</DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-4 my-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="scheduledDate">Дата публикации</Label>
-            <Input
-              id="scheduledDate"
-              type="date"
-              value={scheduledDate}
-              onChange={(e) => setScheduledDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          <div>
-            <Label htmlFor="scheduledTime">Время публикации</Label>
-            <Input
-              id="scheduledTime"
-              type="time"
-              value={scheduledTime}
-              onChange={(e) => setScheduledTime(e.target.value)}
-            />
-          </div>
+      <div className="mt-4">
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
+            <Button
+              key={platform}
+              variant={platformsContent[platform].isEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleTogglePlatform(platform)}
+              className="flex items-center gap-2"
+            >
+              {getPlatformIcon(platform)}
+              <span className="capitalize">{platform}</span>
+              {platformsContent[platform].isEnabled && <Check className="h-3 w-3" />}
+            </Button>
+          ))}
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="instagram" 
-              checked={selectedPlatforms.includes('instagram')}
-              onCheckedChange={() => handleTogglePlatform('instagram')}
-            />
-            <Label htmlFor="instagram" className="flex items-center gap-1">
-              <Instagram className="h-4 w-4" /> Instagram
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="telegram" 
-              checked={selectedPlatforms.includes('telegram')}
-              onCheckedChange={() => handleTogglePlatform('telegram')}
-            />
-            <Label htmlFor="telegram" className="flex items-center gap-1">
-              <MessageCircle className="h-4 w-4" /> Telegram
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="vk" 
-              checked={selectedPlatforms.includes('vk')}
-              onCheckedChange={() => handleTogglePlatform('vk')}
-            />
-            <Label htmlFor="vk" className="flex items-center gap-1">
-              <SiVk className="h-4 w-4" /> ВКонтакте
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="facebook" 
-              checked={selectedPlatforms.includes('facebook')}
-              onCheckedChange={() => handleTogglePlatform('facebook')}
-            />
-            <Label htmlFor="facebook" className="flex items-center gap-1">
-              <SiFacebook className="h-4 w-4" /> Facebook
-            </Label>
-          </div>
-        </div>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SocialPlatform)}>
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="instagram" disabled={!platformsContent.instagram.isEnabled}>Instagram</TabsTrigger>
+            <TabsTrigger value="telegram" disabled={!platformsContent.telegram.isEnabled}>Telegram</TabsTrigger>
+            <TabsTrigger value="vk" disabled={!platformsContent.vk.isEnabled}>VK</TabsTrigger>
+            <TabsTrigger value="facebook" disabled={!platformsContent.facebook.isEnabled}>Facebook</TabsTrigger>
+          </TabsList>
 
-        {selectedPlatforms.length > 0 && (
-          <Tabs defaultValue={selectedPlatforms[0]}>
-            <TabsList className="w-full">
-              {selectedPlatforms.map(platform => (
-                <TabsTrigger key={platform} value={platform} className="flex items-center gap-1">
-                  {platform === 'instagram' && <Instagram className="h-4 w-4" />}
-                  {platform === 'telegram' && <MessageCircle className="h-4 w-4" />}
-                  {platform === 'vk' && <SiVk className="h-4 w-4" />}
-                  {platform === 'facebook' && <SiFacebook className="h-4 w-4" />}
-                  {platform === 'instagram' ? 'Instagram' : 
-                   platform === 'telegram' ? 'Telegram' : 
-                   platform === 'vk' ? 'ВКонтакте' : 'Facebook'}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {selectedPlatforms.map(platform => (
-              <TabsContent key={platform} value={platform} className="space-y-2 mt-2">
+          {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
+            <TabsContent key={platform} value={platform}>
+              <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <Label>
-                    Контент для {platform === 'instagram' ? 'Instagram' : 
-                              platform === 'telegram' ? 'Telegram' : 
-                              platform === 'vk' ? 'ВКонтакте' : 'Facebook'}
-                  </Label>
+                  <Label>Контент для {platform}</Label>
                   <Button 
                     variant="outline" 
-                    size="sm"
+                    size="sm" 
                     onClick={() => regenerateForPlatform(platform)}
                   >
-                    Адаптировать заново
+                    Сбросить
                   </Button>
                 </div>
-                <Textarea 
-                  value={adaptedContent[platform]}
+                <Textarea
+                  value={platformsContent[platform].content}
                   onChange={(e) => handleContentChange(platform, e.target.value)}
-                  placeholder={`Введите контент для ${platform}`}
-                  rows={8}
+                  rows={10}
+                  placeholder={`Введите текст для ${platform}...`}
+                  disabled={!platformsContent[platform].isEnabled}
                 />
-              </TabsContent>
-            ))}
-          </Tabs>
-        )}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="mt-6">
         <Button variant="outline" onClick={onClose}>
           Отмена
         </Button>
         <Button 
-          onClick={() => schedulePublication()} 
-          disabled={isPending || selectedPlatforms.length === 0 || !scheduledDate || !scheduledTime}
-          className="flex items-center gap-2"
+          onClick={() => saveAdaptedContent()} 
+          disabled={isSaving || Object.values(platformsContent).every(p => !p.isEnabled)}
         >
-          {isPending ? (
+          {isSaving ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Планирование...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Сохранение...
             </>
           ) : (
             <>
-              <Calendar className="h-4 w-4" />
-              Запланировать публикации
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Сохранить
             </>
           )}
         </Button>
