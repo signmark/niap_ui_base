@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
-  ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw
+  ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
+  Wand2, Share
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,8 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Campaign, CampaignContent } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
+import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -30,6 +33,8 @@ export default function ContentPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [newContent, setNewContent] = useState({
     title: "",
@@ -370,13 +375,23 @@ export default function ContentPage() {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Управление контентом</h1>
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)} 
-          disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Создать контент
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setIsGenerateDialogOpen(true)}
+            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
+            variant="outline"
+          >
+            <Wand2 className="mr-2 h-4 w-4" />
+            Генерация через AI
+          </Button>
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)} 
+            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Создать контент
+          </Button>
+        </div>
       </div>
 
       {/* Выбор кампании */}

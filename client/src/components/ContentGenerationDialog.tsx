@@ -1,0 +1,300 @@
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Loader2, Wand2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { directusApi } from '@/lib/directus';
+import { queryClient } from '@/lib/queryClient';
+// Определение интерфейса CampainKeyword локально
+interface CampainKeyword {
+  id: string;
+  keyword: string;
+  trendScore: number;
+  campaignId: string;
+}
+
+interface ContentGenerationDialogProps {
+  campaignId: string;
+  keywords: CampainKeyword[];
+  onClose: () => void;
+}
+
+export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
+  const { add: toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationResult, setGenerationResult] = useState<string | null>(null);
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [prompt, setPrompt] = useState('');
+  const [title, setTitle] = useState('');
+  const [tone, setTone] = useState('informative');
+
+  const { mutate: generateContent, isPending } = useMutation({
+    mutationFn: async () => {
+      if (!campaignId) {
+        throw new Error('Выберите кампанию');
+      }
+
+      if (!prompt.trim()) {
+        throw new Error('Введите промт для генерации');
+      }
+
+      if (selectedKeywords.length === 0) {
+        throw new Error('Выберите ключевые слова');
+      }
+
+      setIsGenerating(true);
+
+      // Используем Perplexity API для генерации контента
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('Требуется авторизация');
+      }
+
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          prompt,
+          keywords: selectedKeywords,
+          tone,
+          campaignId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Не удалось сгенерировать контент');
+      }
+
+      const data = await response.json();
+      return data.content;
+    },
+    onSuccess: (content) => {
+      setGenerationResult(content);
+      setIsGenerating(false);
+      toast({
+        title: 'Успешно',
+        description: 'Контент сгенерирован'
+      });
+    },
+    onError: (error: Error) => {
+      setIsGenerating(false);
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error.message || 'Ошибка при генерации контента'
+      });
+    }
+  });
+
+  const { mutate: saveContent, isPending: isSaving } = useMutation({
+    mutationFn: async () => {
+      if (!generationResult) {
+        throw new Error('Сначала сгенерируйте контент');
+      }
+
+      if (!title.trim()) {
+        throw new Error('Введите название для контента');
+      }
+
+      return await directusApi.post('/items/campaign_content', {
+        campaign_id: campaignId,
+        title: title,
+        content: generationResult,
+        content_type: 'text',
+        prompt: prompt,
+        keywords: selectedKeywords,
+        status: 'draft'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', campaignId] });
+      toast({
+        title: 'Успешно',
+        description: 'Контент сохранен'
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error.message || 'Не удалось сохранить контент'
+      });
+    }
+  });
+
+  const handleKeywordToggle = (keyword: string) => {
+    if (selectedKeywords.includes(keyword)) {
+      setSelectedKeywords(selectedKeywords.filter(k => k !== keyword));
+    } else {
+      setSelectedKeywords([...selectedKeywords, keyword]);
+    }
+  };
+
+  return (
+    <DialogContent className="sm:max-w-[600px]">
+      <DialogHeader>
+        <DialogTitle>Генерация контента</DialogTitle>
+        <DialogDescription>
+          Используйте AI для генерации контента на основе ключевых слов и промта
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 py-4">
+        {!generationResult ? (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tone" className="text-right">
+                Тон контента
+              </Label>
+              <Select
+                value={tone}
+                onValueChange={setTone}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Выберите тон контента" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="informative">Информативный</SelectItem>
+                  <SelectItem value="friendly">Дружелюбный</SelectItem>
+                  <SelectItem value="professional">Профессиональный</SelectItem>
+                  <SelectItem value="casual">Повседневный</SelectItem>
+                  <SelectItem value="humorous">С юмором</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="prompt" className="text-right">
+                Промт
+              </Label>
+              <Textarea
+                id="prompt"
+                placeholder="Опишите, какой контент вы хотите сгенерировать"
+                className="col-span-3"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Ключевые слова
+              </Label>
+              <div className="col-span-3 flex flex-wrap gap-2">
+                {keywords.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
+                  </p>
+                ) : (
+                  keywords.map((kw) => (
+                    <Button
+                      key={kw.id}
+                      variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleKeywordToggle(kw.keyword)}
+                    >
+                      {kw.keyword}
+                    </Button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Название
+              </Label>
+              <Input
+                id="title"
+                placeholder="Введите название для контента"
+                className="col-span-3"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="generatedContent" className="text-right pt-2">
+                Результат
+              </Label>
+              <Textarea
+                id="generatedContent"
+                className="col-span-3"
+                value={generationResult}
+                onChange={(e) => setGenerationResult(e.target.value)}
+                rows={8}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      <DialogFooter>
+        {!generationResult ? (
+          <>
+            <Button variant="outline" onClick={onClose}>
+              Отмена
+            </Button>
+            <Button 
+              onClick={() => generateContent()} 
+              disabled={isPending || !prompt || selectedKeywords.length === 0}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Генерация...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Сгенерировать
+                </>
+              )}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button 
+              variant="outline" 
+              onClick={() => setGenerationResult(null)}
+            >
+              Назад
+            </Button>
+            <Button 
+              onClick={() => saveContent()} 
+              disabled={isSaving || !title.trim()}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Сохранение...
+                </>
+              ) : (
+                "Сохранить"
+              )}
+            </Button>
+          </>
+        )}
+      </DialogFooter>
+    </DialogContent>
+  );
+}
