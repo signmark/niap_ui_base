@@ -1,23 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Search } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
+import { useCampaignStore } from "@/lib/campaignStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Keywords() {
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { add } = useToast();
   const queryClient = useQueryClient();
-
+  const { selectedCampaign } = useCampaignStore();
+  // Используем глобальное состояние кампании
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
@@ -26,22 +27,32 @@ export default function Keywords() {
     }
   });
 
+  // Получаем ID выбранной кампании из глобального хранилища
+  const campaignId = selectedCampaign?.id || "";
+
+  // Используем useEffect для обработки изменений глобальной кампании
+  useEffect(() => {
+    if (selectedCampaign) {
+      console.log("Используем глобально выбранную кампанию:", selectedCampaign.name);
+    }
+  }, [selectedCampaign]);
+
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["campaign_keywords", selectedCampaign],
+    queryKey: ["campaign_keywords", campaignId],
     queryFn: async () => {
-      if (!selectedCampaign) return [];
+      if (!campaignId) return [];
       const response = await directusApi.get('/items/user_keywords', {
         params: {
           filter: {
             campaign_id: {
-              _eq: selectedCampaign
+              _eq: campaignId
             }
           }
         }
       });
       return response.data?.data || [];
     },
-    enabled: !!selectedCampaign
+    enabled: !!campaignId
   });
 
   const handleSearch = async () => {
