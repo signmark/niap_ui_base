@@ -1567,6 +1567,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create campaign" });
     }
   });
+  
+  // Добавляем маршрут для удаления кампаний
+  app.delete("/api/campaigns/:id", async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании обязателен" });
+      }
+      
+      // Находим индекс кампании в массиве
+      const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+      
+      if (campaignIndex === -1) {
+        return res.status(404).json({ error: "Кампания не найдена" });
+      }
+      
+      // Удаляем кампанию из массива
+      devCampaigns.splice(campaignIndex, 1);
+      
+      // Возвращаем результат
+      return res.status(200).json({ 
+        success: true,
+        message: "Кампания успешно удалена"
+      });
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      res.status(500).json({ error: "Failed to delete campaign" });
+    }
+  });
+  
+  // Добавляем маршрут для обновления кампаний
+  app.patch("/api/campaigns/:id", async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const { name } = req.body;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании обязателен" });
+      }
+      
+      if (!name || name.trim() === '') {
+        return res.status(400).json({ error: "Название кампании обязательно" });
+      }
+      
+      // Находим индекс кампании в массиве
+      const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+      
+      if (campaignIndex === -1) {
+        return res.status(404).json({ error: "Кампания не найдена" });
+      }
+      
+      // Обновляем кампанию в массиве
+      devCampaigns[campaignIndex] = {
+        ...devCampaigns[campaignIndex],
+        name: name.trim()
+      };
+      
+      // Возвращаем результат
+      return res.status(200).json({ 
+        success: true,
+        data: devCampaigns[campaignIndex],
+        message: "Кампания успешно обновлена"
+      });
+    } catch (error) {
+      console.error("Error updating campaign:", error);
+      res.status(500).json({ error: "Failed to update campaign" });
+    }
+  });
 
   console.log('Route registration completed');
   return httpServer;
