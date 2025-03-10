@@ -1115,9 +1115,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Создаем контент кампании напрямую через Directus API
         const directusPayload = {
-          ...req.body,
-          user_id: userId,
+          campaign_id: req.body.campaignId,
+          content_type: req.body.contentType,
+          title: req.body.title,
+          content: req.body.content,
+          image_url: req.body.imageUrl,
+          video_url: req.body.videoUrl,
+          keywords: req.body.keywords,
           status: req.body.status || "draft",
+          user_id: userId,
           created_at: new Date().toISOString()
         };
         
@@ -1209,7 +1215,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Преобразуем данные для Directus
         const directusPayload = {
-          ...req.body,
+          content_type: req.body.contentType,
+          title: req.body.title,
+          content: req.body.content,
+          image_url: req.body.imageUrl,
+          video_url: req.body.videoUrl,
+          keywords: req.body.keywords,
+          status: req.body.status,
           user_id: userId
         };
         
