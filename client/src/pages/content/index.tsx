@@ -78,6 +78,28 @@ export default function ContentPage() {
     },
     enabled: !!selectedCampaignId
   });
+  
+  // Запрос ключевых слов кампании
+  const { data: campaignKeywords = [], isLoading: isLoadingKeywords } = useQuery<any[]>({
+    queryKey: ["/api/keywords", selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return [];
+
+      const response = await fetch(`/api/keywords?campaignId=${selectedCampaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaign keywords');
+      }
+      
+      const data = await response.json();
+      return data.data || [];
+    },
+    enabled: !!selectedCampaignId
+  });
 
   // Мутация для создания контента
   const createContentMutation = useMutation({
@@ -490,7 +512,7 @@ export default function ContentPage() {
 
       {/* Диалог создания контента */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Создание нового контента</DialogTitle>
           </DialogHeader>
@@ -513,10 +535,10 @@ export default function ContentPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content">Текст контента</Label>
+              <Label htmlFor="content">Промт для создания контента</Label>
               <Textarea
                 id="content"
-                placeholder="Введите текст контента"
+                placeholder="Введите промт для создания контента"
                 rows={5}
                 value={newContent.content}
                 onChange={(e) => setNewContent({...newContent, content: e.target.value})}
@@ -544,18 +566,113 @@ export default function ContentPage() {
                 />
               </div>
             )}
+            
+            {/* Список ключевых слов кампании */}
             <div className="space-y-2">
-              <Label htmlFor="keywords">Ключевые слова (через запятую)</Label>
+              <Label>Выберите ключевые слова</Label>
+              <Card>
+                <CardContent className="p-4">
+                  {isLoadingKeywords ? (
+                    <div className="flex justify-center p-4">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : !campaignKeywords.length ? (
+                    <p className="text-center text-muted-foreground py-2">
+                      Нет ключевых слов для этой кампании
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {campaignKeywords.map((keyword) => (
+                        <div key={keyword.id || keyword.keyword} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`keyword-${keyword.id || keyword.keyword}`}
+                            className="h-4 w-4 rounded border-gray-300"
+                            checked={newContent.keywords.includes(keyword.keyword)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewContent({
+                                  ...newContent,
+                                  keywords: [...newContent.keywords, keyword.keyword]
+                                });
+                              } else {
+                                setNewContent({
+                                  ...newContent,
+                                  keywords: newContent.keywords.filter(k => k !== keyword.keyword)
+                                });
+                              }
+                            }}
+                          />
+                          <label 
+                            htmlFor={`keyword-${keyword.id || keyword.keyword}`}
+                            className="text-sm"
+                          >
+                            {keyword.keyword}
+                            {keyword.trendScore && (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                ({keyword.trendScore})
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Поле для ввода дополнительных ключевых слов */}
+            <div className="space-y-2">
+              <Label htmlFor="additionalKeywords">Дополнительные ключевые слова (через запятую)</Label>
               <Input
-                id="keywords"
+                id="additionalKeywords"
                 placeholder="Например: здоровье, диета, питание"
-                value={newContent.keywords.join(", ")}
-                onChange={(e) => setNewContent({
-                  ...newContent, 
-                  keywords: e.target.value.split(",").map(k => k.trim()).filter(k => k)
-                })}
+                onChange={(e) => {
+                  const additionalKeywords = e.target.value
+                    .split(",")
+                    .map(k => k.trim())
+                    .filter(k => k);
+                  
+                  // Добавляем только те ключевые слова, которых нет в списке
+                  const newKeywords = [
+                    ...newContent.keywords,
+                    ...additionalKeywords.filter(k => !newContent.keywords.includes(k))
+                  ];
+                  
+                  setNewContent({
+                    ...newContent, 
+                    keywords: newKeywords
+                  });
+                }}
               />
             </div>
+            
+            {/* Предпросмотр выбранных ключевых слов */}
+            {newContent.keywords.length > 0 && (
+              <div className="space-y-2">
+                <Label>Выбранные ключевые слова:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {newContent.keywords.map((keyword, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {keyword}
+                      <button
+                        type="button"
+                        className="h-4 w-4 rounded-full"
+                        onClick={() => {
+                          setNewContent({
+                            ...newContent,
+                            keywords: newContent.keywords.filter((_, i) => i !== index)
+                          });
+                        }}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -579,17 +696,17 @@ export default function ContentPage() {
 
       {/* Диалог редактирования контента */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Редактирование контента</DialogTitle>
           </DialogHeader>
           {currentContent && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="content">Текст контента</Label>
+                <Label htmlFor="content">Промт для создания контента</Label>
                 <Textarea
                   id="content"
-                  placeholder="Введите текст контента"
+                  placeholder="Введите промт для создания контента"
                   rows={5}
                   value={currentContent.content}
                   onChange={(e) => setCurrentContent({...currentContent, content: e.target.value})}
@@ -617,18 +734,116 @@ export default function ContentPage() {
                   />
                 </div>
               )}
+              
+              {/* Список ключевых слов кампании */}
               <div className="space-y-2">
-                <Label htmlFor="keywords">Ключевые слова (через запятую)</Label>
+                <Label>Выберите ключевые слова</Label>
+                <Card>
+                  <CardContent className="p-4">
+                    {isLoadingKeywords ? (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : !campaignKeywords.length ? (
+                      <p className="text-center text-muted-foreground py-2">
+                        Нет ключевых слов для этой кампании
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {campaignKeywords.map((keyword) => {
+                          const isSelected = currentContent.keywords?.includes(keyword.keyword);
+                          return (
+                            <div key={keyword.id || keyword.keyword} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`edit-keyword-${keyword.id || keyword.keyword}`}
+                                className="h-4 w-4 rounded border-gray-300"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setCurrentContent({
+                                      ...currentContent,
+                                      keywords: [...(currentContent.keywords || []), keyword.keyword]
+                                    });
+                                  } else {
+                                    setCurrentContent({
+                                      ...currentContent,
+                                      keywords: (currentContent.keywords || []).filter(k => k !== keyword.keyword)
+                                    });
+                                  }
+                                }}
+                              />
+                              <label 
+                                htmlFor={`edit-keyword-${keyword.id || keyword.keyword}`}
+                                className="text-sm"
+                              >
+                                {keyword.keyword}
+                                {keyword.trendScore && (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    ({keyword.trendScore})
+                                  </span>
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Поле для ввода дополнительных ключевых слов */}
+              <div className="space-y-2">
+                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (через запятую)</Label>
                 <Input
-                  id="keywords"
+                  id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
-                  value={currentContent.keywords ? currentContent.keywords.join(", ") : ""}
-                  onChange={(e) => setCurrentContent({
-                    ...currentContent, 
-                    keywords: e.target.value.split(",").map(k => k.trim()).filter(k => k)
-                  })}
+                  onChange={(e) => {
+                    const additionalKeywords = e.target.value
+                      .split(",")
+                      .map(k => k.trim())
+                      .filter(k => k);
+                    
+                    // Добавляем только те ключевые слова, которых нет в списке
+                    const newKeywords = [
+                      ...(currentContent.keywords || []),
+                      ...additionalKeywords.filter(k => !(currentContent.keywords || []).includes(k))
+                    ];
+                    
+                    setCurrentContent({
+                      ...currentContent, 
+                      keywords: newKeywords
+                    });
+                  }}
                 />
               </div>
+              
+              {/* Предпросмотр выбранных ключевых слов */}
+              {currentContent.keywords && currentContent.keywords.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Выбранные ключевые слова:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {currentContent.keywords.map((keyword, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {keyword}
+                        <button
+                          type="button"
+                          className="h-4 w-4 rounded-full"
+                          onClick={() => {
+                            setCurrentContent({
+                              ...currentContent,
+                              keywords: currentContent.keywords?.filter((_, i) => i !== index) || []
+                            });
+                          }}
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
