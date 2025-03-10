@@ -32,6 +32,7 @@ export default function ContentPage() {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [newContent, setNewContent] = useState({
+    title: "",
     content: "",
     contentType: "text",
     imageUrl: "",
@@ -256,6 +257,7 @@ export default function ContentPage() {
     updateContentMutation.mutate({
       id: currentContent.id,
       data: {
+        title: currentContent.title,
         content: currentContent.content,
         contentType: currentContent.contentType,
         imageUrl: currentContent.imageUrl,
@@ -518,6 +520,16 @@ export default function ContentPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="title">Название контента</Label>
+              <Input
+                id="title"
+                placeholder="Введите название контента"
+                value={newContent.title}
+                onChange={(e) => setNewContent({...newContent, title: e.target.value})}
+                className="mb-4"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="contentType">Тип контента</Label>
               <Select
                 value={newContent.contentType}
@@ -702,6 +714,16 @@ export default function ContentPage() {
           </DialogHeader>
           {currentContent && (
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Название контента</Label>
+                <Input
+                  id="title"
+                  placeholder="Введите название контента"
+                  value={currentContent.title || ""}
+                  onChange={(e) => setCurrentContent({...currentContent, title: e.target.value})}
+                  className="mb-4"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="content">Промт для создания контента</Label>
                 <Textarea

@@ -154,6 +154,7 @@ export const campaignContent = pgTable("campaign_content", {
   id: uuid("id").primaryKey().defaultRandom(),
   campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
   userId: uuid("user_id").notNull(),
+  title: text("title"),
   content: text("content").notNull(),
   contentType: text("content_type").notNull(), // text, text-image, video, video-text
   imageUrl: text("image_url"),
@@ -172,6 +173,7 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
   .pick({
     campaignId: true,
     userId: true,
+    title: true,
     content: true,
     contentType: true,
     imageUrl: true,
