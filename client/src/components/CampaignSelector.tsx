@@ -24,11 +24,18 @@ export function CampaignSelector() {
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['/api/campaigns'],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) {
-        throw new Error('Не удалось загрузить кампании');
+      try {
+        const response = await fetch('/api/campaigns');
+        if (!response.ok) {
+          throw new Error('Не удалось загрузить кампании');
+        }
+        const data = await response.json();
+        console.log("Loaded campaigns:", data);
+        return data;
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+        throw error;
       }
-      return response.json();
     }
   });
 

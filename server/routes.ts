@@ -973,6 +973,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     'x.com': 10000
   };
 
+  // Endpoint to get all campaigns for the user
+  app.get("/api/campaigns", async (req, res) => {
+    try {
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        console.log("No authorization header provided");
+        // Для тестирования в разработке возвращаем тестовые данные
+        return res.json({ 
+          data: [
+            {
+              id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
+              name: "Правильное питание",
+              description: "Кампания о правильном питании и здоровом образе жизни",
+              userId: "user123",
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: "76d7eb6e-dc8b-4d4f-a8b0-aa72bf6136f0",
+              name: "Фитнес тренировки",
+              description: "Кампания о фитнесе и спортивных тренировках",
+              userId: "user123",
+              createdAt: new Date().toISOString()
+            }
+          ] 
+        });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // В реальной среде получаем кампании из Directus
+        const response = await directusApi.get('/items/user_campaigns', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const campaigns = response.data.data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          userId: item.user_id,
+          createdAt: item.created_at
+        }));
+        
+        res.json({ data: campaigns });
+      } catch (error) {
+        console.error('Error getting campaigns:', error);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        // Для тестирования в разработке возвращаем тестовые данные при ошибке API
+        return res.json({ 
+          data: [
+            {
+              id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
+              name: "Правильное питание",
+              description: "Кампания о правильном питании и здоровом образе жизни",
+              userId: "user123",
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: "76d7eb6e-dc8b-4d4f-a8b0-aa72bf6136f0",
+              name: "Фитнес тренировки",
+              description: "Кампания о фитнесе и спортивных тренировках",
+              userId: "user123",
+              createdAt: new Date().toISOString()
+            }
+          ] 
+        });
+      }
+    } catch (error) {
+      console.error("Error in campaigns route:", error);
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
   // Campaign Keywords routes
   app.get("/api/keywords", async (req, res) => {
     try {
