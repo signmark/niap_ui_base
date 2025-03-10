@@ -1294,43 +1294,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log(`Deleting content with ID: ${contentId}`);
         
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Проверить, принадлежит ли контент пользователю
-        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const existingContent = existingContentResponse.data.data;
-        
-        if (!existingContent) {
-          return res.status(404).json({ error: "Content not found" });
-        }
-        
-        if (existingContent.user_id !== userId) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
-        
-        // Удалить контент через Directus API
+        // Удалить контент напрямую через Directus API
         await directusApi.delete(`/items/campaign_content/${contentId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
+        console.log(`Successfully deleted content with ID: ${contentId}`);
         res.status(204).end();
       } catch (error) {
         console.error('Error deleting campaign content:', error);
@@ -1340,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(404).json({ error: "Content not found" });
           }
         }
-        return res.status(401).json({ error: "Invalid token or failed to delete content" });
+        return res.status(500).json({ error: "Failed to delete content" });
       }
     } catch (error) {
       console.error("Error deleting campaign content:", error);
