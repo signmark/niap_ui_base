@@ -1040,18 +1040,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Валидация данных
-        const contentData = insertCampaignContentSchema.parse({
+        // Создаем контент кампании напрямую через Directus API
+        const directusPayload = {
           ...req.body,
-          userId: userId
+          user_id: userId,
+          status: req.body.status || "draft",
+          created_at: new Date().toISOString()
+        };
+        
+        console.log("Creating campaign content:", directusPayload);
+        
+        const contentResponse = await directusApi.post('/items/campaign_content', directusPayload, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         
-        const content = await storage.createCampaignContent(contentData);
+        // Трансформируем данные из формата Directus в наш формат
+        const content = {
+          id: contentResponse.data.data.id,
+          campaignId: contentResponse.data.data.campaign_id,
+          userId: contentResponse.data.data.user_id,
+          title: contentResponse.data.data.title,
+          content: contentResponse.data.data.content,
+          contentType: contentResponse.data.data.content_type,
+          imageUrl: contentResponse.data.data.image_url,
+          videoUrl: contentResponse.data.data.video_url,
+          prompt: contentResponse.data.data.prompt,
+          keywords: contentResponse.data.data.keywords,
+          createdAt: contentResponse.data.data.created_at,
+          scheduledAt: contentResponse.data.data.scheduled_at,
+          publishedAt: contentResponse.data.data.published_at,
+          status: contentResponse.data.data.status,
+          socialPlatforms: contentResponse.data.data.social_platforms
+        };
         
         res.status(201).json({ data: content });
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error creating campaign content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(401).json({ error: "Invalid token or failed to create content" });
       }
     } catch (error) {
       console.error("Error creating campaign content:", error);
