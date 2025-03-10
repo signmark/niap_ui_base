@@ -14,7 +14,7 @@ function getCachedResults(keyword: string): any[] | null {
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContentSourceSchema } from "@shared/schema";
+import { insertContentSourceSchema, insertCampaignContentSchema } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
 import { directusApi } from './directus';
