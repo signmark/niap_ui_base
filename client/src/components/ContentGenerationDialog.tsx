@@ -1,21 +1,16 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Loader2, Wand2 } from 'lucide-react';
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { directusApi } from '@/lib/directus';
 import { queryClient } from '@/lib/queryClient';
+
 // Определение интерфейса CampainKeyword локально
 interface CampainKeyword {
   id: string;
@@ -147,154 +142,156 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
-      <DialogHeader>
-        <DialogTitle>Генерация контента</DialogTitle>
-        <DialogDescription>
-          Используйте AI для генерации контента на основе ключевых слов и промта
-        </DialogDescription>
-      </DialogHeader>
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Генерация контента</DialogTitle>
+          <DialogDescription>
+            Используйте AI для генерации контента на основе ключевых слов и промта
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="grid gap-4 py-4">
-        {!generationResult ? (
-          <>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tone" className="text-right">
-                Тон контента
-              </Label>
-              <Select
-                value={tone}
-                onValueChange={setTone}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Выберите тон контента" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="informative">Информативный</SelectItem>
-                  <SelectItem value="friendly">Дружелюбный</SelectItem>
-                  <SelectItem value="professional">Профессиональный</SelectItem>
-                  <SelectItem value="casual">Повседневный</SelectItem>
-                  <SelectItem value="humorous">С юмором</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="prompt" className="text-right">
-                Промт
-              </Label>
-              <Textarea
-                id="prompt"
-                placeholder="Опишите, какой контент вы хотите сгенерировать"
-                className="col-span-3"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">
-                Ключевые слова
-              </Label>
-              <div className="col-span-3 flex flex-wrap gap-2">
-                {keywords.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
-                  </p>
-                ) : (
-                  keywords.map((kw) => (
-                    <Button
-                      key={kw.id}
-                      variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleKeywordToggle(kw.keyword)}
-                    >
-                      {kw.keyword}
-                    </Button>
-                  ))
-                )}
+        <div className="grid gap-4 py-4">
+          {!generationResult ? (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="tone" className="text-right">
+                  Тон контента
+                </Label>
+                <Select
+                  value={tone}
+                  onValueChange={setTone}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Выберите тон контента" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="informative">Информативный</SelectItem>
+                    <SelectItem value="friendly">Дружелюбный</SelectItem>
+                    <SelectItem value="professional">Профессиональный</SelectItem>
+                    <SelectItem value="casual">Повседневный</SelectItem>
+                    <SelectItem value="humorous">С юмором</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Название
-              </Label>
-              <Input
-                id="title"
-                placeholder="Введите название для контента"
-                className="col-span-3"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
 
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="generatedContent" className="text-right pt-2">
-                Результат
-              </Label>
-              <Textarea
-                id="generatedContent"
-                className="col-span-3"
-                value={generationResult}
-                onChange={(e) => setGenerationResult(e.target.value)}
-                rows={8}
-              />
-            </div>
-          </>
-        )}
-      </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="prompt" className="text-right">
+                  Промт
+                </Label>
+                <Textarea
+                  id="prompt"
+                  placeholder="Опишите, какой контент вы хотите сгенерировать"
+                  className="col-span-3"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={4}
+                />
+              </div>
 
-      <DialogFooter>
-        {!generationResult ? (
-          <>
-            <Button variant="outline" onClick={onClose}>
-              Отмена
-            </Button>
-            <Button 
-              onClick={() => generateContent()} 
-              disabled={isPending || !prompt || selectedKeywords.length === 0}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Генерация...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  Сгенерировать
-                </>
-              )}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button 
-              variant="outline" 
-              onClick={() => setGenerationResult(null)}
-            >
-              Назад
-            </Button>
-            <Button 
-              onClick={() => saveContent()} 
-              disabled={isSaving || !title.trim()}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Сохранение...
-                </>
-              ) : (
-                "Сохранить"
-              )}
-            </Button>
-          </>
-        )}
-      </DialogFooter>
-    </DialogContent>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right pt-2">
+                  Ключевые слова
+                </Label>
+                <div className="col-span-3 flex flex-wrap gap-2">
+                  {keywords.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
+                    </p>
+                  ) : (
+                    keywords.map((kw) => (
+                      <Button
+                        key={kw.id}
+                        variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleKeywordToggle(kw.keyword)}
+                      >
+                        {kw.keyword}
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">
+                  Название
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="Введите название для контента"
+                  className="col-span-3"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="generatedContent" className="text-right pt-2">
+                  Результат
+                </Label>
+                <Textarea
+                  id="generatedContent"
+                  className="col-span-3"
+                  value={generationResult}
+                  onChange={(e) => setGenerationResult(e.target.value)}
+                  rows={8}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
+          {!generationResult ? (
+            <>
+              <Button variant="outline" onClick={onClose}>
+                Отмена
+              </Button>
+              <Button 
+                onClick={() => generateContent()} 
+                disabled={isPending || !prompt || selectedKeywords.length === 0}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Генерация...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Сгенерировать
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => setGenerationResult(null)}
+              >
+                Назад
+              </Button>
+              <Button 
+                onClick={() => saveContent()} 
+                disabled={isSaving || !title.trim()}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Сохранение...
+                  </>
+                ) : (
+                  "Сохранить"
+                )}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
