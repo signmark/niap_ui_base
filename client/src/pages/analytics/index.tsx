@@ -36,34 +36,50 @@ export default function Analytics() {
   // Получаем список кампаний из ответа API
   const campaigns = campaignsResponse?.data || [];
   
-  // Получаем общее количество ключевых слов
+  // Получаем количество ключевых слов для выбранной кампании
   const { data: totalKeywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["total_keywords"],
+    queryKey: ["total_keywords", campaignId],
     queryFn: async () => {
+      if (!campaignId) return 0;
+      
       const response = await directusApi.get('/items/user_keywords', {
         params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            }
+          },
           aggregate: {
             count: "*"
           }
         }
       });
       return response.data?.data?.[0]?.count || 0;
-    }
+    },
+    enabled: !!campaignId
   });
   
-  // Получаем общее количество сгенерированного контента
+  // Получаем количество сгенерированного контента для выбранной кампании
   const { data: totalContent, isLoading: isLoadingContent } = useQuery({
-    queryKey: ["total_content"],
+    queryKey: ["total_content", campaignId],
     queryFn: async () => {
+      if (!campaignId) return 0;
+      
       const response = await directusApi.get('/items/campaign_content', {
         params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            }
+          },
           aggregate: {
             count: "*"
           }
         }
       });
       return response.data?.data?.[0]?.count || 0;
-    }
+    },
+    enabled: !!campaignId
   });
 
   const formatDate = (date: Date) => {
