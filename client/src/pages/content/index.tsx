@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
-  ImageIcon, Video, FilePlus2, CheckCircle2, Clock 
+  ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -737,7 +737,21 @@ export default function ContentPage() {
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">
-                <Label>Выберите ключевые слова</Label>
+                <div className="flex justify-between items-center">
+                  <Label>Выберите ключевые слова</Label>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+                    }}
+                    disabled={isLoadingKeywords}
+                    className="h-8 w-8 p-0"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
+                    <span className="sr-only">Обновить</span>
+                  </Button>
+                </div>
                 <Card>
                   <CardContent className="p-4">
                     {isLoadingKeywords ? (
