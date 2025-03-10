@@ -9,13 +9,18 @@ export default function Posts() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
 
   // Получаем список кампаний
-  const { data: campaigns } = useQuery({
+  const { data: campaignsResponse } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await directusApi.get("/items/user_campaigns");
-      return response.data?.data || [];
+      const response = await fetch("/api/campaigns");
+      if (!response.ok) {
+        throw new Error("Не удалось загрузить кампании");
+      }
+      return response.json();
     }
   });
+  
+  const campaigns = campaignsResponse?.data || [];
 
   return (
     <div className="space-y-4">
