@@ -51,17 +51,18 @@ export default function ContentPage() {
   const queryClient = useQueryClient();
 
   // Запрос списка кампаний
-  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<Campaign[]>({
+  const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
       const response = await fetch('/api/campaigns');
       if (!response.ok) {
         throw new Error('Failed to fetch campaigns');
       }
-      const data = await response.json();
-      return data.data || [];
+      return response.json();
     }
   });
+  
+  const campaigns = campaignsResponse?.data || [];
 
   // Запрос списка контента для выбранной кампании
   const { data: campaignContent = [], isLoading: isLoadingContent } = useQuery<CampaignContent[]>({
