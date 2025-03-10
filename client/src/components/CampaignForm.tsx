@@ -54,7 +54,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       return response.data.data;
     },
     onSuccess: (newCampaign) => {
-      // First update the cache with new data
+      // Immediately update the cache to show the new campaign
       queryClient.setQueryData(["user_campaigns", userId], (oldData: any[] = []) => {
         return [...oldData, newCampaign];
       });
@@ -64,9 +64,11 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         description: "Кампания создана"
       });
 
-      // Reset form and close dialog after everything else
-      form.reset();
-      onClose();
+      // Schedule form closure and reset after a short delay
+      setTimeout(() => {
+        form.reset();
+        onClose();
+      }, 500);
     },
     onError: (error: Error) => {
       toast({
