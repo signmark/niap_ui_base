@@ -18,28 +18,18 @@ export default function Campaigns() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState("");
   const { userId } = useAuthStore();
-  const { toast } = useToast();
+  const { toast: add } = useToast();
 
-  const { data: campaigns, isLoading } = useQuery<Campaign[]>({
+  const { data: campaignsResponse, isLoading } = useQuery<{data: Campaign[]}>({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      if (!userId) {
-        throw new Error("Необходима авторизация");
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) {
+        throw new Error("Не удалось загрузить кампании");
       }
-
-      const { data } = await directusApi.get(`/items/user_campaigns`, {
-        params: {
-          filter: {
-            user_id: {
-              _eq: userId
-            }
-          }
-        }
-      });
-
-      return data.data;
+      return response.json();
     },
-    enabled: !!userId,
+    enabled: true,
   });
 
   const { mutate: updateCampaign } = useMutation({
@@ -50,14 +40,14 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({
+      add({
         title: "Успешно",
         description: "Название кампании обновлено"
       });
       setEditingId(null);
     },
     onError: (error: Error) => {
-      toast({
+      add({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось обновить название"
@@ -71,13 +61,13 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({
+      add({
         title: "Успешно",
         description: "Кампания удалена"
       });
     },
     onError: (error: Error) => {
-      toast({
+      add({
         title: "Ошибка",
         description: error.message,
         variant: "destructive",
@@ -119,7 +109,7 @@ export default function Campaigns() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {campaigns?.map((campaign) => (
+        {campaignsResponse?.data?.map((campaign) => (
           <Card key={campaign.id}>
             <CardHeader>
               {editingId === campaign.id ? (
