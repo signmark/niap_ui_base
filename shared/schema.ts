@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, uuid, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -148,6 +148,44 @@ export type TrendTopic = typeof trendTopics.$inferSelect;
 export type InsertTrendTopic = z.infer<typeof insertTrendTopicSchema>;
 export type SourcePost = typeof sourcePosts.$inferSelect;
 export type InsertSourcePost = z.infer<typeof insertSourcePostSchema>;
+
+// Таблица для сгенерированного контента
+export const campaignContent = pgTable("campaign_content", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
+  userId: uuid("user_id").notNull(),
+  content: text("content").notNull(),
+  contentType: text("content_type").notNull(), // text, text-image, video, video-text
+  imageUrl: text("image_url"),
+  videoUrl: text("video_url"),
+  prompt: text("prompt"),
+  keywords: text("keywords").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  scheduledAt: timestamp("scheduled_at"),
+  publishedAt: timestamp("published_at"),
+  status: text("status").default("draft"), // draft, scheduled, published
+  socialPlatforms: jsonb("social_platforms").default({})
+});
+
+// Schema для создания контента
+export const insertCampaignContentSchema = createInsertSchema(campaignContent)
+  .pick({
+    campaignId: true,
+    userId: true,
+    content: true,
+    contentType: true,
+    imageUrl: true,
+    videoUrl: true,
+    prompt: true,
+    keywords: true,
+    scheduledAt: true,
+    status: true,
+    socialPlatforms: true
+  });
+
+// Тип сгенерированного контента
+export type CampaignContent = typeof campaignContent.$inferSelect;
+export type InsertCampaignContent = z.infer<typeof insertCampaignContentSchema>;
 
 export interface KeywordSearchResult {
   keyword: string;

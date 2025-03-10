@@ -1,6 +1,19 @@
 import { db } from "./db";
-import { trendTopics, contentSources, campaigns, type Campaign, type InsertCampaign, type ContentSource, type InsertContentSource, type TrendTopic, type InsertTrendTopic } from "@shared/schema";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { 
+  trendTopics, 
+  contentSources, 
+  campaigns, 
+  campaignContent,
+  type Campaign, 
+  type InsertCampaign, 
+  type ContentSource, 
+  type InsertContentSource, 
+  type TrendTopic, 
+  type InsertTrendTopic,
+  type CampaignContent,
+  type InsertCampaignContent
+} from "@shared/schema";
+import { eq, desc, sql, and, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Campaigns
@@ -15,6 +28,14 @@ export interface IStorage {
   deleteContentSource(id: number, userId: string): Promise<void>;
   getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
+  
+  // Generated Content
+  getGeneratedContent(userId: string, campaignId?: number): Promise<GeneratedContent[]>;
+  getContentById(id: string): Promise<GeneratedContent | undefined>;
+  createGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
+  updateGeneratedContent(id: string, updates: Partial<InsertGeneratedContent>): Promise<GeneratedContent>;
+  deleteGeneratedContent(id: string): Promise<void>;
+  getScheduledContent(userId: string, campaignId?: number): Promise<GeneratedContent[]>;
 }
 
 export class DatabaseStorage implements IStorage {
