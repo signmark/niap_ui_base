@@ -222,6 +222,14 @@ export default function ContentPage() {
       return;
     }
 
+    if (!newContent.title) {
+      toast({
+        description: "Введите название контента",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!newContent.content) {
       toast({
         description: "Введите текст контента",
@@ -463,6 +471,11 @@ export default function ContentPage() {
                           </Button>
                         </div>
                       </div>
+                      {content.title && (
+                        <div className="mb-2">
+                          <h3 className="text-lg font-semibold">{content.title}</h3>
+                        </div>
+                      )}
                       <div className="mb-2">
                         <p className="whitespace-pre-wrap">{content.content}</p>
                       </div>
@@ -581,7 +594,21 @@ export default function ContentPage() {
             
             {/* Список ключевых слов кампании */}
             <div className="space-y-2">
-              <Label>Выберите ключевые слова</Label>
+              <div className="flex justify-between items-center">
+                <Label>Выберите ключевые слова</Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+                  }}
+                  disabled={isLoadingKeywords}
+                  className="h-8 w-8 p-0"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
+                  <span className="sr-only">Обновить</span>
+                </Button>
+              </div>
               <Card>
                 <CardContent className="p-4">
                   {isLoadingKeywords ? (
@@ -636,26 +663,43 @@ export default function ContentPage() {
             
             {/* Поле для ввода дополнительных ключевых слов */}
             <div className="space-y-2">
-              <Label htmlFor="additionalKeywords">Дополнительные ключевые слова (через запятую)</Label>
+              <Label htmlFor="additionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
               <Input
                 id="additionalKeywords"
                 placeholder="Например: здоровье, диета, питание"
-                onChange={(e) => {
-                  const additionalKeywords = e.target.value
-                    .split(",")
-                    .map(k => k.trim())
-                    .filter(k => k);
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    
+                    const value = e.currentTarget.value.trim();
+                    if (!value) return;
+                    
+                    // Не добавляем, если ключевое слово уже есть в списке
+                    if (!newContent.keywords.includes(value)) {
+                      setNewContent({
+                        ...newContent,
+                        keywords: [...newContent.keywords, value]
+                      });
+                    }
+                    
+                    // Очищаем поле ввода
+                    e.currentTarget.value = "";
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = e.currentTarget.value.trim();
+                  if (!value) return;
                   
-                  // Добавляем только те ключевые слова, которых нет в списке
-                  const newKeywords = [
-                    ...newContent.keywords,
-                    ...additionalKeywords.filter(k => !newContent.keywords.includes(k))
-                  ];
+                  // Не добавляем, если ключевое слово уже есть в списке
+                  if (!newContent.keywords.includes(value)) {
+                    setNewContent({
+                      ...newContent,
+                      keywords: [...newContent.keywords, value]
+                    });
+                  }
                   
-                  setNewContent({
-                    ...newContent, 
-                    keywords: newKeywords
-                  });
+                  // Очищаем поле ввода
+                  e.currentTarget.value = "";
                 }}
               />
             </div>
@@ -831,26 +875,43 @@ export default function ContentPage() {
               
               {/* Поле для ввода дополнительных ключевых слов */}
               <div className="space-y-2">
-                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (через запятую)</Label>
+                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
                 <Input
                   id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
-                  onChange={(e) => {
-                    const additionalKeywords = e.target.value
-                      .split(",")
-                      .map(k => k.trim())
-                      .filter(k => k);
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      
+                      const value = e.currentTarget.value.trim();
+                      if (!value) return;
+                      
+                      // Не добавляем, если ключевое слово уже есть в списке
+                      if (!(currentContent.keywords || []).includes(value)) {
+                        setCurrentContent({
+                          ...currentContent,
+                          keywords: [...(currentContent.keywords || []), value]
+                        });
+                      }
+                      
+                      // Очищаем поле ввода
+                      e.currentTarget.value = "";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.currentTarget.value.trim();
+                    if (!value) return;
                     
-                    // Добавляем только те ключевые слова, которых нет в списке
-                    const newKeywords = [
-                      ...(currentContent.keywords || []),
-                      ...additionalKeywords.filter(k => !(currentContent.keywords || []).includes(k))
-                    ];
+                    // Не добавляем, если ключевое слово уже есть в списке
+                    if (!(currentContent.keywords || []).includes(value)) {
+                      setCurrentContent({
+                        ...currentContent,
+                        keywords: [...(currentContent.keywords || []), value]
+                      });
+                    }
                     
-                    setCurrentContent({
-                      ...currentContent, 
-                      keywords: newKeywords
-                    });
+                    // Очищаем поле ввода
+                    e.currentTarget.value = "";
                   }}
                 />
               </div>
