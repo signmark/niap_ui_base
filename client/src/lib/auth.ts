@@ -6,98 +6,112 @@ interface AuthResponse {
     access_token: string;
     refresh_token: string;
     expires: number;
+    user: {
+      id: string;
+    };
   };
 }
 
-let refreshPromise: Promise<string> | null = null;
 let refreshTimeout: NodeJS.Timeout | null = null;
 
-export const refreshAccessToken = async (): Promise<string> => {
-  if (typeof window === 'undefined') {
-    throw new Error('This function should only be called in browser environment');
+export const setupTokenRefresh = (expires: number) => {
+  if (typeof window === 'undefined') return;
+
+  // Clear any existing refresh timeout
+  if (refreshTimeout) {
+    clearTimeout(refreshTimeout);
   }
 
-  // Если уже идет обновление, вернем тот же промис
-  if (refreshPromise) {
-    return refreshPromise;
-  }
+  // Schedule refresh 1 minute before token expires
+  const refreshIn = Math.max(expires - 60000, 1000); // Minimum 1 second
+  refreshTimeout = setTimeout(() => {
+    refreshAccessToken().catch(console.error);
+  }, refreshIn);
+};
 
+export const refreshAccessToken = async () => {
   const refreshToken = localStorage.getItem('refresh_token');
   if (!refreshToken) {
     throw new Error('No refresh token available');
   }
 
   try {
-    refreshPromise = new Promise(async (resolve, reject) => {
-      try {
-        console.log('Attempting to refresh access token...');
-        const response = await directusApi.post<AuthResponse>('/auth/refresh', {
-          refresh_token: refreshToken,
-          mode: 'json'
-        });
-
-        const { access_token, refresh_token, expires } = response.data.data;
-        console.log(`Token refresh successful. New token expires in ${expires} ms`);
-
-        // Сохраняем новые токены
-        localStorage.setItem('auth_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
-
-        // Обновляем состояние в store
-        const auth = useAuthStore.getState();
-        auth.setAuth(access_token, auth.userId);
-
-        // Планируем следующее обновление за 1 минуту до истечения
-        setupTokenRefresh(expires);
-
-        resolve(access_token);
-      } catch (error) {
-        console.error('Failed to refresh token:', error);
-        // Если не удалось обновить токен, очищаем данные авторизации
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        const auth = useAuthStore.getState();
-        auth.clearAuth();
-        reject(error);
-      }
+    const response = await directusApi.post<AuthResponse>('/auth/refresh', {
+      refresh_token: refreshToken,
+      mode: 'json'
     });
 
-    return refreshPromise;
-  } finally {
-    refreshPromise = null;
+    const { access_token, refresh_token, expires } = response.data.data;
+
+    // Update tokens
+    localStorage.setItem('auth_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+
+    // Update auth store
+    const auth = useAuthStore.getState();
+    auth.setAuth(access_token, auth.userId);
+
+    // Setup next refresh
+    setupTokenRefresh(expires);
+
+    return access_token;
+  } catch (error) {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    throw error;
   }
 };
 
-export const setupTokenRefresh = (expires: number) => {
-  if (typeof window === 'undefined') return;
-
-  // Очищаем предыдущий таймер, если он был
-  if (refreshTimeout) {
-    clearTimeout(refreshTimeout);
-  }
-
-  console.log('Setting up token refresh. Token expires in:', expires, 'ms');
-
-  // Устанавливаем обновление токена за 1 минуту до истечения
-  const refreshIn = Math.max(expires - 60000, 1000); // Минимум 1 секунда
-  console.log(`Scheduling initial token refresh in ${refreshIn} ms`);
-
-  refreshTimeout = setTimeout(() => {
-    refreshAccessToken().catch(error => {
-      console.error('Failed to refresh token in scheduled refresh:', error);
+export const loginWithDirectus = async (email: string, password: string) => {
+  try {
+    const response = await directusApi.post<AuthResponse>('/auth/login', {
+      email,
+      password,
     });
-  }, refreshIn);
+
+    const { access_token, refresh_token, expires, user } = response.data.data;
+
+    // Save tokens
+    localStorage.setItem('auth_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+
+    // Update auth store with user ID
+    const auth = useAuthStore.getState();
+    auth.setAuth(access_token, user.id);
+
+    // Setup token refresh
+    setupTokenRefresh(expires);
+
+    return { access_token, user };
+  } catch (error: any) {
+    console.error('Login error:', error);
+    throw new Error(error.response?.data?.errors?.[0]?.message || error.message);
+  }
 };
 
-// Функция для начальной настройки при логине
-export const setupInitialAuth = (expires: number) => {
-  setupTokenRefresh(expires);
-
-  // Добавляем обработчик для обновления токена при возвращении на вкладку
-  window.addEventListener('focus', () => {
-    const authToken = localStorage.getItem('auth_token');
-    if (authToken) {
-      refreshAccessToken().catch(console.error);
+export const logout = async () => {
+  try {
+    // Clear refresh timeout
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
     }
-  });
+
+    // Clear tokens
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+
+    // Clear auth store
+    const auth = useAuthStore.getState();
+    auth.clearAuth();
+
+    // Try to logout from Directus
+    try {
+      await directusApi.post('/auth/logout');
+    } catch (error) {
+      console.warn('Error during logout:', error);
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
 };

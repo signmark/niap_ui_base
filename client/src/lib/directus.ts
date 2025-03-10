@@ -1,35 +1,73 @@
 import axios from 'axios';
+import { useAuthStore } from './store';
 
-// Base URL for Directus API
 export const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
-// Create axios instance for Directus API
 export const directusApi = axios.create({
   baseURL: DIRECTUS_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   }
 });
 
-// Request interceptor to add auth token
-directusApi.interceptors.request.use(config => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers = {
-      ...config.headers,
-      'Authorization': `Bearer ${token}`
-    };
-  }
-  return config;
-});
-
-// Response interceptor for error handling
-directusApi.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.data?.errors?.[0]) {
-      throw new Error(error.response.data.errors[0].message);
+// Add request interceptor to handle auth token
+directusApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
     }
-    throw error;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+directusApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // If we get a 401 error and have a refresh token, try to refresh the access token
+    if (error.response?.status === 401) {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${DIRECTUS_URL}/auth/refresh`, {
+            refresh_token: refreshToken,
+            mode: 'json'
+          });
+
+          const { access_token } = response.data.data;
+          localStorage.setItem('auth_token', access_token);
+
+          // Update auth store
+          const auth = useAuthStore.getState();
+          auth.setAuth(access_token, auth.userId);
+
+          // Retry original request
+          const originalRequest = error.config;
+          originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+          return axios(originalRequest);
+        } catch (refreshError) {
+          // If refresh fails, clear auth and throw error
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('refresh_token');
+          const auth = useAuthStore.getState();
+          auth.clearAuth();
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+    }
+
+    // For other errors, throw with meaningful message
+    const message = error.response?.data?.errors?.[0]?.message || 
+                   error.response?.data?.error?.message ||
+                   error.message ||
+                   'An error occurred';
+    throw new Error(message);
   }
 );
