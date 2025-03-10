@@ -42,7 +42,7 @@ export default function ContentPage() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [activeTab, setActiveTab] = useState<string>("all");
   
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const queryClient = useQueryClient();
 
   // Запрос списка кампаний
@@ -111,20 +111,27 @@ export default function ContentPage() {
       });
     },
     onSuccess: () => {
-      toast({
-        description: "Контент успешно создан",
-      });
-      setIsCreateDialogOpen(false);
-      setNewContent({
-        title: "",
-        content: "",
-        contentType: "text",
-        imageUrl: "",
-        videoUrl: "",
-        keywords: []
-      });
-      // Обновляем данные
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      // Сначала обновляем данные, затем закрываем диалог
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          // Показываем уведомление об успехе
+          toast({
+            description: "Контент успешно создан",
+          });
+          
+          // Сбрасываем форму
+          setNewContent({
+            title: "",
+            content: "",
+            contentType: "text",
+            imageUrl: "",
+            videoUrl: "",
+            keywords: []
+          });
+          
+          // Закрываем диалог
+          setIsCreateDialogOpen(false);
+        });
     },
     onError: (error: Error) => {
       toast({
@@ -144,13 +151,15 @@ export default function ContentPage() {
       });
     },
     onSuccess: () => {
-      toast({
-        description: "Контент успешно обновлен",
-      });
-      setIsEditDialogOpen(false);
-      setCurrentContent(null);
-      // Обновляем данные
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      // Сначала обновляем данные, затем закрываем диалог
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          toast({
+            description: "Контент успешно обновлен",
+          });
+          setIsEditDialogOpen(false);
+          setCurrentContent(null);
+        });
     },
     onError: (error: Error) => {
       toast({
@@ -169,11 +178,13 @@ export default function ContentPage() {
       });
     },
     onSuccess: () => {
-      toast({
-        description: "Контент успешно удален",
-      });
-      // Обновляем данные
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      // Сначала обновляем данные, затем показываем уведомление
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          toast({
+            description: "Контент успешно удален",
+          });
+        });
     },
     onError: (error: Error) => {
       toast({
@@ -196,13 +207,15 @@ export default function ContentPage() {
       });
     },
     onSuccess: () => {
-      toast({
-        description: "Публикация запланирована",
-      });
-      setIsScheduleDialogOpen(false);
-      setCurrentContent(null);
-      // Обновляем данные
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      // Сначала обновляем данные, затем закрываем диалог
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          toast({
+            description: "Публикация запланирована",
+          });
+          setIsScheduleDialogOpen(false);
+          setCurrentContent(null);
+        });
     },
     onError: (error: Error) => {
       toast({
