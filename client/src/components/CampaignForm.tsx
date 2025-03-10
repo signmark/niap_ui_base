@@ -66,13 +66,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         };
         console.log('Request payload:', payload);
 
-        const response = await directusApi.post('items/campaigns', payload, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
+        const response = await directusApi.post('/items/campaigns', payload);
         console.log('Directus API response:', response);
 
         if (!response.data?.data) {
@@ -84,7 +78,6 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       } catch (error: any) {
         console.error('Directus API error:', error);
         console.error('Error response:', error.response?.data);
-        // Добавляем больше деталей об ошибке в сообщение
         const errorMessage = error.response?.data?.errors?.[0]?.message || 
                            error.response?.data?.error?.message ||
                            "Ошибка при создании кампании";

@@ -13,7 +13,6 @@ export const directusApi = axios.create({
 // Add a request interceptor
 directusApi.interceptors.request.use(
   (config) => {
-    // Получаем токен из localStorage напрямую
     const token = localStorage.getItem('auth_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -36,7 +35,7 @@ directusApi.interceptors.response.use(
 
     if (error.response?.status === 403) {
       console.error('Permission denied:', error.response.data);
-      return Promise.reject(new Error(error.response.data.errors?.[0]?.message || 'Нет прав доступа'));
+      throw new Error(error.response.data.errors?.[0]?.message || 'Нет прав доступа');
     }
 
     // Если ошибка 401 и это не запрос на обновление токена
@@ -54,25 +53,27 @@ directusApi.interceptors.response.use(
 
         // Пробуем обновить токен
         const response = await axios.post(`${DIRECTUS_URL}/auth/refresh`, {
-          refresh_token: refreshToken
+          refresh_token: refreshToken,
+          mode: 'json'
         });
 
-        const newToken = response.data.data.access_token;
-        localStorage.setItem('auth_token', newToken);
+        const { access_token, refresh_token } = response.data.data;
+        localStorage.setItem('auth_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
 
         console.log('Token refresh successful, retrying original request');
 
         // Повторяем исходный запрос с новым токеном
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
         return directusApi(originalRequest);
-      } catch (refreshError) {
-        console.error('Failed to refresh token:', refreshError);
-        // Если не удалось обновить токен, очищаем авторизацию
-        useAuthStore.getState().clearAuth();
-        if (window.location.pathname !== '/auth/login') {
-          window.location.href = '/auth/login';
-        }
-        return Promise.reject(refreshError);
+      } catch (error) {
+        console.error('Failed to refresh token:', error);
+        // Если не удалось обновить токен, очищаем данные авторизации
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        const auth = useAuthStore.getState();
+        auth.clearAuth();
+        throw error;
       }
     }
 
