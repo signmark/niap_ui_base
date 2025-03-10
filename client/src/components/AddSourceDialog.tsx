@@ -37,7 +37,7 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
     defaultValues: {
       name: "",
       url: "",
-      type: ""
+      type: "auto" // "Определить" как значение по умолчанию
     }
   });
 
@@ -115,7 +115,7 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
     }
   });
 
-  const isSocialMedia = (type: string) => ['telegram', 'vk'].includes(type);
+  const isSocialMedia = (type: string) => ['telegram', 'vk', 'instagram', 'facebook'].includes(type);
 
   if (parseResults) {
     return (
@@ -179,9 +179,12 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
                     <SelectValue placeholder="Выберите тип источника" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="auto">Определить</SelectItem>
                     <SelectItem value="website">Веб-сайт</SelectItem>
                     <SelectItem value="telegram">Telegram канал</SelectItem>
                     <SelectItem value="vk">VK группа</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
