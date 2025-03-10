@@ -25,7 +25,7 @@ const campaignFormSchema = z.object({
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const { userId } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
