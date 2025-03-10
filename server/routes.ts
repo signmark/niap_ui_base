@@ -871,22 +871,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Fetching keywords for campaign:", campaignId);
       
-      // Здесь можно получить keywords из базы данных
-      // В тестовых целях используем моковые данные
-      const keywords = [
-        { id: "1", keyword: "магазин дачной мебели", trendScore: 98 },
-        { id: "2", keyword: "ротанговая мебель", trendScore: 87 },
-        { id: "3", keyword: "плетеная мебель", trendScore: 76 },
-        { id: "4", keyword: "мебель для сада", trendScore: 65 },
-        { id: "5", keyword: "столы и стулья для дачи", trendScore: 54 },
-        { id: "6", keyword: "дачный интерьер", trendScore: 43 },
-        { id: "7", keyword: "садовые кресла", trendScore: 32 },
-        { id: "8", keyword: "уличная мебель", trendScore: 21 },
-        { id: "9", keyword: "диван для террасы", trendScore: 10 },
-        { id: "10", keyword: "деревянная мебель", trendScore: 9 }
-      ];
+      // Получаем токен из заголовка
+      const authHeader = req.headers['authorization'];
       
-      res.json({ data: keywords });
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получаем ключевые слова из Directus через таблицу user_keywords
+        const response = await directusApi.get('/items/user_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
+            },
+            fields: ['id', 'keyword', 'trend_score', 'campaign_id']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log('Directus keywords API response:', {
+          status: response.status,
+          dataLength: response.data?.data?.length,
+          firstKeyword: response.data?.data?.[0]
+        });
+        
+        // Преобразуем данные из Directus в нужный формат
+        const keywords = (response.data?.data || []).map((item: any) => ({
+          id: item.id,
+          keyword: item.keyword,
+          trendScore: item.trend_score
+        }));
+        
+        res.json({ data: keywords });
+      } catch (error) {
+        console.error('Error fetching keywords from Directus:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Directus API error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              params: error.config?.params
+            }
+          });
+        }
+        return res.status(401).json({ error: "Invalid token or failed to fetch keywords" });
+      }
     } catch (error) {
       console.error("Error fetching keywords:", error);
       res.status(500).json({ error: "Failed to fetch keywords" });
