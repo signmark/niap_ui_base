@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { directusApi } from '@/lib/directus';
 import { queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 
 // Определение интерфейса CampainKeyword локально
 interface CampainKeyword {
@@ -26,7 +26,7 @@ interface ContentGenerationDialogProps {
 }
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<string | null>(null);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
@@ -106,14 +106,18 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         throw new Error('Введите название для контента');
       }
 
-      return await directusApi.post('/items/campaign_content', {
-        campaign_id: campaignId,
-        title: title,
-        content: generationResult,
-        content_type: 'text',
-        prompt: prompt,
-        keywords: selectedKeywords,
-        status: 'draft'
+      // Используем нашу серверную API вместо прямого обращения к Directus
+      return await apiRequest('/api/campaign-content', {
+        method: 'POST',
+        data: {
+          campaignId: campaignId,
+          title: title,
+          content: generationResult,
+          contentType: 'text',
+          prompt: prompt,
+          keywords: selectedKeywords,
+          status: 'draft'
+        }
       });
     },
     onSuccess: () => {
@@ -237,7 +241,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   className="col-span-3"
                   value={generationResult}
                   onChange={(e) => setGenerationResult(e.target.value)}
-                  rows={8}
+                  rows={15}
+                  style={{ minHeight: '300px' }}
                 />
               </div>
             </>
