@@ -55,10 +55,8 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
     onSuccess: (newCampaign) => {
       // Immediately update the cache to show the new campaign
-      queryClient.setQueryData(["user_campaigns", userId], (oldData: any[] = []) => {
-        return [...oldData, newCampaign];
-      });
-
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      
       // Show success message
       toast({
         description: "Кампания создана"
