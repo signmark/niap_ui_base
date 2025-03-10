@@ -1073,8 +1073,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log("Creating new campaign content");
         
+        // Получаем ID пользователя из токена - это обязательное поле для Directus
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
         // Создаем контент кампании напрямую через Directus API
-        // Запрос user_id не требуется, так как Directus API автоматически его добавит
         const directusPayload = {
           campaign_id: req.body.campaignId,
           content_type: req.body.contentType,
@@ -1085,6 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
+          user_id: userId,
           created_at: new Date().toISOString()
         };
         
@@ -1151,8 +1164,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log(`Updating content with ID: ${contentId}`);
         
-        // Directus API автоматически проверяет права доступа, поэтому нам не нужно делать дополнительные проверки
+        // Получаем ID пользователя из токена - это может потребоваться для обновления
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        // Directus API автоматически проверяет права доступа
         // Преобразуем данные для Directus
         const directusPayload = {
           content_type: req.body.contentType,
@@ -1162,7 +1187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           video_url: req.body.videoUrl,
           // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
-          status: req.body.status
+          status: req.body.status,
+          user_id: userId
         };
         
         // Обновляем данные через Directus API
