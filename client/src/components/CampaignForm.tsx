@@ -49,9 +49,12 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       try {
         console.log('Sending request to Directus API');
         const payload = {
-          name: values.name,
-          description: values.description || null,
-          user_id: userId
+          name: values.name.trim(),
+          description: values.description?.trim() || null,
+          user_id: userId,
+          status: 'active',
+          date_created: new Date().toISOString(),
+          date_updated: new Date().toISOString()
         };
         console.log('Request payload:', payload);
 

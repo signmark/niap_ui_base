@@ -16,7 +16,7 @@ directusApi.interceptors.request.use(
     // Получаем токен из localStorage напрямую
     const token = localStorage.getItem('auth_token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -33,6 +33,11 @@ directusApi.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+
+    if (error.response?.status === 403) {
+      console.error('Permission denied:', error.response.data);
+      return Promise.reject(new Error(error.response.data.errors?.[0]?.message || 'Нет прав доступа'));
+    }
 
     // Если ошибка 401 и это не запрос на обновление токена
     if (error.response?.status === 401 && !originalRequest._retry && 
