@@ -957,12 +957,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        const content = await storage.getCampaignContent(userId, campaignId);
+        // Создаем фильтр для запроса
+        const filter: any = {
+          user_id: {
+            _eq: userId
+          }
+        };
         
-        res.json({ data: content });
+        // Если указан campaignId, добавляем его в фильтр
+        if (campaignId) {
+          filter.campaign_id = {
+            _eq: campaignId
+          }
+        }
+        
+        // Получаем контент напрямую из Directus API
+        const contentResponse = await directusApi.get('/items/campaign_content', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: filter
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const contentItems = contentResponse.data.data.map((item: any) => ({
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {}
+        }));
+        
+        res.json({ data: contentItems });
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error getting campaign content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(401).json({ error: "Invalid token or failed to fetch content" });
       }
     } catch (error) {
       console.error("Error fetching campaign content:", error);
@@ -995,20 +1039,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        const content = await storage.getCampaignContentById(contentId);
+        // Получаем контент напрямую из Directus API
+        const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (!content) {
-          return res.status(404).json({ error: "Content not found" });
-        }
+        const item = contentResponse.data.data;
         
-        if (content.userId !== userId) {
+        // Проверяем, принадлежит ли контент текущему пользователю
+        if (item.user_id !== userId) {
           return res.status(403).json({ error: "Forbidden" });
         }
         
+        // Преобразуем данные из формата Directus в наш формат
+        const content = {
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {}
+        };
+        
         res.json({ data: content });
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error getting campaign content by ID:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+          if (error.response.status === 404) {
+            return res.status(404).json({ error: "Content not found" });
+          }
+        }
+        return res.status(401).json({ error: "Invalid token or failed to fetch content" });
       }
     } catch (error) {
       console.error("Error fetching campaign content:", error);
@@ -1118,23 +1191,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Проверить, принадлежит ли контент пользователю
-        const existingContent = await storage.getCampaignContentById(contentId);
+        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const existingContent = existingContentResponse.data.data;
         
         if (!existingContent) {
           return res.status(404).json({ error: "Content not found" });
         }
         
-        if (existingContent.userId !== userId) {
+        if (existingContent.user_id !== userId) {
           return res.status(403).json({ error: "Forbidden" });
         }
         
-        // Обновить контент
-        const updatedContent = await storage.updateCampaignContent(contentId, req.body);
+        // Преобразуем данные для Directus
+        const directusPayload = {
+          ...req.body,
+          user_id: userId
+        };
+        
+        // Обновляем данные через Directus API
+        const updatedContentResponse = await directusApi.patch(`/items/campaign_content/${contentId}`, directusPayload, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const item = updatedContentResponse.data.data;
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const updatedContent = {
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {}
+        };
         
         res.json({ data: updatedContent });
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error updating campaign content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+          if (error.response.status === 404) {
+            return res.status(404).json({ error: "Content not found" });
+          }
+        }
+        return res.status(401).json({ error: "Invalid token or failed to update content" });
       }
     } catch (error) {
       console.error("Error updating campaign content:", error);
@@ -1168,23 +1284,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Проверить, принадлежит ли контент пользователю
-        const existingContent = await storage.getCampaignContentById(contentId);
+        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const existingContent = existingContentResponse.data.data;
         
         if (!existingContent) {
           return res.status(404).json({ error: "Content not found" });
         }
         
-        if (existingContent.userId !== userId) {
+        if (existingContent.user_id !== userId) {
           return res.status(403).json({ error: "Forbidden" });
         }
         
-        // Удалить контент
-        await storage.deleteCampaignContent(contentId);
+        // Удалить контент через Directus API
+        await directusApi.delete(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         res.status(204).end();
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error deleting campaign content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+          if (error.response.status === 404) {
+            return res.status(404).json({ error: "Content not found" });
+          }
+        }
+        return res.status(401).json({ error: "Invalid token or failed to delete content" });
       }
     } catch (error) {
       console.error("Error deleting campaign content:", error);
@@ -1217,12 +1349,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        const scheduledContent = await storage.getScheduledContent(userId, campaignId);
+        // Создаем фильтр для запроса
+        const filter: any = {
+          user_id: {
+            _eq: userId
+          },
+          status: {
+            _eq: "scheduled"
+          },
+          scheduled_at: {
+            _nnull: true
+          }
+        };
         
-        res.json({ data: scheduledContent });
+        // Если указан campaignId, добавляем его в фильтр
+        if (campaignId) {
+          filter.campaign_id = {
+            _eq: campaignId
+          }
+        }
+        
+        // Получаем запланированный контент напрямую из Directus API
+        const contentResponse = await directusApi.get('/items/campaign_content', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: filter,
+            sort: ["scheduled_at"]
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const contentItems = contentResponse.data.data.map((item: any) => ({
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {}
+        }));
+        
+        res.json({ data: contentItems });
       } catch (error) {
-        console.error('Error getting user from token:', error);
-        return res.status(401).json({ error: "Invalid token" });
+        console.error('Error fetching scheduled content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(401).json({ error: "Invalid token or failed to fetch scheduled content" });
       }
     } catch (error) {
       console.error("Error fetching scheduled content:", error);
