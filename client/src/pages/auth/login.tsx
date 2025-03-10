@@ -18,7 +18,7 @@ const loginSchema = z.object({
 });
 
 export default function Login() {
-  const toast = useToast();
+  const { toast } = useToast();
   const [, navigate] = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -55,14 +55,14 @@ export default function Login() {
 
       navigate("/campaigns");
 
-      toast.add({
+      toast({
         title: "Успешный вход",
         description: "Добро пожаловать в SMM Manager",
       });
 
     } catch (error) {
       console.error('Login error:', error);
-      toast.add({
+      toast({
         title: "Ошибка входа",
         description: error instanceof Error ? error.message : "Проверьте email и пароль",
         variant: "destructive",
