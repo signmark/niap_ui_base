@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { useAuthStore } from './store';
-import { refreshAccessToken } from './auth';
 
 export const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
@@ -14,11 +13,10 @@ export const directusApi = axios.create({
 // Add a request interceptor
 directusApi.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = useAuthStore.getState().token;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    // Получаем токен из localStorage напрямую
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -38,14 +36,25 @@ directusApi.interceptors.response.use(
 
     // Если ошибка 401 и это не запрос на обновление токена
     if (error.response?.status === 401 && !originalRequest._retry && 
-        !originalRequest.url?.includes('/auth/refresh') &&
-        typeof window !== 'undefined') {
+        !originalRequest.url?.includes('/auth/refresh')) {
       originalRequest._retry = true;
 
       try {
         console.log('Token expired, attempting to refresh...');
+        const refreshToken = localStorage.getItem('refresh_token');
+
+        if (!refreshToken) {
+          throw new Error('No refresh token found');
+        }
+
         // Пробуем обновить токен
-        const newToken = await refreshAccessToken();
+        const response = await axios.post(`${DIRECTUS_URL}/auth/refresh`, {
+          refresh_token: refreshToken
+        });
+
+        const newToken = response.data.data.access_token;
+        localStorage.setItem('auth_token', newToken);
+
         console.log('Token refresh successful, retrying original request');
 
         // Повторяем исходный запрос с новым токеном

@@ -46,26 +46,16 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         throw new Error("Необходима авторизация");
       }
 
-      const authToken = localStorage.getItem('auth_token');
-      console.log('Auth token present:', !!authToken);
-
-      if (!authToken) {
-        console.error('No auth token found');
-        throw new Error("Токен авторизации не найден");
-      }
-
       try {
         console.log('Sending request to Directus API');
-        const response = await directusApi.post('/items/user_campaigns', {
+        const payload = {
           name: values.name,
           description: values.description || null,
           user_id: userId
-        }, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
+        };
+        console.log('Request payload:', payload);
 
+        const response = await directusApi.post('/items/user_campaigns', payload);
         console.log('Directus API response:', response);
 
         if (!response.data?.data) {
