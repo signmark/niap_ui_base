@@ -48,6 +48,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
       const authToken = localStorage.getItem('auth_token');
       console.log('Auth token:', authToken ? 'Present' : 'Missing');
+      console.log('Token being used:', authToken ? `Bearer ${authToken.substring(0, 10)}...` : 'none');
 
       if (!authToken) {
         console.error('No auth token found');
@@ -66,8 +67,13 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         };
         console.log('Request payload:', payload);
 
-        const response = await directusApi.post('/items/user_campaigns', payload);
-        console.log('Directus API response:', response);
+        const response = await directusApi.post('/items/user_campaigns', payload, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, */*'
+          }
+        });
 
         if (!response.data?.data) {
           console.error('Invalid response format:', response);
@@ -79,8 +85,8 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         console.error('Directus API error:', error);
         console.error('Error response:', error.response?.data);
         const errorMessage = error.response?.data?.errors?.[0]?.message || 
-                           error.response?.data?.error?.message ||
-                           "Ошибка при создании кампании";
+                         error.response?.data?.error?.message ||
+                         "Ошибка при создании кампании";
         throw new Error(errorMessage);
       }
     },

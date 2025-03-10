@@ -8,15 +8,33 @@ export const directusApi = axios.create({
   baseURL: DIRECTUS_URL,
   headers: {
     'Content-Type': 'application/json',
-  },
+    'Accept': 'application/json, text/plain, */*'
+  }
 });
 
 // Add a request interceptor
 directusApi.interceptors.request.use(
   (config) => {
+    // Ensure headers object exists
+    if (!config.headers) {
+      config.headers = {};
+    }
+
     const token = localStorage.getItem('auth_token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      // Добавляем больше логирования
+      console.log('Adding auth token to request:', {
+        url: config.url,
+        method: config.method,
+        data: config.data,
+        token: `Bearer ${token.substring(0, 10)}...`, // Log only part of the token for security
+        headers: config.headers
+      });
+
+      // Set authorization header
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('No auth token found for request:', config.url);
     }
     return config;
   },
@@ -35,8 +53,17 @@ directusApi.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 403) {
-      console.error('Permission denied:', error.response.data);
-      throw new Error('Нет прав доступа к данному ресурсу');
+      console.error('Permission denied:', {
+        url: originalRequest.url,
+        method: originalRequest.method,
+        data: originalRequest.data,
+        headers: {
+          ...originalRequest.headers,
+          Authorization: originalRequest.headers.Authorization ? 'Bearer [hidden]' : 'none'
+        },
+        response: error.response.data
+      });
+      throw new Error(error.response.data.errors?.[0]?.message || 'Нет прав доступа к данному ресурсу');
     }
 
     // Handle 401 error (unauthorized)
@@ -44,7 +71,6 @@ directusApi.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Try to refresh token
         const refreshToken = localStorage.getItem('refresh_token');
         if (!refreshToken) {
           throw new Error('Refresh token not found');
@@ -65,8 +91,8 @@ directusApi.interceptors.response.use(
         const auth = useAuthStore.getState();
         auth.setAuth(access_token, auth.userId);
 
-        // Retry original request
-        originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return directusApi(originalRequest);
       } catch (error) {
         // Clear auth on refresh failure
