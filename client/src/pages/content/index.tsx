@@ -57,7 +57,7 @@ export default function ContentPage() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [activeTab, setActiveTab] = useState<string>("all");
   
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Запрос списка кампаний
