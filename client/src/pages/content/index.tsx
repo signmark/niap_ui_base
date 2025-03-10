@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
+import { useCampaignStore } from "@/lib/campaignStore";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -29,7 +30,16 @@ const formatDate = (date: string | Date) => {
 };
 
 export default function ContentPage() {
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>();
+  // Используем глобальный стор выбранной кампании
+  const { selectedCampaign } = useCampaignStore();
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
+  
+  // Обновляем локальный ID кампании когда меняется глобальный выбор
+  useEffect(() => {
+    if (selectedCampaign?.id) {
+      setSelectedCampaignId(selectedCampaign.id);
+    }
+  }, [selectedCampaign]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
@@ -395,39 +405,7 @@ export default function ContentPage() {
         </div>
       </div>
 
-      {/* Выбор кампании */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Выберите кампанию</CardTitle>
-          <CardDescription>Выберите кампанию для управления контентом</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={selectedCampaignId}
-            onValueChange={setSelectedCampaignId}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingCampaigns ? (
-                <SelectItem value="loading">Загрузка...</SelectItem>
-              ) : !campaigns || campaigns.length === 0 ? (
-                <SelectItem value="empty">Нет доступных кампаний</SelectItem>
-              ) : (
-                campaigns.map((campaign) => (
-                  <SelectItem
-                    key={campaign.id}
-                    value={campaign.id.toString()}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {/* Используется глобальный выбор кампаний в верхней панели */}
 
       {/* Контент кампании */}
       {selectedCampaignId && (

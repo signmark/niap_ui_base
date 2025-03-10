@@ -1,26 +1,10 @@
-import { useState } from "react";
 import { PostCalendar } from "@/components/PostCalendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { directusApi } from "@/lib/directus";
+import { useCampaignStore } from "@/lib/campaignStore";
 
 export default function Posts() {
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
-
-  // Получаем список кампаний
-  const { data: campaignsResponse } = useQuery({
-    queryKey: ["/api/campaigns"],
-    queryFn: async () => {
-      const response = await fetch("/api/campaigns");
-      if (!response.ok) {
-        throw new Error("Не удалось загрузить кампании");
-      }
-      return response.json();
-    }
-  });
-  
-  const campaigns = campaignsResponse?.data || [];
+  // Используем глобальный стор выбранной кампании
+  const { selectedCampaign } = useCampaignStore();
 
   return (
     <div className="space-y-4">
@@ -31,28 +15,12 @@ export default function Posts() {
         </p>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <Select 
-            value={selectedCampaign} 
-            onValueChange={setSelectedCampaign}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Выберите кампанию" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns?.map((campaign: any) => (
-                <SelectItem key={campaign.id} value={campaign.id}>
-                  {campaign.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {selectedCampaign && (
-        <PostCalendar campaignId={selectedCampaign} />
+      {selectedCampaign ? (
+        <PostCalendar campaignId={selectedCampaign.id} />
+      ) : (
+        <div className="text-center py-10 text-muted-foreground">
+          Пожалуйста, выберите кампанию в селекторе сверху
+        </div>
       )}
     </div>
   );
