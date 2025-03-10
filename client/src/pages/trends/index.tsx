@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCampaignStore } from "@/lib/campaignStore";
 
 interface Campaign {
   id: string;
@@ -85,12 +86,21 @@ export default function Trends() {
   const [isSearchingNewSources, setIsSearchingNewSources] = useState(false);
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+  // Используем глобальный стор кампаний
+  const { selectedCampaign } = useCampaignStore();
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
   const { add: toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Обновляем локальный ID кампании когда меняется глобальный выбор
+  useEffect(() => {
+    if (selectedCampaign?.id) {
+      setSelectedCampaignId(selectedCampaign.id);
+    }
+  }, [selectedCampaign]);
 
   // Эффект для очистки интервала при размонтировании
   useEffect(() => {
@@ -665,28 +675,7 @@ export default function Trends() {
       </div>
 
       <div className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <Select
-              value={selectedCampaignId}
-              onValueChange={setSelectedCampaignId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Выберите кампанию" />
-              </SelectTrigger>
-              <SelectContent>
-                {campaigns.map((campaign) => (
-                  <SelectItem
-                    key={campaign.id}
-                    value={campaign.id}
-                  >
-                    {campaign.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        {/* Используется глобальный селектор кампаний */}
 
         {isValidCampaignSelected && (
           <>
