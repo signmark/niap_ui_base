@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { setupInitialAuth } from "@/lib/auth";
+import { setupTokenRefresh, refreshAccessToken } from "@/lib/auth";
 
 type LoginResponse = {
   access_token: string;
@@ -44,6 +44,16 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { add: toast } = useToast();
 
+  // Пробуем обновить токен при загрузке приложения
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    if (token && refreshToken) {
+      refreshAccessToken().catch(console.error);
+    }
+  }, []);
+
   const {
     data: user,
     error,
@@ -76,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
-      setupInitialAuth(data.expires);
+      setupTokenRefresh(data.expires);
       queryClient.setQueryData(["/auth/me"], data.user);
     },
     onError: (error: Error) => {
@@ -108,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
-      setupInitialAuth(data.expires);
+      setupTokenRefresh(data.expires);
       queryClient.setQueryData(["/auth/me"], data.user);
     },
     onError: (error: Error) => {
