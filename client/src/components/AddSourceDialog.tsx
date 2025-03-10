@@ -31,6 +31,7 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   const toast = useToast();
   const [isParsingSource, setIsParsingSource] = useState(false);
   const [parseResults, setParseResults] = useState<any>(null);
+  const [detectedSourceType, setDetectedSourceType] = useState<string | null>(null);
 
   const form = useForm<SourceForm>({
     resolver: zodResolver(sourceSchema),
@@ -116,6 +117,23 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
   });
 
   const isSocialMedia = (type: string) => ['telegram', 'vk', 'instagram', 'facebook'].includes(type);
+  
+  // Функция для автоматического определения типа источника по URL
+  const detectSourceType = (url: string): string => {
+    const normalizedUrl = url.toLowerCase();
+    
+    if (normalizedUrl.includes('t.me') || normalizedUrl.includes('telegram')) {
+      return 'telegram';
+    } else if (normalizedUrl.includes('vk.com') || normalizedUrl.includes('vkontakte')) {
+      return 'vk';
+    } else if (normalizedUrl.includes('instagram') || normalizedUrl.includes('ig.me')) {
+      return 'instagram';
+    } else if (normalizedUrl.includes('facebook') || normalizedUrl.includes('fb.com') || normalizedUrl.includes('fb.me')) {
+      return 'facebook';
+    } else {
+      return 'website';
+    }
+  };
 
   if (parseResults) {
     return (
@@ -136,7 +154,14 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
         <DialogTitle>Добавить источник для анализа</DialogTitle>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => createSource(values))} className="space-y-4">
+        <form onSubmit={form.handleSubmit((values) => {
+          // Если выбран тип "auto", определяем реальный тип источника
+          if (values.type === 'auto') {
+            const detectedType = detectSourceType(values.url);
+            values.type = detectedType; // Заменяем "auto" на определенный тип
+          }
+          createSource(values);
+        })} className="space-y-4">
           <FormField
             control={form.control}
             name="name"
@@ -158,9 +183,33 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
               <FormItem>
                 <FormLabel>URL</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input 
+                    {...field} 
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Если выбран тип "auto", автоматически определяем тип при вводе URL
+                      if (form.getValues('type') === 'auto' && e.target.value) {
+                        const detectedType = detectSourceType(e.target.value);
+                        setDetectedSourceType(detectedType); // Сохраняем определенный тип
+                        form.setValue('type', 'auto'); // Оставляем "auto" в UI, но будем использовать реальный тип при отправке
+                      } else if (!e.target.value) {
+                        setDetectedSourceType(null);
+                      }
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
+                {form.getValues('type') === 'auto' && detectedSourceType && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Определен тип: {
+                      detectedSourceType === 'telegram' ? 'Telegram канал' :
+                      detectedSourceType === 'vk' ? 'VK группа' :
+                      detectedSourceType === 'instagram' ? 'Instagram' :
+                      detectedSourceType === 'facebook' ? 'Facebook' :
+                      'Веб-сайт'
+                    }
+                  </p>
+                )}
               </FormItem>
             )}
           />
@@ -196,11 +245,21 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
             <Button variant="outline" onClick={onClose} type="button">
               Отмена
             </Button>
-            {isSocialMedia(form.getValues('type')) && (
+            {(isSocialMedia(form.getValues('type')) || 
+              (form.getValues('type') === 'auto' && detectedSourceType && isSocialMedia(detectedSourceType))) && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => parseSource(form.getValues())}
+                onClick={() => {
+                  if (form.getValues('type') === 'auto') {
+                    // Создаем копию значений формы и устанавливаем реальный тип источника
+                    const values = { ...form.getValues() };
+                    values.type = detectedSourceType || 'website';
+                    parseSource(values);
+                  } else {
+                    parseSource(form.getValues());
+                  }
+                }}
                 disabled={isParsing || !form.formState.isValid}
               >
                 {isParsing ? (
