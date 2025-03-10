@@ -53,12 +53,15 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
       return response.data.data;
     },
-    onSuccess: () => {
-      // First invalidate the query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["user_campaigns", userId] });
-
-      // Then close the dialog
+    onSuccess: (data) => {
+      // First close the dialog to prevent any state updates on unmounted component
       onClose();
+
+      // Then invalidate the query with the exact key
+      queryClient.invalidateQueries({
+        queryKey: ["user_campaigns", userId],
+        exact: true
+      });
 
       // Show success toast
       toast({
