@@ -1121,7 +1121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          keywords: req.body.keywords,
+          // Проверяем, что keywords это массив и правильно его форматируем
+          keywords: Array.isArray(req.body.keywords) ? JSON.stringify(req.body.keywords) : JSON.stringify([]),
           status: req.body.status || "draft",
           user_id: userId,
           created_at: new Date().toISOString()
@@ -1146,7 +1147,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           imageUrl: contentResponse.data.data.image_url,
           videoUrl: contentResponse.data.data.video_url,
           prompt: contentResponse.data.data.prompt,
-          keywords: contentResponse.data.data.keywords,
+          // Парсим keywords из строки JSON, если это возможно
+          keywords: contentResponse.data.data.keywords 
+            ? (typeof contentResponse.data.data.keywords === 'string' 
+                ? JSON.parse(contentResponse.data.data.keywords) 
+                : contentResponse.data.data.keywords)
+            : [],
           createdAt: contentResponse.data.data.created_at,
           scheduledAt: contentResponse.data.data.scheduled_at,
           publishedAt: contentResponse.data.data.published_at,
@@ -1220,7 +1226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          keywords: req.body.keywords,
+          // Проверяем, что keywords это массив и правильно его форматируем
+          keywords: Array.isArray(req.body.keywords) ? JSON.stringify(req.body.keywords) : JSON.stringify([]),
           status: req.body.status,
           user_id: userId
         };
@@ -1245,7 +1252,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           imageUrl: item.image_url,
           videoUrl: item.video_url,
           prompt: item.prompt,
-          keywords: item.keywords || [],
+          // Парсим keywords из строки JSON, если это возможно
+          keywords: item.keywords 
+            ? (typeof item.keywords === 'string' 
+                ? JSON.parse(item.keywords) 
+                : item.keywords)
+            : [],
           createdAt: item.created_at,
           scheduledAt: item.scheduled_at,
           publishedAt: item.published_at,
