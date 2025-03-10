@@ -367,6 +367,119 @@ function mergeSources(sources: any[]): any[] {
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
+  
+  // Маршрут для генерации контента через Perplexity API
+  app.post("/api/generate-content", async (req, res) => {
+    try {
+      const { prompt, keywords, tone, campaignId } = req.body;
+      
+      if (!prompt || !keywords || !tone || !campaignId) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+      
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получаем API ключ Perplexity из настроек пользователя
+        const settings = await directusApi.get('/items/user_api_keys', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              service_name: { _eq: 'perplexity' }
+            }
+          }
+        });
+        
+        const perplexityKey = settings.data?.data?.[0]?.api_key;
+        if (!perplexityKey) {
+          return res.status(400).json({ error: "Не найден API ключ для Perplexity. Добавьте его в настройках." });
+        }
+        
+        // Создаем системный промт в зависимости от выбранного тона
+        let systemPrompt = "Ты - опытный копирайтер, который создает качественный контент для социальных сетей.";
+        
+        switch (tone) {
+          case "informative":
+            systemPrompt += " Твой стиль информативный, ясный и образовательный.";
+            break;
+          case "friendly":
+            systemPrompt += " Твой стиль дружелюбный, теплый и доступный, как разговор с другом.";
+            break;
+          case "professional":
+            systemPrompt += " Твой стиль профессиональный, авторитетный и основательный.";
+            break;
+          case "casual":
+            systemPrompt += " Твой стиль повседневный, непринужденный и разговорный.";
+            break;
+          case "humorous":
+            systemPrompt += " Твой стиль остроумный, забавный, с уместным юмором.";
+            break;
+        }
+        
+        // Формируем запрос к API для генерации контента
+        console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+        
+        const response = await axios.post(
+          'https://api.perplexity.ai/chat/completions',
+          {
+            model: "llama-3.1-sonar-small-128k-online",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt
+              },
+              {
+                role: "user",
+                content: `Создай контент для социальных сетей на основе следующего задания: ${prompt}
+                
+                Обязательно используй эти ключевые слова: ${keywords.join(", ")}
+                
+                Контент должен быть в русском языке, легко читаемым, структурированным, и длиной около 1000-1500 символов.`
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${perplexityKey}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (!response.data?.choices?.[0]?.message?.content) {
+          throw new Error('Invalid API response structure');
+        }
+        
+        const content = response.data.choices[0].message.content;
+        console.log(`Generated content length: ${content.length} characters`);
+        
+        res.json({ success: true, content });
+        
+      } catch (error) {
+        console.error('Error generating content with Perplexity:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Perplexity API error details:', {
+            status: error.response?.status,
+            data: error.response?.data
+          });
+        }
+        return res.status(500).json({ error: "Failed to generate content with AI" });
+      }
+    } catch (error) {
+      console.error("Error in content generation:", error);
+      res.status(500).json({ error: "Failed to generate content" });
+    }
+  });
 
   // New endpoint for proxying images
   app.get("/api/proxy-image", async (req, res) => {
