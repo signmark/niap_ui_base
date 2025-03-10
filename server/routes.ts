@@ -1121,8 +1121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          // Проверяем, что keywords это массив и правильно его форматируем
-          keywords: Array.isArray(req.body.keywords) ? JSON.stringify(req.body.keywords) : JSON.stringify([]),
+          // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
+          keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
           user_id: userId,
           created_at: new Date().toISOString()
@@ -1226,8 +1226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          // Проверяем, что keywords это массив и правильно его форматируем
-          keywords: Array.isArray(req.body.keywords) ? JSON.stringify(req.body.keywords) : JSON.stringify([]),
+          // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
+          keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status,
           user_id: userId
         };
