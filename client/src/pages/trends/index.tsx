@@ -179,9 +179,6 @@ export default function Trends() {
               }
             },
             fields: ['id', 'name', 'description', 'link', 'created_at', 'updated_at']
-          },
-          headers: {
-            'Authorization': `Bearer ${authToken}`
           }
         });
 
@@ -195,7 +192,11 @@ export default function Trends() {
         throw error;
       }
     },
-    enabled: Boolean(userData?.id)
+    enabled: Boolean(userData?.id),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({

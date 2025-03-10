@@ -53,22 +53,21 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
       return response.data.data;
     },
-    onSuccess: (data) => {
-      // First close the dialog to prevent any state updates on unmounted component
-      onClose();
-
-      // Then invalidate the query with the exact key
-      queryClient.invalidateQueries({
-        queryKey: ["user_campaigns", userId],
-        exact: true
+    onSuccess: (newCampaign) => {
+      // Update the cache directly
+      queryClient.setQueryData(["user_campaigns", userId], (oldData: any[] = []) => {
+        return [...oldData, newCampaign];
       });
 
-      // Show success toast
+      // Close the dialog first
+      onClose();
+
+      // Show success message
       toast({
         description: "Кампания создана"
       });
 
-      // Finally reset the form
+      // Reset form
       form.reset();
     },
     onError: (error: Error) => {
@@ -76,7 +75,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         variant: "destructive",
         description: error.message
       });
-    },
+    }
   });
 
   return (
