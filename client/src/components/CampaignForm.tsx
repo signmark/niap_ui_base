@@ -25,7 +25,7 @@ const campaignFormSchema = z.object({
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const { userId } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
@@ -42,7 +42,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         throw new Error("Необходима авторизация");
       }
 
-      const response = await directusApi.post('/items/user_campaigns', {
+      const response = await directusApi.post('items/user_campaigns', {
         name: values.name.trim(),
         description: values.description?.trim() || null,
         user_id: userId,
