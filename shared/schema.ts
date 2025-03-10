@@ -121,6 +121,17 @@ export interface SocialMediaSettings {
   };
 }
 
+export type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook';
+
+export interface SocialPublication {
+  platform: SocialPlatform;
+  status: 'pending' | 'published' | 'failed';
+  publishedAt: Date | null;
+  postId?: string | null;
+  postUrl?: string | null;
+  error?: string | null;
+}
+
 export const insertSourcePostSchema = createInsertSchema(sourcePosts)
   .pick({
     sourceId: true,
