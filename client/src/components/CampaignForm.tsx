@@ -25,7 +25,7 @@ const campaignFormSchema = z.object({
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function CampaignForm({ onClose }: CampaignFormProps) {
-  const { toast } = useToast();
+  const { add: toast } = useToast();
   const { userId } = useAuthStore();
 
   const form = useForm<CampaignFormValues>({
@@ -46,6 +46,14 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         throw new Error("Необходима авторизация");
       }
 
+      const authToken = localStorage.getItem('auth_token');
+      console.log('Auth token:', authToken ? 'Present' : 'Missing');
+
+      if (!authToken) {
+        console.error('No auth token found');
+        throw new Error("Токен авторизации не найден");
+      }
+
       try {
         console.log('Sending request to Directus API');
         const payload = {
@@ -58,7 +66,13 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         };
         console.log('Request payload:', payload);
 
-        const response = await directusApi.post('/items/user_campaigns', payload);
+        const response = await directusApi.post('items/campaigns', payload, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
         console.log('Directus API response:', response);
 
         if (!response.data?.data) {
@@ -70,13 +84,16 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
       } catch (error: any) {
         console.error('Directus API error:', error);
         console.error('Error response:', error.response?.data);
-        throw new Error(error.response?.data?.errors?.[0]?.message || "Ошибка при создании кампании");
+        // Добавляем больше деталей об ошибке в сообщение
+        const errorMessage = error.response?.data?.errors?.[0]?.message || 
+                           error.response?.data?.error?.message ||
+                           "Ошибка при создании кампании";
+        throw new Error(errorMessage);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       toast({ 
-        title: "Успешно", 
         description: "Кампания создана" 
       });
       onClose();
@@ -85,9 +102,8 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     onError: (error: Error) => {
       console.error('Create campaign error:', error);
       toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось создать кампанию",
         variant: "destructive",
+        description: error.message
       });
     },
   });
