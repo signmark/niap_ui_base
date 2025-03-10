@@ -116,6 +116,7 @@ export default function ContentPage() {
       });
       setIsCreateDialogOpen(false);
       setNewContent({
+        title: "",
         content: "",
         contentType: "text",
         imageUrl: "",
