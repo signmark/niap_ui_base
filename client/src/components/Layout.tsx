@@ -6,6 +6,7 @@ import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { Dialog } from "@/components/ui/dialog";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { CampaignSelector } from "@/components/CampaignSelector";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
@@ -138,15 +139,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="h-16 border-b flex items-center px-4 lg:px-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
+        <div className="h-16 border-b flex items-center justify-between px-4 lg:px-8">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden mr-2"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            {/* Исключаем отображение селектора на странице кампаний, где уже есть список */}
+            {!location.includes('/campaigns') && <CampaignSelector />}
+          </div>
         </div>
         <main className="flex-1 p-4 lg:p-8">{children}</main>
       </div>
