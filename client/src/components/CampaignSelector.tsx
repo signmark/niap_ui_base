@@ -21,7 +21,7 @@ export function CampaignSelector() {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Получаем список всех кампаний
-  const { data: campaigns, isLoading } = useQuery({
+  const { data: campaignsResponse, isLoading } = useQuery({
     queryKey: ['/api/campaigns'],
     queryFn: async () => {
       try {
@@ -41,14 +41,14 @@ export function CampaignSelector() {
 
   // При первой загрузке, если кампания не выбрана, выбираем первую из списка
   useEffect(() => {
-    if (campaigns?.data?.length > 0 && !selectedCampaign && isFirstLoad) {
-      setSelectedCampaign(campaigns.data[0]);
+    if (campaignsResponse?.data?.length > 0 && !selectedCampaign && isFirstLoad) {
+      setSelectedCampaign(campaignsResponse.data[0]);
       setIsFirstLoad(false);
     }
-  }, [campaigns, selectedCampaign, setSelectedCampaign, isFirstLoad]);
+  }, [campaignsResponse, selectedCampaign, setSelectedCampaign, isFirstLoad]);
 
   const handleCampaignChange = (campaignId: string) => {
-    const campaign = campaigns?.data?.find((c: Campaign) => c.id === campaignId);
+    const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
       setSelectedCampaign(campaign);
     }
@@ -72,7 +72,7 @@ export function CampaignSelector() {
               <SelectValue placeholder="Выберите кампанию" />
             </SelectTrigger>
             <SelectContent>
-              {campaigns?.data?.map((campaign: Campaign) => (
+              {campaignsResponse?.data?.map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
                 </SelectItem>
