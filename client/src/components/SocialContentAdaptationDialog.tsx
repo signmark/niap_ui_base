@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Instagram, MessageCircle, Facebook, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -152,83 +152,85 @@ export function SocialContentAdaptationDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-[700px]">
-      <DialogHeader>
-        <DialogTitle>Адаптация контента для социальных сетей</DialogTitle>
-      </DialogHeader>
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-[700px]">
+        <DialogHeader>
+          <DialogTitle>Адаптация контента для социальных сетей</DialogTitle>
+        </DialogHeader>
 
-      <div className="mt-4">
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
-            <Button
-              key={platform}
-              variant={platformsContent[platform].isEnabled ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleTogglePlatform(platform)}
-              className="flex items-center gap-2"
-            >
-              {getPlatformIcon(platform)}
-              <span className="capitalize">{platform}</span>
-              {platformsContent[platform].isEnabled && <Check className="h-3 w-3" />}
-            </Button>
-          ))}
+        <div className="mt-4">
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
+              <Button
+                key={platform}
+                variant={platformsContent[platform].isEnabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTogglePlatform(platform)}
+                className="flex items-center gap-2"
+              >
+                {getPlatformIcon(platform)}
+                <span className="capitalize">{platform}</span>
+                {platformsContent[platform].isEnabled && <Check className="h-3 w-3" />}
+              </Button>
+            ))}
+          </div>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SocialPlatform)}>
+            <TabsList className="grid grid-cols-4">
+              <TabsTrigger value="instagram" disabled={!platformsContent.instagram.isEnabled}>Instagram</TabsTrigger>
+              <TabsTrigger value="telegram" disabled={!platformsContent.telegram.isEnabled}>Telegram</TabsTrigger>
+              <TabsTrigger value="vk" disabled={!platformsContent.vk.isEnabled}>VK</TabsTrigger>
+              <TabsTrigger value="facebook" disabled={!platformsContent.facebook.isEnabled}>Facebook</TabsTrigger>
+            </TabsList>
+
+            {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
+              <TabsContent key={platform} value={platform}>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Label>Контент для {platform}</Label>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => regenerateForPlatform(platform)}
+                    >
+                      Сбросить
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={platformsContent[platform].content}
+                    onChange={(e) => handleContentChange(platform, e.target.value)}
+                    rows={10}
+                    placeholder={`Введите текст для ${platform}...`}
+                    disabled={!platformsContent[platform].isEnabled}
+                  />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SocialPlatform)}>
-          <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="instagram" disabled={!platformsContent.instagram.isEnabled}>Instagram</TabsTrigger>
-            <TabsTrigger value="telegram" disabled={!platformsContent.telegram.isEnabled}>Telegram</TabsTrigger>
-            <TabsTrigger value="vk" disabled={!platformsContent.vk.isEnabled}>VK</TabsTrigger>
-            <TabsTrigger value="facebook" disabled={!platformsContent.facebook.isEnabled}>Facebook</TabsTrigger>
-          </TabsList>
-
-          {(['instagram', 'telegram', 'vk', 'facebook'] as SocialPlatform[]).map(platform => (
-            <TabsContent key={platform} value={platform}>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label>Контент для {platform}</Label>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => regenerateForPlatform(platform)}
-                  >
-                    Сбросить
-                  </Button>
-                </div>
-                <Textarea
-                  value={platformsContent[platform].content}
-                  onChange={(e) => handleContentChange(platform, e.target.value)}
-                  rows={10}
-                  placeholder={`Введите текст для ${platform}...`}
-                  disabled={!platformsContent[platform].isEnabled}
-                />
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-      </div>
-
-      <DialogFooter className="mt-6">
-        <Button variant="outline" onClick={onClose}>
-          Отмена
-        </Button>
-        <Button 
-          onClick={() => saveAdaptedContent()} 
-          disabled={isSaving || Object.values(platformsContent).every(p => !p.isEnabled)}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Сохранение...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Сохранить
-            </>
-          )}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        <DialogFooter className="mt-6">
+          <Button variant="outline" onClick={onClose}>
+            Отмена
+          </Button>
+          <Button 
+            onClick={() => saveAdaptedContent()} 
+            disabled={isSaving || Object.values(platformsContent).every(p => !p.isEnabled)}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сохранение...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Сохранить
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
