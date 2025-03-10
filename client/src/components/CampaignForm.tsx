@@ -38,68 +38,28 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
 
   const { mutate: createCampaign, isPending } = useMutation({
     mutationFn: async (values: CampaignFormValues) => {
-      console.log('Starting campaign creation with values:', values);
-      console.log('Current userId:', userId);
-
       if (!userId) {
-        console.error('No userId found');
         throw new Error("Необходима авторизация");
       }
 
-      const authToken = localStorage.getItem('auth_token');
-      console.log('Auth token:', authToken ? 'Present' : 'Missing');
-      console.log('Token being used:', authToken ? `Bearer ${authToken.substring(0, 10)}...` : 'none');
+      const response = await directusApi.post('/items/user_campaigns', {
+        name: values.name.trim(),
+        description: values.description?.trim() || null,
+        user_id: userId,
+        status: 'active',
+        date_created: new Date().toISOString(),
+        date_updated: new Date().toISOString()
+      });
 
-      if (!authToken) {
-        console.error('No auth token found');
-        throw new Error("Токен авторизации не найден");
-      }
-
-      try {
-        console.log('Sending request to Directus API');
-        const payload = {
-          name: values.name.trim(),
-          description: values.description?.trim() || null,
-          user_id: userId,
-          status: 'active',
-          date_created: new Date().toISOString(),
-          date_updated: new Date().toISOString()
-        };
-        console.log('Request payload:', payload);
-
-        const response = await directusApi.post('/items/user_campaigns', payload, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/plain, */*'
-          }
-        });
-
-        if (!response.data?.data) {
-          console.error('Invalid response format:', response);
-          throw new Error("Некорректный ответ от сервера");
-        }
-
-        return response.data.data;
-      } catch (error: any) {
-        console.error('Directus API error:', error);
-        console.error('Error response:', error.response?.data);
-        const errorMessage = error.response?.data?.errors?.[0]?.message || 
-                         error.response?.data?.error?.message ||
-                         "Ошибка при создании кампании";
-        throw new Error(errorMessage);
-      }
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({ 
-        description: "Кампания создана" 
-      });
+      toast({ description: "Кампания создана" });
       onClose();
       form.reset();
     },
     onError: (error: Error) => {
-      console.error('Create campaign error:', error);
       toast({
         variant: "destructive",
         description: error.message
