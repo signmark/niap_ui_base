@@ -38,6 +38,12 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  
+  // Если статус 204 No Content, не пытаемся распарсить JSON
+  if (res.status === 204) {
+    return { success: true };
+  }
+  
   return res.json();
 }
 
