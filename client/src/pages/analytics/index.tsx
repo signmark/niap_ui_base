@@ -1,20 +1,38 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import type { Campaign } from "@shared/schema";
+import { useCampaignStore } from "@/lib/campaignStore";
 
 export default function Analytics() {
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
     to: new Date()
   });
 
-  const { data: campaigns } = useQuery<Campaign[]>({
+  // Используем глобальный стор для выбранной кампании
+  const { selectedCampaign } = useCampaignStore();
+  const campaignId = selectedCampaign?.id || "";
+
+  // Получаем список всех кампаний
+  const { data: campaignsResponse } = useQuery({
     queryKey: ["/api/campaigns"],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/campaigns');
+        if (!response.ok) {
+          throw new Error('Не удалось загрузить кампании');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+        throw error;
+      }
+    }
   });
+  
+  // Получаем список кампаний из ответа API
+  const campaigns = campaignsResponse?.data || [];
 
   return (
     <div className="space-y-6">
@@ -22,19 +40,7 @@ export default function Analytics() {
         <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
 
         <div className="flex gap-4">
-          <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Campaign" />
-            </SelectTrigger>
-            <SelectContent>
-              {campaigns?.map(campaign => (
-                <SelectItem key={campaign.id} value={campaign.id.toString()}>
-                  {campaign.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
+          {/* Используем глобальный селектор кампаний в навигационной панели */}
           <DateRangePicker
             from={dateRange.from}
             to={dateRange.to}
