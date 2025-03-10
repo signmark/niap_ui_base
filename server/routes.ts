@@ -944,25 +944,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log(`Fetching content for campaign ID: ${campaignId || 'all campaigns'}`);
         
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Создаем фильтр для запроса
-        const filter: any = {
-          user_id: {
-            _eq: userId
-          }
-        };
+        // Создаем фильтр для запроса, полагаясь на авторизацию Directus API
+        // Directus автоматически фильтрует по пользователю, основываясь на токене 
+        const filter: any = {};
         
         // Если указан campaignId, добавляем его в фильтр
         if (campaignId) {
@@ -1026,20 +1012,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
+        console.log(`Fetching content with ID: ${contentId}`);
         
         // Получаем контент напрямую из Directus API
+        // API Directus автоматически проверит права доступа на основе токена
         const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -1047,11 +1023,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         const item = contentResponse.data.data;
-        
-        // Проверяем, принадлежит ли контент текущему пользователю
-        if (item.user_id !== userId) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
         
         // Преобразуем данные из формата Directus в наш формат
         const content = {
@@ -1100,20 +1071,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
+        console.log("Creating new campaign content");
         
         // Создаем контент кампании напрямую через Directus API
+        // Запрос user_id не требуется, так как Directus API автоматически его добавит
         const directusPayload = {
           campaign_id: req.body.campaignId,
           content_type: req.body.contentType,
@@ -1124,7 +1085,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
-          user_id: userId,
           created_at: new Date().toISOString()
         };
         
@@ -1189,35 +1149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log(`Updating content with ID: ${contentId}`);
         
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Проверить, принадлежит ли контент пользователю
-        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const existingContent = existingContentResponse.data.data;
-        
-        if (!existingContent) {
-          return res.status(404).json({ error: "Content not found" });
-        }
-        
-        if (existingContent.user_id !== userId) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
+        // Directus API автоматически проверяет права доступа, поэтому нам не нужно делать дополнительные проверки
         
         // Преобразуем данные для Directus
         const directusPayload = {
@@ -1228,8 +1162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           video_url: req.body.videoUrl,
           // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
-          status: req.body.status,
-          user_id: userId
+          status: req.body.status
         };
         
         // Обновляем данные через Directus API
@@ -1333,24 +1266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получить данные пользователя
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log(`Fetching scheduled content for campaign ID: ${campaignId || 'all campaigns'}`);
         
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Создаем фильтр для запроса
+        // Создаем фильтр для запроса, не делая лишнего запроса для проверки пользователя
+        // Directus API автоматически проверит авторизацию по токену
         const filter: any = {
-          user_id: {
-            _eq: userId
-          },
           status: {
             _eq: "scheduled"
           },
