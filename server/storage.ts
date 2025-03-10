@@ -29,13 +29,13 @@ export interface IStorage {
   getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
   
-  // Generated Content
-  getGeneratedContent(userId: string, campaignId?: number): Promise<GeneratedContent[]>;
-  getContentById(id: string): Promise<GeneratedContent | undefined>;
-  createGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
-  updateGeneratedContent(id: string, updates: Partial<InsertGeneratedContent>): Promise<GeneratedContent>;
-  deleteGeneratedContent(id: string): Promise<void>;
-  getScheduledContent(userId: string, campaignId?: number): Promise<GeneratedContent[]>;
+  // Campaign Content
+  getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
+  getCampaignContentById(id: string): Promise<CampaignContent | undefined>;
+  createCampaignContent(content: InsertCampaignContent): Promise<CampaignContent>;
+  updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
+  deleteCampaignContent(id: string): Promise<void>;
+  getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -157,6 +157,73 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCampaign(id: number): Promise<void> {
     await db.delete(campaigns).where(eq(campaigns.id, id));
+  }
+
+  // Campaign Content
+  async getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
+    const conditions = [eq(campaignContent.userId, userId)];
+
+    if (campaignId) {
+      conditions.push(eq(campaignContent.campaignId, campaignId));
+    }
+
+    return await db
+      .select()
+      .from(campaignContent)
+      .where(and(...conditions))
+      .orderBy(desc(campaignContent.createdAt));
+  }
+
+  async getCampaignContentById(id: string): Promise<CampaignContent | undefined> {
+    const [content] = await db
+      .select()
+      .from(campaignContent)
+      .where(eq(campaignContent.id, id));
+    
+    return content;
+  }
+
+  async createCampaignContent(content: InsertCampaignContent): Promise<CampaignContent> {
+    const [newContent] = await db
+      .insert(campaignContent)
+      .values(content)
+      .returning();
+    
+    return newContent;
+  }
+
+  async updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent> {
+    const [updatedContent] = await db
+      .update(campaignContent)
+      .set(updates)
+      .where(eq(campaignContent.id, id))
+      .returning();
+    
+    return updatedContent;
+  }
+
+  async deleteCampaignContent(id: string): Promise<void> {
+    await db
+      .delete(campaignContent)
+      .where(eq(campaignContent.id, id));
+  }
+
+  async getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
+    const conditions = [
+      eq(campaignContent.userId, userId),
+      eq(campaignContent.status, 'scheduled'),
+      sql`${campaignContent.scheduledAt} IS NOT NULL`
+    ];
+
+    if (campaignId) {
+      conditions.push(eq(campaignContent.campaignId, campaignId));
+    }
+
+    return await db
+      .select()
+      .from(campaignContent)
+      .where(and(...conditions))
+      .orderBy(asc(campaignContent.scheduledAt));
   }
 }
 
