@@ -897,12 +897,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
           campaignId: campaignId,
           keywords: keywordsList,
-          userId: userId
+          userId: userId,
+          // Добавляем токен, чтобы webhook мог использовать его для аутентификации
+          token: token
         }, {
           headers: {
             'Content-Type': 'application/json',
             // Добавляем заголовок авторизации, если требуется
-            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
+            'X-N8N-Authorization': process.env.N8N_API_KEY || '',
+            'Authorization': `Bearer ${token}`
           },
           timeout: 10000 // 10 секунд таймаут
         });
@@ -1006,11 +1009,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/767bbaf6-e9ca-4f1d-aeb6-66598ff7e291', {
           keywords: keywords,
-          userId: userId
+          userId: userId,
+          token: token
         }, {
           headers: {
             'Content-Type': 'application/json',
-            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
+            'X-N8N-Authorization': process.env.N8N_API_KEY || '',
+            'Authorization': `Bearer ${token}`
           },
           timeout: 15000 // 15 секунд таймаут
         });
@@ -1288,6 +1293,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Received trend data from n8n webhook");
       
+      // Получаем токен из заголовка запроса или из body
+      const authHeader = req.headers.authorization;
+      const tokenFromBody = req.body.token;
+      const token = authHeader ? authHeader.replace('Bearer ', '') : tokenFromBody;
+      
+      if (!token) {
+        console.error("No authorization token provided for webhook");
+        return res.status(401).json({
+          error: "Authorization required",
+          message: "No token provided"
+        });
+      }
+      
       // Поддерживаем два формата данных: старый (trends) и новый (posts из TG)
       const posts = req.body.posts || [];
       const trends = req.body.trends || [];
@@ -1357,8 +1375,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }, {
             headers: {
               'Content-Type': 'application/json',
-              // Используем сервисный токен, т.к. это вебхук без авторизации пользователя
-              'Authorization': `Bearer ${process.env.DIRECTUS_SERVICE_TOKEN || ''}`
+              // Используем токен пользователя из запроса
+              'Authorization': `Bearer ${token}`
             }
           });
           savedCount++;
