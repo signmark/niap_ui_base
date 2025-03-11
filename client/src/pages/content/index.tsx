@@ -106,7 +106,13 @@ export default function ContentPage() {
       // Добавляем ID из предопределенных ключевых слов
       if (Array.isArray(safeContent.keywords)) {
         campaignKeywords.forEach(kw => {
-          if (safeContent.keywords.includes(kw.keyword)) {
+          // Строгое сравнение и нормализация строк для более надежного сопоставления
+          const normalizedKeyword = kw.keyword.trim().toLowerCase();
+          const hasKeyword = safeContent.keywords.some(
+            k => typeof k === 'string' && k.trim().toLowerCase() === normalizedKeyword
+          );
+          
+          if (hasKeyword) {
             newSelectedKeywords.add(kw.id);
           }
         });
@@ -395,6 +401,7 @@ export default function ContentPage() {
     campaignKeywords.forEach(keyword => {
       // Используем наш Set для проверки, выбрано ли ключевое слово
       if (selectedKeywordIds.has(keyword.id)) {
+        // Добавляем нормализованное ключевое слово (без изменения регистра для отображения)
         selectedKeywordTexts.push(keyword.keyword);
       }
     });
@@ -402,9 +409,24 @@ export default function ContentPage() {
     // Добавляем пользовательские ключевые слова, которые не являются частью кампании
     if (Array.isArray(currentContent.keywords)) {
       currentContent.keywords.forEach(keyword => {
+        if (typeof keyword !== 'string' || !keyword.trim()) return;
+        
+        // Нормализуем для сравнения
+        const normalizedKeyword = keyword.trim();
+        
+        // Проверяем, не входит ли уже это ключевое слово в список из предопределенных кампаний
+        // используя нормализованное сравнение (без учета регистра)
+        const isAlreadyIncluded = campaignKeywords.some(
+          k => k.keyword.trim().toLowerCase() === normalizedKeyword.toLowerCase()
+        );
+        
+        const isAlreadySelected = selectedKeywordTexts.some(
+          k => k.trim().toLowerCase() === normalizedKeyword.toLowerCase()
+        );
+        
         // Если ключевое слово не из предопределенных в кампании, добавляем его
-        if (!campaignKeywords.some(k => k.keyword === keyword) && !selectedKeywordTexts.includes(keyword)) {
-          selectedKeywordTexts.push(keyword);
+        if (!isAlreadyIncluded && !isAlreadySelected) {
+          selectedKeywordTexts.push(normalizedKeyword);
         }
       });
     }
@@ -418,7 +440,7 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      keywords: selectedKeywordTexts
+      keywords: selectedKeywordTexts.filter(k => k && k.trim() !== '') // Фильтруем пустые значения
     };
 
     console.log('Update data being sent:', updateData);
@@ -1016,9 +1038,30 @@ export default function ContentPage() {
                                   if (e.target.checked) {
                                     // Добавляем ID ключевого слова в Set
                                     newSelectedKeywordIds.add(keyword.id);
+                                    
+                                    // Также обновляем currentContent для визуального отображения
+                                    const updatedContent = {
+                                      ...currentContent,
+                                      keywords: [
+                                        ...Array.isArray(currentContent.keywords) ? currentContent.keywords : [], 
+                                        keyword.keyword
+                                      ].filter((v, i, a) => a.indexOf(v) === i) // Удаляем дубликаты
+                                    };
+                                    setCurrentContent(updatedContent);
                                   } else {
                                     // Удаляем ID ключевого слова из Set
                                     newSelectedKeywordIds.delete(keyword.id);
+                                    
+                                    // Также обновляем currentContent для визуального отображения
+                                    if (Array.isArray(currentContent.keywords)) {
+                                      const updatedContent = {
+                                        ...currentContent,
+                                        keywords: currentContent.keywords.filter(k => 
+                                          k.trim().toLowerCase() !== keyword.keyword.trim().toLowerCase()
+                                        )
+                                      };
+                                      setCurrentContent(updatedContent);
+                                    }
                                   }
                                   
                                   // Обновляем состояние выбранных ключевых слов
