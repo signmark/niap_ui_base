@@ -212,12 +212,12 @@ export function SocialContentAdaptationDialog({
                       Сбросить
                     </Button>
                   </div>
-                  <Textarea
-                    value={platformsContent[platform].content}
-                    onChange={(e) => handleContentChange(platform, e.target.value)}
-                    rows={10}
+                  <RichTextEditor
+                    content={platformsContent[platform].content}
+                    onChange={(html) => handleContentChange(platform, html)}
                     placeholder={`Введите текст для ${platform}...`}
-                    disabled={!platformsContent[platform].isEnabled}
+                    className={!platformsContent[platform].isEnabled ? "opacity-50 pointer-events-none" : ""}
+                    minHeight="200px"
                   />
                 </div>
               </TabsContent>

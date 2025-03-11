@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { SiVk, SiFacebook } from 'react-icons/si';
 import type { SocialPlatform, CampaignContent } from '@shared/schema';
-import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from './RichTextEditor';
 
 interface SocialPublishingPanelProps {
   content: CampaignContent;
@@ -190,11 +190,11 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
                           platform === 'telegram' ? 'Telegram' : 
                           platform === 'vk' ? 'ВКонтакте' : 'Facebook'}
             </Label>
-            <Textarea 
-              value={adaptedContent[platform]}
-              onChange={(e) => handleContentChange(platform, e.target.value)}
+            <RichTextEditor
+              content={adaptedContent[platform]}
+              onChange={(html) => handleContentChange(platform, html)}
               placeholder={`Введите контент для ${platform}`}
-              rows={4}
+              minHeight="150px"
             />
             <Button 
               variant="outline" 
