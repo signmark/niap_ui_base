@@ -500,7 +500,7 @@ export default function ContentPage() {
                             variant="outline" 
                             size="sm"
                             onClick={() => {
-                              setCurrentContent(content);
+                              setCurrentContentSafe(content);
                               setIsEditDialogOpen(true);
                             }}
                           >
@@ -512,7 +512,7 @@ export default function ContentPage() {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => {
-                                  setCurrentContent(content);
+                                  setCurrentContentSafe(content);
                                   setIsScheduleDialogOpen(true);
                                 }}
                               >
@@ -522,7 +522,7 @@ export default function ContentPage() {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => {
-                                  setCurrentContent(content);
+                                  setCurrentContentSafe(content);
                                   setIsAdaptDialogOpen(true);
                                 }}
                               >
@@ -845,7 +845,10 @@ export default function ContentPage() {
                   id="title"
                   placeholder="Введите название контента"
                   value={currentContent.title || ""}
-                  onChange={(e) => setCurrentContent({...currentContent, title: e.target.value})}
+                  onChange={(e) => {
+                    const updatedContent = {...currentContent, title: e.target.value};
+                    setCurrentContentSafe(updatedContent);
+                  }}
                   className="mb-4"
                 />
               </div>
@@ -854,7 +857,10 @@ export default function ContentPage() {
                 <div className="max-h-[300px] overflow-y-auto">
                   <RichTextEditor
                     content={currentContent.content || ''}
-                    onChange={(html: string) => setCurrentContent({...currentContent, content: html})}
+                    onChange={(html: string) => {
+                      const updatedContent = {...currentContent, content: html};
+                      setCurrentContentSafe(updatedContent);
+                    }}
                     minHeight="200px"
                     className="tiptap"
                   />
@@ -867,7 +873,10 @@ export default function ContentPage() {
                     id="imageUrl"
                     placeholder="Введите URL изображения"
                     value={currentContent.imageUrl || ""}
-                    onChange={(e) => setCurrentContent({...currentContent, imageUrl: e.target.value})}
+                    onChange={(e) => {
+                      const updatedContent = {...currentContent, imageUrl: e.target.value};
+                      setCurrentContentSafe(updatedContent);
+                    }}
                   />
                 </div>
               )}
@@ -878,7 +887,10 @@ export default function ContentPage() {
                     id="videoUrl"
                     placeholder="Введите URL видео"
                     value={currentContent.videoUrl || ""}
-                    onChange={(e) => setCurrentContent({...currentContent, videoUrl: e.target.value})}
+                    onChange={(e) => {
+                      const updatedContent = {...currentContent, videoUrl: e.target.value};
+                      setCurrentContentSafe(updatedContent);
+                    }}
                   />
                 </div>
               )}
@@ -923,15 +935,17 @@ export default function ContentPage() {
                                 checked={isSelected}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setCurrentContent({
+                                    const updatedContent = {
                                       ...currentContent,
                                       keywords: [...(currentContent.keywords || []), keyword.keyword]
-                                    });
+                                    };
+                                    setCurrentContentSafe(updatedContent);
                                   } else {
-                                    setCurrentContent({
+                                    const updatedContent = {
                                       ...currentContent,
                                       keywords: (currentContent.keywords || []).filter(k => k !== keyword.keyword)
-                                    });
+                                    };
+                                    setCurrentContentSafe(updatedContent);
                                   }
                                 }}
                               />
@@ -970,10 +984,11 @@ export default function ContentPage() {
                       
                       // Не добавляем, если ключевое слово уже есть в списке
                       if (!(currentContent.keywords || []).includes(value)) {
-                        setCurrentContent({
+                        const updatedContent = {
                           ...currentContent,
                           keywords: [...(currentContent.keywords || []), value]
-                        });
+                        };
+                        setCurrentContentSafe(updatedContent);
                       }
                       
                       // Очищаем поле ввода
@@ -986,10 +1001,11 @@ export default function ContentPage() {
                     
                     // Не добавляем, если ключевое слово уже есть в списке
                     if (!(currentContent.keywords || []).includes(value)) {
-                      setCurrentContent({
+                      const updatedContent = {
                         ...currentContent,
                         keywords: [...(currentContent.keywords || []), value]
-                      });
+                      };
+                      setCurrentContentSafe(updatedContent);
                     }
                     
                     // Очищаем поле ввода
