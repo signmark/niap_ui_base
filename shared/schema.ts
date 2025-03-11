@@ -200,6 +200,35 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
 export type CampaignContent = typeof campaignContent.$inferSelect;
 export type InsertCampaignContent = z.infer<typeof insertCampaignContentSchema>;
 
+// Таблица для трендовых тем из webhook
+export const campaignTrendTopics = pgTable("campaign_trend_topics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  sourceId: uuid("source_id"),
+  campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
+  reactions: integer("reactions").default(0),
+  comments: integer("comments").default(0),
+  views: integer("views").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  isBookmarked: boolean("is_bookmarked").default(false)
+});
+
+// Schema для создания трендовых тем из webhook
+export const insertCampaignTrendTopicSchema = createInsertSchema(campaignTrendTopics)
+  .pick({
+    title: true,
+    sourceId: true,
+    campaignId: true,
+    reactions: true,
+    comments: true,
+    views: true,
+    isBookmarked: true
+  });
+
+// Тип трендовых тем из webhook
+export type CampaignTrendTopic = typeof campaignTrendTopics.$inferSelect;
+export type InsertCampaignTrendTopic = z.infer<typeof insertCampaignTrendTopicSchema>;
+
 export interface KeywordSearchResult {
   keyword: string;
   trendScore: number;

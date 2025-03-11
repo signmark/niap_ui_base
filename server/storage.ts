@@ -4,6 +4,7 @@ import {
   contentSources, 
   campaigns, 
   campaignContent,
+  campaignTrendTopics,
   type Campaign, 
   type InsertCampaign, 
   type ContentSource, 
@@ -11,7 +12,9 @@ import {
   type TrendTopic, 
   type InsertTrendTopic,
   type CampaignContent,
-  type InsertCampaignContent
+  type InsertCampaignContent,
+  type CampaignTrendTopic,
+  type InsertCampaignTrendTopic
 } from "@shared/schema";
 import { eq, desc, sql, and, asc } from "drizzle-orm";
 
@@ -28,6 +31,11 @@ export interface IStorage {
   deleteContentSource(id: number, userId: string): Promise<void>;
   getTrendTopics(params: { from?: Date; to?: Date; campaignId?: number }): Promise<TrendTopic[]>;
   createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic>;
+  
+  // Campaign Trend Topics from webhook
+  getCampaignTrendTopics(params: { from?: Date; to?: Date; campaignId?: string }): Promise<CampaignTrendTopic[]>;
+  createCampaignTrendTopic(topic: InsertCampaignTrendTopic): Promise<CampaignTrendTopic>;
+  bookmarkCampaignTrendTopic(id: string, isBookmarked: boolean): Promise<CampaignTrendTopic>;
   
   // Campaign Content
   getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
@@ -138,6 +146,55 @@ export class DatabaseStorage implements IStorage {
       .returning();
     console.log('Created new topic:', newTopic);
     return newTopic;
+  }
+
+  // Campaign Trend Topics from webhook
+  async getCampaignTrendTopics(params: { from?: Date; to?: Date; campaignId?: string } = {}): Promise<CampaignTrendTopic[]> {
+    console.log('Fetching campaign trend topics with params:', params);
+
+    const conditions = [];
+
+    if (params.from) {
+      conditions.push(sql`${campaignTrendTopics.createdAt} >= ${params.from}`);
+    }
+    if (params.to) {
+      conditions.push(sql`${campaignTrendTopics.createdAt} <= ${params.to}`);
+    }
+    if (params.campaignId) {
+      conditions.push(eq(campaignTrendTopics.campaignId, params.campaignId));
+    }
+
+    const query = db
+      .select()
+      .from(campaignTrendTopics)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(campaignTrendTopics.reactions));
+
+    console.log('SQL Query:', query.toSQL());
+
+    const trends = await query;
+    console.log('Found campaign trend topics:', trends.length);
+    return trends;
+  }
+
+  async createCampaignTrendTopic(topic: InsertCampaignTrendTopic): Promise<CampaignTrendTopic> {
+    console.log('Creating campaign trend topic:', topic);
+    const [newTopic] = await db
+      .insert(campaignTrendTopics)
+      .values(topic)
+      .returning();
+    console.log('Created new campaign trend topic:', newTopic.id);
+    return newTopic;
+  }
+
+  async bookmarkCampaignTrendTopic(id: string, isBookmarked: boolean): Promise<CampaignTrendTopic> {
+    console.log(`${isBookmarked ? 'Bookmarking' : 'Unbookmarking'} campaign trend topic:`, id);
+    const [updatedTopic] = await db
+      .update(campaignTrendTopics)
+      .set({ isBookmarked })
+      .where(eq(campaignTrendTopics.id, id))
+      .returning();
+    return updatedTopic;
   }
 
   // Campaigns
