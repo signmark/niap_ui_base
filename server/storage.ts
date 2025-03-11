@@ -54,14 +54,24 @@ export class DatabaseStorage implements IStorage {
   // User Authentication
   async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
     try {
-      // Так как мы не храним токены в базе данных, 
-      // мы будем использовать директус API для получения токена
-      // В реальной реализации это должно быть заменено на запрос к базе данных
-      // или другой механизм хранения токенов пользователей
+      // Токены для каждого пользователя хранятся на клиенте в localStorage
+      // На сервере мы предполагаем, что токен передается через заголовок Authorization
+      // В продакшн-реализации следует хранить токены в защищенном хранилище
       console.log(`Getting token info for user: ${userId}`);
       
-      // Пока возвращаем null, так как мы не храним токены пользователей
-      // Позже нужно будет реализовать полноценное хранение токенов
+      // Запрашиваем токен из системы сессий или временного хранилища
+      // В реальном приложении здесь будет запрос к БД или Redis
+      
+      // Для демонстрационных целей, можно использовать переменную окружения с токеном
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      if (serviceToken) {
+        return {
+          token: serviceToken,
+          userId: userId
+        };
+      }
+      
+      // Возвращаем null, если не нашли токен
       return null;
     } catch (error) {
       console.error('Error getting user token info:', error);
