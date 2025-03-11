@@ -2255,7 +2255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Преобразуем данные в формат Directus API
-        const directusPayload = {
+        const directusPayload: any = {
           content_type: req.body.contentType,
           title: req.body.title,
           content: req.body.content,
@@ -2269,14 +2269,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Request keywords type:', typeof req.body.keywords, 'Value:', req.body.keywords);
           
           // Убедимся, что keywords - это массив
-          let keywordsArray;
+          let keywordsArray: string[] = [];
+          
           if (Array.isArray(req.body.keywords)) {
-            keywordsArray = req.body.keywords;
+            // Если уже массив, используем его напрямую
+            keywordsArray = req.body.keywords.map((k: any) => 
+              typeof k === 'string' ? k : String(k)
+            );
           } else if (typeof req.body.keywords === 'string') {
             try {
               // Проверяем, может быть это JSON-строка
               const parsed = JSON.parse(req.body.keywords);
-              keywordsArray = Array.isArray(parsed) ? parsed : [req.body.keywords];
+              if (Array.isArray(parsed)) {
+                keywordsArray = parsed.map((k: any) => typeof k === 'string' ? k : String(k));
+              } else {
+                // Одиночное значение, оборачиваем в массив
+                keywordsArray = [req.body.keywords];
+              }
             } catch (e) {
               // Если не удалось распарсить как JSON, то это просто строка
               keywordsArray = [req.body.keywords];
@@ -2288,9 +2297,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             keywordsArray = [String(req.body.keywords)];
           }
           
-          // Фильтруем пустые значения
-          directusPayload.keywords = keywordsArray.filter(k => k && k.trim() !== '');
-          console.log('Processed keywords array:', directusPayload.keywords);
+          // Фильтруем пустые значения и гарантируем уникальность
+          const uniqueKeywords = [...new Set(
+            keywordsArray
+              .filter(k => k && typeof k === 'string' && k.trim() !== '')
+              .map(k => k.trim())
+          )];
+          
+          directusPayload.keywords = uniqueKeywords;
+          console.log('Processed unique keywords array:', directusPayload.keywords);
         }
         
         // Обновляем данные через Directus API
@@ -2317,9 +2332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           imageUrl: item.image_url,
           videoUrl: item.video_url,
           prompt: item.prompt,
-          keywords: item.keywords || [],
-          hashtags: item.hashtags || [],
-          links: item.links || [],
+          // Убедимся, что ключевые слова всегда возвращаются как массив
+          keywords: Array.isArray(item.keywords) ? item.keywords : [],
+          hashtags: Array.isArray(item.hashtags) ? item.hashtags : [],
+          links: Array.isArray(item.links) ? item.links : [],
           createdAt: item.created_at,
           scheduledAt: item.scheduled_at,
           publishedAt: item.published_at,
