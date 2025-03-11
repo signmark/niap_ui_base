@@ -152,7 +152,7 @@ export default function Keywords() {
       });
     } catch (error) {
       console.error('Error saving keywords:', error);
-      add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось сохранить ключевые слова"
@@ -229,12 +229,12 @@ export default function Keywords() {
           try {
             await directusApi.delete(`items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
-            add({ 
+            toast({ 
               title: "Успешно",
               description: "Ключевое слово удалено" 
             });
           } catch {
-            add({
+            toast({
               variant: "destructive",
               title: "Ошибка",
               description: "Не удалось удалить ключевое слово"
