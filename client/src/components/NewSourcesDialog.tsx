@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { directusApi } from "@/lib/directus";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface NewSourcesDialogProps {
@@ -33,7 +32,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const sourcesPerPage = 10;
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Вычисляем пагинацию
@@ -64,16 +63,24 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       );
 
       for (const source of sourcesToAdd) {
-        await directusApi.post('/items/campaign_content_sources', {
-          name: source.name,
-          url: source.url,
-          type: source.platform,
-          campaign_id: campaignId,
-          is_active: true
-        }, {
+        await fetch('/api/sources', {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            name: source.name,
+            url: source.url,
+            type: source.platform,
+            campaignId: campaignId,
+            isActive: true
+          })
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error(`Ошибка при добавлении источника ${source.name}`);
           }
+          return response.json();
         });
       }
 

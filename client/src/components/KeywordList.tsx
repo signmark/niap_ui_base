@@ -19,7 +19,7 @@ interface KeywordListProps {
 
 export function KeywordList({ campaignId }: KeywordListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: keywords, isLoading } = useQuery({

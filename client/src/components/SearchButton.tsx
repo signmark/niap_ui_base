@@ -14,7 +14,7 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sourcesData, setSourcesData] = useState(null);
-  const { add: toast } = useToast();
+  const { toast } = useToast();
 
   const handleSearch = async () => {
     if (!keywords.length) {
