@@ -1740,6 +1740,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Маршрут для адаптации контента для социальных сетей
+  app.post("/api/content/:id/adapt", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const { socialPlatforms } = req.body;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        console.log(`Adapting content ID ${contentId} for social platforms`);
+        
+        // Получаем текущий контент
+        const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const content = contentResponse.data.data;
+        
+        if (!content) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+        
+        // Обновляем social_platforms в Directus
+        await directusApi.patch(`/items/campaign_content/${contentId}`, {
+          social_platforms: socialPlatforms
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Получаем ID кампании и информацию о пользователе для отправки в webhook
+        const campaignId = content.campaign_id;
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        // Отправляем данные в n8n webhook для обработки
+        // Проверяем наличие n8n API ключа в env
+        const n8nApiKey = process.env.N8N_API_KEY;
+        
+        if (n8nApiKey) {
+          try {
+            // Подготавливаем данные для n8n webhook
+            const webhookPayload = {
+              contentId,
+              campaignId,
+              userId,
+              platforms: Object.keys(socialPlatforms),
+              content: socialPlatforms,
+              // Получаем данные изображений и прочую информацию из основного контента
+              imageUrl: content.image_url,
+              videoUrl: content.video_url,
+              title: content.title
+            };
+            
+            // Отправляем запрос на n8n webhook для публикации
+            await axios.post('https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c', webhookPayload, {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-N8N-Authorization': n8nApiKey
+              },
+              timeout: 10000 // 10 секунд таймаут
+            });
+            
+            console.log(`Successfully sent content ${contentId} to n8n webhook for social media publishing`);
+          } catch (webhookError) {
+            console.error('Error sending data to n8n webhook:', webhookError);
+            // Не прерываем выполнение операции, если n8n недоступен
+          }
+        } else {
+          console.warn('N8N_API_KEY not found in environment variables, skipping webhook call');
+        }
+        
+        // Возвращаем успешный ответ
+        return res.json({
+          success: true,
+          message: "Content adapted for social platforms"
+        });
+        
+      } catch (error) {
+        console.error('Error adapting content for social platforms:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(error.response?.status || 500).json({ 
+          error: "Failed to adapt content",
+          details: error.message
+        });
+      }
+    } catch (error) {
+      console.error("Error adapting content:", error);
+      res.status(500).json({ error: "Failed to adapt content" });
+    }
+  });
+  
   // Маршрут для публикации контента в соцсети
   app.post("/api/content/:id/publish", async (req, res) => {
     try {
@@ -1785,11 +1892,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Маршрут для адаптации контента для соцсетей
-  app.post("/api/content/:id/adapt", async (req, res) => {
+  // Маршрут для публикации в соцсети уже адаптированного контента
+  app.post("/api/content/:id/publish-social", async (req, res) => {
     try {
       const contentId = req.params.id;
-      const { socialPublications } = req.body;
+      const { platforms } = req.body;
       
       // Проверка авторизации
       const authHeader = req.headers.authorization;
@@ -1803,29 +1910,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Отправляем запрос к Directus API для обновления контента
-        const response = await directusApi.patch(`/items/campaign_content/${contentId}`, {
-          social_publications: socialPublications
+        // Получаем информацию о контенте
+        const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const content = contentResponse.data.data;
+        if (!content) {
+          return res.status(404).json({ error: "Контент не найден" });
+        }
+        
+        // Проверяем, есть ли настройки для публикации
+        if (!content.social_platforms) {
+          return res.status(400).json({ error: "Контент не адаптирован для публикации в соцсетях" });
+        }
+        
+        // Фильтруем только запрошенные платформы или используем все настроенные
+        const platformsToPublish = platforms || Object.keys(content.social_platforms);
+        
+        // Обновляем статус на "publishing" для выбранных платформ
+        const updatedSocialPlatforms = { ...content.social_platforms };
+        
+        platformsToPublish.forEach(platform => {
+          if (updatedSocialPlatforms[platform]) {
+            updatedSocialPlatforms[platform].status = 'publishing';
+          }
+        });
+        
+        // Обновляем статусы в базе данных
+        await directusApi.patch(`/items/campaign_content/${contentId}`, {
+          social_platforms: updatedSocialPlatforms
         }, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         
-        res.json({ data: response.data.data });
+        // Отправляем данные в n8n webhook для публикации
+        const n8nApiKey = process.env.N8N_API_KEY;
+        
+        if (!n8nApiKey) {
+          console.warn('N8N_API_KEY not found in environment variables');
+          return res.status(500).json({ error: "API ключ n8n не настроен" });
+        }
+        
+        try {
+          // Подготавливаем данные для n8n webhook
+          const webhookPayload = {
+            contentId,
+            campaignId: content.campaign_id,
+            userId: content.user_id,
+            platforms: platformsToPublish,
+            content: {
+              title: content.title,
+              originalContent: content.content,
+              imageUrl: content.image_url,
+              videoUrl: content.video_url,
+              socialPlatforms: updatedSocialPlatforms
+            },
+            scheduledAt: content.scheduled_at,
+            metadata: {
+              keywords: content.keywords,
+              type: content.content_type
+            }
+          };
+          
+          // Отправляем запрос на n8n webhook для публикации
+          const webhookResponse = await axios.post(
+            'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c',
+            webhookPayload,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-N8N-Authorization': n8nApiKey
+              },
+              timeout: 10000 // 10 секунд таймаут
+            }
+          );
+          
+          if (webhookResponse.status === 200) {
+            console.log(`Successfully sent content ${contentId} to n8n for publishing`);
+          } else {
+            console.warn(`Unexpected response from n8n webhook: ${webhookResponse.status}`);
+          }
+        } catch (webhookError) {
+          console.error('Error sending data to n8n webhook:', webhookError);
+          return res.status(500).json({ 
+            error: "Ошибка при отправке данных в n8n",
+            details: webhookError.message
+          });
+        }
+        
+        res.json({ 
+          success: true, 
+          message: "Началась публикация контента в социальные сети",
+          platforms: platformsToPublish
+        });
       } catch (error: any) {
-        console.error('Error adapting content:', error);
+        console.error('Error publishing to social media:', error);
         if (error.response) {
           console.error('Directus API error details:', error.response.data);
         }
         return res.status(error.response?.status || 500).json({ 
-          error: "Ошибка при адаптации контента",
+          error: "Ошибка при публикации в соцсети",
           details: error.response?.data?.errors || error.message
         });
       }
     } catch (error: any) {
-      console.error("Error adapting content:", error);
-      res.status(500).json({ error: "Ошибка при адаптации контента" });
+      console.error("Error publishing to social media:", error);
+      res.status(500).json({ error: "Ошибка при публикации в соцсети" });
     }
   });
 
@@ -1990,6 +2185,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Проверяет статус публикации контента в n8n
+  async function checkPublishingStatus(contentId: string, n8nApiKey: string): Promise<any> {
+    try {
+      const response = await axios.get(
+        `https://n8n.nplanner.ru/webhook/status/${contentId}`,
+        {
+          headers: {
+            'X-N8N-Authorization': n8nApiKey
+          },
+          timeout: 5000
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error checking publishing status for content ${contentId}:`, error);
+      throw error;
+    }
+  }
+
+  // Маршрут для проверки статуса публикации
+  app.get("/api/content/:id/publish-status", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      const n8nApiKey = process.env.N8N_API_KEY;
+      
+      if (!n8nApiKey) {
+        return res.status(500).json({ error: "API ключ n8n не настроен" });
+      }
+      
+      try {
+        // Получаем статус из n8n
+        const publishingStatus = await checkPublishingStatus(contentId, n8nApiKey);
+        
+        // Получаем текущий контент из Directus
+        const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const content = contentResponse.data.data;
+        if (!content) {
+          return res.status(404).json({ error: "Контент не найден" });
+        }
+        
+        // Обновляем статусы платформ если есть изменения
+        let hasStatusChanges = false;
+        const updatedSocialPlatforms = { ...content.social_platforms };
+        
+        Object.entries(publishingStatus.platforms || {}).forEach(([platform, status]) => {
+          if (updatedSocialPlatforms[platform]) {
+            if (status.status !== updatedSocialPlatforms[platform].status) {
+              hasStatusChanges = true;
+              updatedSocialPlatforms[platform] = {
+                ...updatedSocialPlatforms[platform],
+                ...status
+              };
+            }
+          }
+        });
+        
+        // Если есть изменения, обновляем в базе
+        if (hasStatusChanges) {
+          await directusApi.patch(`/items/campaign_content/${contentId}`, {
+            social_platforms: updatedSocialPlatforms
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+        
+        res.json({
+          success: true,
+          status: publishingStatus,
+          platforms: updatedSocialPlatforms
+        });
+        
+      } catch (error: any) {
+        console.error('Error checking publishing status:', error);
+        if (error.response) {
+          console.error('API error details:', error.response.data);
+        }
+        return res.status(error.response?.status || 500).json({ 
+          error: "Ошибка при проверке статуса публикации",
+          details: error.response?.data?.errors || error.message
+        });
+      }
+    } catch (error: any) {
+      console.error("Error checking publishing status:", error);
+      res.status(500).json({ error: "Ошибка при проверке статуса публикации" });
+    }
+  });
+
   return httpServer;
 }
 
