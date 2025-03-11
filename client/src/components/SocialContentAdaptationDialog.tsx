@@ -4,9 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Instagram, MessageCircle, Facebook, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import RichTextEditor from "./RichTextEditor";
 
 // Определение типов
 type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook';

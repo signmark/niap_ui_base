@@ -44,6 +44,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const handleAddSources = async () => {
     if (selectedSources.length === 0) {
       toast({
+        title: "Ошибка",
         description: "Выберите хотя бы один источник",
         variant: "destructive"
       });
@@ -88,12 +89,14 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", campaignId] });
 
       toast({
+        title: "Успешно",
         description: `Добавлено ${sourcesToAdd.length} источников`
       });
       onClose();
     } catch (error) {
       console.error('Error adding sources:', error);
       toast({
+        title: "Ошибка",
         description: "Ошибка при добавлении источников",
         variant: "destructive"
       });
