@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { directusApi } from "@/lib/directus";
 
 // Определение типов
 type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook';
@@ -29,7 +28,7 @@ export function SocialContentAdaptationDialog({
   originalContent, 
   onClose 
 }: SocialContentAdaptationDialogProps) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<SocialPlatform>('instagram');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -55,12 +54,29 @@ export function SocialContentAdaptationDialog({
         throw new Error("Выберите хотя бы одну платформу для публикации");
       }
 
-      return await directusApi.patch(`/items/campaign_content/${contentId}`, {
-        social_publications: enabledPlatforms.map(p => ({
-          platform: p.platform,
-          content: p.content,
-          status: 'pending'
-        }))
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error("Требуется авторизация");
+      }
+      
+      return await fetch(`/api/content/${contentId}/adapt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          socialPublications: enabledPlatforms.map(p => ({
+            platform: p.platform,
+            content: p.content,
+            status: 'pending'
+          }))
+        })
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error("Ошибка при сохранении адаптированного контента");
+        }
+        return response.json();
       });
     },
     onSuccess: () => {

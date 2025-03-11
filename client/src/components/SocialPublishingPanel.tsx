@@ -18,7 +18,7 @@ interface SocialPublishingPanelProps {
 }
 
 export function SocialPublishingPanel({ content, onClose }: SocialPublishingPanelProps) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const [selectedPlatforms, setSelectedPlatforms] = useState<SocialPlatform[]>([]);
   const [adaptedContent, setAdaptedContent] = useState<Record<SocialPlatform, string>>({
     instagram: content.content,
@@ -44,10 +44,27 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
         return acc;
       }, {} as Record<string, any>);
 
-      // Обновляем контент с информацией о публикациях
-      return await directusApi.patch(`/items/campaign_content/${content.id}`, {
-        social_platforms: publications,
-        status: 'scheduled'
+      // Обновляем контент с информацией о публикациях через API сервера
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Требуется авторизация');
+      }
+      
+      return await fetch(`/api/content/${content.id}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          socialPlatforms: publications,
+          status: 'scheduled'
+        })
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Ошибка при публикации контента');
+        }
+        return response.json();
       });
     },
     onSuccess: () => {
