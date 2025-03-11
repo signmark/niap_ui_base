@@ -1238,34 +1238,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       const userId = (req as any).userId;
-      const authHeader = req.headers['authorization'];
+      const authHeader = req.headers['authorization'] || req.headers.authorization;
       
       if (!userId || !authHeader) {
         console.log("Missing userId or authorization header");
         return res.status(401).json({ error: "Не авторизован" });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      // Проверяем, что формат заголовка соответствует ожидаемому
+      const token = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+        ? authHeader.replace('Bearer ', '')
+        : Array.isArray(authHeader) && authHeader[0].startsWith('Bearer ')
+          ? authHeader[0].replace('Bearer ', '')
+          : null;
       
+      if (!token) {
+        console.log("Invalid token format in header");
+        return res.status(401).json({ error: "Неверный формат токена авторизации" });
+      }
+          
       try {
         console.log(`Fetching campaigns for user: ${userId}`);
         
-        // Получаем кампании из Directus, фильтруя по user_id
+        // Получаем кампании из Directus, СТРОГО фильтруя по user_id
         const response = await directusApi.get('/items/user_campaigns', {
           params: {
-            filter: {
+            filter: JSON.stringify({
               user_id: {
                 _eq: userId
               }
-            }
+            })
           },
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
         
+        // Проверяем, что получили массив
+        if (!Array.isArray(response.data.data)) {
+          console.error("Unexpected response format from Directus:", response.data);
+          return res.status(500).json({ error: "Неожиданный формат ответа от Directus API" });
+        }
+        
+        // Строго фильтруем по userId перед преобразованием
+        const filteredItems = response.data.data.filter((item: any) => item.user_id === userId);
+        
         // Преобразуем данные из формата Directus в наш формат
-        const campaigns = response.data.data.map((item: any) => ({
+        const campaigns = filteredItems.map((item: any) => ({
           id: item.id,
           name: item.name,
           description: item.description,
@@ -1273,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: item.created_at
         }));
         
-        console.log(`Found ${campaigns.length} campaigns for user ${userId}`);
+        console.log(`Found ${campaigns.length} campaigns for user ${userId} (filtered from ${response.data.data.length} total)`);
         
         res.json({ data: campaigns });
       } catch (error) {
