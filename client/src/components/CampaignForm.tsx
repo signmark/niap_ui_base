@@ -36,10 +36,17 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
   });
 
+  const { getAuthToken } = useAuthStore();
+  
   const { mutate: createCampaign, isPending } = useMutation({
     mutationFn: async (values: CampaignFormValues) => {
       if (!userId) {
         throw new Error("Необходима авторизация");
+      }
+      
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("Отсутствует токен авторизации");
       }
 
       // Используем наш новый серверный маршрут вместо прямого обращения к Directus
@@ -47,6 +54,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           name: values.name.trim(),
@@ -64,7 +72,7 @@ export function CampaignForm({ onClose }: CampaignFormProps) {
     },
     onSuccess: (newCampaign) => {
       // Immediately update the cache to show the new campaign
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
       
       // Show success message
       toast({

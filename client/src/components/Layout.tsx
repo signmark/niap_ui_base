@@ -16,6 +16,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
+    // Проверяем, находимся ли мы на странице входа
+    const isLoginPage = location === '/auth/login';
+    
+    // Пытаемся восстановить сессию из localStorage
     const storedToken = localStorage.getItem('auth_token');
     const storedUserId = localStorage.getItem('user_id');
     
@@ -25,13 +29,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (!token) {
-      console.log('No auth token found, redirecting to login');
+    // Если нет токена и мы не на странице входа - перенаправляем
+    if (!token && !isLoginPage) {
+      console.log('Токен авторизации не найден, перенаправляем на страницу входа');
       navigate("/auth/login");
-    } else {
-      console.log('Authenticated with token, length:', token.length);
+    } else if (token) {
+      console.log('Авторизован с токеном, длина:', token.length);
+      
+      // Если мы авторизованы и находимся на странице входа - перенаправляем на главную
+      if (isLoginPage) {
+        navigate("/campaigns");
+      }
     }
-  }, [token, navigate, setAuth]);
+  }, [token, location, navigate, setAuth]);
 
   const handleLogout = async () => {
     try {
