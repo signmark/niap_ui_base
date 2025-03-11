@@ -487,34 +487,81 @@ export default function Trends() {
 
   const { mutate: collectTrends, isPending: isCollecting } = useMutation({
     mutationFn: async () => {
+      if (!selectedCampaignId) {
+        throw new Error("Выберите кампанию");
+      }
+
+      if (!keywords?.length) {
+        throw new Error("Добавьте ключевые слова в кампанию");
+      }
+
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      const response = await directusApi.post('/items/crawler_tasks', {
-        campaign_id: selectedCampaignId,
-        status: 'pending',
-        type: 'trend_collection'
-      }, {
+      
+      // Gather all keywords from the campaign for the webhook
+      const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
+      console.log('Sending keywords to webhook:', keywordsList);
+      
+      // Send request to the n8n webhook with all campaign keywords
+      const webhookResponse = await fetch('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
-        }
+        },
+        body: JSON.stringify({ 
+          campaignId: selectedCampaignId,
+          keywords: keywordsList 
+        })
       });
+      
+      if (!webhookResponse.ok) {
+        throw new Error("Ошибка при отправке запроса на сбор трендов");
+      }
+      
+      const trendData = await webhookResponse.json();
+      console.log('Received trend data:', trendData);
+      
+      // If the webhook returns trend posts directly, save them to the database
+      if (trendData?.trendTopics && Array.isArray(trendData.trendTopics)) {
+        // Save trend topics to Directus
+        for (const topic of trendData.trendTopics) {
+          await directusApi.post('/items/campaign_trend_topics', {
+            title: topic.title,
+            campaign_id: selectedCampaignId,
+            source_id: topic.sourceId,
+            reactions: topic.reactions || 0,
+            comments: topic.comments || 0,
+            views: topic.views || 0,
+            is_bookmarked: false
+          }, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+        }
+      }
 
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
-      return response.data;
+      return trendData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Успешно",
-        description: "Запущен сбор трендов. Результаты появятся в течение нескольких минут."
+        description: `Собрано ${data?.trendTopics?.length || 0} трендовых тем. Обновление страницы...`
       });
+      
+      // Refresh the trend topics list
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
     onError: (error: Error) => {
+      console.error('Error collecting trends:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось запустить сбор трендов"
+        description: error.message || "Не удалось запустить сбор трендов"
       });
     }
   });
