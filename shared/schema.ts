@@ -160,23 +160,44 @@ export type InsertTrendTopic = z.infer<typeof insertTrendTopicSchema>;
 export type SourcePost = typeof sourcePosts.$inferSelect;
 export type InsertSourcePost = z.infer<typeof insertSourcePostSchema>;
 
-// Таблица для сгенерированного контента
+// Таблица для сгенерированного контента - оптимизирована для кросс-платформенной публикации
 export const campaignContent = pgTable("campaign_content", {
   id: uuid("id").primaryKey().defaultRandom(),
   campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
   userId: uuid("user_id").notNull(),
   title: text("title"),
-  content: text("content").notNull(),
+  content: text("content").notNull(),  // Хранится в HTML формате для сохранения форматирования
   contentType: text("content_type").notNull(), // text, text-image, video, video-text
   imageUrl: text("image_url"),
   videoUrl: text("video_url"),
   prompt: text("prompt"),
   keywords: text("keywords").array(),
+  hashtags: text("hashtags").array(), // Хэштеги для использования в социальных сетях
+  links: text("links").array(),      // Ссылки для включения в посты
   createdAt: timestamp("created_at").defaultNow(),
   scheduledAt: timestamp("scheduled_at"),
   publishedAt: timestamp("published_at"),
   status: text("status").default("draft"), // draft, scheduled, published
-  socialPlatforms: jsonb("social_platforms").default({})
+  // Структурированное хранение адаптированных версий для разных платформ
+  socialPlatforms: jsonb("social_platforms").default({
+    /*
+    Формат данных:
+    {
+      "instagram": {
+        "caption": "Адаптированный текст для Instagram",
+        "status": "pending|published|failed",
+        "publishedAt": "2023-01-01T00:00:00Z",
+        "postId": "123456789",
+        "postUrl": "https://instagram.com/p/123456789/",
+        "error": "Ошибка публикации"
+      },
+      "telegram": { ... },
+      "vk": { ... },
+      "facebook": { ... }
+    }
+    */
+  }),
+  metadata: jsonb("metadata").default({}), // Для дополнительных метаданных о контенте
 });
 
 // Schema для создания контента
@@ -191,9 +212,12 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     videoUrl: true,
     prompt: true,
     keywords: true,
+    hashtags: true,
+    links: true,
     scheduledAt: true,
     status: true,
-    socialPlatforms: true
+    socialPlatforms: true,
+    metadata: true
   });
 
 // Тип сгенерированного контента
