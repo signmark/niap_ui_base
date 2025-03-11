@@ -2261,9 +2261,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status
         };
+        
+        // Обрабатываем ключевые слова особым образом
+        if (req.body.keywords !== undefined) {
+          console.log('Request keywords type:', typeof req.body.keywords, 'Value:', req.body.keywords);
+          
+          // Убедимся, что keywords - это массив
+          let keywordsArray;
+          if (Array.isArray(req.body.keywords)) {
+            keywordsArray = req.body.keywords;
+          } else if (typeof req.body.keywords === 'string') {
+            try {
+              // Проверяем, может быть это JSON-строка
+              const parsed = JSON.parse(req.body.keywords);
+              keywordsArray = Array.isArray(parsed) ? parsed : [req.body.keywords];
+            } catch (e) {
+              // Если не удалось распарсить как JSON, то это просто строка
+              keywordsArray = [req.body.keywords];
+            }
+          } else if (req.body.keywords === null) {
+            keywordsArray = [];
+          } else {
+            // Для всех остальных типов пытаемся преобразовать
+            keywordsArray = [String(req.body.keywords)];
+          }
+          
+          // Фильтруем пустые значения
+          directusPayload.keywords = keywordsArray.filter(k => k && k.trim() !== '');
+          console.log('Processed keywords array:', directusPayload.keywords);
+        }
         
         // Обновляем данные через Directus API
         const response = await directusApi.patch(`/items/campaign_content/${contentId}`, directusPayload, {
