@@ -432,10 +432,10 @@ export default function ContentPage() {
                 Нет контента для этой кампании
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredContent.map((content) => (
-                  <Card key={content.id}>
-                    <CardContent className="p-4">
+                  <Card key={content.id} className="h-full flex flex-col">
+                    <CardContent className="p-4 flex-grow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2">
                           {getContentTypeIcon(content.contentType)}
@@ -493,8 +493,12 @@ export default function ContentPage() {
                           <h3 className="text-lg font-semibold">{content.title}</h3>
                         </div>
                       )}
-                      <div className="mb-2">
-                        <p className="whitespace-pre-wrap">{content.content}</p>
+                      <div className="mb-2 max-h-24 overflow-hidden relative card-content">
+                        <div 
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: content.content }}
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
                       </div>
                       {content.contentType === "text-image" && content.imageUrl && (
                         <div className="mt-4">
@@ -524,13 +528,13 @@ export default function ContentPage() {
                           ))}
                         </div>
                       )}
-                      <div className="mt-4 text-sm text-muted-foreground">
-                        <p>Создано: {formatDate(content.createdAt)}</p>
+                      <div className="mt-4 text-xs text-muted-foreground flex flex-wrap gap-x-4">
+                        <span>Создано: {formatDate(content.createdAt)}</span>
                         {content.scheduledAt && (
-                          <p>Запланировано: {formatDate(content.scheduledAt)}</p>
+                          <span>Запланировано: {formatDate(content.scheduledAt)}</span>
                         )}
                         {content.publishedAt && (
-                          <p>Опубликовано: {formatDate(content.publishedAt)}</p>
+                          <span>Опубликовано: {formatDate(content.publishedAt)}</span>
                         )}
                       </div>
                     </CardContent>

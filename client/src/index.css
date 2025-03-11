@@ -2,6 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Общие стили для WYSIWYG контента */
+.prose {
+  color: inherit;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.prose h1 {
+  font-size: 1.5em;
+}
+
+.prose h2 {
+  font-size: 1.3em;
+}
+
+.prose h3 {
+  font-size: 1.2em;
+}
+
+.prose p {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose ul, .prose ol {
+  padding-left: 1.5em;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose li {
+  margin-top: 0.125em;
+  margin-bottom: 0.125em;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.prose a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.prose blockquote {
+  border-left: 3px solid hsl(var(--muted-foreground));
+  padding-left: 0.75em;
+  font-style: italic;
+  margin: 0.5em 0;
+}
+
+.prose pre {
+  background-color: hsl(var(--muted));
+  padding: 0.5em;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+}
+
+.prose-sm {
+  font-size: 0.875rem;
+}
+
+.prose-sm h1 {
+  font-size: 1.25em;
+}
+
+.prose-sm h2 {
+  font-size: 1.15em;
+}
+
+.prose-sm h3 {
+  font-size: 1.1em;
+}
+
+/* Специальные стили для компактных карточек */
+.card-content .prose-sm p {
+  margin-top: 0.125em;
+  margin-bottom: 0.125em;
+  line-height: 1.4;
+}
+
+.card-content .prose-sm ul, .card-content .prose-sm ol {
+  padding-left: 1.25em;
+}
+
+.card-content .prose-sm blockquote {
+  margin: 0.25em 0;
+}
+
 @layer base {
   * {
     @apply border-border;
