@@ -1279,10 +1279,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Endpoint для закладок трендовых тем
-  app.patch("/api/campaign-trends/:id/bookmark", async (req, res) => {
+  app.patch("/api/campaign-trends/:id/bookmark", authenticateUser, async (req, res) => {
     try {
       const topicId = req.params.id;
       const { isBookmarked } = req.body;
+      const authHeader = req.headers['authorization'];
       
       if (typeof isBookmarked !== 'boolean') {
         return res.status(400).json({ 
@@ -1291,9 +1292,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Получаем токен из заголовка
-      const authHeader = req.headers['authorization'];
-      
       if (!authHeader) {
         return res.status(401).json({ 
           success: false,
@@ -1301,13 +1299,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Обновляем статус закладки для темы
-      const updatedTopic = await storage.bookmarkCampaignTrendTopic(topicId, isBookmarked);
+      const token = authHeader.replace('Bearer ', '');
       
-      res.json({ 
-        success: true,
-        data: updatedTopic 
-      });
+      try {
+        // Обновляем статус закладки через Directus API
+        const response = await directusApi.patch(`/items/campaign_trend_topics/${topicId}`, {
+          is_bookmarked: isBookmarked
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.data || !response.data.data) {
+          return res.status(404).json({ 
+            success: false,
+            error: "Topic not found" 
+          });
+        }
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const updatedTopic = {
+          id: response.data.data.id,
+          title: response.data.data.title,
+          sourceId: response.data.data.source_id,
+          reactions: response.data.data.reactions,
+          comments: response.data.data.comments,
+          views: response.data.data.views,
+          createdAt: response.data.data.created_at,
+          isBookmarked: response.data.data.is_bookmarked,
+          campaignId: response.data.data.campaign_id
+        };
+        
+        res.json({ 
+          success: true,
+          data: updatedTopic 
+        });
+      } catch (directusError) {
+        console.error("Error updating bookmark in Directus:", directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", directusError.response.data);
+          
+          if (directusError.response.status === 404) {
+            return res.status(404).json({ 
+              success: false,
+              error: "Topic not found" 
+            });
+          }
+        }
+        
+        return res.status(500).json({ 
+          success: false,
+          error: "Failed to update bookmark status",
+          message: directusError instanceof Error ? directusError.message : "Unknown error"
+        });
+      }
     } catch (error) {
       console.error("Error updating bookmark status:", error);
       res.status(500).json({ 
