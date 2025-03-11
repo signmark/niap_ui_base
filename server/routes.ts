@@ -1131,15 +1131,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Sending webhook request to n8n for source search');
       
       try {
+        // Создаем идентификатор запроса для безопасного отслеживания
+        const requestId = crypto.randomUUID();
+        
         const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/767bbaf6-e9ca-4f1d-aeb6-66598ff7e291', {
           keywords: keywords,
           userId: userId,
-          token: token
+          requestId: requestId,
+          // Не передаем токен пользователя в webhook
         }, {
           headers: {
             'Content-Type': 'application/json',
-            'X-N8N-Authorization': process.env.N8N_API_KEY || '',
-            'Authorization': `Bearer ${token}`
+            // Используем только API ключ для авторизации в N8N
+            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
           },
           timeout: 30000 // 30 секунд таймаут
         });
@@ -1417,10 +1421,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Received trend data from n8n webhook");
       
-      // Получаем токен из заголовка запроса или из body
+      // Получаем токен только из заголовка авторизации, это безопаснее
       const authHeader = req.headers.authorization;
-      const tokenFromBody = req.body.token;
-      const token = authHeader ? authHeader.replace('Bearer ', '') : tokenFromBody;
+      const token = authHeader ? authHeader.replace('Bearer ', '') : null;
       
       if (!token) {
         console.error("No authorization token provided for webhook");
