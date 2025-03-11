@@ -1237,12 +1237,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для получения кампаний пользователя
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
-      const userId = (req as any).userId;
+      // Получаем userId двумя способами - из middleware authenticateUser или из заголовка
+      const authenticatedUserId = (req as any).userId;
+      const headerUserId = req.headers['x-user-id'];
+      
+      // Выбираем userId из доступных источников
+      const userId = authenticatedUserId || 
+                    (typeof headerUserId === 'string' ? headerUserId : 
+                    Array.isArray(headerUserId) ? headerUserId[0] : null);
+      
       const authHeader = req.headers['authorization'] || req.headers.authorization;
       
-      if (!userId || !authHeader) {
-        console.log("Missing userId or authorization header");
-        return res.status(401).json({ error: "Не авторизован" });
+      if (!userId) {
+        console.log("Missing userId (auth middleware and header)");
+        return res.status(401).json({ error: "Не авторизован: отсутствует идентификатор пользователя" });
+      }
+      
+      if (!authHeader) {
+        console.log("Missing authorization header");
+        return res.status(401).json({ error: "Не авторизован: отсутствует заголовок авторизации" });
       }
       
       // Проверяем, что формат заголовка соответствует ожидаемому
@@ -1261,13 +1274,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Fetching campaigns for user: ${userId}`);
         
         // Получаем кампании из Directus, СТРОГО фильтруя по user_id
+        console.log(`Sending request to Directus with filter user_id = ${userId}`);
+        
         const response = await directusApi.get('/items/user_campaigns', {
           params: {
             filter: JSON.stringify({
-              user_id: {
-                _eq: userId
+              "user_id": {
+                "_eq": userId
               }
-            })
+            }),
+            // Обеспечиваем, чтобы вернулись только кампании указанного пользователя
+            "fields": ["*", "user_id"]
           },
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1294,6 +1311,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
         
         console.log(`Found ${campaigns.length} campaigns for user ${userId} (filtered from ${response.data.data.length} total)`);
+        
+        // Дополнительная отладочная информация для ЛЮБОГО результата
+        console.log('All campaign user_ids in response:', response.data.data.map((item: any) => item.user_id).join(', '));
+        console.log('User ID from request:', userId);
+        console.log('Types - userId:', typeof userId, 'first db userId:', typeof response.data.data[0]?.user_id);
+        
+        // Проверяем все кампании и логгируем те, что не соответствуют userId
+        const wrongCampaigns = response.data.data.filter((item: any) => item.user_id !== userId);
+        if (wrongCampaigns.length > 0) {
+          console.log('WARNING: Found campaigns with wrong user_id:', 
+            wrongCampaigns.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              user_id: item.user_id
+            }))
+          );
+        }
         
         res.json({ data: campaigns });
       } catch (error) {

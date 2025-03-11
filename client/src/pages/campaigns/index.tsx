@@ -25,27 +25,39 @@ export default function Campaigns() {
   const { data: campaignsResponse, isLoading, error } = useQuery<{data: Campaign[]}>({
     queryKey: ["/api/campaigns", userId],
     queryFn: async () => {
-      const token = getAuthToken();
-      console.log('Fetching campaigns with token:', token ? `${token.substring(0, 10)}...` : 'none');
+      const token = localStorage.getItem('auth_token');
+      const storedUserId = localStorage.getItem('user_id');
+      
+      console.log('Fetching campaigns with:',
+        'token:', token ? `${token.substring(0, 10)}...` : 'none',
+        'userId:', storedUserId || userId
+      );
       
       if (!token) {
         throw new Error("Отсутствует токен авторизации");
       }
       
+      if (!storedUserId && !userId) {
+        throw new Error("Отсутствует ID пользователя");
+      }
+      
       const response = await fetch('/api/campaigns', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'x-user-id': storedUserId || userId || ''
         }
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
         throw new Error(errorData.error || "Не удалось загрузить кампании");
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log('Campaigns loaded:', result.data?.length || 0);
+      return result;
     },
-    enabled: !!userId, // Запрос выполняется только при наличии userId
+    enabled: !!(userId || localStorage.getItem('user_id')), // Запрос выполняется только при наличии userId
   });
 
   const { mutate: updateCampaign } = useMutation({
