@@ -167,7 +167,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Генерация контента</DialogTitle>
           <DialogDescription>
@@ -257,12 +257,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   Результат
                 </Label>
                 <div className="col-span-3">
-                  <RichTextEditor
-                    content={generationResult || ''}
-                    onChange={(html) => setGenerationResult(html)}
-                    minHeight="300px"
-                    className="tiptap"
-                  />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    <RichTextEditor
+                      content={generationResult || ''}
+                      onChange={(html) => setGenerationResult(html)}
+                      minHeight="200px"
+                      className="tiptap"
+                    />
+                  </div>
                 </div>
               </div>
             </>
