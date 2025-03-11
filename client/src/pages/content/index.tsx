@@ -215,12 +215,25 @@ export default function ContentPage() {
   // Мутация для обновления контента
   const updateContentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      // Убедимся, что keywords всегда массив и JSON-сериализуем его
+      if (data.keywords) {
+        console.log('Updating content with keywords:', data.keywords);
+        
+        // Проверяем, что keywords это массив
+        if (!Array.isArray(data.keywords)) {
+          console.warn('Keywords is not an array, converting:', data.keywords);
+          data.keywords = data.keywords ? [String(data.keywords)] : [];
+        }
+      }
+      
       return await apiRequest(`/api/campaign-content/${id}`, { 
         method: 'PATCH',
         data
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Content update success response:', data);
+      
       // Сначала обновляем данные, затем закрываем диалог
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
         .then(() => {
@@ -232,6 +245,7 @@ export default function ContentPage() {
         });
     },
     onError: (error: Error) => {
+      console.error('Content update error:', error);
       toast({
         title: "Ошибка при обновлении контента",
         description: error.message,
