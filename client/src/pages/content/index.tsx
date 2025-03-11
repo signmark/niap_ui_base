@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, createRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,6 +85,7 @@ export default function ContentPage() {
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
+  const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
   // Вспомогательная функция для безопасной установки контента с гарантией наличия массива keywords
   // ВАЖНО: Всегда используйте эту функцию вместо setCurrentContent при установке ненулевых значений,
@@ -92,12 +93,30 @@ export default function ContentPage() {
   const setCurrentContentSafe = (content: CampaignContent | null) => {
     if (content) {
       // Гарантируем, что keywords всегда массив
-      setCurrentContent({
+      const safeContent = {
         ...content,
         keywords: Array.isArray(content.keywords) ? content.keywords : []
-      });
+      };
+      
+      setCurrentContent(safeContent);
+      
+      // Сбрасываем и заново устанавливаем выбранные ключевые слова
+      const newSelectedKeywords = new Set<string>();
+      
+      // Добавляем ID из предопределенных ключевых слов
+      if (Array.isArray(safeContent.keywords)) {
+        campaignKeywords.forEach(kw => {
+          if (safeContent.keywords.includes(kw.keyword)) {
+            newSelectedKeywords.add(kw.id);
+          }
+        });
+      }
+      
+      setSelectedKeywordIds(newSelectedKeywords);
+      console.log('Selected keyword IDs updated:', newSelectedKeywords);
     } else {
       setCurrentContent(null);
+      setSelectedKeywordIds(new Set());
     }
   };
   const [newContent, setNewContent] = useState({
@@ -367,15 +386,16 @@ export default function ContentPage() {
     if (!currentContent) return;
 
     console.log('Current content before update:', currentContent);
+    console.log('Selected keyword IDs:', selectedKeywordIds);
     
-    // Собираем выбранные ключевые слова из чекбоксов
-    let selectedKeywords: string[] = [];
+    // Собираем выбранные ключевые слова из нашего состояния
+    let selectedKeywordTexts: string[] = [];
     
     // Проверяем каждое ключевое слово из кампании
     campaignKeywords.forEach(keyword => {
-      const checkboxElement = document.getElementById(`edit-keyword-${keyword.id || keyword.keyword}`) as HTMLInputElement;
-      if (checkboxElement && checkboxElement.checked) {
-        selectedKeywords.push(keyword.keyword);
+      // Используем наш Set для проверки, выбрано ли ключевое слово
+      if (selectedKeywordIds.has(keyword.id)) {
+        selectedKeywordTexts.push(keyword.keyword);
       }
     });
     
@@ -383,13 +403,13 @@ export default function ContentPage() {
     if (Array.isArray(currentContent.keywords)) {
       currentContent.keywords.forEach(keyword => {
         // Если ключевое слово не из предопределенных в кампании, добавляем его
-        if (!campaignKeywords.some(k => k.keyword === keyword) && !selectedKeywords.includes(keyword)) {
-          selectedKeywords.push(keyword);
+        if (!campaignKeywords.some(k => k.keyword === keyword) && !selectedKeywordTexts.includes(keyword)) {
+          selectedKeywordTexts.push(keyword);
         }
       });
     }
     
-    console.log('FINAL Selected keywords by DOM + extras:', selectedKeywords);
+    console.log('FINAL Selected keywords from React state + extras:', selectedKeywordTexts);
 
     // Создаем типизированный объект для обновления
     const updateData = {
@@ -398,7 +418,7 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      keywords: selectedKeywords
+      keywords: selectedKeywordTexts
     };
 
     console.log('Update data being sent:', updateData);
@@ -977,7 +997,9 @@ export default function ContentPage() {
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
                         {campaignKeywords.map((keyword) => {
-                          const isSelected = currentContent.keywords?.includes(keyword.keyword);
+                          // Проверяем, выбрано ли это ключевое слово в нашем React-состоянии
+                          const isSelected = selectedKeywordIds.has(keyword.id);
+                          
                           return (
                             <div key={keyword.id || keyword.keyword} className="flex items-center space-x-2">
                               <input
@@ -988,29 +1010,20 @@ export default function ContentPage() {
                                 onChange={(e) => {
                                   console.log('Checkbox changed:', keyword.keyword, e.target.checked);
                                   
-                                  // Гарантируем, что keywords всегда массив
-                                  const existingKeywords = Array.isArray(currentContent.keywords) 
-                                    ? [...currentContent.keywords] 
-                                    : [];
+                                  // Создаем новую копию Set для обновления
+                                  const newSelectedKeywordIds = new Set(selectedKeywordIds);
                                   
-                                  let updatedKeywords;
                                   if (e.target.checked) {
-                                    // Добавляем ключевое слово, если его нет в массиве
-                                    updatedKeywords = existingKeywords.includes(keyword.keyword)
-                                      ? existingKeywords
-                                      : [...existingKeywords, keyword.keyword];
+                                    // Добавляем ID ключевого слова в Set
+                                    newSelectedKeywordIds.add(keyword.id);
                                   } else {
-                                    // Удаляем ключевое слово
-                                    updatedKeywords = existingKeywords.filter(k => k !== keyword.keyword);
+                                    // Удаляем ID ключевого слова из Set
+                                    newSelectedKeywordIds.delete(keyword.id);
                                   }
                                   
-                                  console.log('Updated keywords:', updatedKeywords);
-                                  
-                                  const updatedContent = {
-                                    ...currentContent,
-                                    keywords: updatedKeywords
-                                  };
-                                  setCurrentContentSafe(updatedContent);
+                                  // Обновляем состояние выбранных ключевых слов
+                                  console.log('Updated keyword IDs:', newSelectedKeywordIds);
+                                  setSelectedKeywordIds(newSelectedKeywordIds);
                                 }}
                               />
                               <label 
