@@ -251,13 +251,15 @@ export function SocialContentAdaptationDialog({
                       Сбросить
                     </Button>
                   </div>
-                  <RichTextEditor
-                    content={platformsContent[platform].content}
-                    onChange={(html: string) => handleContentChange(platform, html)}
-                    placeholder={`Введите текст для ${platform}...`}
-                    className={!platformsContent[platform].isEnabled ? "opacity-50 pointer-events-none" : ""}
-                    minHeight="200px"
-                  />
+                  <div className="max-h-[400px] overflow-y-auto border rounded-md">
+                    <RichTextEditor
+                      content={platformsContent[platform].content}
+                      onChange={(html: string) => handleContentChange(platform, html)}
+                      placeholder={`Введите текст для ${platform}...`}
+                      className={!platformsContent[platform].isEnabled ? "opacity-50 pointer-events-none" : ""}
+                      minHeight="200px"
+                    />
+                  </div>
                 </div>
               </TabsContent>
             ))}
