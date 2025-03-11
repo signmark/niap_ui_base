@@ -1007,23 +1007,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   console.log('Saving trend topic using storage:', JSON.stringify(trendTopicData).substring(0, 100));
                   const response = await storage.createCampaignTrendTopic(trendTopicData);
                   
-                  console.log('Directus response status:', response.status);
-                  
-                  if (response.data && response.data.errors) {
-                    console.error('Directus API errors:', JSON.stringify(response.data.errors));
-                  }
-                } catch (directusError) {
-                  console.error('Error sending to Directus:', directusError);
-                  if (directusError.response) {
-                    console.error('Directus error response:', JSON.stringify(directusError.response.data));
-                  // Детально выводим каждую ошибку
-                  if (directusError.response?.data?.errors && Array.isArray(directusError.response.data.errors)) {
-                    directusError.response.data.errors.forEach((err: any, index: number) => {
-                      console.error(`Directus error ${index + 1}:`, JSON.stringify(err));
-                    });
-                  }
-                  }
-                  throw directusError;
+                  console.log('Successfully saved trend topic with id:', response.id);
+                } catch (storageError) {
+                  console.error('Error saving trend topic to database:', storageError);
+                  throw storageError;
                 }
                 savedCount++;
               } catch (err) {
@@ -1497,22 +1484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Saving trend topic: ${trendTopic.title.substring(0, 30)}... from ${trendTopic.sourceId}, metrics: views=${trendTopic.views}, reactions=${trendTopic.reactions}, comments=${trendTopic.comments}`);
           
-          // Создаем запись в Directus API напрямую
-          await directusApi.post('/items/campaign_trend_topics', {
-            title: trendTopic.title,
-            source_id: trendTopic.sourceId,
-            reactions: trendTopic.reactions,
-            comments: trendTopic.comments,
-            views: trendTopic.views,
-            campaign_id: trendTopic.campaignId,
-            is_bookmarked: trendTopic.isBookmarked
-          }, {
-            headers: {
-              'Content-Type': 'application/json',
-              // Используем токен пользователя из запроса
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          // Используем storage вместо прямого обращения к Directus API
+          await storage.createCampaignTrendTopic(trendTopic);
           savedCount++;
         } catch (err) {
           console.error("Error saving trend:", err);
@@ -2909,35 +2882,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isBookmarked: false
           });
           
-          // Затем преобразуем его в формат Directus
-          const directusPayload = {
-            title: trendTopic.title,
-            campaign_id: trendTopic.campaignId,
-            source_id: trendTopic.sourceId,
-            reactions: trendTopic.reactions,
-            comments: trendTopic.comments,
-            views: trendTopic.views,
-            is_bookmarked: trendTopic.isBookmarked
-          };
+          // Сохраняем через наш внутренний API
+          const response = await storage.createCampaignTrendTopic(trendTopic);
           
-          // Сохраняем в Directus напрямую через сервисный API ключ
-          const response = await directusApi.post('/items/campaign_trend_topics', directusPayload, {
-            headers: {
-              'Authorization': `Bearer ${n8nApiKey}`
-            }
-          });
-          
-          // Преобразуем ответ из Directus в наш формат и добавляем в сохраненные
+          // Используем данные из ответа хранилища
           const savedTopic = {
-            id: response.data.data.id,
-            title: response.data.data.title,
-            campaignId: response.data.data.campaign_id,
-            sourceId: response.data.data.source_id,
-            reactions: response.data.data.reactions,
-            comments: response.data.data.comments,
-            views: response.data.data.views,
-            isBookmarked: response.data.data.is_bookmarked,
-            createdAt: response.data.data.created_at
+            id: response.id,
+            title: response.title,
+            campaignId: response.campaignId,
+            sourceId: response.sourceId,
+            reactions: response.reactions,
+            comments: response.comments,
+            views: response.views,
+            isBookmarked: response.isBookmarked,
+            createdAt: response.createdAt
           };
           savedTopics.push(savedTopic);
         } catch (topicError) {
