@@ -1426,6 +1426,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.replace('Bearer ', '');
+      
+  // Endpoint для заданий на обработку источников через n8n webhook
+  app.post("/api/crawler/tasks", authenticateUser, async (req, res) => {
+    try {
+      const { sourceId } = req.body;
+      
+      if (!sourceId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "ID источника не указан" 
+        });
+      }
+      
+      console.log(`Отправка задания на обработку источника ${sourceId} через webhook n8n`);
+      
+      // Отправляем запрос на n8n webhook
+      try {
+        const response = await axios.post(
+          "https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c", 
+          { sourceId }
+        );
+        
+        console.log("Webhook response:", response.data);
+        
+        return res.json({
+          success: true,
+          data: response.data || { message: "Задание успешно отправлено" }
+        });
+      } catch (webhookError) {
+        console.error("Error sending webhook request:", webhookError);
+        return res.status(502).json({
+          success: false,
+          error: "Ошибка при отправке запроса на обработку источника",
+          details: webhookError.message
+        });
+      }
+    } catch (error) {
+      console.error('Error processing crawler task:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: "Внутренняя ошибка сервера"
+      });
+    }
+  });
 
       const sourceId = req.params.sourceId;
       const { campaignId } = req.body;
