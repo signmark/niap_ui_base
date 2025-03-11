@@ -990,23 +990,27 @@ export default function ContentPage() {
                 <div className="space-y-2">
                   <Label>Выбранные ключевые слова:</Label>
                   <div className="flex flex-wrap gap-2">
-                    {currentContent.keywords.map((keyword, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {keyword}
-                        <button
-                          type="button"
-                          className="h-4 w-4 rounded-full"
-                          onClick={() => {
-                            setCurrentContent({
-                              ...currentContent,
-                              keywords: currentContent.keywords?.filter((_, i) => i !== index) || []
-                            });
-                          }}
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
+                    {Array.isArray(currentContent.keywords) ? (
+                      currentContent.keywords.map((keyword, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {keyword}
+                          <button
+                            type="button"
+                            className="h-4 w-4 rounded-full"
+                            onClick={() => {
+                              setCurrentContent({
+                                ...currentContent,
+                                keywords: currentContent.keywords?.filter((_, i) => i !== index) || []
+                              });
+                            }}
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))
+                    ) : (
+                      <div>Нет ключевых слов</div>
+                    )}
                   </div>
                 </div>
               )}
