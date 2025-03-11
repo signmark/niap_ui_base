@@ -964,19 +964,31 @@ export default function ContentPage() {
                                 className="h-4 w-4 rounded border-gray-300"
                                 checked={isSelected}
                                 onChange={(e) => {
+                                  console.log('Checkbox changed:', keyword.keyword, e.target.checked);
+                                  
+                                  // Гарантируем, что keywords всегда массив
+                                  const existingKeywords = Array.isArray(currentContent.keywords) 
+                                    ? [...currentContent.keywords] 
+                                    : [];
+                                  
+                                  let updatedKeywords;
                                   if (e.target.checked) {
-                                    const updatedContent = {
-                                      ...currentContent,
-                                      keywords: [...(currentContent.keywords || []), keyword.keyword]
-                                    };
-                                    setCurrentContentSafe(updatedContent);
+                                    // Добавляем ключевое слово, если его нет в массиве
+                                    updatedKeywords = existingKeywords.includes(keyword.keyword)
+                                      ? existingKeywords
+                                      : [...existingKeywords, keyword.keyword];
                                   } else {
-                                    const updatedContent = {
-                                      ...currentContent,
-                                      keywords: (currentContent.keywords || []).filter(k => k !== keyword.keyword)
-                                    };
-                                    setCurrentContentSafe(updatedContent);
+                                    // Удаляем ключевое слово
+                                    updatedKeywords = existingKeywords.filter(k => k !== keyword.keyword);
                                   }
+                                  
+                                  console.log('Updated keywords:', updatedKeywords);
+                                  
+                                  const updatedContent = {
+                                    ...currentContent,
+                                    keywords: updatedKeywords
+                                  };
+                                  setCurrentContentSafe(updatedContent);
                                 }}
                               />
                               <label 
@@ -1012,11 +1024,21 @@ export default function ContentPage() {
                       const value = e.currentTarget.value.trim();
                       if (!value) return;
                       
+                      console.log('Adding new keyword:', value);
+                      
+                      // Гарантируем, что keywords всегда массив
+                      const existingKeywords = Array.isArray(currentContent.keywords) 
+                        ? [...currentContent.keywords] 
+                        : [];
+                      
                       // Не добавляем, если ключевое слово уже есть в списке
-                      if (!(currentContent.keywords || []).includes(value)) {
+                      if (!existingKeywords.includes(value)) {
+                        const updatedKeywords = [...existingKeywords, value];
+                        console.log('New keywords array:', updatedKeywords);
+                        
                         const updatedContent = {
                           ...currentContent,
-                          keywords: [...(currentContent.keywords || []), value]
+                          keywords: updatedKeywords
                         };
                         setCurrentContentSafe(updatedContent);
                       }
@@ -1029,11 +1051,21 @@ export default function ContentPage() {
                     const value = e.currentTarget.value.trim();
                     if (!value) return;
                     
+                    console.log('Adding keyword on blur:', value);
+                    
+                    // Гарантируем, что keywords всегда массив
+                    const existingKeywords = Array.isArray(currentContent.keywords) 
+                      ? [...currentContent.keywords] 
+                      : [];
+                    
                     // Не добавляем, если ключевое слово уже есть в списке
-                    if (!(currentContent.keywords || []).includes(value)) {
+                    if (!existingKeywords.includes(value)) {
+                      const updatedKeywords = [...existingKeywords, value];
+                      console.log('New keywords array on blur:', updatedKeywords);
+                      
                       const updatedContent = {
                         ...currentContent,
-                        keywords: [...(currentContent.keywords || []), value]
+                        keywords: updatedKeywords
                       };
                       setCurrentContentSafe(updatedContent);
                     }
