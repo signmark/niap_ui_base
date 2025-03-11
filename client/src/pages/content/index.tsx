@@ -360,6 +360,15 @@ export default function ContentPage() {
   const handleUpdateContent = () => {
     if (!currentContent) return;
 
+    console.log('Current content before update:', currentContent);
+    
+    // Убеждаемся, что keywords точно массив
+    const keywords = Array.isArray(currentContent.keywords) 
+      ? currentContent.keywords 
+      : (currentContent.keywords ? [String(currentContent.keywords)] : []);
+    
+    console.log('Normalized keywords for update:', keywords);
+
     // Создаем типизированный объект для обновления
     const updateData = {
       title: currentContent.title,
@@ -367,8 +376,10 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      keywords: currentContent.keywords
+      keywords: keywords
     };
+
+    console.log('Update data being sent:', updateData);
 
     updateContentMutation.mutate({
       id: currentContent.id,
