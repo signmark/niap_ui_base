@@ -15,7 +15,7 @@ export default function Keywords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { add } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { selectedCampaign } = useCampaignStore();
   // Используем глобальное состояние кампании
@@ -67,7 +67,10 @@ export default function Keywords() {
 
       const data = await response.json();
       if (!data?.data?.keywords?.length) {
-        add({ description: "Не найдено ключевых слов" });
+        toast({ 
+          title: "Результаты",
+          description: "Не найдено ключевых слов" 
+        });
         return;
       }
 
@@ -79,13 +82,13 @@ export default function Keywords() {
       }));
 
       setSearchResults(formattedResults);
-      add({ 
+      toast({ 
         title: "Успешно",
         description: `Найдено ${formattedResults.length} ключевых слов` 
       });
     } catch (error) {
       console.error("Search error:", error);
-      add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось выполнить поиск"
@@ -107,7 +110,7 @@ export default function Keywords() {
 
   const handleSaveSelected = async () => {
     if (!selectedCampaign || !campaignId) {
-      add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Выберите кампанию"
@@ -117,7 +120,7 @@ export default function Keywords() {
 
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (!selectedKeywords.length) {
-      add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: "Выберите ключевые слова"
@@ -143,7 +146,7 @@ export default function Keywords() {
 
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
       setSearchResults([]);
-      add({ 
+      toast({ 
         title: "Успешно",
         description: "Ключевые слова добавлены" 
       });
