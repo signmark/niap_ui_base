@@ -2383,8 +2383,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Получаем запланированный контент из нашего storage API
-        const contentItems = await storage.getScheduledContent(userId, campaignId);
+        // Получаем запланированный контент напрямую из Directus API
+        // Текущая дата в ISO формате
+        const now = new Date().toISOString();
+        
+        // Построение фильтра для Directus API: контент, у которого scheduled_at в будущем
+        const filter = {
+          user_id: {
+            _eq: userId
+          },
+          status: {
+            _eq: "scheduled"
+          },
+          scheduled_at: {
+            _gt: now
+          },
+          ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
+        };
+        
+        // Выполняем запрос к Directus API
+        const response = await directusApi.get('/items/campaign_content', {
+          params: {
+            filter: JSON.stringify(filter),
+            sort: ['scheduled_at']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Проверяем, что получили массив
+        if (!Array.isArray(response.data.data)) {
+          console.error("Unexpected response format from Directus:", response.data);
+          return res.status(500).json({ error: "Неожиданный формат ответа от Directus API" });
+        }
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const contentItems = response.data.data.map((item: any) => ({
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
+        }));
+        
+        console.log(`Found ${contentItems.length} scheduled content items for campaign ${campaignId || 'all'}`);
         
         res.json({ data: contentItems });
       } catch (error) {
@@ -2952,20 +3008,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isBookmarked: false
           });
           
-          // Сохраняем через наш внутренний API
-          const response = await storage.createCampaignTrendTopic(trendTopic);
+          // Сохраняем через Directus API
+          // Преобразуем в формат Directus
+          const directusPayload = {
+            title: trendTopic.title,
+            campaign_id: trendTopic.campaignId,
+            source_id: trendTopic.sourceId,
+            reactions: trendTopic.reactions,
+            comments: trendTopic.comments,
+            views: trendTopic.views,
+            is_bookmarked: trendTopic.isBookmarked
+          };
           
-          // Используем данные из ответа хранилища
+          // Отправляем запрос в Directus API с использованием сервисного токена
+          // Здесь для webhook мы используем n8nApiKey как авторизацию
+          const response = await directusApi.post('/items/campaign_trend_topics', directusPayload, {
+            headers: {
+              'Authorization': `Bearer ${n8nApiKey}`
+            }
+          });
+          
+          const item = response.data.data;
+          
+          // Преобразуем данные из формата Directus в наш формат
           const savedTopic = {
-            id: response.id,
-            title: response.title,
-            campaignId: response.campaignId,
-            sourceId: response.sourceId,
-            reactions: response.reactions,
-            comments: response.comments,
-            views: response.views,
-            isBookmarked: response.isBookmarked,
-            createdAt: response.createdAt
+            id: item.id,
+            title: item.title,
+            campaignId: item.campaign_id,
+            sourceId: item.source_id,
+            reactions: item.reactions,
+            comments: item.comments,
+            views: item.views,
+            isBookmarked: item.is_bookmarked,
+            createdAt: item.created_at
           };
           savedTopics.push(savedTopic);
         } catch (topicError) {
