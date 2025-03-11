@@ -16,11 +16,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
+    const storedToken = localStorage.getItem('auth_token');
+    const storedUserId = localStorage.getItem('user_id');
+    
+    if (!token && storedToken && storedUserId) {
+      console.log('Восстанавливаем сессию из localStorage');
+      setAuth(storedToken, storedUserId);
+      return;
+    }
+    
     if (!token) {
       console.log('No auth token found, redirecting to login');
       navigate("/auth/login");
+    } else {
+      console.log('Authenticated with token, length:', token.length);
     }
-  }, [token, navigate]);
+  }, [token, navigate, setAuth]);
 
   const handleLogout = async () => {
     try {
@@ -41,11 +52,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Очищаем токены из localStorage
+      // Очищаем все данные авторизации из localStorage
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
-      // Очищаем состояние авторизации
+      localStorage.removeItem('user_id');
+      
+      // Очищаем состояние авторизации в store
       setAuth(null, null);
+      
+      console.log('Session cleared, redirecting to login page');
       // Перенаправляем на страницу входа
       navigate("/auth/login");
     }

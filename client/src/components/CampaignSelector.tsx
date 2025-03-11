@@ -8,6 +8,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useCampaignStore } from "@/lib/campaignStore";
+import { useAuthStore } from "@/lib/store";
 import { Loader2 } from "lucide-react";
 
 interface Campaign {
@@ -18,25 +19,44 @@ interface Campaign {
 
 export function CampaignSelector() {
   const { selectedCampaign, setSelectedCampaign } = useCampaignStore();
+  const getAuthToken = useAuthStore((state) => state.getAuthToken);
+  const userId = useAuthStore((state) => state.userId);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Получаем список всех кампаний
-  const { data: campaignsResponse, isLoading } = useQuery({
-    queryKey: ['/api/campaigns'],
+  const { data: campaignsResponse, isLoading, isError, error } = useQuery({
+    queryKey: ['/api/campaigns', userId],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/campaigns');
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить кампании');
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error('Отсутствует токен авторизации');
         }
+
+        const response = await fetch('/api/campaigns', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Требуется авторизация. Пожалуйста, войдите снова.');
+          }
+          throw new Error(`Не удалось загрузить кампании (${response.status})`);
+        }
+
         const data = await response.json();
-        console.log("Loaded campaigns:", data);
+        console.log("Loaded campaigns:", data.data ? data.data.length : 0, "items");
         return data;
       } catch (error) {
         console.error("Error loading campaigns:", error);
         throw error;
       }
-    }
+    },
+    enabled: !!userId, // Запрос активен только если есть userId
+    refetchOnWindowFocus: false,
+    retry: 1
   });
 
   // При первой загрузке, если кампания не выбрана, выбираем первую из списка
@@ -44,15 +64,25 @@ export function CampaignSelector() {
     if (campaignsResponse?.data?.length > 0 && !selectedCampaign && isFirstLoad) {
       setSelectedCampaign(campaignsResponse.data[0]);
       setIsFirstLoad(false);
+      console.log("Auto-selected campaign:", campaignsResponse.data[0].name);
     }
   }, [campaignsResponse, selectedCampaign, setSelectedCampaign, isFirstLoad]);
 
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
+      console.log("Manually selected campaign:", campaign.name);
       setSelectedCampaign(campaign);
     }
   };
+
+  if (isError) {
+    return (
+      <div className="flex items-center text-red-500">
+        <span className="text-sm">Ошибка: {error instanceof Error ? error.message : 'Не удалось загрузить кампании'}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center">

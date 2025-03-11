@@ -14,16 +14,23 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: localStorage.getItem('auth_token') || null,
-      userId: null,
-      isAuthenticated: !!localStorage.getItem('auth_token'),
+      userId: localStorage.getItem('user_id') || null,
+      isAuthenticated: !!(localStorage.getItem('auth_token') && localStorage.getItem('user_id')),
       setAuth: (token, userId) => {
-        // Сохраняем токен и в localStorage для прямого доступа
+        // Сохраняем токен и userId в localStorage для прямого доступа
         if (token) {
           localStorage.setItem('auth_token', token);
         } else {
           localStorage.removeItem('auth_token');
         }
+        
+        if (userId) {
+          localStorage.setItem('user_id', userId);
+        } else {
+          localStorage.removeItem('user_id');
+        }
 
+        console.log(`Сохранение авторизации: token=${!!token}, userId=${userId}`);
         set({ 
           token, 
           userId, 
@@ -31,7 +38,10 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       clearAuth: () => {
+        console.log('Очистка данных авторизации');
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('refresh_token');
         set({ 
           token: null, 
           userId: null, 
@@ -41,12 +51,21 @@ export const useAuthStore = create<AuthState>()(
       getAuthToken: () => {
         // Получить действующий токен авторизации
         const state = get();
-        return state.token || localStorage.getItem('auth_token');
+        const token = state.token || localStorage.getItem('auth_token');
+        if (!token) {
+          console.log('Токен авторизации не найден');
+        }
+        return token;
       }
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ 
+        token: state.token,
+        userId: state.userId,
+        isAuthenticated: state.isAuthenticated
+      }),
     }
   )
 );
