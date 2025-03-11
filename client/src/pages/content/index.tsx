@@ -98,6 +98,7 @@ export default function ContentPage() {
         keywords: Array.isArray(content.keywords) ? content.keywords : []
       };
       
+      console.log('Setting content with keywords:', safeContent.keywords);
       setCurrentContent(safeContent);
       
       // Сбрасываем и заново устанавливаем выбранные ключевые слова
@@ -105,12 +106,16 @@ export default function ContentPage() {
       
       // Добавляем ID из предопределенных ключевых слов
       if (Array.isArray(safeContent.keywords)) {
+        console.log('Comparing keywords for selection:', safeContent.keywords);
+        
         campaignKeywords.forEach(kw => {
           // Строгое сравнение и нормализация строк для более надежного сопоставления
           const normalizedKeyword = kw.keyword.trim().toLowerCase();
           const hasKeyword = safeContent.keywords.some(
             k => typeof k === 'string' && k.trim().toLowerCase() === normalizedKeyword
           );
+          
+          console.log(`Keyword "${kw.keyword}" (${kw.id}) match:`, hasKeyword);
           
           if (hasKeyword) {
             newSelectedKeywords.add(kw.id);
@@ -119,7 +124,7 @@ export default function ContentPage() {
       }
       
       setSelectedKeywordIds(newSelectedKeywords);
-      console.log('Selected keyword IDs updated:', newSelectedKeywords);
+      console.log('Selected keyword IDs updated:', Array.from(newSelectedKeywords));
     } else {
       setCurrentContent(null);
       setSelectedKeywordIds(new Set());
@@ -392,7 +397,7 @@ export default function ContentPage() {
     if (!currentContent) return;
 
     console.log('Current content before update:', currentContent);
-    console.log('Selected keyword IDs:', selectedKeywordIds);
+    console.log('Selected keyword IDs:', Array.from(selectedKeywordIds));
     
     // Собираем выбранные ключевые слова из нашего состояния
     let selectedKeywordTexts: string[] = [];
@@ -403,6 +408,7 @@ export default function ContentPage() {
       if (selectedKeywordIds.has(keyword.id)) {
         // Добавляем нормализованное ключевое слово (без изменения регистра для отображения)
         selectedKeywordTexts.push(keyword.keyword);
+        console.log(`Adding keyword from campaign: "${keyword.keyword}"`);
       }
     });
     
@@ -427,6 +433,7 @@ export default function ContentPage() {
         // Если ключевое слово не из предопределенных в кампании, добавляем его
         if (!isAlreadyIncluded && !isAlreadySelected) {
           selectedKeywordTexts.push(normalizedKeyword);
+          console.log(`Adding custom keyword: "${normalizedKeyword}"`);
         }
       });
     }
@@ -440,10 +447,12 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      keywords: selectedKeywordTexts.filter(k => k && k.trim() !== '') // Фильтруем пустые значения
+      // Убедимся, что мы отправляем именно массив, а не объект
+      keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
     };
 
     console.log('Update data being sent:', updateData);
+    console.log('Keywords type:', Array.isArray(updateData.keywords) ? 'Array' : typeof updateData.keywords);
 
     updateContentMutation.mutate({
       id: currentContent.id,
@@ -1029,6 +1038,7 @@ export default function ContentPage() {
                                 id={`edit-keyword-${keyword.id || keyword.keyword}`}
                                 className="h-4 w-4 rounded border-gray-300"
                                 checked={isSelected}
+                                data-testid={`keyword-checkbox-${keyword.id}`}
                                 onChange={(e) => {
                                   console.log('Checkbox changed:', keyword.keyword, e.target.checked);
                                   
