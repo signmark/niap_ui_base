@@ -552,6 +552,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
       console.log(`Searching WordStat for keyword: ${req.params.keyword}`);
+      
+      // Фильтр нецензурной лексики в качестве входных данных
+      const offensiveWords = ['бля', 'хуй', 'пизд', 'ебан', 'еб', 'сук', 'пидор', 'пидар', 'хуя', 'нахуй', 'дебил'];
+      const keyword = req.params.keyword.toLowerCase();
+      
+      // Проверяем, содержит ли ключевое слово нецензурную лексику
+      if (offensiveWords.some(word => keyword.includes(word))) {
+        return res.status(400).json({
+          error: "Запрос содержит недопустимое содержание",
+          message: "Пожалуйста, используйте корректные ключевые слова для поиска"
+        });
+      }
+      
       const response = await axios.get(`http://xmlriver.com/wordstat/json`, {
         params: {
           user: process.env.XMLRIVER_USER || "16797",
@@ -567,14 +580,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error("Некорректный формат ответа от XMLRiver API");
       }
 
-      const keywords = response.data.content.includingPhrases.items.map((item: any) => ({
+      // Фильтрация результатов от нецензурной лексики
+      const allKeywords = response.data.content.includingPhrases.items.map((item: any) => ({
         keyword: item.phrase,
         trend: parseInt(item.number.replace(/\s/g, '')),
         competition: Math.floor(Math.random() * 100) // Заглушка для конкуренции
       }));
+      
+      // Фильтруем результаты на нецензурную лексику
+      const filteredKeywords = allKeywords.filter(item => 
+        !offensiveWords.some(word => item.keyword.toLowerCase().includes(word))
+      );
 
-      console.log("Processed keywords:", keywords);
-      res.json({ data: { keywords } });
+      console.log(`Processed keywords: ${filteredKeywords.length} (filtered from ${allKeywords.length})`);
+      res.json({ data: { keywords: filteredKeywords } });
     } catch (error) {
       console.error('XMLRiver API error:', error);
       res.status(500).json({
