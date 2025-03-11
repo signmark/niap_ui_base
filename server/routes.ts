@@ -636,16 +636,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trends routes
-  app.get("/api/trends", async (req, res) => {
+  app.get("/api/trends", authenticateUser, async (req, res) => {
     try {
       const period = req.query.period as string;
-      const campaignId = req.query.campaignId ? Number(req.query.campaignId) : undefined;
+      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      const authHeader = req.headers['authorization'];
 
       console.log("Fetching trends with params:", { period, campaignId });
 
-      if (campaignId && isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
       }
+      
+      const token = authHeader.replace('Bearer ', '');
 
       const from = new Date();
       switch (period) {
@@ -665,11 +668,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from.setDate(from.getDate() - 7);
       }
 
-      const trends = await storage.getTrendTopics({ from, campaignId });
-      console.log('Found trends:', trends);
-      res.json({ data: trends });
+      try {
+        // Форматируем дату для фильтра в формате ISO
+        const fromDateISO = from.toISOString();
+        
+        // Создаем фильтр для API запроса
+        const filter: any = {
+          created_at: {
+            _gte: fromDateISO
+          }
+        };
+        
+        // Если указан campaignId, добавляем в фильтр
+        if (campaignId) {
+          filter.campaign_id = {
+            _eq: campaignId
+          };
+        }
+        
+        // Получаем тренды напрямую из Directus API
+        const response = await directusApi.get('/items/trend_topics', {
+          params: {
+            filter: filter,
+            sort: ['-created_at']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const trends = response.data.data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          sourceId: item.source_id,
+          reactions: item.reactions,
+          comments: item.comments,
+          views: item.views,
+          createdAt: item.created_at,
+          campaignId: item.campaign_id
+        }));
+        
+        console.log(`Found ${trends.length} trends`);
+        res.json({ data: trends });
+      } catch (directusError) {
+        console.error("Error fetching trends from Directus:", directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", directusError.response.data);
+        }
+        
+        return res.status(500).json({ error: "Failed to fetch trends" });
+      }
     } catch (error) {
-      console.error("Error fetching trends:", error);
+      console.error("Error in trends route:", error);
       res.status(500).json({ error: "Failed to fetch trends" });
     }
   });
