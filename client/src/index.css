@@ -11,18 +11,22 @@
   margin-top: 0.5em;
   margin-bottom: 0.5em;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .prose h1 {
   font-size: 1.5em;
+  color: hsl(var(--primary));
 }
 
 .prose h2 {
   font-size: 1.3em;
+  color: hsl(var(--primary) / 0.9);
 }
 
 .prose h3 {
   font-size: 1.2em;
+  color: hsl(var(--primary) / 0.8);
 }
 
 .prose p {
