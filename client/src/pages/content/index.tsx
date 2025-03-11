@@ -87,6 +87,8 @@ export default function ContentPage() {
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   
   // Вспомогательная функция для безопасной установки контента с гарантией наличия массива keywords
+  // ВАЖНО: Всегда используйте эту функцию вместо setCurrentContent при установке ненулевых значений,
+  // чтобы избежать ошибок типа "keywords is not iterable"
   const setCurrentContentSafe = (content: CampaignContent | null) => {
     if (content) {
       // Гарантируем, что keywords всегда массив
