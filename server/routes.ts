@@ -1287,33 +1287,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/trends/webhook", async (req, res) => {
     try {
       console.log("Received trend data from n8n webhook");
-      const { trends, campaignId, userId } = req.body;
       
-      if (!trends || !Array.isArray(trends) || !campaignId || !userId) {
+      // Поддерживаем два формата данных: старый (trends) и новый (posts из TG)
+      const posts = req.body.posts || [];
+      const trends = req.body.trends || [];
+      const { campaignId, userId } = req.body;
+      
+      // Используем данные из массива posts, если он есть, иначе из trends
+      const trendsData = posts.length > 0 ? posts : trends;
+      
+      if (!trendsData.length || !campaignId || !userId) {
         console.error("Invalid webhook data format:", req.body);
         return res.status(400).json({ 
           error: "Invalid data format", 
-          message: "Required fields: trends (array), campaignId (string), and userId (string)" 
+          message: "Required fields: trends or posts (array), campaignId (string), and userId (string)" 
         });
       }
       
-      console.log(`Processing ${trends.length} trends for campaign ${campaignId}`);
+      console.log(`Processing ${trendsData.length} trends for campaign ${campaignId} (data format: ${posts.length > 0 ? 'TG posts' : 'trends'})`);
       
       let savedCount = 0;
       const errors: Error[] = [];
       
       // Обрабатываем каждый тренд и сохраняем в базу данных
-      for (const trendData of trends) {
+      for (const post of trendsData) {
         try {
+          // Определяем формат данных - TG пост или обычный тренд
+          const isTelegramPost = post.text !== undefined;
+          
           const trendTopic: InsertCampaignTrendTopic = {
-            title: trendData.title,
-            sourceId: trendData.sourceId,
-            reactions: trendData.reactions || 0,
-            comments: trendData.comments || 0,
-            views: trendData.views || 0,
+            // Для TG-постов используем первые 255 символов text как title, иначе используем title
+            title: isTelegramPost 
+              ? (post.text ? post.text.substring(0, 255) : 'Untitled Post') 
+              : post.title,
+            
+            // Для TG-постов используем channel_id или url, иначе sourceId
+            sourceId: isTelegramPost 
+              ? (post.channel_id || post.url || 'unknown') 
+              : post.sourceId,
+            
+            // Преобразуем метрики соответственно
+            reactions: isTelegramPost 
+              ? (post.reactions || 0) 
+              : (post.reactions || 0),
+            
+            comments: isTelegramPost 
+              ? (post.comments || 0) 
+              : (post.comments || 0),
+            
+            views: isTelegramPost 
+              ? (post.views || 0) 
+              : (post.views || 0),
+            
             campaignId: campaignId,
             isBookmarked: false
           };
+          
+          console.log(`Saving trend topic: ${trendTopic.title.substring(0, 30)}... from ${trendTopic.sourceId}, metrics: views=${trendTopic.views}, reactions=${trendTopic.reactions}, comments=${trendTopic.comments}`);
           
           // Создаем запись в Directus API напрямую
           await directusApi.post('/items/campaign_trend_topics', {
@@ -1342,11 +1372,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log(`Successfully saved ${savedCount} of ${trends.length} trends`);
+      console.log(`Successfully saved ${savedCount} of ${trendsData.length} trends`);
       
       res.json({
         success: true,
-        message: `Processed ${trends.length} trends`,
+        message: `Processed ${trendsData.length} trends`,
         saved: savedCount,
         errors: errors.length > 0 ? errors.map(e => e.message) : null
       });
