@@ -369,6 +369,50 @@ function mergeSources(sources: any[]): any[] {
   return mergedSources;
 }
 
+// Middleware для проверки авторизации
+const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No authorization header provided');
+      return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      console.log('Empty token provided');
+      return res.status(401).json({ error: 'Не авторизован: Пустой токен' });
+    }
+
+    try {
+      // Получаем информацию о пользователе из Directus API
+      const response = await directusApi.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.data?.data?.id) {
+        console.log('Invalid token: cannot get user info');
+        return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
+      }
+
+      // Добавляем userId в объект запроса для дальнейшего использования
+      (req as any).userId = response.data.data.id;
+      next();
+    } catch (error) {
+      console.error('Auth error:', error);
+      return res.status(401).json({ 
+        error: 'Не авторизован: Ошибка проверки токена',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);

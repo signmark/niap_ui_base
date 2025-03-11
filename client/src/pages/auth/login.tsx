@@ -32,6 +32,7 @@ export default function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
+      console.log('Attempting login with:', values.email);
       const { data: authData } = await directusApi.post('/auth/login', values);
 
       if (!authData?.data?.access_token) {
@@ -39,16 +40,29 @@ export default function Login() {
       }
 
       const { access_token, refresh_token, expires } = authData.data;
+      console.log('Received auth tokens, access token length:', access_token.length);
 
+      // Получаем информацию о пользователе
       const { data: userData } = await directusApi.get('/users/me', {
         headers: {
           'Authorization': `Bearer ${access_token}`
         }
       });
 
+      if (!userData?.data?.id) {
+        throw new Error("Не удалось получить информацию о пользователе");
+      }
+
+      const userId = userData.data.id;
+      console.log('Login successful, user ID:', userId);
+      
+      // Сохраняем в localStorage и в state
       localStorage.setItem('auth_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
-      setAuth(access_token, userData.data.id);
+      localStorage.setItem('user_id', userId);
+      
+      // Также обновляем состояние авторизации
+      setAuth(access_token, userId);
 
       // Устанавливаем автоматическое обновление токена
       setupTokenRefresh(expires);
