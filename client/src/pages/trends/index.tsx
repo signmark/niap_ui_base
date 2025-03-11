@@ -585,73 +585,7 @@ export default function Trends() {
     }
   });
 
-  const { mutate: createCrawlerTask } = useMutation({
-    mutationFn: async (sourceId: string) => {
-      if (!selectedCampaignId) {
-        throw new Error('No campaign selected');
-      }
-
-      // Получаем токен авторизации
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error('No auth token found');
-      }
-
-      // 1. Отправляем запрос через наше API
-      const response = await fetch('/api/crawler/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ sourceId })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to start crawler task: ${response.statusText}`);
-      }
-
-      // 2. Обновляем статус источника
-
-      await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
-        status: 'start'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      return response.json();
-    },
-    onSuccess: (data, sourceId) => {
-      const source = sources.find(s => s.id === sourceId);
-      // Показываем уведомление
-      toast({
-        title: "Задача запущена",
-        description: source ? `Запущен сбор данных для источника ${source.name}` : "Запущен сбор данных",
-        variant: "default",
-        duration: 5000
-      });
-
-      // Устанавливаем активный источник и запускаем проверку статуса
-      setActiveSourceId(sourceId);
-      if (statusCheckInterval.current) {
-        clearInterval(statusCheckInterval.current);
-      }
-      statusCheckInterval.current = setInterval(() => checkSourceStatus(sourceId), 3000);
-
-      // Инвалидируем кеш источников чтобы обновить статусы
-      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-    },
-    onError: (error: Error) => {
-      console.error('Mutation error:', error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Не удалось запустить задачу"
-      });
-    }
-  });
+  // Функционал запуска краулера через API удален, так как больше не используется
 
   const getStatusIcon = (status: string | null) => {
     switch (status) {
@@ -809,7 +743,7 @@ export default function Trends() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => createCrawlerTask(source.id)}
+                            onClick={() => launchWebhook(source.id)}
                             disabled={source.status === 'start' || source.status === 'processing'}
                           >
                             <Bot className="h-4 w-4" />
