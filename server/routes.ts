@@ -1048,7 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('No sources in webhook response, falling back to regular search');
           
           // Собираем источники из нескольких сервисов для ключевых слов без кеша
-          const allResults = await Promise.all(
+          const fallbackResults = await Promise.all(
             keywords.map(async (keyword: string, index: number) => {
               if (cachedResults[index]) {
                 return cachedResults[index];
@@ -1074,6 +1074,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return results;
             })
           );
+          
+          // Объединяем результаты и удаляем дубликаты
+          const uniqueSourcesFallback = fallbackResults.flat().reduce((acc: any[], source) => {
+            const exists = acc.some(s => s.url === source.url);
+            if (!exists) {
+              acc.push(source);
+            }
+            return acc;
+          }, []);
+          
+          console.log(`Found ${uniqueSourcesFallback.length} unique sources from fallback search`);
+          
+          return res.json({
+            success: true,
+            data: {
+              sources: uniqueSourcesFallback
+            }
+          });
         }
       } catch (webhookError) {
         console.error('Error calling n8n webhook for source search:', webhookError);
@@ -1082,7 +1100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Webhook error, falling back to regular search');
         
         // Собираем источники из нескольких сервисов для ключевых слов без кеша
-        const allResults = await Promise.all(
+        const fallbackResults = await Promise.all(
           keywords.map(async (keyword: string, index: number) => {
             if (cachedResults[index]) {
               return cachedResults[index];
@@ -1108,24 +1126,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return results;
           })
         );
+        
+        // Объединяем результаты и удаляем дубликаты
+        const uniqueSourcesFallback = fallbackResults.flat().reduce((acc: any[], source) => {
+          const exists = acc.some(s => s.url === source.url);
+          if (!exists) {
+            acc.push(source);
+          }
+          return acc;
+        }, []);
+        
+        console.log(`Found ${uniqueSourcesFallback.length} unique sources from fallback search after webhook error`);
+        
+        return res.json({
+          success: true,
+          data: {
+            sources: uniqueSourcesFallback
+          }
+        });
       }
 
-      // Merge all results and remove duplicates
-      const uniqueSources = allResults.flat().reduce((acc: any[], source) => {
-        const exists = acc.some(s => s.url === source.url);
-        if (!exists) {
-          acc.push(source);
-        }
-        return acc;
-      }, []);
-
-      console.log(`Found ${uniqueSources.length} unique sources across all keywords`);
-
-      return res.json({
-        success: true,
-        data: {
-          sources: uniqueSources
-        }
+      // Этот код никогда не должен выполняться из-за возвращаемых значений в блоках выше
+      return res.status(500).json({
+        error: "Unexpected error in /api/sources/collect",
+        message: "Please check server logs"
       });
 
     } catch (error) {
