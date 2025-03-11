@@ -12,6 +12,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+
+// Определение интерфейсов для типизации
 import {
   Table,
   TableBody,
@@ -66,6 +68,7 @@ interface SourcePost {
   source_id: string;
   campaign_id: string;
   url: string | null;
+  link: string | null;
   post_type: string | null;
   video_url: string | null;
   date: string | null;
@@ -850,8 +853,8 @@ export default function Trends() {
                         </TableHeader>
                         <TableBody>
                           {trends
-                            .filter((topic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                            .map((topic) => (
+                            .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map((topic: TrendTopic) => (
                               <TableRow key={topic.id}>
                                 <TableCell>
                                   <Checkbox
