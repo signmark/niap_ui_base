@@ -18,6 +18,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth/login" component={Login} />
+      <Route path="/login" component={Login} />
       <Route path="/campaigns" component={() => <Layout><Campaigns /></Layout>} />
       <Route path="/campaigns/:id" component={() => <Layout><CampaignDetails /></Layout>} />
       <Route path="/keywords" component={() => <Layout><Keywords /></Layout>} />
