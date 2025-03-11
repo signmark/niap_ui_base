@@ -1162,23 +1162,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       const userId = (req as any).userId;
+      const authHeader = req.headers['authorization'];
       
-      if (!userId) {
-        console.log("Missing userId in authenticated request");
-        return res.status(401).json({ error: "Не авторизован: Ошибка проверки токена" });
+      if (!userId || !authHeader) {
+        console.log("Missing userId or authorization header");
+        return res.status(401).json({ error: "Не авторизован" });
       }
+      
+      const token = authHeader.replace('Bearer ', '');
       
       try {
         console.log(`Fetching campaigns for user: ${userId}`);
         
-        // Используем storage для получения кампаний пользователя
-        const campaigns = await storage.getCampaigns(userId);
+        // Получаем кампании из Directus, фильтруя по user_id
+        const response = await directusApi.get('/items/user_campaigns', {
+          params: {
+            filter: {
+              user_id: {
+                _eq: userId
+              }
+            }
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const campaigns = response.data.data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          userId: item.user_id,
+          createdAt: item.created_at
+        }));
         
         console.log(`Found ${campaigns.length} campaigns for user ${userId}`);
+        
         res.json({ data: campaigns });
       } catch (error) {
-        console.error('Error getting campaigns:', error);
-        return res.status(500).json({ error: "Ошибка при получении кампаний" });
+        console.error("Error fetching campaigns:", error);
+        if (axios.isAxiosError(error)) {
+          console.error('Directus API error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              params: error.config?.params
+            }
+          });
+        }
+        res.status(500).json({ error: "Не удалось загрузить кампании" });
       }
     } catch (error) {
       console.error("Error in campaigns route:", error);
@@ -2068,24 +2103,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { name, description } = req.body;
       const userId = (req as any).userId;
+      const authHeader = req.headers['authorization'];
       
       if (!name) {
         return res.status(400).json({ error: "Название кампании обязательно" });
       }
       
-      if (!userId) {
+      if (!userId || !authHeader) {
         return res.status(401).json({ error: "Не авторизован" });
       }
       
+      const token = authHeader.replace('Bearer ', '');
+      
       try {
-        // Создаем кампанию в хранилище
-        const newCampaign = await storage.createCampaign({
+        console.log(`Creating new campaign for user ${userId}`);
+        
+        // Создаем кампанию через Directus API
+        const response = await directusApi.post('/items/user_campaigns', {
           name,
           description: description || null,
-          userId,
-          directusId: crypto.randomUUID(), // Генерируем ID для совместимости с Directus
-          createdAt: new Date()
+          user_id: userId
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
+        
+        // Преобразуем ответ в нужный формат
+        const newCampaign = {
+          id: response.data.data.id,
+          name: response.data.data.name,
+          description: response.data.data.description,
+          userId: response.data.data.user_id,
+          createdAt: response.data.data.created_at
+        };
         
         console.log(`Created new campaign for user ${userId}:`, newCampaign);
         
@@ -2095,8 +2146,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: newCampaign
         });
       } catch (error) {
-        console.error("Error storing campaign:", error);
-        return res.status(500).json({ error: "Не удалось сохранить кампанию" });
+        console.error("Error creating campaign:", error);
+        if (axios.isAxiosError(error)) {
+          console.error('Directus API error details:', {
+            status: error.response?.status,
+            data: error.response?.data
+          });
+        }
+        return res.status(500).json({ error: "Не удалось создать кампанию" });
       }
     } catch (error) {
       console.error("Error creating campaign:", error);
@@ -2105,40 +2162,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Добавляем маршрут для удаления кампаний
-  app.delete("/api/campaigns/:id", async (req, res) => {
+  app.delete("/api/campaigns/:id", authenticateUser, async (req, res) => {
     try {
       const campaignId = req.params.id;
+      const userId = (req as any).userId;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании обязателен" });
       }
       
-      // Находим индекс кампании в массиве
-      const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
-      
-      if (campaignIndex === -1) {
-        return res.status(404).json({ error: "Кампания не найдена" });
+      if (!userId || !authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
       }
       
-      // Удаляем кампанию из массива
-      devCampaigns.splice(campaignIndex, 1);
+      const token = authHeader.replace('Bearer ', '');
       
-      // Возвращаем результат
-      return res.status(200).json({ 
-        success: true,
-        message: "Кампания успешно удалена"
-      });
+      try {
+        // Получаем информацию о кампании из Directus, чтобы проверить владельца
+        const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!campaignResponse.data || !campaignResponse.data.data) {
+          return res.status(404).json({ error: "Кампания не найдена" });
+        }
+        
+        const campaign = campaignResponse.data.data;
+        
+        // Проверяем, принадлежит ли кампания текущему пользователю
+        if (campaign.user_id !== userId) {
+          return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
+        }
+        
+        // Удаляем кампанию через Directus API
+        await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Возвращаем результат
+        return res.status(200).json({ 
+          success: true,
+          message: "Кампания успешно удалена"
+        });
+      } catch (deleteError) {
+        console.error(`Error deleting campaign ${campaignId}:`, deleteError);
+        if (axios.isAxiosError(deleteError)) {
+          console.error('Directus API error details:', {
+            status: deleteError.response?.status,
+            data: deleteError.response?.data
+          });
+        }
+        return res.status(500).json({ error: "Не удалось удалить кампанию" });
+      }
     } catch (error) {
-      console.error("Error deleting campaign:", error);
+      console.error("Error in delete campaign endpoint:", error);
       res.status(500).json({ error: "Failed to delete campaign" });
     }
   });
   
   // Добавляем маршрут для обновления кампаний
-  app.patch("/api/campaigns/:id", async (req, res) => {
+  app.patch("/api/campaigns/:id", authenticateUser, async (req, res) => {
     try {
       const campaignId = req.params.id;
       const { name } = req.body;
+      const userId = (req as any).userId;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании обязателен" });
@@ -2148,39 +2241,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Название кампании обязательно" });
       }
       
-      // Получаем токен авторизации из запроса (если есть)
-      const authHeader = req.headers['authorization'];
-      let token = null;
-      
-      if (authHeader) {
-        token = authHeader.replace('Bearer ', '');
+      if (!userId || !authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
       }
       
-      // Если работаем в тестовой среде без токена, обновляем локальный массив
-      if (!token) {
-        console.log("No authorization header, updating dev campaigns array");
-        const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получаем информацию о кампании из Directus, чтобы проверить владельца
+        const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (campaignIndex === -1) {
+        if (!campaignResponse.data || !campaignResponse.data.data) {
           return res.status(404).json({ error: "Кампания не найдена" });
         }
         
-        // Обновляем кампанию в массиве
-        devCampaigns[campaignIndex] = {
-          ...devCampaigns[campaignIndex],
-          name: name.trim()
-        };
+        const campaign = campaignResponse.data.data;
         
-        // Возвращаем результат
-        return res.status(200).json({ 
-          success: true,
-          data: devCampaigns[campaignIndex],
-          message: "Кампания успешно обновлена"
-        });
-      }
-      
-      // Если есть токен, обновляем данные через Directus API
-      try {
+        // Проверяем, принадлежит ли кампания текущему пользователю
+        if (campaign.user_id !== userId) {
+          return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
+        }
+        
         console.log(`Updating campaign ${campaignId} in Directus with name: ${name}`);
         
         const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
@@ -2219,26 +2304,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               error: "Не авторизован для редактирования кампании"
             });
           }
+          
+          if (directusError.response.status === 404) {
+            return res.status(404).json({ error: "Кампания не найдена" });
+          }
         }
         
-        // Если не смогли обновить в Directus, пробуем обновить в тестовом массиве
-        const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
-        
-        if (campaignIndex === -1) {
-          return res.status(404).json({ error: "Кампания не найдена" });
-        }
-        
-        // Обновляем кампанию в массиве
-        devCampaigns[campaignIndex] = {
-          ...devCampaigns[campaignIndex],
-          name: name.trim()
-        };
-        
-        // Возвращаем результат
-        return res.status(200).json({ 
-          success: true,
-          data: devCampaigns[campaignIndex],
-          message: "Кампания успешно обновлена (в тестовом режиме)"
+        return res.status(500).json({ 
+          error: "Не удалось обновить кампанию", 
+          message: directusError instanceof Error ? directusError.message : "Unknown error"
         });
       }
     } catch (error) {
