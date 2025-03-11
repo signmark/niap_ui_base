@@ -2115,28 +2115,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Название кампании обязательно" });
       }
       
-      // Находим индекс кампании в массиве
-      const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+      // Получаем токен авторизации из запроса (если есть)
+      const authHeader = req.headers['authorization'];
+      let token = null;
       
-      if (campaignIndex === -1) {
-        return res.status(404).json({ error: "Кампания не найдена" });
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
       }
       
-      // Обновляем кампанию в массиве
-      devCampaigns[campaignIndex] = {
-        ...devCampaigns[campaignIndex],
-        name: name.trim()
-      };
+      // Если работаем в тестовой среде без токена, обновляем локальный массив
+      if (!token) {
+        console.log("No authorization header, updating dev campaigns array");
+        const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+        
+        if (campaignIndex === -1) {
+          return res.status(404).json({ error: "Кампания не найдена" });
+        }
+        
+        // Обновляем кампанию в массиве
+        devCampaigns[campaignIndex] = {
+          ...devCampaigns[campaignIndex],
+          name: name.trim()
+        };
+        
+        // Возвращаем результат
+        return res.status(200).json({ 
+          success: true,
+          data: devCampaigns[campaignIndex],
+          message: "Кампания успешно обновлена"
+        });
+      }
       
-      // Возвращаем результат
-      return res.status(200).json({ 
-        success: true,
-        data: devCampaigns[campaignIndex],
-        message: "Кампания успешно обновлена"
-      });
+      // Если есть токен, обновляем данные через Directus API
+      try {
+        console.log(`Updating campaign ${campaignId} in Directus with name: ${name}`);
+        
+        const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
+          name: name.trim()
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const updatedCampaign = {
+          id: response.data.data.id,
+          name: response.data.data.name,
+          description: response.data.data.description,
+          userId: response.data.data.user_id,
+          createdAt: response.data.data.created_at
+        };
+        
+        console.log("Campaign updated successfully:", updatedCampaign);
+        
+        return res.status(200).json({ 
+          success: true,
+          data: updatedCampaign,
+          message: "Кампания успешно обновлена"
+        });
+      } catch (directusError) {
+        console.error("Error updating campaign in Directus:", directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", directusError.response.data);
+          
+          // Если получаем ошибку 401 или 403, возвращаем соответствующий статус
+          if (directusError.response.status === 401 || directusError.response.status === 403) {
+            return res.status(directusError.response.status).json({
+              error: "Не авторизован для редактирования кампании"
+            });
+          }
+        }
+        
+        // Если не смогли обновить в Directus, пробуем обновить в тестовом массиве
+        const campaignIndex = devCampaigns.findIndex(camp => camp.id === campaignId);
+        
+        if (campaignIndex === -1) {
+          return res.status(404).json({ error: "Кампания не найдена" });
+        }
+        
+        // Обновляем кампанию в массиве
+        devCampaigns[campaignIndex] = {
+          ...devCampaigns[campaignIndex],
+          name: name.trim()
+        };
+        
+        // Возвращаем результат
+        return res.status(200).json({ 
+          success: true,
+          data: devCampaigns[campaignIndex],
+          message: "Кампания успешно обновлена (в тестовом режиме)"
+        });
+      }
     } catch (error) {
       console.error("Error updating campaign:", error);
-      res.status(500).json({ error: "Failed to update campaign" });
+      res.status(500).json({ 
+        error: "Failed to update campaign",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
