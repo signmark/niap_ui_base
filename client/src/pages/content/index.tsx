@@ -344,16 +344,19 @@ export default function ContentPage() {
   const handleUpdateContent = () => {
     if (!currentContent) return;
 
+    // Создаем типизированный объект для обновления
+    const updateData = {
+      title: currentContent.title,
+      content: currentContent.content,
+      contentType: currentContent.contentType,
+      imageUrl: currentContent.imageUrl,
+      videoUrl: currentContent.videoUrl,
+      keywords: currentContent.keywords
+    };
+
     updateContentMutation.mutate({
       id: currentContent.id,
-      data: {
-        title: currentContent.title,
-        content: currentContent.content,
-        contentType: currentContent.contentType,
-        imageUrl: currentContent.imageUrl,
-        videoUrl: currentContent.videoUrl,
-        keywords: currentContent.keywords
-      }
+      data: updateData
     });
   };
 
@@ -1027,10 +1030,11 @@ export default function ContentPage() {
                             type="button"
                             className="h-4 w-4 rounded-full"
                             onClick={() => {
-                              setCurrentContent({
+                              const updatedContent = {
                                 ...currentContent,
                                 keywords: currentContent.keywords?.filter((_, i) => i !== index) || []
-                              });
+                              };
+                              setCurrentContentSafe(updatedContent);
                             }}
                           >
                             ×
@@ -1123,6 +1127,7 @@ export default function ContentPage() {
           originalContent={currentContent.content}
           onClose={() => {
             setIsAdaptDialogOpen(false);
+            // Используем null, так как это явное обнуление, а не обновление содержимого
             setCurrentContent(null);
             queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', selectedCampaignId] });
           }}
