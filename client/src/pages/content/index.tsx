@@ -785,14 +785,15 @@ export default function ContentPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content">Промт для создания контента</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Введите промт для создания контента"
-                  rows={5}
-                  value={currentContent.content}
-                  onChange={(e) => setCurrentContent({...currentContent, content: e.target.value})}
-                />
+                <Label htmlFor="content">Контент</Label>
+                <div className="max-h-[300px] overflow-y-auto">
+                  <RichTextEditor
+                    content={currentContent.content || ''}
+                    onChange={(html) => setCurrentContent({...currentContent, content: html})}
+                    minHeight="200px"
+                    className="tiptap"
+                  />
+                </div>
               </div>
               {(currentContent.contentType === "text-image") && (
                 <div className="space-y-2">
