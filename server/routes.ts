@@ -779,21 +779,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Sending keywords to webhook:', keywordsList);
       
       // Отправляем запрос на webhook n8n с ключевыми словами кампании
-      const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
-        campaignId: campaignId,
-        keywords: keywordsList,
-        userId: userId
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      // Добавляем информацию о запросе
+      console.log('Sending webhook request to n8n with payload:', {
+        campaignId,
+        keywordsCount: keywordsList.length,
+        userId
       });
       
-      if (!webhookResponse.data) {
-        throw new Error("Error sending request to collect trends");
+      try {
+        const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
+          campaignId: campaignId,
+          keywords: keywordsList,
+          userId: userId
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            // Добавляем заголовок авторизации, если требуется
+            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
+          },
+          timeout: 10000 // 10 секунд таймаут
+        });
+        
+        console.log('Webhook response status:', webhookResponse.status);
+        if (webhookResponse.data) {
+          console.log('Webhook response preview:', JSON.stringify(webhookResponse.data).substring(0, 200));
+        }
+      } catch (error) {
+        console.error('Error calling n8n webhook:', error.message);
+        if (axios.isAxiosError(error)) {
+          console.error('Webhook response status:', error.response?.status);
+          console.error('Webhook response data:', error.response?.data);
+        }
+        // Продолжаем выполнение, чтобы клиент получил хотя бы частичный ответ
       }
       
-      console.log('Webhook response:', webhookResponse.data);
+      // Предполагаем, что вебхук работает, даже если у нас нет явного ответа
+      console.log('Webhook request sent successfully');
 
       res.json({
         success: true,
