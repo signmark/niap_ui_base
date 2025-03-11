@@ -253,6 +253,52 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
+  const { mutate: launchWebhook } = useMutation({
+    mutationFn: async (sourceId: string) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      
+      // Сначала обновляем статус источника
+      await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
+        status: 'processing'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      // Отправляем запрос на запуск вебхука
+      return await directusApi.post('/items/webhook_tasks', {
+        source_id: sourceId,
+        campaign_id: selectedCampaignId,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Запущено!",
+        description: "Задача по анализу источника запущена",
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+    },
+    onError: (error) => {
+      console.error("Error launching webhook:", error);
+      toast({
+        title: "Ошибка!",
+        description: "Не удалось запустить задачу",
+        variant: "destructive",
+      });
+    }
+  });
+
   const { mutate: deleteSource } = useMutation({
     mutationFn: async (sourceId: string) => {
       const authToken = localStorage.getItem('auth_token');
