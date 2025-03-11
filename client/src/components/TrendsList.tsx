@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-import { directusApi } from "@/lib/directus";
+import { Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface TrendsListProps {
   campaignId: string;
@@ -12,43 +14,89 @@ interface TrendsListProps {
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
+interface TrendTopic {
+  id: string;
+  title: string;
+  sourceId: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  reactions: number;
+  comments: number;
+  views: number;
+  createdAt: string;
+  isBookmarked: boolean;
+  campaignId: string;
+}
+
 export function TrendsList({ campaignId }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
-    queryKey: ["campaign_trend_topics", campaignId, selectedPeriod],
+    queryKey: ["campaign-trends", campaignId, selectedPeriod],
     queryFn: async () => {
       try {
-        const response = await directusApi.get('/items/campaign_trend_topics', {
+        const response = await api.get('/api/campaign-trends', {
           params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              }
-            },
-            fields: [
-              'id',
-              'title',
-              'source_id',
-              'source_id.name',
-              'source_id.url',
-              'reactions',
-              'comments',
-              'views',
-              'created_at',
-              'is_bookmarked'
-            ],
-            sort: ['-created_at']
+            campaignId,
+            period: selectedPeriod
           }
         });
+        
+        // Преобразуем полученные данные в правильный формат
+        const trendTopics = (response.data?.data || []).map((trend: any) => ({
+          id: trend.id,
+          title: trend.title,
+          sourceId: trend.sourceId,
+          sourceName: trend.sourceName || 'Источник',
+          sourceUrl: trend.sourceUrl,
+          reactions: trend.reactions || 0,
+          comments: trend.comments || 0,
+          views: trend.views || 0,
+          createdAt: trend.createdAt,
+          isBookmarked: trend.isBookmarked || false,
+          campaignId: trend.campaignId
+        }));
 
-        return response.data?.data || [];
+        return trendTopics;
       } catch (error) {
         console.error("Error fetching trends:", error);
-        throw new Error("Не удалось загрузить тренды");
+        toast({
+          title: "Ошибка",
+          description: "Не удалось загрузить трендовые темы",
+          variant: "destructive",
+        });
+        return [];
       }
     },
     enabled: !!campaignId
+  });
+  
+  // Мутация для управления закладками
+  const bookmarkMutation = useMutation({
+    mutationFn: async ({ id, isBookmarked }: { id: string; isBookmarked: boolean }) => {
+      const response = await api.patch(`/api/campaign-trends/${id}/bookmark`, {
+        isBookmarked
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      // Инвалидируем кеш после успешного изменения закладки
+      queryClient.invalidateQueries({ queryKey: ["campaign-trends", campaignId] });
+      toast({
+        title: "Закладка обновлена",
+        description: "Статус закладки успешно изменен",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Error updating bookmark:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить статус закладки",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoadingTrends) {
@@ -105,16 +153,30 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {trends.map((trend: any) => (
-          <Card key={trend.id}>
+        {trends.map((trend: TrendTopic) => (
+          <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
             <CardContent className="pt-6">
               <div className="space-y-2">
-                <h3 className="font-medium">{trend.title}</h3>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-medium">{trend.title}</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => bookmarkMutation.mutate({ id: trend.id, isBookmarked: !trend.isBookmarked })}
+                    disabled={bookmarkMutation.isPending}
+                  >
+                    {trend.isBookmarked 
+                      ? <BookmarkCheck className="h-4 w-4 text-primary" /> 
+                      : <Bookmark className="h-4 w-4" />
+                    }
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Источник: {trend.source_id?.name || 'Неизвестный источник'}
-                  {trend.source_id?.url && (
+                  Источник: {trend.sourceName || 'Неизвестный источник'}
+                  {trend.sourceUrl && (
                     <a 
-                      href={trend.source_id.url}
+                      href={trend.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 text-blue-500 hover:underline"
@@ -127,6 +189,9 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                   <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>
                   <span title="Комментарии">💬 {trend.comments?.toLocaleString() || 0}</span>
                   <span title="Реакции">❤️ {trend.reactions?.toLocaleString() || 0}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {new Date(trend.createdAt).toLocaleDateString()}
                 </div>
               </div>
             </CardContent>
