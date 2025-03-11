@@ -48,17 +48,45 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        const response = await directusApi.get(`/items/user_campaigns/${id}`);
+        const token = localStorage.getItem("auth_token");
+        console.log(`Проверка доступа к кампании ID: ${id} с токеном: ${token ? 'присутствует' : 'отсутствует'}`);
+        
+        const response = await directusApi.get(`/items/user_campaigns/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+        
+        console.log("Успешно получены данные кампании:", response.data?.data?.name);
         return response.data?.data;
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching campaign:", err);
-        throw new Error("Кампания не найдена или у вас нет прав доступа к ней");
+        
+        // Извлекаем более подробную информацию об ошибке
+        let errorMessage = "Кампания не найдена или у вас нет прав доступа к ней";
+        
+        if (err.response) {
+          console.error("Directus API error response:", {
+            status: err.response.status,
+            statusText: err.response.statusText,
+            data: err.response.data
+          });
+          
+          // Добавляем код ошибки для диагностики
+          errorMessage += ` (Код: ${err.response.status})`;
+          
+          if (err.response.data?.errors?.[0]?.message) {
+            errorMessage += `: ${err.response.data.errors[0].message}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     },
     retry: false,
-    onError: (err) => {
+    onError: (err: Error) => {
       toast({
-        title: "Ошибка",
+        title: "Ошибка доступа к кампании",
         description: err.message,
         variant: "destructive"
       });
