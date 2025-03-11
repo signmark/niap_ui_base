@@ -476,10 +476,10 @@ export default function ContentPage() {
                     <CardContent className="p-4 flex-grow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          {getContentTypeIcon(content.contentType)}
-                          <Badge variant={getStatusBadgeVariant(content.status)}>
-                            {getStatusIcon(content.status)}
-                            <span className="ml-1">{getStatusText(content.status)}</span>
+                          {getContentTypeIcon(content.contentType || 'text')}
+                          <Badge variant={getStatusBadgeVariant(content.status || 'draft')}>
+                            {getStatusIcon(content.status || 'draft')}
+                            <span className="ml-1">{getStatusText(content.status || 'draft')}</span>
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2">
@@ -538,7 +538,8 @@ export default function ContentPage() {
                         />
                         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
                       </div>
-                      {content.socialPlatforms && Object.keys(content.socialPlatforms).length > 0 && (
+                      {content.socialPlatforms && typeof content.socialPlatforms === 'object' && 
+                       Object.keys(content.socialPlatforms as Record<string, any>).length > 0 && (
                         <div className="mt-4">
                           <h3 className="mb-2 text-sm font-medium">Статус публикации</h3>
                           <PublishingStatus contentId={content.id} className="mb-4" />
@@ -574,7 +575,7 @@ export default function ContentPage() {
                         </div>
                       )}
                       <div className="mt-4 text-xs text-muted-foreground flex flex-wrap gap-x-4">
-                        <span>Создано: {formatDate(content.createdAt)}</span>
+                        <span>Создано: {formatDate(content.createdAt || new Date())}</span>
                         {content.scheduledAt && (
                           <span>Запланировано: {formatDate(content.scheduledAt)}</span>
                         )}

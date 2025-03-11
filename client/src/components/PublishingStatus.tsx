@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -99,41 +98,39 @@ export function PublishingStatus({ contentId, className }: PublishingStatusProps
   };
   
   return (
-    <Card className={cn("w-full", className)}>
-      <CardContent className="pt-6">
-        <div className="space-y-2">
-          {Object.entries(data.platforms).map(([platform, status]) => (
-            <div key={platform} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span>{platformIcons[platform]}</span>
-                <span className="font-medium capitalize">{platform}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge 
-                  variant="secondary"
-                  className={cn(
-                    "flex items-center gap-1",
-                    statusColors[status.status]
-                  )}
-                >
-                  {getStatusIcon(status.status)}
-                  <span>{status.status}</span>
-                </Badge>
-                {status.postUrl && status.status === 'published' && (
-                  <a 
-                    href={status.postUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-500 hover:underline"
-                  >
-                    Открыть
-                  </a>
-                )}
-              </div>
+    <div className={cn("w-full", className)}>
+      <div className="space-y-2">
+        {Object.entries(data.platforms).map(([platform, status]) => (
+          <div key={platform} className="flex items-center justify-between bg-muted/30 rounded p-1 px-2">
+            <div className="flex items-center gap-1.5">
+              <span>{platformIcons[platform]}</span>
+              <span className="text-sm font-medium capitalize">{platform}</span>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant="secondary"
+                className={cn(
+                  "flex items-center gap-1 text-xs py-0 h-5",
+                  statusColors[status.status]
+                )}
+              >
+                {getStatusIcon(status.status)}
+                <span className="truncate">{status.status}</span>
+              </Badge>
+              {status.postUrl && status.status === 'published' && (
+                <a 
+                  href={status.postUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-500 hover:underline"
+                >
+                  Открыть
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
