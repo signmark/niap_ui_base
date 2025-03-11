@@ -10,6 +10,7 @@ import {
   Wand2, Share
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PublishingStatus } from "@/components/PublishingStatus";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -537,6 +538,13 @@ export default function ContentPage() {
                         />
                         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
                       </div>
+                      {content.socialPlatforms && Object.keys(content.socialPlatforms).length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="mb-2 text-sm font-medium">Статус публикации</h3>
+                          <PublishingStatus contentId={content.id} className="mb-4" />
+                        </div>
+                      )}
+
                       {content.contentType === "text-image" && content.imageUrl && (
                         <div className="mt-4">
                           <img 
