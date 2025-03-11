@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 
 interface AddSourceDialogProps {
@@ -27,7 +26,7 @@ const sourceSchema = z.object({
 type SourceForm = z.infer<typeof sourceSchema>;
 
 export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
-  const toast = useToast();
+  const { toast } = useToast();
   const [detectedSourceType, setDetectedSourceType] = useState<string | null>(null);
 
   const form = useForm<SourceForm>({
@@ -41,24 +40,36 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
 
   const { mutate: createSource, isPending } = useMutation({
     mutationFn: async (values: SourceForm) => {
-      return await directusApi.post('/items/campaign_content_sources', {
-        name: values.name,
-        url: values.url,
-        type: values.type,
-        campaign_id: campaignId,
-        is_active: true
+      return await fetch('/api/sources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          name: values.name,
+          url: values.url,
+          type: values.type,
+          campaignId: campaignId,
+          isActive: true
+        })
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error("Ошибка при добавлении источника");
+        }
+        return response.json();
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      toast.add({
+      toast({
         title: "Успешно",
         description: "Источник добавлен"
       });
       onClose();
     },
     onError: (error: Error) => {
-      toast.add({
+      toast({
         title: "Ошибка",
         description: error.message,
         variant: "destructive"
