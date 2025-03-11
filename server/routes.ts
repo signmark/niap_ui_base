@@ -437,6 +437,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return [String(keywordsData)];
   }
+  
+  // Создаем "пользовательский" метод для замены переменной
+  const fixCampaignContent = (routes: Express): void => {
+    const getHandler = routes._router.stack.find((layer: any) => 
+      layer.route && layer.route.path === '/api/campaign-content' && layer.route.methods.get);
+    
+    if (getHandler && getHandler.route && getHandler.route.stack && getHandler.route.stack[0] && getHandler.route.stack[0].handle) {
+      const originalHandler = getHandler.route.stack[0].handle;
+      getHandler.route.stack[0].handle = async function(req: Request, res: Response) {
+        try {
+          // Перед передачей запроса исходному обработчику, добавляем обработку для
+          // переопределения метода преобразования данных
+          const originalJson = res.json;
+          res.json = function(body) {
+            // Если это ответ с данными контента кампании
+            if (body && body.data && Array.isArray(body.data)) {
+              // Перебираем все элементы контента и обрабатываем keywords
+              body.data = body.data.map((item: any) => {
+                if (item.keywords) {
+                  console.log(`Original keywords for ${item.id}:`, typeof item.keywords, JSON.stringify(item.keywords));
+                  item.keywords = processKeywords(item.keywords);
+                  console.log(`Processed keywords for ${item.id}:`, typeof item.keywords, JSON.stringify(item.keywords));
+                }
+                return item;
+              });
+            }
+            // Вызываем оригинальный метод json с измененными данными
+            return originalJson.call(this, body);
+          };
+          
+          return originalHandler(req, res);
+        } catch (error) {
+          console.error('Error in campaign content handler:', error);
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      };
+    }
+  };
   console.log('Starting route registration...');
   const httpServer = createServer(app);
   
