@@ -2016,6 +2016,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`Found ${contentItems.length} content items for campaign ${campaignId || 'all'}`);
         
+        // Для отладки выводим ключевые слова из первого элемента
+        if (contentItems.length > 0) {
+          const sample = contentItems[0];
+          console.log('Sample keywords being sent to client:', typeof sample.keywords, JSON.stringify(sample.keywords));
+        }
+        
         res.json({ data: contentItems });
       } catch (error) {
         console.error('Error getting campaign content:', error);
