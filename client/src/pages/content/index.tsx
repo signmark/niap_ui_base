@@ -368,12 +368,28 @@ export default function ContentPage() {
 
     console.log('Current content before update:', currentContent);
     
-    // Убеждаемся, что keywords точно массив
-    const keywords = Array.isArray(currentContent.keywords) 
-      ? currentContent.keywords 
-      : (currentContent.keywords ? [String(currentContent.keywords)] : []);
+    // Собираем выбранные ключевые слова из чекбоксов
+    let selectedKeywords: string[] = [];
     
-    console.log('Normalized keywords for update:', keywords);
+    // Проверяем каждое ключевое слово из кампании
+    campaignKeywords.forEach(keyword => {
+      const checkboxElement = document.getElementById(`edit-keyword-${keyword.id || keyword.keyword}`) as HTMLInputElement;
+      if (checkboxElement && checkboxElement.checked) {
+        selectedKeywords.push(keyword.keyword);
+      }
+    });
+    
+    // Добавляем пользовательские ключевые слова, которые не являются частью кампании
+    if (Array.isArray(currentContent.keywords)) {
+      currentContent.keywords.forEach(keyword => {
+        // Если ключевое слово не из предопределенных в кампании, добавляем его
+        if (!campaignKeywords.some(k => k.keyword === keyword) && !selectedKeywords.includes(keyword)) {
+          selectedKeywords.push(keyword);
+        }
+      });
+    }
+    
+    console.log('FINAL Selected keywords by DOM + extras:', selectedKeywords);
 
     // Создаем типизированный объект для обновления
     const updateData = {
@@ -382,7 +398,7 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      keywords: keywords
+      keywords: selectedKeywords
     };
 
     console.log('Update data being sent:', updateData);
