@@ -6,13 +6,13 @@ import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import RichTextEditor from "./RichTextEditor";
 
 interface TrendTopic {
   id: string;
@@ -138,9 +138,11 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
                 <FormItem>
                   <FormLabel>Описание контента</FormLabel>
                   <FormControl>
-                    <Textarea
+                    <RichTextEditor
+                      content={field.value}
+                      onChange={field.onChange}
                       placeholder="Опишите, какой контент нужно сгенерировать..."
-                      {...field}
+                      minHeight="150px"
                     />
                   </FormControl>
                   <FormMessage />
