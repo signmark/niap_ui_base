@@ -161,7 +161,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(sql`${campaignTrendTopics.createdAt} <= ${params.to}`);
     }
     if (params.campaignId) {
-      conditions.push(eq(campaignTrendTopics.campaignId, params.campaignId));
+      // Используем строковую версию ID кампании
+      const campaignIdStr = String(params.campaignId);
+      console.log('Filtering by campaign ID (string):', campaignIdStr);
+      conditions.push(eq(campaignTrendTopics.campaignId, campaignIdStr));
     }
 
     const query = db
@@ -179,10 +182,18 @@ export class DatabaseStorage implements IStorage {
 
   async createCampaignTrendTopic(topic: InsertCampaignTrendTopic): Promise<CampaignTrendTopic> {
     console.log('Creating campaign trend topic:', topic);
+    
+    // Гарантируем, что campaignId является строкой для совместимости
+    const topicToInsert = {
+      ...topic,
+      campaignId: String(topic.campaignId)
+    };
+    
     const [newTopic] = await db
       .insert(campaignTrendTopics)
-      .values(topic)
+      .values(topicToInsert)
       .returning();
+    
     console.log('Created new campaign trend topic:', newTopic.id);
     return newTopic;
   }
