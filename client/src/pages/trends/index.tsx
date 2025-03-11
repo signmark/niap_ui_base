@@ -327,16 +327,32 @@ export default function Trends() {
       }
 
       // Поиск источников для каждого ключевого слова отдельно
-      const searchPromises = keywordsList.map((keyword: string) =>
-        fetch('/api/sources/collect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ keywords: [keyword] })
-        }).then(res => res.json())
-      );
+      const searchPromises = keywordsList.map(async (keyword: string) => {
+        try {
+          const res = await fetch('/api/sources/collect', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ keywords: [keyword] })
+          });
+          
+          // Проверяем тип контента
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          } else {
+            console.error(`Неверный тип контента для ключевого слова ${keyword}:`, contentType);
+            const text = await res.text();
+            console.error('Полученный ответ:', text.substring(0, 200) + '...');
+            throw new Error(`Получен неверный формат ответа для ключевого слова "${keyword}"`);
+          }
+        } catch (error) {
+          console.error(`Ошибка при поиске источников для ключевого слова "${keyword}":`, error);
+          return { success: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      });
 
       const results = await Promise.all(searchPromises);
 
