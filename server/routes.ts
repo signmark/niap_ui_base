@@ -751,10 +751,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      // Получаем данные кампании из базы
-      const campaign = await storage.getCampaign(Number(campaignId));
-      if (!campaign) {
-        return res.status(404).json({ message: "Campaign not found" });
+      // Проверяем существование кампании через Directus
+      try {
+        const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!campaignResponse.data?.data) {
+          return res.status(404).json({ message: "Campaign not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching campaign from Directus:", error);
+        return res.status(500).json({ message: "Failed to verify campaign", error: String(error) });
       }
 
       // Получаем ключевые слова для этой кампании
@@ -786,8 +796,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       });
       
+      let webhookResponse = { status: 500, data: null };
       try {
-        const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
+        webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
           campaignId: campaignId,
           keywords: keywordsList,
           userId: userId
@@ -805,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Webhook response preview:', JSON.stringify(webhookResponse.data).substring(0, 200));
         }
       } catch (error) {
-        console.error('Error calling n8n webhook:', error.message);
+        console.error('Error calling n8n webhook:', error instanceof Error ? error.message : String(error));
         if (axios.isAxiosError(error)) {
           console.error('Webhook response status:', error.response?.status);
           console.error('Webhook response data:', error.response?.data);
@@ -822,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: {
           keywordsCount: keywordsList.length,
           campaignId,
-          webhookStatus: webhookResponse.status === 200 ? 'success' : 'error'
+          webhookStatus: webhookResponse && webhookResponse.status === 200 ? 'success' : 'error'
         }
       });
     } catch (error) {
