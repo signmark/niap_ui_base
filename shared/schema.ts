@@ -229,7 +229,8 @@ export const campaignTrendTopics = pgTable("campaign_trend_topics", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   sourceId: uuid("source_id"),
-  campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
+  // Используем строковое поле для совместимости с UUID и числовыми ID
+  campaignId: text("campaign_id").notNull(),
   reactions: integer("reactions").default(0),
   comments: integer("comments").default(0),
   views: integer("views").default(0),
