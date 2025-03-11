@@ -415,6 +415,28 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Вспомогательная функция для обработки ключевых слов
+  function processKeywords(keywordsData: any): string[] {
+    if (!keywordsData) return [];
+    
+    if (Array.isArray(keywordsData)) {
+      return keywordsData.map(k => typeof k === 'string' ? k : String(k));
+    }
+    
+    if (typeof keywordsData === 'string') {
+      try {
+        const parsed = JSON.parse(keywordsData);
+        if (Array.isArray(parsed)) {
+          return parsed.map(k => typeof k === 'string' ? k : String(k));
+        }
+      } catch (e) {
+        // Не JSON строка
+      }
+      return [keywordsData];
+    }
+    
+    return [String(keywordsData)];
+  }
   console.log('Starting route registration...');
   const httpServer = createServer(app);
   
