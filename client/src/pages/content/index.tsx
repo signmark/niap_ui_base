@@ -30,6 +30,43 @@ const formatDate = (date: string | Date) => {
   return formatDistanceToNow(new Date(date), { addSuffix: true, locale: ru });
 };
 
+// Функция для преобразования Markdown-подобного синтаксиса в HTML
+const processMarkdownSyntax = (content: string): string => {
+  if (!content) return "";
+  
+  // Сохраняем исходный контент для проверки изменений
+  let processedContent = content;
+  
+  // Обработка заголовков разных уровней
+  processedContent = processedContent
+    .replace(/^###\s+(.*?)(?:\n|$)/gm, '<h3>$1</h3>') // h3 заголовки
+    .replace(/^##\s+(.*?)(?:\n|$)/gm, '<h2>$1</h2>')  // h2 заголовки
+    .replace(/^#\s+(.*?)(?:\n|$)/gm, '<h1>$1</h1>');  // h1 заголовки
+  
+  // Обработка жирного текста **текст** или __текст__
+  processedContent = processedContent.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
+  
+  // Обработка курсива *текст* или _текст_
+  processedContent = processedContent.replace(/(\*|_)([^\*_]+)\1/g, '<em>$2</em>');
+  
+  // Обработка переносов строк (двойной перенос строки на абзацы)
+  // Сначала разделяем контент на абзацы по двойным переносам
+  const paragraphs = processedContent.split(/\n\s*\n/);
+  
+  // Обрабатываем каждый абзац
+  processedContent = paragraphs.map(paragraph => {
+    // Если абзац уже содержит HTML-тег, оставляем как есть
+    if (paragraph.trim().startsWith('<') && !paragraph.trim().startsWith('<em>') && !paragraph.trim().startsWith('<strong>')) {
+      return paragraph;
+    }
+    
+    // Иначе оборачиваем в <p>
+    return `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+  
+  return processedContent;
+};
+
 export default function ContentPage() {
   // Используем глобальный стор выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -496,7 +533,7 @@ export default function ContentPage() {
                       <div className="mb-2 max-h-24 overflow-hidden relative card-content">
                         <div 
                           className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: content.content }}
+                          dangerouslySetInnerHTML={{ __html: content.content.startsWith('<') ? content.content : processMarkdownSyntax(content.content) }}
                         />
                         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
                       </div>
