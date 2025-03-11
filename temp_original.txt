@@ -1,0 +1,64 @@
+  app.get("/api/campaign-content", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        console.log(`Fetching content for campaign ID: ${campaignId || 'all campaigns'}`);
+        
+        // Создаем фильтр для запроса, полагаясь на авторизацию Directus API
+        // Directus автоматически фильтрует по пользователю, основываясь на токене 
+        const filter: any = {};
+        
+        // Если указан campaignId, добавляем его в фильтр
+        if (campaignId) {
+          filter.campaign_id = {
+            _eq: campaignId
+          }
+        }
+        
+        // Получаем контент напрямую из Directus API
+        const contentResponse = await directusApi.get('/items/campaign_content', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: filter
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const contentItems = contentResponse.data.data.map((item: any) => ({
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords ? (typeof item.keywords === "string" ? JSON.parse(item.keywords) : item.keywords) : [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {}
+        }));
+        
+        res.json({ data: contentItems });
+      } catch (error) {
+        console.error('Error getting campaign content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(401).json({ error: "Invalid token or failed to fetch content" });
+      }
+    } catch (error) {
+      console.error("Error fetching campaign content:", error);
