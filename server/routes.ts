@@ -987,18 +987,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     reactions: trendTopic.reactions || 0,
                     comments: trendTopic.comments || 0,
                     views: trendTopic.views || 0,
-                    campaign_id: campaignId,
+                    campaign_id: String(campaignId),
                     is_bookmarked: false
                   };
                   
                   console.log('Sending payload to Directus:', JSON.stringify(payload).substring(0, 100));
                   
-                  const response = await directusApi.post('/items/campaign_trend_topics', payload, {
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                    }
-                  });
+                  // Используем storage.createCampaignTrendTopic вместо прямого вызова Directus API
+                  const trendTopicData: InsertCampaignTrendTopic = {
+                    title: payload.title,
+                    sourceId: payload.source_id,
+                    campaignId: payload.campaign_id,
+                    reactions: payload.reactions,
+                    comments: payload.comments,
+                    views: payload.views,
+                    isBookmarked: payload.is_bookmarked
+                  };
+                  
+                  console.log('Saving trend topic using storage:', JSON.stringify(trendTopicData).substring(0, 100));
+                  const response = await storage.createCampaignTrendTopic(trendTopicData);
                   
                   console.log('Directus response status:', response.status);
                   
