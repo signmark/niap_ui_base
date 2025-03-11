@@ -11,7 +11,7 @@ function getCachedResults(keyword: string): any[] | null {
   return null;
 }
 
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -1158,21 +1158,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/campaigns", async (req, res) => {
+  // Маршрут для получения кампаний пользователя
+  app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
+      const userId = (req as any).userId;
       const authHeader = req.headers['authorization'];
       
-      if (!authHeader) {
-        console.log("No authorization header provided");
-        // Для тестирования в разработке возвращаем тестовые данные
-        return res.json({ data: devCampaigns });
+      if (!userId || !authHeader) {
+        console.log("Missing userId or authorization header");
+        return res.status(401).json({ error: "Не авторизован" });
       }
       
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // В реальной среде получаем кампании из Directus
+        console.log(`Fetching campaigns for user: ${userId}`);
+        
+        // Получаем кампании из Directus, фильтруя по user_id
         const response = await directusApi.get('/items/user_campaigns', {
+          params: {
+            filter: {
+              user_id: {
+                _eq: userId
+              }
+            }
+          },
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -1187,14 +1197,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: item.created_at
         }));
         
+        console.log(`Found ${campaigns.length} campaigns for user ${userId}`);
         res.json({ data: campaigns });
       } catch (error) {
         console.error('Error getting campaigns:', error);
         if (axios.isAxiosError(error) && error.response) {
           console.error('Directus API error details:', error.response.data);
         }
-        // Для тестирования в разработке возвращаем тестовые данные при ошибке API
-        return res.json({ data: devCampaigns });
+        return res.status(500).json({ error: "Ошибка при получении кампаний" });
       }
     } catch (error) {
       console.error("Error in campaigns route:", error);
