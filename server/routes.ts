@@ -11,10 +11,14 @@ function getCachedResults(keyword: string): any[] | null {
   return null;
 }
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContentSourceSchema, insertCampaignContentSchema } from "@shared/schema";
+import { 
+  insertContentSourceSchema, 
+  insertCampaignContentSchema,
+  insertCampaignTrendTopicSchema
+} from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
 import { directusApi } from './directus';
@@ -1638,6 +1642,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   console.log('Route registration completed');
+  // Webhook endpoint to receive trend topics from n8n
+  app.post("/api/webhook/trend-topics", async (req, res) => {
+    try {
+      console.log("Received webhook request for trend topics:", req.body);
+      
+      const { campaignId, keywords, trendTopics } = req.body;
+      
+      if (!campaignId || !trendTopics || !Array.isArray(trendTopics)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid payload. Required: campaignId and trendTopics array." 
+        });
+      }
+      
+      console.log(`Processing ${trendTopics.length} trend topics for campaign ${campaignId}`);
+      
+      // Save each trend topic to the database
+      const savedTopics = [];
+      for (const topic of trendTopics) {
+        try {
+          const trendTopic = insertCampaignTrendTopicSchema.parse({
+            title: topic.title,
+            campaignId: campaignId,
+            sourceId: topic.sourceId || null,
+            reactions: topic.reactions || 0,
+            comments: topic.comments || 0,
+            views: topic.views || 0,
+            isBookmarked: false
+          });
+          
+          const savedTopic = await storage.createCampaignTrendTopic(trendTopic);
+          savedTopics.push(savedTopic);
+        } catch (topicError) {
+          console.error("Error saving trend topic:", topicError);
+          // Continue with other topics even if one fails
+        }
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: `Successfully processed ${savedTopics.length} of ${trendTopics.length} trend topics`,
+        data: { 
+          savedCount: savedTopics.length,
+          campaignId 
+        }
+      });
+    } catch (error) {
+      console.error("Error processing webhook for trend topics:", error);
+      return res.status(500).json({ 
+        success: false, 
+        error: "Failed to process trend topics data"
+      });
+    }
+  });
+  
   return httpServer;
 }
 
