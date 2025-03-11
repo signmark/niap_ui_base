@@ -575,11 +575,18 @@ export default function Trends() {
         throw new Error('No campaign selected');
       }
 
-      // 1. Отправляем запрос в n8n
-      const response = await fetch('https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c', {
+      // Получаем токен авторизации
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      // 1. Отправляем запрос через наше API
+      const response = await fetch('/api/crawler/tasks', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ sourceId })
       });
@@ -589,10 +596,6 @@ export default function Trends() {
       }
 
       // 2. Обновляем статус источника
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error('No auth token found');
-      }
 
       await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
         status: 'start'
