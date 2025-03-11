@@ -17,7 +17,8 @@ import { storage } from "./storage";
 import { 
   insertContentSourceSchema, 
   insertCampaignContentSchema,
-  insertCampaignTrendTopicSchema
+  insertCampaignTrendTopicSchema,
+  InsertCampaignTrendTopic
 } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
@@ -716,9 +717,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trend collection endpoint
   app.post("/api/trends/collect", async (req, res) => {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
+      // Получаем токен аутентификации из заголовков
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Unauthorized: Missing or invalid authorization header" });
+      }
+      const token = authHeader.replace('Bearer ', '');
+
+      // Получаем user_id из заголовка или токена
+      let userId: string;
+      if (req.headers["x-user-id"]) {
+        userId = req.headers["x-user-id"] as string;
+      } else {
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          userId = userResponse.data?.data?.id;
+          if (!userId) {
+            return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
+          }
+        } catch (userError) {
+          console.error("Error getting user from token:", userError);
+          return res.status(401).json({ message: "Unauthorized: Invalid token" });
+        }
       }
 
       const { campaignId } = req.body;
@@ -726,65 +751,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
 
-      // Get sources for this campaign
-      const sources = await storage.getContentSources(userId, Number(campaignId));
-      if (!sources || sources.length === 0) {
-        return res.status(400).json({ message: "No sources found for this campaign" });
+      // Получаем данные кампании из базы
+      const campaign = await storage.getCampaign(Number(campaignId));
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
       }
 
-      console.log(`Starting trend collection for ${sources.length} sources in campaign ${campaignId}`);
-      let collectedTopicsCount = 0;
-
-      // Временные тестовые данные для демонстрации
-      // В реальной системе здесь будет парсинг реальных данных из источников
-      for (const source of sources) {
-        try {
-          console.log(`Processing source: ${source.name} (${source.url})`);
-
-          // Генерация демонстрационных трендов для заполнения таблицы
-          const sampleTopics = [
-            {
-              directusId: crypto.randomUUID(),
-              title: `Популярный пост о ${source.type === 'instagram' ? 'фото' : source.type === 'youtube' ? 'видео' : 'контенте'}`,
-              sourceId: source.id,
-              campaignId: Number(campaignId),
-              reactions: Math.floor(Math.random() * 2000) + 100,
-              comments: Math.floor(Math.random() * 300) + 10,
-              views: Math.floor(Math.random() * 10000) + 500
-            },
-            {
-              directusId: crypto.randomUUID(),
-              title: `Трендовая тема из ${source.name}`,
-              sourceId: source.id,
-              campaignId: Number(campaignId),
-              reactions: Math.floor(Math.random() * 1500) + 50,
-              comments: Math.floor(Math.random() * 200) + 5,
-              views: Math.floor(Math.random() * 8000) + 300
+      // Получаем ключевые слова для этой кампании
+      const keywordsResponse = await directusApi.get('/items/user_keywords', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
             }
-          ];
-
-          // Сохранение трендов в базу данных
-          for (const topic of sampleTopics) {
-            await storage.createTrendTopic(topic);
-            collectedTopicsCount++;
           }
-
-          console.log(`Added ${sampleTopics.length} sample trends for source ${source.name}`);
-        } catch (sourceError) {
-          console.error(`Error processing source ${source.name}:`, sourceError);
-          // Продолжаем с другими источниками даже если один не обработался
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
+      });
+      
+      if (!keywordsResponse.data?.data || keywordsResponse.data.data.length === 0) {
+        return res.status(400).json({ message: "No keywords found for this campaign" });
       }
 
-      console.log(`Trend collection completed. Added ${collectedTopicsCount} topics.`);
+      const keywordsList = keywordsResponse.data.data.map((k: { keyword: string }) => k.keyword);
+      console.log('Sending keywords to webhook:', keywordsList);
+      
+      // Отправляем запрос на webhook n8n с ключевыми словами кампании
+      const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
+        campaignId: campaignId,
+        keywords: keywordsList,
+        userId: userId
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!webhookResponse.data) {
+        throw new Error("Error sending request to collect trends");
+      }
+      
+      console.log('Webhook response:', webhookResponse.data);
 
       res.json({
-        message: "Trend collection completed successfully",
-        topicsCollected: collectedTopicsCount
+        success: true,
+        message: "Trend collection started via n8n webhook",
+        data: {
+          keywordsCount: keywordsList.length,
+          campaignId,
+          webhookStatus: webhookResponse.status === 200 ? 'success' : 'error'
+        }
       });
     } catch (error) {
       console.error("Error collecting trends:", error);
-      res.status(500).json({ error: "Failed to collect trends" });
+      res.status(500).json({ 
+        error: "Failed to collect trends", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -996,6 +1021,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   ];
 
   // Endpoint to get all campaigns for the user
+  // Webhook endpoint для получения трендовых данных от n8n
+  app.post("/api/trends/webhook", async (req, res) => {
+    try {
+      console.log("Received trend data from n8n webhook");
+      const { trends, campaignId, userId } = req.body;
+      
+      if (!trends || !Array.isArray(trends) || !campaignId || !userId) {
+        console.error("Invalid webhook data format:", req.body);
+        return res.status(400).json({ 
+          error: "Invalid data format", 
+          message: "Required fields: trends (array), campaignId (string), and userId (string)" 
+        });
+      }
+      
+      console.log(`Processing ${trends.length} trends for campaign ${campaignId}`);
+      
+      let savedCount = 0;
+      const errors: Error[] = [];
+      
+      // Обрабатываем каждый тренд и сохраняем в базу данных
+      for (const trendData of trends) {
+        try {
+          const trendTopic: InsertCampaignTrendTopic = {
+            id: crypto.randomUUID(),
+            title: trendData.title,
+            sourceId: trendData.sourceId,
+            reactions: trendData.reactions || 0,
+            comments: trendData.comments || 0,
+            views: trendData.views || 0,
+            campaignId: campaignId,
+            isBookmarked: false,
+            createdAt: new Date()
+          };
+          
+          await storage.createCampaignTrendTopic(trendTopic);
+          savedCount++;
+        } catch (err) {
+          console.error("Error saving trend:", err);
+          if (err instanceof Error) {
+            errors.push(err);
+          } else {
+            errors.push(new Error(String(err)));
+          }
+        }
+      }
+      
+      console.log(`Successfully saved ${savedCount} of ${trends.length} trends`);
+      
+      res.json({
+        success: true,
+        message: `Processed ${trends.length} trends`,
+        saved: savedCount,
+        errors: errors.length > 0 ? errors.map(e => e.message) : null
+      });
+    } catch (error) {
+      console.error("Error processing webhook data:", error);
+      res.status(500).json({ 
+        error: "Failed to process trend data", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/campaigns", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -1037,6 +1125,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in campaigns route:", error);
       res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  // Endpoint для получения трендовых тем кампании
+  app.get("/api/campaign-trends", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId as string;
+      const period = req.query.period as string || '7days';
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "Campaign ID is required" });
+      }
+      
+      // Получаем токен из заголовка
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      let fromDate: Date | undefined;
+      
+      // Определяем период для фильтрации данных
+      switch (period) {
+        case '3days':
+          fromDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+          break;
+        case '7days':
+          fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '14days':
+          fromDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      }
+      
+      // Получаем трендовые темы из базы данных
+      const trendTopics = await storage.getCampaignTrendTopics({
+        from: fromDate,
+        campaignId: campaignId
+      });
+      
+      res.json({ 
+        success: true,
+        data: trendTopics 
+      });
+    } catch (error) {
+      console.error("Error fetching campaign trend topics:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to fetch campaign trend topics",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Endpoint для закладок трендовых тем
+  app.patch("/api/campaign-trends/:id/bookmark", async (req, res) => {
+    try {
+      const topicId = req.params.id;
+      const { isBookmarked } = req.body;
+      
+      if (typeof isBookmarked !== 'boolean') {
+        return res.status(400).json({ 
+          success: false,
+          error: "isBookmarked field (boolean) is required" 
+        });
+      }
+      
+      // Получаем токен из заголовка
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Unauthorized" 
+        });
+      }
+      
+      // Обновляем статус закладки для темы
+      const updatedTopic = await storage.bookmarkCampaignTrendTopic(topicId, isBookmarked);
+      
+      res.json({ 
+        success: true,
+        data: updatedTopic 
+      });
+    } catch (error) {
+      console.error("Error updating bookmark status:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to update bookmark status",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
