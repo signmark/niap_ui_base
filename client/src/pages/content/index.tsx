@@ -85,6 +85,19 @@ export default function ContentPage() {
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
+  
+  // Вспомогательная функция для безопасной установки контента с гарантией наличия массива keywords
+  const setCurrentContentSafe = (content: CampaignContent | null) => {
+    if (content) {
+      // Гарантируем, что keywords всегда массив
+      setCurrentContent({
+        ...content,
+        keywords: Array.isArray(content.keywords) ? content.keywords : []
+      });
+    } else {
+      setCurrentContent(null);
+    }
+  };
   const [newContent, setNewContent] = useState({
     title: "",
     content: "",
