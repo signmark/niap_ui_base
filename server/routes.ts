@@ -1299,7 +1299,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Строго фильтруем по userId перед преобразованием
-        const filteredItems = response.data.data.filter((item: any) => item.user_id === userId);
+        console.log('Filtering server-side for userId:', userId);
+        
+        // Преобразуем userId к строке для безопасного сравнения
+        const stringUserId = String(userId);
+        const filteredItems = response.data.data.filter((item: any) => {
+          const itemUserId = String(item.user_id);
+          const matches = itemUserId === stringUserId;
+          
+          if (!matches) {
+            console.log(`Item user_id mismatch: ${itemUserId} !== ${stringUserId}`);
+          }
+          
+          return matches;
+        });
         
         // Преобразуем данные из формата Directus в наш формат
         const campaigns = filteredItems.map((item: any) => ({
