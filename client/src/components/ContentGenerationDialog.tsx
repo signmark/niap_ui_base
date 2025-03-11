@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, Wand2 } from "lucide-react";
@@ -10,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { queryClient } from '@/lib/queryClient';
 import { apiRequest } from '@/lib/queryClient';
+import RichTextEditor from './RichTextEditor';
 
 // Определение интерфейса CampainKeyword локально
 interface CampainKeyword {
@@ -183,14 +183,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 <Label htmlFor="prompt" className="text-right">
                   Промт
                 </Label>
-                <Textarea
-                  id="prompt"
-                  placeholder="Опишите, какой контент вы хотите сгенерировать"
-                  className="col-span-3"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
-                />
+                <div className="col-span-3">
+                  <RichTextEditor
+                    content={prompt}
+                    onChange={(html) => setPrompt(html)}
+                    placeholder="Опишите, какой контент вы хотите сгенерировать"
+                    minHeight="150px"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-4 items-start gap-4">
@@ -236,14 +236,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 <Label htmlFor="generatedContent" className="text-right pt-2">
                   Результат
                 </Label>
-                <Textarea
-                  id="generatedContent"
-                  className="col-span-3"
-                  value={generationResult}
-                  onChange={(e) => setGenerationResult(e.target.value)}
-                  rows={15}
-                  style={{ minHeight: '300px' }}
-                />
+                <div className="col-span-3">
+                  <RichTextEditor
+                    content={generationResult || ''}
+                    onChange={(html) => setGenerationResult(html)}
+                    minHeight="300px"
+                    className="tiptap"
+                  />
+                </div>
               </div>
             </>
           )}
