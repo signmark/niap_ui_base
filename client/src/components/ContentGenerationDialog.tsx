@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,7 +41,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         throw new Error('Выберите кампанию');
       }
 
-      if (!prompt.trim()) {
+      // Удаляем HTML-теги для получения чистого текста для проверки
+      const plainTextPrompt = prompt.replace(/<[^>]*>/g, '').trim();
+      
+      if (!plainTextPrompt) {
         throw new Error('Введите промт для генерации');
       }
 
@@ -63,7 +67,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          prompt,
+          // Отправляем чистый текст без HTML-разметки
+          prompt: plainTextPrompt,
           keywords: selectedKeywords,
           tone,
           campaignId
@@ -79,7 +84,26 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       return data.content;
     },
     onSuccess: (content) => {
-      setGenerationResult(content);
+      // Преобразуем контент в формат, подходящий для редактора
+      // Заменяем обычные переносы строки на HTML-параграфы
+      let formattedContent = content
+        .split('\n\n').map(paragraph => paragraph.trim()) // Разбиваем на параграфы
+        .filter(p => p) // Убираем пустые параграфы
+        .map(paragraph => {
+          // Обрабатываем маркдаун-форматирование
+          return paragraph
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
+            .replace(/\*(.*?)\*/g, '<em>$1</em>') // Курсив
+            .replace(/^#+ (.*)$/, (match, text) => { // Заголовки
+              const level = (match.match(/^#+/)[0].length);
+              return `<h${level}>${text}</h${level}>`;
+            });
+        })
+        .map(p => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
+        .join('');
+      
+      setGenerationResult(formattedContent);
+      
       setIsGenerating(false);
       toast({
         title: 'Успешно',
