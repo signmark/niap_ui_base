@@ -1089,6 +1089,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Modified sources/collect endpoint to use n8n webhook
   app.post("/api/sources/collect", async (req, res) => {
+    // Устанавливаем заголовок Content-Type явно, чтобы клиент всегда получал JSON
+    res.setHeader('Content-Type', 'application/json');
+    
     try {
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
@@ -1097,6 +1100,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
       const { keywords } = req.body;
+      
+      if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Требуется указать ключевые слова для поиска",
+          message: "Требуется указать ключевые слова для поиска" 
+        });
+      }
+      
       console.log('Starting source search for keywords:', keywords);
       
       // Получаем информацию о пользователе из токена
@@ -1109,11 +1121,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         userId = userResponse.data?.data?.id;
         if (!userId) {
-          return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
+          return res.status(401).json({ success: false, message: "Unauthorized: Cannot identify user" });
         }
       } catch (userError) {
         console.error("Error getting user from token:", userError);
-        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+        return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
       }
 
       console.log('Searching for sources with keywords:', keywords);
