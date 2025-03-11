@@ -1,8 +1,9 @@
 import { storage } from '../storage';
-import type { ContentSource, InsertTrendTopic } from '@shared/schema';
+import type { ContentSource, InsertTrendTopic, InsertCampaignTrendTopic } from '@shared/schema';
 import { directusApi } from '../lib/directus';
 import crypto from 'crypto';
 import { apifyService } from './apify';
+import axios from 'axios';
 
 export class ContentCrawler {
   async crawlInstagram(source: ContentSource, campaignId: number, userId: string): Promise<InsertTrendTopic[]> {
@@ -59,6 +60,18 @@ export class ContentCrawler {
     return this.crawlInstagram(source, campaignId, userId);
   }
 
+  // Метод getUserToken больше не нужен, так как мы не используем DIRECTUS_SERVICE_TOKEN
+
+  // Сохранение трендовой темы через storage API
+  private async saveTrendTopicToStorage(topic: InsertCampaignTrendTopic): Promise<void> {
+    try {
+      await storage.createCampaignTrendTopic(topic);
+    } catch (error) {
+      console.error(`Error saving trend topic to storage: ${error}`);
+      throw error;
+    }
+  }
+
   async crawlAllSources(userId: string, campaignId: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
@@ -66,6 +79,9 @@ export class ContentCrawler {
       // Get sources for this campaign
       const sources = await storage.getContentSources(userId, Number(campaignId));
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
+
+      // В режиме без DIRECTUS_SERVICE_TOKEN мы не можем получить токен пользователя,
+      // поэтому мы просто сохраняем данные через storage API без использования токена
 
       for (const source of sources) {
         console.log(`Processing source: ${source.name}`);
@@ -82,16 +98,21 @@ export class ContentCrawler {
           // Save the topics
           for (const topic of topics) {
             console.log(`Saving topic: ${topic.title}`);
-            await directusApi.post('/items/campaign_trend_topics', {
-              id: topic.directusId,
+            
+            // Создаем объект для сохранения в базу данных
+            const trendTopic: InsertCampaignTrendTopic = {
+              directusId: topic.directusId,
               title: topic.title,
-              source_id: topic.sourceId,
-              campaign_id: campaignId,
+              sourceId: topic.sourceId,
+              campaignId: String(topic.campaignId),
               reactions: topic.reactions,
               comments: topic.comments,
               views: topic.views,
-              is_bookmarked: false
-            });
+              isBookmarked: false
+            };
+            
+            // Сохраняем через storage API
+            await this.saveTrendTopicToStorage(trendTopic);
           }
 
         } catch (error) {

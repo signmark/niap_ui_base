@@ -18,7 +18,17 @@ import {
 } from "@shared/schema";
 import { eq, desc, sql, and, asc } from "drizzle-orm";
 
+// Тип для информации о токене пользователя
+export interface UserTokenInfo {
+  token: string;
+  refreshToken?: string;
+  userId: string;
+}
+
 export interface IStorage {
+  // User Authentication
+  getUserTokenInfo(userId: string): Promise<UserTokenInfo | null>;
+  
   // Campaigns
   getCampaigns(userId: string): Promise<Campaign[]>;
   getCampaign(id: number): Promise<Campaign | undefined>;
@@ -47,6 +57,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // User Authentication
+  async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
+    try {
+      // Так как мы не храним токены в базе данных, 
+      // мы будем использовать директус API для получения токена
+      // В реальной реализации это должно быть заменено на запрос к базе данных
+      // или другой механизм хранения токенов пользователей
+      console.log(`Getting token info for user: ${userId}`);
+      
+      // Пока возвращаем null, так как мы не храним токены пользователей
+      // Позже нужно будет реализовать полноценное хранение токенов
+      return null;
+    } catch (error) {
+      console.error('Error getting user token info:', error);
+      return null;
+    }
+  }
+  
   // Content Sources
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
     console.log('Getting content sources with params:', { userId, campaignId });
