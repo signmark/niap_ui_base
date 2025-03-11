@@ -22,6 +22,7 @@ import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
 import { useCampaignStore } from "@/lib/campaignStore";
+import RichTextEditor from "@/components/RichTextEditor";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -576,14 +577,15 @@ export default function ContentPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content">Промт для создания контента</Label>
-              <Textarea
-                id="content"
-                placeholder="Введите промт для создания контента"
-                rows={5}
-                value={newContent.content}
-                onChange={(e) => setNewContent({...newContent, content: e.target.value})}
-              />
+              <Label htmlFor="content">Контент</Label>
+              <div className="max-h-[300px] overflow-y-auto">
+                <RichTextEditor
+                  content={newContent.content || ''}
+                  onChange={(html: string) => setNewContent({...newContent, content: html})}
+                  minHeight="200px"
+                  className="tiptap"
+                />
+              </div>
             </div>
             {(newContent.contentType === "text-image") && (
               <div className="space-y-2">
@@ -789,7 +791,7 @@ export default function ContentPage() {
                 <div className="max-h-[300px] overflow-y-auto">
                   <RichTextEditor
                     content={currentContent.content || ''}
-                    onChange={(html) => setCurrentContent({...currentContent, content: html})}
+                    onChange={(html: string) => setCurrentContent({...currentContent, content: html})}
                     minHeight="200px"
                     className="tiptap"
                   />
