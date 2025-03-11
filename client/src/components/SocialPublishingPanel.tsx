@@ -192,7 +192,7 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
             </Label>
             <RichTextEditor
               content={adaptedContent[platform]}
-              onChange={(html) => handleContentChange(platform, html)}
+              onChange={(html: string) => handleContentChange(platform, html)}
               placeholder={`Введите контент для ${platform}`}
               minHeight="150px"
             />

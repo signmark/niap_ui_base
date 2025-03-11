@@ -214,7 +214,7 @@ export function SocialContentAdaptationDialog({
                   </div>
                   <RichTextEditor
                     content={platformsContent[platform].content}
-                    onChange={(html) => handleContentChange(platform, html)}
+                    onChange={(html: string) => handleContentChange(platform, html)}
                     placeholder={`Введите текст для ${platform}...`}
                     className={!platformsContent[platform].isEnabled ? "opacity-50 pointer-events-none" : ""}
                     minHeight="200px"

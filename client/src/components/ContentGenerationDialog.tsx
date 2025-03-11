@@ -261,7 +261,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   <div className="max-h-[300px] overflow-y-auto">
                     <RichTextEditor
                       content={generationResult || ''}
-                      onChange={(html) => setGenerationResult(html)}
+                      onChange={(html: string) => setGenerationResult(html)}
                       minHeight="200px"
                       className="tiptap"
                     />
