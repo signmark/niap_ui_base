@@ -72,7 +72,7 @@ export class ContentCrawler {
     }
   }
 
-  async crawlAllSources(userId: string, campaignId: string): Promise<void> {
+  async crawlAllSources(userId: string, campaignId: string, authToken?: string): Promise<void> {
     try {
       console.log(`Starting to crawl sources for user ${userId} and campaign ${campaignId}`);
 
@@ -80,8 +80,12 @@ export class ContentCrawler {
       const sources = await storage.getContentSources(userId, Number(campaignId));
       console.log(`Found ${sources.length} sources to crawl for campaign ${campaignId}`);
 
-      // В режиме без DIRECTUS_SERVICE_TOKEN мы не можем получить токен пользователя,
-      // поэтому мы просто сохраняем данные через storage API без использования токена
+      // Инициализируем сервис Apify с токеном пользователя
+      if (authToken) {
+        await apifyService.initialize(userId, authToken);
+      } else {
+        console.warn('No auth token provided for crawling, some features may be limited');
+      }
 
       for (const source of sources) {
         console.log(`Processing source: ${source.name}`);

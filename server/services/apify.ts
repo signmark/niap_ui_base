@@ -15,9 +15,14 @@ export class ApifyService {
   private apiKey: string | null = null;
   private readonly baseUrl = 'https://api.apify.com/v2';
 
-  async initialize(userId: string) {
+  async initialize(userId: string, authToken?: string) {
     try {
       console.log('Initializing Apify service for user:', userId);
+
+      // Проверяем, передан ли токен авторизации
+      if (!authToken) {
+        console.warn('No auth token provided to initialize Apify service');
+      }
 
       // Get API key from user settings
       const response = await directusApi.get('/items/user_api_keys', {
@@ -27,7 +32,10 @@ export class ApifyService {
             service_name: { _eq: 'apify' }
           },
           fields: ['api_key']
-        }
+        },
+        headers: authToken ? {
+          'Authorization': `Bearer ${authToken}`
+        } : undefined
       });
 
       if (!response.data?.data?.[0]?.api_key) {
