@@ -20,25 +20,47 @@ export default function Campaigns() {
   const { userId } = useAuthStore();
   const { toast } = useToast();
 
-  const { data: campaignsResponse, isLoading } = useQuery<{data: Campaign[]}>({
-    queryKey: ["/api/campaigns"],
+  const { getAuthToken } = useAuthStore();
+  
+  const { data: campaignsResponse, isLoading, error } = useQuery<{data: Campaign[]}>({
+    queryKey: ["/api/campaigns", userId],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
-      if (!response.ok) {
-        throw new Error("Не удалось загрузить кампании");
+      const token = getAuthToken();
+      console.log('Fetching campaigns with token:', token ? `${token.substring(0, 10)}...` : 'none');
+      
+      if (!token) {
+        throw new Error("Отсутствует токен авторизации");
       }
+      
+      const response = await fetch('/api/campaigns', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Не удалось загрузить кампании");
+      }
+      
       return response.json();
     },
-    enabled: true,
+    enabled: !!userId, // Запрос выполняется только при наличии userId
   });
 
   const { mutate: updateCampaign } = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("Отсутствует токен авторизации");
+      }
+      
       // Используем REST API вместо прямого обращения к Directus
       const response = await fetch(`/api/campaigns/${id}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name: name.trim() })
       });
@@ -51,7 +73,7 @@ export default function Campaigns() {
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
       toast({
         title: "Успешно",
         description: "Название кампании обновлено"
@@ -69,9 +91,17 @@ export default function Campaigns() {
 
   const { mutate: deleteCampaign } = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("Отсутствует токен авторизации");
+      }
+      
       // Используем REST API вместо прямого обращения к Directus
       const response = await fetch(`/api/campaigns/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
@@ -82,7 +112,7 @@ export default function Campaigns() {
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
       toast({
         title: "Успешно",
         description: "Кампания удалена"
