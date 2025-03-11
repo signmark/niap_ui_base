@@ -41,10 +41,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         throw new Error('Выберите кампанию');
       }
 
-      // Удаляем HTML-теги для получения чистого текста для проверки
-      const plainTextPrompt = prompt.replace(/<[^>]*>/g, '').trim();
-      
-      if (!plainTextPrompt) {
+      if (!prompt.trim()) {
         throw new Error('Введите промт для генерации');
       }
 
@@ -67,8 +64,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          // Отправляем чистый текст без HTML-разметки
-          prompt: plainTextPrompt,
+          prompt: prompt,
           keywords: selectedKeywords,
           tone,
           campaignId
@@ -207,14 +203,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 <Label htmlFor="prompt" className="text-right">
                   Промт
                 </Label>
-                <div className="col-span-3">
-                  <RichTextEditor
-                    content={prompt}
-                    onChange={(html) => setPrompt(html)}
-                    placeholder="Опишите, какой контент вы хотите сгенерировать"
-                    minHeight="150px"
-                  />
-                </div>
+                <Textarea
+                  id="prompt"
+                  placeholder="Опишите, какой контент вы хотите сгенерировать"
+                  className="col-span-3"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={3}
+                />
               </div>
 
               <div className="grid grid-cols-4 items-start gap-4">
