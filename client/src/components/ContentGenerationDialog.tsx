@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { queryClient } from '@/lib/queryClient';
 import { apiRequest } from '@/lib/queryClient';
 import RichTextEditor from './RichTextEditor';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 // Определение интерфейса CampainKeyword локально
 interface CampainKeyword {
@@ -167,7 +168,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto resize-handle">
         <DialogHeader>
           <DialogTitle>Генерация контента</DialogTitle>
           <DialogDescription>
