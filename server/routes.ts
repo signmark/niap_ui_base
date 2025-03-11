@@ -1162,48 +1162,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       const userId = (req as any).userId;
-      const authHeader = req.headers['authorization'];
       
-      if (!userId || !authHeader) {
-        console.log("Missing userId or authorization header");
-        return res.status(401).json({ error: "Не авторизован" });
+      if (!userId) {
+        console.log("Missing userId in authenticated request");
+        return res.status(401).json({ error: "Не авторизован: Ошибка проверки токена" });
       }
-      
-      const token = authHeader.replace('Bearer ', '');
       
       try {
         console.log(`Fetching campaigns for user: ${userId}`);
         
-        // Получаем кампании из Directus, фильтруя по user_id
-        const response = await directusApi.get('/items/user_campaigns', {
-          params: {
-            filter: {
-              user_id: {
-                _eq: userId
-              }
-            }
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        // Преобразуем данные из формата Directus в наш формат
-        const campaigns = response.data.data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          userId: item.user_id,
-          createdAt: item.created_at
-        }));
+        // Используем storage для получения кампаний пользователя
+        const campaigns = await storage.getCampaigns(userId);
         
         console.log(`Found ${campaigns.length} campaigns for user ${userId}`);
         res.json({ data: campaigns });
       } catch (error) {
         console.error('Error getting campaigns:', error);
-        if (axios.isAxiosError(error) && error.response) {
-          console.error('Directus API error details:', error.response.data);
-        }
         return res.status(500).json({ error: "Ошибка при получении кампаний" });
       }
     } catch (error) {
@@ -2090,35 +2064,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Добавляем маршрут для создания кампаний
-  app.post("/api/campaigns", async (req, res) => {
+  app.post("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       const { name, description } = req.body;
+      const userId = (req as any).userId;
       
       if (!name) {
         return res.status(400).json({ error: "Название кампании обязательно" });
       }
       
-      // В реальном приложении здесь бы происходила авторизация и проверка прав
-      // Для разработки используем мок данные
-      const newCampaignId = crypto.randomUUID();
+      if (!userId) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
       
-      // Добавляем новую кампанию в существующий список
-      const newCampaign = {
-        id: newCampaignId,
-        name: name,
-        description: description || null,
-        userId: "user123", // Должно быть заменено реальным ID пользователя
-        createdAt: new Date().toISOString()
-      };
-      
-      // Добавляем новую кампанию в наш массив кампаний для разработки
-      devCampaigns.push(newCampaign);
-      
-      // Возвращаем результат
-      return res.status(201).json({ 
-        success: true,
-        data: newCampaign
-      });
+      try {
+        // Создаем кампанию в хранилище
+        const newCampaign = await storage.createCampaign({
+          name,
+          description: description || null,
+          userId,
+          directusId: crypto.randomUUID(), // Генерируем ID для совместимости с Directus
+          createdAt: new Date()
+        });
+        
+        console.log(`Created new campaign for user ${userId}:`, newCampaign);
+        
+        // Возвращаем результат
+        return res.status(201).json({ 
+          success: true,
+          data: newCampaign
+        });
+      } catch (error) {
+        console.error("Error storing campaign:", error);
+        return res.status(500).json({ error: "Не удалось сохранить кампанию" });
+      }
     } catch (error) {
       console.error("Error creating campaign:", error);
       res.status(500).json({ error: "Failed to create campaign" });
