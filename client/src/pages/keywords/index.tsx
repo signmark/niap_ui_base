@@ -79,11 +79,15 @@ export default function Keywords() {
       }));
 
       setSearchResults(formattedResults);
-      add({ description: `Найдено ${formattedResults.length} ключевых слов` });
+      add({ 
+        title: "Успешно",
+        description: `Найдено ${formattedResults.length} ключевых слов` 
+      });
     } catch (error) {
       console.error("Search error:", error);
       add({
         variant: "destructive",
+        title: "Ошибка",
         description: "Не удалось выполнить поиск"
       });
     } finally {
@@ -105,6 +109,7 @@ export default function Keywords() {
     if (!selectedCampaign || !campaignId) {
       add({
         variant: "destructive",
+        title: "Ошибка",
         description: "Выберите кампанию"
       });
       return;
@@ -114,6 +119,7 @@ export default function Keywords() {
     if (!selectedKeywords.length) {
       add({
         variant: "destructive",
+        title: "Ошибка",
         description: "Выберите ключевые слова"
       });
       return;
@@ -137,11 +143,15 @@ export default function Keywords() {
 
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
       setSearchResults([]);
-      add({ description: "Ключевые слова добавлены" });
+      add({ 
+        title: "Успешно",
+        description: "Ключевые слова добавлены" 
+      });
     } catch (error) {
       console.error('Error saving keywords:', error);
       add({
         variant: "destructive",
+        title: "Ошибка",
         description: "Не удалось сохранить ключевые слова"
       });
     }
@@ -216,10 +226,14 @@ export default function Keywords() {
           try {
             await directusApi.delete(`items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
-            add({ description: "Ключевое слово удалено" });
+            add({ 
+              title: "Успешно",
+              description: "Ключевое слово удалено" 
+            });
           } catch {
             add({
               variant: "destructive",
+              title: "Ошибка",
               description: "Не удалось удалить ключевое слово"
             });
           }
