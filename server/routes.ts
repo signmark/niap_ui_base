@@ -478,6 +478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
   
+  // Применяем наш фикс для правильной обработки keywords
+  fixCampaignContent(app);
+  
   // Маршрут для генерации контента через Perplexity API
   app.post("/api/generate-content", async (req, res) => {
     try {

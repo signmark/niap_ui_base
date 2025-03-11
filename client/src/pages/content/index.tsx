@@ -93,12 +93,37 @@ export default function ContentPage() {
   const setCurrentContentSafe = (content: CampaignContent | null) => {
     if (content) {
       // Гарантируем, что keywords всегда массив
+      let processedKeywords: string[] = [];
+      
+      // Обрабатываем ключевые слова для обеспечения правильного формата
+      if (content.keywords) {
+        if (Array.isArray(content.keywords)) {
+          processedKeywords = content.keywords.map(k => typeof k === 'string' ? k : String(k));
+        } else if (typeof content.keywords === 'string') {
+          try {
+            // Пытаемся разобрать JSON строку
+            const parsed = JSON.parse(content.keywords);
+            if (Array.isArray(parsed)) {
+              processedKeywords = parsed.map(k => typeof k === 'string' ? k : String(k));
+            } else {
+              processedKeywords = [content.keywords];
+            }
+          } catch (e) {
+            // Если не JSON, просто используем как строку
+            processedKeywords = [content.keywords];
+          }
+        } else if (content.keywords !== null) {
+          // Для всех других случаев
+          processedKeywords = [String(content.keywords)];
+        }
+      }
+      
       const safeContent = {
         ...content,
-        keywords: Array.isArray(content.keywords) ? content.keywords : []
+        keywords: processedKeywords
       };
       
-      console.log('Setting content with keywords:', safeContent.keywords);
+      console.log('Setting content with processed keywords:', safeContent.keywords);
       setCurrentContent(safeContent);
       
       // Сбрасываем и заново устанавливаем выбранные ключевые слова
