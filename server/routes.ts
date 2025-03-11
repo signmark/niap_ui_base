@@ -1222,21 +1222,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint для получения трендовых тем кампании
-  app.get("/api/campaign-trends", async (req, res) => {
+  app.get("/api/campaign-trends", authenticateUser, async (req, res) => {
     try {
       const campaignId = req.query.campaignId as string;
       const period = req.query.period as string || '7days';
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
       
-      // Получаем токен из заголовка
-      const authHeader = req.headers['authorization'];
-      
       if (!authHeader) {
         return res.status(401).json({ error: "Unauthorized" });
       }
+      
+      const token = authHeader.replace('Bearer ', '');
       
       let fromDate: Date | undefined;
       
@@ -1258,16 +1258,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       }
       
-      // Получаем трендовые темы из базы данных
-      const trendTopics = await storage.getCampaignTrendTopics({
-        from: fromDate,
-        campaignId: campaignId
-      });
-      
-      res.json({ 
-        success: true,
-        data: trendTopics 
-      });
+      try {
+        console.log(`Fetching trend topics for campaign: ${campaignId}, period: ${period}`);
+        
+        // Форматируем дату для фильтра в формате ISO
+        const fromDateISO = fromDate.toISOString();
+        
+        // Получаем темы напрямую из Directus API
+        const response = await directusApi.get('/items/campaign_trend_topics', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              },
+              created_at: {
+                _gte: fromDateISO
+              }
+            },
+            sort: ['-created_at']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const trendTopics = response.data.data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          sourceId: item.source_id,
+          reactions: item.reactions,
+          comments: item.comments,
+          views: item.views,
+          createdAt: item.created_at,
+          isBookmarked: item.is_bookmarked,
+          campaignId: item.campaign_id
+        }));
+        
+        console.log(`Found ${trendTopics.length} trend topics for campaign ${campaignId}`);
+        
+        res.json({ 
+          success: true,
+          data: trendTopics 
+        });
+      } catch (directusError) {
+        console.error("Error fetching trend topics from Directus:", directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", directusError.response.data);
+        }
+        
+        return res.status(500).json({ 
+          success: false,
+          error: "Не удалось получить тренды", 
+          message: directusError instanceof Error ? directusError.message : "Unknown error"
+        });
+      }
     } catch (error) {
       console.error("Error fetching campaign trend topics:", error);
       res.status(500).json({ 
@@ -2388,10 +2434,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Processing ${trendTopics.length} trend topics for campaign ${campaignId}`);
       
-      // Save each trend topic to the database
+      // Получаем API ключ n8n из переменных окружения
+      const n8nApiKey = process.env.N8N_API_KEY;
+      
+      if (!n8nApiKey) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "N8N API key not configured" 
+        });
+      }
+      
+      // Save each trend topic to the database using Directus API
       const savedTopics = [];
       for (const topic of trendTopics) {
         try {
+          // Сначала создаем объект, соответствующий схеме
           const trendTopic = insertCampaignTrendTopicSchema.parse({
             title: topic.title,
             campaignId: campaignId,
@@ -2402,7 +2459,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isBookmarked: false
           });
           
-          const savedTopic = await storage.createCampaignTrendTopic(trendTopic);
+          // Затем преобразуем его в формат Directus
+          const directusPayload = {
+            title: trendTopic.title,
+            campaign_id: trendTopic.campaignId,
+            source_id: trendTopic.sourceId,
+            reactions: trendTopic.reactions,
+            comments: trendTopic.comments,
+            views: trendTopic.views,
+            is_bookmarked: trendTopic.isBookmarked
+          };
+          
+          // Сохраняем в Directus напрямую через сервисный API ключ
+          const response = await directusApi.post('/items/campaign_trend_topics', directusPayload, {
+            headers: {
+              'Authorization': `Bearer ${n8nApiKey}`
+            }
+          });
+          
+          // Преобразуем ответ из Directus в наш формат и добавляем в сохраненные
+          const savedTopic = {
+            id: response.data.data.id,
+            title: response.data.data.title,
+            campaignId: response.data.data.campaign_id,
+            sourceId: response.data.data.source_id,
+            reactions: response.data.data.reactions,
+            comments: response.data.data.comments,
+            views: response.data.data.views,
+            isBookmarked: response.data.data.is_bookmarked,
+            createdAt: response.data.data.created_at
+          };
           savedTopics.push(savedTopic);
         } catch (topicError) {
           console.error("Error saving trend topic:", topicError);
