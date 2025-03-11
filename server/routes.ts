@@ -1044,15 +1044,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const trendData of trends) {
         try {
           const trendTopic: InsertCampaignTrendTopic = {
-            id: crypto.randomUUID(),
             title: trendData.title,
             sourceId: trendData.sourceId,
             reactions: trendData.reactions || 0,
             comments: trendData.comments || 0,
             views: trendData.views || 0,
             campaignId: campaignId,
-            isBookmarked: false,
-            createdAt: new Date()
+            isBookmarked: false
           };
           
           await storage.createCampaignTrendTopic(trendTopic);
