@@ -234,12 +234,18 @@ export default function ContentPage() {
     onSuccess: (data) => {
       console.log('Content update success response:', data);
       
+      // Принудительное обновление
+      if (data?.data) {
+        // Показываем тост в любом случае, чтобы уведомить пользователя
+        toast({
+          description: "Контент успешно обновлен",
+        });
+      }
+      
       // Сначала обновляем данные, затем закрываем диалог
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
         .then(() => {
-          toast({
-            description: "Контент успешно обновлен",
-          });
+          // Принудительно закрываем форму
           setIsEditDialogOpen(false);
           setCurrentContent(null);
         });
@@ -1089,9 +1095,19 @@ export default function ContentPage() {
                             type="button"
                             className="h-4 w-4 rounded-full"
                             onClick={() => {
+                              console.log('Removing keyword:', keyword);
+                              // Гарантируем, что keywords всегда массив
+                              const existingKeywords = Array.isArray(currentContent.keywords) 
+                                ? [...currentContent.keywords] 
+                                : [];
+                              
+                              // Удаляем ключевое слово по индексу
+                              const updatedKeywords = existingKeywords.filter((_, i) => i !== index);
+                              console.log('Keywords after removal:', updatedKeywords);
+                              
                               const updatedContent = {
                                 ...currentContent,
-                                keywords: currentContent.keywords?.filter((_, i) => i !== index) || []
+                                keywords: updatedKeywords
                               };
                               setCurrentContentSafe(updatedContent);
                             }}
