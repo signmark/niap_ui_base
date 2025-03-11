@@ -1719,6 +1719,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Маршрут для публикации контента в соцсети
+  app.post("/api/content/:id/publish", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const { socialPlatforms, status } = req.body;
+      
+      // Проверка авторизации
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Не авторизован' });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Невалидный токен' });
+      }
+      
+      try {
+        // Отправляем запрос к Directus API для запланированной публикации
+        const response = await directusApi.patch(`/items/campaign_content/${contentId}`, {
+          social_platforms: socialPlatforms,
+          status: status || 'scheduled'
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        res.json({ data: response.data.data });
+      } catch (error: any) {
+        console.error('Error publishing content:', error);
+        if (error.response) {
+          console.error('Directus API error details:', error.response.data);
+        }
+        return res.status(error.response?.status || 500).json({ 
+          error: "Ошибка при публикации контента",
+          details: error.response?.data?.errors || error.message
+        });
+      }
+    } catch (error: any) {
+      console.error("Error publishing content:", error);
+      res.status(500).json({ error: "Ошибка при публикации контента" });
+    }
+  });
+
   // Маршрут для адаптации контента для соцсетей
   app.post("/api/content/:id/adapt", async (req, res) => {
     try {

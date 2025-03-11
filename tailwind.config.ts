@@ -86,5 +86,75 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"), 
+    require("@tailwindcss/typography"),
+    function({ addUtilities }: { addUtilities: Function }) {
+      const newUtilities = {
+        '.tiptap p': {
+          margin: '0.5em 0',
+        },
+        '.tiptap ul': {
+          'list-style-type': 'disc',
+          'padding-left': '1.5em',
+          'margin': '0.5em 0',
+        },
+        '.tiptap ol': {
+          'list-style-type': 'decimal',
+          'padding-left': '1.5em',
+          'margin': '0.5em 0',
+        },
+        '.tiptap h1': {
+          'font-size': '1.875rem',
+          'line-height': '2.25rem',
+          'font-weight': '700',
+          'margin': '0.75em 0 0.5em 0',
+        },
+        '.tiptap h2': {
+          'font-size': '1.5rem',
+          'line-height': '2rem',
+          'font-weight': '600',
+          'margin': '0.75em 0 0.5em 0',
+        },
+        '.tiptap h3': {
+          'font-size': '1.25rem',
+          'line-height': '1.75rem',
+          'font-weight': '600',
+          'margin': '0.75em 0 0.5em 0',
+        },
+        '.tiptap a': {
+          'color': 'hsl(var(--primary))',
+          'text-decoration': 'underline',
+        },
+        '.tiptap img': {
+          'max-width': '100%',
+          'height': 'auto',
+          'margin': '0.5em 0',
+        },
+        '.tiptap blockquote': {
+          'border-left': '3px solid hsl(var(--muted))',
+          'padding-left': '1em',
+          'margin': '0.5em 0',
+          'color': 'hsl(var(--muted-foreground))',
+        },
+        '.tiptap code': {
+          'background': 'hsl(var(--muted))',
+          'padding': '0.2em 0.4em',
+          'border-radius': '3px',
+          'font-size': '0.9em',
+        },
+        '.tiptap p.is-editor-empty:first-child::before': {
+          'content': 'attr(data-placeholder)',
+          'float': 'left',
+          'color': 'hsl(var(--muted-foreground))',
+          'pointer-events': 'none',
+          'height': '0',
+        },
+        '.tiptap .ProseMirror:focus': {
+          'outline': 'none',
+        }
+      }
+      addUtilities(newUtilities)
+    },
+  ],
 } satisfies Config;

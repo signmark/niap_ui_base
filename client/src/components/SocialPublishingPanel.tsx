@@ -6,7 +6,6 @@ import { Loader2, Instagram, MessageCircle, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { directusApi } from '@/lib/directus';
 import { queryClient } from '@/lib/queryClient';
 import { SiVk, SiFacebook } from 'react-icons/si';
 import type { SocialPlatform, CampaignContent } from '@shared/schema';
