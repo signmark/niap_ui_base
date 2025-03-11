@@ -18,7 +18,8 @@ import {
   insertContentSourceSchema, 
   insertCampaignContentSchema,
   insertCampaignTrendTopicSchema,
-  InsertCampaignTrendTopic
+  InsertCampaignTrendTopic,
+  InsertCampaignContent
 } from "@shared/schema";
 import { crawler } from "./services/crawler";
 import axios from "axios";
@@ -2060,51 +2061,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Создаем контент кампании напрямую через Directus API
-        const directusPayload = {
-          campaign_id: req.body.campaignId,
-          content_type: req.body.contentType,
+        // Создаем контент кампании через наш storage API
+        const contentPayload: InsertCampaignContent = {
+          campaignId: req.body.campaignId,
+          postType: req.body.contentType,
           title: req.body.title,
           content: req.body.content,
-          image_url: req.body.imageUrl,
-          video_url: req.body.videoUrl,
-          // Проверяем, что keywords это массив и передаем его напрямую для PostgreSQL
+          imageUrl: req.body.imageUrl,
+          videoUrl: req.body.videoUrl,
+          // Проверяем, что keywords это массив
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
-          user_id: userId,
-          created_at: new Date().toISOString()
+          userId: userId,
+          createdAt: new Date()
         };
         
-        console.log("Creating campaign content:", directusPayload);
+        console.log("Creating campaign content:", JSON.stringify(contentPayload).substring(0, 200));
         
-        const contentResponse = await directusApi.post('/items/campaign_content', directusPayload, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const contentResponse = await storage.createCampaignContent(contentPayload);
         
-        // Трансформируем данные из формата Directus в наш формат
+        // Используем напрямую данные из нашего API
         const content = {
-          id: contentResponse.data.data.id,
-          campaignId: contentResponse.data.data.campaign_id,
-          userId: contentResponse.data.data.user_id,
-          title: contentResponse.data.data.title,
-          content: contentResponse.data.data.content,
-          contentType: contentResponse.data.data.content_type,
-          imageUrl: contentResponse.data.data.image_url,
-          videoUrl: contentResponse.data.data.video_url,
-          prompt: contentResponse.data.data.prompt,
-          // Парсим keywords из строки JSON, если это возможно
-          keywords: contentResponse.data.data.keywords 
-            ? (typeof contentResponse.data.data.keywords === 'string' 
-                ? JSON.parse(contentResponse.data.data.keywords) 
-                : contentResponse.data.data.keywords)
-            : [],
-          createdAt: contentResponse.data.data.created_at,
-          scheduledAt: contentResponse.data.data.scheduled_at,
-          publishedAt: contentResponse.data.data.published_at,
-          status: contentResponse.data.data.status,
-          socialPlatforms: contentResponse.data.data.social_platforms
+          id: contentResponse.id,
+          campaignId: contentResponse.campaignId,
+          userId: contentResponse.userId,
+          title: contentResponse.title,
+          content: contentResponse.content,
+          contentType: contentResponse.postType,
+          imageUrl: contentResponse.imageUrl,
+          videoUrl: contentResponse.videoUrl,
+          prompt: contentResponse.prompt,
+          keywords: contentResponse.keywords || [],
+          createdAt: contentResponse.createdAt,
+          scheduledAt: contentResponse.scheduledAt,
+          publishedAt: contentResponse.publishedAt,
+          status: contentResponse.status,
+          socialPlatforms: contentResponse.socialPlatforms
         };
         
         res.status(201).json({ data: content });
