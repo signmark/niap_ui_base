@@ -35,7 +35,8 @@ export function CampaignSelector() {
 
         const response = await fetch('/api/campaigns', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'x-user-id': userId || ''
           }
         });
 
