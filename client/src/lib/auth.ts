@@ -22,10 +22,24 @@ export const setupTokenRefresh = (expires: number) => {
     clearTimeout(refreshTimeout);
   }
 
-  // Schedule refresh 1 minute before token expires
-  const refreshIn = Math.max(expires - 60000, 1000); // Minimum 1 second
+  // Convert to milliseconds if it looks like seconds
+  let expiresMs = expires;
+  if (expires < 10000) { // If less than 10 seconds, it's probably in seconds format
+    console.log('Expires value appears to be in seconds, converting to milliseconds');
+    expiresMs = expires * 1000;
+  }
+
+  // Schedule refresh to happen at 80% of the token lifetime
+  // This ensures we refresh well before expiration
+  const refreshIn = Math.max(Math.floor(expiresMs * 0.8), 1000); // Minimum 1 second
+  
+  console.log(`Token will expire in ${expiresMs/1000} seconds, scheduling refresh in ${refreshIn/1000} seconds`);
+  
   refreshTimeout = setTimeout(() => {
-    refreshAccessToken().catch(console.error);
+    console.log('Refresh timeout triggered, refreshing token');
+    refreshAccessToken().catch(error => {
+      console.error('Failed to refresh token in scheduled refresh:', error);
+    });
   }, refreshIn);
 };
 
