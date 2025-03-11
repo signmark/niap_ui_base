@@ -66,11 +66,22 @@ export function SocialContentAdaptationDialog({
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          socialPublications: enabledPlatforms.map(p => ({
-            platform: p.platform,
-            content: p.content,
-            status: 'pending'
-          }))
+          // Обновленный формат, который будет храниться в socialPlatforms как JSONB в БД
+          socialPlatforms: Object.entries(platformsContent)
+            .filter(([_, data]) => data.isEnabled)
+            .reduce<Record<string, any>>((acc, [platform, data]) => {
+              acc[platform] = {
+                caption: data.content,         // Текст для публикации
+                status: 'pending',             // Статус публикации 
+                isEdited: data.isEdited,       // Флаг ручного редактирования
+                hashtags: extractHashtags(data.content), // Извлекаем хэштеги для метаданных
+                publishedAt: null,
+                postId: null,
+                postUrl: null,
+                error: null
+              };
+              return acc;
+            }, {})
         })
       }).then(response => {
         if (!response.ok) {
@@ -119,23 +130,51 @@ export function SocialContentAdaptationDialog({
   };
 
   // Адаптация контента для разных платформ
+  // Функция для извлечения хэштегов из текста
+  function extractHashtags(content: string): string[] {
+    if (!content) return [];
+    
+    // Регулярное выражение для поиска хэштегов (#слово)
+    const hashtagRegex = /#(\w+)/g;
+    const matches = content.match(hashtagRegex);
+    
+    // Если совпадения найдены, возвращаем их без символа #
+    if (matches) {
+      return matches.map(tag => tag.substring(1));
+    }
+    
+    return [];
+  }
+
   function adaptContentForPlatform(platform: SocialPlatform, content: string): string {
     // Базовая логика адаптации контента для разных платформ
+    const baseContent = content || "";
+    
     switch (platform) {
       case 'instagram':
-        // Для Instagram добавляем хэштеги и эмодзи
-        return content + "\n\n#контент #smm #маркетинг";
+        // Instagram имеет ограничение в 2200 символов и лучше работает с эмодзи и хэштегами
+        // Добавляем хэштеги в конце для увеличения охвата
+        return (baseContent.length > 1800 
+          ? baseContent.substring(0, 1800) + "..." 
+          : baseContent) + "\n\n#контент #smm #маркетинг";
+          
       case 'telegram':
-        // Для Telegram добавляем форматирование и ссылки
-        return content + "\n\nПодписывайтесь на наш канал! 👉";
+        // Telegram поддерживает HTML разметку и без ограничений на длину
+        // Можно добавить кнопки и форматирование
+        return baseContent + "\n\nПодписывайтесь на наш канал! 👉";
+        
       case 'vk':
-        // Для VK стандартный формат
-        return content + "\n\nСтавьте лайки и делитесь с друзьями! ❤";
+        // ВКонтакте имеет ограничение около 15000 символов
+        // Стиль более неформальный, акцент на вовлечение
+        return baseContent + "\n\nСтавьте лайки и делитесь с друзьями! ❤";
+        
       case 'facebook':
-        // Для Facebook более формальный стиль
-        return content + "\n\nНе забудьте подписаться на нашу страницу, чтобы не пропустить новые публикации.";
+        // Facebook имеет ограничение в 63206 символов
+        // Стиль более профессиональный, акцент на бизнес-аудиторию
+        return baseContent + "\n\nНе забудьте подписаться на нашу страницу, чтобы не пропустить новые публикации.";
+        
       default:
-        return content;
+        return baseContent;
     }
   }
 
