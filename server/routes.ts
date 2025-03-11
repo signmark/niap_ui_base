@@ -1083,35 +1083,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Source ID and Campaign ID are required" });
       }
 
-      // Get source for this campaign
-      const sources = await storage.getContentSources("", Number(campaignId));
-      console.log('Found sources:', sources);
-
-      const source = sources.find(s => String(s.id) === String(sourceId));
+      // Get sources for this campaign from Directus API
+      const sourcesResponse = await directusApi.get('/items/content_sources', {
+        params: {
+          filter: {
+            campaign_id: {
+              _eq: campaignId
+            }
+          }
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const sources = sourcesResponse.data.data || [];
+      console.log(`Found ${sources.length} sources for campaign ${campaignId}`);
+      
+      // Find the specific source we're interested in
+      const source = sources.find((s: any) => String(s.id) === String(sourceId));
 
       if (!source) {
         console.error('Source not found:', { sourceId, campaignId });
         return res.status(404).json({ message: "Source not found" });
       }
-
-      let taskResponse;
-
+      
       try {
-        // Start crawling process first
+        // Start crawling process
         console.log('Starting crawling process for source:', source.name);
-        const topics = await crawler.crawlSource(source, Number(campaignId), "");
-        console.log(`Found ${topics.length} topics for source ${source.name}`);
-
-        if (topics.length === 0) {
-          console.error('No topics found for source:', source.name);
-          return res.status(404).json({ message: "No topics found for this source" });
-        }
-
-        res.status(501).json({ error: "Not Implemented" });
-
-      } catch (error) {
-        console.error("Error during crawling:", error);
-
+        
+        // TODO: Replace with Directus API call when crawler functionality is implemented
+        // For now, returning placeholder response
+        res.status(501).json({ 
+          success: false,
+          error: "Crawling functionality not yet implemented",
+          message: "This endpoint will be implemented in a future update"
+        });
+      } catch (crawlError) {
+        console.error("Error during crawling:", crawlError);
         res.status(500).json({ error: "Failed to complete crawling task" });
       }
     } catch (error) {
@@ -1181,7 +1190,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isBookmarked: false
           };
           
-          await storage.createCampaignTrendTopic(trendTopic);
+          // Создаем запись в Directus API напрямую
+          await directusApi.post('/items/campaign_trend_topics', {
+            title: trendTopic.title,
+            source_id: trendTopic.sourceId,
+            reactions: trendTopic.reactions,
+            comments: trendTopic.comments,
+            views: trendTopic.views,
+            campaign_id: trendTopic.campaignId,
+            is_bookmarked: trendTopic.isBookmarked
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              // Используем сервисный токен, т.к. это вебхук без авторизации пользователя
+              'Authorization': `Bearer ${process.env.DIRECTUS_SERVICE_TOKEN || ''}`
+            }
+          });
           savedCount++;
         } catch (err) {
           console.error("Error saving trend:", err);
