@@ -3,8 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff, Bot } from "lucide-react";
-import { RobotButton } from "@/components/ui/robot-button";
+import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface SourcePost {
