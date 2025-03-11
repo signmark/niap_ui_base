@@ -32,16 +32,24 @@ export const setupTokenRefresh = (expires: number) => {
 export const refreshAccessToken = async () => {
   const refreshToken = localStorage.getItem('refresh_token');
   if (!refreshToken) {
+    console.error('Невозможно обновить токен: отсутствует refresh_token');
     throw new Error('No refresh token available');
   }
 
   try {
+    console.log('Attempting to refresh token');
     const response = await directusApi.post<AuthResponse>('/auth/refresh', {
       refresh_token: refreshToken,
       mode: 'json'
     });
 
+    if (!response.data?.data?.access_token) {
+      console.error('Неверный формат ответа при обновлении токена:', response.data);
+      throw new Error('Invalid response format during token refresh');
+    }
+
     const { access_token, refresh_token, expires } = response.data.data;
+    console.log('Token refresh successful, new token length:', access_token.length);
 
     // Update tokens
     localStorage.setItem('auth_token', access_token);
@@ -51,13 +59,23 @@ export const refreshAccessToken = async () => {
     const auth = useAuthStore.getState();
     auth.setAuth(access_token, auth.userId);
 
-    // Setup next refresh
-    setupTokenRefresh(expires);
+    // Setup next refresh - schedule it for 1 minute before expiration
+    const refreshIn = Math.max(expires - 60000, 1000); // At least 1 second
+    console.log(`Setting up next token refresh in ${refreshIn / 1000} seconds`);
+    setupTokenRefresh(refreshIn);
 
     return access_token;
   } catch (error) {
+    console.error('Error refreshing access token:', error);
+    
+    // Clear tokens on refresh failure
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
+    
+    // Clear auth store
+    const auth = useAuthStore.getState();
+    auth.clearAuth();
+    
     throw error;
   }
 };
