@@ -567,7 +567,7 @@ export default function ContentPage() {
                           />
                         </div>
                       )}
-                      {content.keywords && content.keywords.length > 0 && (
+                      {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {content.keywords.map((keyword, index) => (
                             <Badge key={index} variant="secondary">{keyword}</Badge>
