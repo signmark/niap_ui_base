@@ -92,7 +92,7 @@ export default function Trends() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
-  const { add: toast } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
