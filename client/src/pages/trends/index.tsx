@@ -507,8 +507,8 @@ export default function Trends() {
       const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
       console.log('Sending keywords to webhook:', keywordsList);
       
-      // Send request to the n8n webhook with all campaign keywords
-      const webhookResponse = await fetch('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
+      // Send request to our API endpoint which will forward to n8n webhook
+      const webhookResponse = await fetch('/api/trends/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
