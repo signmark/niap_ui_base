@@ -895,18 +895,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let webhookResponse = { status: 500, data: null };
       try {
+        // Создаем отдельный идентификатор запроса для отслеживания
+        const requestId = crypto.randomUUID();
+        
         webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
           campaignId: campaignId,
           keywords: keywordsList,
           userId: userId,
-          // Добавляем токен, чтобы webhook мог использовать его для аутентификации
-          token: token
+          requestId: requestId,
+          // Не передаем токен пользователя в webhook, используем requestId для идентификации
         }, {
           headers: {
             'Content-Type': 'application/json',
-            // Добавляем заголовок авторизации, если требуется
+            // Используем только API ключ для авторизации в N8N
             'X-N8N-Authorization': process.env.N8N_API_KEY || '',
-            'Authorization': `Bearer ${token}`
           },
           timeout: 30000 // 30 секунд таймаут
         });
