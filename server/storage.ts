@@ -83,7 +83,7 @@ export class DatabaseStorage implements IStorage {
   async getContentSources(userId: string, campaignId?: number): Promise<ContentSource[]> {
     console.log('Getting content sources with params:', { userId, campaignId });
     try {
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
   async createContentSource(source: InsertContentSource): Promise<ContentSource> {
     console.log('Creating content source:', source);
     try {
-      const authToken = this.getAuthToken(source.userId);
+      const authToken = await this.getAuthToken(source.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -171,7 +171,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContentSource(id: number, userId: string): Promise<void> {
     try {
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -210,7 +210,7 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -270,7 +270,7 @@ export class DatabaseStorage implements IStorage {
   async createTrendTopic(topic: InsertTrendTopic): Promise<TrendTopic> {
     console.log('Creating trend topic:', topic);
     try {
-      const authToken = this.getAuthToken(topic.userId);
+      const authToken = await this.getAuthToken(topic.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -335,7 +335,7 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -418,7 +418,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('User ID required for authentication');
       }
       
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -489,7 +489,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('User ID required for authentication');
       }
       
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -541,7 +541,7 @@ export class DatabaseStorage implements IStorage {
   async getCampaigns(userId: string): Promise<Campaign[]> {
     console.log('Sending request to Directus with filter user_id =', userId);
     try {
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -609,7 +609,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
     try {
-      const authToken = this.getAuthToken(campaign.userId);
+      const authToken = await this.getAuthToken(campaign.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -647,7 +647,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('Campaign not found');
       }
       
-      const authToken = this.getAuthToken(campaign.userId);
+      const authToken = await this.getAuthToken(campaign.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -664,27 +664,36 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Вспомогательный метод для получения токена пользователя
-  private getAuthToken(userId: string): string | null {
-    // В этом методе нужно получать токен пользователя из хранилища сессий
-    // В реальной реализации, вам нужно будет сохранять токены при авторизации
-    // и доставать их тут по userId
-    // В текущем прототипе возвращаем null, что приведет к 401 ошибке
+  private async getAuthToken(userId: string): Promise<string | null> {
     console.log('Getting auth token for user:', userId);
     
-    // В реальном приложении здесь будет что-то вроде:
-    // return userTokensMap.get(userId) || null;
-    
-    // Для тестирования, если у вас есть действующий токен, его можно временно указать здесь напрямую:
-    // return "активный_токен_directus_пользователя";
-    
-    return null;
+    try {
+      // Используем реализованный метод getUserTokenInfo для получения информации о токене
+      const tokenInfo = await this.getUserTokenInfo(userId);
+      if (tokenInfo && tokenInfo.token) {
+        return tokenInfo.token;
+      }
+      
+      // Для тестирования и разработки, можно использовать сервисный токен
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      if (serviceToken) {
+        console.log('Using service token for authorization');
+        return serviceToken;
+      }
+      
+      console.warn('No token found for user:', userId);
+      return null;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
   }
 
   // Campaign Content
   async getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
     console.log('Fetching content for campaign ID:', campaignId);
     try {
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -767,7 +776,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCampaignContent(content: InsertCampaignContent): Promise<CampaignContent> {
     try {
-      const authToken = this.getAuthToken(content.userId);
+      const authToken = await this.getAuthToken(content.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -821,7 +830,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('Content not found');
       }
       
-      const authToken = this.getAuthToken(currentContent.userId);
+      const authToken = await this.getAuthToken(currentContent.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -873,7 +882,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error('Content not found');
       }
       
-      const authToken = this.getAuthToken(content.userId);
+      const authToken = await this.getAuthToken(content.userId);
       if (!authToken) {
         throw new Error('No auth token found for user');
       }
@@ -891,7 +900,7 @@ export class DatabaseStorage implements IStorage {
 
   async getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
     try {
-      const authToken = this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
