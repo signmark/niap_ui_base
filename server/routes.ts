@@ -941,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Modified sources/collect endpoint to use real search
+  // Modified sources/collect endpoint to use n8n webhook
   app.post("/api/sources/collect", async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
@@ -952,8 +952,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       const { keywords } = req.body;
       console.log('Starting source search for keywords:', keywords);
+      
+      // Получаем информацию о пользователе из токена
+      let userId;
+      try {
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        userId = userResponse.data?.data?.id;
+        if (!userId) {
+          return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
+        }
+      } catch (userError) {
+        console.error("Error getting user from token:", userError);
+        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+      }
 
-      // Check cache for each keyword first
+      console.log('Searching for sources with keywords:', keywords);
+
+      // Check cache for quick response first
       const cachedResults = keywords.map((keyword: any) => {
         const cached = getCachedResults(keyword);
         if (cached) {
@@ -981,33 +1000,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Collect sources from multiple services for keywords without cache
-      const allResults = await Promise.all(
-        keywords.map(async (keyword: string, index: number) => {
-          if (cachedResults[index]) {
-            return cachedResults[index];
-          }
+      // Отправка запроса на webhook n8n для поиска источников
+      console.log('Sending webhook request to n8n for source search');
+      
+      try {
+        const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/767bbaf6-e9ca-4f1d-aeb6-66598ff7e291', {
+          keywords: keywords,
+          userId: userId
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
+          },
+          timeout: 15000 // 15 секунд таймаут
+        });
+        
+        console.log('Webhook source search response status:', webhookResponse.status);
 
-          // В случае если Social Searcher недоступен, используем только Perplexity
-          const [socialResults, perplexityResults] = await Promise.all([
-            searchSocialSourcesByKeyword(keyword, token),
-            existingPerplexitySearch(keyword, token)
-          ]);
+        // Если n8n вернул результаты, используем их
+        if (webhookResponse.data && webhookResponse.data.sources) {
+          console.log(`Received ${webhookResponse.data.sources.length} sources from n8n webhook`);
+          
+          // Кешируем результаты поиска
+          keywords.forEach((keyword: string) => {
+            const sourcesForKeyword = webhookResponse.data.sourcesMap && 
+                                     webhookResponse.data.sourcesMap[keyword] ? 
+                                     webhookResponse.data.sourcesMap[keyword] : 
+                                     webhookResponse.data.sources;
+            
+            if (sourcesForKeyword && sourcesForKeyword.length > 0) {
+              console.log(`Caching ${sourcesForKeyword.length} results for keyword: ${keyword}`);
+              searchCache.set(keyword, {
+                timestamp: Date.now(),
+                results: sourcesForKeyword
+              });
+            }
+          });
+          
+          return res.json({
+            success: true,
+            data: {
+              sources: webhookResponse.data.sources
+            }
+          });
+        } else {
+          // Если n8n не вернул результаты, возвращаемся к обычному поиску
+          console.log('No sources in webhook response, falling back to regular search');
+          
+          // Собираем источники из нескольких сервисов для ключевых слов без кеша
+          const allResults = await Promise.all(
+            keywords.map(async (keyword: string, index: number) => {
+              if (cachedResults[index]) {
+                return cachedResults[index];
+              }
 
-          const results = [...socialResults, ...perplexityResults];
+              // В случае если Social Searcher недоступен, используем только Perplexity
+              const [socialResults, perplexityResults] = await Promise.all([
+                searchSocialSourcesByKeyword(keyword, token),
+                existingPerplexitySearch(keyword, token)
+              ]);
 
-          // Cache the results
-          if (results.length > 0) {
-            console.log(`Caching ${results.length} results for keyword: ${keyword}`);
-            searchCache.set(keyword, {
-              timestamp: Date.now(),
-              results
-            });
-          }
+              const results = [...socialResults, ...perplexityResults];
 
-          return results;
-        })
-      );
+              // Cache the results
+              if (results.length > 0) {
+                console.log(`Caching ${results.length} results for keyword: ${keyword}`);
+                searchCache.set(keyword, {
+                  timestamp: Date.now(),
+                  results
+                });
+              }
+
+              return results;
+            })
+          );
+        }
+      } catch (webhookError) {
+        console.error('Error calling n8n webhook for source search:', webhookError);
+        
+        // В случае ошибки webhook, возвращаемся к обычному поиску
+        console.log('Webhook error, falling back to regular search');
+        
+        // Собираем источники из нескольких сервисов для ключевых слов без кеша
+        const allResults = await Promise.all(
+          keywords.map(async (keyword: string, index: number) => {
+            if (cachedResults[index]) {
+              return cachedResults[index];
+            }
+
+            // В случае если Social Searcher недоступен, используем только Perplexity
+            const [socialResults, perplexityResults] = await Promise.all([
+              searchSocialSourcesByKeyword(keyword, token),
+              existingPerplexitySearch(keyword, token)
+            ]);
+
+            const results = [...socialResults, ...perplexityResults];
+
+            // Cache the results
+            if (results.length > 0) {
+              console.log(`Caching ${results.length} results for keyword: ${keyword}`);
+              searchCache.set(keyword, {
+                timestamp: Date.now(),
+                results
+              });
+            }
+
+            return results;
+          })
+        );
+      }
 
       // Merge all results and remove duplicates
       const uniqueSources = allResults.flat().reduce((acc: any[], source) => {
