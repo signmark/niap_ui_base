@@ -1939,8 +1939,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Получаем контент через наш storage API
-        const contentItems = await storage.getCampaignContent(userId, campaignId);
+        // Вместо storage API, получаем контент напрямую из Directus API
+        const response = await directusApi.get('/items/campaign_content', {
+          params: {
+            filter: JSON.stringify({
+              user_id: {
+                _eq: userId
+              },
+              ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
+            }),
+            sort: ['-created_at']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Проверяем, что получили массив
+        if (!Array.isArray(response.data.data)) {
+          console.error("Unexpected response format from Directus:", response.data);
+          return res.status(500).json({ error: "Неожиданный формат ответа от Directus API" });
+        }
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const contentItems = response.data.data.map((item: any) => ({
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
+        }));
+        
+        console.log(`Found ${contentItems.length} content items for campaign ${campaignId || 'all'}`);
         
         res.json({ data: contentItems });
       } catch (error) {
@@ -1983,18 +2026,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Получаем контент через наш storage API
-        const content = await storage.getCampaignContentById(contentId);
+        // Получаем контент напрямую из Directus API
+        const response = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (!content) {
+        if (!response.data || !response.data.data) {
           return res.status(404).json({ error: "Content not found" });
         }
         
+        const item = response.data.data;
+        
         // Проверяем, принадлежит ли контент пользователю
-        // В будущем можно добавить проверку на администратора или другие роли
-        if (content.userId !== userId) {
+        if (item.user_id !== userId) {
           return res.status(403).json({ error: "You don't have permission to view this content" });
         }
+        
+        // Преобразуем данные из формата Directus в наш формат
+        const content = {
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
+        };
         
         res.json({ data: content });
       } catch (error) {
@@ -2039,42 +2109,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Создаем контент кампании через наш storage API
-        const contentPayload: InsertCampaignContent = {
-          campaignId: req.body.campaignId,
-          contentType: req.body.contentType, // Используем правильное имя поля
+        // Создаем контент кампании напрямую через Directus API
+        const directusPayload = {
+          campaign_id: req.body.campaignId,
+          content_type: req.body.contentType, 
           title: req.body.title,
           content: req.body.content,
-          imageUrl: req.body.imageUrl,
-          videoUrl: req.body.videoUrl,
+          image_url: req.body.imageUrl,
+          video_url: req.body.videoUrl,
           // Проверяем, что keywords это массив
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
-          userId: userId
-          // createdAt генерируется автоматически в БД
+          user_id: userId
+          // created_at генерируется автоматически в БД
         };
         
-        console.log("Creating campaign content:", JSON.stringify(contentPayload).substring(0, 200));
+        console.log("Creating campaign content:", JSON.stringify(directusPayload).substring(0, 200));
         
-        const contentResponse = await storage.createCampaignContent(contentPayload);
+        // Создаем запись через Directus API
+        const response = await directusApi.post('/items/campaign_content', directusPayload, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        // Используем напрямую данные из нашего API
+        if (!response.data || !response.data.data) {
+          throw new Error('Failed to create content, invalid response from Directus');
+        }
+        
+        const item = response.data.data;
+        
+        // Преобразуем данные из формата Directus в наш формат
         const content = {
-          id: contentResponse.id,
-          campaignId: contentResponse.campaignId,
-          userId: contentResponse.userId,
-          title: contentResponse.title,
-          content: contentResponse.content,
-          contentType: contentResponse.contentType,
-          imageUrl: contentResponse.imageUrl,
-          videoUrl: contentResponse.videoUrl,
-          prompt: contentResponse.prompt,
-          keywords: contentResponse.keywords || [],
-          createdAt: contentResponse.createdAt,
-          scheduledAt: contentResponse.scheduledAt,
-          publishedAt: contentResponse.publishedAt,
-          status: contentResponse.status,
-          socialPlatforms: contentResponse.socialPlatforms
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
         };
         
         res.status(201).json({ data: content });
@@ -2121,47 +2205,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Получаем текущий контент для проверки что он принадлежит этому пользователю
-        const existingContent = await storage.getCampaignContentById(contentId);
-        if (!existingContent) {
+        // Получаем текущий контент напрямую из Directus API для проверки
+        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!existingContentResponse.data || !existingContentResponse.data.data) {
           return res.status(404).json({ error: "Content not found" });
         }
         
-        if (existingContent.userId !== userId) {
+        const existingItem = existingContentResponse.data.data;
+        
+        // Проверяем, принадлежит ли контент пользователю
+        if (existingItem.user_id !== userId) {
           return res.status(403).json({ error: "You don't have permission to update this content" });
         }
         
-        // Преобразуем данные для нашего API
-        const contentUpdates: Partial<InsertCampaignContent> = {
-          contentType: req.body.contentType,
+        // Преобразуем данные в формат Directus API
+        const directusPayload = {
+          content_type: req.body.contentType,
           title: req.body.title,
           content: req.body.content,
-          imageUrl: req.body.imageUrl,
-          videoUrl: req.body.videoUrl,
+          image_url: req.body.imageUrl,
+          video_url: req.body.videoUrl,
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status
         };
         
-        // Обновляем данные через наш storage API
-        const updatedContentResponse = await storage.updateCampaignContent(contentId, contentUpdates);
+        // Обновляем данные через Directus API
+        const response = await directusApi.patch(`/items/campaign_content/${contentId}`, directusPayload, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        // Форматируем ответ в том же формате, что и раньше
+        if (!response.data || !response.data.data) {
+          throw new Error('Failed to update content, invalid response from Directus');
+        }
+        
+        const item = response.data.data;
+        
+        // Преобразуем данные из формата Directus в наш формат
         const updatedContent = {
-          id: updatedContentResponse.id,
-          campaignId: updatedContentResponse.campaignId,
-          userId: updatedContentResponse.userId,
-          title: updatedContentResponse.title,
-          content: updatedContentResponse.content,
-          contentType: updatedContentResponse.contentType,
-          imageUrl: updatedContentResponse.imageUrl,
-          videoUrl: updatedContentResponse.videoUrl,
-          prompt: updatedContentResponse.prompt,
-          keywords: updatedContentResponse.keywords || [],
-          createdAt: updatedContentResponse.createdAt,
-          scheduledAt: updatedContentResponse.scheduledAt,
-          publishedAt: updatedContentResponse.publishedAt,
-          status: updatedContentResponse.status,
-          socialPlatforms: updatedContentResponse.socialPlatforms || {}
+          id: item.id,
+          campaignId: item.campaign_id,
+          userId: item.user_id,
+          title: item.title,
+          content: item.content,
+          contentType: item.content_type,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          createdAt: item.created_at,
+          scheduledAt: item.scheduled_at,
+          publishedAt: item.published_at,
+          status: item.status,
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
         };
         
         res.json({ data: updatedContent });
@@ -2208,19 +2313,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('User ID not found');
         }
         
-        // Получаем контент, чтобы проверить, принадлежит ли он этому пользователю
-        const existingContent = await storage.getCampaignContentById(contentId);
+        // Получаем контент напрямую из Directus API для проверки
+        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (!existingContent) {
+        if (!existingContentResponse.data || !existingContentResponse.data.data) {
           return res.status(404).json({ error: "Content not found" });
         }
         
-        if (existingContent.userId !== userId) {
+        const existingItem = existingContentResponse.data.data;
+        
+        // Проверяем, принадлежит ли контент пользователю
+        if (existingItem.user_id !== userId) {
           return res.status(403).json({ error: "You don't have permission to delete this content" });
         }
         
-        // Удаляем контент через наш storage API
-        await storage.deleteCampaignContent(contentId);
+        // Удаляем контент через Directus API
+        await directusApi.delete(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         console.log(`Successfully deleted content with ID: ${contentId}`);
         res.status(204).end();
