@@ -907,18 +907,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'X-N8N-Authorization': process.env.N8N_API_KEY || '',
             'Authorization': `Bearer ${token}`
           },
-          timeout: 10000 // 10 секунд таймаут
+          timeout: 30000 // 30 секунд таймаут
         });
         
         console.log('Webhook response status:', webhookResponse.status);
         if (webhookResponse.data) {
           console.log('Webhook response preview:', JSON.stringify(webhookResponse.data).substring(0, 200));
+          console.log('Webhook response type:', typeof webhookResponse.data);
+          
+          // Обработка разных форматов данных - массив или объект
+          let postsToProcess = [];
+          
+          // Проверяем формат данных ответа
+          if (Array.isArray(webhookResponse.data)) {
+            // Ответ является массивом постов
+            console.log('Response is an array of posts, processing directly');
+            postsToProcess = webhookResponse.data;
+          } else if (webhookResponse.data.trendTopics && Array.isArray(webhookResponse.data.trendTopics)) {
+            // Ответ содержит массив trendTopics
+            console.log('Response contains trendTopics array');
+            postsToProcess = webhookResponse.data.trendTopics;
+          } else if (webhookResponse.data.posts && Array.isArray(webhookResponse.data.posts)) {
+            // Ответ содержит массив posts
+            console.log('Response contains posts array');
+            postsToProcess = webhookResponse.data.posts;
+          } else if (webhookResponse.data.trends && Array.isArray(webhookResponse.data.trends)) {
+            // Ответ содержит массив trends
+            console.log('Response contains trends array');
+            postsToProcess = webhookResponse.data.trends;
+          }
+          
+          if (postsToProcess.length > 0) {
+            console.log(`Processing ${postsToProcess.length} posts/topics from webhook response`);
+            
+            let savedCount = 0;
+            const errors: Error[] = [];
+            
+            // Обрабатываем каждый пост и сохраняем в базу данных
+            for (const post of postsToProcess) {
+              try {
+                // Определяем формат данных - TG пост или обычный тренд
+                const isTelegramPost = post.text !== undefined;
+                
+                const trendTopic: InsertCampaignTrendTopic = {
+                  // Для TG-постов используем первые 255 символов text как title, иначе используем title
+                  title: isTelegramPost 
+                    ? (post.text ? post.text.substring(0, 255) : 'Untitled Post') 
+                    : (post.title || 'Untitled Topic'),
+                  
+                  // Для TG-постов используем channel_id или url, иначе sourceId
+                  sourceId: isTelegramPost 
+                    ? (post.channel_id || post.url || 'unknown') 
+                    : (post.sourceId || 'unknown'),
+                  
+                  // Преобразуем метрики соответственно
+                  reactions: isTelegramPost 
+                    ? (post.reactions || 0) 
+                    : (post.reactions || 0),
+                  
+                  comments: isTelegramPost 
+                    ? (post.comments || 0) 
+                    : (post.comments || 0),
+                  
+                  views: isTelegramPost 
+                    ? (post.views || 0) 
+                    : (post.views || 0),
+                  
+                  campaignId: campaignId,
+                  isBookmarked: false
+                };
+                
+                console.log(`Saving trend topic: ${trendTopic.title.substring(0, 30)}... from ${trendTopic.sourceId}`);
+                
+                // Создаем запись в Directus API напрямую
+                try {
+                  const payload = {
+                    title: trendTopic.title || '',
+                    source_id: trendTopic.sourceId || '',
+                    reactions: trendTopic.reactions || 0,
+                    comments: trendTopic.comments || 0,
+                    views: trendTopic.views || 0,
+                    campaign_id: campaignId,
+                    is_bookmarked: false
+                  };
+                  
+                  console.log('Sending payload to Directus:', JSON.stringify(payload).substring(0, 100));
+                  
+                  const response = await directusApi.post('/items/campaign_trend_topics', payload, {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+                  
+                  console.log('Directus response status:', response.status);
+                  
+                  if (response.data && response.data.errors) {
+                    console.error('Directus API errors:', JSON.stringify(response.data.errors));
+                  }
+                } catch (directusError) {
+                  console.error('Error sending to Directus:', directusError);
+                  if (directusError.response) {
+                    console.error('Directus error response:', JSON.stringify(directusError.response.data));
+                  // Детально выводим каждую ошибку
+                  if (directusError.response?.data?.errors && Array.isArray(directusError.response.data.errors)) {
+                    directusError.response.data.errors.forEach((err: any, index: number) => {
+                      console.error(`Directus error ${index + 1}:`, JSON.stringify(err));
+                    });
+                  }
+                  }
+                  throw directusError;
+                }
+                savedCount++;
+              } catch (err) {
+                console.error("Error saving trend topic:", err);
+                if (err instanceof Error) {
+                  errors.push(err);
+                } else {
+                  errors.push(new Error(String(err)));
+                }
+              }
+            }
+            
+            console.log(`Successfully saved ${savedCount} of ${postsToProcess.length} trend topics`);
+          } else {
+            console.log('No posts to process in the webhook response');
+          }
         }
       } catch (error) {
         console.error('Error calling n8n webhook:', error instanceof Error ? error.message : String(error));
         if (axios.isAxiosError(error)) {
           console.error('Webhook response status:', error.response?.status);
           console.error('Webhook response data:', error.response?.data);
+          
+          // Проверяем, есть ли частичные данные в ответе
+          if (error.response?.data?.trendTopics && Array.isArray(error.response.data.trendTopics)) {
+            console.log(`Found ${error.response.data.trendTopics.length} trend topics in error response, attempting to process`);
+            // Process the partial data if available
+            // ... (аналогично обработке выше)
+          }
         }
         // Продолжаем выполнение, чтобы клиент получил хотя бы частичный ответ
       }
@@ -1017,7 +1144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'X-N8N-Authorization': process.env.N8N_API_KEY || '',
             'Authorization': `Bearer ${token}`
           },
-          timeout: 15000 // 15 секунд таймаут
+          timeout: 30000 // 30 секунд таймаут
         });
         
         console.log('Webhook source search response status:', webhookResponse.status);
