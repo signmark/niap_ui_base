@@ -25,17 +25,22 @@ export function RobotButton({ sourceId, className }: RobotButtonProps) {
     setIsLoading(true);
     
     try {
-      // Отправляем POST-запрос на webhook URL с sourceId
-      const response = await fetch("https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c", {
+      // Отправляем POST-запрос на наш endpoint, который обрабатывает задания для робота
+      const response = await fetch("/api/crawler/tasks", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
         },
         body: JSON.stringify({ sourceId })
       });
       
       if (!response.ok) {
-        throw new Error(`Ошибка при отправке запроса: ${response.status}`);
+        // Получаем детали ошибки из ответа
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || errorData.details || `Ошибка при отправке запроса: ${response.status}`
+        );
       }
       
       const data = await response.json();
