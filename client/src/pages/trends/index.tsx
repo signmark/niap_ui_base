@@ -131,13 +131,27 @@ export default function Trends() {
 
       const status = response.data?.data?.status;
 
-      // Если статус finished или null, останавливаем проверку
-      if (status === 'finished' || !status) {
+      // Если статус finished, error или null, останавливаем проверку
+      if (status === 'finished' || status === 'error' || !status) {
         if (statusCheckInterval.current) {
           clearInterval(statusCheckInterval.current);
           statusCheckInterval.current = undefined;
         }
         setActiveSourceId(null);
+        
+        // Выводим уведомление о завершении или ошибке
+        if (status === 'error') {
+          toast({
+            title: "Ошибка",
+            description: "Произошла ошибка при сборе данных из источника",
+            variant: "destructive",
+          });
+        } else if (status === 'finished') {
+          toast({
+            title: "Готово",
+            description: "Сбор данных из источника завершен",
+          });
+        }
       }
 
       // Обновляем кеш с новым статусом
@@ -149,6 +163,11 @@ export default function Trends() {
             : source
         )
       );
+      
+      // Перезапрашиваем данные для обновления отображения на UI
+      if (status === 'running' || status === 'processing') {
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+      }
     } catch (error) {
       console.error('Error checking source status:', error);
     }
