@@ -46,7 +46,7 @@ function getCachedResults(keyword: string): any[] | null {
 // Специальное кеширование для URL-адресов
 function getCachedKeywordsByUrl(url: string): any[] | null {
   const normalizedUrl = url.toLowerCase().trim();
-  const cached = urlKeywordCache.get(normalizedUrl);
+  const cached = urlKeywordsCache.get(normalizedUrl);
   
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     console.log(`Using cached URL keywords for: ${url}, found ${cached.results.length} items`);
@@ -497,6 +497,125 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+// Функция для глубокого извлечения контента с сайта для улучшенного анализа
+async function extractFullSiteContent(url: string): Promise<string> {
+  try {
+    console.log(`Начинаем глубокий анализ сайта: ${url}`);
+    
+    // Нормализуем URL, добавляя протокол, если его нет
+    let normalizedUrl = url;
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+    
+    const response = await axios.get(normalizedUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
+      },
+      timeout: 10000 // 10 секунд таймаут
+    });
+    
+    // Разбираем HTML
+    const htmlContent = response.data;
+    
+    // Извлекаем важные метаданные и структурированный контент
+    let content = '';
+    
+    // 1. Получаем title и meta
+    const titleMatch = htmlContent.match(/<title>([^<]+)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      content += `TITLE: ${titleMatch[1]}\n\n`;
+    }
+    
+    const descriptionMatch = htmlContent.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"[^>]*>/i) || 
+                             htmlContent.match(/<meta[^>]*content="([^"]+)"[^>]*name="description"[^>]*>/i);
+    
+    if (descriptionMatch && descriptionMatch[1]) {
+      content += `DESCRIPTION: ${descriptionMatch[1]}\n\n`;
+    }
+    
+    const keywordsMatch = htmlContent.match(/<meta[^>]*name="keywords"[^>]*content="([^"]+)"[^>]*>/i) ||
+                          htmlContent.match(/<meta[^>]*content="([^"]+)"[^>]*name="keywords"[^>]*>/i);
+    
+    if (keywordsMatch && keywordsMatch[1]) {
+      content += `KEYWORDS: ${keywordsMatch[1]}\n\n`;
+    }
+    
+    // 2. Извлекаем заголовки (h1, h2, h3)
+    content += `HEADINGS:\n`;
+    
+    const h1Matches = htmlContent.match(/<h1[^>]*>(.*?)<\/h1>/gis);
+    if (h1Matches) {
+      h1Matches.forEach(h => {
+        const text = h.replace(/<[^>]*>/g, '').trim();
+        if (text) content += `H1: ${text}\n`;
+      });
+    }
+    
+    const h2Matches = htmlContent.match(/<h2[^>]*>(.*?)<\/h2>/gis);
+    if (h2Matches) {
+      h2Matches.forEach(h => {
+        const text = h.replace(/<[^>]*>/g, '').trim();
+        if (text) content += `H2: ${text}\n`;
+      });
+    }
+    
+    const h3Matches = htmlContent.match(/<h3[^>]*>(.*?)<\/h3>/gis);
+    if (h3Matches) {
+      h3Matches.forEach(h => {
+        const text = h.replace(/<[^>]*>/g, '').trim();
+        if (text) content += `H3: ${text}\n`;
+      });
+    }
+    
+    content += `\n`;
+    
+    // 3. Извлекаем основной контент (параграфы)
+    content += `CONTENT:\n`;
+    
+    const paragraphs = htmlContent.match(/<p[^>]*>(.*?)<\/p>/gis);
+    if (paragraphs) {
+      paragraphs.forEach(p => {
+        const text = p.replace(/<[^>]*>/g, '').trim();
+        if (text) content += `${text}\n\n`;
+      });
+    }
+    
+    // 4. Извлекаем списки (ul, ol, li)
+    const lists = htmlContent.match(/<[uo]l[^>]*>.*?<\/[uo]l>/gis);
+    if (lists) {
+      content += `LISTS:\n`;
+      
+      lists.forEach(list => {
+        const items = list.match(/<li[^>]*>(.*?)<\/li>/gis);
+        if (items) {
+          items.forEach(item => {
+            const text = item.replace(/<[^>]*>/g, '').trim();
+            if (text) content += `- ${text}\n`;
+          });
+          content += `\n`;
+        }
+      });
+    }
+    
+    console.log(`Успешно извлечен контент для URL: ${url}, размер: ${content.length} символов`);
+    
+    if (content.length < 500) {
+      // Если удалось извлечь мало контента, возможно сайт использует JS для рендеринга
+      console.log(`Извлечено мало контента (${content.length} символов), возможно сайт требует JS-рендеринг`);
+      // Дополняем исходным HTML, чтобы AI мог проанализировать структуру
+      content += `\n\nRAW HTML STRUCTURE (для анализа):\n${htmlContent.substring(0, 5000)}...`;
+    }
+    
+    return content;
+  } catch (error) {
+    console.error(`Ошибка при глубоком анализе сайта ${url}:`, error);
+    return `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Вспомогательная функция для обработки ключевых слов
   function processKeywords(keywordsData: any): string[] {
@@ -803,15 +922,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const normalizedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
       console.log(`Анализируем сайт: ${normalizedUrl} с помощью DeepSeek`);
       
+      // Создаем уникальный requestId для отслеживания запроса
+      const requestId = crypto.randomUUID();
+      console.log(`[${requestId}] Начат анализ сайта: ${normalizedUrl}`);
+      
       // Проверяем кеш
       const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
       if (cachedKeywords && cachedKeywords.length > 0) {
-        console.log(`Используем ${cachedKeywords.length} кешированных ключевых слов для URL: ${normalizedUrl}`);
+        console.log(`[${requestId}] Используем ${cachedKeywords.length} кешированных ключевых слов для URL: ${normalizedUrl}`);
         return res.json({ data: { keywords: cachedKeywords } });
       }
       
       // Глубокий парсинг сайта для получения максимум контента
       try {
+        console.log(`[${requestId}] Начинаем глубокий парсинг сайта`);
         const siteContent = await extractFullSiteContent(normalizedUrl);
         
         // Получаем ключевые слова от DeepSeek
@@ -1444,7 +1568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сохраняем результаты в кеш, если это URL и результаты получены
       if (isUrl && finalKeywords.length > 0) {
         const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
-        urlKeywordCache.set(normalizedUrl.toLowerCase(), {
+        urlKeywordsCache.set(normalizedUrl.toLowerCase(), {
           timestamp: Date.now(),
           results: finalKeywords
         });
