@@ -283,9 +283,8 @@ export default function Trends() {
     },
     onSuccess: (data) => {
       console.log('Webhook success response:', data);
-      // Находим источник из текущего списка по ID
-      const source = sources.find(s => s.id === data.sourceId);
-      const sourceName = source?.name || data.sourceId;
+      // Используем имя источника, полученное от сервера, или ищем в текущем списке
+      const sourceName = data.sourceName || sources.find(s => s.id === data.sourceId)?.name || data.sourceId;
       
       toast({
         title: "Запущено!",
