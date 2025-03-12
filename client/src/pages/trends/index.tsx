@@ -1103,51 +1103,60 @@ export default function Trends() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      <div className="space-y-2">
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
+                            const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
                             return (
-                              <Card 
-                                key={topic.id} 
-                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-gray-300"
-                                onClick={() => setSelectedTrendTopic(topic)}
-                              >
-                                <div className="relative">
-                                  {/* Чекбокс для выбора тренда */}
-                                  <div className="absolute top-1 left-1 z-10" onClick={(e) => e.stopPropagation()}>
-                                    <Checkbox
-                                      checked={selectedTopics.some(t => t.id === topic.id)}
-                                      onCheckedChange={() => toggleTopicSelection(topic)}
-                                      className="h-4 w-4 bg-white/80 border-gray-400"
-                                    />
-                                  </div>
-                                  
-                                  {/* Фиксированное превью */}
-                                  <div className="h-32 bg-gray-100 flex items-center justify-center">
-                                    <FileText className="h-8 w-8 text-gray-400" />
-                                  </div>
-                                </div>
-                                
-                                <CardContent className="p-2">
-                                  <div className="text-xs font-medium line-clamp-2">{topic.title}</div>
-                                  <div className="text-[10px] text-gray-500 mt-1 mb-1">
-                                    {sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник'}
-                                  </div>
-                                  
-                                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                                    <div className="flex items-center">
-                                      <ThumbsUp className="h-2 w-2 mr-1" />
-                                      {topic.reactions?.toLocaleString() ?? 0}
+                              <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                                <CardContent className="py-3 px-4">
+                                  <div className="flex items-start gap-3">
+                                    {/* Чекбокс для выбора тренда */}
+                                    <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                      <Checkbox
+                                        checked={selectedTopics.some(t => t.id === topic.id)}
+                                        onCheckedChange={() => toggleTopicSelection(topic)}
+                                        className="h-4 w-4 border-gray-400"
+                                      />
                                     </div>
-                                    <div className="flex items-center">
-                                      <MessageSquare className="h-2 w-2 mr-1" />
-                                      {topic.comments?.toLocaleString() ?? 0}
-                                    </div>
-                                    <div className="flex items-center">
-                                      <Eye className="h-2 w-2 mr-1" />
-                                      {topic.views?.toLocaleString() ?? 0}
+                                    
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="outline" className="text-xs py-0 h-5">
+                                            {sourceName}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      
+                                      <div 
+                                        className="text-sm line-clamp-2 cursor-pointer"
+                                        onClick={() => setSelectedTrendTopic(topic)}
+                                      >
+                                        {topic.title}
+                                      </div>
+                                      
+                                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                        <div className="flex items-center gap-1">
+                                          <ThumbsUp className="h-3 w-3" />
+                                          <span>{topic.reactions?.toLocaleString('ru-RU') ?? 0}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <MessageSquare className="h-3 w-3" />
+                                          <span>{topic.comments?.toLocaleString('ru-RU') ?? 0}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Eye className="h-3 w-3" />
+                                          <span>{topic.views?.toLocaleString('ru-RU') ?? 0}</span>
+                                        </div>
+                                        {topic.is_bookmarked && (
+                                          <div className="flex items-center gap-1">
+                                            <Bookmark className="h-3 w-3 text-primary" />
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </CardContent>
