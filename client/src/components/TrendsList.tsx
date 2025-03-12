@@ -172,13 +172,14 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {trends.map((trend: TrendTopic) => {
           // Проверяем что получили из API
-          console.log("Trend data:", trend);
+          console.log("Trend data:", JSON.stringify(trend));
           
           // Получаем URL изображения если есть
           let previewImageUrl = null;
           
           // Обработка media_links как JSON строки с полями images и videos
           if (trend.media_links) {
+            console.log("Raw media_links:", trend.media_links, "Type:", typeof trend.media_links);
             try {
               // Проверяем, является ли media_links строкой JSON или уже объектом
               let mediaData;
@@ -188,7 +189,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 mediaData = trend.media_links;
               }
               
-              console.log("Parsed media_links:", mediaData);
+              console.log("Parsed media_links:", JSON.stringify(mediaData));
               
               // Проверяем, есть ли массив изображений и выбираем первое
               if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
