@@ -60,7 +60,9 @@ export default function Keywords() {
     setIsSearching(true);
 
     try {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}`);
+      // Добавляем случайный параметр для предотвращения кеширования
+      const nocache = Date.now();
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`);
       if (!response.ok) {
         throw new Error("Ошибка при поиске ключевых слов");
       }

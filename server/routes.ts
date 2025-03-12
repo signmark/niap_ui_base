@@ -629,31 +629,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Специальный режим для nplanner.ru (сайт про диетологию)
-      if (keyword === 'nplanner.ru' || keyword === 'https://nplanner.ru' || keyword === 'https://nplanner.ru/') {
-        const dietKeywords = [
-          { keyword: "диетология", trend: 35000, competition: 80 },
-          { keyword: "рацион питания", trend: 28000, competition: 75 },
-          { keyword: "здоровое питание", trend: 42000, competition: 85 },
-          { keyword: "снижение веса", trend: 32000, competition: 80 },
-          { keyword: "расчет калорий", trend: 18000, competition: 70 },
-          { keyword: "как похудеть", trend: 45000, competition: 90 },
-          { keyword: "сбалансированное питание", trend: 22000, competition: 75 },
-          { keyword: "индивидуальное меню", trend: 15000, competition: 65 },
-          { keyword: "план питания", trend: 27000, competition: 70 },
-          { keyword: "белки жиры углеводы", trend: 19000, competition: 60 },
-          { keyword: "диета для похудения", trend: 38000, competition: 85 },
-          { keyword: "питание при тренировках", trend: 16000, competition: 70 },
-          { keyword: "нутрициология", trend: 12000, competition: 65 },
-          { keyword: "подсчет калорий", trend: 21000, competition: 75 },
-          { keyword: "меню на неделю", trend: 31000, competition: 80 },
-          { keyword: "здоровые рецепты", trend: 25000, competition: 70 },
-          { keyword: "питание для набора массы", trend: 14000, competition: 65 },
-          { keyword: "правильное питание", trend: 39000, competition: 85 }
-        ];
+      // Отключаем кеширование для этого запроса
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Генерируем случайный ID для отслеживания
+      const requestId = Math.random().toString(36).substring(2, 15);
+      console.log(`[${requestId}] Processing keyword search for: ${keyword}`);
 
-        return res.json({ data: { keywords: dietKeywords } });
-      }
+      // Добавляем случайный параметр чтобы избежать кеширования на клиенте
+      const nocache = Date.now();
       
       // Проверяем, является ли введенное значение URL сайта
       let isUrl = false;
@@ -689,32 +675,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Сначала попробуем получить контент с сайта для лучшего анализа
           let siteContent = "";
+          let metaDescription = "";
+          let metaKeywords = "";
+          let title = "";
+          
           try {
-            console.log(`Fetching content from site: ${normalizedUrl}`);
+            console.log(`[${requestId}] Fetching content from site: ${normalizedUrl}`);
             const siteResponse = await axios.get(normalizedUrl, {
-              timeout: 5000,
+              timeout: 8000, // Увеличиваем таймаут для медленных сайтов
               headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml',
                 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
               }
             });
             
-            // Получаем только текстовое содержимое страницы, удаляем HTML теги
+            // Получаем HTML контент
             const htmlContent = siteResponse.data;
-            siteContent = htmlContent
+            
+            // Извлекаем мета-теги
+            const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
+            if (titleMatch && titleMatch[1]) {
+              title = titleMatch[1].trim();
+              console.log(`[${requestId}] Title: ${title}`);
+            }
+            
+            const descriptionMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
+                             htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
+            if (descriptionMatch && descriptionMatch[1]) {
+              metaDescription = descriptionMatch[1].trim();
+              console.log(`[${requestId}] Description: ${metaDescription}`);
+            }
+            
+            const keywordsMatch = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
+                          htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']keywords["'][^>]*>/i);
+            if (keywordsMatch && keywordsMatch[1]) {
+              metaKeywords = keywordsMatch[1].trim();
+              console.log(`[${requestId}] Keywords: ${metaKeywords}`);
+            }
+            
+            // Извлекаем основной контент
+            let mainContent = "";
+            
+            // Сначала пробуем найти основной контент в тегах с семантическим значением
+            const contentElements = [
+              /<article[^>]*>(.*?)<\/article>/is,
+              /<main[^>]*>(.*?)<\/main>/is,
+              /<div[^>]*class=["'](?:.*?content.*?|.*?main.*?|.*?body.*?)["'][^>]*>(.*?)<\/div>/is,
+              /<div[^>]*id=["'](?:content|main|body)["'][^>]*>(.*?)<\/div>/is
+            ];
+            
+            for (const pattern of contentElements) {
+              const match = htmlContent.match(pattern);
+              if (match && match[1] && match[1].length > mainContent.length) {
+                mainContent = match[1];
+              }
+            }
+            
+            // Если не удалось найти основной контент, используем весь HTML
+            if (!mainContent || mainContent.length < 500) {
+              mainContent = htmlContent;
+            }
+            
+            // Очищаем HTML от скриптов и стилей
+            siteContent = mainContent
               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+              .replace(/<head\b[^<]*(?:(?!<\/head>)<[^<]*)*<\/head>/gi, ' ')
+              .replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, ' ')
+              .replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, ' ')
+              .replace(/<header\b[^<]*(?:(?!<\/header>)<[^<]*)*<\/header>/gi, ' ')
+              .replace(/<aside\b[^<]*(?:(?!<\/aside>)<[^<]*)*<\/aside>/gi, ' ')
+              .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, ' ')
+              .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
               .replace(/<[^>]+>/g, ' ')
               .replace(/\s+/g, ' ')
               .trim();
               
+            // Удаляем повторы текста на странице
+            const sentences = siteContent.split(/[.!?]+/);
+            const uniqueSentences = new Set(sentences.map(s => s.trim()).filter(s => s.length > 20));
+            siteContent = Array.from(uniqueSentences).join('. ');
+            
+            // Добавляем мета-информацию к контенту для лучшего понимания тематики
+            const metaInfo = [];
+            if (title) metaInfo.push(`Заголовок сайта: ${title}`);
+            if (metaDescription) metaInfo.push(`Описание сайта: ${metaDescription}`);
+            if (metaKeywords) metaInfo.push(`Ключевые слова сайта: ${metaKeywords}`);
+            
+            // Объединяем мета-информацию и контент
+            const fullContent = [...metaInfo, `Основной контент сайта: ${siteContent}`].join('\n\n');
+            
             // Ограничиваем размер контента
-            siteContent = siteContent.substring(0, 5000);
-            console.log(`Successfully fetched ${siteContent.length} chars of content`);
+            siteContent = fullContent.substring(0, 8000);
+            console.log(`[${requestId}] Successfully extracted ${siteContent.length} chars of content`);
           } catch (error) {
-            console.error(`Error fetching site content: ${error}`);
-            siteContent = "";
+            console.error(`[${requestId}] Error fetching site content:`, error);
+            // Если не удалось извлечь контент, хотя бы используем URL для анализа
+            siteContent = `URL сайта: ${normalizedUrl}`;
+            
+            // Попытка извлечь информацию из URL
+            try {
+              const url = new URL(normalizedUrl);
+              const domainParts = url.hostname.split('.');
+              if (domainParts.length >= 2) {
+                const domain = domainParts[domainParts.length - 2]; // Берем имя домена без TLD
+                siteContent += `\n\nНазвание домена: ${domain}`;
+                
+                // Извлекаем пути из URL если они есть
+                if (url.pathname && url.pathname !== '/' && url.pathname.length > 1) {
+                  const pathParts = url.pathname.split('/').filter(Boolean);
+                  siteContent += `\n\nСтруктура сайта: ${pathParts.join(', ')}`;
+                }
+              }
+            } catch (urlError) {
+              console.error(`[${requestId}] Error parsing URL:`, urlError);
+            }
           }
           
           // Запрос к Perplexity с учетом контента сайта
@@ -725,15 +801,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               messages: [
                 {
                   role: "system",
-                  content: `Ты эксперт по SEO и ключевым словам. Твоя задача - проанализировать указанный сайт и определить его ТОЧНУЮ тематику, чтобы затем выдать релевантные ключевые слова. 
+                  content: `Ты эксперт по SEO и поисковым запросам. Твоя задача - проанализировать контент сайта и определить его ТОЧНУЮ тематику, чтобы затем составить список максимально релевантных ключевых слов, которые могли бы использовать потенциальные посетители этого сайта в поисковых системах.
 
-ВАЖНО: Не ориентируйся только на доменное имя! Анализируй весь контекст и содержимое сайта, чтобы определить его реальную тематику и целевую аудиторию.
+ВАЖНО: Проведи глубокий анализ контента! Не ориентируйся только на URL, домен или заголовок. Анализируй всю предоставленную информацию о сайте, включая основной текст, мета-теги, заголовки страниц и описания.
 
-Создай список из 15-20 самых релевантных ключевых слов и фраз для этого сайта. Учти:
-1. Ключевые слова должны ТОЧНО соответствовать тематике и содержанию сайта - не догадывайся по домену
-2. Включи высокочастотные, среднечастотные и низкочастотные запросы
-3. Для каждого ключевого слова укажи примерную популярность (число запросов в месяц)
-4. Ответ должен быть только в виде JSON-массива объектов с полями keyword, trend (примерное число запросов), competition (0-100)`
+Необходимо создать список из 15-20 самых релевантных ключевых слов и фраз, обязательно соблюдая следующие правила:
+
+1. Ключевые слова должны быть на том же языке, что и контент сайта (русский, английский и т.д.)
+2. Фразы должны быть реалистичными поисковыми запросами, которые люди могли бы вводить в поисковую систему
+3. Включи разные типы запросов:
+   - Высокочастотные (популярные общие запросы по тематике)
+   - Среднечастотные (более специфичные запросы)
+   - Низкочастотные (узконаправленные запросы с меньшей конкуренцией)
+4. Для каждого ключевого слова реалистично оцени популярность (число запросов в месяц)
+5. Оцени уровень конкуренции по каждому запросу по шкале от 0 до 100
+
+Ответ предоставь ТОЛЬКО в виде JSON-массива объектов со следующими полями:
+- keyword: ключевое слово или фраза (строка)
+- trend: примерное количество запросов в месяц (число)
+- competition: уровень конкуренции от 0 до 100 (число)`
                 },
                 {
                   role: "user",
