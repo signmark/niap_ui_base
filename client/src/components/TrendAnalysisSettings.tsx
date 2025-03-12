@@ -96,13 +96,28 @@ export function TrendAnalysisSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-4">Настройки поиска источников</h3>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-base">Минимальное количество подписчиков по платформам</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              <div className="space-y-2">
-                <Label htmlFor="instagram-followers">Instagram</Label>
+        <h3 className="text-lg font-medium mb-2">Настройки анализа трендов</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Настройте параметры поиска и анализа трендов для этой кампании. Эти настройки влияют на то, какие источники будут использоваться при анализе трендов.
+        </p>
+        
+        <div className="space-y-6">
+          <div className="bg-muted/50 p-4 rounded-lg border">
+            <h4 className="text-base font-medium mb-3">Минимальное количество подписчиков по платформам</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Укажите минимальное количество подписчиков, которое должно быть у источника, чтобы он был включен в анализ трендов. Это поможет отфильтровать малозначимые источники.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+              <div className="space-y-2 bg-background p-3 rounded-md border">
+                <Label htmlFor="instagram-followers" className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                  Instagram
+                </Label>
                 <Input 
                   id="instagram-followers"
                   type="number" 
@@ -110,10 +125,18 @@ export function TrendAnalysisSettings({
                   onChange={(e) => handleFollowersChange('instagram', e.target.value)}
                   min={0}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Рекомендуется: от 5000
+                </p>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="telegram-followers">Telegram</Label>
+              <div className="space-y-2 bg-background p-3 rounded-md border">
+                <Label htmlFor="telegram-followers" className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.17 8.25 12 2.41a1.36 1.36 0 0 0-1.3-.06L2.17 8.25a1.33 1.33 0 0 0 .46 2.43l2.12.44a2.86 2.86 0 0 0 0 .76L4.75 19a1.4 1.4 0 0 0 2.13 1.33l1.94-1.12a2.13 2.13 0 0 0 2.35 0L13.12 18A1.4 1.4 0 0 0 15.25 19l2.12-7a2.86 2.86 0 0 0 0-.76l2.12-.44a1.33 1.33 0 0 0 .46-2.43z"></path>
+                  </svg>
+                  Telegram
+                </Label>
                 <Input 
                   id="telegram-followers"
                   type="number" 
@@ -121,10 +144,19 @@ export function TrendAnalysisSettings({
                   onChange={(e) => handleFollowersChange('telegram', e.target.value)}
                   min={0}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Рекомендуется: от 2000
+                </p>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="vk-followers">VK</Label>
+              <div className="space-y-2 bg-background p-3 rounded-md border">
+                <Label htmlFor="vk-followers" className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6 12.5L9 15.5L10.5 14L12 12.5L15 15.5L18 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  VK
+                </Label>
                 <Input 
                   id="vk-followers"
                   type="number" 
@@ -132,10 +164,18 @@ export function TrendAnalysisSettings({
                   onChange={(e) => handleFollowersChange('vk', e.target.value)}
                   min={0}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Рекомендуется: от 3000
+                </p>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="facebook-followers">Facebook</Label>
+              <div className="space-y-2 bg-background p-3 rounded-md border">
+                <Label htmlFor="facebook-followers" className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                  </svg>
+                  Facebook
+                </Label>
                 <Input 
                   id="facebook-followers"
                   type="number" 
@@ -143,10 +183,19 @@ export function TrendAnalysisSettings({
                   onChange={(e) => handleFollowersChange('facebook', e.target.value)}
                   min={0}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Рекомендуется: от 5000
+                </p>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="youtube-followers">YouTube</Label>
+              <div className="space-y-2 bg-background p-3 rounded-md border">
+                <Label htmlFor="youtube-followers" className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"></path>
+                    <path d="m10 15 5-3-5-3z"></path>
+                  </svg>
+                  YouTube
+                </Label>
                 <Input 
                   id="youtube-followers"
                   type="number" 
@@ -154,33 +203,54 @@ export function TrendAnalysisSettings({
                   onChange={(e) => handleFollowersChange('youtube', e.target.value)}
                   min={0}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Рекомендуется: от 10000
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="max-sources">Максимальное количество источников на платформу</Label>
-              <Input 
-                id="max-sources"
-                type="number" 
-                value={settings.maxSourcesPerPlatform} 
-                onChange={(e) => handleMaxSourcesChange(e.target.value)}
-                min={1}
-                max={100}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
+              <Label htmlFor="max-sources" className="text-base font-medium">Лимиты источников</Label>
+              <div className="mt-2">
+                <div className="mb-4">
+                  <Label htmlFor="max-sources" className="text-sm">Количество источников на платформу</Label>
+                  <Input 
+                    id="max-sources"
+                    type="number" 
+                    value={settings.maxSourcesPerPlatform} 
+                    onChange={(e) => handleMaxSourcesChange(e.target.value)}
+                    min={1}
+                    max={100}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Максимальное количество источников, которые будут проанализированы для каждой платформы
+                  </p>
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="max-trends">Максимальное количество трендов из источника</Label>
-              <Input 
-                id="max-trends"
-                type="number" 
-                value={settings.maxTrendsPerSource} 
-                onChange={(e) => handleMaxTrendsChange(e.target.value)}
-                min={1}
-                max={50}
-              />
+            <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
+              <Label htmlFor="max-trends" className="text-base font-medium">Лимиты трендов</Label>
+              <div className="mt-2">
+                <div className="mb-4">
+                  <Label htmlFor="max-trends" className="text-sm">Количество трендов из источника</Label>
+                  <Input 
+                    id="max-trends"
+                    type="number" 
+                    value={settings.maxTrendsPerSource} 
+                    onChange={(e) => handleMaxTrendsChange(e.target.value)}
+                    min={1}
+                    max={50}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Максимальное количество трендов, которые будут извлечены из каждого источника
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

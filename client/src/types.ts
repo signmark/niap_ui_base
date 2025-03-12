@@ -5,12 +5,26 @@ export interface CampainKeyword {
   campaignId: string;
 }
 
+export interface TrendAnalysisSettings {
+  minFollowers: {
+    instagram: number;
+    telegram: number;
+    vk: number;
+    facebook: number;
+    youtube: number;
+  };
+  maxSourcesPerPlatform: number;
+  maxTrendsPerSource: number;
+}
+
 export interface Campaign {
   id: string;
   name: string;
   description?: string;
   userId: string;
   createdAt: string;
+  socialMediaSettings?: SocialCredentials | null;
+  trendAnalysisSettings?: TrendAnalysisSettings;
 }
 
 export interface ContentSource {

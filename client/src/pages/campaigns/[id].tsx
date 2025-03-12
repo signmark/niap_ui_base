@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
 import { SocialMediaSettings } from "@/components/SocialMediaSettings";
+import { TrendAnalysisSettings } from "@/components/TrendAnalysisSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
@@ -315,6 +316,21 @@ export default function CampaignDetails() {
             <SocialMediaSettings 
               campaignId={id} 
               initialSettings={campaign.social_media_settings}
+              onSettingsUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+              }}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="trend-analysis" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Настройки анализа трендов
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <TrendAnalysisSettings 
+              campaignId={id} 
+              initialSettings={campaign.trend_analysis_settings}
               onSettingsUpdated={() => {
                 queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
               }}
