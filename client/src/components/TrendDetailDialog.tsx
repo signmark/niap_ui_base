@@ -47,9 +47,13 @@ export function TrendDetailDialog({
 }: TrendDetailDialogProps) {
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   
+  // Создаем статическое тестовое изображение
+  const tempImageId = parseInt((topic?.id || '').replace(/\D/g, '').substring(0, 2) || '1') % 20 + 1;
+  const tempImageUrl = `https://picsum.photos/id/${100 + tempImageId}/800/600`;
+  
   // Разбор JSON из поля media_links
   let mediaData: MediaData = { 
-    images: [`https://source.unsplash.com/random/800x600?sig=${topic?.id || '1'}`], 
+    images: [tempImageUrl], 
     videos: [] 
   };
   
@@ -109,17 +113,12 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images[currentImageIndex])}`}
+                src={mediaData.images[currentImageIndex]}
                 alt={topic.title}
                 className="w-full h-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  // Попробуем прямую ссылку если прокси не сработал
-                  if (e.currentTarget.src.includes('/api/proxy-image')) {
-                    e.currentTarget.src = mediaData.images[currentImageIndex];
-                  } else {
-                    e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
-                  }
+                  e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
                 }}
               />
               {mediaData.images.length > 1 && (
@@ -149,16 +148,13 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos[0])}`} 
+              src={mediaData.videos[0]} 
               controls 
               className="w-full"
               controlsList="nodownload"
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                // Попробуем прямую ссылку если прокси не сработал
-                if (e.currentTarget.src.includes('/api/proxy-image')) {
-                  e.currentTarget.src = mediaData.videos[0];
-                }
+                e.currentTarget.src = '';
               }}
             />
             {mediaData.videos.length > 1 && (
