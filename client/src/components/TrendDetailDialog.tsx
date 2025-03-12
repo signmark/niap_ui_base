@@ -113,12 +113,18 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={mediaData.images[currentImageIndex]}
+                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images[currentImageIndex])}`}
                 alt={topic.title}
                 className="w-full h-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                  // Если прокси не работает, пробуем прямую ссылку
+                  if (e.currentTarget.src.includes('/api/proxy-image')) {
+                    console.log('Пробуем прямую ссылку для изображения:', mediaData.images[currentImageIndex]);
+                    e.currentTarget.src = mediaData.images[currentImageIndex];
+                  } else {
+                    e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                  }
                 }}
               />
               {mediaData.images.length > 1 && (
@@ -148,13 +154,19 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={mediaData.videos[0]} 
+              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos[0])}`} 
               controls 
               className="w-full"
               controlsList="nodownload"
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src = '';
+                // Если прокси не работает, пробуем прямую ссылку
+                if (e.currentTarget.src.includes('/api/proxy-image')) {
+                  console.log('Пробуем прямую ссылку для видео:', mediaData.videos[0]);
+                  e.currentTarget.src = mediaData.videos[0];
+                } else {
+                  e.currentTarget.src = '';
+                }
               }}
             />
             {mediaData.videos.length > 1 && (
