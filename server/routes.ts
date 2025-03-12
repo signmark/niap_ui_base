@@ -1,7 +1,7 @@
 import { deepseekService } from './services/deepseek';
 
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
-const urlKeywordCache = new Map<string, { timestamp: number, results: any[] }>();
+const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Функция для очистки устаревших записей кеша
@@ -19,15 +19,15 @@ function cleanupExpiredCache() {
   }
   
   // Очищаем кеш для URL-запросов
-  for (const [url, entry] of urlKeywordCache.entries()) {
+  for (const [url, entry] of urlKeywordsCache.entries()) {
     if (now - entry.timestamp > CACHE_DURATION) {
       console.log(`Removing expired cache entry for URL: ${url}`);
-      urlKeywordCache.delete(url);
+      urlKeywordsCache.delete(url);
       removedCount++;
     }
   }
   
-  console.log(`Cache cleanup completed. Removed ${removedCount} expired entries. Current state: Keywords cache: ${searchCache.size} entries, URL cache: ${urlKeywordCache.size} entries`);
+  console.log(`Cache cleanup completed. Removed ${removedCount} expired entries. Current state: Keywords cache: ${searchCache.size} entries, URL cache: ${urlKeywordsCache.size} entries`);
 }
 
 // Запускаем очистку кеша каждые 15 минут
@@ -791,6 +791,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Анализ сайта с помощью DeepSeek для извлечения ключевых слов
+  app.get("/api/analyze-site/:url", async (req, res) => {
+    try {
+      const siteUrl = req.params.url;
+      if (!siteUrl) {
+        return res.status(400).json({ error: "URL не указан" });
+      }
+
+      // Нормализуем URL
+      const normalizedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
+      console.log(`Анализируем сайт: ${normalizedUrl} с помощью DeepSeek`);
+      
+      // Проверяем кеш
+      const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
+      if (cachedKeywords && cachedKeywords.length > 0) {
+        console.log(`Используем ${cachedKeywords.length} кешированных ключевых слов для URL: ${normalizedUrl}`);
+        return res.json({ data: { keywords: cachedKeywords } });
+      }
+      
+      // Глубокий парсинг сайта для получения максимум контента
+      try {
+        const siteContent = await extractFullSiteContent(normalizedUrl);
+        
+        // Получаем ключевые слова от DeepSeek
+        const requestId = crypto.randomUUID();
+        const deepseekKeywords = await deepseekService.generateKeywordsForUrl(
+          normalizedUrl, 
+          siteContent, 
+          requestId
+        );
+        
+        // Кешируем результаты
+        if (deepseekKeywords && deepseekKeywords.length > 0) {
+          urlKeywordsCache.set(normalizedUrl, {
+            timestamp: Date.now(),
+            results: deepseekKeywords
+          });
+        }
+        
+        console.log(`DeepSeek нашел ${deepseekKeywords.length} ключевых слов для: ${normalizedUrl}`);
+        return res.json({
+          success: true,
+          data: { keywords: deepseekKeywords }
+        });
+        
+      } catch (error) {
+        console.error(`Ошибка при анализе сайта: ${normalizedUrl}`, error);
+        return res.status(500).json({ 
+          error: "Не удалось проанализировать сайт", 
+          message: "Попробуйте позже или укажите другой URL"
+        });
+      }
+    } catch (error) {
+      console.error("Ошибка в API анализа сайта:", error);
+      return res.status(500).json({ error: "Ошибка сервера" });
+    }
+  });
+  
+  // Извлекает полное содержимое сайта, включая текст, заголовки, метаданные
+  async function extractFullSiteContent(url: string): Promise<string> {
+    try {
+      console.log(`Выполняется глубокий парсинг сайта: ${url}`);
+      
+      const response = await axios.get(url, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
+      });
+      
+      const htmlContent = response.data;
+      
+      // Извлекаем метаданные
+      const metadata: Record<string, string> = {};
+      
+      // Заголовок
+      const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/is);
+      if (titleMatch && titleMatch[1]) {
+        metadata.title = titleMatch[1].replace(/<[^>]+>/g, ' ').trim();
+      }
+      
+      // Мета-описание
+      const descriptionMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
+                          htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
+      if (descriptionMatch && descriptionMatch[1]) {
+        metadata.description = descriptionMatch[1].trim();
+      }
+      
+      // Мета-ключевые слова
+      const keywordsMatch = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
+                      htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']keywords["'][^>]*>/i);
+      if (keywordsMatch && keywordsMatch[1]) {
+        metadata.keywords = keywordsMatch[1].trim();
+      }
+      
+      // Извлекаем все заголовки h1-h6
+      const headings: string[] = [];
+      const headingRegex = /<h([1-6])[^>]*>(.*?)<\/h\1>/gis;
+      let headingMatch;
+      while ((headingMatch = headingRegex.exec(htmlContent)) !== null) {
+        const cleanHeading = headingMatch[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleanHeading.length > 0) {
+          headings.push(`[H${headingMatch[1]}] ${cleanHeading}`);
+        }
+      }
+      
+      // Извлекаем все параграфы
+      const paragraphs: string[] = [];
+      const paragraphRegex = /<p[^>]*>(.*?)<\/p>/gis;
+      let paragraphMatch;
+      while ((paragraphMatch = paragraphRegex.exec(htmlContent)) !== null) {
+        const cleanParagraph = paragraphMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleanParagraph.length > 20) { // Игнорируем слишком короткие параграфы
+          paragraphs.push(cleanParagraph);
+        }
+      }
+      
+      // Извлекаем текст из списков
+      const listItems: string[] = [];
+      const listItemRegex = /<li[^>]*>(.*?)<\/li>/gis;
+      let listItemMatch;
+      while ((listItemMatch = listItemRegex.exec(htmlContent)) !== null) {
+        const cleanItem = listItemMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleanItem.length > 5) {
+          listItems.push(`• ${cleanItem}`);
+        }
+      }
+      
+      // Извлекаем текст из div с потенциально важным содержимым
+      const contentDivs: string[] = [];
+      const contentDivRegex = /<div[^>]*class=["'](?:.*?content.*?|.*?main.*?|.*?article.*?)["'][^>]*>(.*?)<\/div>/gis;
+      let contentDivMatch;
+      while ((contentDivMatch = contentDivRegex.exec(htmlContent)) !== null) {
+        const cleanDiv = contentDivMatch[1]
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+          
+        if (cleanDiv.length > 100) {
+          contentDivs.push(cleanDiv);
+        }
+      }
+      
+      // Формируем структурированный контент для анализа
+      const structuredContent = [
+        `URL: ${url}`,
+        metadata.title ? `ЗАГОЛОВОК САЙТА: ${metadata.title}` : '',
+        metadata.description ? `ОПИСАНИЕ САЙТА: ${metadata.description}` : '',
+        metadata.keywords ? `КЛЮЧЕВЫЕ СЛОВА САЙТА: ${metadata.keywords}` : '',
+        headings.length > 0 ? `\nЗАГОЛОВКИ СТРАНИЦЫ:\n${headings.join('\n')}` : '',
+        listItems.length > 0 ? `\nЭЛЕМЕНТЫ СПИСКОВ:\n${listItems.join('\n')}` : '',
+        paragraphs.length > 0 ? `\nОСНОВНОЙ ТЕКСТ:\n${paragraphs.slice(0, 30).join('\n\n')}` : '',
+        contentDivs.length > 0 ? `\nДОПОЛНИТЕЛЬНОЕ СОДЕРЖИМОЕ:\n${contentDivs.slice(0, 5).join('\n\n')}` : ''
+      ].filter(Boolean).join('\n\n');
+      
+      console.log(`Успешно извлечено ${structuredContent.length} символов контента`);
+      
+      // Ограничиваем максимальный размер, чтобы не перегрузить API
+      return structuredContent.substring(0, 15000);
+      
+    } catch (error) {
+      console.error('Ошибка при извлечении содержимого сайта:', error);
+      // В случае ошибки возвращаем хотя бы URL для минимального анализа
+      return `URL: ${url}\n\nНе удалось извлечь содержимое сайта. Анализ будет выполнен только на основе URL.`;
+    }
+  }
+  
   // Интеллектуальный поиск ключевых слов (XMLRiver с Perplexity fallback)
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
