@@ -1,7 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
+/**
+ * Создает проксированный URL для загрузки изображений/видео через серверный прокси
+ * с учетом специфики разных источников (Instagram, VK, Telegram)
+ */
+function createProxyImageUrl(imageUrl: string, itemId: string): string {
+  // Если URL пустой или undefined, возвращаем пустую строку
+  if (!imageUrl) return '';
+  
+  // Добавляем cache-busting параметр
+  const timestamp = Date.now();
+  
+  // Определяем тип источника (Instagram, VK, etc)
+  const isInstagram = imageUrl.includes('instagram.') || 
+                     imageUrl.includes('fbcdn.net') || 
+                     imageUrl.includes('cdninstagram.com');
+  
+  const isVk = imageUrl.includes('vk.com') || 
+               imageUrl.includes('vk.me') || 
+               imageUrl.includes('userapi.com');
+  
+  const isTelegram = imageUrl.includes('tgcnt.ru') || 
+                    imageUrl.includes('t.me');
+  
+  // Формируем параметры для прокси
+  let forcedType = isInstagram ? 'instagram' : 
+                  isVk ? 'vk' : 
+                  isTelegram ? 'telegram' : null;
+  
+  // Базовый URL прокси с параметрами
+  return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${timestamp}${forcedType ? '&forceType=' + forcedType : ''}&itemId=${itemId}`;
+}
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -1162,13 +1193,21 @@ export default function Trends() {
                                     {firstImage ? (
                                       <div className="flex-shrink-0">
                                         <img 
-                                          src={firstImage}
+                                          src={createProxyImageUrl(firstImage, topic.id)}
                                           alt="Миниатюра"
                                           className="h-16 w-16 object-cover rounded-md"
                                           onError={(e) => {
                                             console.log('Ошибка загрузки изображения:', firstImage);
                                             e.currentTarget.onerror = null;
-                                            e.currentTarget.src = 'https://placehold.co/100x100/jpeg?text=Нет+фото';
+                                            // Пробуем повторную загрузку с прямой ссылкой если это не Instagram
+                                            if (firstImage.includes('instagram') || 
+                                                firstImage.includes('fbcdn') || 
+                                                firstImage.includes('cdninstagram')) {
+                                              const retryUrl = createProxyImageUrl(firstImage, topic.id) + "&_retry=true";
+                                              e.currentTarget.src = retryUrl;
+                                            } else {
+                                              e.currentTarget.src = 'https://placehold.co/100x100/jpeg?text=Нет+фото';
+                                            }
                                           }}
                                           loading="lazy"
                                           referrerPolicy="no-referrer"
