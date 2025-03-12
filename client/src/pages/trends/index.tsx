@@ -1110,6 +1110,28 @@ export default function Trends() {
                           .map((topic: TrendTopic) => {
                             const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
+                            // Разбор JSON из поля media_links для превью
+                            let mediaData: { images: string[], videos: string[] } = { images: [], videos: [] };
+                            
+                            // Проверяем разные варианты имен полей (snake_case и camelCase)
+                            const mediaLinksStr = topic.media_links || topic.mediaLinks;
+                            
+                            if (mediaLinksStr) {
+                              try {
+                                if (typeof mediaLinksStr === 'string') {
+                                  mediaData = JSON.parse(mediaLinksStr);
+                                } else if (typeof mediaLinksStr === 'object') {
+                                  // Может прийти уже распарсенным
+                                  mediaData = mediaLinksStr as { images: string[], videos: string[] };
+                                }
+                              } catch (e) {
+                                console.error('Ошибка разбора JSON в media_links:', e);
+                              }
+                            }
+                            
+                            // Первое изображение для отображения
+                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
+                            
                             return (
                               <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
                                 <CardContent className="py-3 px-4">
@@ -1122,6 +1144,21 @@ export default function Trends() {
                                         className="h-4 w-4 border-gray-400"
                                       />
                                     </div>
+                                    
+                                    {/* Изображение из media_links */}
+                                    {firstImage ? (
+                                      <div className="flex-shrink-0">
+                                        <img 
+                                          src={`/api/proxy-image?url=${encodeURIComponent(firstImage)}`} 
+                                          alt="Миниатюра"
+                                          className="h-16 w-16 object-cover rounded-md"
+                                          onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = 'https://placehold.co/100x100/jpeg?text=Нет+фото';
+                                          }}
+                                        />
+                                      </div>
+                                    ) : null}
                                     
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-1">
