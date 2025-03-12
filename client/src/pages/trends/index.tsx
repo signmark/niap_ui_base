@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
@@ -56,6 +56,7 @@ interface TrendTopic {
   created_at: string;
   is_bookmarked: boolean;
   campaign_id: string;
+  media_link?: string; // JSON строка с медиа-данными
 }
 
 interface SourcePost {
@@ -610,7 +611,8 @@ export default function Trends() {
             'views',
             'created_at',
             'is_bookmarked',
-            'campaign_id'
+            'campaign_id',
+            'media_link'
           ],
           sort: ['-reactions']
         },
@@ -1040,49 +1042,94 @@ export default function Trends() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[30px]"></TableHead>
-                            <TableHead>Тема</TableHead>
-                            <TableHead>Источник</TableHead>
-                            <TableHead>Кампания</TableHead>
-                            <TableHead className="text-right">Реакции</TableHead>
-                            <TableHead className="text-right">Комментарии</TableHead>
-                            <TableHead className="text-right">Просмотры</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {trends
-                            .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                            .map((topic: TrendTopic) => (
-                              <TableRow key={topic.id}>
-                                <TableCell>
-                                  <Checkbox
-                                    checked={selectedTopics.some(t => t.id === topic.id)}
-                                    onCheckedChange={() => toggleTopicSelection(topic)}
-                                  />
-                                </TableCell>
-                                <TableCell>{topic.title}</TableCell>
-                                <TableCell>
-                                  {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
-                                </TableCell>
-                                <TableCell>
-                                  {campaigns.find(c => c.id === topic.campaign_id)?.name}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {topic.reactions?.toLocaleString() ?? 0}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {topic.comments?.toLocaleString() ?? 0}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {topic.views?.toLocaleString() ?? 0}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {trends
+                          .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((topic: TrendTopic) => {
+                            // Разбор JSON из поля media_link
+                            let mediaData = { images: [], videos: [] };
+                            if (topic.media_link) {
+                              try {
+                                mediaData = JSON.parse(topic.media_link);
+                              } catch (e) {
+                                console.error('Ошибка разбора JSON в media_link:', e);
+                              }
+                            }
+                            
+                            // Первое изображение или видео для превью
+                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
+                            const firstVideo = mediaData.videos && mediaData.videos.length > 0 ? mediaData.videos[0] : null;
+                            
+                            return (
+                              <Card key={topic.id} className="overflow-hidden">
+                                <div className="relative">
+                                  {/* Чекбокс для выбора тренда */}
+                                  <div className="absolute top-2 left-2 z-10">
+                                    <Checkbox
+                                      checked={selectedTopics.some(t => t.id === topic.id)}
+                                      onCheckedChange={() => toggleTopicSelection(topic)}
+                                      className="h-5 w-5 bg-white/80 border-gray-400"
+                                    />
+                                  </div>
+                                  
+                                  {/* Превью медиа-контента */}
+                                  {firstImage ? (
+                                    <div className="aspect-video relative">
+                                      <img 
+                                        src={firstImage} 
+                                        alt={topic.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.onerror = null;
+                                          e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                                        }}
+                                      />
+                                      {mediaData.images.length > 1 && (
+                                        <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                          +{mediaData.images.length - 1}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : firstVideo ? (
+                                    <div className="aspect-video relative">
+                                      <video 
+                                        src={firstVideo}
+                                        className="w-full h-full object-cover"
+                                        controls
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="aspect-video bg-muted flex items-center justify-center">
+                                      <FileText className="h-12 w-12 text-muted-foreground/50" />
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <CardContent className="p-4">
+                                  <h3 className="font-medium line-clamp-2 mb-1">{topic.title}</h3>
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
+                                  </p>
+                                  
+                                  <div className="flex justify-between text-sm text-muted-foreground">
+                                    <div className="flex items-center">
+                                      <ThumbsUp className="h-4 w-4 mr-1" />
+                                      {topic.reactions?.toLocaleString() ?? 0}
+                                    </div>
+                                    <div className="flex items-center">
+                                      <MessageSquare className="h-4 w-4 mr-1" />
+                                      {topic.comments?.toLocaleString() ?? 0}
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      {topic.views?.toLocaleString() ?? 0}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                      </div>
                     )}
                   </>
                 ) : (
