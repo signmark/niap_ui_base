@@ -2,6 +2,35 @@ const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
+// Функция для очистки устаревших записей кеша
+function cleanupExpiredCache() {
+  const now = Date.now();
+  let removedCount = 0;
+  
+  // Очищаем кеш для обычных запросов
+  for (const [key, entry] of searchCache.entries()) {
+    if (now - entry.timestamp > CACHE_DURATION) {
+      console.log(`Removing expired cache entry for keyword: ${key}`);
+      searchCache.delete(key);
+      removedCount++;
+    }
+  }
+  
+  // Очищаем кеш для URL-запросов
+  for (const [url, entry] of urlKeywordCache.entries()) {
+    if (now - entry.timestamp > CACHE_DURATION) {
+      console.log(`Removing expired cache entry for URL: ${url}`);
+      urlKeywordCache.delete(url);
+      removedCount++;
+    }
+  }
+  
+  console.log(`Cache cleanup completed. Removed ${removedCount} expired entries. Current state: Keywords cache: ${searchCache.size} entries, URL cache: ${urlKeywordCache.size} entries`);
+}
+
+// Запускаем очистку кеша каждые 15 минут
+setInterval(cleanupExpiredCache, 15 * 60 * 1000);
+
 // Add helper function to check and get cached results
 function getCachedResults(keyword: string): any[] | null {
   const cached = searchCache.get(keyword);
@@ -880,8 +909,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               ],
               max_tokens: 1000,
-              temperature: 0.1, // Сильно уменьшаем temperature для максимальной стабильности
-              random_seed: Math.floor(Math.random() * 10000) // Фиксированный seed для одинаковых результатов
+              temperature: 0.05, // Максимально низкая температура для стабильности
+              random_seed: 12345, // Абсолютно фиксированный seed для одинаковых результатов при повторных запросах
+              top_p: 0.9 // Ограничение разнообразия токенов
             },
             {
               headers: {
@@ -906,24 +936,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[${requestId}] Meta keywords extracted: ${metaKeywords || 'None'}`);
           console.log(`[${requestId}] Request URL: ${normalizedUrl}`);
           
-          // Удаляем все текстовые пояснения и оставляем только JSON
-          const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
-          if (jsonMatch) {
-            try {
+          // Улучшенный алгоритм извлечения JSON из текста
+          // Ищем JSON массив в тексте, используя несколько методов
+          let parsedKeywords = [];
+          
+          try {
+            // Метод 1: Попытка найти массив JSON с помощью регулярного выражения
+            const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
+            if (jsonMatch) {
               const jsonStr = jsonMatch[0];
-              const parsedKeywords = JSON.parse(jsonStr);
-              console.log(`Extracted ${parsedKeywords.length} keywords from Perplexity`);
               
-              if (Array.isArray(parsedKeywords) && parsedKeywords.length > 0) {
-                finalKeywords = parsedKeywords.map(item => ({
-                  keyword: item.keyword,
-                  trend: parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000,
-                  competition: parseInt(item.competition) || Math.floor(Math.random() * 100)
-                }));
+              try {
+                const parsedData = JSON.parse(jsonStr);
+                if (Array.isArray(parsedData) && parsedData.length > 0) {
+                  parsedKeywords = parsedData;
+                  console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords using regex`);
+                }
+              } catch (jsonError) {
+                console.error(`[${requestId}] Error parsing JSON from regex match:`, jsonError);
               }
-            } catch (jsonError) {
-              console.error('Error parsing JSON from Perplexity response:', jsonError);
             }
+            
+            // Метод 2: Если первый метод не сработал, пробуем найти начало и конец массива JSON
+            if (parsedKeywords.length === 0) {
+              const startIdx = content.indexOf('[');
+              const endIdx = content.lastIndexOf(']');
+              
+              if (startIdx >= 0 && endIdx > startIdx) {
+                const jsonStr = content.substring(startIdx, endIdx + 1);
+                
+                try {
+                  const parsedData = JSON.parse(jsonStr);
+                  if (Array.isArray(parsedData) && parsedData.length > 0) {
+                    parsedKeywords = parsedData;
+                    console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords using direct indexing`);
+                  }
+                } catch (jsonError) {
+                  console.error(`[${requestId}] Error parsing JSON from direct indexing:`, jsonError);
+                }
+              }
+            }
+            
+            // Метод 3: Если предыдущие не сработали, пробуем извлечь всю структуру ответа как JSON
+            if (parsedKeywords.length === 0) {
+              try {
+                // Очищаем строку от специальных символов и попробуем парсить
+                const cleanContent = content.replace(/```json|```/g, '').trim();
+                const parsedData = JSON.parse(cleanContent);
+                
+                if (Array.isArray(parsedData) && parsedData.length > 0) {
+                  parsedKeywords = parsedData;
+                  console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords from clean content`);
+                }
+              } catch (jsonError) {
+                console.error(`[${requestId}] Error parsing clean content as JSON:`, jsonError);
+              }
+            }
+          
+            // Обрабатываем полученные ключевые слова
+            if (parsedKeywords.length > 0) {
+              console.log(`[${requestId}] Extracted ${parsedKeywords.length} keywords from Perplexity`);
+              
+              finalKeywords = parsedKeywords.map(item => ({
+                keyword: item.keyword || "",
+                trend: parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000,
+                competition: parseInt(item.competition) || Math.floor(Math.random() * 100)
+              })).filter(item => item.keyword && item.keyword.trim() !== "");
+              
+              console.log(`[${requestId}] Processed ${finalKeywords.length} valid keywords`);
+            }
+          } catch (processingError) {
+            console.error(`[${requestId}] Error during keyword processing:`, processingError);
           }
         } catch (perplexityError) {
           console.error('Error using Perplexity API:', perplexityError);
