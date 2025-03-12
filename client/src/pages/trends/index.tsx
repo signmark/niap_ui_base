@@ -289,12 +289,26 @@ export default function Trends() {
       console.log('Webhook success response:', data);
       // Используем имя источника, полученное от сервера, или ищем в текущем списке
       const sourceName = data.sourceName || sources.find(s => s.id === data.sourceId)?.name || data.sourceId;
+      const sourceId = data.sourceId;
       
       toast({
         title: "Запущено!",
         description: `Задача по сбору постов из источника ${sourceName} запущена`,
         variant: "default",
       });
+      
+      // Устанавливаем активный источник для проверки статуса
+      setActiveSourceId(sourceId);
+      
+      // Запускаем интервал проверки статуса каждые 3 секунды
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+      
+      statusCheckInterval.current = setInterval(() => {
+        checkSourceStatus(sourceId);
+      }, 3000);
+      
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
     },
     onError: (error: Error) => {
