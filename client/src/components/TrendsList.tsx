@@ -215,7 +215,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 const imageUrl = mediaData.images[0];
                 if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
                   console.log(`[Trend ${trend.id}] Found image in mediaLinks: ${imageUrl}`);
-                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_nocache=${Date.now()}`;
+                  previewImageUrl = createProxyImageUrl(imageUrl, trend.id);
                 }
               }
             } catch (e) {
@@ -251,14 +251,14 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 const imageUrl = mediaData.images[0];
                 if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
                   console.log(`[Trend ${trend.id}] Found image in media_links.images: ${imageUrl}`);
-                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_nocache=${Date.now()}`;
+                  previewImageUrl = createProxyImageUrl(imageUrl, trend.id);
                 }
               } else if (mediaData.posts && Array.isArray(mediaData.posts) && mediaData.posts.length > 0) {
                 // Формат с постами
                 const post = mediaData.posts[0];
                 if (post && post.image_url) {
                   console.log(`[Trend ${trend.id}] Found image in post: ${post.image_url}`);
-                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(post.image_url)}&_nocache=${Date.now()}`;
+                  previewImageUrl = createProxyImageUrl(post.image_url, trend.id);
                 }
               }
             } catch (e) {
@@ -310,7 +310,9 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                                 // Для Instagram повторяем попытку через прокси с дополнительными параметрами
                                 if (isInstagram) {
                                   console.log(`[TrendsList] Instagram URL обнаружен, используем специальный режим`);
-                                  const retryUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_force=instagram&_t=${Date.now()}`;
+                                  // Используем нашу функцию с флагом _retry
+                                  const instagramUrl = createProxyImageUrl(urlWithNocache, trend.id);
+                                  const retryUrl = instagramUrl + "&_retry=true";
                                   e.currentTarget.src = retryUrl;
                                 } else {
                                   // Пробуем загрузить напрямую для неинстаграмных URL
