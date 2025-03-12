@@ -95,6 +95,7 @@ export default function Trends() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
+  const [isSocialNetworkDialogOpen, setIsSocialNetworkDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -648,8 +649,8 @@ export default function Trends() {
   });
 
 
-  const { mutate: collectTrends, isPending: isCollecting } = useMutation({
-    mutationFn: async () => {
+  const { mutate: collectTrendsWithPlatforms, isPending: isCollecting } = useMutation({
+    mutationFn: async (platforms: string[]) => {
       if (!selectedCampaignId) {
         throw new Error("Выберите кампанию");
       }
@@ -665,7 +666,7 @@ export default function Trends() {
       
       // Gather all keywords from the campaign for the webhook
       const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
-      console.log('Sending keywords to webhook:', keywordsList);
+      console.log('Sending keywords to webhook with platforms:', keywordsList, platforms);
       
       // Send request to our API endpoint which will forward to n8n webhook
       const webhookResponse = await fetch('/api/trends/collect', {
@@ -676,7 +677,8 @@ export default function Trends() {
         },
         body: JSON.stringify({ 
           campaignId: selectedCampaignId,
-          keywords: keywordsList 
+          keywords: keywordsList,
+          platforms: platforms // Добавляем выбранные платформы
         })
       });
       
@@ -729,7 +731,10 @@ export default function Trends() {
     }
   });
 
-  // Функционал запуска краулера через API удален, так как больше не используется
+  // Функция для открытия диалога выбора социальных сетей
+  const collectTrends = () => {
+    setIsSocialNetworkDialogOpen(true);
+  };
 
   // Отслеживаем активные источники для стабильного отображения статуса
   const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
