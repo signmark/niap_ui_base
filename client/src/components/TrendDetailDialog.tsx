@@ -256,30 +256,49 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos?.[0] || '')}`} 
+              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos?.[0] || '')}&_t=${Date.now()}`} 
               controls 
               className="w-full max-h-[60vh]"
               controlsList="nodownload"
               preload="metadata"
+              crossOrigin="anonymous"
               onError={(e) => {
-                console.log('Ошибка загрузки видео через прокси');
+                console.log(`[TrendDetail] Ошибка загрузки видео через прокси для тренда ${topic.id}`);
                 e.currentTarget.onerror = null;
-                // Если прокси не работает, пробуем прямую ссылку
+                
+                // Если прокси не работает, пробуем прямую ссылку или альтернативный метод
                 if (e.currentTarget.src.includes('/api/proxy-image')) {
                   if (mediaData.videos?.[0]) {
-                    console.log('Пробуем прямую ссылку для видео:', mediaData.videos[0]);
-                    // Добавляем cache-busting параметр чтобы избежать кеширования
+                    // Получаем исходный URL видео
                     const directUrl = mediaData.videos[0];
+                    console.log(`[TrendDetail] Пробуем альтернативную загрузку видео:`, directUrl);
+                    
+                    // Проверяем, является ли это специальным URL
+                    const isTelegram = directUrl.includes('tgcnt.ru') || directUrl.includes('t.me');
+                    
+                    // Добавляем cache-busting параметр
                     const urlWithNocache = directUrl.includes('?') 
                       ? `${directUrl}&_nocache=${Date.now()}` 
                       : `${directUrl}?_nocache=${Date.now()}`;
-                    e.currentTarget.src = urlWithNocache;
+                    
+                    // Для Telegram пробуем специальную обработку
+                    if (isTelegram) {
+                      console.log(`[TrendDetail] Telegram видео обнаружено, используем специальный режим`);
+                      const retryProxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_t=${Date.now()}`;
+                      e.currentTarget.src = retryProxyUrl;
+                    } else {
+                      // Для обычных видео используем прямую ссылку
+                      console.log(`[TrendDetail] Обычное видео, пробуем прямую ссылку`);
+                      e.currentTarget.src = urlWithNocache;
+                      // Добавляем атрибут crossorigin для преодоления CORS
+                      e.currentTarget.crossOrigin = "anonymous";
+                    }
                   } else {
-                    console.log('Нет URL видео в данных');
+                    console.log(`[TrendDetail] Нет URL видео в данных для тренда ${topic.id}`);
                     e.currentTarget.style.display = 'none';
                   }
                 } else {
-                  console.log('Прямая ссылка для видео тоже не работает');
+                  console.log(`[TrendDetail] И прямая ссылка для видео тоже не работает`);
                   e.currentTarget.style.display = 'none';
                 }
               }}
