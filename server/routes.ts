@@ -1559,25 +1559,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Обновляем статус источника в Directus на "processing"
-        await directusApi.patch(`/items/content_sources/${sourceId}`, {
-          status: 'processing'
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
         // Start crawling process
         console.log('Starting crawling process for source:', source.name);
         
         // Отправляем запрос на n8n webhook для сбора постов из источника
         const webhookUrl = 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
         
+        // НЕ отправляем токен, так как в n8n webhook нет авторизации
         const webhookResponse = await axios.post(webhookUrl, {
           sourceId: sourceId,
-          campaignId: campaignId,
-          token: token
+          campaignId: campaignId
         });
         
         console.log('Webhook response:', webhookResponse.status);
@@ -1593,19 +1584,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (crawlError) {
         console.error("Error during crawling:", crawlError);
-        
-        // В случае ошибки также обновляем статус источника на "error"
-        try {
-          await directusApi.patch(`/items/content_sources/${sourceId}`, {
-            status: 'error'
-          }, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-        } catch (updateError) {
-          console.error("Error updating source status:", updateError);
-        }
         
         res.status(500).json({ 
           success: false,
