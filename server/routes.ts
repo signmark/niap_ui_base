@@ -1528,7 +1528,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Starting crawl process for source: ${sourceId} in campaign: ${campaignId}`);
+      // Получаем имя источника напрямую из Directus, так как это проще и надежнее
+      let sourceName = sourceId;
+      try {
+        // Используем напрямую запрос к Directus API для получения данных источника
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        if (authToken) {
+          const sourceResponse = await directusApi.get(`/items/content_sources/${sourceId}`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          if (sourceResponse.data?.data?.name) {
+            sourceName = sourceResponse.data.data.name;
+            console.log(`Starting crawl process for source: ${sourceName} (${sourceId}) in campaign: ${campaignId}`);
+          } else {
+            console.log(`Source name not found, using ID: ${sourceId} in campaign: ${campaignId}`);
+          }
+        } else {
+          console.log(`No auth token available, using source ID: ${sourceId} in campaign: ${campaignId}`);
+        }
+      } catch (sourceError) {
+        console.log(`Error getting source name, using ID: ${sourceId}:`, sourceError instanceof Error ? sourceError.message : String(sourceError));
+      }
       
       try {
         // Отправляем запрос на n8n webhook для сбора постов из источника
@@ -1542,12 +1565,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('Webhook response:', webhookResponse.status);
         
-        // Возвращаем успешный результат с указанием ID источника
+        // Возвращаем успешный результат с указанием имени источника, если оно доступно
         return res.status(200).json({
           success: true,
-          message: `Задача на сбор постов из источника ${sourceId} успешно запущена`,
+          message: `Задача на сбор постов из источника успешно запущена`,
           sourceId: sourceId,
-          campaignId: campaignId
+          campaignId: campaignId,
+          sourceName: sourceName // Передаем имя источника на фронтенд
         });
       } catch (crawlError) {
         console.error("Error calling webhook:", crawlError);
