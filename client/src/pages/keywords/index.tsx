@@ -82,6 +82,7 @@ export default function Keywords() {
       }));
 
       setSearchResults(formattedResults);
+      setSearchQuery(""); // Очищаем поле поиска после получения результатов
       toast({ 
         title: "Успешно",
         description: `Найдено ${formattedResults.length} ключевых слов` 

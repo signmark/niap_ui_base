@@ -64,6 +64,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       }));
 
       setSearchResults(formattedResults);
+      setSearchQuery(""); // Очищаем поле поиска после получения результатов
       toast({ description: `Найдено ${formattedResults.length} ключевых слов` });
     } catch (error) {
       toast({
