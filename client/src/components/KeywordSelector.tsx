@@ -48,7 +48,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     setIsSearching(true);
 
     try {
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}`);
+      // Добавляем случайный параметр для предотвращения кеширования
+      const nocache = Date.now();
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`);
       const data = await response.json();
 
       if (!data?.data?.keywords?.length) {
