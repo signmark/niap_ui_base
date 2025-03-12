@@ -132,7 +132,15 @@ export default function Trends() {
       const status = response.data?.data?.status;
 
       // Если статус finished, error или null, останавливаем проверку
+      // Не удаляем источник из списка активных в случае ошибки или завершения
       if (status === 'finished' || status === 'error' || !status) {
+        
+        // Удаляем источник из списка активных процессов только при завершении успешно или с ошибкой
+        setProcessingSourceIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(sourceId);
+          return newSet;
+        });
         if (statusCheckInterval.current) {
           clearInterval(statusCheckInterval.current);
           statusCheckInterval.current = undefined;
@@ -350,6 +358,13 @@ export default function Trends() {
       
       // Устанавливаем активный источник для проверки статуса
       setActiveSourceId(sourceId);
+      
+      // Добавляем источник в список активных процессов
+      setProcessingSourceIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceId);
+        return newSet;
+      });
       
       // Сразу же устанавливаем статус "processing" для мгновенной обратной связи
       queryClient.setQueryData(
@@ -716,7 +731,31 @@ export default function Trends() {
 
   // Функционал запуска краулера через API удален, так как больше не используется
 
-  const getStatusIcon = (status: string | null) => {
+  // Отслеживаем активные источники для стабильного отображения статуса
+  const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
+  
+  // Обновляем список активных источников при изменении статуса
+  useEffect(() => {
+    if (!sources) return;
+    
+    const newProcessingSources = new Set<string>();
+    sources.forEach(source => {
+      if (source.status === 'start' || source.status === 'processing' || source.status === 'running' || source.id === activeSourceId) {
+        newProcessingSources.add(source.id);
+      }
+    });
+    
+    setProcessingSourceIds(newProcessingSources);
+  }, [sources, activeSourceId]);
+  
+  // Функция определения иконки для текущего статуса
+  const getStatusIcon = (status: string | null, sourceId: string) => {
+    // Если источник в списке обрабатываемых, показываем анимацию
+    if (processingSourceIds.has(sourceId)) {
+      return <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />;
+    }
+    
+    // Иначе показываем статус из базы данных
     switch (status) {
       case 'start':
         return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
@@ -852,7 +891,7 @@ export default function Trends() {
                     {sources.map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(source.status)}
+                          {getStatusIcon(source.status, source.id)}
                           <div>
                             <h3 className="font-medium">{source.name}</h3>
                             <p className="text-sm text-muted-foreground">
