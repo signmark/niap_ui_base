@@ -19,7 +19,7 @@ export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
   const [socialSearcherKey, setSocialSearcherKey] = useState("");
-  const toast = useToast();
+  const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
   const { data: apiKeys, isLoading } = useQuery({
@@ -94,13 +94,13 @@ export function SettingsDialog() {
       }
     },
     onSuccess: () => {
-      toast.add({
+      toast({
         title: "Успешно",
         description: "Настройки сохранены"
       });
     },
     onError: (error: Error) => {
-      toast.add({
+      toast({
         variant: "destructive",
         title: "Ошибка",
         description: error.message || "Не удалось сохранить настройки"
