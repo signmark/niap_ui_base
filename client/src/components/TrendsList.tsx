@@ -214,22 +214,32 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       <img 
                         src={previewImageUrl} 
                         alt="Превью" 
+                        loading="lazy"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           console.log("Image load error, trying direct URL");
                           e.currentTarget.onerror = null;
                           // Если прокси не работает, пробуем прямую ссылку
                           try {
-                            const urlParams = new URLSearchParams(e.currentTarget.src.split('?')[1]);
-                            const originalUrl = urlParams.get('url');
-                            if (originalUrl) {
-                              console.log("Setting direct image URL:", originalUrl);
-                              e.currentTarget.src = decodeURIComponent(originalUrl);
+                            // Получаем исходный URL если мы использовали прокси
+                            if (e.currentTarget.src.includes('/api/proxy-image')) {
+                              const urlParams = new URLSearchParams(e.currentTarget.src.split('?')[1]);
+                              const originalUrl = urlParams.get('url');
+                              if (originalUrl) {
+                                console.log("Setting direct image URL:", originalUrl);
+                                e.currentTarget.src = decodeURIComponent(originalUrl);
+                              } else {
+                                // Показываем иконку-заглушку если URL отсутствует
+                                console.log("No URL parameter in proxy path");
+                                e.currentTarget.style.display = 'none';
+                              }
                             } else {
+                              // Это прямой URL, который тоже не загрузился
+                              console.log("Direct URL also failed");
                               e.currentTarget.style.display = 'none';
                             }
                           } catch (error) {
-                            console.error("Error extracting original URL:", error);
+                            console.error("Error handling image fallback:", error);
                             e.currentTarget.style.display = 'none';
                           }
                         }}

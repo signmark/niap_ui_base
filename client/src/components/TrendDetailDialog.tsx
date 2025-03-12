@@ -118,17 +118,31 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images[currentImageIndex])}`}
+                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images?.[currentImageIndex] || '')}`}
                 alt={topic.title}
-                className="w-full h-auto object-contain"
+                loading="lazy"
+                className="w-full h-auto object-contain max-h-[60vh]"
                 onError={(e) => {
+                  console.log('Ошибка загрузки изображения через прокси');
                   e.currentTarget.onerror = null;
+                  
                   // Если прокси не работает, пробуем прямую ссылку
                   if (e.currentTarget.src.includes('/api/proxy-image')) {
-                    console.log('Пробуем прямую ссылку для изображения:', mediaData.images[currentImageIndex]);
-                    e.currentTarget.src = mediaData.images[currentImageIndex];
+                    if (mediaData.images?.[currentImageIndex]) {
+                      console.log('Пробуем прямую ссылку для изображения:', mediaData.images[currentImageIndex]);
+                      // Добавляем cache-busting параметр чтобы избежать кеширования
+                      const directUrl = mediaData.images[currentImageIndex];
+                      const urlWithNocache = directUrl.includes('?') 
+                        ? `${directUrl}&_nocache=${Date.now()}` 
+                        : `${directUrl}?_nocache=${Date.now()}`;
+                      e.currentTarget.src = urlWithNocache;
+                    } else {
+                      console.log('Нет URL изображения в данных');
+                      e.currentTarget.style.display = 'none';
+                    }
                   } else {
-                    e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                    console.log('Прямая ссылка тоже не работает');
+                    e.currentTarget.style.display = 'none';
                   }
                 }}
               />
@@ -159,18 +173,31 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos[0])}`} 
+              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos?.[0] || '')}`} 
               controls 
-              className="w-full"
+              className="w-full max-h-[60vh]"
               controlsList="nodownload"
+              preload="metadata"
               onError={(e) => {
+                console.log('Ошибка загрузки видео через прокси');
                 e.currentTarget.onerror = null;
                 // Если прокси не работает, пробуем прямую ссылку
                 if (e.currentTarget.src.includes('/api/proxy-image')) {
-                  console.log('Пробуем прямую ссылку для видео:', mediaData.videos[0]);
-                  e.currentTarget.src = mediaData.videos[0];
+                  if (mediaData.videos?.[0]) {
+                    console.log('Пробуем прямую ссылку для видео:', mediaData.videos[0]);
+                    // Добавляем cache-busting параметр чтобы избежать кеширования
+                    const directUrl = mediaData.videos[0];
+                    const urlWithNocache = directUrl.includes('?') 
+                      ? `${directUrl}&_nocache=${Date.now()}` 
+                      : `${directUrl}?_nocache=${Date.now()}`;
+                    e.currentTarget.src = urlWithNocache;
+                  } else {
+                    console.log('Нет URL видео в данных');
+                    e.currentTarget.style.display = 'none';
+                  }
                 } else {
-                  e.currentTarget.src = '';
+                  console.log('Прямая ссылка для видео тоже не работает');
+                  e.currentTarget.style.display = 'none';
                 }
               }}
             />
