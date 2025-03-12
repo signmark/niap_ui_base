@@ -1105,15 +1105,23 @@ export default function Trends() {
                             let mediaData = { images: [], videos: [] };
                             if (topic.media_link) {
                               try {
+                                console.log('Media link data для темы:', topic.title, topic.media_link.substring(0, 100));
                                 mediaData = JSON.parse(topic.media_link);
+                                console.log('Parsed media data:', mediaData);
                               } catch (e) {
                                 console.error('Ошибка разбора JSON в media_link:', e);
                               }
+                            } else {
+                              console.log('Нет media_link для темы:', topic.title);
                             }
                             
                             // Первое изображение или видео для превью
                             const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
                             const hasVideo = mediaData.videos && mediaData.videos.length > 0;
+                            
+                            if (firstImage) {
+                              console.log('Найдено изображение для превью:', firstImage.substring(0, 100));
+                            }
                             
                             return (
                               <Card 
