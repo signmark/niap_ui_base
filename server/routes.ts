@@ -845,7 +845,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Извлекаем JSON из ответа
           const content = response.data.choices[0].message.content;
-          console.log('Perplexity response content:', content);
+          console.log(`[${requestId}] Perplexity response content:`, content);
+          
+          // Логируем больше отладочной информации
+          console.log(`[${requestId}] Used content length for analysis: ${siteContent.length} chars`);
+          console.log(`[${requestId}] Title extracted: ${title || 'None'}`);
+          console.log(`[${requestId}] Meta description extracted: ${metaDescription || 'None'}`);
+          console.log(`[${requestId}] Meta keywords extracted: ${metaKeywords || 'None'}`);
+          console.log(`[${requestId}] Request URL: ${normalizedUrl}`);
           
           // Удаляем все текстовые пояснения и оставляем только JSON
           const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
