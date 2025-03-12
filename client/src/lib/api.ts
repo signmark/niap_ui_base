@@ -74,8 +74,8 @@ directusApi.interceptors.response.use(
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user_id');
           
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
+          if (window.location.pathname !== '/auth/login') {
+            window.location.href = '/auth/login';
           }
           
           return Promise.reject(refreshError);
@@ -148,8 +148,8 @@ api.interceptors.response.use(
         localStorage.removeItem('user_id');
         
         // Перенаправляем на страницу входа, если мы не уже на ней
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        if (window.location.pathname !== '/auth/login') {
+          window.location.href = '/auth/login';
         }
       }
     }
