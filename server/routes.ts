@@ -3128,7 +3128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/campaigns/:id", authenticateUser, async (req, res) => {
     try {
       const campaignId = req.params.id;
-      const { name } = req.body;
+      const { name, link, social_media_settings, trend_analysis_settings } = req.body;
       const userId = (req as any).userId;
       const authHeader = req.headers['authorization'];
       
@@ -3136,8 +3136,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "ID кампании обязателен" });
       }
       
-      if (!name || name.trim() === '') {
-        return res.status(400).json({ error: "Название кампании обязательно" });
+      // Разрешаем обновление только определенных полей
+      // Удалим undefined значения, оставим только те, что нужно обновить
+      const updateFields: any = {};
+      
+      if (name !== undefined && name.trim() !== '') {
+        updateFields.name = name.trim();
+      }
+      
+      if (link !== undefined) {
+        updateFields.link = link.trim();
+      }
+      
+      if (social_media_settings !== undefined) {
+        updateFields.social_media_settings = social_media_settings;
+      }
+      
+      if (trend_analysis_settings !== undefined) {
+        updateFields.trend_analysis_settings = trend_analysis_settings;
+      }
+      
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json({ error: "Необходимо указать хотя бы одно поле для обновления" });
       }
       
       if (!userId || !authHeader) {
@@ -3165,11 +3185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
         }
         
-        console.log(`Updating campaign ${campaignId} in Directus with name: ${name}`);
+        console.log(`Updating campaign ${campaignId} in Directus with fields:`, updateFields);
         
-        const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
-          name: name.trim()
-        }, {
+        const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, updateFields, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -3181,10 +3199,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: response.data.data.name,
           description: response.data.data.description,
           userId: response.data.data.user_id,
-          createdAt: response.data.data.created_at
+          createdAt: response.data.data.created_at,
+          link: response.data.data.link,
+          socialMediaSettings: response.data.data.social_media_settings,
+          trendAnalysisSettings: response.data.data.trend_analysis_settings
         };
         
-        console.log("Campaign updated successfully:", updatedCampaign);
+        console.log("Campaign updated successfully:", updatedCampaign.name);
         
         return res.status(200).json({ 
           success: true,
