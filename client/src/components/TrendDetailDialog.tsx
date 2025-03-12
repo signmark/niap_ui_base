@@ -27,7 +27,7 @@ interface TrendTopic {
   created_at: string;
   is_bookmarked: boolean;
   campaign_id: string;
-  media_link?: string;
+  media_links?: string;
 }
 
 interface TrendDetailDialogProps {
@@ -47,13 +47,13 @@ export function TrendDetailDialog({
 }: TrendDetailDialogProps) {
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   
-  // Разбор JSON из поля media_link
+  // Разбор JSON из поля media_links
   let mediaData: MediaData = { images: [], videos: [] };
-  if (topic?.media_link) {
+  if (topic?.media_links) {
     try {
-      mediaData = JSON.parse(topic.media_link);
+      mediaData = JSON.parse(topic.media_links);
     } catch (e) {
-      console.error('Ошибка разбора JSON в media_link:', e);
+      console.error('Ошибка разбора JSON в media_links:', e);
     }
   }
 

@@ -57,7 +57,7 @@ interface TrendTopic {
   created_at: string;
   is_bookmarked: boolean;
   campaign_id: string;
-  media_link?: string; // JSON строка с медиа-данными
+  media_links?: string; // JSON строка с медиа-данными
 }
 
 interface SourcePost {
