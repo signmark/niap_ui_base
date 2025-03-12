@@ -1110,9 +1110,10 @@ export default function Trends() {
                           .map((topic: TrendTopic) => {
                             const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
-                            // Для тестирования, создаем тестовые изображения для каждого тренда
+                            // Создаем статическое изображение-заглушку вместо Unsplash
                             // Это временное решение, пока не настроены медиа-данные в базе
-                            const tempImageUrl = `https://source.unsplash.com/random/300x200?sig=${topic.id}`;
+                            const tempImageId = parseInt(topic.id.replace(/\D/g, '').substring(0, 2) || '1') % 20 + 1;
+                            const tempImageUrl = `https://picsum.photos/id/${100 + tempImageId}/300/200`;
                             
                             // Разбор JSON из поля media_links для превью (в реальном режиме)
                             let mediaData: { images: string[], videos: string[] } = { 
