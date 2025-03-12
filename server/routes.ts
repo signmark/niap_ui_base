@@ -661,7 +661,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Нормализуем URL
           const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
           
-          // Запрос к Perplexity
+          // Сначала попробуем получить контент с сайта для лучшего анализа
+          let siteContent = "";
+          try {
+            console.log(`Fetching content from site: ${normalizedUrl}`);
+            const siteResponse = await axios.get(normalizedUrl, {
+              timeout: 5000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
+              }
+            });
+            
+            // Получаем только текстовое содержимое страницы, удаляем HTML теги
+            const htmlContent = siteResponse.data;
+            siteContent = htmlContent
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+              
+            // Ограничиваем размер контента
+            siteContent = siteContent.substring(0, 5000);
+            console.log(`Successfully fetched ${siteContent.length} chars of content`);
+          } catch (error) {
+            console.error(`Error fetching site content: ${error}`);
+            siteContent = "";
+          }
+          
+          // Запрос к Perplexity с учетом контента сайта
           const response = await axios.post(
             'https://api.perplexity.ai/chat/completions',
             {
@@ -669,20 +699,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               messages: [
                 {
                   role: "system",
-                  content: `Ты эксперт по SEO и ключевым словам. Проанализируй указанный сайт и выдай список из 15-20 самых релевантных ключевых слов и фраз для этого сайта. Учти:
-1. Ключевые слова должны точно соответствовать тематике и содержанию сайта
+                  content: `Ты эксперт по SEO и ключевым словам. Твоя задача - проанализировать указанный сайт и определить его ТОЧНУЮ тематику, чтобы затем выдать релевантные ключевые слова. 
+
+ВАЖНО: Не ориентируйся только на доменное имя! Анализируй весь контекст и содержимое сайта, чтобы определить его реальную тематику и целевую аудиторию.
+
+Создай список из 15-20 самых релевантных ключевых слов и фраз для этого сайта. Учти:
+1. Ключевые слова должны ТОЧНО соответствовать тематике и содержанию сайта - не догадывайся по домену
 2. Включи высокочастотные, среднечастотные и низкочастотные запросы
-3. Группируй ключевые слова по смысловым кластерам
-4. Для каждого ключевого слова укажи примерную популярность (число запросов в месяц)
-5. Ответ должен быть только в виде JSON-массива объектов с полями keyword, trend (примерное число запросов), competition (0-100)`
+3. Для каждого ключевого слова укажи примерную популярность (число запросов в месяц)
+4. Ответ должен быть только в виде JSON-массива объектов с полями keyword, trend (примерное число запросов), competition (0-100)`
                 },
                 {
                   role: "user",
-                  content: `Посети сайт ${normalizedUrl} и сгенерируй массив релевантных ключевых слов без дополнительных пояснений.`
+                  content: siteContent 
+                    ? `Вот содержимое сайта ${normalizedUrl}:\n\n${siteContent}\n\nПроанализируй этот контент и сгенерируй массив релевантных ключевых слов в JSON формате.`
+                    : `Посети сайт ${normalizedUrl} и сгенерируй массив релевантных ключевых слов в JSON формате.`
                 }
               ],
               max_tokens: 1000,
-              temperature: 0.5
+              temperature: 0.3 // Уменьшаем temperature для более точных результатов
             },
             {
               headers: {
