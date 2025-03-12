@@ -1993,12 +1993,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Создаем отдельный идентификатор запроса для отслеживания
         const requestId = crypto.randomUUID();
         
-        webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/df4257a3-deb1-4c73-82ea-44deead48939', {
-          campaignId: campaignId,
+        // Получаем настройки кампании, включая соц. сети и другие настройки
+        const campaignSettingsResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          params: {
+            fields: ['id', 'trend_analysis_settings'],
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const trendAnalysisSettings = campaignSettingsResponse.data?.data?.trend_analysis_settings || {};
+        console.log('Campaign trend analysis settings:', trendAnalysisSettings);
+        
+        // Настройки поиска по умолчанию, если нет в кампании
+        const followerRequirements = trendAnalysisSettings?.minFollowers || {
+          instagram: 5000,
+          telegram: 2000,
+          vk: 3000,
+          facebook: 5000,
+          youtube: 10000
+        };
+        
+        const maxSourcesPerPlatform = trendAnalysisSettings?.maxSourcesPerPlatform || 5;
+        const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
+        const selectedPlatforms = req.body.platforms || ["instagram", "telegram", "vk"];
+        
+        webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439', {
+          minFollowers: followerRequirements,
+          maxSourcesPerPlatform: maxSourcesPerPlatform,
+          platforms: selectedPlatforms,
           keywords: keywordsList,
+          maxTrendsPerSource: maxTrendsPerSource,
+          language: "ru",
+          filters: {
+            minReactions: 10,
+            minViews: 500,
+            contentTypes: ["text", "image", "video"]
+          },
+          campaignId: campaignId,
           userId: userId,
           requestId: requestId,
-          // Не передаем токен пользователя в webhook, используем requestId для идентификации
         }, {
           headers: {
             'Content-Type': 'application/json',
