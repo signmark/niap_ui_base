@@ -926,13 +926,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestId = crypto.randomUUID();
       console.log(`[${requestId}] Начат анализ сайта: ${normalizedUrl}`);
       
-      // Проверяем кеш
-      const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
-      if (cachedKeywords && cachedKeywords.length > 0) {
-        console.log(`[${requestId}] Используем ${cachedKeywords.length} кешированных ключевых слов для URL: ${normalizedUrl}`);
-        return res.json({ data: { keywords: cachedKeywords } });
-      }
-      
       // Глубокий парсинг сайта для получения максимум контента
       try {
         const parseRequestId = crypto.randomUUID();
