@@ -259,7 +259,8 @@ export const campaignTrendTopics = pgTable("campaign_trend_topics", {
   comments: integer("comments").default(0),
   views: integer("views").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-  isBookmarked: boolean("is_bookmarked").default(false)
+  isBookmarked: boolean("is_bookmarked").default(false),
+  mediaLink: jsonb("media_link").default({})
 });
 
 // Schema для создания трендовых тем из webhook
