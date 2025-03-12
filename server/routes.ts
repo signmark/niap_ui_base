@@ -735,9 +735,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let finalKeywords = [];
       
-      // Если это URL, используем Perplexity API для получения релевантных ключевых слов
+      // Если это URL, используем AI-API для получения релевантных ключевых слов
       if (isUrl) {
-        console.log('Using Perplexity for URL-based keyword search');
+        console.log(`[${requestId}] Using AI for URL-based keyword search`);
         
         // Нормализуем URL
         const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
