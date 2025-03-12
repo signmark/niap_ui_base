@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Play, Bookmark } from "lucide-react";
+import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
@@ -98,6 +99,7 @@ export default function Trends() {
   const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
   const [isSocialNetworkDialogOpen, setIsSocialNetworkDialogOpen] = useState(false);
+  const [selectedTrendTopic, setSelectedTrendTopic] = useState<TrendTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -829,6 +831,69 @@ export default function Trends() {
     });
   };
 
+  // Мутация для обновления статуса закладки
+  const { mutate: updateTrendBookmark } = useMutation({
+    mutationFn: async ({ id, isBookmarked }: { id: string, isBookmarked: boolean }) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      
+      return await fetch(`/api/campaign-trends/${id}/bookmark`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ isBookmarked })
+      }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Ошибка при обновлении закладки');
+          });
+        }
+        return response.json();
+      });
+    },
+    onSuccess: (data) => {
+      console.log('Bookmark updated:', data);
+      
+      // Обновляем данные в кеше
+      queryClient.setQueryData(
+        ["trends", selectedPeriod, selectedCampaignId],
+        (old: TrendTopic[] | undefined) => {
+          if (!old) return [];
+          return old.map(topic => 
+            topic.id === data.id 
+              ? { ...topic, is_bookmarked: data.is_bookmarked }
+              : topic
+          );
+        }
+      );
+      
+      // Обновляем выбранный тренд, если это тот же самый
+      if (selectedTrendTopic && selectedTrendTopic.id === data.id) {
+        setSelectedTrendTopic({
+          ...selectedTrendTopic,
+          is_bookmarked: data.is_bookmarked
+        });
+      }
+      
+      toast({
+        title: data.is_bookmarked ? "Сохранено" : "Удалено из закладок",
+        description: data.is_bookmarked ? "Тренд добавлен в закладки" : "Тренд удален из закладок",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Error updating bookmark:", error);
+      toast({
+        title: "Ошибка!",
+        description: error.message || "Не удалось обновить закладку",
+        variant: "destructive",
+      });
+    }
+  });
+
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";
@@ -1036,7 +1101,7 @@ export default function Trends() {
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
-                            // Разбор JSON из поля media_link
+                            // Разбор JSON из поля media_link для превью
                             let mediaData = { images: [], videos: [] };
                             if (topic.media_link) {
                               try {
@@ -1048,13 +1113,17 @@ export default function Trends() {
                             
                             // Первое изображение или видео для превью
                             const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
-                            const firstVideo = mediaData.videos && mediaData.videos.length > 0 ? mediaData.videos[0] : null;
+                            const hasVideo = mediaData.videos && mediaData.videos.length > 0;
                             
                             return (
-                              <Card key={topic.id} className="overflow-hidden">
+                              <Card 
+                                key={topic.id} 
+                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                onClick={() => setSelectedTrendTopic(topic)}
+                              >
                                 <div className="relative">
                                   {/* Чекбокс для выбора тренда */}
-                                  <div className="absolute top-2 left-2 z-10">
+                                  <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox
                                       checked={selectedTopics.some(t => t.id === topic.id)}
                                       onCheckedChange={() => toggleTopicSelection(topic)}
@@ -1062,7 +1131,7 @@ export default function Trends() {
                                     />
                                   </div>
                                   
-                                  {/* Превью медиа-контента */}
+                                  {/* Превью (минимальная версия) */}
                                   {firstImage ? (
                                     <div className="aspect-video relative">
                                       <img 
@@ -1074,19 +1143,18 @@ export default function Trends() {
                                           e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
                                         }}
                                       />
-                                      {mediaData.images.length > 1 && (
+                                      {mediaData.images && mediaData.images.length > 1 && (
                                         <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                                           +{mediaData.images.length - 1}
                                         </div>
                                       )}
                                     </div>
-                                  ) : firstVideo ? (
-                                    <div className="aspect-video relative">
-                                      <video 
-                                        src={firstVideo}
-                                        className="w-full h-full object-cover"
-                                        controls
-                                      />
+                                  ) : hasVideo ? (
+                                    <div className="aspect-video bg-muted flex items-center justify-center relative">
+                                      <Play className="h-12 w-12 text-muted-foreground/50" />
+                                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                        Видео
+                                      </div>
                                     </div>
                                   ) : (
                                     <div className="aspect-video bg-muted flex items-center justify-center">
