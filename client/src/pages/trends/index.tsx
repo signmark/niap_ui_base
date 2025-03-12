@@ -1101,32 +1101,32 @@ export default function Trends() {
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
-                            // Разбор JSON из поля media_link для превью
+                            // Разбор JSON из поля media_links для превью
                             let mediaData = { images: [], videos: [] };
-                            if (topic.media_link) {
+                            if (topic.media_links) {
                               try {
-                                console.log('Media link data для темы:', topic.title, topic.media_link.substring(0, 100));
-                                mediaData = JSON.parse(topic.media_link);
+                                console.log('Media links data для темы:', topic.title, topic.media_links.substring(0, 100));
+                                mediaData = JSON.parse(topic.media_links);
                                 console.log('Parsed media data:', mediaData);
                               } catch (e) {
-                                console.error('Ошибка разбора JSON в media_link:', e);
+                                console.error('Ошибка разбора JSON в media_links:', e);
                               }
                             } else {
-                              console.log('Нет media_link для темы:', topic.title);
+                              console.log('Нет media_links для темы:', topic.title);
                             }
                             
                             // Первое изображение или видео для превью
                             const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
                             const hasVideo = mediaData.videos && mediaData.videos.length > 0;
                             
-                            if (firstImage) {
+                            if (firstImage && typeof firstImage === 'string') {
                               console.log('Найдено изображение для превью:', firstImage.substring(0, 100));
                             }
                             
                             return (
                               <Card 
                                 key={topic.id} 
-                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-900/50 border-gray-800"
                                 onClick={() => setSelectedTrendTopic(topic)}
                               >
                                 <div className="relative">
@@ -1171,25 +1171,30 @@ export default function Trends() {
                                   )}
                                 </div>
                                 
-                                <CardContent className="p-4">
-                                  <h3 className="font-medium line-clamp-2 mb-1">{topic.title}</h3>
-                                  <p className="text-sm text-muted-foreground mb-2">
+                                <CardContent className="p-3">
+                                  <h3 className="font-medium line-clamp-2 mb-1 text-sm">{topic.title}</h3>
+                                  <p className="text-xs text-muted-foreground mb-2">
                                     {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
                                   </p>
                                   
-                                  <div className="flex justify-between text-sm text-muted-foreground">
+                                  <div className="flex justify-between text-xs text-muted-foreground mt-auto">
                                     <div className="flex items-center">
-                                      <ThumbsUp className="h-4 w-4 mr-1" />
+                                      <ThumbsUp className="h-3 w-3 mr-1" />
                                       {topic.reactions?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="flex items-center">
-                                      <MessageSquare className="h-4 w-4 mr-1" />
+                                      <MessageSquare className="h-3 w-3 mr-1" />
                                       {topic.comments?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="flex items-center">
-                                      <Eye className="h-4 w-4 mr-1" />
+                                      <Eye className="h-3 w-3 mr-1" />
                                       {topic.views?.toLocaleString() ?? 0}
                                     </div>
+                                    {topic.is_bookmarked && (
+                                      <div className="flex items-center">
+                                        <Bookmark className="h-3 w-3 text-primary" />
+                                      </div>
+                                    )}
                                   </div>
                                 </CardContent>
                               </Card>
