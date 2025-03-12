@@ -38,6 +38,24 @@ interface TrendDetailDialogProps {
   sourceName?: string;
 }
 
+// Функция для создания прокси-URL с учётом типа источника
+const createProxyImageUrl = (imageUrl: string, topicId: string) => {
+  // Проверяем, является ли это Instagram URL
+  const isInstagram = imageUrl.includes('instagram.') || 
+                      imageUrl.includes('fbcdn.net') || 
+                      imageUrl.includes('cdninstagram.com');
+  
+  if (isInstagram) {
+    // Для Instagram используем специальный параметр
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_force=instagram&_t=${Date.now()}`;
+    console.log(`[TrendDetail ${topicId}] Instagram image detected, using special mode: ${proxyUrl}`);
+    return proxyUrl;
+  } else {
+    // Для обычных URL
+    return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}`;
+  }
+};
+
 export function TrendDetailDialog({
   topic,
   isOpen,
@@ -181,7 +199,7 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images?.[currentImageIndex] || '')}&_t=${Date.now()}`}
+                src={topic && mediaData.images?.[currentImageIndex] ? createProxyImageUrl(mediaData.images[currentImageIndex], topic.id) : ''}
                 alt={topic.title}
                 loading="lazy"
                 className="w-full h-auto object-contain max-h-[60vh]"
@@ -256,7 +274,7 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos?.[0] || '')}&_t=${Date.now()}`} 
+              src={topic && mediaData.videos?.[0] ? createProxyImageUrl(mediaData.videos[0], topic.id) : ''} 
               controls 
               className="w-full max-h-[60vh]"
               controlsList="nodownload"
