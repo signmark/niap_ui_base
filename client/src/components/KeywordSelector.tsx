@@ -17,7 +17,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const [isSearching, setIsSearching] = useState(false);
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { add } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -52,7 +52,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       const data = await response.json();
 
       if (!data?.data?.keywords?.length) {
-        add({ description: "Не найдено ключевых слов" });
+        toast({ description: "Не найдено ключевых слов" });
         return;
       }
 
@@ -64,9 +64,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
       }));
 
       setSearchResults(formattedResults);
-      add({ description: `Найдено ${formattedResults.length} ключевых слов` });
+      toast({ description: `Найдено ${formattedResults.length} ключевых слов` });
     } catch (error) {
-      add({
+      toast({
         variant: "destructive",
         description: "Не удалось выполнить поиск"
       });
@@ -88,7 +88,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSaveSelected = async () => {
     const selectedKeywords = searchResults.filter(kw => kw.selected);
     if (!selectedKeywords.length) {
-      add({
+      toast({
         variant: "destructive",
         description: "Выберите ключевые слова"
       });
@@ -97,7 +97,7 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
     const authToken = localStorage.getItem('auth_token');
     if (!authToken) {
-      add({
+      toast({
         variant: "destructive",
         description: "Требуется авторизация"
       });
@@ -124,10 +124,10 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
 
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
       setSearchResults([]);
-      add({ description: "Ключевые слова добавлены" });
+      toast({ description: "Ключевые слова добавлены" });
     } catch (error: any) {
       console.error('Error saving keywords:', error);
-      add({
+      toast({
         variant: "destructive",
         description: "Не удалось сохранить ключевые слова"
       });
@@ -167,9 +167,9 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
           try {
             await directusApi.delete(`items/user_keywords/${id}`);
             queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            add({ description: "Ключевое слово удалено" });
+            toast({ description: "Ключевое слово удалено" });
           } catch {
-            add({
+            toast({
               variant: "destructive",
               description: "Не удалось удалить ключевое слово"
             });
