@@ -37,6 +37,17 @@ export const campaigns = pgTable("user_campaigns", {
     instagram: { token: null, accessToken: null },
     facebook: { token: null, pageId: null },
     youtube: { apiKey: null, channelId: null }
+  }),
+  trendAnalysisSettings: jsonb("trend_analysis_settings").default({
+    minFollowers: {
+      instagram: 5000,
+      telegram: 2000,
+      vk: 3000,
+      facebook: 5000,
+      youtube: 10000
+    },
+    maxSourcesPerPlatform: 10,
+    maxTrendsPerSource: 5
   })
 });
 
@@ -73,7 +84,8 @@ export const insertCampaignSchema = createInsertSchema(campaigns)
     description: true,
     userId: true,
     link: true,
-    socialMediaSettings: true
+    socialMediaSettings: true,
+    trendAnalysisSettings: true
   });
 
 export const insertContentSourceSchema = createInsertSchema(contentSources)
@@ -98,6 +110,18 @@ export const insertTrendTopicSchema = createInsertSchema(trendTopics)
   });
 
 // Types for social media settings
+export interface TrendAnalysisSettings {
+  minFollowers: {
+    instagram: number;
+    telegram: number;
+    vk: number;
+    facebook: number;
+    youtube: number;
+  };
+  maxSourcesPerPlatform: number;
+  maxTrendsPerSource: number;
+}
+
 export interface SocialMediaSettings {
   telegram?: {
     token: string | null;
