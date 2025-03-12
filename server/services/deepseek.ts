@@ -14,11 +14,21 @@ export interface DeepSeekMessage {
 }
 
 export class DeepSeekService {
-  private readonly apiKey: string;
+  private apiKey: string;
   private readonly baseUrl = 'https://api.deepseek.com/v1';
   
   constructor(config: DeepSeekConfig) {
     this.apiKey = config.apiKey;
+  }
+  
+  /**
+   * Обновляет API ключ сервиса
+   */
+  updateApiKey(newApiKey: string): void {
+    if (newApiKey && newApiKey.trim() !== '') {
+      this.apiKey = newApiKey;
+      console.log("DeepSeek API key updated from user settings");
+    }
   }
 
   /**

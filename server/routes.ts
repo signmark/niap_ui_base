@@ -565,6 +565,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
   fixCampaignContent(app);
   
   // Маршрут для генерации контента через Perplexity API
+  app.post("/api/content/generate-deepseek", async (req, res) => {
+    try {
+      const { prompt, keywords, tone, platform, campaignId } = req.body;
+      
+      if (!prompt || !keywords || !tone || !campaignId) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+      
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получаем API ключ DeepSeek из настроек пользователя
+        const settings = await directusApi.get('/items/user_api_keys', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              service_name: { _eq: 'deepseek' }
+            }
+          }
+        });
+        
+        const deepseekKey = settings.data?.data?.[0]?.api_key;
+        
+        // Если ключ найден в настройках, используем его
+        if (deepseekKey) {
+          // Обновляем ключ в сервисе
+          deepseekService.updateApiKey(deepseekKey);
+        }
+
+        // Конвертируем тон в формат, понятный DeepSeek
+        let deepseekTone: 'professional' | 'casual' | 'friendly' | 'humorous' = 'professional';
+        switch (tone) {
+          case "informative":
+            deepseekTone = 'professional';
+            break;
+          case "friendly":
+            deepseekTone = 'friendly';
+            break;
+          case "professional":
+            deepseekTone = 'professional';
+            break;
+          case "casual":
+            deepseekTone = 'casual';
+            break;
+          case "humorous":
+            deepseekTone = 'humorous';
+            break;
+        }
+        
+        // Формируем запрос к DeepSeek API для генерации контента
+        console.log(`Generating content with DeepSeek for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+        
+        // Генерируем контент с помощью DeepSeek
+        const content = await deepseekService.generateSocialContent(
+          keywords,
+          [prompt], // Используем prompt как тему
+          platform || 'facebook', // Если платформа не указана, используем facebook по умолчанию
+          {
+            tone: deepseekTone,
+            length: 'medium', // Medium по умолчанию
+            language: 'ru' // Русский язык по умолчанию
+          }
+        );
+        
+        console.log(`Generated content with DeepSeek, length: ${content.length} characters`);
+        
+        // Возвращаем сгенерированный контент
+        return res.json({
+          success: true,
+          content,
+          service: 'deepseek'
+        });
+      } catch (error: any) {
+        console.error("Error getting DeepSeek API key or generating content:", error);
+        return res.status(400).json({ 
+          error: "Ошибка при генерации контента с помощью DeepSeek API", 
+          details: error.message 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error in content generation endpoint:", error);
+      return res.status(500).json({ error: "Ошибка сервера" });
+    }
+  });
+
   app.post("/api/generate-content", async (req, res) => {
     try {
       const { prompt, keywords, tone, campaignId } = req.body;
@@ -659,7 +752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const content = response.data.choices[0].message.content;
         console.log(`Generated content length: ${content.length} characters`);
         
-        res.json({ success: true, content });
+        return res.json({ 
+          success: true, 
+          content,
+          service: 'perplexity'
+        });
         
       } catch (error) {
         console.error('Error generating content with Perplexity:', error);

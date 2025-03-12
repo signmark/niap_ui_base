@@ -12,6 +12,7 @@ import { queryClient } from '@/lib/queryClient';
 import { apiRequest } from '@/lib/queryClient';
 import RichTextEditor from './RichTextEditor';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Определение интерфейса CampainKeyword локально
 interface CampainKeyword {
@@ -27,6 +28,8 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
+type ApiService = 'perplexity' | 'deepseek';
+
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -35,6 +38,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [prompt, setPrompt] = useState('');
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
+  const [platform, setPlatform] = useState('facebook');
+  const [selectedService, setSelectedService] = useState<ApiService>('perplexity');
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -52,13 +57,20 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
       setIsGenerating(true);
 
-      // Используем Perplexity API для генерации контента
+      // Получаем токен авторизации
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error('Требуется авторизация');
       }
 
-      const response = await fetch('/api/generate-content', {
+      // Выбираем API в зависимости от выбранного сервиса
+      const apiEndpoint = selectedService === 'perplexity' 
+        ? '/api/generate-content' 
+        : '/api/content/generate-deepseek';
+      
+      console.log(`Генерация контента через ${selectedService} API`);
+
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +80,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           prompt: prompt,
           keywords: selectedKeywords,
           tone,
-          campaignId
+          campaignId,
+          platform: platform // Используется только для DeepSeek
         })
       });
 
@@ -78,11 +91,19 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       const data = await response.json();
-      return data.content;
+      
+      // Добавляем информацию о используемом сервисе
+      return {
+        content: data.content,
+        service: data.service || selectedService
+      };
     },
-    onSuccess: (content) => {
+    onSuccess: (data) => {
       // Преобразуем контент в формат, подходящий для редактора
       // Заменяем обычные переносы строки на HTML-параграфы
+      const content = data.content;
+      const service = data.service;
+      
       let formattedContent = content
         .split('\n\n').map(paragraph => paragraph.trim()) // Разбиваем на параграфы
         .filter(p => p) // Убираем пустые параграфы
@@ -104,7 +125,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       setIsGenerating(false);
       toast({
         title: 'Успешно',
-        description: 'Контент сгенерирован'
+        description: `Контент сгенерирован с помощью ${service}`
       });
     },
     onError: (error: Error) => {
@@ -179,6 +200,46 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         <div className="grid gap-4 py-4">
           {!generationResult ? (
             <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="service" className="text-right">
+                  API Сервис
+                </Label>
+                <div className="col-span-3">
+                  <Tabs 
+                    value={selectedService} 
+                    onValueChange={(value) => setSelectedService(value as ApiService)}
+                    className="w-full"
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="perplexity">Perplexity</TabsTrigger>
+                      <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              </div>
+              
+              {selectedService === 'deepseek' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="platform" className="text-right">
+                    Платформа
+                  </Label>
+                  <Select
+                    value={platform}
+                    onValueChange={setPlatform}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Выберите платформу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="facebook">Facebook</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="telegram">Telegram</SelectItem>
+                      <SelectItem value="vk">ВКонтакте</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="tone" className="text-right">
                   Тон контента
