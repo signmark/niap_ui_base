@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
@@ -646,7 +646,11 @@ export default function Trends() {
       case 'start':
         return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
       case 'processing':
-        return <RefreshCw className="h-4 w-4 text-yellow-500" />;
+        return <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />;
+      case 'running':
+        return <Clock className="h-4 w-4 animate-spin text-blue-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'finished':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
@@ -798,7 +802,8 @@ export default function Trends() {
                             variant="ghost"
                             size="icon"
                             onClick={() => launchWebhook(source.id)}
-                            disabled={source.status === 'start' || source.status === 'processing'}
+                            disabled={source.status === 'start' || source.status === 'processing' || source.status === 'running'}
+                            title="Запустить сбор данных из источника"
                           >
                             <Bot className="h-4 w-4" />
                           </Button>
