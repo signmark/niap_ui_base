@@ -118,7 +118,6 @@ export function TrendAnalysisSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">Настройки анализа трендов</h3>
         <p className="text-sm text-muted-foreground mb-4">
           Настройте параметры поиска и анализа трендов для этой кампании. Эти настройки влияют на то, какие источники будут использоваться при анализе трендов.
         </p>
