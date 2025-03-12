@@ -40,6 +40,24 @@ interface TrendTopic {
   media_links?: Post[]; // Массив постов
 }
 
+// Функция для создания прокси-URL с учётом типа источника
+const createProxyImageUrl = (imageUrl: string, trendId: string) => {
+  // Проверяем, является ли это Instagram URL
+  const isInstagram = imageUrl.includes('instagram.') || 
+                      imageUrl.includes('fbcdn.net') || 
+                      imageUrl.includes('cdninstagram.com');
+  
+  if (isInstagram) {
+    // Для Instagram используем специальный параметр
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_force=instagram&_t=${Date.now()}`;
+    console.log(`[Trend ${trendId}] Instagram image detected, using special mode: ${proxyUrl}`);
+    return proxyUrl;
+  } else {
+    // Для обычных URL
+    return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}`;
+  }
+};
+
 export function TrendsList({ campaignId }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const queryClient = useQueryClient();
