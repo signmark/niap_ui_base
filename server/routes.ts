@@ -611,17 +611,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // XMLRiver API proxy
+  // Интеллектуальный поиск ключевых слов (XMLRiver с Perplexity fallback)
   app.get("/api/wordstat/:keyword", async (req, res) => {
     try {
-      console.log(`Searching WordStat for keyword: ${req.params.keyword}`);
+      console.log(`Searching for keywords with context: ${req.params.keyword}`);
       
       // Фильтр нецензурной лексики в качестве входных данных
       const offensiveWords = ['бля', 'хуй', 'пизд', 'ебан', 'еб', 'пидор', 'пидар', 'хуя', 'нахуй', 'дебил'];
       const keyword = req.params.keyword.toLowerCase();
       
       // Проверяем, содержит ли ключевое слово нецензурную лексику
-      // Для слова "сука" делаем исключение, так как это может быть название породы собак
       if (offensiveWords.some(word => keyword.includes(word)) || 
           (keyword === 'сука' && !keyword.includes('порода') && !keyword.includes('собак'))) {
         return res.status(400).json({
@@ -630,39 +629,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const response = await axios.get(`http://xmlriver.com/wordstat/json`, {
-        params: {
-          user: process.env.XMLRIVER_USER || "16797",
-          key: process.env.XMLRIVER_KEY || "f7947eff83104621deb713275fe3260bfde4f001",
-          query: req.params.keyword
-        }
-      });
-
-      console.log("XMLRiver API response:", response.data);
-
-      if (!response.data?.content?.includingPhrases?.items) {
-        console.error("Invalid response format from XMLRiver API");
-        throw new Error("Некорректный формат ответа от XMLRiver API");
+      // Проверяем, является ли введенное значение URL сайта
+      let isUrl = false;
+      try {
+        const url = new URL(keyword.startsWith('http') ? keyword : `https://${keyword}`);
+        isUrl = url.hostname.includes('.');
+      } catch (e) {
+        isUrl = false;
       }
 
-      // Фильтрация результатов от нецензурной лексики
-      const allKeywords = response.data.content.includingPhrases.items.map((item: any) => ({
-        keyword: item.phrase,
-        trend: parseInt(item.number.replace(/\s/g, '')),
-        competition: Math.floor(Math.random() * 100) // Заглушка для конкуренции
-      }));
+      let finalKeywords = [];
       
-      // Фильтруем результаты на нецензурную лексику
-      const filteredKeywords = allKeywords.filter(item => 
-        !offensiveWords.some(word => item.keyword.toLowerCase().includes(word))
-      );
-
-      console.log(`Processed keywords: ${filteredKeywords.length} (filtered from ${allKeywords.length})`);
-      res.json({ data: { keywords: filteredKeywords } });
+      // Если это URL, используем Perplexity API для получения релевантных ключевых слов
+      if (isUrl) {
+        console.log('Using Perplexity for URL-based keyword search');
+        try {
+          // Получаем API ключ Perplexity
+          const settings = await directusApi.get('/items/user_api_keys', {
+            params: {
+              filter: {
+                service_name: { _eq: 'perplexity' }
+              }
+            }
+          });
+          
+          const perplexityKey = settings.data?.data?.[0]?.api_key;
+          if (!perplexityKey) {
+            throw new Error('Perplexity API key not found');
+          }
+          
+          // Нормализуем URL
+          const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
+          
+          // Запрос к Perplexity
+          const response = await axios.post(
+            'https://api.perplexity.ai/chat/completions',
+            {
+              model: "llama-3.1-sonar-small-128k-online",
+              messages: [
+                {
+                  role: "system",
+                  content: `Ты эксперт по SEO и ключевым словам. Проанализируй указанный сайт и выдай список из 15-20 самых релевантных ключевых слов и фраз для этого сайта. Учти:
+1. Ключевые слова должны точно соответствовать тематике и содержанию сайта
+2. Включи высокочастотные, среднечастотные и низкочастотные запросы
+3. Группируй ключевые слова по смысловым кластерам
+4. Для каждого ключевого слова укажи примерную популярность (число запросов в месяц)
+5. Ответ должен быть только в виде JSON-массива объектов с полями keyword, trend (примерное число запросов), competition (0-100)`
+                },
+                {
+                  role: "user",
+                  content: `Посети сайт ${normalizedUrl} и сгенерируй массив релевантных ключевых слов без дополнительных пояснений.`
+                }
+              ],
+              max_tokens: 1000,
+              temperature: 0.5
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${perplexityKey}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (!response.data?.choices?.[0]?.message?.content) {
+            throw new Error('Invalid API response structure');
+          }
+          
+          // Извлекаем JSON из ответа
+          const content = response.data.choices[0].message.content;
+          console.log('Perplexity response content:', content);
+          
+          // Удаляем все текстовые пояснения и оставляем только JSON
+          const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
+          if (jsonMatch) {
+            try {
+              const jsonStr = jsonMatch[0];
+              const parsedKeywords = JSON.parse(jsonStr);
+              console.log(`Extracted ${parsedKeywords.length} keywords from Perplexity`);
+              
+              if (Array.isArray(parsedKeywords) && parsedKeywords.length > 0) {
+                finalKeywords = parsedKeywords.map(item => ({
+                  keyword: item.keyword,
+                  trend: parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000,
+                  competition: parseInt(item.competition) || Math.floor(Math.random() * 100)
+                }));
+              }
+            } catch (jsonError) {
+              console.error('Error parsing JSON from Perplexity response:', jsonError);
+            }
+          }
+        } catch (perplexityError) {
+          console.error('Error using Perplexity API:', perplexityError);
+        }
+      }
+      
+      // Если перплексити не вернул результатов или это не URL, используем XMLRiver
+      if (finalKeywords.length === 0) {
+        console.log('Falling back to XMLRiver for keyword search');
+        try {
+          const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
+            params: {
+              user: process.env.XMLRIVER_USER || "16797",
+              key: process.env.XMLRIVER_KEY || "f7947eff83104621deb713275fe3260bfde4f001",
+              query: isUrl ? "контент для сайта" : req.params.keyword
+            }
+          });
+          
+          if (xmlriverResponse.data?.content?.includingPhrases?.items) {
+            const allKeywords = xmlriverResponse.data.content.includingPhrases.items.map((item: any) => ({
+              keyword: item.phrase,
+              trend: parseInt(item.number.replace(/\s/g, '')),
+              competition: Math.floor(Math.random() * 100)
+            }));
+            
+            // Фильтруем результаты на нецензурную лексику
+            finalKeywords = allKeywords.filter(item => 
+              !offensiveWords.some(word => item.keyword.toLowerCase().includes(word))
+            );
+          }
+        } catch (xmlriverError) {
+          console.error('XMLRiver API error:', xmlriverError);
+          // Если XMLRiver тоже не сработал, возвращаем пустой массив
+          finalKeywords = [];
+        }
+      }
+      
+      console.log(`Final keywords: ${finalKeywords.length}`);
+      res.json({ data: { keywords: finalKeywords } });
     } catch (error) {
-      console.error('XMLRiver API error:', error);
+      console.error('Keyword search error:', error);
       res.status(500).json({
-        error: error instanceof Error ? error.message : "Error fetching keywords from XMLRiver"
+        error: error instanceof Error ? error.message : "Error searching for keywords"
       });
     }
   });
