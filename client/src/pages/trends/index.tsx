@@ -232,6 +232,31 @@ export default function Trends() {
     refetchInterval: false
   });
 
+  // Используем useRef для отслеживания необходимости обновления данных
+  const shouldRefreshSources = useRef<boolean>(false);
+  
+  // Настраиваем интервал для периодического обновления статусов источников
+  useEffect(() => {
+    if (!selectedCampaignId) return;
+    
+    // Создаем интервал обновления для всех источников
+    const refreshInterval = setInterval(() => {
+      if (activeSourceId) {
+        // Если есть активный источник, обновление будет происходить через checkSourceStatus
+        return;
+      }
+      
+      // Иначе помечаем, что нужно обновить данные
+      shouldRefreshSources.current = true;
+      // И запускаем обновление запроса
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+    }, 5000); // Обновляем каждые 5 секунд если нет активного источника
+    
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [selectedCampaignId, activeSourceId, queryClient]);
+
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
     queryKey: ["campaign_content_sources", selectedCampaignId],
     queryFn: async () => {
@@ -266,10 +291,14 @@ export default function Trends() {
         dataLength: response.data?.data?.length,
         firstSource: response.data?.data?.[0]
       });
+      
+      // Сбрасываем флаг обновления
+      shouldRefreshSources.current = false;
 
       return response.data?.data || [];
     },
-    enabled: !!selectedCampaignId
+    enabled: !!selectedCampaignId,
+    refetchInterval: 3000 // Обновляем каждые 3 секунды автоматически
   });
 
   const { mutate: launchWebhook } = useMutation({
