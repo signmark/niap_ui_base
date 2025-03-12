@@ -156,9 +156,8 @@ export function TrendDetailDialog({
     }
   }
   
-  // Добавляем параметры для избежания кеширования к URL изображений
-  mediaData.images = mediaData.images.map(url => url + (url.includes('?') ? '&_nc=' : '?_nc=') + Date.now());
-  mediaData.videos = mediaData.videos.map(url => url + (url.includes('?') ? '&_nc=' : '?_nc=') + Date.now());
+  // Не добавляем параметры для избежания кеширования к URL напрямую,
+  // это будет делать функция createProxyImageUrl
 
   // Функция для форматирования даты создания
   const formatDate = (dateString: string) => {
@@ -228,8 +227,10 @@ export function TrendDetailDialog({
                       // Для Instagram повторяем попытку через прокси с дополнительными параметрами
                       if (isInstagram) {
                         console.log(`[TrendDetail] Instagram URL обнаружен, используем специальный режим`);
-                        const retryProxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_t=${Date.now()}`;
-                        e.currentTarget.src = retryProxyUrl;
+                        // Используем нашу функцию с флагом _retry
+                        const instagramUrl = createProxyImageUrl(urlWithNocache, topic.id);
+                        const retryUrl = instagramUrl + "&_retry=true";
+                        e.currentTarget.src = retryUrl;
                       } else {
                         // Для неинстаграмных URL используем прямую ссылку
                         console.log(`[TrendDetail] Обычный URL, пробуем прямую ссылку`);
@@ -302,8 +303,10 @@ export function TrendDetailDialog({
                     // Для Telegram пробуем специальную обработку
                     if (isTelegram) {
                       console.log(`[TrendDetail] Telegram видео обнаружено, используем специальный режим`);
-                      const retryProxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_t=${Date.now()}`;
-                      e.currentTarget.src = retryProxyUrl;
+                      // Используем нашу функцию с флагом _retry
+                      const telegramUrl = createProxyImageUrl(urlWithNocache, topic.id);
+                      const retryUrl = telegramUrl + "&_retry=true";
+                      e.currentTarget.src = retryUrl;
                     } else {
                       // Для обычных видео используем прямую ссылку
                       console.log(`[TrendDetail] Обычное видео, пробуем прямую ссылку`);
