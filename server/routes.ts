@@ -132,37 +132,52 @@ async function fetchAndProxyImage(url: string, res: any) {
     }
     
     // Специальная обработка для Instagram
-    const isInstagram = url.includes('instagram.') || url.includes('fbcdn.net');
+    const isInstagram = url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com');
     if (isInstagram) {
       console.log('Processing Instagram URL');
+      
+      // Добавляем к URL параметр для обхода кеширования
+      fixedUrl = url.includes('?') 
+        ? `${url}&_nocache=${Date.now()}` 
+        : `${url}?_nocache=${Date.now()}`;
+      
+      console.log(`Modified Instagram URL with cache-busting: ${fixedUrl}`);
     }
     
     // Настраиваем заголовки в зависимости от источника
     const headers: Record<string, string> = {
-      // Базовые заголовки
+      // Базовые заголовки для всех запросов
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
       'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Referer': 'https://nplanner.ru/',
       'Cache-Control': 'no-cache',
       'Pragma': 'no-cache',
     };
     
     // Добавляем специальные заголовки для Instagram
     if (isInstagram) {
+      // Добавляем заголовки, имитирующие запрос от браузера
+      headers['Referer'] = 'https://www.instagram.com/';
+      headers['Origin'] = 'https://www.instagram.com';
+      headers['sec-ch-ua'] = '"Chromium";v="120", "Google Chrome";v="120"';
+      headers['sec-ch-ua-mobile'] = '?0';
+      headers['sec-ch-ua-platform'] = '"Windows"';
       headers['sec-fetch-dest'] = 'image';
       headers['sec-fetch-mode'] = 'no-cors';
-      headers['sec-fetch-site'] = 'cross-site';
-      headers['Origin'] = 'https://nplanner.ru';
-      headers['X-Instagram-GIS'] = 'random-hash'; // Можно сгенерировать случайный хеш
+      headers['sec-fetch-site'] = 'same-site';
+    } else {
+      headers['Referer'] = 'https://nplanner.ru/';
     }
+    
+    console.log(`Sending request to ${fixedUrl} with headers:`, headers);
     
     // Set a timeout to prevent hanging requests
     const response = await axios.get(fixedUrl, {
       responseType: 'arraybuffer',
-      timeout: 10000, // Увеличенный таймаут для медленных серверов
+      timeout: 15000, // Увеличенный таймаут для медленных серверов
       headers: headers,
-      maxRedirects: 5 // Поддержка перенаправлений
+      maxRedirects: 5, // Поддержка перенаправлений
+      validateStatus: (status) => status < 400, // Принимаем только успешные статусы
     });
 
     // Set appropriate headers based on content type
