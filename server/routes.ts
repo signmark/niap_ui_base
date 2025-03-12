@@ -1783,7 +1783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Получаем тренды напрямую из Directus API
-        const response = await directusApi.get('/items/trend_topics', {
+        const response = await directusApi.get('/items/campaign_trend_topics', {
           params: {
             filter: filter,
             sort: ['-created_at']
