@@ -935,15 +935,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Глубокий парсинг сайта для получения максимум контента
       try {
-        console.log(`[${requestId}] Начинаем глубокий парсинг сайта`);
+        const parseRequestId = crypto.randomUUID();
+        console.log(`[${parseRequestId}] Начинаем глубокий парсинг сайта`);
         const siteContent = await extractFullSiteContent(normalizedUrl);
         
         // Получаем ключевые слова от DeepSeek
-        const requestId = crypto.randomUUID();
+        // Создаем новый requestId для запроса к DeepSeek
+        const deepseekRequestId = crypto.randomUUID();
         const deepseekKeywords = await deepseekService.generateKeywordsForUrl(
           normalizedUrl, 
           siteContent, 
-          requestId
+          deepseekRequestId
         );
         
         // Кешируем результаты
@@ -979,12 +981,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Выполняется глубокий парсинг сайта: ${url}`);
       
       const response = await axios.get(url, {
-        timeout: 10000,
+        timeout: 15000, // Увеличиваем timeout для сложных сайтов
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
           'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
-        }
+        },
+        maxRedirects: 5 // Разрешаем редиректы для корректной обработки сайтов
       });
       
       const htmlContent = response.data;
