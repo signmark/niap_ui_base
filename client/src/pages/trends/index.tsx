@@ -154,18 +154,21 @@ export default function Trends() {
         }
       }
 
-      // Обновляем кеш с новым статусом
+      // Обновляем кеш с новым статусом, гарантируя немедленное обновление UI
       queryClient.setQueryData(
         ["campaign_content_sources", selectedCampaignId],
-        (old: any[]) => old?.map(source =>
-          source.id === sourceId
-            ? { ...source, status }
-            : source
-        )
+        (old: any[]) => {
+          if (!old) return [];
+          return old.map(source =>
+            source.id === sourceId
+              ? { ...source, status: status || 'processing' }
+              : source
+          );
+        }
       );
       
       // Перезапрашиваем данные для обновления отображения на UI
-      if (status === 'running' || status === 'processing') {
+      if (status === 'start' || status === 'running' || status === 'processing') {
         queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       }
     } catch (error) {
@@ -347,6 +350,16 @@ export default function Trends() {
       
       // Устанавливаем активный источник для проверки статуса
       setActiveSourceId(sourceId);
+      
+      // Сразу же устанавливаем статус "processing" для мгновенной обратной связи
+      queryClient.setQueryData(
+        ["campaign_content_sources", selectedCampaignId],
+        (old: any[]) => old?.map(source =>
+          source.id === sourceId
+            ? { ...source, status: 'processing' }
+            : source
+        )
+      );
       
       // Запускаем интервал проверки статуса каждые 3 секунды
       if (statusCheckInterval.current) {
