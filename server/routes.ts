@@ -2127,6 +2127,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   console.log('Sending payload to Directus:', JSON.stringify(payload).substring(0, 100));
                   
                   // Используем storage.createCampaignTrendTopic вместо прямого вызова Directus API
+                  // Обрабатываем медиа-ссылки
+                  let mediaLinks = {};
+                  
+                  // Извлекаем изображения из поста Telegram, если они есть
+                  if (post.photos && Array.isArray(post.photos) && post.photos.length > 0) {
+                    mediaLinks = {
+                      images: post.photos.map((photo: string) => photo),
+                      videos: []
+                    };
+                    console.log("Extracted media links from Telegram post:", JSON.stringify(mediaLinks));
+                  }
+                  
+                  // Создаем объект с данными тренда
                   const trendTopicData: InsertCampaignTrendTopic = {
                     title: payload.title,
                     sourceId: payload.source_id,
@@ -2134,7 +2147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     reactions: payload.reactions,
                     comments: payload.comments,
                     views: payload.views,
-                    isBookmarked: payload.is_bookmarked
+                    isBookmarked: payload.is_bookmarked,
+                    mediaLinks: mediaLinks
                   };
                   
                   console.log('Saving trend topic using storage:', JSON.stringify(trendTopicData).substring(0, 100));

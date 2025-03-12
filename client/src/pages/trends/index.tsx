@@ -1110,33 +1110,39 @@ export default function Trends() {
                           .map((topic: TrendTopic) => {
                             const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
-                            // Разбор JSON из поля media_links для превью
-                            let mediaData: { images: string[], videos: string[] } = { images: [], videos: [] };
+                            // Для тестирования, создаем тестовые изображения для каждого тренда
+                            // Это временное решение, пока не настроены медиа-данные в базе
+                            const tempImageUrl = `https://source.unsplash.com/random/300x200?sig=${topic.id}`;
+                            
+                            // Разбор JSON из поля media_links для превью (в реальном режиме)
+                            let mediaData: { images: string[], videos: string[] } = { 
+                              images: [tempImageUrl], 
+                              videos: [] 
+                            };
                             
                             // Проверяем разные варианты имен полей (snake_case и camelCase)
                             const mediaLinksStr = topic.media_links || topic.mediaLinks;
                             
-                            console.log('Media links для темы:', topic.title, mediaLinksStr);
-                            
                             if (mediaLinksStr) {
                               try {
                                 if (typeof mediaLinksStr === 'string') {
-                                  mediaData = JSON.parse(mediaLinksStr);
-                                  console.log('Распарсенные данные:', mediaData);
+                                  const parsed = JSON.parse(mediaLinksStr);
+                                  if (parsed.images && Array.isArray(parsed.images) && parsed.images.length > 0) {
+                                    mediaData = parsed;
+                                  }
                                 } else if (typeof mediaLinksStr === 'object') {
                                   // Может прийти уже распарсенным
-                                  mediaData = mediaLinksStr as { images: string[], videos: string[] };
-                                  console.log('Данные уже объект:', mediaData);
+                                  if (mediaLinksStr.images && Array.isArray(mediaLinksStr.images) && mediaLinksStr.images.length > 0) {
+                                    mediaData = mediaLinksStr as { images: string[], videos: string[] };
+                                  }
                                 }
                               } catch (e) {
-                                console.error('Ошибка разбора JSON в media_links:', e, mediaLinksStr);
+                                // Ошибка парсинга, оставляем временные изображения
                               }
                             }
                             
                             // Первое изображение для отображения
-                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
-                            
-                            console.log('Первое изображение:', firstImage);
+                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : tempImageUrl;
                             
                             return (
                               <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
