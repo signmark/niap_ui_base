@@ -68,11 +68,33 @@ export function TrendAnalysisSettings({
   const saveSettings = async () => {
     setIsUpdating(true);
     try {
-      await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
-        trend_analysis_settings: settings
+      // Получаем токен авторизации из localStorage
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Необходима авторизация');
+      }
+      
+      // Используем наш API endpoint вместо прямого обращения к Directus
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          trend_analysis_settings: settings
+        })
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Не удалось сохранить настройки');
+      }
+      
+      // Инвалидируем кэш для обновления данных после сохранения
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", campaignId] });
+      
       toast({
         title: "Успешно",
         description: "Настройки анализа трендов обновлены"
@@ -86,7 +108,7 @@ export function TrendAnalysisSettings({
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось обновить настройки анализа трендов"
+        description: error instanceof Error ? error.message : "Не удалось обновить настройки анализа трендов"
       });
     } finally {
       setIsUpdating(false);
