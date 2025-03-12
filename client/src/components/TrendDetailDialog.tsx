@@ -55,7 +55,16 @@ export function TrendDetailDialog({
   
   if (topic?.media_links) {
     try {
-      const parsedData = JSON.parse(topic.media_links);
+      // Проверяем, является ли media_links строкой JSON или уже объектом
+      let parsedData;
+      if (typeof topic.media_links === 'string') {
+        parsedData = JSON.parse(topic.media_links);
+      } else {
+        parsedData = topic.media_links;
+      }
+      
+      console.log('Parsed media data:', parsedData);
+      
       // Проверяем, есть ли реальные изображения и видео
       if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
         mediaData.images = parsedData.images;

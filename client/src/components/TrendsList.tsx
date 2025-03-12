@@ -176,20 +176,30 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           
           // Получаем URL изображения если есть
           let previewImageUrl = null;
-          let firstPost = null;
           
-          // Обработка media_links как массива постов
-          if (trend.media_links && Array.isArray(trend.media_links) && trend.media_links.length > 0) {
-            console.log("Found media_links as array:", trend.media_links);
-            
-            // Берем первый пост с изображением
-            firstPost = trend.media_links.find((post: any) => 
-              post.image_url && typeof post.image_url === 'string' && post.image_url.trim() !== ''
-            );
-            
-            if (firstPost && firstPost.image_url) {
-              console.log("Found image in first post:", firstPost.image_url);
-              previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(firstPost.image_url)}`;
+          // Обработка media_links как JSON строки с полями images и videos
+          if (trend.media_links) {
+            try {
+              // Проверяем, является ли media_links строкой JSON или уже объектом
+              let mediaData;
+              if (typeof trend.media_links === 'string') {
+                mediaData = JSON.parse(trend.media_links);
+              } else {
+                mediaData = trend.media_links;
+              }
+              
+              console.log("Parsed media_links:", mediaData);
+              
+              // Проверяем, есть ли массив изображений и выбираем первое
+              if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
+                const firstImageUrl = mediaData.images[0];
+                console.log("Found first image URL:", firstImageUrl);
+                if (firstImageUrl && typeof firstImageUrl === 'string' && firstImageUrl.trim() !== '') {
+                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(firstImageUrl)}`;
+                }
+              }
+            } catch (e) {
+              console.error("Error parsing media_links JSON:", e);
             }
           }
             
@@ -208,10 +218,17 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                           console.log("Image load error, trying direct URL");
                           e.currentTarget.onerror = null;
                           // Если прокси не работает, пробуем прямую ссылку
-                          if (firstPost && firstPost.image_url) {
-                            console.log("Setting direct image URL:", firstPost.image_url);
-                            e.currentTarget.src = firstPost.image_url;
-                          } else {
+                          try {
+                            const urlParams = new URLSearchParams(e.currentTarget.src.split('?')[1]);
+                            const originalUrl = urlParams.get('url');
+                            if (originalUrl) {
+                              console.log("Setting direct image URL:", originalUrl);
+                              e.currentTarget.src = decodeURIComponent(originalUrl);
+                            } else {
+                              e.currentTarget.style.display = 'none';
+                            }
+                          } catch (error) {
+                            console.error("Error extracting original URL:", error);
                             e.currentTarget.style.display = 'none';
                           }
                         }}
