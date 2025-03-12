@@ -1801,7 +1801,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: item.name,
           description: item.description,
           userId: item.user_id,
-          createdAt: item.created_at
+          createdAt: item.created_at,
+          socialMediaSettings: item.social_media_settings || null,
+          trendAnalysisSettings: item.trend_analysis_settings || {
+            minFollowers: {
+              instagram: 5000,
+              telegram: 2000,
+              vk: 3000,
+              facebook: 5000,
+              youtube: 10000
+            },
+            maxSourcesPerPlatform: 10,
+            maxTrendsPerSource: 5
+          }
         }));
         
         console.log(`Found ${campaigns.length} campaigns for user ${userId} (filtered from ${response.data.data.length} total)`);
