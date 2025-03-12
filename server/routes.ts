@@ -2968,7 +2968,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           views: item.views,
           createdAt: item.created_at,
           isBookmarked: item.is_bookmarked,
-          campaignId: item.campaign_id
+          campaignId: item.campaign_id,
+          media_links: item.media_links // Добавляем поле media_links
         }));
         
         console.log(`Found ${trendTopics.length} trend topics for campaign ${campaignId}`);
