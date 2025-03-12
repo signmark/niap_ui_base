@@ -47,13 +47,9 @@ export function TrendDetailDialog({
 }: TrendDetailDialogProps) {
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   
-  // Создаем статическое тестовое изображение
-  const tempImageId = parseInt((topic?.id || '').replace(/\D/g, '').substring(0, 2) || '1') % 20 + 1;
-  const tempImageUrl = `https://picsum.photos/id/${100 + tempImageId}/800/600`;
-  
-  // Разбор JSON из поля media_links
+  // Инициализируем пустую структуру для медиаданных
   let mediaData: MediaData = { 
-    images: [tempImageUrl], 
+    images: [], 
     videos: [] 
   };
   
