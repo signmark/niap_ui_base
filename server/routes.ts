@@ -117,43 +117,89 @@ type PlatformRequirements = {
 // Image proxy function to handle Telegram images
 async function fetchAndProxyImage(url: string, res: any) {
   try {
-    console.log(`Proxying image: ${url}`);
+    console.log(`Proxying image/media: ${url}`);
+    
+    // Исправление для специфических URL из Telegram
+    let fixedUrl = url;
+    if (url.includes('tgcnt.ru')) {
+      console.log('Processing Telegram URL');
+      // Пытаемся устранить двойное кодирование URL
+      try {
+        fixedUrl = decodeURIComponent(url);
+      } catch (e) {
+        console.log('URL already decoded or invalid encoding');
+      }
+    }
+    
     // Set a timeout to prevent hanging requests
-    const response = await axios.get(url, {
+    const response = await axios.get(fixedUrl, {
       responseType: 'arraybuffer',
-      timeout: 5000,
+      timeout: 10000, // Увеличенный таймаут для медленных серверов
       headers: {
-        // Add common browser headers to avoid being blocked
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        // Более современные заголовки для обхода блокировок
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://nplanner.ru/',
+        'sec-ch-ua': '"Google Chrome";v="120", "Chromium";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-      }
+      },
+      maxRedirects: 5 // Поддержка перенаправлений
     });
 
     // Set appropriate headers based on content type
     let contentType = response.headers['content-type'];
+    
+    // Определяем тип содержимого по расширению файла, если заголовок не заполнен
+    if (!contentType) {
+      const lowercasedUrl = fixedUrl.toLowerCase();
+      if (lowercasedUrl.endsWith('.jpg') || lowercasedUrl.endsWith('.jpeg')) {
+        contentType = 'image/jpeg';
+      } else if (lowercasedUrl.endsWith('.png')) {
+        contentType = 'image/png';
+      } else if (lowercasedUrl.endsWith('.gif')) {
+        contentType = 'image/gif';
+      } else if (lowercasedUrl.endsWith('.webp')) {
+        contentType = 'image/webp';
+      } else if (lowercasedUrl.endsWith('.mp4')) {
+        contentType = 'video/mp4';
+      } else if (lowercasedUrl.endsWith('.avi')) {
+        contentType = 'video/x-msvideo';
+      } else if (lowercasedUrl.endsWith('.webm')) {
+        contentType = 'video/webm';
+      }
+    }
 
     // Special handling for Telegram MP4 files which are actually GIFs
-    if (url.includes('tgcnt.ru') && url.toLowerCase().endsWith('.mp4')) {
+    if (fixedUrl.includes('tgcnt.ru') && fixedUrl.toLowerCase().endsWith('.mp4')) {
       // Force content type to be video/mp4 for Telegram MP4 files
       contentType = 'video/mp4';
     }
 
-    // Set headers
+    // Set all necessary headers
     res.setHeader('Content-Type', contentType || 'application/octet-stream');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    
+    // Добавляем Content-Length для корректного отображения прогресса загрузки
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
 
     // Log success
-    console.log(`Successfully proxied image ${url} with content type ${contentType}`);
+    console.log(`Successfully proxied media ${fixedUrl} with content type ${contentType}`);
 
-    // Send the image data
+    // Send the media data
     res.send(response.data);
   } catch (error) {
-    console.error(`Error proxying image ${url}:`, error);
-    res.status(404).send('Image not found');
+    console.error(`Error proxying media ${url}:`, error);
+    // Отправка 404 вместо 500 для корректной обработки ошибок в UI
+    res.status(404).send('Media not found');
   }
 }
 
@@ -893,20 +939,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New endpoint for proxying images
+  // Endpoint for proxying images with improved error handling and debugging
   app.get("/api/proxy-image", async (req, res) => {
     const imageUrl = req.query.url as string;
     if (!imageUrl) {
       return res.status(400).send('URL parameter is required');
     }
 
+    console.log(`[Image proxy] Requested URL: ${imageUrl}`);
+
     try {
       // Decode the URL if it's encoded
       const decodedUrl = decodeURIComponent(imageUrl);
+      
+      // Добавление корс-заголовков
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
       await fetchAndProxyImage(decodedUrl, res);
     } catch (error) {
       console.error('Error in image proxy:', error);
-      res.status(500).send('Failed to proxy image');
+      // Отправка 404 вместо 500, чтобы браузер мог переключиться на прямую ссылку
+      res.status(404).send('Image not found');
     }
   });
 
