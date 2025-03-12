@@ -540,6 +540,41 @@ export default function Trends() {
     }
   });
 
+  // Состояние для отслеживания активного обновления трендов
+  const [isActivelyFetchingTrends, setIsActivelyFetchingTrends] = useState(false);
+  const trendRefreshInterval = useRef<NodeJS.Timeout>();
+
+  // Эффект для обновления трендов каждые несколько секунд после запуска webhook
+  useEffect(() => {
+    // Если активно обновляем или нет ID кампании, не создаем интервал
+    if (!isActivelyFetchingTrends || !selectedCampaignId) return;
+    
+    console.log('Starting trend refresh interval');
+    
+    // Создаем интервал обновления
+    trendRefreshInterval.current = setInterval(() => {
+      console.log('Refreshing trends data...');
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+    }, 3000); // Обновление каждые 3 секунды
+    
+    // Автоматически останавливаем обновление через 2 минуты
+    const stopTimeout = setTimeout(() => {
+      if (trendRefreshInterval.current) {
+        console.log('Stopping trend refresh interval (timeout)');
+        clearInterval(trendRefreshInterval.current);
+        setIsActivelyFetchingTrends(false);
+      }
+    }, 120000); // 2 минуты
+    
+    return () => {
+      // Очищаем интервал и таймаут при размонтировании
+      if (trendRefreshInterval.current) {
+        clearInterval(trendRefreshInterval.current);
+      }
+      clearTimeout(stopTimeout);
+    };
+  }, [isActivelyFetchingTrends, selectedCampaignId, queryClient]);
+
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
@@ -716,10 +751,16 @@ export default function Trends() {
     onSuccess: (data) => {
       toast({
         title: "Успешно",
-        description: `Собрано ${data?.trendTopics?.length || 0} трендовых тем. Обновление страницы...`
+        description: `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
       });
       
       // Refresh the trend topics list
+      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      
+      // Активируем автоматическое обновление данных
+      setIsActivelyFetchingTrends(true);
+      
+      // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
     },
     onError: (error: Error) => {
