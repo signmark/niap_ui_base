@@ -14,6 +14,16 @@ interface TrendsListProps {
 
 type Period = "3days" | "7days" | "14days" | "30days";
 
+interface Post {
+  id: string;
+  title: string;
+  image_url?: string;
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+}
+
 interface TrendTopic {
   id: string;
   title: string;
@@ -27,6 +37,7 @@ interface TrendTopic {
   isBookmarked: boolean;
   campaignId: string;
   mediaLinks?: string; // JSON строка с медиа-данными
+  media_links?: Post[]; // Массив постов
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
@@ -159,44 +170,24 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           // Проверяем что получили из API
           console.log("Trend data:", trend);
           
-          // Инициализируем медиа-данные
-          let mediaData = { images: [], videos: [] };
+          // Получаем URL изображения если есть
+          let previewImageUrl = null;
+          let firstPost = null;
           
-          // Проверяем наличие media_links как объекта
+          // Обработка media_links как массива постов
           if (trend.media_links && Array.isArray(trend.media_links) && trend.media_links.length > 0) {
             console.log("Found media_links as array:", trend.media_links);
-            // Если это массив, берем первый элемент как ссылку на изображение
-            mediaData = {
-              images: trend.media_links,
-              videos: []
-            };
-          }
-          // Проверяем наличие mediaLinks как JSON-строки
-          else if (trend.mediaLinks && typeof trend.mediaLinks === 'string') {
-            try {
-              mediaData = JSON.parse(trend.mediaLinks);
-              console.log("Parsed from mediaLinks string:", mediaData);
-            } catch (e) {
-              console.error("Failed to parse mediaLinks string:", e);
+            
+            // Берем первый пост с изображением
+            firstPost = trend.media_links.find((post: any) => 
+              post.image_url && typeof post.image_url === 'string' && post.image_url.trim() !== ''
+            );
+            
+            if (firstPost && firstPost.image_url) {
+              console.log("Found image in first post:", firstPost.image_url);
+              previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(firstPost.image_url)}`;
             }
           }
-          // Проверяем media_links как JSON-строку
-          else if (trend.media_links && typeof trend.media_links === 'string') {
-            try {
-              mediaData = JSON.parse(trend.media_links);
-              console.log("Parsed from media_links string:", mediaData);
-            } catch (e) {
-              console.error("Failed to parse media_links string:", e);
-            }
-          }
-          
-          // Получаем первую картинку для превью, если она есть
-          const previewImageUrl = mediaData.images && mediaData.images.length > 0 
-            ? `/api/proxy-image?url=${encodeURIComponent(mediaData.images[0])}` 
-            : null;
-          
-          console.log("Media data:", mediaData);
-          console.log("Preview image URL:", previewImageUrl);
             
           return (
             <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
@@ -213,9 +204,9 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                           console.log("Image load error, trying direct URL");
                           e.currentTarget.onerror = null;
                           // Если прокси не работает, пробуем прямую ссылку
-                          if (mediaData.images && mediaData.images.length > 0) {
-                            console.log("Setting direct image URL:", mediaData.images[0]);
-                            e.currentTarget.src = mediaData.images[0];
+                          if (firstPost && firstPost.image_url) {
+                            console.log("Setting direct image URL:", firstPost.image_url);
+                            e.currentTarget.src = firstPost.image_url;
                           } else {
                             e.currentTarget.style.display = 'none';
                           }
