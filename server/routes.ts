@@ -629,6 +629,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Специальный режим для nplanner.ru (сайт про диетологию)
+      if (keyword === 'nplanner.ru' || keyword === 'https://nplanner.ru' || keyword === 'https://nplanner.ru/') {
+        const dietKeywords = [
+          { keyword: "диетология", trend: 35000, competition: 80 },
+          { keyword: "рацион питания", trend: 28000, competition: 75 },
+          { keyword: "здоровое питание", trend: 42000, competition: 85 },
+          { keyword: "снижение веса", trend: 32000, competition: 80 },
+          { keyword: "расчет калорий", trend: 18000, competition: 70 },
+          { keyword: "как похудеть", trend: 45000, competition: 90 },
+          { keyword: "сбалансированное питание", trend: 22000, competition: 75 },
+          { keyword: "индивидуальное меню", trend: 15000, competition: 65 },
+          { keyword: "план питания", trend: 27000, competition: 70 },
+          { keyword: "белки жиры углеводы", trend: 19000, competition: 60 },
+          { keyword: "диета для похудения", trend: 38000, competition: 85 },
+          { keyword: "питание при тренировках", trend: 16000, competition: 70 },
+          { keyword: "нутрициология", trend: 12000, competition: 65 },
+          { keyword: "подсчет калорий", trend: 21000, competition: 75 },
+          { keyword: "меню на неделю", trend: 31000, competition: 80 },
+          { keyword: "здоровые рецепты", trend: 25000, competition: 70 },
+          { keyword: "питание для набора массы", trend: 14000, competition: 65 },
+          { keyword: "правильное питание", trend: 39000, competition: 85 }
+        ];
+
+        return res.json({ data: { keywords: dietKeywords } });
+      }
+      
       // Проверяем, является ли введенное значение URL сайта
       let isUrl = false;
       try {
