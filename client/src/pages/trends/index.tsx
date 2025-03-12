@@ -260,40 +260,40 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
       
-      // Сначала обновляем статус источника
-      await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
-        status: 'processing'
-      }, {
+      // Отправляем запрос на запуск сбора постов из источника
+      console.log(`Starting post collection for source ${sourceId} in campaign ${selectedCampaignId}`);
+      
+      return await fetch(`/api/sources/${sourceId}/crawl`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId
+        })
+      }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Ошибка при запуске задачи');
+          });
         }
-      });
-
-      // Отправляем запрос на запуск вебхука
-      return await directusApi.post('/items/webhook_tasks', {
-        source_id: sourceId,
-        campaign_id: selectedCampaignId,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      }, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+        return response.json();
       });
     },
     onSuccess: () => {
       toast({
         title: "Запущено!",
-        description: "Задача по анализу источника запущена",
+        description: "Задача по сбору постов из источника запущена",
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
     },
-    onError: (error) => {
-      console.error("Error launching webhook:", error);
+    onError: (error: Error) => {
+      console.error("Error launching source crawl:", error);
       toast({
         title: "Ошибка!",
-        description: "Не удалось запустить задачу",
+        description: error.message || "Не удалось запустить задачу",
         variant: "destructive",
       });
     }
