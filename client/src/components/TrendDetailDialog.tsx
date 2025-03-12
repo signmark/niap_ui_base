@@ -53,31 +53,94 @@ export function TrendDetailDialog({
     videos: [] 
   };
   
-  if (topic?.media_links) {
+  console.log(`[TrendDetail] Processing trend ${topic?.id}, media_links type:`, topic?.media_links ? typeof topic.media_links : 'undefined');
+  
+  // Обработка медиа данных из темы
+  if (topic) {
     try {
-      // Проверяем, является ли media_links строкой JSON или уже объектом
-      let parsedData;
-      if (typeof topic.media_links === 'string') {
-        parsedData = JSON.parse(topic.media_links);
-      } else {
-        parsedData = topic.media_links;
-      }
-      
-      console.log('Parsed media data:', parsedData);
-      
-      // Проверяем, есть ли реальные изображения и видео
-      if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
-        mediaData.images = parsedData.images;
-      }
-      
-      if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
-        mediaData.videos = parsedData.videos;
+      // Пробуем сначала обработать новое поле mediaLinks
+      if (topic.mediaLinks || topic.media_links) {
+        const mediaLinks = topic.mediaLinks || topic.media_links;
+        
+        // Анализ типа данных
+        if (typeof mediaLinks === 'string') {
+          // Это JSON строка, пробуем распарсить
+          try {
+            const parsedData = JSON.parse(mediaLinks);
+            console.log(`[TrendDetail] Parsed JSON data:`, parsedData);
+            
+            // Обработка разных форматов структуры данных
+            if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
+              mediaData.images = parsedData.images.filter(url => url && typeof url === 'string' && url.trim() !== '');
+              console.log(`[TrendDetail] Found ${mediaData.images.length} images in parsed JSON`);
+            }
+            
+            if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
+              mediaData.videos = parsedData.videos.filter(url => url && typeof url === 'string' && url.trim() !== '');
+              console.log(`[TrendDetail] Found ${mediaData.videos.length} videos in parsed JSON`);
+            }
+            
+            // Проверка формата с постами
+            if (parsedData.posts && Array.isArray(parsedData.posts) && parsedData.posts.length > 0) {
+              for (const post of parsedData.posts) {
+                if (post.image_url) {
+                  mediaData.images.push(post.image_url);
+                }
+                if (post.video_url) {
+                  mediaData.videos.push(post.video_url);
+                }
+              }
+              console.log(`[TrendDetail] Extracted media from posts: ${mediaData.images.length} images, ${mediaData.videos.length} videos`);
+            }
+          } catch (e) {
+            console.error(`[TrendDetail] Error parsing JSON string:`, e);
+          }
+        } else if (Array.isArray(mediaLinks)) {
+          // Это массив постов или медиа URLs
+          console.log(`[TrendDetail] Processing media_links as array:`, mediaLinks);
+          
+          for (const item of mediaLinks) {
+            if (typeof item === 'string') {
+              // Это прямая ссылка на изображение/видео
+              if (item.match(/\.(jpg|jpeg|png|gif|webp)($|\?)/i)) {
+                mediaData.images.push(item);
+              } else if (item.match(/\.(mp4|webm|ogg|mov)($|\?)/i)) {
+                mediaData.videos.push(item);
+              }
+            } else if (item && typeof item === 'object') {
+              // Это объект поста
+              if (item.image_url) {
+                mediaData.images.push(item.image_url);
+              }
+              if (item.video_url) {
+                mediaData.videos.push(item.video_url);
+              }
+            }
+          }
+          console.log(`[TrendDetail] Extracted from array: ${mediaData.images.length} images, ${mediaData.videos.length} videos`);
+        } else if (mediaLinks && typeof mediaLinks === 'object') {
+          // Это уже объект с полями images и videos
+          console.log(`[TrendDetail] Processing media_links as object:`, mediaLinks);
+          
+          if (mediaLinks.images && Array.isArray(mediaLinks.images)) {
+            mediaData.images = mediaLinks.images.filter(url => url && typeof url === 'string' && url.trim() !== '');
+          }
+          
+          if (mediaLinks.videos && Array.isArray(mediaLinks.videos)) {
+            mediaData.videos = mediaLinks.videos.filter(url => url && typeof url === 'string' && url.trim() !== '');
+          }
+          
+          console.log(`[TrendDetail] Extracted from object: ${mediaData.images.length} images, ${mediaData.videos.length} videos`);
+        }
       }
     } catch (e) {
-      console.error('Ошибка разбора JSON в media_links:', e);
-      // Оставляем изображения по умолчанию
+      console.error(`[TrendDetail] Error processing media data:`, e);
     }
   }
+  
+  // Добавляем параметры для избежания кеширования к URL изображений
+  mediaData.images = mediaData.images.map(url => url + (url.includes('?') ? '&_nc=' : '?_nc=') + Date.now());
+  mediaData.videos = mediaData.videos.map(url => url + (url.includes('?') ? '&_nc=' : '?_nc=') + Date.now());
 
   // Функция для форматирования даты создания
   const formatDate = (dateString: string) => {
@@ -118,30 +181,50 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images?.[currentImageIndex] || '')}`}
+                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images?.[currentImageIndex] || '')}&_t=${Date.now()}`}
                 alt={topic.title}
                 loading="lazy"
                 className="w-full h-auto object-contain max-h-[60vh]"
+                crossOrigin="anonymous"
                 onError={(e) => {
-                  console.log('Ошибка загрузки изображения через прокси');
+                  console.log(`[TrendDetail] Ошибка загрузки изображения через прокси для тренда ${topic.id}`);
                   e.currentTarget.onerror = null;
                   
-                  // Если прокси не работает, пробуем прямую ссылку
+                  // Если прокси не работает, пробуем прямую ссылку или альтернативный метод
                   if (e.currentTarget.src.includes('/api/proxy-image')) {
                     if (mediaData.images?.[currentImageIndex]) {
-                      console.log('Пробуем прямую ссылку для изображения:', mediaData.images[currentImageIndex]);
-                      // Добавляем cache-busting параметр чтобы избежать кеширования
+                      // Получаем исходный URL изображения
                       const directUrl = mediaData.images[currentImageIndex];
+                      console.log(`[TrendDetail] Пробуем альтернативную загрузку:`, directUrl);
+                      
+                      // Проверяем, является ли это Instagram URL
+                      const isInstagram = directUrl.includes('instagram.') || 
+                                      directUrl.includes('fbcdn.net') || 
+                                      directUrl.includes('cdninstagram.com');
+                      
+                      // Добавляем cache-busting параметр
                       const urlWithNocache = directUrl.includes('?') 
                         ? `${directUrl}&_nocache=${Date.now()}` 
                         : `${directUrl}?_nocache=${Date.now()}`;
-                      e.currentTarget.src = urlWithNocache;
+                      
+                      // Для Instagram повторяем попытку через прокси с дополнительными параметрами
+                      if (isInstagram) {
+                        console.log(`[TrendDetail] Instagram URL обнаружен, используем специальный режим`);
+                        const retryProxyUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_t=${Date.now()}`;
+                        e.currentTarget.src = retryProxyUrl;
+                      } else {
+                        // Для неинстаграмных URL используем прямую ссылку
+                        console.log(`[TrendDetail] Обычный URL, пробуем прямую ссылку`);
+                        e.currentTarget.src = urlWithNocache;
+                        // Добавляем атрибут crossorigin для преодоления CORS
+                        e.currentTarget.crossOrigin = "anonymous";
+                      }
                     } else {
-                      console.log('Нет URL изображения в данных');
+                      console.log(`[TrendDetail] Нет URL изображения в данных для тренда ${topic.id}`);
                       e.currentTarget.style.display = 'none';
                     }
                   } else {
-                    console.log('Прямая ссылка тоже не работает');
+                    console.log(`[TrendDetail] И прямая ссылка тоже не работает`);
                     e.currentTarget.style.display = 'none';
                   }
                 }}

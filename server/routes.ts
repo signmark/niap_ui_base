@@ -222,6 +222,8 @@ async function fetchAndProxyImage(url: string, res: any) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     
     // Добавляем Content-Length для корректного отображения прогресса загрузки
