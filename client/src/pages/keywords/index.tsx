@@ -10,6 +10,8 @@ import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WebsiteKeywordAnalyzer } from "@/components/WebsiteKeywordAnalyzer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Keywords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,6 +176,50 @@ export default function Keywords() {
     }
   };
 
+  // Функция для обработки выбранных ключевых слов из анализатора сайта
+  const handleWebsiteKeywordsSelected = async (selectedKeywords: string[]) => {
+    if (!selectedCampaign || !campaignId) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Сначала выберите кампанию"
+      });
+      return;
+    }
+
+    try {
+      const now = new Date().toISOString();
+      
+      // Добавляем выбранные ключевые слова в кампанию
+      for (const keyword of selectedKeywords) {
+        // Используем значения по умолчанию для trend_score и mentions_count
+        const data = {
+          keyword: keyword,
+          campaign_id: campaignId,
+          trend_score: 500, // Усредненное значение
+          mentions_count: 50, // Усредненное значение
+          date_created: now,
+          last_checked: now
+        };
+
+        await directusApi.post('items/user_keywords', data);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+      toast({ 
+        title: "Успешно",
+        description: `${selectedKeywords.length} ключевых слов добавлено в кампанию` 
+      });
+    } catch (error) {
+      console.error('Error saving website keywords:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось сохранить ключевые слова"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4 p-6">
       <div className="flex flex-col">
@@ -196,58 +242,79 @@ export default function Keywords() {
       )}
 
       {selectedCampaign && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Введите запрос для поиска ключевых слов"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1"
-              />
-              <Button onClick={handleSearch} disabled={isSearching}>
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Поиск...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Искать
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="search" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="search">Поиск ключевых слов</TabsTrigger>
+            <TabsTrigger value="website">Анализ сайта</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="search">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Введите запрос для поиска ключевых слов"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleSearch} disabled={isSearching}>
+                    {isSearching ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Поиск...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Искать
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="website">
+            <WebsiteKeywordAnalyzer 
+              campaignId={campaignId} 
+              onKeywordsSelected={handleWebsiteKeywordsSelected}
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
-      <KeywordTable
-        keywords={keywords}
-        searchResults={searchResults}
-        isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching}
-        onDelete={async (id) => {
-          try {
-            await directusApi.delete(`items/user_keywords/${id}`);
-            queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
-            toast({ 
-              title: "Успешно",
-              description: "Ключевое слово удалено" 
-            });
-          } catch {
-            toast({
-              variant: "destructive",
-              title: "Ошибка",
-              description: "Не удалось удалить ключевое слово"
-            });
-          }
-        }}
-        onKeywordToggle={handleKeywordToggle}
-        onSelectAll={handleSelectAll}
-        onSaveSelected={handleSaveSelected}
-      />
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Ключевые слова кампании</h2>
+          <KeywordTable
+            keywords={keywords}
+            searchResults={searchResults}
+            isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching}
+            onDelete={async (id) => {
+              try {
+                await directusApi.delete(`items/user_keywords/${id}`);
+                queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+                toast({ 
+                  title: "Успешно",
+                  description: "Ключевое слово удалено" 
+                });
+              } catch {
+                toast({
+                  variant: "destructive",
+                  title: "Ошибка",
+                  description: "Не удалось удалить ключевое слово"
+                });
+              }
+            }}
+            onKeywordToggle={handleKeywordToggle}
+            onSelectAll={handleSelectAll}
+            onSaveSelected={handleSaveSelected}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
