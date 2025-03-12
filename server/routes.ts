@@ -131,22 +131,37 @@ async function fetchAndProxyImage(url: string, res: any) {
       }
     }
     
+    // Специальная обработка для Instagram
+    const isInstagram = url.includes('instagram.') || url.includes('fbcdn.net');
+    if (isInstagram) {
+      console.log('Processing Instagram URL');
+    }
+    
+    // Настраиваем заголовки в зависимости от источника
+    const headers: Record<string, string> = {
+      // Базовые заголовки
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
+      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Referer': 'https://nplanner.ru/',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    };
+    
+    // Добавляем специальные заголовки для Instagram
+    if (isInstagram) {
+      headers['sec-fetch-dest'] = 'image';
+      headers['sec-fetch-mode'] = 'no-cors';
+      headers['sec-fetch-site'] = 'cross-site';
+      headers['Origin'] = 'https://nplanner.ru';
+      headers['X-Instagram-GIS'] = 'random-hash'; // Можно сгенерировать случайный хеш
+    }
+    
     // Set a timeout to prevent hanging requests
     const response = await axios.get(fixedUrl, {
       responseType: 'arraybuffer',
       timeout: 10000, // Увеличенный таймаут для медленных серверов
-      headers: {
-        // Более современные заголовки для обхода блокировок
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
-        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': 'https://nplanner.ru/',
-        'sec-ch-ua': '"Google Chrome";v="120", "Chromium";v="120"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
+      headers: headers,
       maxRedirects: 5 // Поддержка перенаправлений
     });
 
@@ -177,6 +192,14 @@ async function fetchAndProxyImage(url: string, res: any) {
     if (fixedUrl.includes('tgcnt.ru') && fixedUrl.toLowerCase().endsWith('.mp4')) {
       // Force content type to be video/mp4 for Telegram MP4 files
       contentType = 'video/mp4';
+    }
+    
+    // Особая обработка для Instagram и Facebook CDN
+    if (isInstagram) {
+      // Instagram всегда отдает JPEG, кроме редких случаев
+      if (!contentType || contentType === 'application/octet-stream') {
+        contentType = 'image/jpeg';
+      }
     }
 
     // Set all necessary headers
