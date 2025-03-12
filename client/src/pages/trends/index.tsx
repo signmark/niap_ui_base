@@ -415,9 +415,8 @@ export default function Trends() {
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      return await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
-        is_active: false
-      }, {
+      // Полностью удаляем источник вместо обновления is_active
+      return await directusApi.delete(`/items/campaign_content_sources/${sourceId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -431,6 +430,7 @@ export default function Trends() {
       });
     },
     onError: (error: Error) => {
+      console.error('Error deleting source:', error);
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -550,40 +550,39 @@ export default function Trends() {
     }
   });
 
-  // Состояние для отслеживания активного обновления трендов
-  const [isActivelyFetchingTrends, setIsActivelyFetchingTrends] = useState(false);
-  const trendRefreshInterval = useRef<NodeJS.Timeout>();
+  // Интервалы для обновления данных
+  const trendsRefreshInterval = useRef<NodeJS.Timeout>();
+  const sourcesRefreshInterval = useRef<NodeJS.Timeout>();
 
-  // Эффект для обновления трендов каждые несколько секунд после запуска webhook
+  // Эффект для постоянного обновления трендов и источников
   useEffect(() => {
-    // Если активно обновляем или нет ID кампании, не создаем интервал
-    if (!isActivelyFetchingTrends || !selectedCampaignId) return;
+    // Не запускаем обновление без ID кампании
+    if (!selectedCampaignId) return;
     
-    console.log('Starting trend refresh interval');
+    console.log('Starting automatic data refresh intervals');
     
-    // Создаем интервал обновления
-    trendRefreshInterval.current = setInterval(() => {
+    // Создаем интервал обновления трендов
+    trendsRefreshInterval.current = setInterval(() => {
       console.log('Refreshing trends data...');
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
-    }, 3000); // Обновление каждые 3 секунды
+    }, 3000); // Обновление трендов каждые 3 секунды
     
-    // Автоматически останавливаем обновление через 2 минуты
-    const stopTimeout = setTimeout(() => {
-      if (trendRefreshInterval.current) {
-        console.log('Stopping trend refresh interval (timeout)');
-        clearInterval(trendRefreshInterval.current);
-        setIsActivelyFetchingTrends(false);
-      }
-    }, 120000); // 2 минуты
+    // Создаем интервал обновления источников
+    sourcesRefreshInterval.current = setInterval(() => {
+      console.log('Refreshing sources data...');
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+    }, 3000); // Обновление источников каждые 3 секунды
     
     return () => {
-      // Очищаем интервал и таймаут при размонтировании
-      if (trendRefreshInterval.current) {
-        clearInterval(trendRefreshInterval.current);
+      // Очищаем интервалы при размонтировании компонента или смене кампании
+      if (trendsRefreshInterval.current) {
+        clearInterval(trendsRefreshInterval.current);
       }
-      clearTimeout(stopTimeout);
+      if (sourcesRefreshInterval.current) {
+        clearInterval(sourcesRefreshInterval.current);
+      }
     };
-  }, [isActivelyFetchingTrends, selectedCampaignId, queryClient]);
+  }, [selectedCampaignId, queryClient]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
@@ -764,11 +763,9 @@ export default function Trends() {
         description: `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
       });
       
-      // Refresh the trend topics list
+      // Refresh the trend topics list и источники
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
-      
-      // Активируем автоматическое обновление данных
-      setIsActivelyFetchingTrends(true);
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       
       // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
       queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
