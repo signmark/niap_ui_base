@@ -1103,118 +1103,52 @@ export default function Trends() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
-                            // Разбор JSON из поля media_links для превью
-                            let mediaData: { images: string[], videos: string[] } = { images: [], videos: [] };
-                            
-                            // Проверяем разные варианты имен полей (snake_case и camelCase)
-                            const mediaLinksStr = topic.media_links || topic.mediaLinks;
-                            
-                            if (mediaLinksStr) {
-                              try {
-                                if (typeof mediaLinksStr === 'string') {
-                                  console.log('Media links data для темы:', topic.title, mediaLinksStr.substring(0, 100));
-                                  mediaData = JSON.parse(mediaLinksStr);
-                                } else if (typeof mediaLinksStr === 'object') {
-                                  // Может прийти уже распарсенным
-                                  mediaData = mediaLinksStr as { images: string[], videos: string[] };
-                                }
-                                console.log('Parsed media data:', mediaData);
-                              } catch (e) {
-                                console.error('Ошибка разбора JSON в media_links:', e);
-                              }
-                            } else {
-                              console.log('Нет media_links для темы:', topic.title);
-                            }
-                            
-                            // Первое изображение или видео для превью
-                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
-                            const hasVideo = mediaData.videos && mediaData.videos.length > 0;
-                            
-                            if (firstImage && typeof firstImage === 'string') {
-                              console.log('Найдено изображение для превью:', firstImage.substring(0, 100));
-                            }
                             
                             return (
                               <Card 
                                 key={topic.id} 
-                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-900/50 border-gray-800"
+                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-gray-300"
                                 onClick={() => setSelectedTrendTopic(topic)}
                               >
                                 <div className="relative">
                                   {/* Чекбокс для выбора тренда */}
-                                  <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+                                  <div className="absolute top-1 left-1 z-10" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox
                                       checked={selectedTopics.some(t => t.id === topic.id)}
                                       onCheckedChange={() => toggleTopicSelection(topic)}
-                                      className="h-5 w-5 bg-white/80 border-gray-400"
+                                      className="h-4 w-4 bg-white/80 border-gray-400"
                                     />
                                   </div>
                                   
-                                  {/* Превью (минимальная версия) */}
-                                  {firstImage ? (
-                                    <div className="aspect-square relative">
-                                      <img 
-                                        src={`/api/proxy-image?url=${encodeURIComponent(firstImage)}`} 
-                                        alt={topic.title}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          e.currentTarget.onerror = null;
-                                          // Попробуем прямую ссылку если прокси не сработал
-                                          if (e.currentTarget.src.includes('/api/proxy-image')) {
-                                            e.currentTarget.src = firstImage;
-                                          } else {
-                                            e.currentTarget.src = 'https://placehold.co/300x300/jpeg?text=Нет+фото';
-                                          }
-                                        }}
-                                      />
-                                      {mediaData.images && mediaData.images.length > 1 && (
-                                        <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                          +{mediaData.images.length - 1}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : hasVideo ? (
-                                    <div className="aspect-video bg-muted flex items-center justify-center relative">
-                                      <Play className="h-12 w-12 text-muted-foreground/50" />
-                                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                        Видео
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="aspect-video bg-muted flex items-center justify-center">
-                                      <FileText className="h-12 w-12 text-muted-foreground/50" />
-                                    </div>
-                                  )}
+                                  {/* Фиксированное превью */}
+                                  <div className="h-32 bg-gray-100 flex items-center justify-center">
+                                    <FileText className="h-8 w-8 text-gray-400" />
+                                  </div>
                                 </div>
                                 
-                                <CardContent className="p-3">
-                                  <h3 className="font-medium line-clamp-2 mb-1 text-sm">{topic.title}</h3>
-                                  <p className="text-xs text-muted-foreground mb-2">
+                                <CardContent className="p-2">
+                                  <div className="text-xs font-medium line-clamp-2">{topic.title}</div>
+                                  <div className="text-[10px] text-gray-500 mt-1 mb-1">
                                     {sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник'}
-                                  </p>
+                                  </div>
                                   
-                                  <div className="flex justify-between text-xs text-muted-foreground mt-auto">
+                                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
                                     <div className="flex items-center">
-                                      <ThumbsUp className="h-3 w-3 mr-1" />
+                                      <ThumbsUp className="h-2 w-2 mr-1" />
                                       {topic.reactions?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="flex items-center">
-                                      <MessageSquare className="h-3 w-3 mr-1" />
+                                      <MessageSquare className="h-2 w-2 mr-1" />
                                       {topic.comments?.toLocaleString() ?? 0}
                                     </div>
                                     <div className="flex items-center">
-                                      <Eye className="h-3 w-3 mr-1" />
+                                      <Eye className="h-2 w-2 mr-1" />
                                       {topic.views?.toLocaleString() ?? 0}
                                     </div>
-                                    {topic.is_bookmarked && (
-                                      <div className="flex items-center">
-                                        <Bookmark className="h-3 w-3 text-primary" />
-                                      </div>
-                                    )}
                                   </div>
                                 </CardContent>
                               </Card>
