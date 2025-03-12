@@ -156,13 +156,26 @@ export function TrendsList({ campaignId }: TrendsListProps) {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {trends.map((trend: TrendTopic) => {
+          // Проверяем что получили из API
+          console.log("Trend data:", trend);
+          console.log("Media links raw:", trend.mediaLinks);
+          
           // Парсим JSON с медиа-ссылками, если есть
           let mediaData = { images: [], videos: [] };
           if (trend.mediaLinks) {
             try {
               mediaData = JSON.parse(trend.mediaLinks);
+              console.log("Parsed media data:", mediaData);
             } catch (e) {
               console.error("Failed to parse media links:", e);
+            }
+          } else if (trend.media_links) {
+            // Проверяем альтернативное имя поля
+            try {
+              mediaData = JSON.parse(trend.media_links);
+              console.log("Parsed from media_links:", mediaData);
+            } catch (e) {
+              console.error("Failed to parse media_links:", e);
             }
           }
           
@@ -170,28 +183,37 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           const previewImageUrl = mediaData.images && mediaData.images.length > 0 
             ? `/api/proxy-image?url=${encodeURIComponent(mediaData.images[0])}` 
             : null;
+          
+          console.log("Preview image URL:", previewImageUrl);
             
           return (
             <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
               <CardContent className="pt-6">
                 <div className="space-y-3">
                   {/* Превью изображения */}
-                  {previewImageUrl && (
+                  {previewImageUrl ? (
                     <div className="w-full aspect-video bg-muted rounded-md overflow-hidden">
                       <img 
                         src={previewImageUrl} 
                         alt="Превью" 
                         className="w-full h-full object-cover"
                         onError={(e) => {
+                          console.log("Image load error, trying direct URL");
                           e.currentTarget.onerror = null;
                           // Если прокси не работает, пробуем прямую ссылку
                           if (mediaData.images && mediaData.images.length > 0) {
+                            console.log("Setting direct image URL:", mediaData.images[0]);
                             e.currentTarget.src = mediaData.images[0];
                           } else {
                             e.currentTarget.style.display = 'none';
                           }
                         }}
                       />
+                    </div>
+                  ) : (
+                    // Если нет изображения, показываем текстовый индикатор
+                    <div className="w-full aspect-video bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground">Нет изображения</p>
                     </div>
                   )}
                   
