@@ -1025,10 +1025,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Проверяем дополнительные параметры
     const isRetry = req.query._retry === 'true';
-    const forceType = req.query._force as string || null;
+    const forceType = req.query.forceType as string || null;
+    const itemId = req.query.itemId as string || '';
     const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
     
-    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}`);
+    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}${itemId ? ` (item ID: ${itemId})` : ''}`);
 
     try {
       // Decode the URL if it's encoded
