@@ -1542,10 +1542,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('Webhook response:', webhookResponse.status);
         
-        // Возвращаем успешный результат, если запрос к webhook удался
+        // Возвращаем успешный результат с указанием ID источника
         return res.status(200).json({
           success: true,
-          message: "Задача на сбор постов из источника успешно запущена"
+          message: `Задача на сбор постов из источника ${sourceId} успешно запущена`,
+          sourceId: sourceId,
+          campaignId: campaignId
         });
       } catch (crawlError) {
         console.error("Error calling webhook:", crawlError);

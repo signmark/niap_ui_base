@@ -281,10 +281,15 @@ export default function Trends() {
         return response.json();
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Webhook success response:', data);
+      // Находим источник из текущего списка по ID
+      const source = sources.find(s => s.id === data.sourceId);
+      const sourceName = source?.name || data.sourceId;
+      
       toast({
         title: "Запущено!",
-        description: "Задача по сбору постов из источника запущена",
+        description: `Задача по сбору постов из источника ${sourceName} запущена`,
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
