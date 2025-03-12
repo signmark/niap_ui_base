@@ -16,8 +16,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
 interface MediaData {
-  images?: string[];
-  videos?: string[];
+  images: string[];
+  videos: string[];
 }
 
 interface TrendTopic {
@@ -32,6 +32,7 @@ interface TrendTopic {
   is_bookmarked: boolean;
   campaign_id: string;
   media_links?: string;
+  mediaLinks?: string; // Альтернативное имя поля (для обратной совместимости)
 }
 
 interface TrendDetailDialogProps {
@@ -75,12 +76,12 @@ export function TrendDetailDialog({
             
             // Обработка разных форматов структуры данных
             if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
-              mediaData.images = parsedData.images.filter(url => url && typeof url === 'string' && url.trim() !== '');
+              mediaData.images = parsedData.images.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
               console.log(`[TrendDetail] Found ${mediaData.images.length} images in parsed JSON`);
             }
             
             if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
-              mediaData.videos = parsedData.videos.filter(url => url && typeof url === 'string' && url.trim() !== '');
+              mediaData.videos = parsedData.videos.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
               console.log(`[TrendDetail] Found ${mediaData.videos.length} videos in parsed JSON`);
             }
             
@@ -127,11 +128,11 @@ export function TrendDetailDialog({
           console.log(`[TrendDetail] Processing media_links as object:`, mediaLinks);
           
           if (mediaLinks.images && Array.isArray(mediaLinks.images)) {
-            mediaData.images = mediaLinks.images.filter(url => url && typeof url === 'string' && url.trim() !== '');
+            mediaData.images = mediaLinks.images.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
           }
           
           if (mediaLinks.videos && Array.isArray(mediaLinks.videos)) {
-            mediaData.videos = mediaLinks.videos.filter(url => url && typeof url === 'string' && url.trim() !== '');
+            mediaData.videos = mediaLinks.videos.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
           }
           
           console.log(`[TrendDetail] Extracted from object: ${mediaData.images.length} images, ${mediaData.videos.length} videos`);
