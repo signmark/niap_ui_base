@@ -14,6 +14,7 @@ import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
+import { Badge } from "@/components/ui/badge";
 
 // Определение интерфейсов для типизации
 import {
