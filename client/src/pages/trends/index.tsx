@@ -282,33 +282,43 @@ export default function Trends() {
 
       console.log('Fetching sources for campaign:', selectedCampaignId);
 
-      const response = await directusApi.get('/items/campaign_content_sources', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            },
-            is_active: {
-              _eq: true
-            }
+      // Убираем фильтр is_active для получения всех источников кампании
+      try {
+        // Используем явно указанные параметры в GET-запросе
+        const response = await directusApi.get('/items/campaign_content_sources', {
+          params: {
+            'filter[campaign_id][_eq]': selectedCampaignId,
+            'fields[]': ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status']
           },
-          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status']
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
 
-      console.log('Sources API response:', {
-        status: response.status,
-        dataLength: response.data?.data?.length,
-        firstSource: response.data?.data?.[0]
-      });
-      
-      // Сбрасываем флаг обновления
-      shouldRefreshSources.current = false;
+        console.log('Sources API response:', {
+          status: response.status,
+          dataLength: response.data?.data?.length,
+          firstSource: response.data?.data?.[0],
+          allSources: response.data?.data
+        });
+        
+        // Сбрасываем флаг обновления
+        shouldRefreshSources.current = false;
 
-      return response.data?.data || [];
+        // Фильтруем активные источники на стороне клиента (если нужно)
+        const allSources = response.data?.data || [];
+        // return allSources.filter(source => source.is_active === true);
+        return allSources; // Возвращаем все источники для отображения
+
+      } catch (error) {
+        console.error("Error fetching sources:", error);
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: "Не удалось загрузить источники данных"
+        });
+        return [];
+      }
     },
     enabled: !!selectedCampaignId,
     refetchInterval: 3000 // Обновляем каждые 3 секунды автоматически
