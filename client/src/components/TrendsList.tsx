@@ -174,35 +174,82 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           // Проверяем что получили из API
           console.log("Trend data:", JSON.stringify(trend));
           
-          // Получаем URL изображения если есть
+          // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
           
-          // Обработка media_links как JSON строки с полями images и videos
-          if (trend.media_links) {
-            console.log("Raw media_links:", trend.media_links, "Type:", typeof trend.media_links);
+          // 1. Проверяем mediaLinks поле (новый формат)
+          if (trend.mediaLinks) {
+            console.log(`[Trend ${trend.id}] Checking mediaLinks:`, trend.mediaLinks);
             try {
-              // Проверяем, является ли media_links строкой JSON или уже объектом
+              // Преобразуем строку JSON в объект, если это строка
               let mediaData;
-              if (typeof trend.media_links === 'string') {
-                mediaData = JSON.parse(trend.media_links);
+              if (typeof trend.mediaLinks === 'string') {
+                mediaData = JSON.parse(trend.mediaLinks);
+                console.log(`[Trend ${trend.id}] Parsed mediaLinks:`, mediaData);
               } else {
-                mediaData = trend.media_links;
+                mediaData = trend.mediaLinks;
+                console.log(`[Trend ${trend.id}] Using mediaLinks as object`);
               }
               
-              console.log("Parsed media_links:", JSON.stringify(mediaData));
-              
-              // Проверяем, есть ли массив изображений и выбираем первое
-              if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
-                const firstImageUrl = mediaData.images[0];
-                console.log("Found first image URL:", firstImageUrl);
-                if (firstImageUrl && typeof firstImageUrl === 'string' && firstImageUrl.trim() !== '') {
-                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(firstImageUrl)}`;
+              // Проверяем наличие изображений
+              if (mediaData && mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
+                // Берём первое изображение
+                const imageUrl = mediaData.images[0];
+                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
+                  console.log(`[Trend ${trend.id}] Found image in mediaLinks: ${imageUrl}`);
+                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_nocache=${Date.now()}`;
                 }
               }
             } catch (e) {
-              console.error("Error parsing media_links JSON:", e);
+              console.error(`[Trend ${trend.id}] Error parsing mediaLinks JSON:`, e);
             }
           }
+          
+          // 2. Проверяем media_links поле (старый формат)
+          if (!previewImageUrl && trend.media_links) {
+            console.log(`[Trend ${trend.id}] Checking media_links:`, typeof trend.media_links, trend.media_links);
+            
+            try {
+              // Обработка media_links как JSON строки или массива
+              let mediaData;
+              
+              if (typeof trend.media_links === 'string') {
+                // Строка JSON
+                mediaData = JSON.parse(trend.media_links);
+                console.log(`[Trend ${trend.id}] Parsed media_links string:`, mediaData);
+              } else if (Array.isArray(trend.media_links)) {
+                // Массив постов
+                mediaData = { posts: trend.media_links };
+                console.log(`[Trend ${trend.id}] Using media_links as array of posts`);
+              } else {
+                // Объект
+                mediaData = trend.media_links;
+                console.log(`[Trend ${trend.id}] Using media_links as object`);
+              }
+              
+              // Проверяем разные форматы данных
+              if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
+                // Формат с массивом изображений
+                const imageUrl = mediaData.images[0];
+                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
+                  console.log(`[Trend ${trend.id}] Found image in media_links.images: ${imageUrl}`);
+                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_nocache=${Date.now()}`;
+                }
+              } else if (mediaData.posts && Array.isArray(mediaData.posts) && mediaData.posts.length > 0) {
+                // Формат с постами
+                const post = mediaData.posts[0];
+                if (post && post.image_url) {
+                  console.log(`[Trend ${trend.id}] Found image in post: ${post.image_url}`);
+                  previewImageUrl = `/api/proxy-image?url=${encodeURIComponent(post.image_url)}&_nocache=${Date.now()}`;
+                }
+              }
+            } catch (e) {
+              console.error(`[Trend ${trend.id}] Error processing media_links:`, e);
+            }
+          }
+          
+          // Отладочный вывод результата
+          console.log(`[Trend ${trend.id}] Final preview URL:`, previewImageUrl);
             
           return (
             <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
