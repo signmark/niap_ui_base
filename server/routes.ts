@@ -2,6 +2,9 @@ const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
+// DeepSeek API ключ - временно храним здесь, потом перенесем в настройки
+const DEEPSEEK_API_KEY = "sk-7debde066de4456bbf2b029beb789db3";
+
 // Функция для очистки устаревших записей кеша
 function cleanupExpiredCache() {
   const now = Date.now();
@@ -707,7 +710,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
-      // Генерируем случайный ID для отслеживания
       console.log(`[${requestId}] Processing keyword search for: ${keyword}`);
 
       // Добавляем случайный параметр чтобы избежать кеширования на клиенте
