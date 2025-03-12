@@ -12,6 +12,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
 
 // Определение интерфейсов для типизации
 import {
@@ -1080,6 +1081,17 @@ export default function Trends() {
           />
         )}
       </Dialog>
+
+      {/* Диалог выбора социальных сетей для сбора трендов */}
+      <SocialNetworkSelectorDialog
+        isOpen={isSocialNetworkDialogOpen}
+        onClose={() => setIsSocialNetworkDialogOpen(false)}
+        onConfirm={(platforms) => {
+          setIsSocialNetworkDialogOpen(false);
+          collectTrendsWithPlatforms(platforms);
+        }}
+        isLoading={isCollecting}
+      />
     </div>
   );
 }
