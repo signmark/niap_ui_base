@@ -565,7 +565,7 @@ export default function Trends() {
     // Создаем интервал обновления трендов
     trendsRefreshInterval.current = setInterval(() => {
       console.log('Refreshing trends data...');
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
     }, 3000); // Обновление трендов каждые 3 секунды
     
     // Создаем интервал обновления источников
@@ -586,7 +586,7 @@ export default function Trends() {
   }, [selectedCampaignId, queryClient]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
-    queryKey: ["campaign_trend_topics", selectedPeriod, selectedCampaignId],
+    queryKey: ["trends", selectedPeriod, selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
@@ -595,32 +595,22 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
-      const response = await directusApi.get('/items/campaign_trend_topics', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: selectedCampaignId
-            }
-          },
-          fields: [
-            'id',
-            'title',
-            'source_id',
-            'reactions',
-            'comments',
-            'views',
-            'created_at',
-            'is_bookmarked',
-            'campaign_id',
-            'media_link'
-          ],
-          sort: ['-reactions']
-        },
+      // Используем наш собственный API эндпоинт вместо прямого обращения к Directus
+      const response = await fetch(`/api/trends?campaignId=${selectedCampaignId}&period=${selectedPeriod}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
-      return response.data?.data || [];
+      
+      if (!response.ok) {
+        console.error("Error fetching trends:", response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch trends");
+      }
+      
+      const data = await response.json();
+      console.log("Fetched trends data:", data);
+      return data.data || [];
     },
     enabled: !!selectedCampaignId
   });
@@ -756,7 +746,7 @@ export default function Trends() {
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
       return trendData;
     },
     onSuccess: (data) => {
@@ -766,11 +756,11 @@ export default function Trends() {
       });
       
       // Refresh the trend topics list и источники
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       
       // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
-      queryClient.invalidateQueries({ queryKey: ["campaign_trend_topics"] });
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
     },
     onError: (error: Error) => {
       console.error('Error collecting trends:', error);
