@@ -96,12 +96,17 @@ export function TrendDetailDialog({
           <div className="relative">
             <div className="aspect-video relative">
               <img
-                src={mediaData.images[currentImageIndex]}
+                src={`/api/proxy-image?url=${encodeURIComponent(mediaData.images[currentImageIndex])}`}
                 alt={topic.title}
                 className="w-full h-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                  // Попробуем прямую ссылку если прокси не сработал
+                  if (e.currentTarget.src.includes('/api/proxy-image')) {
+                    e.currentTarget.src = mediaData.images[currentImageIndex];
+                  } else {
+                    e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                  }
                 }}
               />
               {mediaData.images.length > 1 && (
@@ -131,10 +136,17 @@ export function TrendDetailDialog({
         {mediaData.videos && mediaData.videos.length > 0 && (
           <div className="mt-4">
             <video 
-              src={mediaData.videos[0]} 
+              src={`/api/proxy-image?url=${encodeURIComponent(mediaData.videos[0])}`} 
               controls 
               className="w-full"
-              controlsList="nodownload" 
+              controlsList="nodownload"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                // Попробуем прямую ссылку если прокси не сработал
+                if (e.currentTarget.src.includes('/api/proxy-image')) {
+                  e.currentTarget.src = mediaData.videos[0];
+                }
+              }}
             />
             {mediaData.videos.length > 1 && (
               <div className="text-sm text-muted-foreground mt-1">

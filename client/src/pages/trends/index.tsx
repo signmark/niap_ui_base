@@ -1103,7 +1103,7 @@ export default function Trends() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
@@ -1156,14 +1156,19 @@ export default function Trends() {
                                   
                                   {/* Превью (минимальная версия) */}
                                   {firstImage ? (
-                                    <div className="aspect-video relative">
+                                    <div className="aspect-square relative">
                                       <img 
-                                        src={firstImage} 
+                                        src={`/api/proxy-image?url=${encodeURIComponent(firstImage)}`} 
                                         alt={topic.title}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                           e.currentTarget.onerror = null;
-                                          e.currentTarget.src = 'https://placehold.co/600x400/jpeg?text=Изображение+недоступно';
+                                          // Попробуем прямую ссылку если прокси не сработал
+                                          if (e.currentTarget.src.includes('/api/proxy-image')) {
+                                            e.currentTarget.src = firstImage;
+                                          } else {
+                                            e.currentTarget.src = 'https://placehold.co/300x300/jpeg?text=Нет+фото';
+                                          }
                                         }}
                                       />
                                       {mediaData.images && mediaData.images.length > 1 && (
