@@ -57,20 +57,24 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         });
         
         // Преобразуем полученные данные в правильный формат
-        const trendTopics = (response.data?.data || []).map((trend: any) => ({
-          id: trend.id,
-          title: trend.title,
-          sourceId: trend.sourceId,
-          sourceName: trend.sourceName || 'Источник',
-          sourceUrl: trend.sourceUrl,
-          reactions: trend.reactions || 0,
-          comments: trend.comments || 0,
-          views: trend.views || 0,
-          createdAt: trend.createdAt,
-          isBookmarked: trend.isBookmarked || false,
-          campaignId: trend.campaignId,
-          mediaLinks: trend.mediaLinks || trend.media_links
-        }));
+        const trendTopics = (response.data?.data || []).map((trend: any) => {
+          console.log("Raw API trend data:", trend);
+          return {
+            id: trend.id,
+            title: trend.title,
+            sourceId: trend.sourceId,
+            sourceName: trend.sourceName || 'Источник',
+            sourceUrl: trend.sourceUrl,
+            reactions: trend.reactions || 0,
+            comments: trend.comments || 0,
+            views: trend.views || 0,
+            createdAt: trend.createdAt,
+            isBookmarked: trend.isBookmarked || false,
+            campaignId: trend.campaignId,
+            mediaLinks: trend.mediaLinks,
+            media_links: trend.media_links
+          };
+        });
 
         return trendTopics;
       } catch (error) {
