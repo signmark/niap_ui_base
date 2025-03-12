@@ -263,30 +263,53 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                         alt="Превью" 
                         loading="lazy"
                         className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
                         onError={(e) => {
-                          console.log("Image load error, trying direct URL");
+                          console.log(`[TrendsList] Ошибка загрузки изображения для тренда ${trend.id}`);
                           e.currentTarget.onerror = null;
-                          // Если прокси не работает, пробуем прямую ссылку
+                          
                           try {
-                            // Получаем исходный URL если мы использовали прокси
+                            // Если прокси не работает, анализируем URL и пробуем альтернативные методы
                             if (e.currentTarget.src.includes('/api/proxy-image')) {
                               const urlParams = new URLSearchParams(e.currentTarget.src.split('?')[1]);
                               const originalUrl = urlParams.get('url');
+                              
                               if (originalUrl) {
-                                console.log("Setting direct image URL:", originalUrl);
-                                e.currentTarget.src = decodeURIComponent(originalUrl);
+                                // Декодируем исходный URL
+                                const decodedUrl = decodeURIComponent(originalUrl);
+                                console.log(`[TrendsList] Пробуем альтернативную загрузку:`, decodedUrl);
+                                
+                                // Проверяем, является ли это Instagram URL
+                                const isInstagram = decodedUrl.includes('instagram.') || 
+                                                  decodedUrl.includes('fbcdn.net') || 
+                                                  decodedUrl.includes('cdninstagram.com');
+                                
+                                // Добавляем cache-busting параметр
+                                const urlWithNocache = decodedUrl.includes('?') 
+                                  ? `${decodedUrl}&_nocache=${Date.now()}` 
+                                  : `${decodedUrl}?_nocache=${Date.now()}`;
+                                
+                                // Для Instagram повторяем попытку через прокси с дополнительными параметрами
+                                if (isInstagram) {
+                                  console.log(`[TrendsList] Instagram URL обнаружен, используем специальный режим`);
+                                  const retryUrl = `/api/proxy-image?url=${encodeURIComponent(urlWithNocache)}&_retry=true&_force=instagram&_t=${Date.now()}`;
+                                  e.currentTarget.src = retryUrl;
+                                } else {
+                                  // Пробуем загрузить напрямую для неинстаграмных URL
+                                  console.log(`[TrendsList] Пробуем прямую ссылку:`, urlWithNocache);
+                                  e.currentTarget.src = urlWithNocache;
+                                }
                               } else {
-                                // Показываем иконку-заглушку если URL отсутствует
-                                console.log("No URL parameter in proxy path");
+                                console.log(`[TrendsList] Нет URL параметра в пути прокси`);
                                 e.currentTarget.style.display = 'none';
                               }
                             } else {
-                              // Это прямой URL, который тоже не загрузился
-                              console.log("Direct URL also failed");
+                              // Прямая ссылка тоже не работает
+                              console.log(`[TrendsList] Прямая ссылка не работает`);
                               e.currentTarget.style.display = 'none';
                             }
                           } catch (error) {
-                            console.error("Error handling image fallback:", error);
+                            console.error(`[TrendsList] Ошибка обработки изображения:`, error);
                             e.currentTarget.style.display = 'none';
                           }
                         }}

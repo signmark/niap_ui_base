@@ -115,7 +115,7 @@ type PlatformRequirements = {
 };
 
 // Image proxy function to handle Telegram images
-async function fetchAndProxyImage(url: string, res: any) {
+async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: boolean; forceType?: string | null } = {}) {
   try {
     console.log(`Proxying image/media: ${url}`);
     
@@ -131,10 +131,15 @@ async function fetchAndProxyImage(url: string, res: any) {
       }
     }
     
-    // Специальная обработка для Instagram
-    const isInstagram = url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com');
+    // Специальная обработка для Instagram и других платформ
+    const isInstagram = url.includes('instagram.') || 
+                       url.includes('fbcdn.net') || 
+                       url.includes('cdninstagram.com') || 
+                       options.forceType === 'instagram';
+                       
+    // Если это Instagram или принудительно выбран тип Instagram
     if (isInstagram) {
-      console.log('Processing Instagram URL');
+      console.log(`Processing Instagram URL${options.forceType ? ' (forced)' : ''}`);
       
       // Добавляем к URL параметр для обхода кеширования
       fixedUrl = url.includes('?') 
@@ -142,6 +147,11 @@ async function fetchAndProxyImage(url: string, res: any) {
         : `${url}?_nocache=${Date.now()}`;
       
       console.log(`Modified Instagram URL with cache-busting: ${fixedUrl}`);
+    }
+    
+    // Для повторных попыток мы можем использовать альтернативные параметры
+    if (options.isRetry) {
+      console.log(`This is a retry attempt for URL: ${url}`);
     }
     
     // Настраиваем заголовки в зависимости от источника
@@ -1013,7 +1023,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).send('URL parameter is required');
     }
 
-    console.log(`[Image proxy] Requested URL: ${imageUrl}`);
+    // Проверяем дополнительные параметры
+    const isRetry = req.query._retry === 'true';
+    const forceType = req.query._force as string || null;
+    const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
+    
+    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}`);
 
     try {
       // Decode the URL if it's encoded
@@ -1023,8 +1038,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
       
-      await fetchAndProxyImage(decodedUrl, res);
+      await fetchAndProxyImage(decodedUrl, res, { isRetry, forceType });
     } catch (error) {
       console.error('Error in image proxy:', error);
       // Отправка 404 вместо 500, чтобы браузер мог переключиться на прямую ссылку
