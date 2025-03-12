@@ -802,7 +802,7 @@ export default function Trends() {
                             variant="ghost"
                             size="icon"
                             onClick={() => launchWebhook(source.id)}
-                            disabled={['start', 'processing', 'running'].includes(source.status || '')}
+                            disabled={false} 
                             title="Запустить сбор данных из источника"
                           >
                             <Bot className="h-4 w-4" />
