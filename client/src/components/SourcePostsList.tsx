@@ -72,14 +72,8 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   const processImageUrl = (url: string | null) => {
     if (!url) return null;
 
-    // For both Instagram and Telegram use weserv.nl proxy
-    if (url.includes('instagram.') || url.includes('fbcdn.net') ||
-        url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
-      return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&default=placeholder`;
-    }
-
-    // For other sources use direct link
-    return url;
+    // Используем наш собственный прокси для всех медиа
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   };
 
   // Проверка, является ли URL видео-файлом

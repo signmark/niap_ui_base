@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +26,7 @@ interface TrendTopic {
   createdAt: string;
   isBookmarked: boolean;
   campaignId: string;
+  mediaLinks?: string; // JSON строка с медиа-данными
 }
 
 export function TrendsList({ campaignId }: TrendsListProps) {
@@ -56,7 +57,8 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           views: trend.views || 0,
           createdAt: trend.createdAt,
           isBookmarked: trend.isBookmarked || false,
-          campaignId: trend.campaignId
+          campaignId: trend.campaignId,
+          mediaLinks: trend.mediaLinks || trend.media_links
         }));
 
         return trendTopics;
@@ -153,50 +155,87 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {trends.map((trend: TrendTopic) => (
-          <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
-            <CardContent className="pt-6">
-              <div className="space-y-2">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-medium">{trend.title}</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => bookmarkMutation.mutate({ id: trend.id, isBookmarked: !trend.isBookmarked })}
-                    disabled={bookmarkMutation.isPending}
-                  >
-                    {trend.isBookmarked 
-                      ? <BookmarkCheck className="h-4 w-4 text-primary" /> 
-                      : <Bookmark className="h-4 w-4" />
-                    }
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Источник: {trend.sourceName || 'Неизвестный источник'}
-                  {trend.sourceUrl && (
-                    <a 
-                      href={trend.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-2 text-blue-500 hover:underline"
-                    >
-                      (открыть)
-                    </a>
+        {trends.map((trend: TrendTopic) => {
+          // Парсим JSON с медиа-ссылками, если есть
+          let mediaData = { images: [], videos: [] };
+          if (trend.mediaLinks) {
+            try {
+              mediaData = JSON.parse(trend.mediaLinks);
+            } catch (e) {
+              console.error("Failed to parse media links:", e);
+            }
+          }
+          
+          // Получаем первую картинку для превью, если она есть
+          const previewImageUrl = mediaData.images && mediaData.images.length > 0 
+            ? `/api/proxy-image?url=${encodeURIComponent(mediaData.images[0])}` 
+            : null;
+            
+          return (
+            <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  {/* Превью изображения */}
+                  {previewImageUrl && (
+                    <div className="w-full aspect-video bg-muted rounded-md overflow-hidden">
+                      <img 
+                        src={previewImageUrl} 
+                        alt="Превью" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          // Если прокси не работает, пробуем прямую ссылку
+                          if (mediaData.images && mediaData.images.length > 0) {
+                            e.currentTarget.src = mediaData.images[0];
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                          }
+                        }}
+                      />
+                    </div>
                   )}
-                </p>
-                <div className="flex gap-4 text-sm">
-                  <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>
-                  <span title="Комментарии">💬 {trend.comments?.toLocaleString() || 0}</span>
-                  <span title="Реакции">❤️ {trend.reactions?.toLocaleString() || 0}</span>
+                  
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium">{trend.title}</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => bookmarkMutation.mutate({ id: trend.id, isBookmarked: !trend.isBookmarked })}
+                      disabled={bookmarkMutation.isPending}
+                    >
+                      {trend.isBookmarked 
+                        ? <BookmarkCheck className="h-4 w-4 text-primary" /> 
+                        : <Bookmark className="h-4 w-4" />
+                      }
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Источник: {trend.sourceName || 'Неизвестный источник'}
+                    {trend.sourceUrl && (
+                      <a 
+                        href={trend.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 text-blue-500 hover:underline"
+                      >
+                        (открыть)
+                      </a>
+                    )}
+                  </p>
+                  <div className="flex gap-4 text-sm">
+                    <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>
+                    <span title="Комментарии">💬 {trend.comments?.toLocaleString() || 0}</span>
+                    <span title="Реакции">❤️ {trend.reactions?.toLocaleString() || 0}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(trend.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(trend.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
