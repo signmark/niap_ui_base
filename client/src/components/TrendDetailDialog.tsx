@@ -8,6 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
+// Импортируем функцию createProxyImageUrl из utils
+import { createProxyImageUrl } from "../utils/media";
 import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -20,6 +23,7 @@ interface MediaData {
 interface TrendTopic {
   id: string;
   title: string;
+  description?: string; // Добавляем поле description
   source_id: string;
   reactions: number;
   comments: number;
@@ -37,24 +41,6 @@ interface TrendDetailDialogProps {
   onBookmark: (id: string, isBookmarked: boolean) => void;
   sourceName?: string;
 }
-
-// Функция для создания прокси-URL с учётом типа источника
-const createProxyImageUrl = (imageUrl: string, topicId: string) => {
-  // Проверяем, является ли это Instagram URL
-  const isInstagram = imageUrl.includes('instagram.') || 
-                      imageUrl.includes('fbcdn.net') || 
-                      imageUrl.includes('cdninstagram.com');
-  
-  if (isInstagram) {
-    // Для Instagram используем специальный параметр
-    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_force=instagram&_t=${Date.now()}`;
-    console.log(`[TrendDetail ${topicId}] Instagram image detected, using special mode: ${proxyUrl}`);
-    return proxyUrl;
-  } else {
-    // Для обычных URL
-    return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}`;
-  }
-};
 
 export function TrendDetailDialog({
   topic,
@@ -334,7 +320,10 @@ export function TrendDetailDialog({
 
         {/* Текст публикации */}
         <div className="my-4 text-base">
-          <p>{topic.title}</p>
+          <p className="font-medium">{topic.title}</p>
+          {topic.description && (
+            <p className="mt-2 text-gray-700">{topic.description}</p>
+          )}
         </div>
 
         {/* Статистика */}
