@@ -1116,21 +1116,27 @@ export default function Trends() {
                             // Проверяем разные варианты имен полей (snake_case и camelCase)
                             const mediaLinksStr = topic.media_links || topic.mediaLinks;
                             
+                            console.log('Media links для темы:', topic.title, mediaLinksStr);
+                            
                             if (mediaLinksStr) {
                               try {
                                 if (typeof mediaLinksStr === 'string') {
                                   mediaData = JSON.parse(mediaLinksStr);
+                                  console.log('Распарсенные данные:', mediaData);
                                 } else if (typeof mediaLinksStr === 'object') {
                                   // Может прийти уже распарсенным
                                   mediaData = mediaLinksStr as { images: string[], videos: string[] };
+                                  console.log('Данные уже объект:', mediaData);
                                 }
                               } catch (e) {
-                                console.error('Ошибка разбора JSON в media_links:', e);
+                                console.error('Ошибка разбора JSON в media_links:', e, mediaLinksStr);
                               }
                             }
                             
                             // Первое изображение для отображения
                             const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : null;
+                            
+                            console.log('Первое изображение:', firstImage);
                             
                             return (
                               <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
@@ -1149,13 +1155,17 @@ export default function Trends() {
                                     {firstImage ? (
                                       <div className="flex-shrink-0">
                                         <img 
-                                          src={`/api/proxy-image?url=${encodeURIComponent(firstImage)}`} 
+                                          src={firstImage}
                                           alt="Миниатюра"
                                           className="h-16 w-16 object-cover rounded-md"
                                           onError={(e) => {
+                                            console.log('Ошибка загрузки изображения:', firstImage);
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = 'https://placehold.co/100x100/jpeg?text=Нет+фото';
                                           }}
+                                          loading="lazy"
+                                          referrerPolicy="no-referrer"
+                                          crossOrigin="anonymous"
                                         />
                                       </div>
                                     ) : null}
