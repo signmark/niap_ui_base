@@ -666,6 +666,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sources routes
+  app.post("/api/sources", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { name, url, type, campaignId, isActive } = req.body;
+
+      if (!name || !url || !type || !campaignId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Отсутствуют обязательные поля",
+          message: "Необходимо указать name, url, type и campaignId" 
+        });
+      }
+
+      // Получаем информацию о пользователе из токена
+      let userId;
+      try {
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        userId = userResponse.data?.data?.id;
+        if (!userId) {
+          return res.status(401).json({ success: false, message: "Unauthorized: Cannot identify user" });
+        }
+      } catch (userError) {
+        console.error("Error getting user from token:", userError);
+        return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
+      }
+
+      // Создаем новый источник в Directus
+      try {
+        console.log(`Creating source: ${name} (${url}) for campaign: ${campaignId}`);
+        
+        const response = await directusApi.post('/items/campaign_content_sources', {
+          name: name,
+          url: url,
+          type: type,
+          campaign_id: campaignId,
+          is_active: isActive !== undefined ? isActive : true
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // Преобразуем ответ от Directus в наш формат
+        const newSource = {
+          id: response.data.data.id,
+          name: response.data.data.name,
+          url: response.data.data.url,
+          type: response.data.data.type,
+          isActive: response.data.data.is_active,
+          campaignId: response.data.data.campaign_id,
+          createdAt: response.data.data.created_at
+        };
+
+        console.log('Successfully created source:', newSource);
+
+        return res.status(201).json({
+          success: true,
+          data: newSource,
+          message: "Источник успешно добавлен"
+        });
+      } catch (directusError) {
+        console.error("Error creating source in Directus:", directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", directusError.response.data);
+          
+          return res.status(directusError.response.status || 500).json({
+            success: false,
+            error: "Ошибка при создании источника",
+            details: directusError.response.data
+          });
+        }
+        
+        return res.status(500).json({
+          success: false,
+          error: "Ошибка при создании источника",
+          message: directusError instanceof Error ? directusError.message : "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error("Error in POST /api/sources:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to create source",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/sources", async (req, res) => {
     try {
       const campaignId = req.query.campaignId as string;
