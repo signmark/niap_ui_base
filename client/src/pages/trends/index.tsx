@@ -50,14 +50,20 @@ interface ContentSource {
 interface TrendTopic {
   id: string;
   title: string;
-  source_id: string;
+  source_id?: string;  // Версия с подчеркиванием (snake_case)
+  sourceId?: string;   // Версия в camelCase
   reactions: number;
   comments: number;
   views: number;
-  created_at: string;
-  is_bookmarked: boolean;
-  campaign_id: string;
-  media_links?: string; // JSON строка с медиа-данными
+  created_at?: string; // Версия с подчеркиванием (snake_case)
+  createdAt?: string;  // Версия в camelCase
+  is_bookmarked?: boolean; // Версия с подчеркиванием (snake_case)
+  isBookmarked?: boolean;  // Версия в camelCase
+  campaign_id?: string;    // Версия с подчеркиванием (snake_case)
+  campaignId?: string;     // Версия в camelCase
+  media_links?: string;    // JSON строка с медиа-данными
+  mediaLinks?: string;     // Альтернативное имя поля
+  sourceName?: string;     // Имя источника, может приходить напрямую от API
 }
 
 interface SourcePost {
@@ -1102,11 +1108,20 @@ export default function Trends() {
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
                             // Разбор JSON из поля media_links для превью
-                            let mediaData = { images: [], videos: [] };
-                            if (topic.media_links) {
+                            let mediaData: { images: string[], videos: string[] } = { images: [], videos: [] };
+                            
+                            // Проверяем разные варианты имен полей (snake_case и camelCase)
+                            const mediaLinksStr = topic.media_links || topic.mediaLinks;
+                            
+                            if (mediaLinksStr) {
                               try {
-                                console.log('Media links data для темы:', topic.title, topic.media_links.substring(0, 100));
-                                mediaData = JSON.parse(topic.media_links);
+                                if (typeof mediaLinksStr === 'string') {
+                                  console.log('Media links data для темы:', topic.title, mediaLinksStr.substring(0, 100));
+                                  mediaData = JSON.parse(mediaLinksStr);
+                                } else if (typeof mediaLinksStr === 'object') {
+                                  // Может прийти уже распарсенным
+                                  mediaData = mediaLinksStr as { images: string[], videos: string[] };
+                                }
                                 console.log('Parsed media data:', mediaData);
                               } catch (e) {
                                 console.error('Ошибка разбора JSON в media_links:', e);
@@ -1174,7 +1189,7 @@ export default function Trends() {
                                 <CardContent className="p-3">
                                   <h3 className="font-medium line-clamp-2 mb-1 text-sm">{topic.title}</h3>
                                   <p className="text-xs text-muted-foreground mb-2">
-                                    {sources.find(s => s.id === topic.source_id)?.name || 'Неизвестный источник'}
+                                    {sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник'}
                                   </p>
                                   
                                   <div className="flex justify-between text-xs text-muted-foreground mt-auto">
@@ -1266,7 +1281,7 @@ export default function Trends() {
           isOpen={!!selectedTrendTopic}
           onClose={() => setSelectedTrendTopic(null)}
           onBookmark={(id, isBookmarked) => updateTrendBookmark({ id, isBookmarked })}
-          sourceName={sources.find(s => s.id === selectedTrendTopic.source_id)?.name}
+          sourceName={sources.find(s => s.id === selectedTrendTopic.source_id || s.id === selectedTrendTopic.sourceId)?.name || selectedTrendTopic.sourceName}
         />
       )}
     </div>
