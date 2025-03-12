@@ -1517,82 +1517,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Single source crawling endpoint
   app.post("/api/sources/:sourceId/crawl", async (req, res) => {
     try {
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        console.error('Missing authorization header');
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const token = authHeader.replace('Bearer ', '');
-      
       const sourceId = req.params.sourceId;
       const { campaignId } = req.body;
 
       if (!sourceId || !campaignId) {
         console.error('Missing required parameters:', { sourceId, campaignId });
-        return res.status(400).json({ message: "Source ID and Campaign ID are required" });
+        return res.status(400).json({ 
+          success: false,
+          message: "Source ID and Campaign ID are required" 
+        });
       }
-
-      // Get sources for this campaign from Directus API
-      const sourcesResponse = await directusApi.get('/items/content_sources', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
-            }
-          }
-        },
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
       
-      const sources = sourcesResponse.data.data || [];
-      console.log(`Found ${sources.length} sources for campaign ${campaignId}`);
-      
-      // Find the specific source we're interested in
-      const source = sources.find((s: any) => String(s.id) === String(sourceId));
-
-      if (!source) {
-        console.error('Source not found:', { sourceId, campaignId });
-        return res.status(404).json({ message: "Source not found" });
-      }
+      console.log(`Starting crawl process for source: ${sourceId} in campaign: ${campaignId}`);
       
       try {
-        // Start crawling process
-        console.log('Starting crawling process for source:', source.name);
-        
         // Отправляем запрос на n8n webhook для сбора постов из источника
         const webhookUrl = 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
         
-        // НЕ отправляем токен, так как в n8n webhook нет авторизации
+        // Отправляем только sourceId и campaignId без авторизации
         const webhookResponse = await axios.post(webhookUrl, {
-          sourceId: sourceId,
-          campaignId: campaignId
+          sourceId,
+          campaignId
         });
         
         console.log('Webhook response:', webhookResponse.status);
         
-        if (webhookResponse.status >= 200 && webhookResponse.status < 300) {
-          // Успешно запустили задачу
-          return res.status(200).json({
-            success: true,
-            message: "Задача на сбор постов из источника успешно запущена"
-          });
-        } else {
-          throw new Error(`Webhook returned status ${webhookResponse.status}`);
-        }
+        // Возвращаем успешный результат, если запрос к webhook удался
+        return res.status(200).json({
+          success: true,
+          message: "Задача на сбор постов из источника успешно запущена"
+        });
       } catch (crawlError) {
-        console.error("Error during crawling:", crawlError);
+        console.error("Error calling webhook:", crawlError);
+        
+        // Проверяем, есть ли ответ от сервера
+        if (axios.isAxiosError(crawlError) && crawlError.response) {
+          console.error('Webhook error response:', {
+            status: crawlError.response.status,
+            data: crawlError.response.data
+          });
+        }
         
         res.status(500).json({ 
           success: false,
-          error: "Failed to complete crawling task",
+          error: "Failed to start crawling task",
           message: crawlError instanceof Error ? crawlError.message : "Unknown error"
         });
       }
     } catch (error) {
-      console.error("Error processing request:", error);
+      console.error("Unexpected error in crawl endpoint:", error);
       res.status(500).json({ 
         success: false,
         error: "Failed to process request",
