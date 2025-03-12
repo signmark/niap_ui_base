@@ -209,6 +209,33 @@ async function fetchAndProxyImage(url: string, res: any) {
       contentType = 'video/mp4';
     }
     
+    // Особая обработка для ВКонтакте видео
+    if (fixedUrl.includes('vk.com/video') && response.headers['content-type']?.includes('text/html')) {
+      // Это HTML-страница с видео ВКонтакте, пытаемся извлечь прямую ссылку
+      try {
+        const htmlContent = response.data.toString('utf8');
+        
+        // Регулярное выражение для поиска URL видеофайла в коде страницы
+        const videoUrlMatches = htmlContent.match(/https:\/\/[^"]+\.mp4[^"]+/g);
+        
+        if (videoUrlMatches && videoUrlMatches.length > 0) {
+          console.log(`Found direct video URL in VK page: ${videoUrlMatches[0]}`);
+          
+          // Получаем прямую ссылку на видеофайл
+          const directVideoUrl = videoUrlMatches[0];
+          
+          // Делаем редирект на прямую ссылку
+          res.setHeader('Location', directVideoUrl);
+          res.status(302).end();
+          return;
+        } else {
+          console.log('No direct video URL found in VK page');
+        }
+      } catch (e) {
+        console.error('Error extracting video URL from VK page:', e);
+      }
+    }
+    
     // Особая обработка для Instagram и Facebook CDN
     if (isInstagram) {
       // Instagram всегда отдает JPEG, кроме редких случаев
