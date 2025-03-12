@@ -1525,8 +1525,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.replace('Bearer ', '');
       
-  // Эндпоинт для заданий на обработку источников удален, так как краулер больше не используется
-
       const sourceId = req.params.sourceId;
       const { campaignId } = req.body;
 
@@ -1561,23 +1559,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
+        // Обновляем статус источника в Directus на "processing"
+        await directusApi.patch(`/items/content_sources/${sourceId}`, {
+          status: 'processing'
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
         // Start crawling process
         console.log('Starting crawling process for source:', source.name);
         
-        // TODO: Replace with Directus API call when crawler functionality is implemented
-        // For now, returning placeholder response
-        res.status(501).json({ 
-          success: false,
-          error: "Crawling functionality not yet implemented",
-          message: "This endpoint will be implemented in a future update"
+        // Отправляем запрос на n8n webhook для сбора постов из источника
+        const webhookUrl = 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
+        
+        const webhookResponse = await axios.post(webhookUrl, {
+          sourceId: sourceId,
+          campaignId: campaignId,
+          token: token
         });
+        
+        console.log('Webhook response:', webhookResponse.status);
+        
+        if (webhookResponse.status >= 200 && webhookResponse.status < 300) {
+          // Успешно запустили задачу
+          return res.status(200).json({
+            success: true,
+            message: "Задача на сбор постов из источника успешно запущена"
+          });
+        } else {
+          throw new Error(`Webhook returned status ${webhookResponse.status}`);
+        }
       } catch (crawlError) {
         console.error("Error during crawling:", crawlError);
-        res.status(500).json({ error: "Failed to complete crawling task" });
+        
+        // В случае ошибки также обновляем статус источника на "error"
+        try {
+          await directusApi.patch(`/items/content_sources/${sourceId}`, {
+            status: 'error'
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        } catch (updateError) {
+          console.error("Error updating source status:", updateError);
+        }
+        
+        res.status(500).json({ 
+          success: false,
+          error: "Failed to complete crawling task",
+          message: crawlError instanceof Error ? crawlError.message : "Unknown error"
+        });
       }
     } catch (error) {
       console.error("Error processing request:", error);
-      res.status(500).json({ error: "Failed to process request" });
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to process request",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
