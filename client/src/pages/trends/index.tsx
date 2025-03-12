@@ -1245,6 +1245,17 @@ export default function Trends() {
         }}
         isLoading={isCollecting}
       />
+
+      {/* Модальное окно для детального просмотра тренда */}
+      {selectedTrendTopic && (
+        <TrendDetailDialog
+          topic={selectedTrendTopic}
+          isOpen={!!selectedTrendTopic}
+          onClose={() => setSelectedTrendTopic(null)}
+          onBookmark={(id, isBookmarked) => updateTrendBookmark({ id, isBookmarked })}
+          sourceName={sources.find(s => s.id === selectedTrendTopic.source_id)?.name}
+        />
+      )}
     </div>
   );
 }
