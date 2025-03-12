@@ -158,24 +158,35 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         {trends.map((trend: TrendTopic) => {
           // Проверяем что получили из API
           console.log("Trend data:", trend);
-          console.log("Media links raw:", trend.mediaLinks);
           
-          // Парсим JSON с медиа-ссылками, если есть
+          // Инициализируем медиа-данные
           let mediaData = { images: [], videos: [] };
-          if (trend.mediaLinks) {
+          
+          // Проверяем наличие media_links как объекта
+          if (trend.media_links && Array.isArray(trend.media_links) && trend.media_links.length > 0) {
+            console.log("Found media_links as array:", trend.media_links);
+            // Если это массив, берем первый элемент как ссылку на изображение
+            mediaData = {
+              images: trend.media_links,
+              videos: []
+            };
+          }
+          // Проверяем наличие mediaLinks как JSON-строки
+          else if (trend.mediaLinks && typeof trend.mediaLinks === 'string') {
             try {
               mediaData = JSON.parse(trend.mediaLinks);
-              console.log("Parsed media data:", mediaData);
+              console.log("Parsed from mediaLinks string:", mediaData);
             } catch (e) {
-              console.error("Failed to parse media links:", e);
+              console.error("Failed to parse mediaLinks string:", e);
             }
-          } else if (trend.media_links) {
-            // Проверяем альтернативное имя поля
+          }
+          // Проверяем media_links как JSON-строку
+          else if (trend.media_links && typeof trend.media_links === 'string') {
             try {
               mediaData = JSON.parse(trend.media_links);
-              console.log("Parsed from media_links:", mediaData);
+              console.log("Parsed from media_links string:", mediaData);
             } catch (e) {
-              console.error("Failed to parse media_links:", e);
+              console.error("Failed to parse media_links string:", e);
             }
           }
           
@@ -184,6 +195,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             ? `/api/proxy-image?url=${encodeURIComponent(mediaData.images[0])}` 
             : null;
           
+          console.log("Media data:", mediaData);
           console.log("Preview image URL:", previewImageUrl);
             
           return (
