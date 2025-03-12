@@ -1,9 +1,8 @@
+import { deepseekService } from './services/deepseek';
+
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-
-// DeepSeek API ключ - временно храним здесь, потом перенесем в настройки
-const DEEPSEEK_API_KEY = "sk-7debde066de4456bbf2b029beb789db3";
 
 // Функция для очистки устаревших записей кеша
 function cleanupExpiredCache() {
@@ -57,16 +56,26 @@ function getCachedKeywordsByUrl(url: string): any[] | null {
 }
 
 // Функция для объединения ключевых слов из разных источников
-function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[]): any[] {
+function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deepseekKeywords: any[] = []): any[] {
   // Создаем Map для уникальности по ключевому слову
   const keywordMap = new Map<string, any>();
   
-  // Сначала добавляем ключевые слова от Perplexity, они приоритетнее
+  // Сначала добавляем ключевые слова от DeepSeek, они наиболее приоритетны
+  deepseekKeywords.forEach(keyword => {
+    if (!keyword?.keyword) return;
+    const key = keyword.keyword.toLowerCase().trim();
+    if (!keywordMap.has(key)) {
+      // Добавляем источник к ключевому слову
+      keywordMap.set(key, { ...keyword, source: 'deepseek' });
+    }
+  });
+  
+  // Затем добавляем ключевые слова от Perplexity
   perplexityKeywords.forEach(keyword => {
     if (!keyword?.keyword) return;
     const key = keyword.keyword.toLowerCase().trim();
     if (!keywordMap.has(key)) {
-      keywordMap.set(key, keyword);
+      keywordMap.set(key, { ...keyword, source: 'perplexity' });
     }
   });
   
@@ -75,7 +84,7 @@ function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[]): any[
     if (!keyword?.keyword) return;
     const key = keyword.keyword.toLowerCase().trim();
     if (!keywordMap.has(key)) {
-      keywordMap.set(key, keyword);
+      keywordMap.set(key, { ...keyword, source: 'xmlriver' });
     }
   });
   
