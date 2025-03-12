@@ -1,4 +1,5 @@
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
+const urlKeywordCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Add helper function to check and get cached results
@@ -9,6 +10,47 @@ function getCachedResults(keyword: string): any[] | null {
     return cached.results;
   }
   return null;
+}
+
+// Специальное кеширование для URL-адресов
+function getCachedKeywordsByUrl(url: string): any[] | null {
+  const normalizedUrl = url.toLowerCase().trim();
+  const cached = urlKeywordCache.get(normalizedUrl);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`Using cached URL keywords for: ${url}, found ${cached.results.length} items`);
+    return cached.results;
+  }
+  return null;
+}
+
+// Функция для объединения ключевых слов из разных источников
+function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[]): any[] {
+  // Создаем Map для уникальности по ключевому слову
+  const keywordMap = new Map<string, any>();
+  
+  // Сначала добавляем ключевые слова от Perplexity, они приоритетнее
+  perplexityKeywords.forEach(keyword => {
+    if (!keyword?.keyword) return;
+    const key = keyword.keyword.toLowerCase().trim();
+    if (!keywordMap.has(key)) {
+      keywordMap.set(key, keyword);
+    }
+  });
+  
+  // Затем добавляем ключевые слова от XMLRiver, если таких еще нет
+  xmlRiverKeywords.forEach(keyword => {
+    if (!keyword?.keyword) return;
+    const key = keyword.keyword.toLowerCase().trim();
+    if (!keywordMap.has(key)) {
+      keywordMap.set(key, keyword);
+    }
+  });
+  
+  // Преобразуем Map обратно в массив и сортируем по популярности
+  return Array.from(keywordMap.values())
+    .sort((a, b) => b.trend - a.trend)
+    .slice(0, 15); // Ограничиваем до 15 самых популярных ключевых слов
 }
 
 import type { Express, Request, Response, NextFunction } from "express";
@@ -655,6 +697,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Если это URL, используем Perplexity API для получения релевантных ключевых слов
       if (isUrl) {
         console.log('Using Perplexity for URL-based keyword search');
+        
+        // Нормализуем URL
+        const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
+        
+        // Проверяем кеш для URL
+        const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
+        if (cachedKeywords && cachedKeywords.length > 0) {
+          console.log(`[${requestId}] Using ${cachedKeywords.length} cached keywords for URL: ${normalizedUrl}`);
+          finalKeywords = cachedKeywords;
+          return res.json({ data: { keywords: finalKeywords } });
+        }
+        
         try {
           // Получаем API ключ Perplexity
           const settings = await directusApi.get('/items/user_api_keys', {
@@ -669,9 +723,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!perplexityKey) {
             throw new Error('Perplexity API key not found');
           }
-          
-          // Нормализуем URL
-          const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
           
           // Сначала попробуем получить контент с сайта для лучшего анализа
           let siteContent = "";
