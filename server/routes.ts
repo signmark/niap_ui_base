@@ -617,11 +617,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Searching WordStat for keyword: ${req.params.keyword}`);
       
       // Фильтр нецензурной лексики в качестве входных данных
-      const offensiveWords = ['бля', 'хуй', 'пизд', 'ебан', 'еб', 'сук', 'пидор', 'пидар', 'хуя', 'нахуй', 'дебил'];
+      const offensiveWords = ['бля', 'хуй', 'пизд', 'ебан', 'еб', 'пидор', 'пидар', 'хуя', 'нахуй', 'дебил'];
       const keyword = req.params.keyword.toLowerCase();
       
       // Проверяем, содержит ли ключевое слово нецензурную лексику
-      if (offensiveWords.some(word => keyword.includes(word))) {
+      // Для слова "сука" делаем исключение, так как это может быть название породы собак
+      if (offensiveWords.some(word => keyword.includes(word)) || 
+          (keyword === 'сука' && !keyword.includes('порода') && !keyword.includes('собак'))) {
         return res.status(400).json({
           error: "Запрос содержит недопустимое содержание",
           message: "Пожалуйста, используйте корректные ключевые слова для поиска"
