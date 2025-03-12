@@ -565,7 +565,7 @@ export default function Trends() {
     // Создаем интервал обновления трендов
     trendsRefreshInterval.current = setInterval(() => {
       console.log('Refreshing trends data...');
-      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
     }, 3000); // Обновление трендов каждые 3 секунды
     
     // Создаем интервал обновления источников
@@ -596,7 +596,7 @@ export default function Trends() {
       }
 
       // Используем наш собственный API эндпоинт вместо прямого обращения к Directus
-      const response = await fetch(`/api/trends?campaignId=${selectedCampaignId}&period=${selectedPeriod}`, {
+      const response = await fetch(`/api/campaign-trends?campaignId=${selectedCampaignId}&period=${selectedPeriod}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -746,7 +746,7 @@ export default function Trends() {
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       return trendData;
     },
     onSuccess: (data) => {
@@ -756,11 +756,11 @@ export default function Trends() {
       });
       
       // Refresh the trend topics list и источники
-      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       
       // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
-      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
     },
     onError: (error: Error) => {
       console.error('Error collecting trends:', error);
