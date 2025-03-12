@@ -263,6 +263,9 @@ export default function Trends() {
       // Отправляем запрос на запуск сбора постов из источника
       console.log(`Starting post collection for source ${sourceId} in campaign ${selectedCampaignId}`);
       
+      // Найдем имя источника для передачи на сервер
+      const source = sources.find(s => s.id === sourceId);
+      
       return await fetch(`/api/sources/${sourceId}/crawl`, {
         method: 'POST',
         headers: {
@@ -270,7 +273,8 @@ export default function Trends() {
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          campaignId: selectedCampaignId
+          campaignId: selectedCampaignId,
+          sourceName: source?.name || 'Источник' // Передаем имя источника в запросе
         })
       }).then(response => {
         if (!response.ok) {

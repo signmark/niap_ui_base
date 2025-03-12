@@ -1528,30 +1528,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Получаем имя источника напрямую из Directus, так как это проще и надежнее
-      let sourceName = sourceId;
-      try {
-        // Используем напрямую запрос к Directus API для получения данных источника
-        const authToken = req.headers.authorization?.replace('Bearer ', '');
-        if (authToken) {
-          const sourceResponse = await directusApi.get(`/items/content_sources/${sourceId}`, {
-            headers: {
-              'Authorization': `Bearer ${authToken}`
-            }
-          });
-          
-          if (sourceResponse.data?.data?.name) {
-            sourceName = sourceResponse.data.data.name;
-            console.log(`Starting crawl process for source: ${sourceName} (${sourceId}) in campaign: ${campaignId}`);
-          } else {
-            console.log(`Source name not found, using ID: ${sourceId} in campaign: ${campaignId}`);
-          }
-        } else {
-          console.log(`No auth token available, using source ID: ${sourceId} in campaign: ${campaignId}`);
-        }
-      } catch (sourceError) {
-        console.log(`Error getting source name, using ID: ${sourceId}:`, sourceError instanceof Error ? sourceError.message : String(sourceError));
-      }
+      // Получаем имя источника из запроса клиента вместо запроса к серверу
+      // Клиент уже получил список источников, поэтому он знает имя источника
+      const sourceName = req.body.sourceName || req.query.sourceName || sourceId;
+      console.log(`Starting crawl process for source: ${sourceName} (${sourceId}) in campaign: ${campaignId}`);
       
       try {
         // Отправляем запрос на n8n webhook для сбора постов из источника
