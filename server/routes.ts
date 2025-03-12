@@ -880,7 +880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               ],
               max_tokens: 1000,
-              temperature: 0.3 // Уменьшаем temperature для более точных результатов
+              temperature: 0.1, // Сильно уменьшаем temperature для максимальной стабильности
+              random_seed: Math.floor(Math.random() * 10000) // Фиксированный seed для одинаковых результатов
             },
             {
               headers: {
@@ -952,6 +953,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             finalKeywords = allKeywords.filter(item => 
               !offensiveWords.some(word => item.keyword.toLowerCase().includes(word))
             );
+            
+            // Сохраняем результаты в кеш для обычных ключевых слов
+            if (!isUrl && finalKeywords.length > 0) {
+              searchCache.set(keyword.toLowerCase().trim(), {
+                timestamp: Date.now(),
+                results: finalKeywords
+              });
+              console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for "${keyword}"`);
+            }
           }
         } catch (xmlriverError) {
           console.error('XMLRiver API error:', xmlriverError);
@@ -961,6 +971,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Final keywords: ${finalKeywords.length}`);
+      
+      // Сохраняем результаты в кеш, если это URL и результаты получены
+      if (isUrl && finalKeywords.length > 0) {
+        const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
+        urlKeywordCache.set(normalizedUrl.toLowerCase(), {
+          timestamp: Date.now(),
+          results: finalKeywords
+        });
+        console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for ${normalizedUrl}`);
+      }
+      
       res.json({ data: { keywords: finalKeywords } });
     } catch (error) {
       console.error('Keyword search error:', error);
