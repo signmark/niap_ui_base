@@ -48,12 +48,25 @@ export function TrendDetailDialog({
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   
   // Разбор JSON из поля media_links
-  let mediaData: MediaData = { images: [], videos: [] };
+  let mediaData: MediaData = { 
+    images: [`https://source.unsplash.com/random/800x600?sig=${topic?.id || '1'}`], 
+    videos: [] 
+  };
+  
   if (topic?.media_links) {
     try {
-      mediaData = JSON.parse(topic.media_links);
+      const parsedData = JSON.parse(topic.media_links);
+      // Проверяем, есть ли реальные изображения и видео
+      if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
+        mediaData.images = parsedData.images;
+      }
+      
+      if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
+        mediaData.videos = parsedData.videos;
+      }
     } catch (e) {
       console.error('Ошибка разбора JSON в media_links:', e);
+      // Оставляем изображения по умолчанию
     }
   }
 
