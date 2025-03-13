@@ -89,13 +89,9 @@ export function createStreamVideoUrl(videoUrl: string, itemId: string, forceType
                isDirectVideo ? 'directVideo' : undefined;
   }
   
-  // Для Instagram видео возвращаем прямую ссылку с nocache параметром
-  if (forceType === 'instagram' && (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
-    console.log(`[Media] Instagram видео обрабатывается напрямую: ${videoUrl}`);
-    // Добавляем параметр для обхода кеширования
-    const separator = videoUrl.includes('?') ? '&' : '?';
-    return `${videoUrl}${separator}_nocache=${timestamp}`;
-  }
+  // Instagram видео будет проксироваться через наш собственный сервер
+  // Мы не меняем логику для Instagram, так как это обрабатывается на уровне UI
+  // и возвращаем стандартный stream-video URL
   
   // Формируем URL для стриминга видео
   let streamUrl = `/api/stream-video?url=${encodeURIComponent(videoUrl)}&_t=${timestamp}&itemId=${itemId}`;
