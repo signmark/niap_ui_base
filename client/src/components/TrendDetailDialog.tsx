@@ -236,8 +236,8 @@ export function TrendDetailDialog({
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
                   {/* Отображаем дату в полном формате */}
-                  {(topic.created_at || topic.createdAt) ? 
-                    new Date(topic.created_at || topic.createdAt).toLocaleString('ru-RU', {
+                  {(topic.created_at) ? 
+                    new Date(topic.created_at).toLocaleString('ru-RU', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
