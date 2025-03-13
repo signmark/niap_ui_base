@@ -3042,7 +3042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
-            createdAt: item.created_at,
+            createdAt: item.created_at || null,
             isBookmarked: item.is_bookmarked,
             campaignId: item.campaign_id,
             media_links: item.media_links // Добавляем поле media_links
