@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Импортируем функции для работы с медиа
-import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "../utils/media";
+import { createProxyImageUrl, createVideoThumbnailUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
 import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -292,7 +292,7 @@ export function TrendDetailDialog({
                   {/* Если это прямая ссылка на видео файл Instagram (.mp4) */}
                   {videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('fbcdn.net')) ? (
                     <video 
-                      src={videoUrl}
+                      src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
                       controls
                       autoPlay={false}
                       loop={false}
@@ -328,8 +328,22 @@ export function TrendDetailDialog({
                 </div>
               ) : (
                 <div className="relative">
-                  {/* Для других видео показываем превью с ссылкой */}
-                  {videoThumbnailUrl ? (
+                  {/* Для других типов видео используем наш новый стриминг API */}
+                  {videoUrl ? (
+                    <div className="aspect-video w-full rounded-md overflow-hidden relative">
+                      <video 
+                        src={createStreamVideoUrl(videoUrl, topic.id)}
+                        controls
+                        autoPlay={false}
+                        loop={false}
+                        muted={false}
+                        playsInline
+                        className="w-full max-h-[450px] object-contain"
+                        poster={videoThumbnailUrl || undefined}
+                        crossOrigin="anonymous"
+                      />
+                    </div>
+                  ) : videoThumbnailUrl ? (
                     <div className="relative">
                       <img
                         src={videoThumbnailUrl}
