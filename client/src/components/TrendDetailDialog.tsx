@@ -235,7 +235,7 @@ export function TrendDetailDialog({
             <div className="mt-4 border-t pt-2 flex justify-between items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {topic.created_at ? format(new Date(topic.created_at), "d MMMM yyyy 'г.' HH:mm", { locale: ru }) : "Invalid Date"}
+                  {topic.created_at || "No date available"} {/* Прямой вывод даты из БД без форматирования */}
                 </span>
               </div>
               
