@@ -5117,7 +5117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Создание новой анкеты
-  app.post("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req, res) => {
+  app.post("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req: any, res) => {
     try {
       const { campaignId } = req.params;
       
@@ -5141,7 +5141,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId
       });
       
-      const newQuestionnaire = await storage.createBusinessQuestionnaire(questionnaireData);
+      // Используем сервисный токен для создания анкеты
+      // Этот токен уже настроен с необходимыми правами в Directus
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      
+      if (!serviceToken) {
+        console.error('Service token is not configured in environment variables');
+        return res.status(500).json({ error: "Authentication configuration error" });
+      }
+      
+      console.log('Using service token for creating business questionnaire');
+      const newQuestionnaire = await storage.createBusinessQuestionnaire(questionnaireData, serviceToken);
       
       return res.status(201).json({
         success: true,
@@ -5164,7 +5174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Обновление существующей анкеты
-  app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req, res) => {
+  app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req: any, res) => {
     try {
       const { campaignId, id } = req.params;
       
@@ -5189,8 +5199,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateSchema = insertBusinessQuestionnaireSchema.partial();
       const validatedUpdates = updateSchema.parse(req.body);
       
+      // Используем сервисный токен для обновления анкеты
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      
+      if (!serviceToken) {
+        console.error('Service token is not configured in environment variables');
+        return res.status(500).json({ error: "Authentication configuration error" });
+      }
+      
+      console.log('Using service token for updating business questionnaire');
+      
       // Обновляем анкету
-      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(id, validatedUpdates);
+      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(id, validatedUpdates, serviceToken);
       
       return res.json({
         success: true,
