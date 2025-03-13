@@ -377,7 +377,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          {trend.createdAt ? formatDistanceToNow(new Date(trend.createdAt), { 
+                          {(trend.createdAt || trend.created_at) ? formatDistanceToNow(new Date(trend.createdAt || trend.created_at), { 
                             locale: ru, 
                             addSuffix: false 
                           }) + " назад" : "Дата недоступна"}
