@@ -290,7 +290,7 @@ export function TrendDetailDialog({
               ) : isInstagramVideo ? (
                 <div className="aspect-square w-full rounded-md overflow-hidden relative">
                   {/* Если это прямая ссылка на видео файл Instagram (.mp4) */}
-                  {videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('fbcdn.net')) ? (
+                  {videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('fbcdn.net') || videoUrl.includes('cdninstagram.com')) ? (
                     <video 
                       src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
                       controls
