@@ -173,8 +173,8 @@ export function TrendDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6">
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-2rem)]">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

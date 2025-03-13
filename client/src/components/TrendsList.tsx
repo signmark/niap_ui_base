@@ -203,7 +203,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-3 pr-2">
+      <div className="flex flex-col gap-3 pr-2 pb-4">
         {trends.map((trend: TrendTopic) => {
           // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
