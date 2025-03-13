@@ -324,9 +324,10 @@ export function TrendDetailDialog({
 
         {/* Текст публикации */}
         <div className="my-4 text-base">
-          <p className="font-medium">{topic.title}</p>
-          {topic.description && (
-            <p className="mt-2 text-gray-700">{topic.description}</p>
+          {topic.description ? (
+            <p className="font-medium">{topic.description}</p>
+          ) : (
+            <p className="font-medium">{topic.title}</p>
           )}
         </div>
 

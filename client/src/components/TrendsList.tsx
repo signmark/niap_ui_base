@@ -33,6 +33,7 @@ interface TrendTopic {
   url?: string; // URL оригинальной публикации
   reactions: number;
   comments: number;
+  description?: string; // Добавляем поле для описания
   views: number;
   createdAt: string;
   isBookmarked: boolean;
@@ -92,7 +93,8 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             isBookmarked: trend.isBookmarked || false,
             campaignId: trend.campaignId,
             mediaLinks: trend.mediaLinks,
-            media_links: trend.media_links
+            media_links: trend.media_links,
+            description: trend.description
           };
         });
 
@@ -360,6 +362,12 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       }
                     </Button>
                   </div>
+                  
+                  {/* Отображаем описание вместо повторного заголовка */}
+                  {trend.description && (
+                    <p className="text-sm my-2 line-clamp-3">{trend.description}</p>
+                  )}
+                  
                   <p className="text-sm text-muted-foreground">
                     Источник: {trend.sourceName || 'Неизвестный источник'}
                     {trend.sourceUrl && (
