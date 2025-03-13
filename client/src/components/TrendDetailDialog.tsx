@@ -168,7 +168,7 @@ export function TrendDetailDialog({
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              {sourceName || 'Неизвестный источник'}
+              {sourceName || topic.sourceName || topic.accountUrl || ''}
             </DialogDescription>
           </DialogHeader>
 
@@ -244,7 +244,7 @@ export function TrendDetailDialog({
                       hour: '2-digit',
                       minute: '2-digit'
                     }) 
-                    : "Дата недоступна"}
+                    : ""}
                 </span>
               </div>
               
