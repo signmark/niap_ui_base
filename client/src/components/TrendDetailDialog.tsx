@@ -33,6 +33,8 @@ interface TrendTopic {
   campaign_id: string;
   media_links?: string;
   mediaLinks?: string; // Альтернативное имя поля (для обратной совместимости)
+  url?: string; // URL оригинальной публикации
+  sourceUrl?: string; // URL источника (аккаунта или страницы)
 }
 
 interface TrendDetailDialogProps {
@@ -59,6 +61,7 @@ export function TrendDetailDialog({
   };
   
   console.log(`[TrendDetail] Processing trend ${topic?.id}, media_links type:`, topic?.media_links ? typeof topic.media_links : 'undefined');
+  console.log(`[TrendDetail] Full topic data:`, topic);
   
   // Обработка медиа данных из темы
   if (topic) {
@@ -326,6 +329,34 @@ export function TrendDetailDialog({
             <p className="mt-2 text-gray-700">{topic.description}</p>
           )}
         </div>
+
+        {/* Ссылки на оригинал и источник */}
+        {(topic.url || topic.sourceUrl) && (
+          <div className="my-4 flex flex-col gap-2">
+            {topic.url && (
+              <a 
+                href={topic.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Перейти к оригинальной публикации
+              </a>
+            )}
+            {topic.sourceUrl && (
+              <a 
+                href={topic.sourceUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Перейти к источнику
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Статистика */}
         <div className="flex justify-between items-center py-3 border-t border-b">
