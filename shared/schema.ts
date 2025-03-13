@@ -280,6 +280,49 @@ export const insertCampaignTrendTopicSchema = createInsertSchema(campaignTrendTo
 export type CampaignTrendTopic = typeof campaignTrendTopics.$inferSelect;
 export type InsertCampaignTrendTopic = z.infer<typeof insertCampaignTrendTopicSchema>;
 
+// Таблица для бизнес-анкеты
+export const businessQuestionnaire = pgTable("business_questionnaire", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  campaignId: uuid("campaign_id").references(() => campaigns.id).notNull(),
+  companyName: text("company_name").notNull(),
+  contactInfo: text("contact_info"),
+  businessDescription: text("business_description").notNull(),
+  mainDirections: text("main_directions").notNull(),
+  brandImage: text("brand_image").notNull(),
+  productsServices: text("products_services").notNull(),
+  targetAudience: text("target_audience").notNull(),
+  customerResults: text("customer_results").notNull(),
+  companyFeatures: text("company_features").notNull(),
+  businessValues: text("business_values").notNull(),
+  productBeliefs: text("product_beliefs").notNull(),
+  competitiveAdvantages: text("competitive_advantages").notNull(),
+  marketingExpectations: text("marketing_expectations").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Schema для создания бизнес-анкеты
+export const insertBusinessQuestionnaireSchema = createInsertSchema(businessQuestionnaire)
+  .pick({
+    campaignId: true,
+    companyName: true,
+    contactInfo: true,
+    businessDescription: true,
+    mainDirections: true,
+    brandImage: true,
+    productsServices: true,
+    targetAudience: true,
+    customerResults: true,
+    companyFeatures: true,
+    businessValues: true,
+    productBeliefs: true,
+    competitiveAdvantages: true,
+    marketingExpectations: true
+  });
+
+// Тип бизнес-анкеты
+export type BusinessQuestionnaire = typeof businessQuestionnaire.$inferSelect;
+export type InsertBusinessQuestionnaire = z.infer<typeof insertBusinessQuestionnaireSchema>;
+
 export interface KeywordSearchResult {
   keyword: string;
   trendScore: number;

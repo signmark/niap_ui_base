@@ -9,7 +9,9 @@ import {
   type CampaignContent,
   type InsertCampaignContent,
   type CampaignTrendTopic,
-  type InsertCampaignTrendTopic
+  type InsertCampaignTrendTopic,
+  type BusinessQuestionnaire,
+  type InsertBusinessQuestionnaire
 } from "@shared/schema";
 
 // Тип для информации о токене пользователя
@@ -48,6 +50,11 @@ export interface IStorage {
   updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
   deleteCampaignContent(id: string): Promise<void>;
   getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
+  
+  // Business Questionnaire
+  getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
+  createBusinessQuestionnaire(questionnaire: InsertBusinessQuestionnaire): Promise<BusinessQuestionnaire>;
+  updateBusinessQuestionnaire(id: string, updates: Partial<InsertBusinessQuestionnaire>): Promise<BusinessQuestionnaire>;
 }
 
 export class DatabaseStorage implements IStorage {
