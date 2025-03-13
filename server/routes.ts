@@ -3033,10 +3033,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: item.title,
             sourceId: item.source_id,
             sourceName: item.source_name || 'Источник', // Возможно в Directus это поле названо иначе
-            // Используем account_url как URL источника
-            sourceUrl: item.account_url || null,
-            // Используем url_post как URL оригинальной публикации
-            url: item.url_post || null,
+            // Используем accountUrl как URL источника (camelCase в базе)
+            sourceUrl: item.accountUrl || null,
+            // Используем urlPost как URL оригинальной публикации (camelCase в базе)
+            url: item.urlPost || null,
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
