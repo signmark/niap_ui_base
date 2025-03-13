@@ -962,6 +962,266 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Business Questionnaire методы
+  async getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null> {
+    console.log('Getting business questionnaire for campaign:', campaignId);
+    try {
+      // Получаем userId из campaignId для авторизации
+      const campaignIdNum = parseInt(campaignId, 10);
+      if (isNaN(campaignIdNum)) {
+        throw new Error('Invalid campaign ID');
+      }
+      
+      const campaign = await this.getCampaign(campaignIdNum);
+      if (!campaign) {
+        throw new Error('Campaign not found');
+      }
+      
+      const userId = campaign.userId;
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        console.error('No auth token found for user', userId);
+        return null;
+      }
+      
+      const filter = {
+        campaign_id: {
+          _eq: campaignId
+        }
+      };
+      
+      const response = await directusApi.get('/items/business_questionnaire', {
+        params: {
+          filter
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      if (!response.data?.data?.length) {
+        console.log('No business questionnaire found for campaign', campaignId);
+        return null;
+      }
+      
+      const item = response.data.data[0];
+      return {
+        id: item.id,
+        campaignId: item.campaign_id,
+        companyName: item.company_name,
+        contactInfo: item.contact_info,
+        businessDescription: item.business_description,
+        mainDirections: item.main_directions,
+        brandImage: item.brand_image,
+        productsServices: item.products_services,
+        targetAudience: item.target_audience,
+        customerResults: item.customer_results,
+        companyFeatures: item.company_features,
+        businessValues: item.business_values,
+        productBeliefs: item.product_beliefs,
+        competitiveAdvantages: item.competitive_advantages,
+        marketingExpectations: item.marketing_expectations,
+        createdAt: new Date(item.created_at)
+      };
+    } catch (error) {
+      console.error('Error getting business questionnaire from Directus:', error);
+      return null;
+    }
+  }
+  
+  async createBusinessQuestionnaire(questionnaire: InsertBusinessQuestionnaire): Promise<BusinessQuestionnaire> {
+    console.log('Creating business questionnaire:', questionnaire);
+    try {
+      // Получаем userId из campaignId для авторизации
+      const campaignIdStr = String(questionnaire.campaignId);
+      const campaignIdNum = parseInt(campaignIdStr, 10);
+      if (isNaN(campaignIdNum)) {
+        throw new Error('Invalid campaign ID');
+      }
+      
+      const campaign = await this.getCampaign(campaignIdNum);
+      if (!campaign) {
+        throw new Error('Campaign not found');
+      }
+      
+      const userId = campaign.userId;
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        throw new Error('No auth token found for user');
+      }
+      
+      // Преобразуем данные из нашей схемы в формат Directus
+      const directusQuestionnaire = {
+        campaign_id: questionnaire.campaignId,
+        company_name: questionnaire.companyName,
+        contact_info: questionnaire.contactInfo,
+        business_description: questionnaire.businessDescription,
+        main_directions: questionnaire.mainDirections,
+        brand_image: questionnaire.brandImage,
+        products_services: questionnaire.productsServices,
+        target_audience: questionnaire.targetAudience,
+        customer_results: questionnaire.customerResults,
+        company_features: questionnaire.companyFeatures,
+        business_values: questionnaire.businessValues,
+        product_beliefs: questionnaire.productBeliefs,
+        competitive_advantages: questionnaire.competitiveAdvantages,
+        marketing_expectations: questionnaire.marketingExpectations
+      };
+      
+      const response = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      const item = response.data.data;
+      return {
+        id: item.id,
+        campaignId: item.campaign_id,
+        companyName: item.company_name,
+        contactInfo: item.contact_info,
+        businessDescription: item.business_description,
+        mainDirections: item.main_directions,
+        brandImage: item.brand_image,
+        productsServices: item.products_services,
+        targetAudience: item.target_audience,
+        customerResults: item.customer_results,
+        companyFeatures: item.company_features,
+        businessValues: item.business_values,
+        productBeliefs: item.product_beliefs,
+        competitiveAdvantages: item.competitive_advantages,
+        marketingExpectations: item.marketing_expectations,
+        createdAt: new Date(item.created_at)
+      };
+    } catch (error) {
+      console.error('Error creating business questionnaire in Directus:', error);
+      throw new Error('Failed to create business questionnaire');
+    }
+  }
+  
+  async updateBusinessQuestionnaire(id: string, updates: Partial<InsertBusinessQuestionnaire>): Promise<BusinessQuestionnaire> {
+    console.log('Updating business questionnaire:', id, updates);
+    try {
+      // Нам нужно получить текущую анкету, чтобы узнать campaignId
+      const currentQuestionnaire = await this.getBusinessQuestionnaireById(id);
+      if (!currentQuestionnaire) {
+        throw new Error('Business questionnaire not found');
+      }
+      
+      // Получаем userId из campaignId для авторизации
+      const campaignIdStr = String(currentQuestionnaire.campaignId);
+      const campaignIdNum = parseInt(campaignIdStr, 10);
+      if (isNaN(campaignIdNum)) {
+        throw new Error('Invalid campaign ID');
+      }
+      
+      const campaign = await this.getCampaign(campaignIdNum);
+      if (!campaign) {
+        throw new Error('Campaign not found');
+      }
+      
+      const userId = campaign.userId;
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        throw new Error('No auth token found for user');
+      }
+      
+      // Преобразуем данные из нашей схемы в формат Directus
+      const directusUpdates: any = {};
+      
+      if (updates.companyName !== undefined) directusUpdates.company_name = updates.companyName;
+      if (updates.contactInfo !== undefined) directusUpdates.contact_info = updates.contactInfo;
+      if (updates.businessDescription !== undefined) directusUpdates.business_description = updates.businessDescription;
+      if (updates.mainDirections !== undefined) directusUpdates.main_directions = updates.mainDirections;
+      if (updates.brandImage !== undefined) directusUpdates.brand_image = updates.brandImage;
+      if (updates.productsServices !== undefined) directusUpdates.products_services = updates.productsServices;
+      if (updates.targetAudience !== undefined) directusUpdates.target_audience = updates.targetAudience;
+      if (updates.customerResults !== undefined) directusUpdates.customer_results = updates.customerResults;
+      if (updates.companyFeatures !== undefined) directusUpdates.company_features = updates.companyFeatures;
+      if (updates.businessValues !== undefined) directusUpdates.business_values = updates.businessValues;
+      if (updates.productBeliefs !== undefined) directusUpdates.product_beliefs = updates.productBeliefs;
+      if (updates.competitiveAdvantages !== undefined) directusUpdates.competitive_advantages = updates.competitiveAdvantages;
+      if (updates.marketingExpectations !== undefined) directusUpdates.marketing_expectations = updates.marketingExpectations;
+      
+      // campaignId не может быть изменен
+      
+      const response = await directusApi.patch(`/items/business_questionnaire/${id}`, directusUpdates, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      const item = response.data.data;
+      return {
+        id: item.id,
+        campaignId: item.campaign_id,
+        companyName: item.company_name,
+        contactInfo: item.contact_info,
+        businessDescription: item.business_description,
+        mainDirections: item.main_directions,
+        brandImage: item.brand_image,
+        productsServices: item.products_services,
+        targetAudience: item.target_audience,
+        customerResults: item.customer_results,
+        companyFeatures: item.company_features,
+        businessValues: item.business_values,
+        productBeliefs: item.product_beliefs,
+        competitiveAdvantages: item.competitive_advantages,
+        marketingExpectations: item.marketing_expectations,
+        createdAt: new Date(item.created_at)
+      };
+    } catch (error) {
+      console.error('Error updating business questionnaire in Directus:', error);
+      throw new Error('Failed to update business questionnaire');
+    }
+  }
+  
+  // Вспомогательный метод для получения бизнес-анкеты по ID
+  private async getBusinessQuestionnaireById(id: string): Promise<BusinessQuestionnaire | null> {
+    try {
+      // Нам нужен authToken, но для этого нужен userId
+      // Используем токен сервиса из переменных окружения
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      if (!serviceToken) {
+        console.error('No service token found, cannot get business questionnaire by ID');
+        return null;
+      }
+      
+      const response = await directusApi.get(`/items/business_questionnaire/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${serviceToken}`
+        }
+      });
+      
+      if (!response.data?.data) {
+        return null;
+      }
+      
+      const item = response.data.data;
+      return {
+        id: item.id,
+        campaignId: item.campaign_id,
+        companyName: item.company_name,
+        contactInfo: item.contact_info,
+        businessDescription: item.business_description,
+        mainDirections: item.main_directions,
+        brandImage: item.brand_image,
+        productsServices: item.products_services,
+        targetAudience: item.target_audience,
+        customerResults: item.customer_results,
+        companyFeatures: item.company_features,
+        businessValues: item.business_values,
+        productBeliefs: item.product_beliefs,
+        competitiveAdvantages: item.competitive_advantages,
+        marketingExpectations: item.marketing_expectations,
+        createdAt: new Date(item.created_at)
+      };
+    } catch (error) {
+      console.error('Error getting business questionnaire by ID from Directus:', error);
+      return null;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
