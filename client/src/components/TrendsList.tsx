@@ -401,17 +401,17 @@ export function TrendsList({ campaignId }: TrendsListProps) {
 
                       <div className="flex items-center gap-1">
                         <ThumbsUp className="h-3 w-3" />
-                        <span>{trend.reactions?.toLocaleString('ru-RU') ?? 0}</span>
+                        <span>{typeof trend.reactions === 'number' ? Math.round(trend.reactions).toLocaleString('ru-RU') : (trend.reactions ?? 0)}</span>
                       </div>
                       
                       <div className="flex items-center gap-1">
                         <MessageSquare className="h-3 w-3" />
-                        <span>{trend.comments?.toLocaleString('ru-RU') ?? 0}</span>
+                        <span>{typeof trend.comments === 'number' ? Math.round(trend.comments).toLocaleString('ru-RU') : (trend.comments ?? 0)}</span>
                       </div>
                       
                       <div className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
-                        <span>{trend.views?.toLocaleString('ru-RU') ?? 0}</span>
+                        <span>{typeof trend.views === 'number' ? Math.round(trend.views).toLocaleString('ru-RU') : (trend.views ?? 0)}</span>
                       </div>
                       
                       <div className="flex items-center gap-1">
