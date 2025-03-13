@@ -1272,6 +1272,14 @@ export default function Trends() {
                                             <Bookmark className="h-3 w-3 text-primary" />
                                           </div>
                                         )}
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />
+                                          <span>
+                                            {topic.created_at 
+                                              ? formatRelativeTime(new Date(topic.created_at))
+                                              : 'Н/Д'}
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
