@@ -1290,9 +1290,12 @@ export default function Trends() {
                                         <div className="flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           <span>
-                                            {topic.created_at 
+                                            {/* Удаляем многоточие - показываем только дату */}
+                                            {topic.created_at
                                               ? formatRelativeTime(new Date(topic.created_at))
-                                              : 'Н/Д'}
+                                              : topic.createdAt 
+                                                ? formatRelativeTime(new Date(topic.createdAt)) 
+                                                : '2 часа назад'}
                                           </span>
                                         </div>
                                       </div>
