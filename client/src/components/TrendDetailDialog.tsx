@@ -232,8 +232,11 @@ export function TrendDetailDialog({
               </div>
             )}
             
-            <div className="mt-2">
-              {formatDate(topic.created_at)}
+            {/* Добавлен блок с датой публикации */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-gray-500 text-sm">
+                {formatDate(topic.created_at)}
+              </span>
             </div>
             
             {topic.url && (
