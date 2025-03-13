@@ -1260,8 +1260,7 @@ export default function Trends() {
                                       <div className="text-xs mb-1 text-muted-foreground">
                                         {sources.find(s => s.id === topic.source_id)?.description || 
                                          (topic.sourceDescription && topic.sourceDescription) || 
-                                         topic.accountUrl || 
-                                         "Гриль кухня,простые рецепты и правильное питание. Канал о еде.Меню для компании,шашлык, суши, пицца с доставкой по всему Донецку"}
+                                         topic.accountUrl || ""}
                                       </div>
                                       
                                       {/* Название тренда/поста из базы данных */}
