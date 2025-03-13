@@ -352,13 +352,13 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                     {/* Заголовок с датой */}
                     <div className="text-sm font-medium line-clamp-1">
                       <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">13 МАРТА</span>
-                      {trend.title?.replace(/\.\.\.$/, '')}
+                      {trend.title?.replace(/\s*\.\.\.\s*$/, '').replace(/\n\s*\.\.\.\s*$/, '').trim()}
                     </div>
                     
                     {/* Описание с бо́льшим количеством строк, если нет превью */}
                     {trend.description && (
-                      <div className={`text-xs mt-1 whitespace-pre-line ${previewImageUrl ? 'line-clamp-2' : 'line-clamp-4'}`}>
-                        {trend.description.replace(/\.\.\.$/, '')}
+                      <div className={`text-xs mt-1 ${previewImageUrl ? 'line-clamp-2' : 'line-clamp-4'}`} style={{ whiteSpace: 'normal' }}>
+                        {trend.description.replace(/\s*\.\.\.\s*$/, '').replace(/\n\s*\.\.\.\s*$/, '').trim()}
                       </div>
                     )}
                     
