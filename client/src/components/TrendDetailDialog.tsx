@@ -163,7 +163,13 @@ export function TrendDetailDialog({
   const isInstagramVideo = videoUrl && (
     videoUrl.includes('instagram.com/p/') || 
     videoUrl.includes('instagram.com/reel/') || 
-    videoUrl.includes('instagram.com/reels/')
+    videoUrl.includes('instagram.com/reels/') ||
+    (videoUrl.includes('instagram.') && (
+      videoUrl.includes('.mp4') || 
+      videoUrl.includes('fbcdn.net') || 
+      videoUrl.endsWith('.mp4') || 
+      videoUrl.includes('instagram.fuio')
+    ))
   );
   
   // Состояние для хранения информации о видео ВКонтакте
@@ -283,7 +289,19 @@ export function TrendDetailDialog({
                 </div>
               ) : isInstagramVideo ? (
                 <div className="aspect-square w-full rounded-md overflow-hidden relative">
-                  {instagramVideoInfo && instagramVideoInfo.success ? (
+                  {/* Если это прямая ссылка на видео файл Instagram (.mp4) */}
+                  {videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('fbcdn.net')) ? (
+                    <video 
+                      src={videoUrl}
+                      controls
+                      autoPlay={false}
+                      loop={false}
+                      muted={false}
+                      playsInline
+                      className="w-full max-h-[450px] object-contain"
+                      crossOrigin="anonymous"
+                    />
+                  ) : instagramVideoInfo && instagramVideoInfo.success ? (
                     <iframe 
                       src={instagramVideoInfo.data?.embedUrl}
                       width="100%" 
