@@ -367,15 +367,10 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       {trend.title?.trim()}
                     </div>
                     
-                    {/* Описание с бо́льшим количеством строк, если нет превью */}
+                    {/* Только первая строка описания */}
                     {trend.description && (
-                      <div className={`text-xs mt-1 overflow-hidden`} style={{ 
-                        display: '-webkit-box', 
-                        WebkitLineClamp: previewImageUrl ? 2 : 4, 
-                        WebkitBoxOrient: 'vertical',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {trend.description}
+                      <div className="text-xs mt-1 overflow-hidden">
+                        {trend.description.split('\n')[0]}
                       </div>
                     )}
                     
