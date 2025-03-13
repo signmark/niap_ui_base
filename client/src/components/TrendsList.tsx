@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -395,6 +395,11 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       <div className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
                         <span>{trend.views?.toLocaleString('ru-RU') ?? 0}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{trend.created_at ? formatDistanceToNow(new Date(trend.created_at), { locale: ru, addSuffix: true }) : 'неизвестно'}</span>
                       </div>
                       
                       <Button
