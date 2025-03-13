@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 // Импортируем функцию createProxyImageUrl из utils
 import { createProxyImageUrl } from "../utils/media";
-import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark } from "lucide-react";
+import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, ExternalLink, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 

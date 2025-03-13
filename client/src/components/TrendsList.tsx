@@ -370,6 +370,19 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       </a>
                     )}
                   </p>
+                  {trend.url && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      <a 
+                        href={trend.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline flex items-center"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        Оригинал публикации
+                      </a>
+                    </p>
+                  )}
                   <div className="flex gap-4 text-sm">
                     <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>
                     <span title="Комментарии">💬 {trend.comments?.toLocaleString() || 0}</span>
