@@ -3037,6 +3037,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sourceUrl: item.accountUrl || null,
             // Используем urlPost как URL оригинальной публикации (camelCase в базе)
             url: item.urlPost || null,
+            // Добавляем поле description из базы
+            description: item.description || null,
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
