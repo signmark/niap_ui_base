@@ -3020,72 +3020,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
-        // Получим все источники для этой кампании, чтобы найти URL источника
-        const sourcesResponse = await directusApi.get('/items/campaign_content_sources', {
-          params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              }
-            },
-            fields: ['id', 'name', 'url', 'type']
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const sources = sourcesResponse.data.data || [];
-        
-        // Создаем карту источников для быстрого поиска
-        const sourcesMap = new Map();
-        sources.forEach((source: any) => {
-          sourcesMap.set(source.id, source);
-        });
-        
         // Преобразуем данные из формата Directus в наш формат
         const trendTopics = response.data.data.map((item: any) => {
-          // Находим источник для этого тренда
-          const source = sourcesMap.get(item.source_id) || {};
+          // Теперь мы используем поля account_url и url_post непосредственно из Directus
+          // Поскольку я вижу, что они уже существуют в базе данных
           
-          // Получим URL поста, если есть (из метаданных или непосредственно от источника)
-          let postUrl = null;
-          let sourceUrl = source.url || null;
-          
-          // Если есть ссылка на медиа, пытаемся извлечь URL из метаданных
-          if (item.media_links && typeof item.media_links === 'string') {
-            try {
-              const mediaData = JSON.parse(item.media_links);
-              if (mediaData.postUrl) {
-                postUrl = mediaData.postUrl;
-              }
-            } catch (e) {
-              console.error(`Error parsing media_links for trend ${item.id}:`, e);
-            }
-          }
-          
-          // Если URL поста не найден в медиаданных, но у нас есть URL источника,
-          // создаем URL поста из URL источника и ID поста (если тип источника известен)
-          if (!postUrl && sourceUrl) {
-            // Для Telegram каналов URL поста обычно имеет формат https://t.me/channel/post_id
-            if (source.type === 'telegram' && item.original_post_id) {
-              postUrl = `${sourceUrl.replace(/\/$/, '')}/${item.original_post_id}`;
-            }
-            // Для VK URL поста обычно имеет формат https://vk.com/wall-group_id_post_id
-            else if (source.type === 'vk' && item.original_post_id) {
-              const parts = sourceUrl.split('/');
-              const groupName = parts[parts.length - 1];
-              postUrl = `${sourceUrl.replace(/\/$/, '')}/wall${item.original_post_id}`;
-            }
-          }
-          
+          // Log для отладки полей
+          console.log(`Raw trend item fields for ${item.id}:`, Object.keys(item));
+
           return {
             id: item.id,
             title: item.title,
             sourceId: item.source_id,
-            sourceName: source.name || 'Источник',
-            sourceUrl: sourceUrl,
-            url: postUrl || item.original_url || null, // URL оригинальной публикации
+            sourceName: item.source_name || 'Источник', // Возможно в Directus это поле названо иначе
+            // Используем account_url как URL источника
+            sourceUrl: item.account_url || null,
+            // Используем url_post как URL оригинальной публикации
+            url: item.url_post || null,
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
