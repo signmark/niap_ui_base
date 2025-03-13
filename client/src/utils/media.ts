@@ -29,3 +29,46 @@ export function createProxyImageUrl(imageUrl: string, itemId: string): string {
   // Базовый URL прокси с параметрами
   return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${timestamp}${forcedType ? '&forceType=' + forcedType : ''}&itemId=${itemId}`;
 }
+
+/**
+ * Создает проксированный URL для получения превью из видео
+ * Используется для генерации миниатюр видео в трендах
+ */
+export function createVideoThumbnailUrl(videoUrl: string, itemId: string): string {
+  // Если URL пустой или undefined, возвращаем пустую строку
+  if (!videoUrl) return '';
+  
+  // Добавляем cache-busting параметр
+  const timestamp = Date.now();
+  
+  // Используем специальный параметр isVideo для указания, что это запрос на превью видео
+  return `/api/proxy-image?url=${encodeURIComponent(videoUrl)}&isVideo=true&_t=${timestamp}&itemId=${itemId}`;
+}
+
+/**
+ * Проверяет, является ли URL ссылкой на видео
+ * по расширению файла или доменному имени
+ */
+export function isVideoUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  
+  // Нормализуем URL для проверки
+  const normalizedUrl = url.toLowerCase();
+  
+  // Проверка по расширению файла
+  const hasVideoExtension = normalizedUrl.endsWith('.mp4') || 
+                          normalizedUrl.endsWith('.webm') || 
+                          normalizedUrl.endsWith('.avi') || 
+                          normalizedUrl.endsWith('.mov') || 
+                          normalizedUrl.endsWith('.mkv') || 
+                          normalizedUrl.endsWith('.wmv');
+  
+  // Проверка по доменам видеохостингов
+  const isVideoHosting = normalizedUrl.includes('youtube.com/watch') || 
+                        normalizedUrl.includes('youtu.be/') || 
+                        normalizedUrl.includes('vimeo.com/') || 
+                        normalizedUrl.includes('vk.com/video') ||
+                        (normalizedUrl.includes('tgcnt.ru') && normalizedUrl.includes('.mp4'));
+  
+  return hasVideoExtension || isVideoHosting;
+}

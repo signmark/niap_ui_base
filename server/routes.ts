@@ -114,10 +114,15 @@ type PlatformRequirements = {
   [key: string]: number;
 };
 
-// Image proxy function to handle Telegram images
-async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: boolean; forceType?: string | null } = {}) {
+// Image proxy function to handle Telegram images and Video thumbnails
+async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: boolean; forceType?: string | null; isVideoThumbnail?: boolean } = {}) {
   try {
     console.log(`Proxying image/media: ${url}`);
+    
+    // Проверяем, является ли это запросом на превью видео
+    if (options.isVideoThumbnail) {
+      return await fetchVideoThumbnail(url, res);
+    }
     
     // Исправление для специфических URL из Telegram
     let fixedUrl = url;
@@ -277,6 +282,130 @@ async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: bo
     console.error(`Error proxying media ${url}:`, error);
     // Отправка 404 вместо 500 для корректной обработки ошибок в UI
     res.status(404).send('Media not found');
+  }
+}
+
+// Функция для получения превью из видео
+async function fetchVideoThumbnail(videoUrl: string, res: any) {
+  try {
+    console.log(`Generating thumbnail for video: ${videoUrl}`);
+    
+    // Определяем тип видео для специфической обработки
+    const isVk = videoUrl.includes('vk.com') || 
+                videoUrl.includes('vk.me') || 
+                videoUrl.includes('userapi.com');
+                
+    const isTelegram = videoUrl.includes('tgcnt.ru') || 
+                      videoUrl.includes('t.me');
+                      
+    const isInstagram = videoUrl.includes('instagram.') || 
+                       videoUrl.includes('fbcdn.net') || 
+                       videoUrl.includes('cdninstagram.com');
+    
+    const isYoutube = videoUrl.includes('youtube.com') || 
+                     videoUrl.includes('youtu.be');
+    
+    // 1. Если это YouTube, используем их API для превью
+    if (isYoutube) {
+      // Извлекаем ID видео
+      let videoId = '';
+      
+      if (videoUrl.includes('youtube.com/watch')) {
+        // Формат youtube.com/watch?v=VIDEO_ID
+        const url = new URL(videoUrl);
+        videoId = url.searchParams.get('v') || '';
+      } else if (videoUrl.includes('youtu.be/')) {
+        // Формат youtu.be/VIDEO_ID
+        videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
+      } else if (videoUrl.includes('youtube.com/embed/')) {
+        // Формат youtube.com/embed/VIDEO_ID
+        videoId = videoUrl.split('youtube.com/embed/')[1]?.split('?')[0] || '';
+      }
+      
+      if (videoId) {
+        // Используем максимальное разрешение превью
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        
+        // Прокси запрос к этому URL
+        await fetchAndProxyImage(thumbnailUrl, res);
+        return;
+      }
+    }
+    
+    // 2. Если это ВКонтакте
+    if (isVk && videoUrl.includes('vk.com/video')) {
+      try {
+        // Пытаемся получить HTML-страницу видео
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml',
+          'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        };
+        
+        const response = await axios.get(videoUrl, {
+          headers,
+          timeout: 10000,
+        });
+        
+        const html = response.data;
+        
+        // Ищем URL превью (обычно в мета-тегах или в og:image)
+        const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+        
+        if (ogImageMatch && ogImageMatch[1]) {
+          // Нашли превью в og:image
+          const thumbnailUrl = ogImageMatch[1];
+          await fetchAndProxyImage(thumbnailUrl, res);
+          return;
+        }
+        
+        // Альтернативный поиск превью в исходном коде
+        const imgMatches = html.match(/https:\/\/sun[^"']+\.jpg/g);
+        
+        if (imgMatches && imgMatches.length > 0) {
+          // Находим самое большое изображение (предположительно, это будет превью)
+          for (const imgUrl of imgMatches) {
+            if (imgUrl.includes('&size=')) {
+              await fetchAndProxyImage(imgUrl, res);
+              return;
+            }
+          }
+          
+          // Если не нашли превью с размером, берем первое
+          await fetchAndProxyImage(imgMatches[0], res);
+          return;
+        }
+      } catch (e) {
+        console.error('Error extracting VK video thumbnail:', e);
+      }
+    }
+    
+    // 3. Для Instagram и Telegram, просто пытаемся получить первый кадр видео
+    // Но это требует FFmpeg на сервере, поэтому сейчас просто вернем стандартное превью
+    
+    // Если не удалось получить специфическое превью, возвращаем универсальную иконку видео
+    // В продакшене здесь можно использовать стандартное изображение плеера
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+        <rect width="300" height="200" fill="#222" />
+        <circle cx="150" cy="100" r="40" fill="#444" />
+        <path d="M135 80L175 100L135 120Z" fill="white" />
+        <text x="150" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="white">Видео</text>
+      </svg>
+    `);
+  } catch (error) {
+    console.error(`Error generating video thumbnail for ${videoUrl}:`, error);
+    // Отправляем стандартное превью в случае ошибки
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+        <rect width="300" height="200" fill="#222" />
+        <circle cx="150" cy="100" r="40" fill="#444" />
+        <path d="M135 80L175 100L135 120Z" fill="white" />
+        <text x="150" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="white">Видео</text>
+      </svg>
+    `);
   }
 }
 
@@ -1044,8 +1173,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const forceType = req.query.forceType as string || null;
     const itemId = req.query.itemId as string || '';
     const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
+    const isVideoThumbnail = req.query.isVideo === 'true';
     
-    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}${itemId ? ` (item ID: ${itemId})` : ''}`);
+    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}${isVideoThumbnail ? ' (video thumbnail)' : ''}${itemId ? ` (item ID: ${itemId})` : ''}`);
 
     try {
       // Decode the URL if it's encoded
@@ -1058,11 +1188,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
       
-      await fetchAndProxyImage(decodedUrl, res, { isRetry, forceType });
+      await fetchAndProxyImage(decodedUrl, res, { isRetry, forceType, isVideoThumbnail });
     } catch (error) {
       console.error('Error in image proxy:', error);
       // Отправка 404 вместо 500, чтобы браузер мог переключиться на прямую ссылку
       res.status(404).send('Image not found');
+    }
+  });
+  
+  // Эндпоинт для получения превью из видео-URL
+  app.get("/api/video-thumbnail", async (req, res) => {
+    const videoUrl = req.query.url as string;
+    if (!videoUrl) {
+      return res.status(400).send('URL parameter is required');
+    }
+    
+    const itemId = req.query.itemId as string || '';
+    console.log(`[Video Thumbnail] Requested thumbnail for video: ${videoUrl} (item ID: ${itemId})`);
+    
+    try {
+      // Добавление корс-заголовков
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+      
+      await fetchVideoThumbnail(videoUrl, res);
+    } catch (error) {
+      console.error(`Error generating video thumbnail for ${videoUrl}:`, error);
+      res.status(404).send('Video thumbnail not found');
     }
   });
 
