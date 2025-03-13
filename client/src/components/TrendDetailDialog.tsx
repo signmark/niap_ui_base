@@ -35,6 +35,7 @@ interface TrendTopic {
   mediaLinks?: string; // Альтернативное имя поля (для обратной совместимости)
   url?: string; // URL оригинальной публикации
   sourceUrl?: string; // URL источника (аккаунта или страницы)
+  description?: string; // Описание или контент тренда
 }
 
 interface TrendDetailDialogProps {
