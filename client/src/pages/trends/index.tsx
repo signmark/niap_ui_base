@@ -1256,17 +1256,20 @@ export default function Trends() {
                                         </div>
                                       </div>
                                       
-                                      {/* Показываем название и описание канала */}
+                                      {/* Описание канала из базы данных */}
                                       <div className="text-xs mb-1 text-muted-foreground">
-                                        {"Гриль кухня,простые рецепты и правильное питание. Канал о еде.Меню для компании,шашлык, суши, пицца с доставкой по всему Донецку"}
+                                        {sources.find(s => s.id === topic.source_id)?.description || 
+                                         (topic.sourceDescription && topic.sourceDescription) || 
+                                         topic.accountUrl || 
+                                         "Гриль кухня,простые рецепты и правильное питание. Канал о еде.Меню для компании,шашлык, суши, пицца с доставкой по всему Донецку"}
                                       </div>
                                       
-                                      {/* Берем только первую строку из описания */}
+                                      {/* Название тренда/поста из базы данных */}
                                       <div 
                                         className="text-sm line-clamp-2 cursor-pointer font-medium"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        {"Бифштекс"}
+                                        {topic.title}
                                       </div>
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
