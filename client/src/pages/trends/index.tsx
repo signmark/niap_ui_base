@@ -1264,8 +1264,8 @@ export default function Trends() {
                                       </div>
                                       
                                       {topic.description && (
-                                        <div className="text-xs mt-1 line-clamp-2 whitespace-pre-line">
-                                          {topic.description}
+                                        <div className="text-xs mt-1">
+                                          {topic.description.split('\n')[0]}
                                         </div>
                                       )}
                                       
