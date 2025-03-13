@@ -168,7 +168,7 @@ export function TrendDetailDialog({
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              {sourceName || 'Неизвестный источник'} • {formatDate(topic.created_at)}
+              {sourceName || 'Неизвестный источник'}
             </DialogDescription>
           </DialogHeader>
 
