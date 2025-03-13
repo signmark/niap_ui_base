@@ -286,6 +286,118 @@ async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: bo
 }
 
 // Функция для получения превью из видео
+/**
+ * Функция для потоковой передачи видео с различных источников
+ * @param videoUrl URL видео для стриминга
+ * @param res HTTP ответ для отправки видео
+ * @param options Дополнительные опции для настройки запроса
+ */
+async function streamVideo(videoUrl: string, res: any, options: { 
+  forceType?: string | null;
+  range?: string | null;
+  itemId?: string;
+} = {}) {
+  try {
+    console.log(`Streaming video from: ${videoUrl}${options.forceType ? ` (forced type: ${options.forceType})` : ''}`);
+    
+    // Определяем тип видео для специфической обработки
+    const isVk = videoUrl.includes('vk.com') || 
+                videoUrl.includes('vk.me') || 
+                videoUrl.includes('userapi.com');
+                
+    const isTelegram = videoUrl.includes('tgcnt.ru') || 
+                      videoUrl.includes('t.me');
+                      
+    const isInstagram = videoUrl.includes('instagram.') || 
+                       videoUrl.includes('fbcdn.net') || 
+                       videoUrl.includes('cdninstagram.com');
+                       
+    // Проверяем, может ли быть это прямой URL на видеофайл
+    const isDirectVideoFile = videoUrl.endsWith('.mp4') || 
+                             videoUrl.endsWith('.webm') || 
+                             videoUrl.endsWith('.mov');
+    
+    // Формируем заголовки для запроса
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'video/webm,video/mp4,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5',
+      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Referer': 'https://nplanner.ru/'
+    };
+    
+    // Если это прямой видеофайл, выполняем стриминг с поддержкой range запросов
+    if (isDirectVideoFile || options.forceType === 'directVideo') {
+      // Добавляем HTTP-заголовки для стриминга
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Accept-Ranges', 'bytes');
+      
+      // Добавляем заголовки CORS
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      
+      // Поддержка частичного контента (range requests)
+      if (options.range) {
+        try {
+          const { data, headers } = await axios.get(videoUrl, {
+            headers: {
+              ...headers,
+              Range: options.range
+            },
+            responseType: 'arraybuffer'
+          });
+          
+          // Устанавливаем те же заголовки диапазона, что и в ответе
+          if (headers['content-range']) {
+            res.setHeader('Content-Range', headers['content-range']);
+            res.status(206); // Partial Content
+          }
+          
+          if (headers['content-length']) {
+            res.setHeader('Content-Length', headers['content-length']);
+          }
+          
+          return res.end(data);
+        } catch (error) {
+          console.error('Error streaming video with range request:', error);
+          // Если range запрос не сработал, пробуем получить весь файл
+        }
+      }
+      
+      // Если range-запрос не задан или произошла ошибка, получаем весь файл
+      try {
+        const response = await axios({
+          method: 'get',
+          url: videoUrl,
+          responseType: 'stream',
+          headers
+        });
+        
+        // Устанавливаем заголовки Content-Length если они есть
+        if (response.headers['content-length']) {
+          res.setHeader('Content-Length', response.headers['content-length']);
+        }
+        
+        // Стримим видеофайл клиенту
+        return response.data.pipe(res);
+      } catch (error) {
+        console.error('Error streaming full video:', error);
+        return res.status(500).send('Ошибка при получении видео');
+      }
+    }
+    
+    // Если это не прямое видео, перенаправляем на оригинальный URL
+    // В этом случае клиентское приложение должно использовать iframe или другие способы отображения
+    return res.redirect(videoUrl);
+  } catch (error) {
+    console.error('Error in video streaming:', error);
+    return res.status(500).send('Ошибка при обработке видео');
+  }
+}
+
 async function fetchVideoThumbnail(videoUrl: string, res: any) {
   try {
     console.log(`Generating thumbnail for video: ${videoUrl}`);
@@ -3111,6 +3223,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to process trend data", 
         message: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Эндпоинт для потоковой передачи видео с оптимизацией для разных источников
+  app.get("/api/stream-video", async (req, res) => {
+    const videoUrl = req.query.url as string;
+    if (!videoUrl) {
+      return res.status(400).send('URL parameter is required');
+    }
+    
+    console.log(`[Video Stream] Requested video streaming for: ${videoUrl}`);
+    
+    // Проверяем дополнительные параметры
+    const forceType = req.query.forceType as string || null;
+    const itemId = req.query.itemId as string || '';
+    const range = req.headers.range || null;
+    
+    try {
+      // Декодируем URL если он закодирован
+      const decodedUrl = decodeURIComponent(videoUrl);
+      
+      // Стримим видео с помощью нашей вспомогательной функции
+      await streamVideo(decodedUrl, res, {
+        forceType,
+        range: range as string | null,
+        itemId
+      });
+    } catch (error) {
+      console.error('Error in video streaming endpoint:', error);
+      res.status(500).send('Ошибка при стриминге видео');
     }
   });
 
