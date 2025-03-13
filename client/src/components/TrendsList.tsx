@@ -67,6 +67,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign-trends", campaignId, selectedPeriod],
@@ -81,7 +82,6 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         
         // Преобразуем полученные данные в правильный формат
         const trendTopics = (response.data?.data || []).map((trend: any) => {
-          console.log("Raw API trend data:", trend);
           return {
             id: trend.id,
             title: trend.title,
@@ -141,6 +141,12 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     }
   });
 
+  // Обработчик ошибки загрузки изображения
+  const handleImageError = (imageUrl: string) => {
+    console.log("Failed to load image:", imageUrl);
+    setFailedImages(prev => new Set(prev).add(imageUrl));
+  };
+
   if (isLoadingTrends) {
     return (
       <div className="flex justify-center p-8">
@@ -194,216 +200,146 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         </Select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2">
         {trends.map((trend: TrendTopic) => {
-          // Проверяем что получили из API
-          console.log("Trend data:", JSON.stringify(trend));
-          console.log("URL fields:", { url: trend.url, sourceUrl: trend.sourceUrl });
-          
           // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
+          let hasVideos = false;
           
-          // 1. Проверяем mediaLinks поле (новый формат)
-          if (trend.mediaLinks) {
-            console.log(`[Trend ${trend.id}] Checking mediaLinks:`, trend.mediaLinks);
+          // Обрабатываем mediaLinks (может быть строкой JSON или объектом)
+          if (trend.mediaLinks || trend.media_links) {
             try {
-              // Преобразуем строку JSON в объект, если это строка
+              // Определяем исходный формат данных
+              const mediaLinksSource = trend.mediaLinks || trend.media_links;
               let mediaData;
-              if (typeof trend.mediaLinks === 'string') {
-                mediaData = JSON.parse(trend.mediaLinks);
-                console.log(`[Trend ${trend.id}] Parsed mediaLinks:`, mediaData);
+              
+              if (typeof mediaLinksSource === 'string') {
+                // Это JSON строка
+                mediaData = JSON.parse(mediaLinksSource);
               } else {
-                mediaData = trend.mediaLinks;
-                console.log(`[Trend ${trend.id}] Using mediaLinks as object`);
+                // Это уже объект
+                mediaData = mediaLinksSource;
               }
               
-              // Проверяем наличие изображений
-              if (mediaData && mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
-                // Берём первое изображение
+              // Ищем первое изображение
+              if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
                 const imageUrl = mediaData.images[0];
                 if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
-                  console.log(`[Trend ${trend.id}] Found image in mediaLinks: ${imageUrl}`);
                   previewImageUrl = createProxyImageUrl(imageUrl, trend.id);
                 }
-              }
-            } catch (e) {
-              console.error(`[Trend ${trend.id}] Error parsing mediaLinks JSON:`, e);
-            }
-          }
-          
-          // 2. Проверяем media_links поле (старый формат)
-          if (!previewImageUrl && trend.media_links) {
-            console.log(`[Trend ${trend.id}] Checking media_links:`, typeof trend.media_links, trend.media_links);
-            
-            try {
-              // Обработка media_links как JSON строки или массива
-              let mediaData;
-              
-              if (typeof trend.media_links === 'string') {
-                // Строка JSON
-                mediaData = JSON.parse(trend.media_links);
-                console.log(`[Trend ${trend.id}] Parsed media_links string:`, mediaData);
-              } else if (Array.isArray(trend.media_links)) {
-                // Массив постов
-                mediaData = { posts: trend.media_links };
-                console.log(`[Trend ${trend.id}] Using media_links as array of posts`);
-              } else {
-                // Объект
-                mediaData = trend.media_links;
-                console.log(`[Trend ${trend.id}] Using media_links as object`);
-              }
-              
-              // Проверяем разные форматы данных
-              if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
-                // Формат с массивом изображений
-                const imageUrl = mediaData.images[0];
-                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
-                  console.log(`[Trend ${trend.id}] Found image in media_links.images: ${imageUrl}`);
-                  previewImageUrl = createProxyImageUrl(imageUrl, trend.id);
+                
+                // Проверяем наличие видео
+                if (mediaData.videos && Array.isArray(mediaData.videos) && mediaData.videos.length > 0) {
+                  hasVideos = true;
                 }
               } else if (mediaData.posts && Array.isArray(mediaData.posts) && mediaData.posts.length > 0) {
                 // Формат с постами
                 const post = mediaData.posts[0];
                 if (post && post.image_url) {
-                  console.log(`[Trend ${trend.id}] Found image in post: ${post.image_url}`);
                   previewImageUrl = createProxyImageUrl(post.image_url, trend.id);
+                }
+                if (post && post.video_url) {
+                  hasVideos = true;
                 }
               }
             } catch (e) {
-              console.error(`[Trend ${trend.id}] Error processing media_links:`, e);
+              console.error(`[Trend ${trend.id}] Error processing media data:`, e);
             }
           }
-          
-          // Отладочный вывод результата
-          console.log(`[Trend ${trend.id}] Final preview URL:`, previewImageUrl);
             
           return (
-            <Card key={trend.id} className={trend.isBookmarked ? "border-primary" : ""}>
-              <CardContent className="pt-6">
-                <div className="space-y-3">
+            <Card 
+              key={trend.id} 
+              className={`hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
+            >
+              <CardContent className="py-3 px-4">
+                <div className="flex items-start gap-3">
                   {/* Превью изображения */}
-                  {previewImageUrl ? (
-                    <div className="w-full aspect-video bg-muted rounded-md overflow-hidden">
+                  {previewImageUrl && !failedImages.has(previewImageUrl) ? (
+                    <div className="flex-shrink-0">
                       <img 
                         src={previewImageUrl} 
-                        alt="Превью" 
+                        alt="Миниатюра поста" 
+                        className="h-16 w-16 object-cover rounded-md"
                         loading="lazy"
-                        className="w-full h-full object-cover"
                         crossOrigin="anonymous"
-                        onError={(e) => {
-                          console.log(`[TrendsList] Ошибка загрузки изображения для тренда ${trend.id}`);
-                          e.currentTarget.onerror = null;
-                          
-                          try {
-                            // Если прокси не работает, анализируем URL и пробуем альтернативные методы
-                            if (e.currentTarget.src.includes('/api/proxy-image')) {
-                              const urlParams = new URLSearchParams(e.currentTarget.src.split('?')[1]);
-                              const originalUrl = urlParams.get('url');
-                              
-                              if (originalUrl) {
-                                // Декодируем исходный URL
-                                const decodedUrl = decodeURIComponent(originalUrl);
-                                console.log(`[TrendsList] Пробуем альтернативную загрузку:`, decodedUrl);
-                                
-                                // Проверяем, является ли это Instagram URL
-                                const isInstagram = decodedUrl.includes('instagram.') || 
-                                                  decodedUrl.includes('fbcdn.net') || 
-                                                  decodedUrl.includes('cdninstagram.com');
-                                
-                                // Добавляем cache-busting параметр
-                                const urlWithNocache = decodedUrl.includes('?') 
-                                  ? `${decodedUrl}&_nocache=${Date.now()}` 
-                                  : `${decodedUrl}?_nocache=${Date.now()}`;
-                                
-                                // Для Instagram повторяем попытку через прокси с дополнительными параметрами
-                                if (isInstagram) {
-                                  console.log(`[TrendsList] Instagram URL обнаружен, используем специальный режим`);
-                                  // Используем нашу функцию с флагом _retry
-                                  const instagramUrl = createProxyImageUrl(urlWithNocache, trend.id);
-                                  const retryUrl = instagramUrl + "&_retry=true";
-                                  e.currentTarget.src = retryUrl;
-                                } else {
-                                  // Пробуем загрузить напрямую для неинстаграмных URL
-                                  console.log(`[TrendsList] Пробуем прямую ссылку:`, urlWithNocache);
-                                  e.currentTarget.src = urlWithNocache;
-                                }
-                              } else {
-                                console.log(`[TrendsList] Нет URL параметра в пути прокси`);
-                                e.currentTarget.style.display = 'none';
-                              }
-                            } else {
-                              // Прямая ссылка тоже не работает
-                              console.log(`[TrendsList] Прямая ссылка не работает`);
-                              e.currentTarget.style.display = 'none';
-                            }
-                          } catch (error) {
-                            console.error(`[TrendsList] Ошибка обработки изображения:`, error);
-                            e.currentTarget.style.display = 'none';
-                          }
-                        }}
+                        onError={() => handleImageError(previewImageUrl)}
                       />
                     </div>
-                  ) : (
-                    // Если нет изображения, показываем текстовый индикатор
-                    <div className="w-full aspect-video bg-muted rounded-md overflow-hidden flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">Нет изображения</p>
+                  ) : previewImageUrl ? (
+                    <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
+                      <ImageOff className="h-6 w-6 text-muted-foreground" />
                     </div>
-                  )}
+                  ) : null}
                   
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-medium">{trend.title}</h3>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => bookmarkMutation.mutate({ id: trend.id, isBookmarked: !trend.isBookmarked })}
-                      disabled={bookmarkMutation.isPending}
-                    >
-                      {trend.isBookmarked 
-                        ? <BookmarkCheck className="h-4 w-4 text-primary" /> 
-                        : <Bookmark className="h-4 w-4" />
-                      }
-                    </Button>
-                  </div>
-                  
-                  {/* Отображаем описание вместо повторного заголовка */}
-                  {trend.description && (
-                    <div className="text-sm my-2 line-clamp-3 whitespace-pre-line">{trend.description}</div>
-                  )}
-                  
-                  <p className="text-sm text-muted-foreground">
-                    Источник: {trend.sourceName || 'Неизвестный источник'}
-                    {trend.sourceUrl && (
-                      <a 
-                        href={trend.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-2 text-blue-500 hover:underline"
-                      >
-                        (открыть)
-                      </a>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs py-0 h-5">
+                          {hasVideos ? "Видео" : previewImageUrl ? "Фото" : "Текст"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(trend.createdAt), { addSuffix: true, locale: ru })}
+                        </span>
+                      </div>
+                      
+                      {trend.url && (
+                        <a
+                          href={trend.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Открыть оригинал
+                        </a>
+                      )}
+                    </div>
+                    
+                    <div className="text-sm font-medium line-clamp-1">
+                      {trend.title}
+                    </div>
+                    
+                    {trend.description && (
+                      <div className="text-xs mt-1 line-clamp-2 whitespace-pre-line">
+                        {trend.description}
+                      </div>
                     )}
-                  </p>
-                  {trend.url && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      <a 
-                        href={trend.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline flex items-center"
+                    
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <ThumbsUp className="h-3 w-3" />
+                        <span>{trend.reactions?.toLocaleString('ru-RU') ?? 0}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        <span>{trend.comments?.toLocaleString('ru-RU') ?? 0}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        <span>{trend.views?.toLocaleString('ru-RU') ?? 0}</span>
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 ml-auto"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          bookmarkMutation.mutate({ id: trend.id, isBookmarked: !trend.isBookmarked });
+                        }}
+                        disabled={bookmarkMutation.isPending}
                       >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        Оригинал публикации
-                      </a>
-                    </p>
-                  )}
-                  <div className="flex gap-4 text-sm">
-                    <span title="Просмотры">👁 {trend.views?.toLocaleString() || 0}</span>
-                    <span title="Комментарии">💬 {trend.comments?.toLocaleString() || 0}</span>
-                    <span title="Реакции">❤️ {trend.reactions?.toLocaleString() || 0}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(trend.createdAt).toLocaleDateString()}
+                        {trend.isBookmarked ? (
+                          <BookmarkCheck className="h-3 w-3 text-primary" />
+                        ) : (
+                          <Bookmark className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
