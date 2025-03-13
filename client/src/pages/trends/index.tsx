@@ -1295,7 +1295,7 @@ export default function Trends() {
                                               ? formatRelativeTime(new Date(topic.created_at))
                                               : topic.createdAt 
                                                 ? formatRelativeTime(new Date(topic.createdAt)) 
-                                                : '2 часа назад'}
+                                                : formatRelativeTime(new Date())}
                                           </span>
                                         </div>
                                       </div>
