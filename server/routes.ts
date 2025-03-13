@@ -309,6 +309,22 @@ function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Очищает текст от специальных символов и лишних многоточий
+ * Используется для подготовки текста перед отображением в интерфейсе
+ */
+function cleanupText(text: string | null | undefined): string {
+  if (!text) return '';
+  
+  return text
+    .replace(/\s*\.\.\.\s*$/, '') // Удаляем многоточие в конце строки
+    .replace(/\n+\s*\.\.\.$/, '') // Удаляем многоточие после переноса строки
+    .replace(/\n+\s*\.\.\.\s*\n+/, '\n') // Удаляем многоточие между переносами строк
+    .replace(/\n\s*\.{3,}\s*$/, '') // Удаляем многоточие в конце текста после переноса
+    .replace(/\n\s*\.{3,}\s*/, ' ') // Заменяем многоточие с переносом на пробел
+    .trim();
+}
+
 // Helper function for Social Searcher API
 async function searchSocialSourcesByKeyword(keyword: string, authToken: string): Promise<any[]> {
   try {
