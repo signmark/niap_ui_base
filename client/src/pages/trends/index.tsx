@@ -1242,11 +1242,17 @@ export default function Trends() {
                                       </div>
                                       
                                       <div 
-                                        className="text-sm line-clamp-2 cursor-pointer"
+                                        className="text-sm line-clamp-2 cursor-pointer font-medium"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
                                         {topic.title}
                                       </div>
+                                      
+                                      {topic.description && (
+                                        <div className="text-xs mt-1 line-clamp-2 whitespace-pre-line">
+                                          {topic.description}
+                                        </div>
+                                      )}
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                                         <div className="flex items-center gap-1">
