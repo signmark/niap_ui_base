@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 /**
  * Создает проксированный URL для загрузки изображений/видео через серверный прокси
@@ -126,6 +128,19 @@ const isValidPeriod = (period: string): period is Period => {
   return ['3days', '7days', '14days', '30days'].includes(period);
 };
 
+
+// Функция форматирования относительного времени (например, "2 часа назад")
+const formatRelativeTime = (date: Date): string => {
+  try {
+    return formatDistanceToNow(date, {
+      addSuffix: true,
+      locale: ru
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Н/Д';
+  }
+};
 
 export default function Trends() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
