@@ -3027,6 +3027,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Log для отладки полей
           console.log(`Raw trend item fields for ${item.id}:`, Object.keys(item));
+          
+          // Добавляем логи для отладки дат
+          if (item.id === response.data.data[0].id) {
+            console.log("ДАТА created_at:", item.created_at);
+            console.log("ТИП ДАТЫ:", typeof item.created_at);
+            if (item.created_at) {
+              console.log("ВАЛИДНОСТЬ ДАТЫ:", new Date(item.created_at).toString());
+            }
+          }
 
           return {
             id: item.id,
@@ -3042,7 +3051,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
-            createdAt: item.created_at || null,
+            // Важно! Передаем дату в нескольких форматах для совместимости
+            createdAt: item.created_at ? new Date(item.created_at).toISOString() : null,
+            created_at: item.created_at ? new Date(item.created_at).toISOString() : null, // Дублируем для Snake Case
             isBookmarked: item.is_bookmarked,
             campaignId: item.campaign_id,
             media_links: item.media_links // Добавляем поле media_links
