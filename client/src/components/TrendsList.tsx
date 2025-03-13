@@ -365,7 +365,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                   
                   {/* Отображаем описание вместо повторного заголовка */}
                   {trend.description && (
-                    <p className="text-sm my-2 line-clamp-3">{trend.description}</p>
+                    <div className="text-sm my-2 line-clamp-3 whitespace-pre-line">{trend.description}</div>
                   )}
                   
                   <p className="text-sm text-muted-foreground">
