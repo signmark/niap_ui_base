@@ -263,7 +263,10 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 mediaData = mediaLinksSource;
               }
               
-              // Ищем первое изображение
+              // Проверяем наличие видео для генерации превью
+              let videoUrl: string | null = null;
+              
+              // Ищем первое изображение или видео
               if (mediaData.images && Array.isArray(mediaData.images) && mediaData.images.length > 0) {
                 const imageUrl = mediaData.images[0];
                 if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
@@ -273,16 +276,33 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                 // Проверяем наличие видео
                 if (mediaData.videos && Array.isArray(mediaData.videos) && mediaData.videos.length > 0) {
                   hasVideos = true;
+                  videoUrl = mediaData.videos[0];
                 }
               } else if (mediaData.posts && Array.isArray(mediaData.posts) && mediaData.posts.length > 0) {
                 // Формат с постами
                 const post = mediaData.posts[0];
-                if (post && post.image_url) {
-                  previewImageUrl = createProxyImageUrl(post.image_url, trend.id);
-                }
+                
+                // Проверяем видео сначала, чтобы дать ему приоритет
                 if (post && post.video_url) {
                   hasVideos = true;
+                  videoUrl = post.video_url;
+                  
+                  // Если есть видео, но мы не можем получить изображение,
+                  // генерируем превью из видео
+                  if (!previewImageUrl && videoUrl) {
+                    previewImageUrl = createVideoThumbnailUrl(videoUrl, trend.id);
+                  }
                 }
+                
+                // Если нет видео или у нас есть изображение для поста с видео
+                if (post && post.image_url && !previewImageUrl) {
+                  previewImageUrl = createProxyImageUrl(post.image_url, trend.id);
+                }
+              }
+              
+              // Если есть видео, но нет превью - создаем превью из видео
+              if (hasVideos && !previewImageUrl && videoUrl) {
+                previewImageUrl = createVideoThumbnailUrl(videoUrl, trend.id);
               }
             } catch (e) {
               console.error(`[Trend ${trend.id}] Error processing media data:`, e);
