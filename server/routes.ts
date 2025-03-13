@@ -2043,8 +2043,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataLength: response.data?.data?.length,
         firstPost: response.data?.data?.[0]
       });
+      
+      // Трансформируем данные, чтобы очистить контент от многоточий
+      const cleanedPosts = (response.data?.data || []).map((post: any) => ({
+        ...post,
+        postContent: cleanupText(post.postContent)
+      }));
 
-      res.json({ data: response.data?.data || [] });
+      res.json({ data: cleanedPosts });
     } catch (error) {
       console.error("Error fetching source posts:", error);
       if (axios.isAxiosError(error)) {
@@ -2917,7 +2923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const campaigns = filteredItems.map((item: any) => ({
           id: item.id,
           name: item.name,
-          description: item.description,
+          description: cleanupText(item.description),
           userId: item.user_id,
           createdAt: item.created_at,
           socialMediaSettings: item.social_media_settings || null,
@@ -3062,8 +3068,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sourceUrl: item.accountUrl || null,
             // Используем urlPost как URL оригинальной публикации (camelCase в базе)
             url: item.urlPost || null,
-            // Добавляем поле description из базы
-            description: item.description || null,
+            // Добавляем поле description из базы и очищаем от лишних многоточий
+            description: cleanupText(item.description) || null,
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
