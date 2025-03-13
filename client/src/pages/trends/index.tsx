@@ -1248,9 +1248,16 @@ export default function Trends() {
                                     ) : null}
                                     
                                     <div className="flex-1 min-w-0">
-                                      {/* Название канала вверху (вместо бейджа) */}
+                                      {/* Название канала вверху как ссылка на канал */}
                                       <div className="mb-1 font-medium">
-                                        {sourceName}
+                                        <a 
+                                          href={topic.accountUrl || sources.find(s => s.id === topic.source_id)?.url || "#"} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {sourceName}
+                                        </a>
                                       </div>
                                       
                                       {/* Описание канала из базы данных */}
