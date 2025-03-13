@@ -255,7 +255,16 @@ export function TrendsList({ campaignId }: TrendsListProps) {
               key={trend.id} 
               className={`shadow hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
               onClick={() => {
-                setSelectedTrend(trend);
+                // Преобразуем camelCase свойства в snake_case для совместимости с TrendDetailDialog
+                const transformedTrend = {
+                  ...trend,
+                  created_at: trend.created_at || trend.createdAt,
+                  is_bookmarked: trend.is_bookmarked !== undefined ? trend.is_bookmarked : trend.isBookmarked,
+                  source_id: trend.source_id || trend.sourceId,
+                  campaign_id: trend.campaign_id || trend.campaignId,
+                  media_links: trend.media_links || trend.mediaLinks
+                };
+                setSelectedTrend(transformedTrend);
                 setDetailDialogOpen(true);
               }}
             >
@@ -381,17 +390,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
       {/* Диалог с подробной информацией о тренде */}
       {selectedTrend && (
         <TrendDetailDialog
-          topic={{
-            ...selectedTrend,
-            source_id: selectedTrend.sourceId,
-            created_at: selectedTrend.createdAt,
-            is_bookmarked: selectedTrend.isBookmarked,
-            campaign_id: selectedTrend.campaignId,
-            // Преобразуем media_links в строку, если это объект
-            media_links: typeof selectedTrend.media_links === 'string' 
-              ? selectedTrend.media_links
-              : selectedTrend.mediaLinks
-          }}
+          topic={selectedTrend}
           isOpen={detailDialogOpen}
           onClose={() => setDetailDialogOpen(false)}
           onBookmark={(id, isBookmarked) => {
