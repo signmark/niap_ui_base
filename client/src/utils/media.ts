@@ -89,6 +89,14 @@ export function createStreamVideoUrl(videoUrl: string, itemId: string, forceType
                isDirectVideo ? 'directVideo' : undefined;
   }
   
+  // Для Instagram видео возвращаем прямую ссылку с nocache параметром
+  if (forceType === 'instagram' && (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
+    console.log(`[Media] Instagram видео обрабатывается напрямую: ${videoUrl}`);
+    // Добавляем параметр для обхода кеширования
+    const separator = videoUrl.includes('?') ? '&' : '?';
+    return `${videoUrl}${separator}_nocache=${timestamp}`;
+  }
+  
   // Формируем URL для стриминга видео
   let streamUrl = `/api/stream-video?url=${encodeURIComponent(videoUrl)}&_t=${timestamp}&itemId=${itemId}`;
   
