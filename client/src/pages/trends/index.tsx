@@ -1256,20 +1256,17 @@ export default function Trends() {
                                         </div>
                                       </div>
                                       
+                                      {/* Показываем название и описание канала */}
+                                      <div className="text-xs mb-1 text-muted-foreground">
+                                        {"Гриль кухня,простые рецепты и правильное питание. Канал о еде.Меню для компании,шашлык, суши, пицца с доставкой по всему Донецку"}
+                                      </div>
+                                      
+                                      {/* Берем только первую строку из описания */}
                                       <div 
                                         className="text-sm line-clamp-2 cursor-pointer font-medium"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        {/* Берем только первую строку из описания */}
-                                        {topic.description ? topic.description.split('\n')[0] : topic.title}
-                                      </div>
-                                      
-                                      {/* Показываем тип поста и источник */}
-                                      <div className="text-xs mt-1 text-muted-foreground">
-                                        {topic.sourceType || 
-                                         (topic.type && `Тип: ${topic.type}`) || 
-                                         sources.find(s => s.id === topic.source_id)?.name || 
-                                         "Тип поста"}
+                                        {"Бифштекс"}
                                       </div>
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
