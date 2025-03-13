@@ -3,8 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff } from "lucide-react";
+import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff, Video } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { createProxyImageUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
 
 interface SourcePost {
   id: string;
@@ -69,31 +70,21 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return postUrl ? ensureValidUrl(postUrl) : null;
   };
 
-  // Function to process image URLs to handle CORS
-  const processImageUrl = (url: string | null) => {
+  // Function to process image and video URLs using our new proxy system
+  const processMediaUrl = (url: string | null, postId: string) => {
     if (!url) return null;
 
-    // Используем наш собственный прокси для всех медиа
-    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-  };
-
-  // Проверка, является ли URL видео-файлом
-  const isVideoUrl = (url: string | null): boolean => {
-    if (!url) return false;
-
-    // Для ссылок из Telegram (tgcnt.ru) не считаем .mp4 как видео,
-    // так как они часто используют это расширение для GIF-анимаций
-    if (url.includes('tgcnt.ru') || url.includes('t.me') || url.includes('telegram')) {
-      return false;
+    // Если это видео, используем потоковую передачу
+    if (isVideoUrl(url)) {
+      return createStreamVideoUrl(url, postId);
+    } 
+    // Иначе используем прокси для изображений
+    else {
+      return createProxyImageUrl(url, postId);
     }
-
-    // Для других ссылок проверяем расширение файла и явные признаки видео
-    return url.toLowerCase().includes('video/') || 
-           (url.toLowerCase().endsWith('.mp4') && !url.includes('tgcnt.ru')) || 
-           url.toLowerCase().endsWith('.mov') || 
-           url.toLowerCase().endsWith('.avi') || 
-           url.toLowerCase().endsWith('.webm');
   };
+
+  // Используем импортированную isVideoUrl функцию из utils/media.ts
 
   // Обработчик для открытия/закрытия всплывающего окна
   const handlePopoverChange = (open: boolean, postId: string) => {
@@ -124,7 +115,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     {post.image_url && !failedImages.has(post.image_url) ? (
                       <div className="flex-shrink-0">
                         <img
-                          src={processImageUrl(post.image_url)}
+                          src={processMediaUrl(post.image_url, post.id)}
                           alt="Миниатюра поста"
                           className="h-16 w-16 object-cover rounded-md"
                           onError={() => handleImageError(post.image_url!)}
