@@ -1172,14 +1172,13 @@ export default function Trends() {
                           .map((topic: TrendTopic) => {
                             const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
-                            // Создаем статическое изображение-заглушку вместо Unsplash
+                            // Используем локальные заглушки-изображения вместо picsum.photos
                             // Это временное решение, пока не настроены медиа-данные в базе
-                            const tempImageId = parseInt(topic.id.replace(/\D/g, '').substring(0, 2) || '1') % 20 + 1;
-                            const tempImageUrl = `https://picsum.photos/id/${100 + tempImageId}/300/200`;
+                            // Не используем внешние URL, которые могут вызывать ошибки
                             
                             // Разбор JSON из поля media_links для превью (в реальном режиме)
                             let mediaData: { images: string[], videos: string[] } = { 
-                              images: [tempImageUrl], 
+                              images: [],  // Пустой массив, если нет реальных изображений 
                               videos: [] 
                             };
                             
@@ -1204,8 +1203,8 @@ export default function Trends() {
                               }
                             }
                             
-                            // Первое изображение для отображения
-                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : tempImageUrl;
+                            // Первое изображение для отображения (если есть)
+                            const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : undefined;
                             
                             return (
                               <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
