@@ -164,7 +164,7 @@ export function TrendDetailDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[600px] md:w-[650px] lg:w-[700px] p-0">
-        <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-md scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

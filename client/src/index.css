@@ -130,4 +130,33 @@
       linear-gradient(135deg, transparent 0%, transparent 50%, rgba(128, 128, 128, 0.3) 50%, rgba(128, 128, 128, 0.3) 100%);
     border-bottom-right-radius: 4px;
   }
+
+  /* Кастомные скроллбары */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, rgba(240, 240, 240, 0.5));
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, rgba(160, 160, 160, 0.5));
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, rgba(140, 140, 140, 0.7));
+  }
+
+  .scrollbar-track-gray-100::-webkit-scrollbar-track {
+    --scrollbar-track: rgba(200, 200, 200, 0.2);
+  }
+
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    --scrollbar-thumb: rgba(160, 160, 160, 0.5);
+    --scrollbar-thumb-hover: rgba(120, 120, 120, 0.7);
+  }
 }
