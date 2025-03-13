@@ -310,88 +310,122 @@ async function streamVideo(videoUrl: string, res: any, options: {
                       
     const isInstagram = videoUrl.includes('instagram.') || 
                        videoUrl.includes('fbcdn.net') || 
-                       videoUrl.includes('cdninstagram.com');
+                       videoUrl.includes('cdninstagram.com') ||
+                       options.forceType === 'instagram';
                        
     // Проверяем, может ли быть это прямой URL на видеофайл
     const isDirectVideoFile = videoUrl.endsWith('.mp4') || 
                              videoUrl.endsWith('.webm') || 
-                             videoUrl.endsWith('.mov');
+                             videoUrl.endsWith('.mov') ||
+                             isInstagram; // Instagram видео обрабатываем как прямые файлы
     
-    // Формируем заголовки для запроса
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    // Формируем базовые заголовки для запроса
+    let headers: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
       'Accept': 'video/webm,video/mp4,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5',
       'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
       'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-      'Referer': 'https://nplanner.ru/'
+      'Pragma': 'no-cache'
     };
     
-    // Если это прямой видеофайл, выполняем стриминг с поддержкой range запросов
-    if (isDirectVideoFile || options.forceType === 'directVideo') {
-      // Добавляем HTTP-заголовки для стриминга
-      res.setHeader('Content-Type', 'video/mp4');
-      res.setHeader('Accept-Ranges', 'bytes');
-      
-      // Добавляем заголовки CORS
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-      
-      // Поддержка частичного контента (range requests)
-      if (options.range) {
-        try {
-          const { data, headers } = await axios.get(videoUrl, {
-            headers: {
-              ...headers,
-              Range: options.range
-            },
-            responseType: 'arraybuffer'
-          });
-          
-          // Устанавливаем те же заголовки диапазона, что и в ответе
-          if (headers['content-range']) {
-            res.setHeader('Content-Range', headers['content-range']);
-            res.status(206); // Partial Content
-          }
-          
-          if (headers['content-length']) {
-            res.setHeader('Content-Length', headers['content-length']);
-          }
-          
-          return res.end(data);
-        } catch (error) {
-          console.error('Error streaming video with range request:', error);
-          // Если range запрос не сработал, пробуем получить весь файл
-        }
-      }
-      
-      // Если range-запрос не задан или произошла ошибка, получаем весь файл
+    // Добавляем специальные заголовки для Instagram видео
+    if (isInstagram) {
+      console.log('Processing Instagram video with enhanced headers');
+      headers = {
+        ...headers,
+        'Referer': 'https://www.instagram.com/',
+        'Origin': 'https://www.instagram.com',
+        'sec-ch-ua': '"Chromium";v="123", "Google Chrome";v="123"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'video',
+        'sec-fetch-mode': 'no-cors',
+        'sec-fetch-site': 'cross-site',
+        'Connection': 'keep-alive'
+      };
+    } else {
+      headers['Referer'] = 'https://nplanner.ru/';
+    }
+    
+    // Добавляем HTTP-заголовки для стриминга в ответе
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Accept-Ranges', 'bytes');
+    
+    // Добавляем расширенные CORS заголовки
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Timing-Allow-Origin', '*');
+    
+    // Для Instagram видео добавляем еще параметр ночного кеширования в URL
+    if (isInstagram) {
+      const separator = videoUrl.includes('?') ? '&' : '?';
+      videoUrl = `${videoUrl}${separator}_nocache=${Date.now()}`;
+      console.log(`Modified Instagram video URL with cache-busting: ${videoUrl}`);
+    }
+    
+    // Поддержка Range запросов
+    if (options.range) {
       try {
-        const response = await axios({
-          method: 'get',
-          url: videoUrl,
-          responseType: 'stream',
-          headers
+        const rangeHeaders = { ...headers, Range: options.range };
+        console.log(`Processing range request: ${options.range} for URL: ${videoUrl}`);
+        
+        const { data, headers: responseHeaders } = await axios.get(videoUrl, {
+          headers: rangeHeaders,
+          responseType: 'arraybuffer',
+          maxRedirects: 5
         });
         
-        // Устанавливаем заголовки Content-Length если они есть
-        if (response.headers['content-length']) {
-          res.setHeader('Content-Length', response.headers['content-length']);
+        // Копируем заголовки Content-Range из ответа
+        if (responseHeaders['content-range']) {
+          res.setHeader('Content-Range', responseHeaders['content-range']);
+          res.status(206); // Partial Content
         }
         
-        // Стримим видеофайл клиенту
-        return response.data.pipe(res);
+        // Устанавливаем Content-Length из ответа
+        if (responseHeaders['content-length']) {
+          res.setHeader('Content-Length', responseHeaders['content-length']);
+        }
+        
+        // Отправляем данные
+        return res.end(data);
       } catch (error) {
-        console.error('Error streaming full video:', error);
-        return res.status(500).send('Ошибка при получении видео');
+        console.error(`Error streaming video with range request: ${error}`);
+        // Если range запрос не сработал, пытаемся получить весь файл
       }
     }
     
-    // Если это не прямое видео, перенаправляем на оригинальный URL
-    // В этом случае клиентское приложение должно использовать iframe или другие способы отображения
-    return res.redirect(videoUrl);
+    // Если range запрос не задан или произошла ошибка, получаем весь файл
+    try {
+      console.log(`Streaming full video file from: ${videoUrl}`);
+      
+      const response = await axios({
+        method: 'get',
+        url: videoUrl,
+        responseType: 'stream',
+        headers,
+        maxRedirects: 5
+      });
+      
+      // Копируем важные заголовки из ответа
+      if (response.headers['content-length']) {
+        res.setHeader('Content-Length', response.headers['content-length']);
+      }
+      
+      if (response.headers['content-type']) {
+        res.setHeader('Content-Type', response.headers['content-type']);
+      }
+      
+      console.log(`Successfully connected to video stream: ${videoUrl}`);
+      
+      // Стримим видеофайл клиенту
+      return response.data.pipe(res);
+    } catch (error) {
+      console.error(`Error streaming full video: ${error}`);
+      return res.status(500).send('Ошибка при получении видео');
+    }
   } catch (error) {
     console.error('Error in video streaming:', error);
     return res.status(500).send('Ошибка при обработке видео');
