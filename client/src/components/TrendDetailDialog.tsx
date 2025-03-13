@@ -235,12 +235,15 @@ export function TrendDetailDialog({
             <div className="mt-4 border-t pt-2 flex justify-between items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {/* Отображаем дату в формате "X часов назад" */}
+                  {/* Отображаем дату в полном формате */}
                   {(topic.created_at || topic.createdAt) ? 
-                    formatDistanceToNow(new Date(topic.created_at || topic.createdAt), { 
-                      locale: ru, 
-                      addSuffix: false 
-                    }) + " назад"
+                    new Date(topic.created_at || topic.createdAt).toLocaleString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) 
                     : "Дата недоступна"}
                 </span>
               </div>
