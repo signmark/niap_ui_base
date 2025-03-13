@@ -235,7 +235,9 @@ export function TrendDetailDialog({
             <div className="mt-4 border-t pt-2 flex justify-between items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {new Date(topic.created_at).toLocaleDateString('ru-RU')}
+                  {(topic.created_at && !isNaN(new Date(topic.created_at).getTime())) 
+                    ? new Date(topic.created_at).toLocaleDateString('ru-RU')
+                    : "Дата не указана"}
                 </span>
               </div>
               
