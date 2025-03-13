@@ -159,4 +159,26 @@
     --scrollbar-thumb: rgba(160, 160, 160, 0.5);
     --scrollbar-thumb-hover: rgba(120, 120, 120, 0.7);
   }
+  
+  /* Улучшенные стили для скроллбаров на разных элементах */
+  .Dialog-overlay {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  
+  .Dialog-content {
+    scrollbar-width: thin;
+  }
+  
+  /* Глобальные стили для скроллбаров */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
+  }
+  
+  /* Стили для Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
+  }
 }

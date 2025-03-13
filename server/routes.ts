@@ -1441,7 +1441,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`[Instagram Video Info] Requested info for post: ${videoUrl}`);
     
     try {
-      // Извлекаем ID публикации из URL
+      // Прямые ссылки на видео Instagram обрабатываем особым образом
+      if (videoUrl.includes('instagram.fuio') || videoUrl.includes('cdninstagram.com') || videoUrl.includes('fbcdn.net')) {
+        // Это прямая ссылка на медиафайл Instagram, возвращаем успешный ответ с минимальной информацией
+        return res.json({
+          success: true,
+          data: {
+            type: 'video',
+            url: videoUrl,
+            // Минимальная информация для интерфейса
+            isDirectVideo: true
+          }
+        });
+      }
+      
+      // Для обычных постов извлекаем ID публикации из URL
       // Поддерживаем форматы:
       // - https://www.instagram.com/p/DHBwBSFzZuI/
       // - https://instagram.com/reel/CtZw1SPD1OL/
