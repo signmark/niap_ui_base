@@ -3064,9 +3064,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: item.title,
             sourceId: item.source_id,
             sourceName: item.source_name || 'Источник', // Возможно в Directus это поле названо иначе
-            // Используем accountUrl как URL источника (camelCase в базе)
+            // Сохраняем оригинальные имена полей из базы данных
+            accountUrl: item.accountUrl || null,
+            urlPost: item.urlPost || null,
+            // Добавляем поля для обратной совместимости
             sourceUrl: item.accountUrl || null,
-            // Используем urlPost как URL оригинальной публикации (camelCase в базе)
             url: item.urlPost || null,
             // Добавляем поле description из базы и очищаем от лишних многоточий
             description: cleanupText(item.description) || null,
