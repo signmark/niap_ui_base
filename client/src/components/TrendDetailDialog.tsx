@@ -53,7 +53,7 @@ export function TrendDetailDialog({
   onBookmark,
   sourceName
 }: TrendDetailDialogProps) {
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  // Нет необходимости в отслеживании индекса изображения, т.к. показываем только первое
   const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
   
   // Инициализируем пустую структуру для медиаданных
@@ -146,17 +146,7 @@ export function TrendDetailDialog({
     }
   };
 
-  // Следующее изображение
-  const nextImage = () => {
-    if (!mediaData.images || mediaData.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev + 1) % mediaData.images!.length);
-  };
-
-  // Предыдущее изображение
-  const prevImage = () => {
-    if (!mediaData.images || mediaData.images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev - 1 + mediaData.images!.length) % mediaData.images!.length);
-  };
+  // Удалены функции навигации по изображениям, т.к. мы показываем только первое изображение
 
   // Обработчик ошибки загрузки изображения
   const handleImageError = (imageUrl: string) => {
@@ -166,15 +156,15 @@ export function TrendDetailDialog({
 
   if (!topic) return null;
 
-  // Создаем проксированный URL для изображения
-  const imageUrl = mediaData.images && mediaData.images.length > 0 && !failedImages.has(mediaData.images[currentImageIndex])
-    ? createProxyImageUrl(mediaData.images[currentImageIndex], topic.id)
+  // Создаем проксированный URL только для первого изображения
+  const imageUrl = mediaData.images && mediaData.images.length > 0 && !failedImages.has(mediaData.images[0])
+    ? createProxyImageUrl(mediaData.images[0], topic.id)
     : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl p-0">
-        <div className="p-6">
+      <DialogContent className="w-[600px] md:w-[650px] lg:w-[700px] p-0">
+        <div className="p-6 max-h-[80vh] overflow-y-auto">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -189,35 +179,10 @@ export function TrendDetailDialog({
                 src={imageUrl}
                 alt={topic.title}
                 loading="lazy"
-                className="w-full h-auto max-h-[500px] max-w-full rounded-md object-contain mx-auto"
+                className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
                 crossOrigin="anonymous"
-                onError={() => handleImageError(mediaData.images[currentImageIndex])}
+                onError={() => handleImageError(mediaData.images[0])}
               />
-              {mediaData.images.length > 1 && (
-                <>
-                  <div className="flex justify-between mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={prevImage}
-                      className="h-7 px-2"
-                    >
-                      ←
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {currentImageIndex + 1} / {mediaData.images.length}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={nextImage}
-                      className="h-7 px-2"
-                    >
-                      →
-                    </Button>
-                  </div>
-                </>
-              )}
               {topic.url && (
                 <div className="text-right mt-2">
                   <a
