@@ -185,25 +185,25 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                         {post.likes !== null && post.likes !== undefined && (
                           <div className="flex items-center gap-1">
                             <ThumbsUp className="h-3 w-3" />
-                            <span>{post.likes.toLocaleString('ru-RU')}</span>
+                            <span>{typeof post.likes === 'number' ? Math.round(post.likes).toLocaleString('ru-RU') : post.likes}</span>
                           </div>
                         )}
                         {post.views !== null && post.views !== undefined && (
                           <div className="flex items-center gap-1">
                             <Eye className="h-3 w-3" />
-                            <span>{post.views.toLocaleString('ru-RU')}</span>
+                            <span>{typeof post.views === 'number' ? Math.round(post.views).toLocaleString('ru-RU') : post.views}</span>
                           </div>
                         )}
                         {post.comments !== null && post.comments !== undefined && (
                           <div className="flex items-center gap-1">
                             <span>💬</span>
-                            <span>{post.comments.toLocaleString('ru-RU')}</span>
+                            <span>{typeof post.comments === 'number' ? Math.round(post.comments).toLocaleString('ru-RU') : post.comments}</span>
                           </div>
                         )}
                         {post.shares !== null && post.shares !== undefined && (
                           <div className="flex items-center gap-1">
                             <RefreshCw className="h-3 w-3" />
-                            <span>{post.shares.toLocaleString('ru-RU')}</span>
+                            <span>{typeof post.shares === 'number' ? Math.round(post.shares).toLocaleString('ru-RU') : post.shares}</span>
                           </div>
                         )}
                       </div>
@@ -277,25 +277,25 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     {post.likes !== null && post.likes !== undefined && (
                       <div className="flex items-center gap-1">
                         <ThumbsUp className="h-4 w-4" />
-                        <span>{post.likes.toLocaleString('ru-RU')} лайков</span>
+                        <span>{typeof post.likes === 'number' ? Math.round(post.likes).toLocaleString('ru-RU') : post.likes} лайков</span>
                       </div>
                     )}
                     {post.views !== null && post.views !== undefined && (
                       <div className="flex items-center gap-1">
                         <Eye className="h-4 w-4" />
-                        <span>{post.views.toLocaleString('ru-RU')} просмотров</span>
+                        <span>{typeof post.views === 'number' ? Math.round(post.views).toLocaleString('ru-RU') : post.views} просмотров</span>
                       </div>
                     )}
                     {post.comments !== null && post.comments !== undefined && (
                       <div className="flex items-center gap-1">
                         <span>💬</span>
-                        <span>{post.comments.toLocaleString('ru-RU')} комментариев</span>
+                        <span>{typeof post.comments === 'number' ? Math.round(post.comments).toLocaleString('ru-RU') : post.comments} комментариев</span>
                       </div>
                     )}
                     {post.shares !== null && post.shares !== undefined && (
                       <div className="flex items-center gap-1">
                         <RefreshCw className="h-4 w-4" />
-                        <span>{post.shares.toLocaleString('ru-RU')} репостов</span>
+                        <span>{typeof post.shares === 'number' ? Math.round(post.shares).toLocaleString('ru-RU') : post.shares} репостов</span>
                       </div>
                     )}
                   </div>
