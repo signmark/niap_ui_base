@@ -56,6 +56,7 @@ export function TrendDetailDialog({
 }: TrendDetailDialogProps) {
   // Нет необходимости в отслеживании индекса изображения, т.к. показываем только первое
   const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
+  const [videoLoadError, setVideoLoadError] = React.useState(false);
   
   // Инициализируем пустую структуру для медиаданных
   let mediaData: MediaData = { 
@@ -100,67 +101,40 @@ export function TrendDetailDialog({
             console.error(`[TrendDetail] Error parsing JSON string:`, e);
           }
         } else if (Array.isArray(mediaLinks)) {
-          // Это массив постов или медиа URLs
-          
+          // Массив объектов, обрабатываем каждый элемент
           for (const item of mediaLinks) {
-            if (typeof item === 'string') {
-              // Это прямая ссылка на изображение/видео
-              if (item.match(/\.(jpg|jpeg|png|gif|webp)($|\?)/i)) {
-                mediaData.images.push(item);
-              } else if (item.match(/\.(mp4|webm|ogg|mov)($|\?)/i)) {
-                mediaData.videos.push(item);
-              }
-            } else if (item && typeof item === 'object') {
-              // Это объект поста
-              if (item.image_url) {
-                mediaData.images.push(item.image_url);
-              }
-              if (item.video_url) {
-                mediaData.videos.push(item.video_url);
-              }
+            if (item.image_url) {
+              mediaData.images.push(item.image_url);
             }
-          }
-        } else if (mediaLinks && typeof mediaLinks === 'object') {
-          // Это уже объект с полями images и videos
-          
-          if (mediaLinks.images && Array.isArray(mediaLinks.images)) {
-            mediaData.images = mediaLinks.images.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
-          }
-          
-          if (mediaLinks.videos && Array.isArray(mediaLinks.videos)) {
-            mediaData.videos = mediaLinks.videos.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
+            if (item.video_url) {
+              mediaData.videos.push(item.video_url);
+            }
           }
         }
       }
     } catch (e) {
-      console.error(`[TrendDetail] Error processing media data:`, e);
+      console.error("[TrendDetail] Error processing media data:", e);
     }
   }
-
-  // Функция для форматирования даты создания
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, "d MMMM yyyy 'г.' HH:mm", { locale: ru });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  // Удалены функции навигации по изображениям, т.к. мы показываем только первое изображение
-
-  // Обработчик ошибки загрузки изображения
+  
+  // Обработка ошибки загрузки изображения
   const handleImageError = (imageUrl: string) => {
-    console.log("Failed to load image:", imageUrl);
-    setFailedImages(prev => new Set(prev).add(imageUrl));
+    setFailedImages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(imageUrl);
+      return newSet;
+    });
   };
-
-  if (!topic) return null;
-
-  // Проверяем наличие видео
-  const hasVideo = mediaData.videos && mediaData.videos.length > 0;
-  const videoUrl = hasVideo ? mediaData.videos[0] : null;
-  const isVkVideo = videoUrl && videoUrl.includes('vk.com/video');
+  
+  if (!topic) {
+    return null;
+  }
+  
+  // Проверяем, есть ли у нас видео в трендах
+  const videoUrl = mediaData.videos && mediaData.videos.length > 0 ? mediaData.videos[0] : null;
+  const hasVideo = Boolean(videoUrl);
+  
+  // Определяем тип источника видео для соответствующей обработки
   const isInstagramVideo = videoUrl && (
     videoUrl.includes('instagram.com/p/') || 
     videoUrl.includes('instagram.com/reel/') || 
@@ -172,12 +146,12 @@ export function TrendDetailDialog({
       videoUrl.includes('ig_') || 
       videoUrl.includes('instagram')
     )) ||
-    videoUrl.includes('instagram.')
+    videoUrl.includes('HBksFQIYUmlnX') || // маркер Instagram видео
+    videoUrl.includes('_nc_vs=') ||     // другой маркер Instagram видео
+    videoUrl.includes('efg=')          // еще один маркер Instagram видео
   );
-  
-  // Логируем определение типа видео
-  if (videoUrl) {
-    console.log(`[TrendDetail] Видео URL: ${videoUrl}`);
+    
+  if (isInstagramVideo) {
     console.log(`[TrendDetail] Определено как Instagram видео: ${isInstagramVideo}`);
   }
   
@@ -189,8 +163,6 @@ export function TrendDetailDialog({
       ownerId: string;
       videoLocalId: string;
       embedUrl: string;
-      iframeUrl: string;
-      directUrl: string;
     }
   } | null>(null);
   
@@ -198,19 +170,14 @@ export function TrendDetailDialog({
   const [instagramVideoInfo, setInstagramVideoInfo] = React.useState<{
     success: boolean;
     data?: {
-      postId: string;
-      embedUrl: string;
-      originalUrl: string;
-      normalizedUrl: string;
+      videoUrl: string;
+      thumbnailUrl: string;
     }
   } | null>(null);
   
-  // Состояние для отслеживания ошибок воспроизведения видео
-  const [videoLoadError, setVideoLoadError] = React.useState<boolean>(false);
-  
-  // Получаем информацию о видео ВКонтакте, если это необходимо
+  // Проверяем URL для ВК видео
   React.useEffect(() => {
-    if (isVkVideo && videoUrl) {
+    if (videoUrl && videoUrl.includes('vk.com/video')) {
       fetch(`/api/vk-video-info?url=${encodeURIComponent(videoUrl)}`)
         .then(response => response.json())
         .then(data => {
@@ -222,9 +189,9 @@ export function TrendDetailDialog({
           console.error('Error fetching VK video info:', error);
         });
     }
-  }, [isVkVideo, videoUrl]);
+  }, [videoUrl]);
   
-  // Получаем информацию о видео Instagram, если это необходимо
+  // Проверяем URL для Instagram видео
   React.useEffect(() => {
     if (isInstagramVideo && videoUrl) {
       fetch(`/api/instagram-video-info?url=${encodeURIComponent(videoUrl)}`)
@@ -249,55 +216,50 @@ export function TrendDetailDialog({
   const videoThumbnailUrl = !imageUrl && videoUrl ? createVideoThumbnailUrl(videoUrl, topic.id) : null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[600px] md:w-[650px] lg:w-[700px] p-0">
-        <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              <a 
-                href={topic.accountUrl || topic.sourceUrl || ""} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {sourceName || topic.sourceName || ''}
-              </a>
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Медиа контент */}
-          {/* Если есть видео, показываем его */}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              {sourceName && (
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground font-normal text-sm">{sourceName}</span>
+                </div>
+              )}
+              {topic.accountUrl && (
+                <a 
+                  href={topic.accountUrl} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-sm text-blue-500 hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {topic.sourceName || "Профиль"}
+                </a>
+              )}
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          {/* Медиа: видео или изображение */}
           {hasVideo && (
             <div className="mb-4">
-              {/* Для видео ВКонтакте используем специальный формат ссылки */}
-              {isVkVideo ? (
-                <div className="aspect-video w-full rounded-md overflow-hidden relative">
-                  {vkVideoInfo && vkVideoInfo.success ? (
-                    <iframe 
-                      src={`https://vk.com/video_ext.php?oid=${vkVideoInfo.data?.ownerId}&id=${vkVideoInfo.data?.videoLocalId}&hd=2`}
-                      width="100%" 
-                      height="100%" 
-                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
-                      frameBorder="0" 
-                      allowFullScreen
-                      className="aspect-video"
-                    ></iframe>
-                  ) : (
-                    <a
-                      href={videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4"
-                    >
-                      <div className="text-center text-white">
-                        <Video className="h-12 w-12 mx-auto mb-3" />
-                        <p className="text-sm">Открыть видео ВКонтакте</p>
-                        <p className="text-xs mt-2 text-gray-300">(Загрузка информации о видео...)</p>
-                      </div>
-                    </a>
-                  )}
+              {vkVideoInfo?.success ? (
+                <div className="aspect-video w-full rounded-md overflow-hidden">
+                  <iframe 
+                    src={vkVideoInfo.data?.embedUrl} 
+                    width="100%" 
+                    height="100%" 
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture;" 
+                    frameBorder="0"
+                    className="w-full min-h-[300px]"
+                  />
                 </div>
               ) : isInstagramVideo ? (
                 <div className="aspect-square w-full rounded-md overflow-hidden relative">
@@ -309,80 +271,23 @@ export function TrendDetailDialog({
                         <p className="text-sm">Загрузка видео...</p>
                       </div>
                     </div>
-                  ) : videoUrl.includes('instagram.com') ? (
-                    // Прямая ссылка на видео из Instagram - используем прямое воспроизведение
-                    <video 
-                      src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
-                      controls
-                      autoPlay={false}
-                      loop={false}
-                      muted={false}
-                      playsInline
-                      className="w-full max-h-[450px] object-contain"
-                      crossOrigin="anonymous"
-                      onLoadStart={() => {
-                        setVideoLoadError(false);
-                        console.log("[TrendDetail] Начало загрузки Instagram видео");
-                      }}
-                      onError={(e) => {
-                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram: ${videoUrl}`, e);
-                        setVideoLoadError(true);
-                        // При ошибке воспроизведения предлагаем открыть оригинальный источник
-                        e.currentTarget.style.display = 'none';
-                        const errorContainer = document.createElement('div');
-                        errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
-                        errorContainer.innerHTML = `
-                          <div class="text-center text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
-                              <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                            </svg>
-                            <p class="text-sm">Ошибка воспроизведения видео</p>
-                            <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
-                              Открыть оригинал
-                            </a>
-                          </div>
-                        `;
-                        e.currentTarget.parentNode?.appendChild(errorContainer);
-                      }}
-                    />
                   ) : (
-                    // Это прямая ссылка на видео-файл из Instagram CDN
-                    <video 
-                      src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
-                      controls
-                      autoPlay={false}
-                      loop={false}
-                      muted={false}
-                      playsInline
-                      className="w-full max-h-[450px] object-contain"
-                      crossOrigin="anonymous"
-                      onLoadStart={() => {
-                        setVideoLoadError(false);
-                        console.log("[TrendDetail] Начало загрузки Instagram CDN видео");
-                      }}
-                      onError={(e) => {
-                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram CDN: ${videoUrl}`, e);
-                        setVideoLoadError(true);
-                        // При ошибке воспроизведения предлагаем открыть оригинальный источник
-                        e.currentTarget.style.display = 'none';
-                        const errorContainer = document.createElement('div');
-                        errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
-                        errorContainer.innerHTML = `
-                          <div class="text-center text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
-                              <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                            </svg>
-                            <p class="text-sm">Ошибка воспроизведения видео</p>
-                            <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
-                              Открыть оригинал
-                            </a>
-                          </div>
-                        `;
-                        e.currentTarget.parentNode?.appendChild(errorContainer);
-                      }}
-                    />
+                    // Прямая ссылка на видео из Instagram - перенаправляем пользователя
+                    <a 
+                      href={videoUrl}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4"
+                    >
+                      <div className="text-center text-white">
+                        <Video className="h-12 w-12 mx-auto mb-3" />
+                        <p className="text-sm font-medium">Видео Instagram доступно только в оригинале</p>
+                        <p className="text-xs mt-1 text-gray-300">Instagram блокирует прямое воспроизведение</p>
+                        <span className="text-xs mt-3 text-blue-300 hover:underline block bg-blue-900/30 py-2 px-3 rounded-md">
+                          Открыть в Instagram
+                        </span>
+                      </div>
+                    </a>
                   )}
                 </div>
               ) : (
