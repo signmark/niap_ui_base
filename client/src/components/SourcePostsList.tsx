@@ -76,7 +76,12 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
     // Если это видео, используем потоковую передачу
     if (isVideoUrl(url)) {
-      return createStreamVideoUrl(url, postId);
+      // Проверяем, является ли это видео из Instagram
+      if (url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com')) {
+        return createStreamVideoUrl(url, postId, 'instagram');
+      } else {
+        return createStreamVideoUrl(url, postId);
+      }
     } 
     // Иначе используем прокси для изображений
     else {
@@ -210,11 +215,14 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     {isVideoUrl(post.image_url) ? (
                       <div className="relative rounded-md overflow-hidden" style={{ maxHeight: '450px' }}>
                         <video
-                          src={processMediaUrl(post.image_url, post.id)}
+                          src={post.image_url && (post.image_url.includes('instagram.') || post.image_url.includes('fbcdn.net') || post.image_url.includes('cdninstagram.com')) 
+                            ? createStreamVideoUrl(post.image_url, post.id, 'instagram') 
+                            : processMediaUrl(post.image_url, post.id)}
                           className="w-full max-h-[450px] object-contain"
                           controls
                           preload="metadata"
                           poster={post.video_url ? createVideoThumbnailUrl(post.video_url, post.id) : undefined}
+                          crossOrigin="anonymous"
                         />
                       </div>
                     ) : (

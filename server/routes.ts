@@ -361,8 +361,15 @@ async function streamVideo(videoUrl: string, res: any, options: {
     
     // Для Instagram видео добавляем еще параметр ночного кеширования в URL
     if (isInstagram) {
+      console.log(`Processing Instagram video: ${videoUrl}`);
+      console.log(`Instagram video type detected - forceType: ${options.forceType}`);
+      
+      // Замеры времени для логирования
+      const startTime = Date.now();
+      
+      // Добавляем nocache параметр для избежания проблем с кешированием
       const separator = videoUrl.includes('?') ? '&' : '?';
-      videoUrl = `${videoUrl}${separator}_nocache=${Date.now()}`;
+      videoUrl = `${videoUrl}${separator}_nocache=${startTime}`;
       console.log(`Modified Instagram video URL with cache-busting: ${videoUrl}`);
     }
     
