@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 // Импортируем функцию createProxyImageUrl из utils
 import { createProxyImageUrl } from "../utils/media";
 import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 
@@ -235,15 +235,12 @@ export function TrendDetailDialog({
             <div className="mt-4 border-t pt-2 flex justify-between items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {/* Отображаем дату в заданном формате, используя поле из camelCase или snake_case */}
+                  {/* Отображаем дату в формате "X часов назад" */}
                   {(topic.created_at || topic.createdAt) ? 
-                    new Date(topic.created_at || topic.createdAt).toLocaleString('ru-RU', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) 
+                    formatDistanceToNow(new Date(topic.created_at || topic.createdAt), { 
+                      locale: ru, 
+                      addSuffix: false 
+                    }) + " назад"
                     : "Дата недоступна"}
                 </span>
               </div>
