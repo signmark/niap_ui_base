@@ -295,7 +295,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                         </Badge>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(trend.createdAt), { addSuffix: true, locale: ru })}
+                          {`Пост от ${new Date(trend.createdAt).toLocaleDateString('ru-RU')} ${new Date(trend.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}`}
                         </span>
                       </div>
                       
