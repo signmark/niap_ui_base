@@ -11,6 +11,7 @@ import { TrendsList } from "@/components/TrendsList";
 import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { TrendAnalysisSettings } from "@/components/TrendAnalysisSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+import { BusinessQuestionnaireForm } from "@/components/BusinessQuestionnaireForm";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -370,6 +371,20 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
+        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Бизнес-анкета
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <BusinessQuestionnaireForm 
+              campaignId={id}
+              onQuestionnaireUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: [`/api/campaigns/${id}/questionnaire`] });
+              }}
+            />
+          </AccordionContent>
+        </AccordionItem>
+            
         <AccordionItem value="schedule" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Календарь публикаций
