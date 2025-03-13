@@ -964,15 +964,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Business Questionnaire методы
-  async getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null> {
+  async getBusinessQuestionnaire(campaignId: string, authToken?: string): Promise<BusinessQuestionnaire | null> {
     console.log('Getting business questionnaire for campaign:', campaignId);
     try {
-      // Используем сервисный токен из окружения
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      if (!serviceToken) {
-        console.error('No service token found in environment variables');
+      // Убедимся, что у нас есть токен авторизации
+      if (!authToken) {
+        console.error('No auth token provided for getting business questionnaire');
         return null;
       }
+      
+      console.log('Using authorization token for directus request');
       
       const filter = {
         campaign_id: {
@@ -980,12 +981,14 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
+      console.log('Requesting business questionnaire with filter:', JSON.stringify(filter));
+      
       const response = await directusApi.get('/items/business_questionnaire', {
         params: {
           filter
         },
         headers: {
-          'Authorization': `Bearer ${serviceToken}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
@@ -1158,19 +1161,19 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Вспомогательный метод для получения бизнес-анкеты по ID
-  private async getBusinessQuestionnaireById(id: string): Promise<BusinessQuestionnaire | null> {
+  private async getBusinessQuestionnaireById(id: string, authToken?: string): Promise<BusinessQuestionnaire | null> {
     try {
-      // Нам нужен authToken, но для этого нужен userId
-      // Используем токен сервиса из переменных окружения
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      if (!serviceToken) {
-        console.error('No service token found, cannot get business questionnaire by ID');
+      // Проверяем, что у нас есть токен авторизации
+      if (!authToken) {
+        console.error('No auth token provided, cannot get business questionnaire by ID');
         return null;
       }
       
+      console.log('Getting business questionnaire by ID:', id);
+      
       const response = await directusApi.get(`/items/business_questionnaire/${id}`, {
         headers: {
-          'Authorization': `Bearer ${serviceToken}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
