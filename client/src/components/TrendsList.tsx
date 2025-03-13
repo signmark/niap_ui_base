@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,7 @@ interface TrendTopic {
   sourceId: string;
   sourceName?: string;
   sourceUrl?: string;
+  url?: string; // URL оригинальной публикации
   reactions: number;
   comments: number;
   views: number;
@@ -83,6 +84,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             sourceId: trend.sourceId,
             sourceName: trend.sourceName || 'Источник',
             sourceUrl: trend.sourceUrl,
+            url: trend.url, // URL оригинальной публикации
             reactions: trend.reactions || 0,
             comments: trend.comments || 0,
             views: trend.views || 0,
