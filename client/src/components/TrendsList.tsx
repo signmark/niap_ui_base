@@ -395,7 +395,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       {trend.trendScore && (
                         <div className="flex items-center gap-1">
                           <Flame className="h-3 w-3 text-orange-500" />
-                          <span className="text-orange-500 font-medium">{trend.trendScore.toFixed(1)}</span>
+                          <span className="text-orange-500 font-medium">{Math.round(trend.trendScore)}</span>
                         </div>
                       )}
 
