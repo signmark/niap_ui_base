@@ -90,6 +90,13 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         
         // Преобразуем полученные данные в правильный формат
         const trendTopics = (response.data?.data || []).map((trend: any) => {
+          // Выводим значение created_at для отладки
+          if (trend.id === response.data.data[0].id) {
+            console.log("Raw created_at value:", trend.created_at);
+            console.log("Raw date type:", typeof trend.created_at);
+            console.log("Is valid date:", !isNaN(new Date(trend.created_at).getTime()));
+          }
+
           const result = {
             id: trend.id,
             title: trend.title,
@@ -100,7 +107,8 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             reactions: trend.reactions || 0,
             comments: trend.comments || 0,
             views: trend.views || 0,
-            createdAt: trend.createdAt || trend.created_at,
+            // Напрямую копируем created_at для сохранения snake_case формата
+            created_at: trend.created_at,
             isBookmarked: trend.isBookmarked || false,
             campaignId: trend.campaignId,
             mediaLinks: trend.mediaLinks,
@@ -389,11 +397,11 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                     </div>
                     
                     {/* Дата публикации в формате "X часов назад" */}
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-1 rounded">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          {(trend.createdAt || trend.created_at) ? formatDistanceToNow(new Date(trend.createdAt || trend.created_at), { 
+                          {trend.created_at ? formatDistanceToNow(new Date(trend.created_at), { 
                             locale: ru, 
                             addSuffix: false 
                           }) + " назад" : "Дата недоступна"}
