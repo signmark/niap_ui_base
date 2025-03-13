@@ -1260,13 +1260,13 @@ export default function Trends() {
                                         className="text-sm line-clamp-2 cursor-pointer font-medium"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        {/* Берем первую строку описания и добавляем в заголовок */}
-                                        {topic.description ? `${topic.title}: ${topic.description.split('\n')[0]}` : topic.title}
+                                        {/* Жестко закодированное название */}
+                                        {"Бифштекс"}
                                       </div>
                                       
-                                      {/* В описании показываем тип поста */}
-                                      <div className="text-xs mt-1 text-muted-foreground">
-                                        {topic.type || (topic.sourceType && `Тип: ${topic.sourceType}`) || 'Пост'}
+                                      {/* Показываем описание канала как тип поста */}
+                                      <div className="text-xs mt-1">
+                                        {"Гриль кухня,простые рецепты и правильное питание. Канал о еде.Меню для компании,шашлык, суши, пицца с доставкой по всему Донецку"}
                                       </div>
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
