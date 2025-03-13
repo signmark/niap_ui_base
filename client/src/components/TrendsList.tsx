@@ -116,15 +116,27 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             campaignId: trend.campaignId,
             mediaLinks: trend.mediaLinks,
             media_links: trend.media_links,
-            description: trend.description
+            description: trend.description,
+            // Добавляем показатель trendScore из API
+            trendScore: trend.trendScore,
+            // Добавляем URL аккаунта и поста в их оригинальном snake_case формате
+            accountUrl: trend.accountUrl,
+            urlPost: trend.urlPost
           };
           
-          // Отладочный вывод для поля даты
+          // Отладочный вывод для поля даты и trendScore
           if (trend.id === response.data.data[0].id) {
             console.log("Date fields for first trend:", {
               createdAtFromServer: trend.createdAt,
               created_atFromServer: trend.created_at,
               finalCreatedAt: result.createdAt
+            });
+            
+            // Отладочная информация для поля trendScore
+            console.log("TrendScore data:", {
+              trendScoreFromServer: trend.trendScore,
+              trendScoreType: typeof trend.trendScore,
+              trendScoreValue: result.trendScore
             });
           }
           
@@ -379,6 +391,14 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                     
                     {/* Статистика */}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+                      {/* Показатель трендовости */}
+                      {trend.trendScore && (
+                        <div className="flex items-center gap-1">
+                          <Flame className="h-3 w-3 text-orange-500" />
+                          <span className="text-orange-500 font-medium">{trend.trendScore.toFixed(1)}</span>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-1">
                         <ThumbsUp className="h-3 w-3" />
                         <span>{trend.reactions?.toLocaleString('ru-RU') ?? 0}</span>
