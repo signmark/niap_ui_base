@@ -53,6 +53,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   // Функция для очистки HTML-тегов для превью
   const stripHtml = (html: string | null) => {
     if (!html) return '';
+    // Удаляем HTML-теги и многоточие в конце строки
     return html.replace(/<[^>]*>?/gm, '');
   };
 
@@ -164,7 +165,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                       </div>
 
                       {post.post_content ? (
-                        <p className="text-sm line-clamp-2">{stripHtml(post.post_content)}</p>
+                        <p className="text-sm line-clamp-2">{stripHtml(post.post_content).replace(/\.\.\.$/, '')}</p>
                       ) : (
                         <p className="text-xs text-muted-foreground">Нет текстового описания</p>
                       )}
