@@ -220,23 +220,23 @@ export function TrendDetailDialog({
           <div className="text-sm text-muted-foreground space-y-1">
             <div className="flex items-center gap-2">
               <ThumbsUp className="h-4 w-4" />
-              <span>{topic.reactions?.toLocaleString('ru-RU') ?? 0} лайков</span>
+              <span>{typeof topic.reactions === 'number' ? Math.round(topic.reactions).toLocaleString('ru-RU') : (topic.reactions ?? 0)} лайков</span>
               
               <span className="mx-1">•</span>
               
               <Eye className="h-4 w-4" />
-              <span>{topic.views?.toLocaleString('ru-RU') ?? 0} просмотров</span>
+              <span>{typeof topic.views === 'number' ? Math.round(topic.views).toLocaleString('ru-RU') : (topic.views ?? 0)} просмотров</span>
               
               <span className="mx-1">•</span>
               
               <MessageSquare className="h-4 w-4" />
-              <span>{topic.comments?.toLocaleString('ru-RU') ?? 0} комментариев</span>
+              <span>{typeof topic.comments === 'number' ? Math.round(topic.comments).toLocaleString('ru-RU') : (topic.comments ?? 0)} комментариев</span>
             </div>
             
             {topic.reposts && topic.reposts > 0 && (
               <div className="flex items-center gap-2">
                 <Share2 className="h-4 w-4" />
-                <span>{topic.reposts?.toLocaleString('ru-RU')} репостов</span>
+                <span>{typeof topic.reposts === 'number' ? Math.round(topic.reposts).toLocaleString('ru-RU') : (topic.reposts ?? 0)} репостов</span>
               </div>
             )}
             
