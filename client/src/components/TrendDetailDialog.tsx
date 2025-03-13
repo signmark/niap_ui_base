@@ -222,7 +222,7 @@ export function TrendDetailDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
         <DialogHeader>
           <DialogTitle>
             <div className="flex items-center gap-2">
