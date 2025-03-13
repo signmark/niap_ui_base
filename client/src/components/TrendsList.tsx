@@ -83,9 +83,14 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           }
         });
         
+        // Отладочный вывод для первого элемента
+        if (response.data?.data && response.data.data.length > 0) {
+          console.log("Sample trend data from server:", response.data.data[0]);
+        }
+        
         // Преобразуем полученные данные в правильный формат
         const trendTopics = (response.data?.data || []).map((trend: any) => {
-          return {
+          const result = {
             id: trend.id,
             title: trend.title,
             sourceId: trend.sourceId,
@@ -102,6 +107,17 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             media_links: trend.media_links,
             description: trend.description
           };
+          
+          // Отладочный вывод для поля даты
+          if (trend.id === response.data.data[0].id) {
+            console.log("Date fields for first trend:", {
+              createdAtFromServer: trend.createdAt,
+              created_atFromServer: trend.created_at,
+              finalCreatedAt: result.createdAt
+            });
+          }
+          
+          return result;
         });
 
         return trendTopics;
