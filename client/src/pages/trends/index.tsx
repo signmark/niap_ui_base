@@ -1279,20 +1279,20 @@ export default function Trends() {
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                                         <div className="flex items-center gap-1">
                                           <ThumbsUp className="h-3 w-3" />
-                                          <span>{topic.reactions?.toLocaleString('ru-RU') ?? 0}</span>
+                                          <span>{typeof topic.reactions === 'number' ? Math.round(topic.reactions).toLocaleString('ru-RU') : (topic.reactions ?? 0)}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           <MessageSquare className="h-3 w-3" />
-                                          <span>{topic.comments?.toLocaleString('ru-RU') ?? 0}</span>
+                                          <span>{typeof topic.comments === 'number' ? Math.round(topic.comments).toLocaleString('ru-RU') : (topic.comments ?? 0)}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           <Eye className="h-3 w-3" />
-                                          <span>{topic.views?.toLocaleString('ru-RU') ?? 0}</span>
+                                          <span>{typeof topic.views === 'number' ? Math.round(topic.views).toLocaleString('ru-RU') : (topic.views ?? 0)}</span>
                                         </div>
                                         {/* Показываем trendScore - показатель трендовости */}
                                         <div className="flex items-center gap-1">
                                           <Flame className="h-3 w-3 text-orange-500" />
-                                          <span>{topic.trendScore?.toLocaleString('ru-RU') ?? 0}</span>
+                                          <span>{typeof topic.trendScore === 'number' ? Math.round(topic.trendScore).toLocaleString('ru-RU') : (topic.trendScore ?? 0)}</span>
                                         </div>
                                         {topic.is_bookmarked && (
                                           <div className="flex items-center gap-1">
