@@ -63,11 +63,16 @@ export function isVideoUrl(url: string | undefined | null): boolean {
                           normalizedUrl.endsWith('.mkv') || 
                           normalizedUrl.endsWith('.wmv');
   
+  // Проверка по ссылкам на видео ВКонтакте
+  const isVkVideo = normalizedUrl.includes('vk.com/video') || 
+                   // Формат video-GROUPID_VIDEOID
+                   /vk\.com\/video-\d+_\d+/.test(normalizedUrl);
+  
   // Проверка по доменам видеохостингов
   const isVideoHosting = normalizedUrl.includes('youtube.com/watch') || 
                         normalizedUrl.includes('youtu.be/') || 
                         normalizedUrl.includes('vimeo.com/') || 
-                        normalizedUrl.includes('vk.com/video') ||
+                        isVkVideo ||
                         (normalizedUrl.includes('tgcnt.ru') && normalizedUrl.includes('.mp4'));
   
   return hasVideoExtension || isVideoHosting;
