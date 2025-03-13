@@ -165,12 +165,20 @@ export function TrendDetailDialog({
     videoUrl.includes('instagram.com/reel/') || 
     videoUrl.includes('instagram.com/reels/') ||
     videoUrl.includes('cdninstagram.com') || 
-    videoUrl.includes('fbcdn.net') || 
-    (videoUrl.includes('instagram.') && (
-      videoUrl.includes('.mp4') || 
-      videoUrl.endsWith('.mp4')
-    ))
+    videoUrl.includes('fbcdn.net') ||
+    videoUrl.includes('scontent.') ||  // домены scontent часто встречаются в CDN Instagram
+    (videoUrl.includes('.mp4') && (
+      videoUrl.includes('ig_') || 
+      videoUrl.includes('instagram')
+    )) ||
+    videoUrl.includes('instagram.')
   );
+  
+  // Логируем определение типа видео
+  if (videoUrl) {
+    console.log(`[TrendDetail] Видео URL: ${videoUrl}`);
+    console.log(`[TrendDetail] Определено как Instagram видео: ${isInstagramVideo}`);
+  }
   
   // Состояние для хранения информации о видео ВКонтакте
   const [vkVideoInfo, setVkVideoInfo] = React.useState<{
@@ -289,12 +297,14 @@ export function TrendDetailDialog({
                 </div>
               ) : isInstagramVideo ? (
                 <div className="aspect-square w-full rounded-md overflow-hidden relative">
-                  {/* Если это прямая ссылка на видео файл Instagram (.mp4) */}
+                  {/* Если это прямая ссылка на видео файл Instagram (.mp4) или CDN URL */}
                   {videoUrl && (
                     videoUrl.includes('.mp4') || 
                     videoUrl.includes('fbcdn.net') || 
-                    videoUrl.includes('cdninstagram.com') ||
-                    (videoUrl.includes('instagram.') && videoUrl.includes('media'))
+                    videoUrl.includes('cdninstagram.com') || 
+                    videoUrl.includes('scontent.') ||
+                    (videoUrl.includes('instagram.') && (videoUrl.includes('media') || videoUrl.includes('vid'))) ||
+                    (videoUrl.includes('.mp4') && (videoUrl.includes('ig_') || videoUrl.includes('instagram')))
                   ) ? (
                     <video 
                       src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
@@ -305,7 +315,26 @@ export function TrendDetailDialog({
                       playsInline
                       className="w-full max-h-[450px] object-contain"
                       crossOrigin="anonymous"
-                      onError={(e) => console.log("Ошибка воспроизведения видео Instagram:", e)}
+                      onError={(e) => {
+                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram: ${videoUrl}`, e);
+                        // При ошибке воспроизведения предлагаем открыть оригинальный источник
+                        e.currentTarget.style.display = 'none';
+                        const errorContainer = document.createElement('div');
+                        errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
+                        errorContainer.innerHTML = `
+                          <div class="text-center text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
+                            <p class="text-sm">Ошибка воспроизведения видео</p>
+                            <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
+                              Открыть оригинал
+                            </a>
+                          </div>
+                        `;
+                        e.currentTarget.parentNode?.appendChild(errorContainer);
+                      }}
                     />
                   ) : instagramVideoInfo && instagramVideoInfo.success ? (
                     <iframe 
@@ -347,6 +376,26 @@ export function TrendDetailDialog({
                         className="w-full max-h-[450px] object-contain"
                         poster={videoThumbnailUrl || undefined}
                         crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.log(`[TrendDetail] Ошибка воспроизведения обычного видео: ${videoUrl}`, e);
+                          // При ошибке воспроизведения предлагаем открыть оригинальный источник
+                          e.currentTarget.style.display = 'none';
+                          const errorContainer = document.createElement('div');
+                          errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
+                          errorContainer.innerHTML = `
+                            <div class="text-center text-white">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                              </svg>
+                              <p class="text-sm">Ошибка воспроизведения видео</p>
+                              <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
+                                Открыть оригинал
+                              </a>
+                            </div>
+                          `;
+                          e.currentTarget.parentNode?.appendChild(errorContainer);
+                        }}
                       />
                     </div>
                   ) : videoThumbnailUrl ? (

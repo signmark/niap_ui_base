@@ -77,7 +77,13 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     // Если это видео, используем потоковую передачу
     if (isVideoUrl(url)) {
       // Проверяем, является ли это видео из Instagram
-      if (url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com')) {
+      if (url.includes('instagram.') || 
+          url.includes('fbcdn.net') || 
+          url.includes('cdninstagram.com') ||
+          url.includes('scontent.') ||  // домены scontent часто встречаются в CDN Instagram
+          (url.includes('.mp4') && (url.includes('ig_') || url.includes('instagram')))
+      ) {
+        console.log(`[MediaProcessing] Распознано видео Instagram: ${url}`);
         return createStreamVideoUrl(url, postId, 'instagram');
       } else {
         return createStreamVideoUrl(url, postId);
@@ -85,6 +91,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     } 
     // Иначе используем прокси для изображений
     else {
+      // Проверяем, принадлежит ли изображение Instagram
+      if (url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com') || url.includes('scontent.')) {
+        console.log(`[MediaProcessing] Распознано изображение Instagram: ${url}`);
+      }
       return createProxyImageUrl(url, postId);
     }
   };
@@ -215,7 +225,13 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                     {isVideoUrl(post.image_url) ? (
                       <div className="relative rounded-md overflow-hidden" style={{ maxHeight: '450px' }}>
                         <video
-                          src={post.image_url && (post.image_url.includes('instagram.') || post.image_url.includes('fbcdn.net') || post.image_url.includes('cdninstagram.com')) 
+                          src={post.image_url && (
+                            post.image_url.includes('instagram.') || 
+                            post.image_url.includes('fbcdn.net') || 
+                            post.image_url.includes('cdninstagram.com') || 
+                            post.image_url.includes('scontent.') ||
+                            (post.image_url.includes('.mp4') && (post.image_url.includes('ig_') || post.image_url.includes('instagram')))
+                          ) 
                             ? createStreamVideoUrl(post.image_url, post.id, 'instagram') 
                             : processMediaUrl(post.image_url, post.id)}
                           className="w-full max-h-[450px] object-contain"
