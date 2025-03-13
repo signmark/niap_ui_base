@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 // Импортируем функцию createProxyImageUrl из utils
 import { createProxyImageUrl } from "../utils/media";
 import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 
@@ -140,7 +140,7 @@ export function TrendDetailDialog({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return formatDistanceToNow(date, { addSuffix: true, locale: ru });
+      return format(date, "d MMMM yyyy 'г.' HH:mm", { locale: ru });
     } catch (e) {
       return dateString;
     }
@@ -232,8 +232,8 @@ export function TrendDetailDialog({
               </div>
             )}
             
-            <div>
-              {new Date(topic.created_at).toLocaleDateString('ru-RU')}
+            <div className="mt-2">
+              {formatDate(topic.created_at)}
             </div>
             
             {topic.url && (
