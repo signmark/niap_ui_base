@@ -169,12 +169,13 @@ export function TrendDetailDialog({
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               <a 
-                href={topic.accountUrl || topic.sourceUrl || "#"} 
+                href={topic.accountUrl || topic.sourceUrl || ""} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
-                {sourceName || topic.sourceName || topic.accountUrl || ''}
+                {sourceName || topic.sourceName || ''}
               </a>
             </DialogDescription>
           </DialogHeader>
