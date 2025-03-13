@@ -1251,10 +1251,11 @@ export default function Trends() {
                                       {/* Название канала вверху как ссылка на канал */}
                                       <div className="mb-1 font-medium">
                                         <a 
-                                          href={topic.accountUrl || sources.find(s => s.id === topic.source_id)?.url || "#"} 
+                                          href={topic.accountUrl || sources.find(s => s.id === topic.source_id)?.url || ""} 
                                           target="_blank" 
                                           rel="noopener noreferrer"
                                           className="text-blue-600 hover:underline"
+                                          onClick={(e) => e.stopPropagation()}
                                         >
                                           {sourceName}
                                         </a>
