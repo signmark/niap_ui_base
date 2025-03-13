@@ -4183,7 +4183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newCampaign = {
           id: response.data.data.id,
           name: response.data.data.name,
-          description: response.data.data.description,
+          description: cleanupText(response.data.data.description),
           userId: response.data.data.user_id,
           createdAt: response.data.data.created_at
         };
@@ -4348,7 +4348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updatedCampaign = {
           id: response.data.data.id,
           name: response.data.data.name,
-          description: response.data.data.description,
+          description: cleanupText(response.data.data.description),
           userId: response.data.data.user_id,
           createdAt: response.data.data.created_at,
           link: response.data.data.link,
