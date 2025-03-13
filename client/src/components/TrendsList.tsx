@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,6 +44,9 @@ interface TrendTopic {
   campaignId: string;
   mediaLinks?: string; // JSON строка с медиа-данными
   media_links?: Post[]; // Массив постов
+  trendScore?: number; // Показатель трендовости контента
+  accountUrl?: string; // URL аккаунта (в snake_case формате из API)
+  urlPost?: string; // URL поста (в snake_case формате из API)
 }
 
 // Функция для создания прокси-URL с учётом типа источника
