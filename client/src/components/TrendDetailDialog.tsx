@@ -161,6 +161,35 @@ export function TrendDetailDialog({
   const videoUrl = hasVideo ? mediaData.videos[0] : null;
   const isVkVideo = videoUrl && videoUrl.includes('vk.com/video');
   
+  // Состояние для хранения информации о видео ВКонтакте
+  const [vkVideoInfo, setVkVideoInfo] = React.useState<{
+    success: boolean;
+    data?: {
+      videoId: string;
+      ownerId: string;
+      videoLocalId: string;
+      embedUrl: string;
+      iframeUrl: string;
+      directUrl: string;
+    }
+  } | null>(null);
+  
+  // Получаем информацию о видео ВКонтакте, если это необходимо
+  React.useEffect(() => {
+    if (isVkVideo && videoUrl) {
+      fetch(`/api/vk-video-info?url=${encodeURIComponent(videoUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            setVkVideoInfo(data);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching VK video info:', error);
+        });
+    }
+  }, [isVkVideo, videoUrl]);
+  
   // Создаем проксированный URL только для первого изображения
   const imageUrl = mediaData.images && mediaData.images.length > 0 && !failedImages.has(mediaData.images[0])
     ? createProxyImageUrl(mediaData.images[0], topic.id)
@@ -192,17 +221,33 @@ export function TrendDetailDialog({
           {/* Если есть видео, показываем его */}
           {hasVideo && (
             <div className="mb-4">
-              {/* Для видео ВКонтакте используем iframe */}
+              {/* Для видео ВКонтакте используем специальный формат ссылки */}
               {isVkVideo ? (
                 <div className="aspect-video w-full rounded-md overflow-hidden relative">
-                  <iframe
-                    src={`https://vk.com/video_ext.php?${videoUrl.split('vk.com/video')[1]}`}
-                    width="100%"
-                    height="100%"
-                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    frameBorder="0"
-                    className="absolute top-0 left-0 w-full h-full"
-                  ></iframe>
+                  {vkVideoInfo && vkVideoInfo.success ? (
+                    <iframe 
+                      src={`https://vk.com/video_ext.php?oid=${vkVideoInfo.data?.ownerId}&id=${vkVideoInfo.data?.videoLocalId}&hd=2`}
+                      width="100%" 
+                      height="100%" 
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
+                      frameBorder="0" 
+                      allowFullScreen
+                      className="aspect-video"
+                    ></iframe>
+                  ) : (
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4"
+                    >
+                      <div className="text-center text-white">
+                        <Video className="h-12 w-12 mx-auto mb-3" />
+                        <p className="text-sm">Открыть видео ВКонтакте</p>
+                        <p className="text-xs mt-2 text-gray-300">(Загрузка информации о видео...)</p>
+                      </div>
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="relative">

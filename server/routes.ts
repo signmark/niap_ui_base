@@ -1168,12 +1168,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).send('URL parameter is required');
     }
 
+    // Обработка видео ВКонтакте - просто перенаправляем на оригинальный URL
+    if (imageUrl.includes('vk.com/video') && req.query.isVideo !== 'true') {
+      return res.redirect(imageUrl);
+    }
+
     // Проверяем дополнительные параметры
     const isRetry = req.query._retry === 'true';
     const forceType = req.query.forceType as string || null;
     const itemId = req.query.itemId as string || '';
-    const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
     const isVideoThumbnail = req.query.isVideo === 'true';
+    const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
     
     console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}${isVideoThumbnail ? ' (video thumbnail)' : ''}${itemId ? ` (item ID: ${itemId})` : ''}`);
 
@@ -1218,6 +1223,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error(`Error generating video thumbnail for ${videoUrl}:`, error);
       res.status(404).send('Video thumbnail not found');
+    }
+  });
+  
+  // Эндпоинт для получения информации о видео ВКонтакте
+  app.get("/api/vk-video-info", async (req, res) => {
+    const videoUrl = req.query.url as string;
+    if (!videoUrl) {
+      return res.status(400).send('URL parameter is required');
+    }
+    
+    console.log(`[VK Video Info] Requested info for video: ${videoUrl}`);
+    
+    try {
+      // Извлекаем ID видео из URL
+      const videoIdMatch = videoUrl.match(/vk\.com\/video(-?\d+_\d+)/);
+      if (!videoIdMatch || !videoIdMatch[1]) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid VK video URL format'
+        });
+      }
+      
+      const videoId = videoIdMatch[1];
+      const [ownerId, videoLocalId] = videoId.split('_');
+      
+      // Формируем URL для встраивания видео
+      const embedUrl = `https://vk.com/video_ext.php?oid=${ownerId}&id=${videoLocalId}&hd=2`;
+      
+      // Формируем URL для iframe'а (для более надежного встраивания)
+      const iframeUrl = `https://vk.com/video_ext.php?${videoUrl.split('vk.com/video')[1]}`;
+      
+      return res.json({
+        success: true,
+        data: {
+          videoId,
+          ownerId,
+          videoLocalId,
+          embedUrl,
+          iframeUrl,
+          directUrl: videoUrl,
+          videoInfo: {
+            platform: 'vk',
+            requiresExternal: true
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Error extracting VK video info for ${videoUrl}:`, error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to extract video information'
+      });
     }
   });
 
