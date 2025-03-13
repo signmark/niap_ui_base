@@ -1289,6 +1289,11 @@ export default function Trends() {
                                           <Eye className="h-3 w-3" />
                                           <span>{topic.views?.toLocaleString('ru-RU') ?? 0}</span>
                                         </div>
+                                        {/* Показываем trendScore - показатель трендовости */}
+                                        <div className="flex items-center gap-1">
+                                          <Flame className="h-3 w-3 text-orange-500" />
+                                          <span>{topic.trendScore?.toLocaleString('ru-RU') ?? 0}</span>
+                                        </div>
                                         {topic.is_bookmarked && (
                                           <div className="flex items-center gap-1">
                                             <Bookmark className="h-3 w-3 text-primary" />

@@ -3075,6 +3075,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             reactions: item.reactions,
             comments: item.comments,
             views: item.views,
+            // Добавляем trendScore - показатель трендовости контента
+            trendScore: item.trendScore || 0,
             // Важно! Передаем дату в нескольких форматах для совместимости
             createdAt: item.created_at ? new Date(item.created_at).toISOString() : null,
             created_at: item.created_at ? new Date(item.created_at).toISOString() : null, // Дублируем для Snake Case
