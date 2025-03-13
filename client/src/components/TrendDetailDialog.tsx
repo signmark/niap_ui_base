@@ -235,7 +235,16 @@ export function TrendDetailDialog({
             <div className="mt-4 border-t pt-2 flex justify-between items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {topic.created_at || "No date available"} {/* Прямой вывод даты из БД без форматирования */}
+                  {/* Отображаем дату в заданном формате, используя поле из camelCase или snake_case */}
+                  {(topic.created_at || topic.createdAt) ? 
+                    new Date(topic.created_at || topic.createdAt).toLocaleString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) 
+                    : "Дата недоступна"}
                 </span>
               </div>
               
