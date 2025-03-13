@@ -12,7 +12,11 @@ export function createProxyImageUrl(imageUrl: string, itemId: string): string {
   // Определяем тип источника (Instagram, VK, etc)
   const isInstagram = imageUrl.includes('instagram.') || 
                      imageUrl.includes('fbcdn.net') || 
-                     imageUrl.includes('cdninstagram.com');
+                     imageUrl.includes('cdninstagram.com') ||
+                     imageUrl.includes('scontent.') || // Домены scontent часто используются CDN Instagram
+                     (imageUrl.includes('.jpg') && 
+                      (imageUrl.includes('ig_') || 
+                       imageUrl.includes('instagram')));
   
   const isVk = imageUrl.includes('vk.com') || 
                imageUrl.includes('vk.me') || 
@@ -60,7 +64,13 @@ export function createStreamVideoUrl(videoUrl: string, itemId: string, forceType
   if (!forceType) {
     const isInstagram = videoUrl.includes('instagram.') || 
                        videoUrl.includes('fbcdn.net') || 
-                       videoUrl.includes('cdninstagram.com');
+                       videoUrl.includes('cdninstagram.com') ||
+                       videoUrl.includes('scontent.') || // Домены scontent часто используются CDN Instagram
+                       (videoUrl.includes('.mp4') && 
+                        (videoUrl.includes('ig_') || videoUrl.includes('instagram'))) ||
+                       videoUrl.includes('HBksFQIYUmlnX') || // Характерная часть URL Instagram видео
+                       videoUrl.includes('_nc_vs=') ||       // Другой маркер Instagram видео
+                       videoUrl.includes('efg=');
     
     const isVk = videoUrl.includes('vk.com') || 
                 videoUrl.includes('vk.me') || 
@@ -113,11 +123,21 @@ export function isVideoUrl(url: string | undefined | null): boolean {
                    // Формат video-GROUPID_VIDEOID
                    /vk\.com\/video-\d+_\d+/.test(normalizedUrl);
   
+  // Проверка на Instagram видео
+  const isInstagramVideo = normalizedUrl.includes('instagram.') && 
+                        (normalizedUrl.includes('_nc_vs=') || 
+                         normalizedUrl.includes('fbcdn.net') && normalizedUrl.includes('.mp4') ||
+                         normalizedUrl.includes('cdninstagram.com') && normalizedUrl.includes('.mp4') ||
+                         normalizedUrl.includes('scontent.') && normalizedUrl.includes('.mp4') ||
+                         normalizedUrl.includes('efg=') ||
+                         normalizedUrl.includes('HBksFQIYUmlnX'));
+
   // Проверка по доменам видеохостингов
   const isVideoHosting = normalizedUrl.includes('youtube.com/watch') || 
                         normalizedUrl.includes('youtu.be/') || 
                         normalizedUrl.includes('vimeo.com/') || 
                         isVkVideo ||
+                        isInstagramVideo ||
                         (normalizedUrl.includes('tgcnt.ru') && normalizedUrl.includes('.mp4'));
   
   return hasVideoExtension || isVideoHosting;

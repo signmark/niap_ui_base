@@ -444,7 +444,30 @@ export function TrendDetailDialog({
                 loading="lazy"
                 className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
                 crossOrigin="anonymous"
-                onError={() => handleImageError(mediaData.images[0])}
+                onError={(e) => {
+                  console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
+                  // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
+                  if (mediaData.images && mediaData.images.length > 0) {
+                    handleImageError(mediaData.images[0]);
+                  } else {
+                    // Если нет альтернативных изображений, показываем ошибку
+                    e.currentTarget.style.display = 'none';
+                    const errorContainer = document.createElement('div');
+                    errorContainer.className = "flex items-center justify-center bg-slate-100 rounded-md h-[200px] w-full";
+                    errorContainer.innerHTML = `
+                      <div class="text-center text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                          <circle cx="9" cy="9" r="2"></circle>
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                        </svg>
+                        <p class="text-sm">Ошибка загрузки изображения</p>
+                        ${topic.url ? `<a href="${topic.url}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-500 hover:underline block">Открыть оригинал</a>` : ''}
+                      </div>
+                    `;
+                    e.currentTarget.parentNode?.appendChild(errorContainer);
+                  }
+                }}
               />
               {topic.url && (
                 <div className="text-right mt-2">
