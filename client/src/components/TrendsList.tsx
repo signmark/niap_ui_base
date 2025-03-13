@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "@/utils/media";
 import { TrendDetailDialog } from "./TrendDetailDialog";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -49,23 +50,7 @@ interface TrendTopic {
   urlPost?: string; // URL поста (в snake_case формате из API)
 }
 
-// Функция для создания прокси-URL с учётом типа источника
-const createProxyImageUrl = (imageUrl: string, trendId: string) => {
-  // Проверяем, является ли это Instagram URL
-  const isInstagram = imageUrl.includes('instagram.') || 
-                      imageUrl.includes('fbcdn.net') || 
-                      imageUrl.includes('cdninstagram.com');
-  
-  if (isInstagram) {
-    // Для Instagram используем специальный параметр
-    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_force=instagram&_t=${Date.now()}`;
-    console.log(`[Trend ${trendId}] Instagram image detected, using special mode: ${proxyUrl}`);
-    return proxyUrl;
-  } else {
-    // Для обычных URL
-    return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}`;
-  }
-};
+// Используем импортированную функцию createProxyImageUrl из utils/media
 
 export function TrendsList({ campaignId }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
