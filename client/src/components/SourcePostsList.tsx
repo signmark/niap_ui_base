@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ThumbsUp, Eye, RefreshCw, Calendar, ImageOff, Video } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { createProxyImageUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
+import { createProxyImageUrl, createStreamVideoUrl, createVideoThumbnailUrl, isVideoUrl } from "../utils/media";
 
 interface SourcePost {
   id: string;
@@ -71,7 +71,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   };
 
   // Function to process image and video URLs using our new proxy system
-  const processMediaUrl = (url: string | null, postId: string) => {
+  const processMediaUrl = (url: string | null, postId: string): string | null => {
     if (!url) return null;
 
     // Если это видео, используем потоковую передачу
@@ -207,16 +207,28 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
               <div className="p-4 max-h-[calc(80vh-8px)] overflow-auto">
                 {post.image_url && !failedImages.has(post.image_url) ? (
                   <div className="mb-4">
-                    <img
-                      src={processImageUrl(post.image_url)}
-                      alt="Изображение поста"
-                      className="w-full h-auto max-w-full rounded-md object-cover"
-                      style={{ maxHeight: '300px' }}
-                      onError={() => handleImageError(post.image_url!)}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
-                    />
+                    {isVideoUrl(post.image_url) ? (
+                      <div className="relative rounded-md overflow-hidden" style={{ maxHeight: '450px' }}>
+                        <video
+                          src={processMediaUrl(post.image_url, post.id)}
+                          className="w-full max-h-[450px] object-contain"
+                          controls
+                          preload="metadata"
+                          poster={post.video_url ? createVideoThumbnailUrl(post.video_url, post.id) : undefined}
+                        />
+                      </div>
+                    ) : (
+                      <img
+                        src={processMediaUrl(post.image_url, post.id)}
+                        alt="Изображение поста"
+                        className="w-full h-auto max-w-full rounded-md object-cover"
+                        style={{ maxHeight: '300px' }}
+                        onError={() => handleImageError(post.image_url!)}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                      />
+                    )}
                     {getPostUrl(post) && (
                       <div className="mt-2 text-right">
                         <a
