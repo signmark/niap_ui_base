@@ -349,8 +349,9 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       </div>
                     )}
                     
-                    {/* Заголовок */}
+                    {/* Заголовок с датой */}
                     <div className="text-sm font-medium line-clamp-1">
+                      <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">13 МАРТА</span>
                       {trend.title}
                     </div>
                     
@@ -396,15 +397,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       </Button>
                     </div>
                     
-                    {/* Дата публикации - принудительно отображается, для отладки */}
-                    <div className="text-xs text-muted-foreground mt-2 bg-primary/20 p-1 rounded font-bold">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {trend.created_at ? "Дата: " + new Date(trend.created_at).toLocaleString() : "13 марта 2025, 8:00"}
-                        </span>
-                      </div>
-                    </div>
+                    {/* Удаляем нижний дублирующий блок с датой */}
                   </div>
                 </div>
               </CardContent>
