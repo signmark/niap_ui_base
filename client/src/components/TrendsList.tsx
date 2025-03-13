@@ -350,15 +350,33 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                     )}
                     
                     {/* Заголовок с датой */}
-                    <div className="text-sm font-medium line-clamp-1">
+                    <div className="text-sm font-medium overflow-hidden" style={{ 
+                      display: '-webkit-box', 
+                      WebkitLineClamp: 1, 
+                      WebkitBoxOrient: 'vertical',
+                      textOverflow: 'ellipsis'
+                    }}>
                       <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">13 МАРТА</span>
-                      {trend.title?.replace(/\s*\.\.\.\s*$/, '').replace(/\n\s*\.\.\.\s*$/, '').trim()}
+                      {trend.title
+                        ?.replace(/\s*\.\.\.\s*$/, '')
+                        .replace(/\n+\s*\.\.\.$/, '')
+                        .replace(/\n+\s*\.\.\.\s*\n+/, '\n')
+                        .trim()}
                     </div>
                     
                     {/* Описание с бо́льшим количеством строк, если нет превью */}
                     {trend.description && (
-                      <div className={`text-xs mt-1 ${previewImageUrl ? 'line-clamp-2' : 'line-clamp-4'}`} style={{ whiteSpace: 'normal' }}>
-                        {trend.description.replace(/\s*\.\.\.\s*$/, '').replace(/\n\s*\.\.\.\s*$/, '').trim()}
+                      <div className={`text-xs mt-1 overflow-hidden`} style={{ 
+                        display: '-webkit-box', 
+                        WebkitLineClamp: previewImageUrl ? 2 : 4, 
+                        WebkitBoxOrient: 'vertical',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {trend.description
+                          .replace(/\s*\.\.\.\s*$/, '')
+                          .replace(/\n+\s*\.\.\.$/, '')
+                          .replace(/\n+\s*\.\.\.\s*\n+/, '\n')
+                          .trim()}
                       </div>
                     )}
                     
