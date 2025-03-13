@@ -3279,6 +3279,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Проверяем дополнительные параметры
     const forceType = req.query.forceType as string || null;
     const itemId = req.query.itemId as string || '';
+    
+    // Проверяем, является ли это видео из Instagram
+    const isInstagram = videoUrl.includes('instagram.') || 
+                       videoUrl.includes('fbcdn.net') || 
+                       videoUrl.includes('cdninstagram.com') ||
+                       forceType === 'instagram';
+                       
+    if (isInstagram) {
+      console.log(`[Video Stream] Detected Instagram video, providing direct link instead of streaming`);
+      
+      // Добавляем параметр для обхода кеширования
+      const separator = videoUrl.includes('?') ? '&' : '?';
+      const nocacheUrl = `${videoUrl}${separator}_nocache=${Date.now()}`;
+      
+      // Перенаправляем пользователя на прямую ссылку
+      return res.redirect(nocacheUrl);
+    }
     const range = req.headers.range || null;
     
     try {
