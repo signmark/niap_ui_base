@@ -1251,7 +1251,7 @@ export default function Trends() {
                                       {/* Название канала вверху как ссылка на канал */}
                                       <div className="mb-1 font-medium">
                                         <a 
-                                          href={topic.urlPost || topic.accountUrl || ""} 
+                                          href={topic.accountUrl || topic.urlPost || ""} 
                                           target="_blank" 
                                           rel="noopener noreferrer"
                                           className="text-blue-600 hover:underline"
