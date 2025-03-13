@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { TrendDetailDialog } from "./TrendDetailDialog";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -68,6 +69,8 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [selectedTrend, setSelectedTrend] = useState<TrendTopic | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign-trends", campaignId, selectedPeriod],
@@ -200,7 +203,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-3 pr-2">
         {trends.map((trend: TrendTopic) => {
           // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
@@ -251,28 +254,40 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             <Card 
               key={trend.id} 
               className={`shadow hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
+              onClick={() => {
+                setSelectedTrend(trend);
+                setDetailDialogOpen(true);
+              }}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
-                  {/* Превью изображения */}
+                  {/* Превью изображения с увеличенным размером */}
                   {previewImageUrl && !failedImages.has(previewImageUrl) ? (
                     <div className="flex-shrink-0">
                       <img 
                         src={previewImageUrl} 
                         alt="Миниатюра поста" 
-                        className="h-16 w-16 object-cover rounded-md"
+                        className="h-20 w-20 object-cover rounded-md"
                         loading="lazy"
                         crossOrigin="anonymous"
                         onError={() => handleImageError(previewImageUrl)}
                       />
+                      {hasVideos && (
+                        <div className="absolute top-8 left-8 bg-black/60 rounded-full p-1">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5.14V19.14L19 12.14L8 5.14Z" fill="white" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   ) : previewImageUrl ? (
-                    <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center bg-muted rounded-md">
-                      <ImageOff className="h-6 w-6 text-muted-foreground" />
+                    <div className="flex-shrink-0 h-20 w-20 flex items-center justify-center bg-muted rounded-md">
+                      <ImageOff className="h-8 w-8 text-muted-foreground" />
                     </div>
                   ) : null}
                   
                   <div className="flex-1 min-w-0">
+                    {/* Верхняя строка с бейджем и датой */}
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs py-0 h-5">
@@ -289,25 +304,36 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                           href={trend.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-blue-500 hover:underline"
+                          className="text-xs text-blue-500 hover:underline flex items-center gap-1"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          Открыть оригинал
+                          <ExternalLink className="h-3 w-3" />
+                          <span>Источник</span>
                         </a>
                       )}
                     </div>
                     
+                    {/* Название источника, если оно есть */}
+                    {trend.sourceName && (
+                      <div className="text-xs text-muted-foreground font-medium mb-1">
+                        {trend.sourceName}
+                      </div>
+                    )}
+                    
+                    {/* Заголовок */}
                     <div className="text-sm font-medium line-clamp-1">
                       {trend.title}
                     </div>
                     
+                    {/* Описание с бо́льшим количеством строк, если нет превью */}
                     {trend.description && (
-                      <div className="text-xs mt-1 line-clamp-2 whitespace-pre-line">
+                      <div className={`text-xs mt-1 whitespace-pre-line ${previewImageUrl ? 'line-clamp-2' : 'line-clamp-4'}`}>
                         {trend.description}
                       </div>
                     )}
                     
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                    {/* Статистика */}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
                       <div className="flex items-center gap-1">
                         <ThumbsUp className="h-3 w-3" />
                         <span>{trend.reactions?.toLocaleString('ru-RU') ?? 0}</span>
@@ -347,6 +373,29 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           );
         })}
       </div>
+
+      {/* Диалог с подробной информацией о тренде */}
+      {selectedTrend && (
+        <TrendDetailDialog
+          topic={{
+            ...selectedTrend,
+            source_id: selectedTrend.sourceId,
+            created_at: selectedTrend.createdAt,
+            is_bookmarked: selectedTrend.isBookmarked,
+            campaign_id: selectedTrend.campaignId,
+            // Преобразуем media_links в строку, если это объект
+            media_links: typeof selectedTrend.media_links === 'string' 
+              ? selectedTrend.media_links
+              : selectedTrend.mediaLinks
+          }}
+          isOpen={detailDialogOpen}
+          onClose={() => setDetailDialogOpen(false)}
+          onBookmark={(id, isBookmarked) => {
+            bookmarkMutation.mutate({ id, isBookmarked });
+          }}
+          sourceName={selectedTrend.sourceName}
+        />
+      )}
     </div>
   );
 }
