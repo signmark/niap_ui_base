@@ -193,6 +193,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
         {trends.map((trend: TrendTopic) => {
           // Проверяем что получили из API
           console.log("Trend data:", JSON.stringify(trend));
+          console.log("URL fields:", { url: trend.url, sourceUrl: trend.sourceUrl });
           
           // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
