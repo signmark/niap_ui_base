@@ -95,7 +95,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             reactions: trend.reactions || 0,
             comments: trend.comments || 0,
             views: trend.views || 0,
-            createdAt: trend.createdAt,
+            createdAt: trend.createdAt || trend.created_at,
             isBookmarked: trend.isBookmarked || false,
             campaignId: trend.campaignId,
             mediaLinks: trend.mediaLinks,
@@ -380,7 +380,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                           {trend.createdAt ? formatDistanceToNow(new Date(trend.createdAt), { 
                             locale: ru, 
                             addSuffix: false 
-                          }) : "Дата недоступна"}
+                          }) + " назад" : "Дата недоступна"}
                         </span>
                       </div>
                     </div>
