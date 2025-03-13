@@ -164,7 +164,7 @@ export function TrendDetailDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[600px] md:w-[650px] lg:w-[700px] p-0">
-        <div className="p-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-md scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -209,36 +209,40 @@ export function TrendDetailDialog({
           <Separator className="my-4" />
 
           {/* Статистика в стиле как на скриншоте */}
-          <div className="text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <ThumbsUp className="h-4 w-4 mr-1" />
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div className="flex items-center gap-2">
+              <ThumbsUp className="h-4 w-4" />
               <span>{topic.reactions?.toLocaleString('ru-RU') ?? 0} лайков</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              <Eye className="h-4 w-4 mr-1" />
+              
+              <span className="mx-1">•</span>
+              
+              <Eye className="h-4 w-4" />
               <span>{topic.views?.toLocaleString('ru-RU') ?? 0} просмотров</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              <span>💬</span>
+              
+              <span className="mx-1">•</span>
+              
+              <MessageSquare className="h-4 w-4" />
               <span>{topic.comments?.toLocaleString('ru-RU') ?? 0} комментариев</span>
             </div>
+            
             {topic.reposts && topic.reposts > 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <Share2 className="h-4 w-4 mr-1" />
+              <div className="flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
                 <span>{topic.reposts?.toLocaleString('ru-RU')} репостов</span>
               </div>
             )}
-            <div className="mt-2">
+            
+            <div>
               {new Date(topic.created_at).toLocaleDateString('ru-RU')}
             </div>
             
             {topic.url && (
-              <div className="mt-2">
+              <div>
                 <a 
                   href={topic.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline text-sm"
+                  className="text-blue-500 hover:underline"
                 >
                   Открыть оригинал
                 </a>
