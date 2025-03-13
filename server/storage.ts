@@ -1020,12 +1020,19 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createBusinessQuestionnaire(questionnaire: InsertBusinessQuestionnaire, authToken?: string): Promise<BusinessQuestionnaire> {
-    console.log('Creating business questionnaire:', questionnaire);
+    console.log('Creating business questionnaire for campaign:', questionnaire.campaignId);
     try {
-      // Используем токен аутентификации, который был передан или используем сервисный токен
-      const token = authToken || process.env.DIRECTUS_SERVICE_TOKEN;
-      if (!token) {
+      // Убедимся, что у нас есть токен авторизации
+      if (!authToken) {
+        console.error('No auth token provided for creating business questionnaire');
         throw new Error('Authentication token not found');
+      }
+      
+      console.log('Using authorization token for directus request');
+      
+      // Проверяем наличие и формат campaignId
+      if (!questionnaire.campaignId || typeof questionnaire.campaignId !== 'string') {
+        throw new Error('Invalid campaign ID');
       }
       
       // Преобразуем данные из нашей схемы в формат Directus
@@ -1046,10 +1053,12 @@ export class DatabaseStorage implements IStorage {
         marketing_expectations: questionnaire.marketingExpectations
       };
       
-      // Отправляем данные в Directus
+      console.log('Sending questionnaire data to Directus');
+      
+      // Отправляем данные в Directus с токеном авторизации
       const response = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
@@ -1082,16 +1091,18 @@ export class DatabaseStorage implements IStorage {
   async updateBusinessQuestionnaire(id: string, updates: Partial<InsertBusinessQuestionnaire>, authToken?: string): Promise<BusinessQuestionnaire> {
     console.log('Updating business questionnaire:', id, updates);
     try {
-      // Получаем текущую анкету, чтобы узнать campaignId
-      const currentQuestionnaire = await this.getBusinessQuestionnaireById(id);
-      if (!currentQuestionnaire) {
-        throw new Error('Business questionnaire not found');
+      // Убедимся, что у нас есть токен авторизации
+      if (!authToken) {
+        console.error('No auth token provided for updating business questionnaire');
+        throw new Error('Authentication token not found');
       }
       
-      // Используем токен аутентификации, который был передан или используем сервисный токен
-      const token = authToken || process.env.DIRECTUS_SERVICE_TOKEN;
-      if (!token) {
-        throw new Error('Authentication token not found');
+      console.log('Using authorization token for directus update request');
+      
+      // Получаем текущую анкету, чтобы убедиться в ее существовании
+      const currentQuestionnaire = await this.getBusinessQuestionnaireById(id, authToken);
+      if (!currentQuestionnaire) {
+        throw new Error('Business questionnaire not found');
       }
       
       // Преобразуем данные из нашей схемы в формат Directus
@@ -1113,9 +1124,11 @@ export class DatabaseStorage implements IStorage {
       
       // campaignId не может быть изменен
       
+      console.log('Sending update data to Directus for ID:', id);
+      
       const response = await directusApi.patch(`/items/business_questionnaire/${id}`, directusUpdates, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
