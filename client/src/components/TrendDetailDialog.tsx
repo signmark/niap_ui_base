@@ -160,6 +160,11 @@ export function TrendDetailDialog({
   const hasVideo = mediaData.videos && mediaData.videos.length > 0;
   const videoUrl = hasVideo ? mediaData.videos[0] : null;
   const isVkVideo = videoUrl && videoUrl.includes('vk.com/video');
+  const isInstagramVideo = videoUrl && (
+    videoUrl.includes('instagram.com/p/') || 
+    videoUrl.includes('instagram.com/reel/') || 
+    videoUrl.includes('instagram.com/reels/')
+  );
   
   // Состояние для хранения информации о видео ВКонтакте
   const [vkVideoInfo, setVkVideoInfo] = React.useState<{
@@ -171,6 +176,17 @@ export function TrendDetailDialog({
       embedUrl: string;
       iframeUrl: string;
       directUrl: string;
+    }
+  } | null>(null);
+  
+  // Состояние для хранения информации о видео Instagram
+  const [instagramVideoInfo, setInstagramVideoInfo] = React.useState<{
+    success: boolean;
+    data?: {
+      postId: string;
+      embedUrl: string;
+      originalUrl: string;
+      normalizedUrl: string;
     }
   } | null>(null);
   
@@ -189,6 +205,22 @@ export function TrendDetailDialog({
         });
     }
   }, [isVkVideo, videoUrl]);
+  
+  // Получаем информацию о видео Instagram, если это необходимо
+  React.useEffect(() => {
+    if (isInstagramVideo && videoUrl) {
+      fetch(`/api/instagram-video-info?url=${encodeURIComponent(videoUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            setInstagramVideoInfo(data);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching Instagram video info:', error);
+        });
+    }
+  }, [isInstagramVideo, videoUrl]);
   
   // Создаем проксированный URL только для первого изображения
   const imageUrl = mediaData.images && mediaData.images.length > 0 && !failedImages.has(mediaData.images[0])
@@ -245,6 +277,33 @@ export function TrendDetailDialog({
                         <Video className="h-12 w-12 mx-auto mb-3" />
                         <p className="text-sm">Открыть видео ВКонтакте</p>
                         <p className="text-xs mt-2 text-gray-300">(Загрузка информации о видео...)</p>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              ) : isInstagramVideo ? (
+                <div className="aspect-square w-full rounded-md overflow-hidden relative">
+                  {instagramVideoInfo && instagramVideoInfo.success ? (
+                    <iframe 
+                      src={instagramVideoInfo.data?.embedUrl}
+                      width="100%" 
+                      height="100%" 
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
+                      frameBorder="0" 
+                      allowFullScreen
+                      className="aspect-square min-h-[450px]"
+                    ></iframe>
+                  ) : (
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4"
+                    >
+                      <div className="text-center text-white">
+                        <Video className="h-12 w-12 mx-auto mb-3" />
+                        <p className="text-sm">Открыть публикацию Instagram</p>
+                        <p className="text-xs mt-2 text-gray-300">(Загрузка информации о публикации...)</p>
                       </div>
                     </a>
                   )}
