@@ -293,10 +293,6 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                         <Badge variant="outline" className="text-xs py-0 h-5">
                           {hasVideos ? "Видео" : previewImageUrl ? "Фото" : "Текст"}
                         </Badge>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {`Пост от ${new Date(trend.createdAt).toLocaleDateString('ru-RU')} ${new Date(trend.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}`}
-                        </span>
                       </div>
                       
                       {trend.url && (
