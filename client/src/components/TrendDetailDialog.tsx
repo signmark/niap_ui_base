@@ -14,6 +14,7 @@ import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkC
 import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
+import { handleInstagramVideoError } from "./instagram-error-handler";
 
 interface MediaData {
   images: string[];
