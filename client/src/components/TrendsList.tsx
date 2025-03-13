@@ -356,12 +356,15 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       WebkitBoxOrient: 'vertical',
                       textOverflow: 'ellipsis'
                     }}>
-                      <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">13 МАРТА</span>
-                      {trend.title
-                        ?.replace(/\s*\.\.\.\s*$/, '')
-                        .replace(/\n+\s*\.\.\.$/, '')
-                        .replace(/\n+\s*\.\.\.\s*\n+/, '\n')
-                        .trim()}
+                      {trend.created_at && (
+                        <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">
+                          {new Date(trend.created_at).toLocaleDateString('ru-RU', { 
+                            day: 'numeric', 
+                            month: 'long'
+                          }).toUpperCase()}
+                        </span>
+                      )}
+                      {trend.title?.trim()}
                     </div>
                     
                     {/* Описание с бо́льшим количеством строк, если нет превью */}
@@ -372,11 +375,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                         WebkitBoxOrient: 'vertical',
                         textOverflow: 'ellipsis'
                       }}>
-                        {trend.description
-                          .replace(/\s*\.\.\.\s*$/, '')
-                          .replace(/\n+\s*\.\.\.$/, '')
-                          .replace(/\n+\s*\.\.\.\s*\n+/, '\n')
-                          .trim()}
+                        {trend.description}
                       </div>
                     )}
                     
