@@ -164,11 +164,11 @@ export function TrendDetailDialog({
     videoUrl.includes('instagram.com/p/') || 
     videoUrl.includes('instagram.com/reel/') || 
     videoUrl.includes('instagram.com/reels/') ||
+    videoUrl.includes('cdninstagram.com') || 
+    videoUrl.includes('fbcdn.net') || 
     (videoUrl.includes('instagram.') && (
       videoUrl.includes('.mp4') || 
-      videoUrl.includes('fbcdn.net') || 
-      videoUrl.endsWith('.mp4') || 
-      videoUrl.includes('instagram.fuio')
+      videoUrl.endsWith('.mp4')
     ))
   );
   
@@ -290,7 +290,12 @@ export function TrendDetailDialog({
               ) : isInstagramVideo ? (
                 <div className="aspect-square w-full rounded-md overflow-hidden relative">
                   {/* Если это прямая ссылка на видео файл Instagram (.mp4) */}
-                  {videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('fbcdn.net') || videoUrl.includes('cdninstagram.com')) ? (
+                  {videoUrl && (
+                    videoUrl.includes('.mp4') || 
+                    videoUrl.includes('fbcdn.net') || 
+                    videoUrl.includes('cdninstagram.com') ||
+                    (videoUrl.includes('instagram.') && videoUrl.includes('media'))
+                  ) ? (
                     <video 
                       src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
                       controls
@@ -300,6 +305,7 @@ export function TrendDetailDialog({
                       playsInline
                       className="w-full max-h-[450px] object-contain"
                       crossOrigin="anonymous"
+                      onError={(e) => console.log("Ошибка воспроизведения видео Instagram:", e)}
                     />
                   ) : instagramVideoInfo && instagramVideoInfo.success ? (
                     <iframe 

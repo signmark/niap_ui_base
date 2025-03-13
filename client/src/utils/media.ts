@@ -76,7 +76,7 @@ export function createStreamVideoUrl(videoUrl: string, itemId: string, forceType
     forceType = isInstagram ? 'instagram' : 
                isVk ? 'vk' : 
                isTelegram ? 'telegram' : 
-               isDirectVideo ? 'directVideo' : null;
+               isDirectVideo ? 'directVideo' : undefined;
   }
   
   // Формируем URL для стриминга видео
