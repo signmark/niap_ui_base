@@ -1277,6 +1277,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Эндпоинт для получения информации о видео Instagram
+  app.get("/api/instagram-video-info", async (req, res) => {
+    const videoUrl = req.query.url as string;
+    if (!videoUrl) {
+      return res.status(400).send('URL parameter is required');
+    }
+    
+    console.log(`[Instagram Video Info] Requested info for post: ${videoUrl}`);
+    
+    try {
+      // Извлекаем ID публикации из URL
+      // Поддерживаем форматы:
+      // - https://www.instagram.com/p/DHBwBSFzZuI/
+      // - https://instagram.com/reel/CtZw1SPD1OL/
+      // - https://www.instagram.com/reels/CvGSDdvOhAJ/
+      const urlPatterns = [
+        /instagram\.com\/p\/([A-Za-z0-9_-]+)/,
+        /instagram\.com\/reel\/([A-Za-z0-9_-]+)/,
+        /instagram\.com\/reels\/([A-Za-z0-9_-]+)/
+      ];
+      
+      let postId = null;
+      for (const pattern of urlPatterns) {
+        const match = videoUrl.match(pattern);
+        if (match && match[1]) {
+          postId = match[1];
+          break;
+        }
+      }
+      
+      if (!postId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Instagram URL format'
+        });
+      }
+      
+      // Нормализуем URL для встраивания
+      const normalizedUrl = normalizeInstagramUrl(videoUrl);
+      const embedUrl = `https://www.instagram.com/p/${postId}/embed/`;
+      
+      return res.json({
+        success: true,
+        data: {
+          postId,
+          embedUrl,
+          originalUrl: videoUrl,
+          normalizedUrl,
+          videoInfo: {
+            platform: 'instagram',
+            requiresExternal: true
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Error extracting Instagram video info for ${videoUrl}:`, error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to extract Instagram post information'
+      });
+    }
+  });
 
   // Анализ сайта с помощью DeepSeek для извлечения ключевых слов
   app.get("/api/analyze-site/:url", async (req, res) => {
