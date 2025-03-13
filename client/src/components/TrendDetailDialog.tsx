@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-// Импортируем функцию createProxyImageUrl из utils
-import { createProxyImageUrl } from "../utils/media";
-import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User } from "lucide-react";
+// Импортируем функции для работы с медиа
+import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "../utils/media";
+import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
@@ -156,10 +156,18 @@ export function TrendDetailDialog({
 
   if (!topic) return null;
 
+  // Проверяем наличие видео
+  const hasVideo = mediaData.videos && mediaData.videos.length > 0;
+  const videoUrl = hasVideo ? mediaData.videos[0] : null;
+  const isVkVideo = videoUrl && videoUrl.includes('vk.com/video');
+  
   // Создаем проксированный URL только для первого изображения
   const imageUrl = mediaData.images && mediaData.images.length > 0 && !failedImages.has(mediaData.images[0])
     ? createProxyImageUrl(mediaData.images[0], topic.id)
     : null;
+    
+  // Создаем превью из видео, если у нас нет изображения, но есть видео
+  const videoThumbnailUrl = !imageUrl && videoUrl ? createVideoThumbnailUrl(videoUrl, topic.id) : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -181,7 +189,63 @@ export function TrendDetailDialog({
           </DialogHeader>
 
           {/* Медиа контент */}
-          {imageUrl && (
+          {/* Если есть видео, показываем его */}
+          {hasVideo && (
+            <div className="mb-4">
+              {/* Для видео ВКонтакте используем iframe */}
+              {isVkVideo ? (
+                <div className="aspect-video w-full rounded-md overflow-hidden relative">
+                  <iframe
+                    src={`https://vk.com/video_ext.php?${videoUrl.split('vk.com/video')[1]}`}
+                    width="100%"
+                    height="100%"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    frameBorder="0"
+                    className="absolute top-0 left-0 w-full h-full"
+                  ></iframe>
+                </div>
+              ) : (
+                <div className="relative">
+                  {/* Для других видео показываем превью с ссылкой */}
+                  {videoThumbnailUrl ? (
+                    <div className="relative">
+                      <img
+                        src={videoThumbnailUrl}
+                        alt={topic.title}
+                        loading="lazy"
+                        className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
+                        crossOrigin="anonymous"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/60 rounded-full p-3">
+                          <Video className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center bg-muted rounded-md h-[200px]">
+                      <Video className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              )}
+              {videoUrl && (
+                <div className="text-right mt-2">
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:underline"
+                  >
+                    Открыть видео в источнике
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Если нет видео, но есть изображение, показываем его */}
+          {!hasVideo && imageUrl && (
             <div className="mb-4">
               <img
                 src={imageUrl}
