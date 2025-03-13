@@ -362,6 +362,14 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                         )}
                       </Button>
                     </div>
+                    
+                    {/* Дата публикации */}
+                    <div className="text-xs text-muted-foreground mt-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{`${new Date(trend.createdAt).toLocaleDateString('ru-RU')} ${new Date(trend.createdAt).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}`}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
