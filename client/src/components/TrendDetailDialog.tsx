@@ -204,6 +204,9 @@ export function TrendDetailDialog({
     }
   } | null>(null);
   
+  // Состояние для отслеживания ошибок воспроизведения видео
+  const [videoLoadError, setVideoLoadError] = React.useState<boolean>(false);
+  
   // Получаем информацию о видео ВКонтакте, если это необходимо
   React.useEffect(() => {
     if (isVkVideo && videoUrl) {
@@ -306,105 +309,42 @@ export function TrendDetailDialog({
                       </div>
                     </div>
                   ) : videoUrl.includes('instagram.com') ? (
-                    // Это URL публикации Instagram - используем встроенный Instagram плеер
-                    (() => {
-                      // Извлекаем идентификатор поста из URL
-                      let postId = '';
-                      
-                      // Для постов Instagram (instagram.com/p/CODE/)
-                      if (videoUrl.includes('/p/')) {
-                        postId = videoUrl.split('/p/')[1]?.split('/')[0] || '';
-                      } 
-                      // Для Reels Instagram (instagram.com/reel/CODE/)
-                      else if (videoUrl.includes('/reel/')) {
-                        postId = videoUrl.split('/reel/')[1]?.split('/')[0] || '';
-                      }
-                      // Для Instagram TV
-                      else if (videoUrl.includes('/tv/')) {
-                        postId = videoUrl.split('/tv/')[1]?.split('/')[0] || '';
-                      }
-                      
-                      // Если удалось извлечь ID поста, создаем встроенный iframe
-                      if (postId) {
-                        const embedUrl = `https://www.instagram.com/p/${postId}/embed/`;
-                        console.log(`[TrendDetail] Создан embedUrl: ${embedUrl} из ${videoUrl}`);
-                        
-                        return (
-                          <iframe 
-                            src={embedUrl}
-                            width="100%" 
-                            height="100%" 
-                            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
-                            frameBorder="0" 
-                            allowFullScreen
-                            className="aspect-square min-h-[450px]"
-                            onError={(e) => {
-                              console.log(`[TrendDetail] Ошибка загрузки iframe Instagram: ${embedUrl}`, e);
-                              
-                              // Если iframe не загрузился, пробуем прямое видео
-                              e.currentTarget.style.display = 'none';
-                              
-                              const videoElement = document.createElement('video');
-                              videoElement.src = createStreamVideoUrl(videoUrl, topic.id, 'instagram');
-                              videoElement.controls = true;
-                              videoElement.autoPlay = false;
-                              videoElement.loop = false;
-                              videoElement.muted = false;
-                              videoElement.playsInline = true;
-                              videoElement.className = "w-full max-h-[450px] object-contain";
-                              videoElement.crossOrigin = "anonymous";
-                              
-                              e.currentTarget.parentNode?.appendChild(videoElement);
-                              
-                              // Обработка ошибки прямого видео
-                              videoElement.onerror = () => {
-                                videoElement.style.display = 'none';
-                                const errorContainer = document.createElement('div');
-                                errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
-                                errorContainer.innerHTML = `
-                                  <div class="text-center text-white">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
-                                      <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                                    </svg>
-                                    <p class="text-sm">Ошибка воспроизведения видео</p>
-                                    <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
-                                      Открыть оригинал
-                                    </a>
-                                  </div>
-                                `;
-                                videoElement.parentNode?.appendChild(errorContainer);
-                              };
-                            }}
-                          />
-                        );
-                      }
-                      
-                      // Если не удалось извлечь ID поста, пробуем через API или прямое видео
-                      return instagramVideoInfo && instagramVideoInfo.success ? (
-                        <iframe 
-                          src={instagramVideoInfo.data?.embedUrl}
-                          width="100%" 
-                          height="100%" 
-                          allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;" 
-                          frameBorder="0" 
-                          allowFullScreen
-                          className="aspect-square min-h-[450px]"
-                        ></iframe>
-                      ) : (
-                        <a
-                          href={videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4"
-                        >
-                          <div className="text-center text-white">
-                            <Video className="h-12 w-12 mx-auto mb-3" />
-                            <p className="text-sm">Открыть публикацию Instagram</p>
+                    // Прямая ссылка на видео из Instagram - используем прямое воспроизведение
+                    <video 
+                      src={createStreamVideoUrl(videoUrl, topic.id, 'instagram')}
+                      controls
+                      autoPlay={false}
+                      loop={false}
+                      muted={false}
+                      playsInline
+                      className="w-full max-h-[450px] object-contain"
+                      crossOrigin="anonymous"
+                      onLoadStart={() => {
+                        setVideoLoadError(false);
+                        console.log("[TrendDetail] Начало загрузки Instagram видео");
+                      }}
+                      onError={(e) => {
+                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram: ${videoUrl}`, e);
+                        setVideoLoadError(true);
+                        // При ошибке воспроизведения предлагаем открыть оригинальный источник
+                        e.currentTarget.style.display = 'none';
+                        const errorContainer = document.createElement('div');
+                        errorContainer.className = "flex items-center justify-center bg-slate-700 rounded-md h-full w-full p-4 absolute inset-0";
+                        errorContainer.innerHTML = `
+                          <div class="text-center text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
+                            <p class="text-sm">Ошибка воспроизведения видео</p>
+                            <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
+                              Открыть оригинал
+                            </a>
                           </div>
-                        </a>
-                      );
-                    })()
+                        `;
+                        e.currentTarget.parentNode?.appendChild(errorContainer);
+                      }}
+                    />
                   ) : (
                     // Это прямая ссылка на видео-файл из Instagram CDN
                     <video 
@@ -416,8 +356,13 @@ export function TrendDetailDialog({
                       playsInline
                       className="w-full max-h-[450px] object-contain"
                       crossOrigin="anonymous"
+                      onLoadStart={() => {
+                        setVideoLoadError(false);
+                        console.log("[TrendDetail] Начало загрузки Instagram CDN видео");
+                      }}
                       onError={(e) => {
-                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram: ${videoUrl}`, e);
+                        console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram CDN: ${videoUrl}`, e);
+                        setVideoLoadError(true);
                         // При ошибке воспроизведения предлагаем открыть оригинальный источник
                         e.currentTarget.style.display = 'none';
                         const errorContainer = document.createElement('div');
@@ -454,8 +399,13 @@ export function TrendDetailDialog({
                         className="w-full max-h-[450px] object-contain"
                         poster={videoThumbnailUrl || undefined}
                         crossOrigin="anonymous"
+                        onLoadStart={() => {
+                          setVideoLoadError(false);
+                          console.log("[TrendDetail] Начало загрузки обычного видео");
+                        }}
                         onError={(e) => {
                           console.log(`[TrendDetail] Ошибка воспроизведения обычного видео: ${videoUrl}`, e);
+                          setVideoLoadError(true);
                           // При ошибке воспроизведения предлагаем открыть оригинальный источник
                           e.currentTarget.style.display = 'none';
                           const errorContainer = document.createElement('div');
