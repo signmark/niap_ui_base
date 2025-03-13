@@ -1248,27 +1248,24 @@ export default function Trends() {
                                     ) : null}
                                     
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center gap-2">
-                                          <Badge variant="outline" className="text-xs py-0 h-5">
-                                            {sourceName}
-                                          </Badge>
-                                        </div>
+                                      {/* Название канала вверху (вместо бейджа) */}
+                                      <div className="mb-1 font-medium">
+                                        {sourceName}
                                       </div>
                                       
                                       {/* Описание канала из базы данных */}
-                                      <div className="text-xs mb-1 text-muted-foreground">
+                                      <div className="text-xs mb-2 text-muted-foreground">
                                         {sources.find(s => s.id === topic.source_id)?.description || 
                                          (topic.sourceDescription && topic.sourceDescription) || 
                                          topic.accountUrl || ""}
                                       </div>
                                       
-                                      {/* Название тренда/поста из базы данных */}
+                                      {/* Первая строка описания поста (если есть) */}
                                       <div 
-                                        className="text-sm line-clamp-2 cursor-pointer font-medium"
+                                        className="text-sm line-clamp-2 cursor-pointer"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        {topic.title}
+                                        {topic.description ? topic.description.split('\n')[0] : topic.title}
                                       </div>
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
