@@ -85,6 +85,9 @@ interface TrendTopic {
   title: string;
   source_id?: string;  // Версия с подчеркиванием (snake_case)
   sourceId?: string;   // Версия в camelCase
+  sourceName?: string; // Имя источника, может приходить напрямую от API
+  sourceUrl?: string;  // URL источника (аккаунта или страницы)
+  url?: string;        // URL оригинальной публикации
   reactions: number;
   comments: number;
   views: number;
@@ -96,7 +99,7 @@ interface TrendTopic {
   campaignId?: string;     // Версия в camelCase
   media_links?: string;    // JSON строка с медиа-данными
   mediaLinks?: string;     // Альтернативное имя поля
-  sourceName?: string;     // Имя источника, может приходить напрямую от API
+  description?: string;    // Описание или контент тренда
 }
 
 interface SourcePost {
@@ -651,7 +654,19 @@ export default function Trends() {
       
       const data = await response.json();
       console.log("Fetched trends data:", data);
-      return data.data || [];
+      
+      // Преобразуем данные, добавляя поля url и sourceUrl если они есть
+      const processedTrends = (data.data || []).map((trend: any) => {
+        // Добавляем обработку дополнительных полей
+        return {
+          ...trend,
+          // Явно обрабатываем поля url и sourceUrl, если они присутствуют
+          url: trend.url || trend.original_url || trend.originalUrl,
+          sourceUrl: trend.sourceUrl || trend.source_url || trend.source?.url
+        };
+      });
+      
+      return processedTrends;
     },
     enabled: !!selectedCampaignId
   });
