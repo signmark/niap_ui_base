@@ -165,7 +165,18 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
                       </div>
 
                       {post.post_content ? (
-                        <p className="text-sm line-clamp-2">{stripHtml(post.post_content).replace(/\.\.\.$/, '')}</p>
+                        <p className="text-sm line-clamp-2 overflow-hidden" style={{ 
+                          display: '-webkit-box', 
+                          WebkitLineClamp: 2, 
+                          WebkitBoxOrient: 'vertical',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {stripHtml(post.post_content)
+                            .replace(/\s*\.\.\.\s*$/, '')
+                            .replace(/\n+\s*\.\.\.$/, '')
+                            .replace(/\n+\s*\.\.\.\s*\n+/, '\n')
+                            .trim()}
+                        </p>
                       ) : (
                         <p className="text-xs text-muted-foreground">Нет текстового описания</p>
                       )}
