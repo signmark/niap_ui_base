@@ -173,8 +173,8 @@ export function TrendDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-2rem)]">
+      <DialogContent className="w-[95vw] max-w-4xl p-0">
+        <div className="p-6">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-bold">{topic.title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ export function TrendDetailDialog({
                 src={imageUrl}
                 alt={topic.title}
                 loading="lazy"
-                className="w-full h-auto max-w-full rounded-md object-cover"
+                className="w-full h-auto max-h-[500px] max-w-full rounded-md object-contain mx-auto"
                 crossOrigin="anonymous"
                 onError={() => handleImageError(mediaData.images[currentImageIndex])}
               />
@@ -235,9 +235,9 @@ export function TrendDetailDialog({
 
           {/* Текст публикации */}
           {topic.description ? (
-            <div className="font-normal whitespace-pre-line mt-4">{topic.description}</div>
+            <div className="font-normal whitespace-pre-line mt-4 text-base leading-normal">{topic.description}</div>
           ) : (
-            <div className="font-normal whitespace-pre-line mt-4">{topic.title}</div>
+            <div className="font-normal whitespace-pre-line mt-4 text-base leading-normal">{topic.title}</div>
           )}
 
           {/* Разделитель */}
