@@ -46,6 +46,51 @@ export function createVideoThumbnailUrl(videoUrl: string, itemId: string): strin
 }
 
 /**
+ * Создает URL для потоковой передачи видео через новый API эндпоинт
+ * Поддерживает все типы видео с автоматическим определением формата
+ */
+export function createStreamVideoUrl(videoUrl: string, itemId: string, forceType?: string): string {
+  // Если URL пустой или undefined, возвращаем пустую строку
+  if (!videoUrl) return '';
+  
+  // Добавляем cache-busting параметр
+  const timestamp = Date.now();
+  
+  // Определяем тип источника, если не указан явно
+  if (!forceType) {
+    const isInstagram = videoUrl.includes('instagram.') || 
+                       videoUrl.includes('fbcdn.net') || 
+                       videoUrl.includes('cdninstagram.com');
+    
+    const isVk = videoUrl.includes('vk.com') || 
+                videoUrl.includes('vk.me') || 
+                videoUrl.includes('userapi.com');
+    
+    const isTelegram = videoUrl.includes('tgcnt.ru') || 
+                      videoUrl.includes('t.me');
+                      
+    const isDirectVideo = videoUrl.endsWith('.mp4') || 
+                         videoUrl.endsWith('.webm') || 
+                         videoUrl.endsWith('.mov');
+    
+    forceType = isInstagram ? 'instagram' : 
+               isVk ? 'vk' : 
+               isTelegram ? 'telegram' : 
+               isDirectVideo ? 'directVideo' : null;
+  }
+  
+  // Формируем URL для стриминга видео
+  let streamUrl = `/api/stream-video?url=${encodeURIComponent(videoUrl)}&_t=${timestamp}&itemId=${itemId}`;
+  
+  // Добавляем тип видео, если он был определен
+  if (forceType) {
+    streamUrl += `&forceType=${forceType}`;
+  }
+  
+  return streamUrl;
+}
+
+/**
  * Проверяет, является ли URL ссылкой на видео
  * по расширению файла или доменному имени
  */
