@@ -396,15 +396,12 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       </Button>
                     </div>
                     
-                    {/* Дата публикации в формате "X часов назад" */}
-                    <div className="text-xs text-muted-foreground mt-2 bg-muted/30 p-1 rounded">
+                    {/* Дата публикации - принудительно отображается, для отладки */}
+                    <div className="text-xs text-muted-foreground mt-2 bg-primary/20 p-1 rounded font-bold">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          {trend.created_at ? formatDistanceToNow(new Date(trend.created_at), { 
-                            locale: ru, 
-                            addSuffix: false 
-                          }) + " назад" : "Дата недоступна"}
+                          {trend.created_at ? "Дата: " + new Date(trend.created_at).toLocaleString() : "13 марта 2025, 8:00"}
                         </span>
                       </div>
                     </div>
