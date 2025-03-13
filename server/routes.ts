@@ -97,6 +97,7 @@ function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deeps
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertBusinessQuestionnaireSchema } from "../shared/schema";
 import { 
   insertContentSourceSchema, 
   insertCampaignContentSchema,
@@ -5087,6 +5088,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error checking publishing status:", error);
       res.status(500).json({ error: "Ошибка при проверке статуса публикации" });
+    }
+  });
+  
+  // Business Questionnaire API routes
+  // Получение анкеты для определенной кампании
+  app.get("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании не указан" });
+      }
+      
+      const questionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      
+      return res.json({
+        success: true,
+        data: questionnaire
+      });
+    } catch (error: any) {
+      console.error('Error getting business questionnaire:', error);
+      return res.status(500).json({ 
+        error: "Ошибка при получении бизнес-анкеты",
+        details: error.message 
+      });
+    }
+  });
+  
+  // Создание новой анкеты
+  app.post("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании не указан" });
+      }
+      
+      // Проверяем, существует ли уже анкета для этой кампании
+      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      
+      if (existingQuestionnaire) {
+        return res.status(400).json({ 
+          error: "Анкета для этой кампании уже существует",
+          data: existingQuestionnaire 
+        });
+      }
+      
+      // Валидация данных формы с помощью Zod схемы
+      const questionnaireData = insertBusinessQuestionnaireSchema.parse({
+        ...req.body,
+        campaignId
+      });
+      
+      const newQuestionnaire = await storage.createBusinessQuestionnaire(questionnaireData);
+      
+      return res.status(201).json({
+        success: true,
+        data: newQuestionnaire
+      });
+    } catch (error: any) {
+      console.error('Error creating business questionnaire:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Ошибка валидации данных",
+          details: error.errors 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Ошибка при создании бизнес-анкеты",
+        details: error.message 
+      });
+    }
+  });
+  
+  // Обновление существующей анкеты
+  app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId, id } = req.params;
+      
+      if (!campaignId || !id) {
+        return res.status(400).json({ error: "ID кампании или анкеты не указаны" });
+      }
+      
+      // Проверяем существование анкеты
+      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      
+      if (!existingQuestionnaire) {
+        return res.status(404).json({ error: "Анкета для этой кампании не найдена" });
+      }
+      
+      // Проверяем, что ID в пути совпадает с ID существующей анкеты
+      if (existingQuestionnaire.id !== id) {
+        return res.status(400).json({ error: "ID анкеты не совпадает с ID в пути" });
+      }
+      
+      // Валидация данных для обновления
+      // Используем partial, чтобы позволить обновление только части полей
+      const updateSchema = insertBusinessQuestionnaireSchema.partial();
+      const validatedUpdates = updateSchema.parse(req.body);
+      
+      // Обновляем анкету
+      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(id, validatedUpdates);
+      
+      return res.json({
+        success: true,
+        data: updatedQuestionnaire
+      });
+    } catch (error: any) {
+      console.error('Error updating business questionnaire:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Ошибка валидации данных",
+          details: error.errors 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Ошибка при обновлении бизнес-анкеты",
+        details: error.message 
+      });
     }
   });
 
