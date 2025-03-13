@@ -232,25 +232,24 @@ export function TrendDetailDialog({
               </div>
             )}
             
-            {/* Добавлен блок с датой публикации */}
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-gray-500 text-sm">
-                {formatDate(topic.created_at)}
-              </span>
-            </div>
-            
-            {topic.url && (
-              <div>
+            <div className="mt-4 border-t pt-2 flex justify-between items-center">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  {new Date(topic.created_at).toLocaleDateString('ru-RU')}
+                </span>
+              </div>
+              
+              {topic.url && (
                 <a 
                   href={topic.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
+                  className="text-xs text-blue-500 hover:underline"
                 >
                   Открыть оригинал
                 </a>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end mt-4">
