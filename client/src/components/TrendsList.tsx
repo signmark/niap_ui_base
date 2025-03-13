@@ -250,7 +250,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           return (
             <Card 
               key={trend.id} 
-              className={`hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
+              className={`shadow hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
