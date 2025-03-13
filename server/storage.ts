@@ -967,21 +967,10 @@ export class DatabaseStorage implements IStorage {
   async getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null> {
     console.log('Getting business questionnaire for campaign:', campaignId);
     try {
-      // Получаем userId из campaignId для авторизации
-      const campaignIdNum = parseInt(campaignId, 10);
-      if (isNaN(campaignIdNum)) {
-        throw new Error('Invalid campaign ID');
-      }
-      
-      const campaign = await this.getCampaign(campaignIdNum);
-      if (!campaign) {
-        throw new Error('Campaign not found');
-      }
-      
-      const userId = campaign.userId;
-      const authToken = await this.getAuthToken(userId);
-      if (!authToken) {
-        console.error('No auth token found for user', userId);
+      // Используем сервисный токен из окружения
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      if (!serviceToken) {
+        console.error('No service token found in environment variables');
         return null;
       }
       
@@ -996,7 +985,7 @@ export class DatabaseStorage implements IStorage {
           filter
         },
         headers: {
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${serviceToken}`
         }
       });
       
