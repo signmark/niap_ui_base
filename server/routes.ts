@@ -14,6 +14,37 @@ import { log } from "./vite";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
 
+// Функция для взаимодействия с n8n API
+async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
+  try {
+    const n8nUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru';
+    const n8nApiKey = process.env.N8N_API_KEY;
+    
+    if (!n8nApiKey) {
+      throw new Error('N8N API ключ не настроен');
+    }
+    
+    const response = await axios.post(
+      `${n8nUrl}/api/v1/workflows/${workflowId}/execute`,
+      { data },
+      {
+        headers: {
+          'X-N8N-API-KEY': n8nApiKey,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Ошибка при вызове N8N workflow:', error.message);
+    if (error.response) {
+      console.error('Ответ от N8N:', error.response.data);
+    }
+    throw error;
+  }
+}
+
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
