@@ -5197,6 +5197,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Analyzing website ${url} for questionnaire data...`);
       
+      // Получаем API ключ DeepSeek из настроек пользователя
+      try {
+        const userKeysResponse = await directusApi.get('/items/user_api_keys', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              service_name: {
+                _eq: 'deepseek'
+              }
+            }
+          }
+        });
+        
+        const userKeys = userKeysResponse?.data?.data || [];
+        const deepseekKey = userKeys.length > 0 ? userKeys[0].api_key : '';
+        
+        if (deepseekKey) {
+          console.log('Found DeepSeek API key in user settings');
+          // Обновляем ключ в сервисе DeepSeek
+          deepseekService.updateApiKey(deepseekKey);
+        } else {
+          console.warn('DeepSeek API key not found in user settings');
+        }
+      } catch (error) {
+        console.error('Error fetching DeepSeek API key from user settings:', error);
+        // Продолжаем выполнение, так как ключ может быть доступен из переменных окружения
+      }
+      
       // Извлекаем контент сайта с помощью существующей функции
       let websiteContent = '';
       try {
@@ -5245,12 +5275,13 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         ], { max_tokens: 2000 });
         
         console.log('Received analysis from DeepSeek');
+        console.log('DeepSeek response first 100 chars:', analysisResponse.substring(0, 100));
         
         // Извлекаем JSON из ответа
         let jsonData = {};
         try {
           // Попытка найти JSON в ответе, даже если он не полностью соответствует формату
-          const jsonMatch = analysisResponse.content.match(/\{[\s\S]*\}/);
+          const jsonMatch = analysisResponse.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             jsonData = JSON.parse(jsonMatch[0]);
           } else {
