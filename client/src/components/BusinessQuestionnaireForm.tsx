@@ -217,8 +217,17 @@ export function BusinessQuestionnaireForm({
     
     setIsAnalyzing(true);
     
+    // Показываем уведомление о начале анализа
+    const toastId = toast({
+      title: 'Анализ сайта',
+      description: 'Извлечение данных с сайта и анализ контента...',
+      duration: 100000, // Длительное уведомление до завершения анализа
+    });
+    
     try {
-      const response = await apiRequest('/api/analyze-website-for-questionnaire', {
+      console.log('Starting website analysis for URL:', websiteUrl);
+      
+      const response = await apiRequest('/api/website-analysis', {
         method: 'POST',
         data: {
           url: websiteUrl,
@@ -229,22 +238,58 @@ export function BusinessQuestionnaireForm({
       if (response && response.data) {
         const { data } = response;
         
+        console.log('Received analysis data:', data);
+        
+        // Сохраняем предыдущие значения, чтобы использовать их, если новые не заполнены
+        const prevValues = {
+          companyName: form.getValues('companyName'),
+          businessDescription: form.getValues('businessDescription'),
+          productsServices: form.getValues('productsServices'),
+          targetAudience: form.getValues('targetAudience'),
+          businessValues: form.getValues('businessValues'),
+          mainDirections: form.getValues('mainDirections'),
+          companyFeatures: form.getValues('companyFeatures'),
+          competitiveAdvantages: form.getValues('competitiveAdvantages'),
+          brandImage: form.getValues('brandImage'),
+          contactInfo: form.getValues('contactInfo'),
+          customerResults: form.getValues('customerResults'),
+          productBeliefs: form.getValues('productBeliefs'),
+          marketingExpectations: form.getValues('marketingExpectations'),
+        };
+        
         // Обновляем поля формы данными, полученными из анализа сайта
-        form.setValue('companyName', data.companyName || form.getValues('companyName'));
-        form.setValue('businessDescription', data.businessDescription || form.getValues('businessDescription'));
-        form.setValue('productsServices', data.productsServices || form.getValues('productsServices'));
-        form.setValue('targetAudience', data.targetAudience || form.getValues('targetAudience'));
-        form.setValue('businessValues', data.businessValues || form.getValues('businessValues'));
-        form.setValue('mainDirections', data.mainDirections || form.getValues('mainDirections'));
-        form.setValue('companyFeatures', data.companyFeatures || form.getValues('companyFeatures'));
+        // Сохраняем старые значения, если новые отсутствуют
+        form.setValue('companyName', data.companyName || prevValues.companyName);
+        form.setValue('businessDescription', data.businessDescription || prevValues.businessDescription);
+        form.setValue('productsServices', data.productsServices || prevValues.productsServices);
+        form.setValue('targetAudience', data.targetAudience || prevValues.targetAudience);
+        form.setValue('businessValues', data.businessValues || prevValues.businessValues);
+        form.setValue('mainDirections', data.mainDirections || prevValues.mainDirections);
+        form.setValue('companyFeatures', data.companyFeatures || prevValues.companyFeatures);
+        form.setValue('competitiveAdvantages', data.competitiveAdvantages || prevValues.competitiveAdvantages);
+        form.setValue('brandImage', data.brandImage || prevValues.brandImage);
+        
+        // Закрываем уведомление о процессе анализа
+        toast.dismiss(toastId);
         
         toast({
           title: 'Анализ сайта завершен',
           description: 'Данные успешно получены и заполнены в анкету.',
         });
+        
+        // Если анкета уже существует, автоматически сохраняем обновленные данные
+        if (questionnaireData?.id) {
+          const formValues = form.getValues();
+          console.log('Automatically saving updated questionnaire after analysis');
+          updateQuestionnaireMutation.mutate(formValues);
+        }
       }
     } catch (error) {
       console.error('Error analyzing website:', error);
+      
+      // Закрываем уведомление о процессе анализа
+      toast.dismiss(toastId);
+      
       toast({
         title: 'Ошибка анализа',
         description: 'Не удалось проанализировать сайт. Пожалуйста, проверьте URL и попробуйте снова.',
