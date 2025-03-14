@@ -217,6 +217,56 @@ export function BusinessQuestionnaireForm({
     }
   };
 
+  // Обработчик анализа веб-сайта
+  const analyzeWebsite = async () => {
+    if (!websiteUrl) return;
+
+    setIsAnalyzing(true);
+    try {
+      const response = await apiRequest(`/api/website-analysis`, {
+        method: "POST",
+        data: { 
+          url: websiteUrl,
+          campaignId 
+        },
+      });
+
+      if (response?.data) {
+        // Заполнение формы данными из анализа
+        const analysisData = response.data;
+        
+        form.setValue("companyName", analysisData.companyName || form.getValues("companyName"));
+        form.setValue("businessDescription", analysisData.businessDescription || form.getValues("businessDescription"));
+        form.setValue("mainDirections", analysisData.mainDirections || form.getValues("mainDirections"));
+        form.setValue("productsServices", analysisData.productsServices || form.getValues("productsServices"));
+        form.setValue("targetAudience", analysisData.targetAudience || form.getValues("targetAudience"));
+        form.setValue("brandImage", analysisData.brandImage || form.getValues("brandImage"));
+        form.setValue("companyFeatures", analysisData.companyFeatures || form.getValues("companyFeatures"));
+        form.setValue("businessValues", analysisData.businessValues || form.getValues("businessValues"));
+        form.setValue("competitiveAdvantages", analysisData.competitiveAdvantages || form.getValues("competitiveAdvantages"));
+        
+        // Сохраняем URL сайта в контактную информацию, если она пуста
+        if (!form.getValues("contactInfo")) {
+          form.setValue("contactInfo", websiteUrl);
+        }
+        
+        toast({
+          title: "Анализ завершен",
+          description: "Данные о компании извлечены из сайта",
+        });
+      }
+    } catch (error) {
+      console.error("Ошибка при анализе сайта:", error);
+      toast({
+        title: "Ошибка анализа",
+        description: "Не удалось проанализировать сайт. Пожалуйста, проверьте URL и попробуйте снова.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   // Обработчик переключения режима редактирования
   const toggleEditMode = () => {
     if (isEditMode) {
@@ -267,14 +317,67 @@ export function BusinessQuestionnaireForm({
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Бизнес-анкета</CardTitle>
-        {hasQuestionnaire && (
-          <Button 
-            variant={isEditMode ? "outline" : "default"} 
-            onClick={toggleEditMode}
-          >
-            {isEditMode ? "Отмена" : "Редактировать"}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {isEditMode && (
+            <Dialog open={isWebsiteDialogOpen} onOpenChange={setIsWebsiteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                >
+                  <Search className="h-4 w-4" />
+                  Анализ сайта
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Анализ сайта компании</DialogTitle>
+                  <DialogDescription>
+                    Введите URL сайта компании для автоматического заполнения анкеты на основе данных с сайта.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="website-url" className="text-sm font-medium">
+                      URL сайта компании
+                    </label>
+                    <Input
+                      id="website-url"
+                      placeholder="https://example.com"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsWebsiteDialogOpen(false)}
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      analyzeWebsite();
+                      setIsWebsiteDialogOpen(false);
+                    }}
+                    disabled={!websiteUrl || isAnalyzing}
+                  >
+                    {isAnalyzing ? "Анализ..." : "Анализировать"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          {hasQuestionnaire && (
+            <Button 
+              variant={isEditMode ? "outline" : "default"} 
+              onClick={toggleEditMode}
+            >
+              {isEditMode ? "Отмена" : "Редактировать"}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {!hasQuestionnaire && !isEditMode ? (
