@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { DraggableDialogContent } from "@/components/ui/draggable-dialog";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
@@ -975,8 +976,8 @@ export default function ContentPage() {
 
       {/* Диалог редактирования контента */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DraggableDialogContent className="max-h-[90vh] overflow-hidden">
+          <DialogHeader className="draggable-header cursor-move px-6 pt-6">
             <DialogTitle>Редактирование контента</DialogTitle>
           </DialogHeader>
           {currentContent && (
@@ -1299,7 +1300,7 @@ export default function ContentPage() {
               Сохранить
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </DraggableDialogContent>
       </Dialog>
 
       {/* Диалог планирования публикации */}
