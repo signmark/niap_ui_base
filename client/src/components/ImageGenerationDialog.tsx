@@ -37,7 +37,7 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning">("sdxl"); // По умолчанию используем SDXL
+  const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning" | "fooocus">("sdxl"); // По умолчанию используем SDXL
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   
   const { toast } = useToast();
@@ -297,7 +297,7 @@ export function ImageGenerationDialog({
           
           <div className="space-y-2">
             <Label>Модель генерации</Label>
-            <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex space-x-2">
+            <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex space-x-2 flex-wrap">
               <div className="flex items-center space-x-1">
                 <RadioGroupItem value="sdxl" id="m1" />
                 <Label htmlFor="m1">SDXL</Label>
@@ -309,6 +309,10 @@ export function ImageGenerationDialog({
               <div className="flex items-center space-x-1">
                 <RadioGroupItem value="sdxl-lightning" id="m3" />
                 <Label htmlFor="m3">SDXL Lightning</Label>
+              </div>
+              <div className="flex items-center space-x-1 mt-2">
+                <RadioGroupItem value="fooocus" id="m4" />
+                <Label htmlFor="m4">Fooocus</Label>
               </div>
             </RadioGroup>
           </div>
