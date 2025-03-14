@@ -322,6 +322,17 @@ export function BusinessQuestionnaireForm({
                 {isEditMode ? "Отмена" : "Редактировать"}
               </Button>
             )}
+            {isEditMode && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={() => setIsWebsiteDialogOpen(true)}
+              >
+                <Search className="h-4 w-4" />
+                Анализ сайта
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -384,17 +395,6 @@ export function BusinessQuestionnaireForm({
                     <FormItem>
                       <div className="flex flex-row justify-between items-center">
                         <FormLabel>Описание бизнеса</FormLabel>
-                        {isEditMode && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex items-center gap-1"
-                            onClick={() => setIsWebsiteDialogOpen(true)}
-                          >
-                            <Search className="h-4 w-4" />
-                            Анализ сайта
-                          </Button>
-                        )}
                       </div>
                       <FormControl>
                         <Textarea
