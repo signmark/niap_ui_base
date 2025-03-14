@@ -142,6 +142,7 @@ Return only the translated text, no explanations or comments.`;
       model?: string;
       numImages?: number;
       translatePrompt?: boolean;
+      stylePreset?: string;
     } = {}
   ): Promise<string[]> {
     try {
@@ -153,25 +154,23 @@ Return only the translated text, no explanations or comments.`;
         negativePrompt = '',
         width = 1024,
         height = 1024,
-        model = 'stable-diffusion-xl',
+        model = 'foocus', // Теперь Foocus модель будет по умолчанию
         numImages = 1,
-        translatePrompt = true
+        translatePrompt = true,
+        stylePreset = 'photographic'
       } = options;
       
       // Переводим промпт на английский, если это требуется
       const processedPrompt = translatePrompt ? await this.translatePrompt(prompt) : prompt;
       
-      console.log(`Генерация изображения через FAL.AI: prompt=${processedPrompt}, width=${width}, height=${height}, numImages=${numImages}`);
+      console.log(`Генерация изображения через FAL.AI: prompt=${processedPrompt}, model=${model}, width=${width}, height=${height}, numImages=${numImages}`);
 
-      // Формируем запрос в зависимости от выбранной модели
-      const modelName = model || 'foocus'; // По умолчанию используем Foocus вместо SDXL
-      
       // Адаптируем параметры запроса под выбранную модель
       let requestData: any = {};
       let apiUrl = '';
       
       // Выбираем эндпоинт и параметры запроса в зависимости от модели
-      if (modelName === 'foocus') {
+      if (model === 'foocus') {
         // Endpoint и параметры для Foocus
         apiUrl = `${this.baseUrl}/fal-ai/foocus`;
         requestData = {
@@ -181,10 +180,23 @@ Return only the translated text, no explanations or comments.`;
           guidance_scale: 7.5, // Стандартное значение для Foocus
           num_inference_steps: 30, // Стандартное количество шагов
           num_images: numImages,
-          style_preset: "photographic", // Можно выбрать: base, anime, photographic, cinematic, и т.д.
+          style_preset: stylePreset, // Можно выбрать: base, anime, photographic, cinematic, и т.д.
           seed: Math.floor(Math.random() * 2147483647) // Случайный сид для разнообразия результатов
         };
-      } else if (modelName === 'stable-diffusion-xl' || modelName === 'fast-sdxl') {
+      } else if (model === 'flux') {
+        // Endpoint и параметры для Flux (Schnell)
+        apiUrl = `${this.baseUrl}/fal-ai/flux/schnell`;
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt || "",
+          width: width,
+          height: height,
+          num_images: numImages,
+          scheduler: "K_EULER", // Планировщик для Flux
+          num_inference_steps: 25,
+          guidance_scale: 7.0
+        };
+      } else if (model === 'sdxl' || model === 'stable-diffusion-xl' || model === 'fast-sdxl') {
         // Endpoint и параметры для SDXL
         apiUrl = `${this.baseUrl}/fast-sdxl`;
         requestData = {
@@ -196,7 +208,7 @@ Return only the translated text, no explanations or comments.`;
         };
       } else {
         // Если указана другая модель, используем общий формат
-        apiUrl = `${this.baseUrl}/${modelName}`;
+        apiUrl = `${this.baseUrl}/${model}`;
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt,

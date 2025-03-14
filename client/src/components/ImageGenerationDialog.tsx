@@ -37,6 +37,8 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
+  const [modelType, setModelType] = useState<"foocus" | "flux" | "sdxl">("foocus"); // По умолчанию используем Foocus
+  const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль для Foocus по умолчанию
   
   const { toast } = useToast();
   
@@ -286,6 +288,48 @@ export function ImageGenerationDialog({
               </div>
             </RadioGroup>
           </div>
+          
+          <div className="space-y-2">
+            <Label>Модель генерации</Label>
+            <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex space-x-2">
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="foocus" id="m1" />
+                <Label htmlFor="m1">Foocus</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="flux" id="m2" />
+                <Label htmlFor="m2">Flux</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="sdxl" id="m3" />
+                <Label htmlFor="m3">SDXL</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          {modelType === "foocus" && (
+            <div className="space-y-2">
+              <Label>Стиль изображения</Label>
+              <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="flex space-x-2 flex-wrap">
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="photographic" id="s1" />
+                  <Label htmlFor="s1">Фотореалистичный</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="cinematic" id="s2" />
+                  <Label htmlFor="s2">Кинематографический</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="anime" id="s3" />
+                  <Label htmlFor="s3">Аниме</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="base" id="s4" />
+                  <Label htmlFor="s4">Базовый</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
         </TabsContent>
         
         {/* Содержимое вкладки для бизнеса */}
