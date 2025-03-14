@@ -77,7 +77,7 @@ export class FalAiService {
         num_images: numImages
       };
 
-      // Используем актуальный API endpoint из baseUrl
+      // Используем новый формат API endpoint
       const apiUrl = `${this.baseUrl}/generation/stable-diffusion-xl`;
       
       console.log('Используем FAL.AI API URL:', apiUrl);
@@ -85,6 +85,7 @@ export class FalAiService {
       
       // Отправляем запрос на API FAL.AI
       // При использовании IP адреса вместо домена отключаем проверку SSL сертификата
+      // Увеличиваем таймаут до 5 минут (300000 мс)
       const response = await axios.post(
         apiUrl,
         requestData,
@@ -95,8 +96,10 @@ export class FalAiService {
             'Accept': 'application/json',
             'Host': 'api.fal.ai' // Добавляем хост-заголовок для правильной маршрутизации на CDN
           },
+          timeout: 300000, // 5 минут таймаут
           httpsAgent: new (require('https').Agent)({
-            rejectUnauthorized: false // Отключаем проверку SSL сертификата при использовании IP
+            rejectUnauthorized: false, // Отключаем проверку SSL сертификата при использовании IP
+            timeout: 300000 // Также добавляем таймаут для https агента
           })
         }
       );

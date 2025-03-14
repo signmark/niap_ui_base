@@ -97,9 +97,20 @@ export class FalAiService {
       
       console.log('Данные запроса для SDK:', JSON.stringify(sdkPayload).substring(0, 200) + '...');
       
-      // Используем функцию run для запуска модели
+      // Используем функцию run для запуска модели с опцией таймаута
       console.log(`Отправляем запрос к FAL.AI на эндпоинт: ${sdkEndpoint}`);
-      const result = await run(sdkEndpoint, sdkPayload);
+      
+      // Добавляем опцию таймаута 5 минут (300000 мс)
+      // Настраиваем максимальное число попыток
+      const options = {
+        timeout: 300000, // 5 минут таймаут
+        maxRetries: 2,
+        onRetry: (err: any, attempt: number) => {
+          console.log(`Повторная попытка ${attempt} после ошибки: ${err.message}`);
+        }
+      };
+      
+      const result = await run(sdkEndpoint, sdkPayload, options);
       
       console.log('Изображение успешно сгенерировано через FAL.AI');
       console.log('Структура ответа SDK:', Object.keys(result || {}));
