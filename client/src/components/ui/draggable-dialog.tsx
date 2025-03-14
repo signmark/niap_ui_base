@@ -1,4 +1,5 @@
 import React, { useRef, useState, ComponentProps, forwardRef } from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
 import Draggable from "react-draggable"
 import {
   Dialog,
