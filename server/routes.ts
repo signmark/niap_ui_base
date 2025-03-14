@@ -1452,6 +1452,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Определяем используемую модель и данные для запроса
       let model = modelName || 'sdxl'; // По умолчанию используем SDXL
       
+      // Особая обработка для специальных моделей
+      if (model === 'fooocus') {
+        console.log('Используем специальную модель Fooocus');
+        model = 'fal-ai/fooocus';
+      } else if (model === 'schnell') {
+        console.log('Используем специальную модель Schnell');
+        model = 'flux/schnell';
+      }
+      
       if (prompt) {
         // Генерация по прямому промпту
         console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
@@ -1542,9 +1551,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
         
         // Прямой запрос к API fal.ai
-        // Для fooocus используем специальный формат URL
+        // Используем разные форматы URL в зависимости от модели
         let apiUrl = "";
         if (model === 'fal-ai/fooocus') {
+          apiUrl = `https://queue.fal.run/${model}`;
+        } else if (model === 'flux/schnell') {
           apiUrl = `https://queue.fal.run/${model}`;
         } else {
           apiUrl = `https://queue.fal.run/fal-ai/${model}`;
