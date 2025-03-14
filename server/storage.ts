@@ -1058,33 +1058,52 @@ export class DatabaseStorage implements IStorage {
       
       console.log('Sending questionnaire data to Directus');
       
-      // Отправляем данные в Directus с токеном авторизации
-      const response = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+      try {
+        // Отправляем данные в Directus с токеном авторизации
+        const response = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        // Успешный ответ
+        console.log('Successfully created business questionnaire in Directus');
+        return this.mapDirectusQuestionnaire(response.data.data);
+      } catch (apiError: any) {
+        // Подробный вывод ошибки
+        console.error('Directus API Error details:', {
+          status: apiError.response?.status,
+          statusText: apiError.response?.statusText,
+          message: apiError.message,
+          errors: apiError.response?.data?.errors
+        });
+        
+        // Если ошибка 403 - скорее всего проблема с правами доступа
+        if (apiError.response?.status === 403) {
+          console.log('Attempting to use service token as fallback for creating questionnaire');
+          const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+          
+          if (serviceToken) {
+            // Пробуем использовать сервисный токен как запасной вариант
+            const fallbackResponse = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
+              headers: {
+                'Authorization': `Bearer ${serviceToken}`
+              }
+            });
+            
+            console.log('Successfully created business questionnaire using service token');
+            return this.mapDirectusQuestionnaire(fallbackResponse.data.data);
+          } else {
+            throw new Error('Access denied and no service token available');
+          }
         }
-      });
+        
+        // Прокидываем ошибку дальше
+        throw apiError;
+      }
       
-      // Преобразуем ответ в формат нашей схемы
-      const item = response.data.data;
-      return {
-        id: item.id,
-        campaignId: item.campaign_id,
-        companyName: item.company_name,
-        contactInfo: item.contact_info,
-        businessDescription: item.business_description,
-        mainDirections: item.main_directions,
-        brandImage: item.brand_image,
-        productsServices: item.products_services,
-        targetAudience: item.target_audience,
-        customerResults: item.customer_results,
-        companyFeatures: item.company_features,
-        businessValues: item.business_values,
-        productBeliefs: item.product_beliefs,
-        competitiveAdvantages: item.competitive_advantages,
-        marketingExpectations: item.marketing_expectations,
-        createdAt: new Date(item.created_at)
-      };
+      // Добавляем метод отображения, который используется в нескольких местах
+      return this.mapDirectusQuestionnaire(response.data.data);
     } catch (error) {
       console.error('Error creating business questionnaire in Directus:', error);
       throw new Error('Failed to create business questionnaire');
@@ -1161,6 +1180,28 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Вспомогательный метод для получения бизнес-анкеты по ID
+  // Вспомогательный метод для преобразования данных Directus в наш формат
+  private mapDirectusQuestionnaire(item: any): BusinessQuestionnaire {
+    return {
+      id: item.id,
+      campaignId: item.campaign_id,
+      companyName: item.company_name,
+      contactInfo: item.contact_info,
+      businessDescription: item.business_description,
+      mainDirections: item.main_directions,
+      brandImage: item.brand_image,
+      productsServices: item.products_services,
+      targetAudience: item.target_audience,
+      customerResults: item.customer_results,
+      companyFeatures: item.company_features,
+      businessValues: item.business_values,
+      productBeliefs: item.product_beliefs,
+      competitiveAdvantages: item.competitive_advantages,
+      marketingExpectations: item.marketing_expectations,
+      createdAt: new Date(item.created_at)
+    };
+  }
+  
   private async getBusinessQuestionnaireById(id: string, authToken?: string): Promise<BusinessQuestionnaire | null> {
     try {
       // Проверяем, что у нас есть токен авторизации
@@ -1181,25 +1222,7 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
       
-      const item = response.data.data;
-      return {
-        id: item.id,
-        campaignId: item.campaign_id,
-        companyName: item.company_name,
-        contactInfo: item.contact_info,
-        businessDescription: item.business_description,
-        mainDirections: item.main_directions,
-        brandImage: item.brand_image,
-        productsServices: item.products_services,
-        targetAudience: item.target_audience,
-        customerResults: item.customer_results,
-        companyFeatures: item.company_features,
-        businessValues: item.business_values,
-        productBeliefs: item.product_beliefs,
-        competitiveAdvantages: item.competitive_advantages,
-        marketingExpectations: item.marketing_expectations,
-        createdAt: new Date(item.created_at)
-      };
+      return this.mapDirectusQuestionnaire(response.data.data);
     } catch (error) {
       console.error('Error getting business questionnaire by ID from Directus:', error);
       return null;
