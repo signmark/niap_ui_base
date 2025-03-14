@@ -17,7 +17,7 @@ export interface FalAiConfig {
 export class FalAiService {
   private apiKey: string;
   // Используем современный URL очереди FAL.AI
-  private readonly baseUrl = 'https://fal.run/fal-ai';
+  private readonly baseUrl = 'https://queue.fal.run/fal-ai';
   private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
@@ -172,15 +172,16 @@ Return only the translated text, no explanations or comments.`;
       // Выбираем эндпоинт и параметры запроса в зависимости от модели
       if (model === 'foocus') {
         // Endpoint и параметры для Foocus
-        apiUrl = `${this.baseUrl}/foocus`;
+        apiUrl = `${this.baseUrl}/text-to-image/sdxl`;
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt || "",
-          image_size: Math.max(width, height), // Foocus принимает один параметр размера
-          guidance_scale: 7.5, // Стандартное значение для Foocus
-          num_inference_steps: 30, // Стандартное количество шагов
+          width: width,
+          height: height,
+          guidance_scale: 7.5,
+          num_inference_steps: 30,
           num_images: numImages,
-          style_preset: stylePreset, // Можно выбрать: base, anime, photographic, cinematic, и т.д.
+          style_preset: stylePreset,
           seed: Math.floor(Math.random() * 2147483647) // Случайный сид для разнообразия результатов
         };
       } else if (model === 'flux') {
