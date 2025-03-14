@@ -33,8 +33,20 @@ export class FalAiService {
       let sdkPayload: any = { input: {} };
       
       // Маппинг эндпоинтов для известных моделей
-      if (endpoint === 'fal-ai/sdxl' || endpoint.includes('stable-diffusion-xl')) {
-        // Для SDXL используем правильную структуру
+      if (endpoint === 'fal-ai/sdxl') {
+        // Для нового формата API fal-ai/sdxl
+        console.log('Определена модель SDXL (новый формат API), адаптируем параметры...');
+        sdkPayload = {
+          input: {
+            prompt: data.prompt,
+            negative_prompt: data.negative_prompt || '',
+            width: data.width || 1024,
+            height: data.height || 1024,
+            num_images: data.num_images || 1,
+          }
+        };
+      } else if (endpoint.includes('stable-diffusion-xl')) {
+        // Для стандартного формата SDXL
         console.log('Определена модель SDXL, адаптируем параметры...');
         sdkPayload = {
           input: {
@@ -86,10 +98,17 @@ export class FalAiService {
       console.log('Данные запроса для SDK:', JSON.stringify(sdkPayload).substring(0, 200) + '...');
       
       // Используем функцию run для запуска модели
+      console.log(`Отправляем запрос к FAL.AI на эндпоинт: ${sdkEndpoint}`);
       const result = await run(sdkEndpoint, sdkPayload);
       
       console.log('Изображение успешно сгенерировано через FAL.AI');
       console.log('Структура ответа SDK:', Object.keys(result || {}));
+      
+      // Подробный лог для отладки ответа
+      if (result) {
+        if (result.output) console.log('Найдено поле "output" в ответе:', typeof result.output);
+        if (result.images) console.log('Найдено поле "images" в ответе:', Array.isArray(result.images) ? `Массив из ${result.images.length} элементов` : typeof result.images);
+      }
       
       // Проверяем различные форматы ответа
       if (result?.images && Array.isArray(result.images)) {
