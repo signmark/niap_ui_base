@@ -1010,7 +1010,23 @@ export default function ContentPage() {
               </div>
               {(currentContent.contentType === "text-image") && (
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL изображения</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="imageUrl">URL изображения</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => {
+                        // Открываем диалог генерации изображения для редактирования
+                        setCurrentContentSafe(currentContent);
+                        setIsImageGenerationDialogOpen(true);
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Сгенерировать изображение
+                    </Button>
+                  </div>
                   <Input
                     id="imageUrl"
                     placeholder="Введите URL изображения"
@@ -1335,11 +1351,18 @@ export default function ContentPage() {
         <ImageGenerationDialog 
           campaignId={selectedCampaignId}
           onImageGenerated={(imageUrl) => {
-            // Обновляем URL изображения в форме создания контента
-            setNewContent({
-              ...newContent,
-              imageUrl
-            });
+            // Проверяем, находимся ли мы в режиме редактирования или создания
+            if (currentContent) {
+              // Обновляем URL изображения в форме редактирования
+              const updatedContent = {...currentContent, imageUrl};
+              setCurrentContentSafe(updatedContent);
+            } else {
+              // Обновляем URL изображения в форме создания контента
+              setNewContent({
+                ...newContent,
+                imageUrl
+              });
+            }
             // Закрываем диалог после выбора изображения
             setIsImageGenerationDialogOpen(false);
           }}
