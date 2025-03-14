@@ -9,6 +9,10 @@ export class FalAiService {
    * @param apiKey API ключ для FAL.AI
    */
   initialize(apiKey: string) {
+    // Сохраняем API ключ в переменной окружения для прямых вызовов через axios
+    process.env.FAL_AI_API_KEY = apiKey;
+    
+    // Инициализируем SDK (для совместимости с существующим кодом)
     config({
       credentials: apiKey
     });
