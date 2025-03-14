@@ -76,13 +76,13 @@ export function ContentPlanGenerator({
     queryFn: async () => {
       if (!campaignId) return [];
       
-      const response = await fetch(`/api/campaign-trend-topics?campaignId=${campaignId}`);
-      if (!response.ok) {
-        throw new Error('Ошибка при загрузке трендов');
+      try {
+        const response = await apiRequest(`/api/campaign-trend-topics?campaignId=${campaignId}`);
+        return response.data || [];
+      } catch (error) {
+        console.error("Ошибка при загрузке трендов:", error);
+        throw error;
       }
-      
-      const data = await response.json();
-      return data.data || [];
     },
     enabled: !!campaignId && isOpen,
     onError: (error: any) => {
@@ -100,13 +100,13 @@ export function ContentPlanGenerator({
     queryFn: async () => {
       if (!campaignId) return [];
       
-      const response = await fetch(`/api/keywords?campaignId=${campaignId}`);
-      if (!response.ok) {
-        throw new Error('Ошибка при загрузке ключевых слов');
+      try {
+        const response = await apiRequest(`/api/keywords?campaignId=${campaignId}`);
+        return response.data || [];
+      } catch (error) {
+        console.error("Ошибка при загрузке ключевых слов:", error);
+        throw error;
       }
-      
-      const data = await response.json();
-      return data.data || [];
     },
     enabled: !!campaignId && isOpen,
     onError: (error: any) => {
