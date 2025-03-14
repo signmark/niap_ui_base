@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { directusApi } from '../directus';
 import { log } from '../vite';
+import { deepseekService } from './deepseek';
 
 /**
  * Конфигурация для FAL.AI API
@@ -40,6 +41,98 @@ export class FalAiService {
    * @param model ID модели для использования
    * @returns URL сгенерированного изображения
    */
+  /**
+   * Переводит промпт с русского на английский для лучшей генерации изображений
+   * @param prompt Промпт на русском языке
+   * @returns Промпт на английском языке
+   */
+  private async translatePrompt(prompt: string): Promise<string> {
+    // Проверяем, нужен ли перевод (если текст уже содержит много английских слов)
+    const russianRegex = /[а-яА-ЯёЁ]/g;
+    const englishRegex = /[a-zA-Z]/g;
+    const russianChars = (prompt.match(russianRegex) || []).length;
+    const englishChars = (prompt.match(englishRegex) || []).length;
+    
+    // Если текст уже преимущественно на английском, возвращаем его как есть
+    if (englishChars > russianChars * 2) {
+      console.log('Промпт уже на английском языке, перевод не требуется');
+      return prompt;
+    }
+    
+    try {
+      // Попытка использовать deepseekService для перевода, если он доступен
+      if (process.env.DEEPSEEK_API_KEY || 
+          (typeof deepseekService?.hasApiKey === 'function' && deepseekService.hasApiKey())) {
+        
+        console.log('Переводим промпт с помощью DeepSeek API...');
+        const deepseekPrompt = `Translate the following text from Russian to English, optimizing it for AI image generation:
+        
+${prompt}
+
+Focus on clear, descriptive language that works well with image generation models.
+Return only the translated text, no explanations or comments.`;
+
+        const translatedPrompt = await deepseekService.generateText([
+          { role: 'system', content: 'You are a professional translator specializing in optimizing text for AI image generation.' },
+          { role: 'user', content: deepseekPrompt }
+        ], {
+          temperature: 0.3,
+          max_tokens: 500
+        });
+        
+        console.log(`Оригинальный промпт: "${prompt}"`);
+        console.log(`Переведенный промпт: "${translatedPrompt}"`);
+        
+        return translatedPrompt;
+      }
+    } catch (error) {
+      console.error('Ошибка при переводе промпта через DeepSeek:', error);
+      // Продолжаем с базовым переводом
+    }
+    
+    // Базовый перевод с использованием словаря, если API недоступен
+    console.log('Используем базовый словарный перевод для промпта');
+    const translationDict: Record<string, string> = {
+      'изображение': 'image',
+      'фото': 'photo',
+      'картинка': 'picture',
+      'пост': 'post',
+      'правильное питание': 'healthy nutrition',
+      'здоровое питание': 'healthy eating',
+      'рецепт': 'recipe',
+      'еда': 'food',
+      'питание': 'nutrition',
+      'диета': 'diet',
+      'полезный': 'healthy',
+      'вкусный': 'delicious',
+      'свежий': 'fresh',
+      'витамины': 'vitamins',
+      'белки': 'proteins',
+      'углеводы': 'carbohydrates',
+      'жиры': 'fats',
+      'овощи': 'vegetables',
+      'фрукты': 'fruits',
+      'ягоды': 'berries',
+      'завтрак': 'breakfast',
+      'обед': 'lunch',
+      'ужин': 'dinner',
+      'салат': 'salad',
+      'суп': 'soup'
+    };
+    
+    let translatedPrompt = prompt;
+    
+    // Заменяем все найденные слова и фразы
+    Object.entries(translationDict).forEach(([rus, eng]) => {
+      translatedPrompt = translatedPrompt.replace(new RegExp(rus, 'gi'), eng);
+    });
+    
+    console.log(`Оригинальный промпт: "${prompt}"`);
+    console.log(`Базово переведенный промпт: "${translatedPrompt}"`);
+    
+    return translatedPrompt;
+  }
+
   async generateImage(
     prompt: string,
     options: {
@@ -48,6 +141,7 @@ export class FalAiService {
       height?: number;
       model?: string;
       numImages?: number;
+      translatePrompt?: boolean;
     } = {}
   ): Promise<string[]> {
     try {
@@ -60,14 +154,18 @@ export class FalAiService {
         width = 1024,
         height = 1024,
         model = 'stable-diffusion-xl',
-        numImages = 1
+        numImages = 1,
+        translatePrompt = true
       } = options;
       
-      console.log(`Генерация изображения через FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
+      // Переводим промпт на английский, если это требуется
+      const processedPrompt = translatePrompt ? await this.translatePrompt(prompt) : prompt;
+      
+      console.log(`Генерация изображения через FAL.AI: prompt=${processedPrompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
       // Формируем запрос точно как в успешном запросе
       const requestData = {
-        prompt: prompt,
+        prompt: processedPrompt,
         negative_prompt: negativePrompt,
         width: width,
         height: height,
