@@ -65,22 +65,26 @@ export class FalAiService {
       console.log(`Generating image with FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
       // Формируем запрос в соответствии с документацией FAL.AI
-      // https://docs.fal.ai/guides/generating-images-from-text
+      // https://docs.fal.ai/reference/fal-ai-text-to-image
       const requestData = {
-        model_name: "sdxl",
         prompt: prompt,
         negative_prompt: negativePrompt,
-        width: width,
-        height: height,
-        num_images: numImages,
-        scheduler: "K_EULER_ANCESTRAL",
-        steps: 25,
+        image_size: `${width}x${height}`,
+        batch_size: numImages,
+        scheduler: "euler_a",
+        num_inference_steps: 30,
         guidance_scale: 7.5
       };
 
+      // URL для Fast SDXL API
+      const apiUrl = 'https://8cf71aa7-9952-4607-b77f-4d4151e777a5.defaults-profile.lm.fal.ai/sdxl';
+      
+      console.log('Using FAL.AI API URL:', apiUrl);
+      console.log('Request data:', JSON.stringify(requestData));
+      
       // Отправляем запрос на API FAL.AI
       const response = await axios.post(
-        'https://110602490-fast-sdxl.gateway.alpha.fal.ai/',
+        apiUrl,
         requestData,
         {
           headers: {
@@ -97,20 +101,42 @@ export class FalAiService {
 
       console.log('FAL.AI response:', JSON.stringify(response.data).substr(0, 200) + '...');
 
-      // Извлекаем URL сгенерированных изображений в соответствии с документацией FAL.AI
-      const images = response.data.images || [];
+      console.log('FAL.AI response structure:', Object.keys(response.data));
+      
+      // В новом SDXL API изображения находятся в свойстве 'images' в виде массива строк
+      let images = [];
+      
+      // Проверяем разные возможные структуры ответа
+      if (response.data.images && Array.isArray(response.data.images)) {
+        if (typeof response.data.images[0] === 'string') {
+          // Если напрямую массив строк с URL
+          images = response.data.images;
+        } else if (typeof response.data.images[0] === 'object' && response.data.images[0].url) {
+          // Если массив объектов с url внутри
+          images = response.data.images.map((img: any) => img.url || '').filter(Boolean);
+        }
+      } else if (response.data.image) {
+        // Если одно изображение
+        images = [response.data.image];
+      } else if (response.data.output && Array.isArray(response.data.output)) {
+        // Новая структура с 'output'
+        images = response.data.output;
+      }
+      
       if (!images.length) {
-        throw new Error('Не удалось получить сгенерированные изображения');
+        console.error('Структура ответа FAL.AI:', response.data);
+        throw new Error('Не удалось получить сгенерированные изображения из ответа API');
       }
 
       // Возвращаем массив URL изображений
-      return images.map((image: any) => image.url || '').filter(Boolean);
+      return images;
     } catch (error: any) {
       console.error('Ошибка при генерации изображения через FAL.AI:', error);
       if (error.response) {
         console.error('Детали ошибки FAL.AI:', {
           status: error.response.status,
-          data: error.response.data
+          data: error.response.data,
+          details: JSON.stringify(error.response.data?.detail || {})
         });
       }
       throw new Error(`Не удалось сгенерировать изображение: ${error.message}`);

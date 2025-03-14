@@ -83,7 +83,8 @@ export function ImageGenerationDialog({
         };
       }
       
-      const response = await api.post("/generate-image", requestData);
+      console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
+      const response = await api.post("/api/generate-image", requestData);
       return response.data;
     },
     onSuccess: (data) => {
