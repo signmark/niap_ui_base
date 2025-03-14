@@ -13,51 +13,29 @@ export default function ImageGenerationTest() {
   const [apiKeyStatus, setApiKeyStatus] = useState<'checking' | 'ok' | 'missing' | 'error'>('checking');
 
   useEffect(() => {
-    // Проверяем статус API ключа
+    // Проверяем статус API ключа из системных настроек
     const checkApiKey = async () => {
       try {
-        if (!user) {
-          setApiKeyStatus('missing');
-          return;
-        }
-
-        // Проверка наличия и работоспособности API ключа FAL.AI через новый эндпоинт
-        const response = await fetch('/api/tools/test/fal-ai-status.json', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          }
-        });
-
-        // Если ответ не в формате JSON, возможно Vite перехватил запрос
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('Неверный формат ответа от сервера:', contentType);
-          setApiKeyStatus('error');
-          return;
-        }
-
-        const data = await response.json();
+        // Запрашиваем API ключ из настроек системы
+        const apiResponse = await api.get('/api/settings/fal_ai');
         
-        if (response.ok && data.success) {
-          console.log('FAL.AI API статус:', data.message);
-          setApiKeyStatus('ok');
-        } else {
-          console.error('Ошибка FAL.AI API:', data.message || data.error);
+        if (!apiResponse.data?.success || !apiResponse.data?.data?.api_key) {
+          console.error('API ключ FAL.AI не найден в настройках системы');
           setApiKeyStatus('missing');
+          return;
         }
+        
+        // Получили API ключ, считаем его валидным
+        console.log('FAL.AI API ключ найден в настройках системы');
+        setApiKeyStatus('ok');
       } catch (error) {
         console.error('Ошибка при проверке API ключа:', error);
         setApiKeyStatus('error');
       }
     };
 
-    if (user) {
-      checkApiKey();
-    }
-  }, [user]);
+    checkApiKey();
+  }, []);
 
   const handleSettingsOpen = () => {
     // Перенаправление на страницу настроек
