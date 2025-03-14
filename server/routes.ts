@@ -7493,7 +7493,7 @@ ${datesText}
       console.log(`Запуск генерации контент-плана через n8n для кампании ${campaignId}`);
       
       // Переменная для контроля режима имитации (для отладки)
-      const simulationMode = true;
+      const simulationMode = false;
       
       if (simulationMode) {
         console.log("РЕЖИМ ИМИТАЦИИ: возвращение тестового контент-плана без вызова n8n webhook");
