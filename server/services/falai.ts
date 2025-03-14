@@ -163,17 +163,48 @@ Return only the translated text, no explanations or comments.`;
       
       console.log(`Генерация изображения через FAL.AI: prompt=${processedPrompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
-      // Формируем запрос точно как в успешном запросе
-      const requestData = {
-        prompt: processedPrompt,
-        negative_prompt: negativePrompt,
-        width: width,
-        height: height,
-        num_images: numImages
-      };
-
-      // Используем endpoint fast-sdxl, который мы видели на скриншоте
-      const apiUrl = `${this.baseUrl}/fast-sdxl`;
+      // Формируем запрос в зависимости от выбранной модели
+      const modelName = model || 'foocus'; // По умолчанию используем Foocus вместо SDXL
+      
+      // Адаптируем параметры запроса под выбранную модель
+      let requestData: any = {};
+      let apiUrl = '';
+      
+      // Выбираем эндпоинт и параметры запроса в зависимости от модели
+      if (modelName === 'foocus') {
+        // Endpoint и параметры для Foocus
+        apiUrl = `${this.baseUrl}/fal-ai/foocus`;
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt || "",
+          image_size: Math.max(width, height), // Foocus принимает один параметр размера
+          guidance_scale: 7.5, // Стандартное значение для Foocus
+          num_inference_steps: 30, // Стандартное количество шагов
+          num_images: numImages,
+          style_preset: "photographic", // Можно выбрать: base, anime, photographic, cinematic, и т.д.
+          seed: Math.floor(Math.random() * 2147483647) // Случайный сид для разнообразия результатов
+        };
+      } else if (modelName === 'stable-diffusion-xl' || modelName === 'fast-sdxl') {
+        // Endpoint и параметры для SDXL
+        apiUrl = `${this.baseUrl}/fast-sdxl`;
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt,
+          width: width,
+          height: height,
+          num_images: numImages
+        };
+      } else {
+        // Если указана другая модель, используем общий формат
+        apiUrl = `${this.baseUrl}/${modelName}`;
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt,
+          width: width,
+          height: height,
+          num_images: numImages
+        };
+      }
       
       console.log('Используем FAL.AI API URL:', apiUrl);
       console.log('Данные запроса:', JSON.stringify(requestData));
@@ -366,12 +397,14 @@ Return only the translated text, no explanations or comments.`;
       // Негативный промпт для улучшения качества
       const negativePrompt = 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional';
 
-      // Генерируем несколько вариантов
+      // Генерируем несколько вариантов с использованием Foocus
       return await this.generateImage(prompt, {
         negativePrompt,
         width: 1024,
         height: 1024,
-        numImages: 3
+        numImages: 3,
+        model: 'foocus',
+        translatePrompt: true
       });
     } catch (error) {
       console.error('Ошибка при генерации изображения для бизнеса:', error);
@@ -397,6 +430,7 @@ Return only the translated text, no explanations or comments.`;
       let width = 1080;
       let height = 1080;
       let stylePrompt = '';
+      let useModel = 'foocus'; // Используем Foocus как модель по умолчанию
 
       switch (platform) {
         case 'instagram':
@@ -426,12 +460,14 @@ Return only the translated text, no explanations or comments.`;
       Make it suitable for ${platform} posts, with no text overlay. 
       High quality, professional look, eye-catching design.`;
 
-      // Генерируем несколько вариантов
+      // Генерируем несколько вариантов, используя Foocus модель
       return await this.generateImage(prompt, {
         negativePrompt: 'text, words, letters, logos, watermarks, low quality',
         width,
         height,
-        numImages: 3
+        numImages: 3,
+        model: useModel,
+        translatePrompt: true
       });
     } catch (error) {
       console.error(`Ошибка при генерации изображения для ${platform}:`, error);
