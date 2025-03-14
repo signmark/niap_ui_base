@@ -1895,15 +1895,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Обновляем API ключ в сервисе
+      // Обновляем ключ API в сервисе
       falAiService.updateApiKey(falAiApiKey);
       
       // Генерируем тестовое изображение
       const prompt = "A beautiful landscape with mountains and a lake, digital art style";
+      console.log("Запуск генерации изображения через прямой API вызов...");
+      
       const imageURLs = await falAiService.generateImage(prompt, {
         negativePrompt: "bad quality, blurry, text, watermark",
-        width: 512,
-        height: 512,
+        width: 1024,
+        height: 1024,
         numImages: 1
       });
       
