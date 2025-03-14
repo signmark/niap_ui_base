@@ -1342,8 +1342,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Инициализация FalAI SDK с ключом API
         falAiSdk.initialize(apiKey);
         
-        // Подготавливаем endpoint для SDK (удаляем начальный слеш, если есть)
-        const sdkEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        // Подготавливаем endpoint для SDK (проверяем, содержит ли путь 'fal-ai')
+        const sdkEndpoint = endpoint.includes('fal-ai') ? endpoint : `fal-ai/${endpoint}`;
         
         // Устанавливаем увеличенный таймаут для операции
         // 300000 мс = 5 минут
@@ -1552,12 +1552,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Прямой запрос к API fal.ai
         // Используем разные форматы URL в зависимости от модели
+        // Унифицированная логика формирования URL
         let apiUrl = "";
-        if (model === 'fal-ai/fooocus') {
-          apiUrl = `https://queue.fal.run/${model}`;
-        } else if (model === 'flux/schnell') {
+        if (model.includes('fal-ai/')) {
+          // Модель уже содержит префикс
           apiUrl = `https://queue.fal.run/${model}`;
         } else {
+          // Добавляем префикс
           apiUrl = `https://queue.fal.run/fal-ai/${model}`;
         }
         
@@ -7076,7 +7077,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         };
         
         // Выполняем запрос через SDK
-        const responseData = await falAiSdk.generateImage("flux/schnell", {
+        const responseData = await falAiSdk.generateImage("fal-ai/flux/schnell", {
           ...data,
           scheduler: "K_EULER",
           num_inference_steps: 25,
@@ -7115,7 +7116,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         } else if (statusCode === 401 || statusCode === 403) {
           errorMessage = "Ошибка авторизации в FAL.AI API. Проверьте API ключ.";
         } else if (statusCode === 404) {
-          errorMessage = "Эндпоинт 'flux/schnell' не найден в FAL.AI API.";
+          errorMessage = "Эндпоинт 'fal-ai/flux/schnell' не найден в FAL.AI API.";
         } else if (statusCode >= 500) {
           errorMessage = "Внутренняя ошибка сервера FAL.AI API. Попробуйте повторить запрос позже.";
         }

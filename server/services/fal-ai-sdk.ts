@@ -47,13 +47,19 @@ export class FalAiSdkService {
     }
 
     try {
-      // Пробуем быстрый запрос для проверки связи
-      const result = await this.client.run({
-        modelId: 'text-to-image/sdxl',
-        input: {
+      // Пробуем быстрый запрос для проверки связи через прямой HTTP запрос
+      const axios = require('axios');
+      const result = await axios({
+        url: 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium',
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           prompt: 'test image',
           num_inference_steps: 1,
-        },
+        }
       });
 
       return { success: true, message: 'API доступно и работает' };
@@ -81,9 +87,10 @@ export class FalAiSdkService {
     console.log('Входные данные:', JSON.stringify(input).substring(0, 200));
 
     try {
-      // Формируем конфигурацию для запроса
+      // Формируем конфигурацию для запроса - автоматически добавляем префикс 'fal-ai/', если его нет
+      const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
       const requestConfig = {
-        url: `https://queue.fal.run/fal-ai/${modelId}`,
+        url: `https://queue.fal.run/${sanitizedModelId}`,
         method: 'POST',
         headers: {
           'Authorization': `Key ${this.apiKey}`,
