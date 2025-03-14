@@ -62,9 +62,9 @@ export function ImageGenerationDialog({
           width,
           height,
           campaignId,
-          model: modelType,
+          modelName: modelType,
           numImages: 1, // Уменьшаем до 1 изображения для ускорения обработки
-          stylePreset: stylePreset
+          stylePreset
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
@@ -74,8 +74,8 @@ export function ImageGenerationDialog({
         requestData = {
           businessData,
           campaignId,
-          model: modelType,
-          stylePreset: stylePreset
+          modelName: modelType,
+          stylePreset
         };
       } else if (activeTab === "social") {
         // Генерация для социальных сетей
@@ -86,8 +86,8 @@ export function ImageGenerationDialog({
           content,
           platform,
           campaignId,
-          model: modelType,
-          stylePreset: stylePreset
+          modelName: modelType,
+          stylePreset
         };
       }
       
@@ -313,29 +313,27 @@ export function ImageGenerationDialog({
             </RadioGroup>
           </div>
           
-          {{false} && (
-            <div className="space-y-2">
-              <Label>Стиль изображения</Label>
-              <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="flex space-x-2 flex-wrap">
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="photographic" id="s1" />
-                  <Label htmlFor="s1">Фотореалистичный</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="cinematic" id="s2" />
-                  <Label htmlFor="s2">Кинематографический</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="anime" id="s3" />
-                  <Label htmlFor="s3">Аниме</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="base" id="s4" />
-                  <Label htmlFor="s4">Базовый</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Стиль изображения</Label>
+            <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="flex space-x-2 flex-wrap">
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="photographic" id="s1" />
+                <Label htmlFor="s1">Фотореалистичный</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="cinematic" id="s2" />
+                <Label htmlFor="s2">Кинематографический</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="anime" id="s3" />
+                <Label htmlFor="s3">Аниме</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="base" id="s4" />
+                <Label htmlFor="s4">Базовый</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </TabsContent>
         
         {/* Содержимое вкладки для бизнеса */}

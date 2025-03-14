@@ -38,7 +38,7 @@ export function ImageGenerationDialog({
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
   const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning">("sdxl"); // По умолчанию используем SDXL
-  const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль для Foocus по умолчанию
+  const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   
   const { toast } = useToast();
   
@@ -64,7 +64,7 @@ export function ImageGenerationDialog({
           campaignId,
           model: modelType,
           numImages: 1, // Уменьшаем до 1 изображения для ускорения обработки
-          stylePreset: modelType === 'foocus' ? stylePreset : undefined
+          stylePreset: stylePreset
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
@@ -75,7 +75,7 @@ export function ImageGenerationDialog({
           businessData,
           campaignId,
           model: modelType,
-          stylePreset: modelType === 'foocus' ? stylePreset : undefined
+          stylePreset: stylePreset
         };
       } else if (activeTab === "social") {
         // Генерация для социальных сетей
@@ -87,7 +87,7 @@ export function ImageGenerationDialog({
           platform,
           campaignId,
           model: modelType,
-          stylePreset: modelType === 'foocus' ? stylePreset : undefined
+          stylePreset: stylePreset
         };
       }
       
@@ -313,7 +313,7 @@ export function ImageGenerationDialog({
             </RadioGroup>
           </div>
           
-          {modelType === "foocus" && (
+          {false && (
             <div className="space-y-2">
               <Label>Стиль изображения</Label>
               <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="flex space-x-2 flex-wrap">
