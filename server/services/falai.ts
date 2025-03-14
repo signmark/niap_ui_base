@@ -17,7 +17,7 @@ export interface FalAiConfig {
 export class FalAiService {
   private apiKey: string;
   // Используем современный URL очереди FAL.AI
-  private readonly baseUrl = 'https://queue.fal.run/fal-ai';
+  private readonly baseUrl = 'https://fal.run/fal-ai';
   private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
@@ -172,7 +172,7 @@ Return only the translated text, no explanations or comments.`;
       // Выбираем эндпоинт и параметры запроса в зависимости от модели
       if (model === 'foocus') {
         // Endpoint и параметры для Foocus
-        apiUrl = `${this.baseUrl}/fal-ai/foocus`;
+        apiUrl = `${this.baseUrl}/foocus`;
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt || "",
@@ -185,7 +185,7 @@ Return only the translated text, no explanations or comments.`;
         };
       } else if (model === 'flux') {
         // Endpoint и параметры для Flux (Schnell)
-        apiUrl = `${this.baseUrl}/fal-ai/flux/schnell`;
+        apiUrl = `${this.baseUrl}/flux/schnell`;
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt || "",
@@ -198,7 +198,7 @@ Return only the translated text, no explanations or comments.`;
         };
       } else if (model === 'sdxl' || model === 'stable-diffusion-xl' || model === 'fast-sdxl') {
         // Endpoint и параметры для SDXL
-        apiUrl = `${this.baseUrl}/fast-sdxl`;
+        apiUrl = `${this.baseUrl}/sdxl`;
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt,

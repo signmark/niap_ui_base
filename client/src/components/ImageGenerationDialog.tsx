@@ -62,7 +62,9 @@ export function ImageGenerationDialog({
           width,
           height,
           campaignId,
-          numImages: 1 // Уменьшаем до 1 изображения для ускорения обработки
+          model: modelType,
+          numImages: 1, // Уменьшаем до 1 изображения для ускорения обработки
+          stylePreset: modelType === 'foocus' ? stylePreset : undefined
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
@@ -71,7 +73,9 @@ export function ImageGenerationDialog({
         }
         requestData = {
           businessData,
-          campaignId
+          campaignId,
+          model: modelType,
+          stylePreset: modelType === 'foocus' ? stylePreset : undefined
         };
       } else if (activeTab === "social") {
         // Генерация для социальных сетей
@@ -81,7 +85,9 @@ export function ImageGenerationDialog({
         requestData = {
           content,
           platform,
-          campaignId
+          campaignId,
+          model: modelType,
+          stylePreset: modelType === 'foocus' ? stylePreset : undefined
         };
       }
       
