@@ -318,57 +318,6 @@ export function BusinessQuestionnaireForm({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Бизнес-анкета</CardTitle>
         <div className="flex gap-2">
-          {isEditMode && (
-            <Dialog open={isWebsiteDialogOpen} onOpenChange={setIsWebsiteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-1"
-                >
-                  <Search className="h-4 w-4" />
-                  Анализ сайта
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Анализ сайта компании</DialogTitle>
-                  <DialogDescription>
-                    Введите URL сайта компании для автоматического заполнения анкеты на основе данных с сайта.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="website-url" className="text-sm font-medium">
-                      URL сайта компании
-                    </label>
-                    <Input
-                      id="website-url"
-                      placeholder="https://example.com"
-                      value={websiteUrl}
-                      onChange={(e) => setWebsiteUrl(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsWebsiteDialogOpen(false)}
-                  >
-                    Отмена
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      analyzeWebsite();
-                      setIsWebsiteDialogOpen(false);
-                    }}
-                    disabled={!websiteUrl || isAnalyzing}
-                  >
-                    {isAnalyzing ? "Анализ..." : "Анализировать"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
           {hasQuestionnaire && (
             <Button 
               variant={isEditMode ? "outline" : "default"} 
@@ -379,6 +328,47 @@ export function BusinessQuestionnaireForm({
           )}
         </div>
       </CardHeader>
+      
+      <Dialog open={isWebsiteDialogOpen} onOpenChange={setIsWebsiteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Анализ сайта компании</DialogTitle>
+            <DialogDescription>
+              Введите URL сайта компании для автоматического заполнения анкеты на основе данных с сайта.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="website-url" className="text-sm font-medium">
+                URL сайта компании
+              </label>
+              <Input
+                id="website-url"
+                placeholder="https://example.com"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsWebsiteDialogOpen(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={() => {
+                analyzeWebsite();
+                setIsWebsiteDialogOpen(false);
+              }}
+              disabled={!websiteUrl || isAnalyzing}
+            >
+              {isAnalyzing ? "Анализ..." : "Анализировать"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <CardContent>
         {!hasQuestionnaire && !isEditMode ? (
           <div className="flex flex-col items-center py-8">
