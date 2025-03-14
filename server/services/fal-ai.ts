@@ -37,9 +37,11 @@ export class FalAiService {
       let sdkPayload: any = { input: {} };
       
       // Маппинг эндпоинтов для известных моделей
-      if (endpoint === 'fal-ai/sdxl') {
-        // Для нового формата API fal-ai/sdxl
-        console.log('Определена модель SDXL (новый формат API), адаптируем параметры...');
+      if (endpoint === 'fal-ai/sdxl' || 
+          endpoint === 'fal-ai/fast-sdxl' ||
+          endpoint === 'fast-sdxl') {
+        // Для нового формата API fal-ai/fast-sdxl
+        console.log('Определена модель fast-sdxl (новый формат API), адаптируем параметры...');
         sdkPayload = {
           input: {
             prompt: data.prompt,
@@ -51,7 +53,7 @@ export class FalAiService {
         };
       } else if (endpoint.includes('stable-diffusion-xl')) {
         // Для стандартного формата SDXL
-        console.log('Определена модель SDXL, адаптируем параметры...');
+        console.log('Определена модель SDXL, адаптируем параметры и преобразуем в fast-sdxl...');
         sdkPayload = {
           input: {
             prompt: data.prompt,
@@ -115,10 +117,13 @@ export class FalAiService {
       }));
       
       // Выполняем запрос к API с увеличенным таймаутом
-      // Для эндпоинта fal-ai/sdxl используем фиксированную ссылку
+      // Для старых эндпоинтов используем новый эндпоинт fast-sdxl 
       // на известную и работающую модель
-      const actualEndpoint = sdkEndpoint === 'fal-ai/sdxl' 
-        ? 'fal-ai/stable-diffusion-xl' 
+      const actualEndpoint = (sdkEndpoint === 'fal-ai/sdxl' || 
+                           sdkEndpoint === 'fal-ai/stable-diffusion-xl' ||
+                           sdkEndpoint === 'stable-diffusion/sdxl' ||
+                           sdkEndpoint === 'stable-diffusion-xl') 
+        ? 'fal-ai/fast-sdxl' 
         : sdkEndpoint;
       
       console.log(`Преобразуем эндпоинт из '${sdkEndpoint}' в '${actualEndpoint}'`);
@@ -229,7 +234,7 @@ export class FalAiService {
   async checkStatus(): Promise<{ok: boolean; message: string; details?: any}> {
     try {
       // Используем менее ресурсоемкий запрос для проверки связи
-      await run('fal-ai/stable-diffusion-xl', {
+      await run('fal-ai/fast-sdxl', {
         input: {
           prompt: "test image",
           width: 64,  // Минимальный размер для быстрого ответа
