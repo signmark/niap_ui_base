@@ -13,20 +13,28 @@ export default function ImageGenerationTest() {
   const [apiKeyStatus, setApiKeyStatus] = useState<'checking' | 'ok' | 'missing' | 'error'>('checking');
 
   useEffect(() => {
-    // Проверяем статус API ключа из системных настроек
+    // Проверяем статус API ключа напрямую через серверный эндпоинт
     const checkApiKey = async () => {
       try {
-        // Запрашиваем API ключ из настроек системы
-        const apiResponse = await api.get('/api/settings/fal_ai');
+        // Делаем простой запрос для проверки доступности API ключа
+        const response = await fetch('/api/settings/fal_ai');
         
-        if (!apiResponse.data?.success || !apiResponse.data?.data?.api_key) {
-          console.error('API ключ FAL.AI не найден в настройках системы');
+        if (!response.ok) {
+          console.error('API ключ FAL.AI не найден на сервере');
+          setApiKeyStatus('missing');
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.data?.api_key) {
+          console.error('API ключ FAL.AI не найден в ответе сервера');
           setApiKeyStatus('missing');
           return;
         }
         
         // Получили API ключ, считаем его валидным
-        console.log('FAL.AI API ключ найден в настройках системы');
+        console.log('FAL.AI API ключ найден на сервере');
         setApiKeyStatus('ok');
       } catch (error) {
         console.error('Ошибка при проверке API ключа:', error);
