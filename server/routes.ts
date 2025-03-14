@@ -6670,7 +6670,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         if (prompt) {
           // Базовая генерация по промпту с использованием Schnell модели
           console.log('Генерация изображения по промпту:', prompt.substring(0, 50) + '...');
-          const result = await falAiSdk.generateImage('flux/schnell', {
+          const result = await falAiSdk.generateImage('fal-ai/flux/schnell', {
             prompt: prompt,
             negative_prompt: negativePrompt || 'text, words, letters, logos, watermarks, low quality, blurry, grainy',
             width: width,

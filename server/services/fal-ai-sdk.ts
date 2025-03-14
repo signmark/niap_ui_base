@@ -69,10 +69,10 @@ export class FalAiSdkService {
   /**
    * Сгенерировать изображение
    * @param input Данные для генерации
-   * @param modelId ID модели (например, text-to-image/sdxl)
+   * @param modelId ID модели (например, 'flux/schnell', 'stable-diffusion-v35-medium')
    * @returns Результат генерации
    */
-  async generateImage(input: any, modelId: string = 'text-to-image/sdxl'): Promise<any> {
+  async generateImage(input: any, modelId: string = 'flux/schnell'): Promise<any> {
     if (!this.apiKey || !this.client) {
       throw new Error('Клиент не инициализирован. Необходим API ключ.');
     }
