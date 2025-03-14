@@ -184,7 +184,7 @@ Return only the translated text, no explanations or comments.`;
           style_preset: stylePreset,
           seed: Math.floor(Math.random() * 2147483647) // Случайный сид для разнообразия результатов
         };
-      } else if (model === 'flux') {
+      } else if (model === 'flux' || model === 'schnell') {
         // Endpoint и параметры для Flux (Schnell)
         apiUrl = `${this.baseUrl}/flux/schnell`;
         requestData = {
@@ -410,13 +410,13 @@ Return only the translated text, no explanations or comments.`;
       // Негативный промпт для улучшения качества
       const negativePrompt = 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional';
 
-      // Генерируем несколько вариантов с использованием Foocus
+      // Генерируем несколько вариантов с использованием Schnell для быстрой генерации
       return await this.generateImage(prompt, {
         negativePrompt,
         width: 1024,
         height: 1024,
         numImages: 3,
-        model: 'foocus',
+        model: 'schnell',
         translatePrompt: true
       });
     } catch (error) {
@@ -443,7 +443,7 @@ Return only the translated text, no explanations or comments.`;
       let width = 1080;
       let height = 1080;
       let stylePrompt = '';
-      let useModel = 'foocus'; // Используем Foocus как модель по умолчанию
+      let useModel = 'schnell'; // Используем Schnell как новую модель по умолчанию для быстрой генерации
 
       switch (platform) {
         case 'instagram':
@@ -473,7 +473,7 @@ Return only the translated text, no explanations or comments.`;
       Make it suitable for ${platform} posts, with no text overlay. 
       High quality, professional look, eye-catching design.`;
 
-      // Генерируем несколько вариантов, используя Foocus модель
+      // Генерируем несколько вариантов, используя Schnell модель
       return await this.generateImage(prompt, {
         negativePrompt: 'text, words, letters, logos, watermarks, low quality',
         width,
