@@ -1436,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', async (req, res) => {
     try {
-      const { prompt, negativePrompt, width, height, numImages, businessData, content, platform } = req.body;
+      const { prompt, negativePrompt, width, height, numImages, modelName, businessData, content, platform } = req.body;
       const falAiApiKey = process.env.FAL_AI_API_KEY;
       
       if (!falAiApiKey) {
@@ -1446,29 +1446,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Обновляем ключ API в сервисе
-      falAiService.updateApiKey(falAiApiKey);
-      console.log("[fal-ai] FAL.AI API key updated for image generation");
-      
-      let imageUrls: string[] = [];
+      // Определяем используемую модель и данные для запроса
+      let model = modelName || 'sdxl'; // По умолчанию используем SDXL
+      let requestData: any = {};
       
       if (prompt) {
         // Генерация по прямому промпту
         console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
-        imageUrls = await falAiService.generateImage(prompt, {
-          negativePrompt: negativePrompt || "",
+        
+        requestData = {
+          prompt: prompt,
+          negative_prompt: negativePrompt || "",
           width: width || 1024,
           height: height || 1024,
-          numImages: numImages || 1
-        });
+          num_images: numImages || 1,
+          style_preset: 'photographic'
+        };
       } else if (businessData) {
         // Генерация изображения для бизнеса
         console.log(`Генерация изображения для бизнеса: ${businessData.companyName}`);
-        imageUrls = await falAiService.generateBusinessImage(businessData);
+        
+        const businessPrompt = `Create a professional, brand-appropriate image for ${businessData.companyName}. 
+        The business is described as: ${businessData.brandImage}. 
+        They provide: ${businessData.productsServices}. 
+        Style: clean, professional, modern corporate design with soft colors, minimalist approach.
+        Make it appropriate for business marketing materials, websites, and social media. 
+        No text or logos, just the visual elements that represent the brand.`;
+        
+        requestData = {
+          prompt: businessPrompt,
+          negative_prompt: 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional',
+          width: 1024,
+          height: 1024,
+          num_images: 3,
+          style_preset: 'photographic'
+        };
       } else if (content && platform) {
         // Генерация изображения для социальных сетей
         console.log(`Генерация изображения для соцсетей (${platform})`);
-        imageUrls = await falAiService.generateSocialMediaImage(content, platform);
+        
+        // Короткий контент для промпта
+        const shortContent = content.slice(0, 300);
+        
+        // Адаптируем размеры и стиль под платформу
+        let width = 1080;
+        let height = 1080;
+        let stylePrompt = '';
+        
+        switch (platform) {
+          case 'instagram':
+            width = 1080;
+            height = 1080;
+            stylePrompt = 'vibrant, eye-catching, social media ready, Instagram style';
+            break;
+          case 'facebook':
+            width = 1200;
+            height = 630;
+            stylePrompt = 'clean, professional, engaging, Facebook style';
+            break;
+          case 'vk':
+            width = 1200;
+            height = 800;
+            stylePrompt = 'modern, appealing to Russian audience, VK style';
+            break;
+          case 'telegram':
+            width = 1200;
+            height = 900;
+            stylePrompt = 'minimalist, informative, Telegram channel style';
+            break;
+        }
+        
+        const socialPrompt = `Create an image that visually represents: "${shortContent}". ${stylePrompt}. 
+        Make it suitable for ${platform} posts, with no text overlay. 
+        High quality, professional look, eye-catching design.`;
+        
+        requestData = {
+          prompt: socialPrompt,
+          negative_prompt: 'text, words, letters, logos, watermarks, low quality',
+          width: width,
+          height: height,
+          num_images: 3,
+          style_preset: 'photographic'
+        };
       } else {
         return res.status(400).json({
           success: false,
@@ -1476,10 +1535,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      return res.json({
-        success: true,
-        data: imageUrls
-      });
+      // Делаем запрос к FAL.AI API напрямую
+      try {
+        console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
+        
+        // Прямой запрос к API fal.ai
+        const apiUrl = `https://queue.fal.run/fal-ai/text-to-image/${model}`;
+        console.log(`URL запроса: ${apiUrl}`);
+        console.log(`Данные запроса: ${JSON.stringify(requestData).substring(0, 200)}`);
+        
+        const response = await axios.post(
+          apiUrl,
+          requestData,
+          {
+            headers: {
+              'Authorization': `Key ${falAiApiKey}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 180000 // 3 минуты таймаут
+          }
+        );
+        
+        // Обрабатываем ответ API
+        console.log(`Статус ответа: ${response.status}`);
+        console.log(`Заголовки ответа: ${JSON.stringify(response.headers)}`);
+        console.log(`Тип данных ответа: ${typeof response.data}`);
+        
+        // Проверяем тип ответа и обрабатываем соответственно
+        // Если запрос поставлен в очередь, создаем поллинг для получения результата
+        if (response.data && response.data.status === 'IN_QUEUE' && response.data.status_url) {
+          console.log(`Запрос поставлен в очередь, ID запроса: ${response.data.request_id}`);
+          
+          // Функция для ожидания завершения генерации
+          const waitForResult = async (statusUrl: string): Promise<any> => {
+            console.log(`Проверяем статус по URL: ${statusUrl}`);
+            let maxAttempts = 60; // Максимальное число попыток (3 минуты при интервале в 3 секунды)
+            let attempt = 0;
+            
+            while (attempt < maxAttempts) {
+              const statusResponse = await axios.get(statusUrl, {
+                headers: {
+                  'Authorization': `Key ${falAiApiKey}`,
+                  'Accept': 'application/json'
+                }
+              });
+              
+              const status = statusResponse.data?.status;
+              console.log(`Текущий статус: ${status}, попытка ${attempt + 1}/${maxAttempts}`);
+              
+              if (status === 'COMPLETED' && statusResponse.data.response_url) {
+                // Получаем результат
+                const resultResponse = await axios.get(statusResponse.data.response_url, {
+                  headers: {
+                    'Authorization': `Key ${falAiApiKey}`,
+                    'Accept': 'application/json'
+                  }
+                });
+                return resultResponse.data;
+              } else if (status === 'FAILED' || status === 'CANCELED') {
+                throw new Error(`Генерация изображения не удалась: ${status}`);
+              }
+              
+              // Если все еще в обработке, ждем и продолжаем проверять
+              await new Promise(resolve => setTimeout(resolve, 3000)); // 3 секунды
+              attempt++;
+            }
+            
+            throw new Error('Время ожидания генерации изображения истекло');
+          };
+          
+          // Ожидаем результат генерации
+          const result = await waitForResult(response.data.status_url);
+          console.log(`Получен результат: ${typeof result === 'object' ? JSON.stringify(result).substring(0, 200) : 'не объект'}`);
+          
+          // Извлекаем URL изображений из результата
+          let imageUrls: string[] = [];
+          
+          if (result.images && Array.isArray(result.images)) {
+            imageUrls = result.images;
+          } else if (result.image) {
+            imageUrls = [result.image];
+          } else if (result.output && Array.isArray(result.output)) {
+            imageUrls = result.output;
+          } else {
+            console.error(`Неизвестный формат результата: ${JSON.stringify(result).substring(0, 200)}`);
+            throw new Error('Не удалось получить URL изображений из результата');
+          }
+          
+          return res.json({
+            success: true,
+            data: imageUrls
+          });
+        } else {
+          // Если запрос обработан мгновенно (редкий случай)
+          let imageUrls: string[] = [];
+          
+          if (response.data.images && Array.isArray(response.data.images)) {
+            imageUrls = response.data.images;
+          } else if (response.data.image) {
+            imageUrls = [response.data.image];
+          } else if (response.data.output && Array.isArray(response.data.output)) {
+            imageUrls = response.data.output;
+          } else {
+            console.error(`Неизвестный формат мгновенного результата: ${JSON.stringify(response.data).substring(0, 200)}`);
+            throw new Error('Не удалось получить URL изображений из мгновенного результата');
+          }
+          
+          return res.json({
+            success: true,
+            data: imageUrls
+          });
+        }
+      } catch (apiError: any) {
+        console.error(`Ошибка при запросе к FAL.AI API: ${apiError.message}`);
+        
+        if (apiError.response) {
+          console.error(`Статус ошибки: ${apiError.response.status}`);
+          console.error(`Данные ошибки: ${JSON.stringify(apiError.response.data)}`);
+        }
+        
+        throw new Error(`Ошибка API FAL.AI: ${apiError.message}`);
+      }
     } catch (error: any) {
       console.error("Ошибка при генерации изображения:", error);
       
