@@ -1069,16 +1069,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rejectUnauthorized: false
         });
         
-        // Отправляем запрос через node-fetch вместо axios
+        // Отправляем запрос через node-fetch вместо axios, используя HTTPS с отключенной проверкой сертификата
+        // Вместо прямого IP адреса, используем обычный домен api.fal.ai
+        const apiUrl = `https://api.fal.ai${endpoint}`;
+        
+        console.log(`[FAL.AI Прокси] Выполняем запрос к: ${apiUrl}`);
+        console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
+        
+        // Импортируем https нативный модуль для создания агента
+        const agentOptions = {
+          rejectUnauthorized: false
+        };
+        
+        // Создаем агента, который игнорирует ошибки сертификата
+        const agent = new https.Agent(agentOptions);
+        
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Host': 'api.fal.ai' // Необходимо для правильной обработки запроса на CloudFront
+            'Accept': 'application/json'
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          agent
         });
         
         console.log(`[FAL.AI Прокси] Статус ответа: ${response.status}`);
