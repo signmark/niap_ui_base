@@ -1329,6 +1329,23 @@ export default function ContentPage() {
           }}
         />
       )}
+      
+      {/* Диалог генерации изображений */}
+      <Dialog open={isImageGenerationDialogOpen} onOpenChange={setIsImageGenerationDialogOpen}>
+        <ImageGenerationDialog 
+          campaignId={selectedCampaignId}
+          onImageGenerated={(imageUrl) => {
+            // Обновляем URL изображения в форме создания контента
+            setNewContent({
+              ...newContent,
+              imageUrl
+            });
+            // Закрываем диалог после выбора изображения
+            setIsImageGenerationDialogOpen(false);
+          }}
+          onClose={() => setIsImageGenerationDialogOpen(false)}
+        />
+      </Dialog>
     </div>
   );
 }
