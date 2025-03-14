@@ -981,14 +981,14 @@ export default function ContentPage() {
         </DialogContent>
         
         {isEditDialogOpen && (
-          <DraggableDialogContent className="overflow-auto p-6">
-            <div className="flex flex-col h-full">
+          <DraggableDialogContent className="sm:max-w-[800px] bg-background rounded-lg">
+            <div className="flex flex-col h-full p-6">
               <DialogHeader className="draggable-header cursor-move mb-4">
                 <DialogTitle>Редактирование контента</DialogTitle>
               </DialogHeader>
               
               {currentContent && (
-                <div className="space-y-4 flex-1 overflow-y-auto px-1">
+                <div className="space-y-4 flex-1 overflow-y-auto">
                   <div className="space-y-2">
                     <Label htmlFor="title">Название контента</Label>
                     <Input
@@ -1294,7 +1294,7 @@ export default function ContentPage() {
                 </div>
               )}
               
-              <DialogFooter className="mt-4 pt-2 border-t">
+              <DialogFooter className="mt-4 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"

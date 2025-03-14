@@ -93,12 +93,13 @@ export const DraggableDialogContent = forwardRef<
           height: size.height,
           maxWidth: "95vw",
           maxHeight: "90vh",
-          position: "absolute",
-          top: "50%",
+          position: "fixed",
+          top: "10%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           padding: 0,
-          overflow: "hidden"
+          overflow: "hidden",
+          backgroundColor: "white"
         }}
         {...props}
       >
