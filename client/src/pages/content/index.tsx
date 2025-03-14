@@ -3,8 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { DraggableDialogContent, TransparentDialogOverlay } from "@/components/ui/draggable-dialog";
-import { TransparentDialog } from "@/components/ui/transparent-dialog";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
@@ -976,359 +974,332 @@ export default function ContentPage() {
       </Dialog>
 
       {/* Диалог редактирования контента */}
-      <Dialog 
-        open={isEditDialogOpen} 
-        onOpenChange={(open) => {
-          // Проверяем, не клик ли это внутри контента
-          if (open === false && isEditDialogOpen === true) {
-            // Диалог закрывается по клику вне диалога или кнопкой "Отмена/X"
-            setIsEditDialogOpen(false);
-          } else if (open === true && isEditDialogOpen === false) {
-            // Диалог открывается
-            setIsEditDialogOpen(true);
-          }
-        }}>
-        {/* Используем прозрачный оверлей вместо стандартного черного */}
-        <TransparentDialogOverlay />
-        
-        <DialogContent className="hidden opacity-0 pointer-events-none">
-          {/* Этот DialogContent скрыт и нужен только для соответствия API Dialog */}
-        </DialogContent>
-        
-        {isEditDialogOpen && (
-          <DraggableDialogContent className="sm:max-w-[800px] bg-background rounded-lg">
-            <div className="flex flex-col h-full p-6">
-              <DialogHeader className="draggable-header cursor-move mb-4">
-                <DialogTitle>Редактирование контента</DialogTitle>
-              </DialogHeader>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактирование контента</DialogTitle>
+          </DialogHeader>
+          {currentContent && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Название контента</Label>
+                <Input
+                  id="title"
+                  placeholder="Введите название контента"
+                  value={currentContent.title || ""}
+                  onChange={(e) => {
+                    const updatedContent = {...currentContent, title: e.target.value};
+                    setCurrentContentSafe(updatedContent);
+                  }}
+                  className="mb-4"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contentType">Тип контента</Label>
+                <Select
+                  value={currentContent.contentType || 'text'}
+                  onValueChange={(value) => {
+                    const updatedContent = {...currentContent, contentType: value};
+                    setCurrentContentSafe(updatedContent);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите тип контента" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Только текст</SelectItem>
+                    <SelectItem value="text-image">Текст с изображением</SelectItem>
+                    <SelectItem value="video">Видео</SelectItem>
+                    <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               
-              {currentContent && (
-                <div className="space-y-4 flex-1 overflow-y-auto">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Название контента</Label>
-                    <Input
-                      id="title"
-                      placeholder="Введите название контента"
-                      value={currentContent.title || ""}
-                      onChange={(e) => {
-                        const updatedContent = {...currentContent, title: e.target.value};
-                        setCurrentContentSafe(updatedContent);
-                      }}
-                      className="mb-4"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="contentType">Тип контента</Label>
-                    <Select
-                      value={currentContent.contentType || 'text'}
-                      onValueChange={(value) => {
-                        const updatedContent = {...currentContent, contentType: value};
-                        setCurrentContentSafe(updatedContent);
+              <div className="space-y-2">
+                <Label htmlFor="content">Контент</Label>
+                <div className="max-h-[200px] overflow-y-auto">
+                  <RichTextEditor
+                    content={currentContent.content || ''}
+                    onChange={(html: string) => {
+                      const updatedContent = {...currentContent, content: html};
+                      setCurrentContentSafe(updatedContent);
+                    }}
+                    minHeight="150px"
+                    className="tiptap"
+                  />
+                </div>
+              </div>
+              {(currentContent.contentType === "text-image") && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="imageUrl">URL изображения</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => {
+                        // Открываем диалог генерации изображения для редактирования
+                        setCurrentContentSafe(currentContent);
+                        setIsImageGenerationDialogOpen(true);
                       }}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите тип контента" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Только текст</SelectItem>
-                        <SelectItem value="text-image">Текст с изображением</SelectItem>
-                        <SelectItem value="video">Видео</SelectItem>
-                        <SelectItem value="video-text">Видео с текстом</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Sparkles className="h-4 w-4" />
+                      Сгенерировать изображение
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="content">Контент</Label>
-                    <div className="max-h-[200px] overflow-y-auto border rounded-md">
-                      <RichTextEditor
-                        content={currentContent.content || ''}
-                        onChange={(html: string) => {
-                          const updatedContent = {...currentContent, content: html};
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                        minHeight="150px"
-                        className="tiptap"
-                      />
-                    </div>
-                  </div>
-                  
-                  {(currentContent.contentType === "text-image") && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="imageUrl">URL изображения</Label>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={() => {
-                            // Открываем диалог генерации изображения для редактирования
-                            setCurrentContentSafe(currentContent);
-                            setIsImageGenerationDialogOpen(true);
-                          }}
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          Сгенерировать изображение
-                        </Button>
-                      </div>
-                      <Input
-                        id="imageUrl"
-                        placeholder="Введите URL изображения"
-                        value={currentContent.imageUrl || ""}
-                        onChange={(e) => {
-                          const updatedContent = {...currentContent, imageUrl: e.target.value};
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                      />
-                    </div>
-                  )}
-                  
-                  {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="videoUrl">URL видео</Label>
-                      <Input
-                        id="videoUrl"
-                        placeholder="Введите URL видео"
-                        value={currentContent.videoUrl || ""}
-                        onChange={(e) => {
-                          const updatedContent = {...currentContent, videoUrl: e.target.value};
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Список ключевых слов кампании */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label>Выберите ключевые слова</Label>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
-                        }}
-                        disabled={isLoadingKeywords}
-                        className="h-8 w-8 p-0"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
-                        <span className="sr-only">Обновить</span>
-                      </Button>
-                    </div>
-                    <Card>
-                      <CardContent className="p-4">
-                        {isLoadingKeywords ? (
-                          <div className="flex justify-center p-4">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                          </div>
-                        ) : !campaignKeywords.length ? (
-                          <p className="text-center text-muted-foreground py-2">
-                            Нет ключевых слов для этой кампании
-                          </p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-1">
-                            {campaignKeywords.map((keyword) => {
-                              // Проверяем, выбрано ли это ключевое слово в нашем React-состоянии
-                              const isSelected = selectedKeywordIds.has(keyword.id);
-                              
-                              return (
-                                <div key={keyword.id || keyword.keyword} className="flex items-center space-x-1">
-                                  <input
-                                    type="checkbox"
-                                    id={`edit-keyword-${keyword.id || keyword.keyword}`}
-                                    className="h-3 w-3 rounded border-gray-300"
-                                    checked={isSelected}
-                                    data-testid={`keyword-checkbox-${keyword.id}`}
-                                    onChange={(e) => {
-                                      console.log('Checkbox changed:', keyword.keyword, e.target.checked);
-                                      
-                                      // Создаем новую копию Set для обновления
-                                      const newSelectedKeywordIds = new Set(selectedKeywordIds);
-                                      
-                                      if (e.target.checked) {
-                                        // Добавляем ID ключевого слова в Set
-                                        newSelectedKeywordIds.add(keyword.id);
-                                        
-                                        // Также обновляем currentContent для визуального отображения
-                                        const updatedContent = {
-                                          ...currentContent,
-                                          keywords: [
-                                            ...Array.isArray(currentContent.keywords) ? currentContent.keywords : [], 
-                                            keyword.keyword
-                                          ].filter((v, i, a) => a.indexOf(v) === i) // Удаляем дубликаты
-                                        };
-                                        setCurrentContent(updatedContent);
-                                      } else {
-                                        // Удаляем ID ключевого слова из Set
-                                        newSelectedKeywordIds.delete(keyword.id);
-                                        
-                                        // Также обновляем currentContent для визуального отображения
-                                        if (Array.isArray(currentContent.keywords)) {
-                                          const updatedContent = {
-                                            ...currentContent,
-                                            keywords: currentContent.keywords.filter(k => 
-                                              k.trim().toLowerCase() !== keyword.keyword.trim().toLowerCase()
-                                            )
-                                          };
-                                          setCurrentContent(updatedContent);
-                                        }
-                                      }
-                                      
-                                      // Обновляем состояние выбранных ключевых слов
-                                      console.log('Updated keyword IDs:', newSelectedKeywordIds);
-                                      setSelectedKeywordIds(newSelectedKeywordIds);
-                                    }}
-                                  />
-                                  <label 
-                                    htmlFor={`edit-keyword-${keyword.id || keyword.keyword}`}
-                                    className="text-sm"
-                                  >
-                                    {keyword.keyword}
-                                    {keyword.trendScore && (
-                                      <span className="ml-1 text-xs text-muted-foreground">
-                                        ({keyword.trendScore})
-                                      </span>
-                                    )}
-                                  </label>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  {/* Поле для ввода дополнительных ключевых слов */}
-                  <div className="space-y-2">
-                    <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
-                    <Input
-                      id="editAdditionalKeywords"
-                      placeholder="Например: здоровье, диета, питание"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          
-                          const value = e.currentTarget.value.trim();
-                          if (!value) return;
-                          
-                          console.log('Adding new keyword:', value);
-                          
-                          // Гарантируем, что keywords всегда массив
-                          const existingKeywords = Array.isArray(currentContent.keywords) 
-                            ? [...currentContent.keywords] 
-                            : [];
-                          
-                          // Не добавляем, если ключевое слово уже есть в списке
-                          if (!existingKeywords.includes(value)) {
-                            const updatedKeywords = [...existingKeywords, value];
-                            console.log('New keywords array:', updatedKeywords);
-                            
-                            const updatedContent = {
-                              ...currentContent,
-                              keywords: updatedKeywords
-                            };
-                            setCurrentContentSafe(updatedContent);
-                          }
-                          
-                          // Очищаем поле ввода
-                          e.currentTarget.value = "";
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const value = e.currentTarget.value.trim();
-                        if (!value) return;
-                        
-                        console.log('Adding keyword on blur:', value);
-                        
-                        // Гарантируем, что keywords всегда массив
-                        const existingKeywords = Array.isArray(currentContent.keywords) 
-                          ? [...currentContent.keywords] 
-                          : [];
-                        
-                        // Не добавляем, если ключевое слово уже есть в списке
-                        if (!existingKeywords.includes(value)) {
-                          const updatedKeywords = [...existingKeywords, value];
-                          console.log('New keywords array on blur:', updatedKeywords);
-                          
-                          const updatedContent = {
-                            ...currentContent,
-                            keywords: updatedKeywords
-                          };
-                          setCurrentContentSafe(updatedContent);
-                        }
-                        
-                        // Очищаем поле ввода
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Предпросмотр выбранных ключевых слов */}
-                  {currentContent.keywords && currentContent.keywords.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Выбранные ключевые слова:</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {Array.isArray(currentContent.keywords) ? (
-                          currentContent.keywords.map((keyword, index) => (
-                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                              {keyword}
-                              <button
-                                type="button"
-                                className="h-4 w-4 rounded-full"
-                                onClick={() => {
-                                  console.log('Removing keyword:', keyword);
-                                  // Гарантируем, что keywords всегда массив
-                                  const existingKeywords = Array.isArray(currentContent.keywords) 
-                                    ? [...currentContent.keywords] 
-                                    : [];
-                                  
-                                  // Удаляем ключевое слово по индексу
-                                  const updatedKeywords = existingKeywords.filter((_, i) => i !== index);
-                                  console.log('Keywords after removal:', updatedKeywords);
-                                  
-                                  const updatedContent = {
-                                    ...currentContent,
-                                    keywords: updatedKeywords
-                                  };
-                                  setCurrentContentSafe(updatedContent);
-                                }}
-                              >
-                                ×
-                              </button>
-                            </Badge>
-                          ))
-                        ) : (
-                          <div>Нет ключевых слов</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <Input
+                    id="imageUrl"
+                    placeholder="Введите URL изображения"
+                    value={currentContent.imageUrl || ""}
+                    onChange={(e) => {
+                      const updatedContent = {...currentContent, imageUrl: e.target.value};
+                      setCurrentContentSafe(updatedContent);
+                    }}
+                  />
+                </div>
+              )}
+              {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">URL видео</Label>
+                  <Input
+                    id="videoUrl"
+                    placeholder="Введите URL видео"
+                    value={currentContent.videoUrl || ""}
+                    onChange={(e) => {
+                      const updatedContent = {...currentContent, videoUrl: e.target.value};
+                      setCurrentContentSafe(updatedContent);
+                    }}
+                  />
                 </div>
               )}
               
-              <DialogFooter className="mt-4 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  Отмена
-                </Button>
-                <Button 
-                  type="button" 
-                  onClick={handleUpdateContent}
-                  disabled={updateContentMutation.isPending}
-                >
-                  {updateContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Сохранить
-                </Button>
-              </DialogFooter>
+              {/* Список ключевых слов кампании */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Выберите ключевые слова</Label>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+                    }}
+                    disabled={isLoadingKeywords}
+                    className="h-8 w-8 p-0"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
+                    <span className="sr-only">Обновить</span>
+                  </Button>
+                </div>
+                <Card>
+                  <CardContent className="p-4">
+                    {isLoadingKeywords ? (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : !campaignKeywords.length ? (
+                      <p className="text-center text-muted-foreground py-2">
+                        Нет ключевых слов для этой кампании
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-1">
+                        {campaignKeywords.map((keyword) => {
+                          // Проверяем, выбрано ли это ключевое слово в нашем React-состоянии
+                          const isSelected = selectedKeywordIds.has(keyword.id);
+                          
+                          return (
+                            <div key={keyword.id || keyword.keyword} className="flex items-center space-x-1">
+                              <input
+                                type="checkbox"
+                                id={`edit-keyword-${keyword.id || keyword.keyword}`}
+                                className="h-3 w-3 rounded border-gray-300"
+                                checked={isSelected}
+                                data-testid={`keyword-checkbox-${keyword.id}`}
+                                onChange={(e) => {
+                                  console.log('Checkbox changed:', keyword.keyword, e.target.checked);
+                                  
+                                  // Создаем новую копию Set для обновления
+                                  const newSelectedKeywordIds = new Set(selectedKeywordIds);
+                                  
+                                  if (e.target.checked) {
+                                    // Добавляем ID ключевого слова в Set
+                                    newSelectedKeywordIds.add(keyword.id);
+                                    
+                                    // Также обновляем currentContent для визуального отображения
+                                    const updatedContent = {
+                                      ...currentContent,
+                                      keywords: [
+                                        ...Array.isArray(currentContent.keywords) ? currentContent.keywords : [], 
+                                        keyword.keyword
+                                      ].filter((v, i, a) => a.indexOf(v) === i) // Удаляем дубликаты
+                                    };
+                                    setCurrentContent(updatedContent);
+                                  } else {
+                                    // Удаляем ID ключевого слова из Set
+                                    newSelectedKeywordIds.delete(keyword.id);
+                                    
+                                    // Также обновляем currentContent для визуального отображения
+                                    if (Array.isArray(currentContent.keywords)) {
+                                      const updatedContent = {
+                                        ...currentContent,
+                                        keywords: currentContent.keywords.filter(k => 
+                                          k.trim().toLowerCase() !== keyword.keyword.trim().toLowerCase()
+                                        )
+                                      };
+                                      setCurrentContent(updatedContent);
+                                    }
+                                  }
+                                  
+                                  // Обновляем состояние выбранных ключевых слов
+                                  console.log('Updated keyword IDs:', newSelectedKeywordIds);
+                                  setSelectedKeywordIds(newSelectedKeywordIds);
+                                }}
+                              />
+                              <label 
+                                htmlFor={`edit-keyword-${keyword.id || keyword.keyword}`}
+                                className="text-sm"
+                              >
+                                {keyword.keyword}
+                                {keyword.trendScore && (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    ({keyword.trendScore})
+                                  </span>
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Поле для ввода дополнительных ключевых слов */}
+              <div className="space-y-2">
+                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+                <Input
+                  id="editAdditionalKeywords"
+                  placeholder="Например: здоровье, диета, питание"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      
+                      const value = e.currentTarget.value.trim();
+                      if (!value) return;
+                      
+                      console.log('Adding new keyword:', value);
+                      
+                      // Гарантируем, что keywords всегда массив
+                      const existingKeywords = Array.isArray(currentContent.keywords) 
+                        ? [...currentContent.keywords] 
+                        : [];
+                      
+                      // Не добавляем, если ключевое слово уже есть в списке
+                      if (!existingKeywords.includes(value)) {
+                        const updatedKeywords = [...existingKeywords, value];
+                        console.log('New keywords array:', updatedKeywords);
+                        
+                        const updatedContent = {
+                          ...currentContent,
+                          keywords: updatedKeywords
+                        };
+                        setCurrentContentSafe(updatedContent);
+                      }
+                      
+                      // Очищаем поле ввода
+                      e.currentTarget.value = "";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.currentTarget.value.trim();
+                    if (!value) return;
+                    
+                    console.log('Adding keyword on blur:', value);
+                    
+                    // Гарантируем, что keywords всегда массив
+                    const existingKeywords = Array.isArray(currentContent.keywords) 
+                      ? [...currentContent.keywords] 
+                      : [];
+                    
+                    // Не добавляем, если ключевое слово уже есть в списке
+                    if (!existingKeywords.includes(value)) {
+                      const updatedKeywords = [...existingKeywords, value];
+                      console.log('New keywords array on blur:', updatedKeywords);
+                      
+                      const updatedContent = {
+                        ...currentContent,
+                        keywords: updatedKeywords
+                      };
+                      setCurrentContentSafe(updatedContent);
+                    }
+                    
+                    // Очищаем поле ввода
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </div>
+              
+              {/* Предпросмотр выбранных ключевых слов */}
+              {currentContent.keywords && currentContent.keywords.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Выбранные ключевые слова:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.isArray(currentContent.keywords) ? (
+                      currentContent.keywords.map((keyword, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {keyword}
+                          <button
+                            type="button"
+                            className="h-4 w-4 rounded-full"
+                            onClick={() => {
+                              console.log('Removing keyword:', keyword);
+                              // Гарантируем, что keywords всегда массив
+                              const existingKeywords = Array.isArray(currentContent.keywords) 
+                                ? [...currentContent.keywords] 
+                                : [];
+                              
+                              // Удаляем ключевое слово по индексу
+                              const updatedKeywords = existingKeywords.filter((_, i) => i !== index);
+                              console.log('Keywords after removal:', updatedKeywords);
+                              
+                              const updatedContent = {
+                                ...currentContent,
+                                keywords: updatedKeywords
+                              };
+                              setCurrentContentSafe(updatedContent);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))
+                    ) : (
+                      <div>Нет ключевых слов</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </DraggableDialogContent>
-        )}
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Отмена
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleUpdateContent}
+              disabled={updateContentMutation.isPending}
+            >
+              {updateContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Диалог планирования публикации */}
