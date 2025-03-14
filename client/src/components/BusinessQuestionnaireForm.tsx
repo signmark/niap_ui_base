@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import {
   Form,
   FormControl,
@@ -393,6 +394,21 @@ export function BusinessQuestionnaireForm({
         </DialogContent>
       </Dialog>
       
+      {showProgress && (
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-medium">Анализ сайта</span>
+            <span className="text-sm">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div 
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+      
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Бизнес-анкета</CardTitle>
@@ -678,21 +694,7 @@ export function BusinessQuestionnaireForm({
                   )}
                 />
 
-                {/* Индикатор прогресса анализа сайта */}
-                {showProgress && (
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">Анализ сайта...</span>
-                      <span className="text-sm font-medium">{Math.round(progress)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                      <div 
-                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
+
 
                 {isEditMode && (
                   <div className="flex justify-end space-x-2">
