@@ -975,7 +975,7 @@ export default function ContentPage() {
 
       {/* Диалог редактирования контента */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Редактирование контента</DialogTitle>
           </DialogHeader>
@@ -996,7 +996,7 @@ export default function ContentPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="content">Контент</Label>
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className="max-h-[400px] overflow-y-auto">
                   <RichTextEditor
                     content={currentContent.content || ''}
                     onChange={(html: string) => {
