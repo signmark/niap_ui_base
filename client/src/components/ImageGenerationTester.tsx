@@ -20,42 +20,69 @@ export function ImageGenerationTester() {
 
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await api.post('/api/generate-image', {
+      // Используем новый эндпоинт для избежания конфликтов с Vite
+      const response = await api.post('/api/v1/image-gen', {
         prompt,
         negativePrompt,
         width: 1024,
         height: 1024,
         numImages: 1
       }, {
-        timeout: 300000 // 5 минут таймаут
+        timeout: 300000, // 5 минут таймаут
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
       return response.data;
     },
     onSuccess: (data) => {
       console.log('Ответ от API генерации изображений:', data);
       
-      if (data.success && data.data) {
-        setGeneratedImages(Array.isArray(data.data) ? data.data : [data.data]);
+      if (data.success && data.images) {
+        // Извлекаем все URL изображений из ответа
+        const imageUrls = data.images.map((img: any) => {
+          if (typeof img === 'string') {
+            return img;
+          } else if (img && (img.url || img.image)) {
+            return img.url || img.image;
+          }
+          return null;
+        }).filter(Boolean);
+        
+        setGeneratedImages(imageUrls);
         
         toast({
           title: 'Генерация успешна',
-          description: 'Изображение было успешно сгенерировано',
+          description: `Успешно сгенерировано изображений: ${imageUrls.length}`,
         });
       } else {
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: data.error || 'Неизвестная ошибка при генерации изображения',
+          description: data.message || data.error || 'Неизвестная ошибка при генерации изображения',
         });
       }
     },
     onError: (error: any) => {
       console.error('Ошибка при генерации изображения:', error);
       
+      // Улучшенная обработка ошибок с детальной информацией
+      const errorDetails = error.response?.data;
+      let errorMessage = error.message || 'Ошибка при генерации изображения';
+      
+      if (errorDetails) {
+        if (errorDetails.message) {
+          errorMessage = errorDetails.message;
+        } else if (errorDetails.error) {
+          errorMessage = errorDetails.error;
+        }
+      }
+      
       toast({
         variant: 'destructive',
-        title: 'Ошибка',
-        description: error.response?.data?.error || error.message || 'Ошибка при генерации изображения',
+        title: 'Ошибка генерации',
+        description: errorMessage,
       });
     }
   });
