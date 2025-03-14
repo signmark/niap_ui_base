@@ -175,6 +175,29 @@ export function ContentPlanGenerator({
   // Мутация для генерации контент-плана через n8n
   const generateContentPlanMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log('Отправляем запрос на генерацию контент-плана:', data);
+      
+      // Прямой запрос к n8n webhook для отладки (опционально)
+      try {
+        const directResponse = await fetch('https://n8n.nplanner.ru/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            data: {
+              ...data, 
+              directusToken: localStorage.getItem('authToken') || ''
+            } 
+          })
+        });
+        
+        console.log('Прямой ответ от n8n webhook:', await directResponse.text());
+      } catch (directError) {
+        console.warn('Ошибка прямого запроса к n8n webhook:', directError);
+      }
+      
+      // Основной запрос через API бэкенда
       return await apiRequest('/api/content-plan/generate', {
         method: 'POST',
         data
@@ -182,6 +205,7 @@ export function ContentPlanGenerator({
     },
     onSuccess: (response) => {
       setIsGenerating(false);
+      console.log('Успешный ответ от API генерации контент-плана:', response);
       
       if (response.success && response.data && response.data.contentPlan) {
         toast({
@@ -192,15 +216,17 @@ export function ContentPlanGenerator({
           onPlanGenerated(response.data.contentPlan);
         }
       } else {
+        console.error('Ответ не содержит contentPlan:', response);
         toast({
           title: "Ошибка",
-          description: "При генерации контент-плана произошла ошибка",
+          description: "При генерации контент-плана произошла ошибка: " + (response.error || response.message || "структура данных некорректна"),
           variant: "destructive"
         });
       }
     },
     onError: (error: any) => {
       setIsGenerating(false);
+      console.error('Ошибка генерации контент-плана:', error);
       toast({
         title: "Ошибка генерации",
         description: error.message || "Не удалось сгенерировать контент-план",
