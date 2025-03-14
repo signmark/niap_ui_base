@@ -7290,6 +7290,27 @@ ${datesText}
       }
 
       console.log(`Запуск генерации контент-плана через n8n для кампании ${campaignId}`);
+      
+      // Переменная для контроля режима имитации (для отладки)
+      const simulationMode = true;
+      
+      if (simulationMode) {
+        console.log("РЕЖИМ ИМИТАЦИИ: возвращение тестового контент-плана без вызова n8n webhook");
+        
+        // Генерируем имитационный контент-план для тестирования интерфейса
+        const mockContentPlan = generateMockContentPlan(
+          settings?.postsCount || 5,
+          settings?.contentType || 'mixed',
+          keywords || []
+        );
+        
+        return res.json({
+          success: true,
+          data: {
+            contentPlan: mockContentPlan
+          }
+        });
+      }
 
       // Получаем тренды, которые выбрал пользователь
       let selectedTrends = [];
@@ -7482,4 +7503,118 @@ function normalizeSourceUrl(url: string, domain: string): string | undefined {
     console.error('Error normalizing source URL', url, e);
     return undefined;
   }
+}
+
+/**
+ * Генерирует имитационный контент-план для тестирования интерфейса
+ * @param count Количество элементов контента в плане
+ * @param contentType Тип контента (text, text-image, mixed, video)
+ * @param keywords Массив ключевых слов для использования в контенте
+ * @returns Массив элементов контент-плана
+ */
+function generateMockContentPlan(count: number = 5, contentType: string = 'mixed', keywords: any[] = []): any[] {
+  console.log(`Генерация имитационного контент-плана: ${count} элементов, тип: ${contentType}`);
+  
+  const contentPlan = [];
+  const types = contentType === 'mixed' 
+    ? ['text', 'text-image', 'video'] 
+    : [contentType];
+  
+  // Заготовки заголовков для постов о правильном питании
+  const titleTemplates = [
+    "Правильное питание для начинающих: %s простых шагов",
+    "Топ-%s продуктов для здорового рациона",
+    "%s рецептов полезных завтраков за 15 минут",
+    "Как составить сбалансированное меню на неделю: %s советов",
+    "Здоровые альтернативы: замените %s вредных продуктов на полезные",
+    "Секреты правильного питания: %s мифов и фактов",
+    "Правильное питание без стресса: %s простых привычек",
+    "Суперфуды: %s продуктов для крепкого иммунитета",
+    "Правильное питание на работе: %s идей для ланч-бокса",
+    "Сезонное меню: %s лучших рецептов из осенних продуктов"
+  ];
+  
+  // Заготовки контента для постов
+  const contentTemplates = [
+    "Правильное питание - это не диета, а образ жизни. В этом посте разберем %s основных принципов здорового питания, которые помогут вам чувствовать себя лучше каждый день. #здоровоепитание #пп",
+    
+    "Многие думают, что правильное питание - это сложно и дорого. Но мы подготовили для вас %s простых рецептов, которые не потребуют много времени и специальных ингредиентов. #рецепты #пп #бюджетное",
+    
+    "Знаете ли вы, что %s% людей испытывают дефицит витаминов даже при полноценном питании? Поговорим о том, как составить действительно сбалансированное меню и какие продукты обязательно должны быть в вашем рационе. #витамины #здоровье #питание",
+    
+    "Вода - основа здоровья! Сегодня разберемся, сколько воды нужно пить в день и как правильно распределить питьевой режим. Плюс %s советов, как приучить себя пить больше воды. #водныйбаланс #здоровье",
+    
+    "Белки, жиры и углеводы - строительный материал для нашего организма. Рассказываем, в каком соотношении их лучше употреблять и из каких продуктов получать. %s идеальных сочетаний продуктов для максимальной пользы. #бжу #правильноепитание",
+  ];
+  
+  // Заготовки для хештегов
+  const hashtags = [
+    "#правильноепитание", "#здоровоепитание", "#пп", "#здоровье", "#рецепты", 
+    "#полезно", "#вкусно", "#ппрецепты", "#nutrition", "#здоровыйобразжизни",
+    "#ппшка", "#едаживая", "#витамины", "#белки", "#углеводы", "#жиры", "#диета",
+    "#спорт", "#фитнес", "#зож", "#wellness", "#cleaneating", "#foodblogger"
+  ];
+  
+  // Создаем элементы контент-плана
+  for (let i = 0; i < count; i++) {
+    // Выбираем случайный тип контента из доступных
+    const postType = types[Math.floor(Math.random() * types.length)];
+    
+    // Формируем заголовок с случайным числом
+    const randomNumber = Math.floor(Math.random() * 10) + 3; // число от 3 до 12
+    const titleTemplate = titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
+    const title = titleTemplate.replace('%s', randomNumber.toString());
+    
+    // Формируем контент
+    const contentTemplate = contentTemplates[Math.floor(Math.random() * contentTemplates.length)];
+    const content = contentTemplate.replace('%s', randomNumber.toString());
+    
+    // Выбираем случайные хештеги (от 3 до 7)
+    const hashtagCount = Math.floor(Math.random() * 5) + 3;
+    const postHashtags = [];
+    for (let j = 0; j < hashtagCount; j++) {
+      const tag = hashtags[Math.floor(Math.random() * hashtags.length)];
+      if (!postHashtags.includes(tag)) {
+        postHashtags.push(tag);
+      }
+    }
+    
+    // Добавляем ключевые слова из входных данных (до 3 случайных)
+    const postKeywords = [];
+    if (keywords && keywords.length > 0) {
+      const keywordCount = Math.min(3, keywords.length);
+      const shuffledKeywords = [...keywords].sort(() => 0.5 - Math.random());
+      
+      for (let k = 0; k < keywordCount; k++) {
+        const kw = shuffledKeywords[k];
+        if (kw && kw.keyword) {
+          postKeywords.push(kw.keyword);
+        }
+      }
+    }
+    
+    // Формируем дату публикации (в диапазоне от сегодня до +14 дней)
+    const scheduledAt = new Date();
+    scheduledAt.setDate(scheduledAt.getDate() + Math.floor(Math.random() * 14) + 1);
+    
+    // Создаем элемент контент-плана
+    const item: any = {
+      title,
+      content,
+      contentType: postType,
+      hashtags: postHashtags,
+      keywords: postKeywords,
+      scheduledAt: scheduledAt.toISOString()
+    };
+    
+    // Добавляем поля в зависимости от типа контента
+    if (postType === 'text-image' || postType === 'image-text') {
+      item.prompt = `Изображение для поста "${title}" о правильном питании. ${content.substring(0, 100)}`;
+    }
+    
+    contentPlan.push(item);
+  }
+  
+  console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
+  return contentPlan;
 }

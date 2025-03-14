@@ -213,12 +213,15 @@ export function ContentPlanGenerator({
       
       if (response.success && response.data && response.data.contentPlan) {
         toast({
-          description: "Контент-план успешно сгенерирован с использованием n8n",
+          description: "Контент-план успешно сгенерирован",
         });
         
         if (onPlanGenerated) {
           onPlanGenerated(response.data.contentPlan);
         }
+        
+        // Закрываем диалог после успешной генерации
+        onClose();
       } else {
         console.error('Ответ не содержит contentPlan:', response);
         toast({
@@ -231,11 +234,36 @@ export function ContentPlanGenerator({
     onError: (error: any) => {
       setIsGenerating(false);
       console.error('Ошибка генерации контент-плана:', error);
-      toast({
-        title: "Ошибка генерации",
-        description: error.message || "Не удалось сгенерировать контент-план",
-        variant: "destructive"
-      });
+      
+      // Проверяем, является ли ошибка ошибкой авторизации
+      const errorMessage = error.message || "";
+      if (
+        error.status === 401 ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("авториз") ||
+        errorMessage.includes("unauthorized") ||
+        errorMessage.includes("не авторизован")
+      ) {
+        console.log("Обнаружена ошибка авторизации, перенаправляем на страницу входа");
+        toast({
+          title: "Ошибка авторизации",
+          description: "Ваша сессия истекла. Пожалуйста, войдите в систему заново.",
+          variant: "destructive"
+        });
+        
+        // Перенаправляем на страницу входа
+        setTimeout(() => {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          window.location.href = '/auth/login';
+        }, 2000);
+      } else {
+        toast({
+          title: "Ошибка генерации",
+          description: error.message || "Не удалось сгенерировать контент-план",
+          variant: "destructive"
+        });
+      }
     }
   });
 
