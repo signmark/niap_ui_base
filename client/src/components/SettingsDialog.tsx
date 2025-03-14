@@ -83,7 +83,8 @@ export function SettingsDialog() {
         { name: 'perplexity', key: perplexityKey },
         { name: 'apify', key: apifyKey },
         { name: 'social_searcher', key: socialSearcherKey },
-        { name: 'deepseek', key: deepseekKey }
+        { name: 'deepseek', key: deepseekKey },
+        { name: 'fal_ai', key: falAiKey }
       ];
 
       for (const service of services) {
@@ -184,6 +185,19 @@ export function SettingsDialog() {
           />
           <p className="text-sm text-muted-foreground">
             Ключ используется для анализа веб-сайтов и генерации контента
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>API Ключ FAL.AI</Label>
+          <Input
+            type="password"
+            value={falAiKey}
+            onChange={(e) => setFalAiKey(e.target.value)}
+            placeholder="Введите API ключ"
+          />
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для генерации изображений и медиа-контента
           </p>
         </div>
 
