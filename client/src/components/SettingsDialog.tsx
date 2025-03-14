@@ -20,6 +20,7 @@ export function SettingsDialog() {
   const [apifyKey, setApifyKey] = useState("");
   const [socialSearcherKey, setSocialSearcherKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
+  const [falAiKey, setFalAiKey] = useState("");
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
@@ -52,6 +53,7 @@ export function SettingsDialog() {
       const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
       const socialSearcherKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'social_searcher');
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
+      const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -64,6 +66,9 @@ export function SettingsDialog() {
       }
       if (deepseekKeyData) {
         setDeepseekKey(deepseekKeyData.api_key);
+      }
+      if (falAiKeyData) {
+        setFalAiKey(falAiKeyData.api_key);
       }
     }
   }, [apiKeys]);
