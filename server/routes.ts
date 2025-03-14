@@ -1066,10 +1066,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const token = authHeader.replace('Bearer ', '');
       
+      // Получаем информацию о пользователе из токена
+      const userResponse = await directusApi.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const userId = userResponse.data?.data?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не удалось определить ID пользователя из токена" 
+        });
+      }
+      
       // Инициализируем сервис FAL.AI с ключом пользователя, если это необходимо
       // Это позволяет использовать ключ пользователя для запросов к API
-      const apiInitialized = await falAiService.initialize('dummy-user-id', token);
-      
+      const apiInitialized = await falAiService.initialize(userId, token);
+    
       if (!apiInitialized) {
         return res.status(400).json({ 
           success: false, 
