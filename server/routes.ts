@@ -1262,7 +1262,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const negPrompt = 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional';
           
           requestData = {
-            model_name: 'stable-diffusion-xl',
             prompt: businessPrompt,
             negative_prompt: negPrompt,
             width: 1024,
@@ -1308,7 +1307,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             High quality, professional look, eye-catching design.`;
             
           requestData = {
-            model_name: 'stable-diffusion-xl',
             prompt: socialPrompt,
             negative_prompt: 'text, words, letters, logos, watermarks, low quality',
             width: width,

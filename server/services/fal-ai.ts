@@ -33,7 +33,7 @@ export class FalAiService {
       let sdkPayload: any = { input: {} };
       
       // Маппинг эндпоинтов для известных моделей
-      if (endpoint.includes('stable-diffusion-xl')) {
+      if (endpoint === 'fal-ai/sdxl' || endpoint.includes('stable-diffusion-xl')) {
         // Для SDXL используем правильную структуру
         console.log('Определена модель SDXL, адаптируем параметры...');
         sdkPayload = {
