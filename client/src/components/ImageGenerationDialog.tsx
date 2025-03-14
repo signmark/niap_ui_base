@@ -37,7 +37,7 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning" | "fooocus">("sdxl"); // По умолчанию используем SDXL
+  const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning" | "fooocus" | "schnell">("sdxl"); // По умолчанию используем SDXL
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   
   const { toast } = useToast();
@@ -313,6 +313,10 @@ export function ImageGenerationDialog({
               <div className="flex items-center space-x-1 mt-2">
                 <RadioGroupItem value="fooocus" id="m4" />
                 <Label htmlFor="m4">Fooocus</Label>
+              </div>
+              <div className="flex items-center space-x-1 mt-2">
+                <RadioGroupItem value="schnell" id="m5" />
+                <Label htmlFor="m5">Schnell</Label>
               </div>
             </RadioGroup>
           </div>
