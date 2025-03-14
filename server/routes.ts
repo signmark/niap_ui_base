@@ -5315,7 +5315,63 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
 
-  // Обновление существующей анкеты
+  // Обновление существующей анкеты напрямую через ID кампании (без указания ID анкеты)
+  app.patch("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req: any, res) => {
+    try {
+      const { campaignId } = req.params;
+      const authHeader = req.headers['authorization'];
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании не указан" });
+      }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Находим анкету по ID кампании
+      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId, token);
+      
+      if (!existingQuestionnaire) {
+        return res.status(404).json({ error: "Анкета для этой кампании не найдена" });
+      }
+      
+      // Валидация данных для обновления
+      const updateSchema = insertBusinessQuestionnaireSchema.partial();
+      const validatedUpdates = updateSchema.parse(req.body);
+      
+      console.log('Using user token for updating business questionnaire by campaign ID');
+      
+      // Обновляем анкету, используя ID из найденной анкеты
+      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(
+        existingQuestionnaire.id, 
+        validatedUpdates, 
+        token
+      );
+      
+      return res.json({
+        success: true,
+        data: updatedQuestionnaire
+      });
+    } catch (error: any) {
+      console.error('Error updating business questionnaire by campaign ID:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Ошибка валидации данных",
+          details: error.errors 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Ошибка при обновлении бизнес-анкеты",
+        details: error.message 
+      });
+    }
+  });
+
+  // Обновление существующей анкеты по ID анкеты
   app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req: any, res) => {
     try {
       const { campaignId, id } = req.params;
