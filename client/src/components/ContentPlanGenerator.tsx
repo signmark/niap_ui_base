@@ -1,19 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Loader2, Calendar, Sparkles, FilePlus2, FileText } from "lucide-react";
+import { Loader2, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { BusinessQuestionnaire, CampaignTrendTopic } from "@shared/schema";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+
+interface CampaignTrendTopic {
+  id: string;
+  title: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  reactions: number;
+  comments: number;
+  views: number;
+  createdAt: string;
+  isBookmarked: boolean;
+  campaignId: string;
+  mediaLinks?: string;
+  description?: string;
+}
+
+interface BusinessQuestionnaire {
+  id: string;
+  campaignId: string;
+  companyName: string;
+  businessDescription: string;
+  targetAudience: string;
+  productsServices: string;
+  brandStyle: string;
+  competitors: string;
+  goals: string;
+  communicationChannels: string;
+  contentPreferences: string;
+  additionalInfo: string;
+}
 
 interface ContentPlanGeneratorProps {
   isOpen: boolean;
@@ -28,446 +58,426 @@ export function ContentPlanGenerator({
   campaignId,
   onPlanGenerated
 }: ContentPlanGeneratorProps) {
-  const [period, setPeriod] = useState<number>(28); // Период в днях
-  const [postsCount, setPostsCount] = useState<number>(8); // Количество постов
-  const [includeImages, setIncludeImages] = useState<boolean>(true);
-  const [includeVideos, setIncludeVideos] = useState<boolean>(false);
-  const [contentType, setContentType] = useState<string>("mixed"); // mixed, educational, promotional, entertaining
-  const [selectedTrendTopics, setSelectedTrendTopics] = useState<Set<string>>(new Set());
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [generatedPlan, setGeneratedPlan] = useState<any[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
+  const [contentCount, setContentCount] = useState(5);
+  const [selectedType, setSelectedType] = useState<string>("mixed");
+  const [includeBusiness, setIncludeBusiness] = useState(true);
+  const [includeGeneratedImage, setIncludeGeneratedImage] = useState(true);
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState("trends");
   
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Получение трендов для кампании
-  const { data: trendTopics, isLoading: isLoadingTrends } = useQuery({
-    queryKey: ['/api/trends', campaignId],
-    queryFn: () => apiRequest(`/api/trends?campaignId=${campaignId}`),
-    enabled: !!campaignId,
-    onError: (error: Error) => {
+  // Загружаем тренды кампании
+  const { data: trendTopics = [], isLoading: isLoadingTrends } = useQuery({
+    queryKey: ["/api/campaign-trend-topics", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return [];
+      
+      const response = await fetch(`/api/campaign-trend-topics?campaignId=${campaignId}`);
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке трендов');
+      }
+      
+      const data = await response.json();
+      return data.data || [];
+    },
+    enabled: !!campaignId && isOpen,
+    onError: (error: any) => {
       toast({
-        title: "Ошибка загрузки трендов",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-  
-  // Получение ключевых слов для кампании
-  const { data: keywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ['/api/keywords', campaignId],
-    queryFn: () => apiRequest(`/api/keywords?campaignId=${campaignId}`),
-    enabled: !!campaignId,
-    onError: (error: Error) => {
-      toast({
-        title: "Ошибка загрузки ключевых слов",
-        description: error.message,
+        title: "Ошибка загрузки",
+        description: `Не удалось загрузить тренды: ${error.message}`,
         variant: "destructive"
       });
     }
   });
 
-  // Получение бизнес-анкеты для кампании
-  const { data: businessQuestionnaire, isLoading: isLoadingQuestionnaire } = useQuery({
-    queryKey: ['/api/business-questionnaire', campaignId],
-    queryFn: () => apiRequest(`/api/business-questionnaire/${campaignId}`),
-    enabled: !!campaignId,
-    onError: (error: Error) => {
+  // Загружаем ключевые слова кампании
+  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
+    queryKey: ["/api/keywords", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return [];
+      
+      const response = await fetch(`/api/keywords?campaignId=${campaignId}`);
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке ключевых слов');
+      }
+      
+      const data = await response.json();
+      return data.data || [];
+    },
+    enabled: !!campaignId && isOpen,
+    onError: (error: any) => {
       toast({
-        title: "Ошибка загрузки бизнес-анкеты",
-        description: error.message,
+        title: "Ошибка загрузки",
+        description: `Не удалось загрузить ключевые слова: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Загружаем данные бизнес-анкеты
+  const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
+    queryKey: ["/api/business-questionnaire", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return null;
+      
+      const response = await fetch(`/api/business-questionnaire?campaignId=${campaignId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // Анкета может отсутствовать, это не ошибка
+        }
+        throw new Error('Ошибка при загрузке данных бизнеса');
+      }
+      
+      const data = await response.json();
+      return data.data || null;
+    },
+    enabled: !!campaignId && isOpen && includeBusiness,
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка загрузки",
+        description: `Не удалось загрузить данные бизнеса: ${error.message}`,
         variant: "destructive"
       });
     }
   });
 
   // Мутация для генерации контент-плана
-  const generatePlanMutation = useMutation({
+  const generateContentPlanMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/content/generate-plan', {
+      return await apiRequest('/api/content-plan/generate', {
         method: 'POST',
         data
       });
     },
-    onSuccess: (data) => {
-      setGeneratedPlan(data.plan || []);
-      toast({
-        title: "Контент-план сгенерирован",
-        description: `Создано ${data.plan?.length || 0} записей для вашего контент-плана`,
-      });
-      if (onPlanGenerated && data.plan) {
-        onPlanGenerated(data.plan);
-      }
+    onSuccess: (response) => {
       setIsGenerating(false);
+      
+      if (response.success && response.data && response.data.contentItems) {
+        toast({
+          description: "Контент-план успешно сгенерирован",
+        });
+        
+        if (onPlanGenerated) {
+          onPlanGenerated(response.data.contentItems);
+        }
+      } else {
+        toast({
+          title: "Ошибка",
+          description: "При генерации контент-плана произошла ошибка",
+          variant: "destructive"
+        });
+      }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      setIsGenerating(false);
       toast({
-        title: "Ошибка генерации плана",
-        description: error.message,
+        title: "Ошибка генерации",
+        description: error.message || "Не удалось сгенерировать контент-план",
         variant: "destructive"
       });
-      setIsGenerating(false);
     }
   });
 
-  // Функция генерации контент-плана
-  const handleGeneratePlan = () => {
-    if (!campaignId) {
+  // Обработчик генерации контент-плана
+  const handleGenerateContentPlan = async () => {
+    if (selectedTopicIds.size === 0 && activeTab === "trends") {
       toast({
-        title: "Ошибка",
-        description: "Не выбрана кампания",
+        description: "Выберите хотя бы один тренд для генерации",
         variant: "destructive"
       });
       return;
     }
 
     setIsGenerating(true);
-    setGeneratedPlan([]);
 
-    // Подготовка данных для запроса
+    // Собираем выбранные тренды
+    const selectedTrends = Array.from(selectedTopicIds).map(id => 
+      trendTopics.find((topic: CampaignTrendTopic) => topic.id === id)
+    ).filter(Boolean);
+
+    // Формируем данные для запроса
     const requestData = {
       campaignId,
-      settings: {
-        period,
-        postsCount,
-        includeImages,
-        includeVideos,
-        contentType
-      },
-      selectedTrendTopics: Array.from(selectedTrendTopics),
-      keywords: keywords?.data || [],
-      businessData: businessQuestionnaire?.data || null
+      contentCount,
+      contentType: selectedType,
+      selectedTrends,
+      keywords: keywords || [],
+      includeBusiness: includeBusiness && !!businessData,
+      businessData: includeBusiness ? businessData : null,
+      includeGeneratedImage,
+      customInstructions
     };
 
-    generatePlanMutation.mutate(requestData);
+    // Отправляем запрос на генерацию
+    generateContentPlanMutation.mutate(requestData);
   };
 
-  // Функция сохранения контент-плана
-  const savePlanMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest('/api/content/save-plan', {
-        method: 'POST',
-        data
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "План сохранен",
-        description: "Контент-план успешно сохранен в вашей кампании"
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
-      onClose();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Ошибка сохранения плана",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleSavePlan = () => {
-    if (generatedPlan.length === 0) {
-      toast({
-        title: "Нет данных для сохранения",
-        description: "Сначала сгенерируйте контент-план",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    savePlanMutation.mutate({
-      campaignId,
-      contentPlan: generatedPlan
-    });
-  };
-
-  // Обработка выбора тренда
-  const toggleTrendTopic = (topicId: string) => {
-    const newSelectedTopics = new Set(selectedTrendTopics);
+  // Обработчик выбора/отмены тренда
+  const toggleTopic = (topicId: string) => {
+    const newSelectedTopics = new Set(selectedTopicIds);
+    
     if (newSelectedTopics.has(topicId)) {
       newSelectedTopics.delete(topicId);
     } else {
       newSelectedTopics.add(topicId);
     }
-    setSelectedTrendTopics(newSelectedTopics);
+    
+    setSelectedTopicIds(newSelectedTopics);
   };
 
-  const isLoading = isLoadingTrends || isLoadingKeywords || isLoadingQuestionnaire;
+  // Обработчик выбора всех трендов
+  const selectAllTopics = () => {
+    const allTopicIds = trendTopics.map((topic: CampaignTrendTopic) => topic.id);
+    setSelectedTopicIds(new Set(allTopicIds));
+  };
+
+  // Обработчик отмены выбора всех трендов
+  const deselectAllTopics = () => {
+    setSelectedTopicIds(new Set());
+  };
+
+  // Форматирование числа с добавлением сокращения для больших значений
+  const formatNumber = (num: number): string => {
+    if (num === null || num === undefined) return '0';
+    
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    } else {
+      return num.toString();
+    }
+  };
+
+  // Объединяем состояния загрузки
+  const isLoading = isLoadingTrends || isLoadingKeywords || (includeBusiness && isLoadingBusiness);
+
+  // Добавляем эффект для сброса выбранных трендов при закрытии
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedTopicIds(new Set());
+    }
+  }, [isOpen]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Генерация контент-плана</DialogTitle>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>Генерация контент-плана</DialogTitle>
+      </DialogHeader>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2">
+          <TabsTrigger value="trends">Выбор трендов</TabsTrigger>
+          <TabsTrigger value="settings">Настройки</TabsTrigger>
+        </TabsList>
         
-        <Tabs defaultValue="settings">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="settings">Настройки</TabsTrigger>
-            <TabsTrigger value="trends">Тренды ({selectedTrendTopics.size})</TabsTrigger>
-            <TabsTrigger value="preview" disabled={generatedPlan.length === 0}>
-              Предпросмотр ({generatedPlan.length})
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Основные параметры плана</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="ml-2">Загрузка данных кампании...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="period">Период планирования (дней): {period}</Label>
-                      <Slider 
-                        id="period"
-                        min={7} 
-                        max={90} 
-                        step={7} 
-                        value={[period]} 
-                        onValueChange={(value) => setPeriod(value[0])} 
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="postsCount">Количество постов: {postsCount}</Label>
-                      <Slider 
-                        id="postsCount"
-                        min={3} 
-                        max={30} 
-                        step={1} 
-                        value={[postsCount]} 
-                        onValueChange={(value) => setPostsCount(value[0])} 
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Тип контента</Label>
-                      <Select value={contentType} onValueChange={setContentType}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите тип контента" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mixed">Смешанный</SelectItem>
-                          <SelectItem value="educational">Обучающий</SelectItem>
-                          <SelectItem value="promotional">Рекламный</SelectItem>
-                          <SelectItem value="entertaining">Развлекательный</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Checkbox 
-                        id="includeImages" 
-                        checked={includeImages} 
-                        onCheckedChange={(checked) => setIncludeImages(!!checked)} 
-                      />
-                      <Label htmlFor="includeImages">Включать изображения</Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="includeVideos" 
-                        checked={includeVideos} 
-                        onCheckedChange={(checked) => setIncludeVideos(!!checked)} 
-                      />
-                      <Label htmlFor="includeVideos">Включать видео</Label>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Данные бизнес-анкеты</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {businessQuestionnaire?.data ? (
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Компания:</strong> {businessQuestionnaire.data.companyName}</p>
-                    <p><strong>Описание:</strong> {businessQuestionnaire.data.businessDescription}</p>
-                    <p><strong>Аудитория:</strong> {businessQuestionnaire.data.targetAudience}</p>
-                    <p><strong>Ценности:</strong> {businessQuestionnaire.data.businessValues}</p>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {isLoadingQuestionnaire ? 
-                      <span>Загрузка данных анкеты...</span> : 
-                      <span>Бизнес-анкета не заполнена для этой кампании</span>
-                    }
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Ключевые слова кампании</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {keywords?.data?.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {keywords.data.slice(0, 10).map((kw: any) => (
-                      <div key={kw.id} className="bg-muted px-2 py-1 rounded-md text-sm">
-                        {kw.keyword}
-                      </div>
-                    ))}
-                    {keywords.data.length > 10 && (
-                      <div className="bg-muted px-2 py-1 rounded-md text-sm">
-                        +{keywords.data.length - 10} еще
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {isLoadingKeywords ? 
-                      <span>Загрузка ключевых слов...</span> : 
-                      <span>Для этой кампании не найдено ключевых слов</span>
-                    }
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="trends">
-            <Card>
-              <CardHeader>
-                <CardTitle>Выберите тренды для использования в контент-плане</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {trendTopics?.data?.length > 0 ? (
-                  <div className="space-y-2">
-                    {trendTopics.data.map((topic: CampaignTrendTopic) => (
-                      <div 
-                        key={topic.id}
-                        className={`p-3 border rounded-md cursor-pointer ${
-                          selectedTrendTopics.has(topic.id) ? 'border-primary bg-primary/10' : 'border-border'
-                        }`}
-                        onClick={() => toggleTrendTopic(topic.id)}
-                      >
-                        <div className="font-medium">{topic.title}</div>
-                        <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {topic.description || "Нет описания"}
-                        </div>
-                        <div className="flex items-center text-xs mt-2 text-muted-foreground">
-                          <span>👍 {topic.reactions || 0}</span>
-                          <span className="ml-2">💬 {topic.comments || 0}</span>
-                          <span className="ml-2">👁️ {topic.views || 0}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    {isLoadingTrends ? 
-                      <span>Загрузка трендов...</span> : 
-                      <span>Для этой кампании не найдено трендов</span>
-                    }
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="preview">
-            <Card>
-              <CardHeader>
-                <CardTitle>Предпросмотр контент-плана</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {generatedPlan.length > 0 ? (
-                  <div className="space-y-4">
-                    {generatedPlan.map((item, index) => (
-                      <Card key={index} className="border border-border">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">{item.title}</CardTitle>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" /> 
-                            {new Date(item.scheduledAt).toLocaleDateString()}
-                            <span className="ml-3 flex items-center">
-                              {item.contentType === 'text' && <FileText className="h-3 w-3 mr-1" />}
-                              {item.contentType === 'text-image' && <FilePlus2 className="h-3 w-3 mr-1" />}
-                              {item.contentType}
-                            </span>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pb-2 pt-0">
-                          <div className="text-sm line-clamp-3">{item.content}</div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Нет сгенерированного контент-плана
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter className="flex gap-2 justify-between items-center mt-4">
-          <div>
-            {generatedPlan.length > 0 && (
-              <div className="text-sm text-muted-foreground">
-                Сгенерировано {generatedPlan.length} записей для контент-плана
+        <TabsContent value="trends" className="space-y-4 mt-4">
+          {isLoadingTrends ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Загрузка трендов...</span>
+            </div>
+          ) : trendTopics.length === 0 ? (
+            <div className="text-center py-8">
+              <p>Тренды не найдены для данной кампании.</p>
+              <p className="text-muted-foreground mt-2">Сначала добавьте источники контента и дождитесь сбора трендов.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <span className="text-sm text-muted-foreground">
+                    Выбрано {selectedTopicIds.size} из {trendTopics.length} трендов
+                  </span>
+                </div>
+                <div className="space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={selectAllTopics}
+                    disabled={trendTopics.length === 0}
+                  >
+                    Выбрать все
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={deselectAllTopics}
+                    disabled={selectedTopicIds.size === 0}
+                  >
+                    Снять выбор
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Отмена
-            </Button>
-            {generatedPlan.length === 0 ? (
-              <Button 
-                onClick={handleGeneratePlan} 
-                disabled={isGenerating || isLoading}
+              
+              <div className="grid grid-cols-1 gap-4 max-h-[50vh] overflow-y-auto pr-2">
+                {trendTopics.map((topic: CampaignTrendTopic) => (
+                  <Card 
+                    key={topic.id} 
+                    className={`cursor-pointer transition-colors ${
+                      selectedTopicIds.has(topic.id) ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => toggleTopic(topic.id)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-base">{topic.title}</CardTitle>
+                        <Checkbox 
+                          checked={selectedTopicIds.has(topic.id)} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTopic(topic.id);
+                          }}
+                        />
+                      </div>
+                      <CardDescription className="flex items-center gap-2 text-xs">
+                        {topic.sourceName && (
+                          <span className="inline-flex items-center">
+                            Источник: {topic.sourceName}
+                          </span>
+                        )}
+                        {topic.createdAt && (
+                          <span className="inline-flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {format(new Date(topic.createdAt), 'dd MMM yyyy', {locale: ru})}
+                          </span>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      {topic.description && (
+                        <p className="text-sm line-clamp-2 mb-2">{topic.description}</p>
+                      )}
+                      <div className="flex gap-3 text-xs text-muted-foreground">
+                        <span>👁 {formatNumber(topic.views || 0)}</span>
+                        <span>❤️ {formatNumber(topic.reactions || 0)}</span>
+                        <span>💬 {formatNumber(topic.comments || 0)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="content-count">Количество элементов контента</Label>
+              <Input
+                id="content-count"
+                type="number"
+                min={1}
+                max={20}
+                value={contentCount}
+                onChange={(e) => setContentCount(parseInt(e.target.value))}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="content-type">Тип контента</Label>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger id="content-type">
+                  <SelectValue placeholder="Выберите тип контента" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mixed">Смешанный (текст, изображения, видео)</SelectItem>
+                  <SelectItem value="text">Только текст</SelectItem>
+                  <SelectItem value="text-image">Текст с изображениями</SelectItem>
+                  <SelectItem value="video">С видео</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="include-business" 
+                checked={includeBusiness} 
+                onCheckedChange={(checked) => setIncludeBusiness(checked === true)}
+              />
+              <Label htmlFor="include-business" className="cursor-pointer">
+                Использовать данные о бизнесе
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="include-image" 
+                checked={includeGeneratedImage} 
+                onCheckedChange={(checked) => setIncludeGeneratedImage(checked === true)}
+                disabled={selectedType === "text"}
+              />
+              <Label 
+                htmlFor="include-image" 
+                className={`cursor-pointer ${selectedType === "text" ? "text-muted-foreground" : ""}`}
               >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Генерация...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Сгенерировать план
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSavePlan} 
-                disabled={savePlanMutation.isPending}
-              >
-                {savePlanMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Сохранение...
-                  </>
-                ) : (
-                  <>
-                    <FilePlus2 className="mr-2 h-4 w-4" />
-                    Сохранить план
-                  </>
-                )}
-              </Button>
-            )}
+                Генерировать изображения для контента
+              </Label>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="custom-instructions">Дополнительные инструкции</Label>
+              <Textarea
+                id="custom-instructions"
+                placeholder="Укажите особые требования к генерируемому контенту..."
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                rows={4}
+              />
+            </div>
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          
+          {isLoadingBusiness && includeBusiness && (
+            <div className="flex items-center text-muted-foreground text-sm mt-4">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Загрузка данных о бизнесе...
+            </div>
+          )}
+          
+          {includeBusiness && !businessData && !isLoadingBusiness && (
+            <div className="text-amber-500 text-sm mt-4">
+              ⚠️ Данные о бизнесе не найдены. Заполните бизнес-анкету для лучших результатов.
+            </div>
+          )}
+          
+          {isLoadingKeywords && (
+            <div className="flex items-center text-muted-foreground text-sm mt-2">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Загрузка ключевых слов...
+            </div>
+          )}
+          
+          {!isLoadingKeywords && keywords.length === 0 && (
+            <div className="text-amber-500 text-sm">
+              ⚠️ Ключевые слова не найдены. Добавьте ключевые слова для лучших результатов.
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+      
+      <DialogFooter className="mt-4">
+        <Button variant="outline" onClick={onClose}>
+          Отмена
+        </Button>
+        <Button 
+          onClick={handleGenerateContentPlan} 
+          disabled={isLoading || isGenerating || (activeTab === "trends" && selectedTopicIds.size === 0)}
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Генерация...
+            </>
+          ) : (
+            "Сгенерировать контент-план"
+          )}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
