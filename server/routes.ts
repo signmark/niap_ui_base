@@ -6309,6 +6309,46 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
 
   // Обработчик для социальных данных пользователя
   
+  // Тестовый эндпоинт для проверки состояния FAL.AI API
+  app.get("/api/test/fal-ai-status", async (req, res) => {
+    try {
+      const apiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "FAL.AI API ключ не найден в переменных окружения"
+        });
+      }
+      
+      // Инициализируем SDK с ключом
+      falAiSdk.initialize(apiKey);
+      
+      // Проверяем статус API
+      const status = await falAiSdk.checkStatus();
+      
+      if (status.ok) {
+        return res.json({
+          success: true,
+          message: status.message
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: status.message,
+          details: status.details
+        });
+      }
+    } catch (error: any) {
+      console.error("Ошибка при проверке статуса FAL.AI API:", error);
+      res.status(500).json({
+        success: false,
+        error: "Неожиданная ошибка при проверке статуса FAL.AI API",
+        message: error.message
+      });
+    }
+  });
+  
   return httpServer;
 }
 

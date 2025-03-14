@@ -222,21 +222,53 @@ export class FalAiService {
    * Проверка статуса API
    * @returns Результат проверки статуса
    */
-  async checkStatus(): Promise<boolean> {
+  async checkStatus(): Promise<{ok: boolean; message: string; details?: any}> {
     try {
-      // Используем заведомо работающий эндпоинт для проверки связи
+      // Используем менее ресурсоемкий запрос для проверки связи
       await run('fal-ai/stable-diffusion-xl', {
         input: {
           prompt: "test image",
-          width: 512,
-          height: 512,
+          width: 64,  // Минимальный размер для быстрого ответа
+          height: 64, 
           num_images: 1
         }
       });
-      return true;
-    } catch (error) {
+      return {
+        ok: true,
+        message: "FAL.AI API доступен и корректно настроен"
+      };
+    } catch (error: any) {
       console.error('FAL.AI API недоступен:', error);
-      return false;
+      
+      // Подробная информация об ошибке
+      let details = {};
+      if (error.status) {
+        details = {
+          status: error.status,
+          body: error.body
+        };
+      }
+      
+      // Сообщение в зависимости от типа ошибки
+      let message = "Неизвестная ошибка при подключении к FAL.AI API";
+      
+      if (error.status === 401) {
+        message = "Ошибка авторизации FAL.AI API - проверьте API ключ";
+      } else if (error.status === 404) {
+        message = "Указанный эндпоинт FAL.AI API не найден";
+      } else if (error.status >= 500) {
+        message = "Серверная ошибка FAL.AI API";
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        message = "Не удалось установить соединение с FAL.AI API";
+      } else if (error.message) {
+        message = `Ошибка FAL.AI API: ${error.message}`;
+      }
+      
+      return {
+        ok: false,
+        message,
+        details
+      };
     }
   }
 }
