@@ -30,6 +30,14 @@ export class DeepSeekService {
       console.log("DeepSeek API key updated from user settings");
     }
   }
+  
+  /**
+   * Проверяет, установлен ли API ключ
+   * @returns true, если API ключ установлен, иначе false
+   */
+  hasApiKey(): boolean {
+    return !!(this.apiKey && this.apiKey.trim() !== '');
+  }
 
   /**
    * Отправляет запрос на генерацию текста через DeepSeek API

@@ -7504,6 +7504,78 @@ function normalizeSourceUrl(url: string, domain: string): string | undefined {
  * @param keywords Массив ключевых слов для использования в контенте
  * @returns Массив элементов контент-плана
  */
+/**
+ * Переводит текст с русского на английский для использования в генерации изображений
+ * Используется для улучшения качества генерации изображений через Stable Diffusion
+ * @param text Текст на русском языке
+ * @returns Текст, переведенный на английский язык
+ */
+async function translateToEnglish(text: string): Promise<string> {
+  try {
+    // Используем DeepSeek для перевода, если API ключ доступен
+    if (process.env.DEEPSEEK_API_KEY || deepseekService.hasApiKey()) {
+      console.log('Переводим текст на английский через DeepSeek API');
+      
+      const translationPrompt = `Translate the following Russian text to English for image generation purposes. 
+Provide only the translation without any explanations or comments:
+
+${text}`;
+      
+      const response = await deepseekService.generateText([
+        { role: 'system', content: 'You are a professional Russian to English translator. Translate the text maintaining the meaning and style, but optimizing it for image generation purposes. Your task is to make the text work well with image generation models like Stable Diffusion.' },
+        { role: 'user', content: translationPrompt }
+      ], {
+        model: 'deepseek-chat',
+        temperature: 0.3,
+        max_tokens: 2000
+      });
+      
+      return response.trim();
+    } else {
+      // Если DeepSeek недоступен, используем словарь для базового перевода ключевых слов
+      console.log('DeepSeek API недоступен, используем базовый перевод');
+      
+      const translationDict: Record<string, string> = {
+        'правильное питание': 'healthy nutrition',
+        'рецепты': 'recipes',
+        'еда': 'food',
+        'здоровое питание': 'healthy eating',
+        'фрукты': 'fruits',
+        'овощи': 'vegetables',
+        'диета': 'diet',
+        'спорт': 'sports',
+        'тренировка': 'workout',
+        'фитнес': 'fitness',
+        'белок': 'protein',
+        'витамины': 'vitamins',
+        'завтрак': 'breakfast',
+        'обед': 'lunch',
+        'ужин': 'dinner',
+        'полезные продукты': 'healthy food',
+        'салат': 'salad',
+        'суп': 'soup',
+        'вегетарианский': 'vegetarian',
+        'веганский': 'vegan',
+        'меню': 'menu',
+        'план питания': 'meal plan'
+      };
+      
+      let translatedText = text;
+      
+      // Заменяем все найденные слова и фразы
+      Object.entries(translationDict).forEach(([rus, eng]) => {
+        translatedText = translatedText.replace(new RegExp(rus, 'gi'), eng);
+      });
+      
+      return translatedText;
+    }
+  } catch (error) {
+    console.error('Ошибка при переводе текста:', error);
+    // В случае ошибки возвращаем оригинальный текст
+    return text;
+  }
+}
+
 function generateMockContentPlan(count: number = 5, contentType: string = 'mixed', keywords: any[] = []): any[] {
   console.log(`Генерация имитационного контент-плана: ${count} элементов, тип: ${contentType}`);
   
@@ -7601,7 +7673,21 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
     
     // Добавляем поля в зависимости от типа контента
     if (postType === 'text-image' || postType === 'image-text') {
-      item.prompt = `Изображение для поста "${title}" о правильном питании. ${content.substring(0, 100)}`;
+      // Создаем промпт на русском языке
+      const russianPrompt = `Изображение для поста "${title}" о правильном питании. ${content.substring(0, 100)}`;
+      
+      // Переводим промпт на английский для лучшей генерации изображений
+      const englishPrompt = `Healthy eating post image about "${title.replace('Правильное питание', 'Healthy nutrition').replace('полезных', 'healthy').replace('здоровых', 'healthy')}". ${content.substring(0, 100)
+        .replace('Правильное питание', 'Healthy nutrition')
+        .replace('здоровое питание', 'healthy eating')
+        .replace('рецепт', 'recipe')
+        .replace('диета', 'diet')
+        .replace('полезно', 'healthy')
+        .replace('витамины', 'vitamins')}`;
+      
+      // Сохраняем оба промпта
+      item.prompt = russianPrompt;
+      item.englishPrompt = englishPrompt;
     }
     
     contentPlan.push(item);
