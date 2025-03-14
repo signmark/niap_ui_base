@@ -1046,6 +1046,142 @@ async function extractFullSiteContent(url: string): Promise<string> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Прокси для прямых запросов к FAL.AI REST API
+  app.post('/api/v1/image-gen', async (req, res) => {
+    try {
+      const { prompt, negativePrompt, width, height, numImages } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Отсутствует обязательный параметр prompt" 
+        });
+      }
+      
+      // Извлекаем API ключ из переменных окружения
+      const apiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!apiKey) {
+        console.error('FAL_AI_API_KEY отсутствует в переменных окружения');
+        return res.status(500).json({ 
+          success: false, 
+          error: "API ключ FAL.AI не настроен" 
+        });
+      }
+      
+      console.log(`[FAL.AI Прокси] Выполняем прямой запрос к REST API FAL.AI`);
+      console.log(`[FAL.AI Прокси] Запрос: prompt="${prompt.substring(0, 50)}...", width=${width}, height=${height}`);
+      
+      try {
+        // Выполняем прямой запрос к FAL.AI REST API
+        const response = await axios.post(
+          'https://queue.fal.ai/fal-ai/fast-sdxl/requests',
+          {
+            prompt,
+            negative_prompt: negativePrompt || "",
+            width: width || 1024,
+            height: height || 1024,
+            num_images: numImages || 1
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Key ${apiKey}`
+            },
+            timeout: 300000 // 5 минут таймаут
+          }
+        );
+        
+        const data = response.data;
+        console.log(`[FAL.AI Прокси] Ответ успешно получен`, 
+                   Object.keys(data || {}));
+        
+        // Обрабатываем различные форматы ответа
+        let images: string[] = [];
+        
+        if (data.status === "IN_QUEUE") {
+          return res.json({
+            success: true,
+            status: "queued",
+            message: "Запрос поставлен в очередь"
+          });
+        }
+        
+        // Получаем URL изображений из ответа
+        if (data.resources && Array.isArray(data.resources)) {
+          images = data.resources.map((r: any) => r.url).filter(Boolean);
+        } else if (data.output && Array.isArray(data.output)) {
+          images = data.output.filter(Boolean);
+        } else if (data.output) {
+          images = [data.output];
+        } else if (data.images && Array.isArray(data.images)) {
+          images = data.images.map((img: any) => {
+            if (typeof img === 'string') return img;
+            return img.url || img.image || '';
+          }).filter(Boolean);
+        }
+        
+        return res.json({
+          success: true,
+          images,
+          total: images.length
+        });
+      } catch (error: any) {
+        console.error('[FAL.AI Прокси] Ошибка при запросе к API:', error.message);
+        
+        const errorDetails = error.response?.data;
+        let errorMessage = error.message || 'Неизвестная ошибка';
+        
+        if (errorDetails) {
+          errorMessage = errorDetails.detail || errorDetails.message || errorDetails.error || errorMessage;
+        }
+        
+        if (error.response?.status === 401) {
+          errorMessage = 'Ошибка авторизации FAL.AI - проверьте валидность API ключа';
+        }
+        
+        return res.status(error.response?.status || 500).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+    } catch (error: any) {
+      console.error('[FAL.AI Прокси] Общая ошибка:', error.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка сервера при обработке запроса'
+      });
+    }
+  });
+  
+  // Получение API ключа FAL.AI из настроек
+  app.get('/api/settings/fal_ai', async (req, res) => {
+    try {
+      // Проверяем наличие API ключа в переменных окружения
+      const apiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(404).json({
+          success: false,
+          error: "API ключ FAL.AI не найден в настройках"
+        });
+      }
+      
+      return res.json({
+        success: true,
+        data: {
+          api_key: apiKey
+        }
+      });
+    } catch (error: any) {
+      console.error('Ошибка при получении API ключа FAL.AI:', error.message);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при получении настроек"
+      });
+    }
+  });
+
   // Прокси для запросов к FAL.AI API через официальный SDK
   app.post('/api/fal-ai-proxy', async (req, res) => {
     try {
