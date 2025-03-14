@@ -1405,6 +1405,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', async (req, res) => {
     try {
+      const { prompt, negativePrompt, width, height, numImages, businessData, content, platform } = req.body;
+      const falAiApiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!falAiApiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "API ключ для FAL.AI не настроен" 
+        });
+      }
+      
+      // Обновляем ключ API в сервисе
+      falAiService.updateApiKey(falAiApiKey);
+      console.log("[fal-ai] FAL.AI API key updated for image generation");
+      
+      let imageUrls: string[] = [];
+      
+      if (prompt) {
+        // Генерация по прямому промпту
+        console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
+        imageUrls = await falAiService.generateImage(prompt, {
+          negativePrompt: negativePrompt || "",
+          width: width || 1024,
+          height: height || 1024,
+          numImages: numImages || 1
+        });
+      } else if (businessData) {
+        // Генерация изображения для бизнеса
+        console.log(`Генерация изображения для бизнеса: ${businessData.companyName}`);
+        imageUrls = await falAiService.generateBusinessImage(businessData);
+      } else if (content && platform) {
+        // Генерация изображения для социальных сетей
+        console.log(`Генерация изображения для соцсетей (${platform})`);
+        imageUrls = await falAiService.generateSocialMediaImage(content, platform);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "Недостаточно данных для генерации изображения"
+        });
+      }
+      
+      return res.json({
+        success: true,
+        data: imageUrls
+      });
+    } catch (error: any) {
+      console.error("Ошибка при генерации изображения:", error);
+      
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Неизвестная ошибка при генерации изображения"
+      });
+    }
+  });
+  
+  // Старый метод генерации изображений (для обратной совместимости)
+  app.post('/api/old-generate-image', async (req, res) => {
+    try {
       const { 
         prompt, 
         negativePrompt, 
@@ -1611,7 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Выполняем прямой запрос к FAL.AI REST API без промежуточного прокси
               // Используем актуальный API эндпоинт для генерации изображений
               falApiResponse = await axios.post(
-                'https://api.fal.ai/v1/stable-diffusion/sdxl',
+                'https://queue.fal.run/fal-ai/fast-sdxl',
                 {
                   prompt: requestData.prompt,
                   negative_prompt: requestData.negative_prompt || "",
