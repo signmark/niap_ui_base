@@ -1878,7 +1878,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);
   
-  // Маршрут для генерации контента через Perplexity API
+  // Тестовый маршрут для проверки генерации изображений через FAL.AI API
+  app.post("/api/test-fal-image", async (req, res) => {
+    try {
+      // Проверяем, работает ли API FAL.AI
+      console.log("Тестирование генерации изображения через FAL.AI API");
+      
+      // Получаем FAL.AI API ключ из переменных окружения
+      const falAiApiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!falAiApiKey) {
+        console.log("FAL.AI API ключ не найден в переменных окружения");
+        return res.status(400).json({ 
+          success: false, 
+          error: "FAL.AI API ключ не настроен" 
+        });
+      }
+      
+      // Обновляем API ключ в сервисе
+      falAiService.updateApiKey(falAiApiKey);
+      
+      // Генерируем тестовое изображение
+      const prompt = "A beautiful landscape with mountains and a lake, digital art style";
+      const imageURLs = await falAiService.generateImage(prompt, {
+        negativePrompt: "bad quality, blurry, text, watermark",
+        width: 512,
+        height: 512,
+        numImages: 1
+      });
+      
+      console.log("Результат генерации тестового изображения:", imageURLs);
+      
+      return res.json({
+        success: true,
+        message: "Тестовое изображение успешно сгенерировано",
+        imageURLs
+      });
+    } catch (error: any) {
+      console.error("Ошибка при тестировании FAL.AI:", error);
+      return res.status(500).json({ 
+        success: false, 
+        error: `Ошибка при тестировании FAL.AI: ${error.message}`,
+        details: error.response?.data || null
+      });
+    }
+  });
+
+// Маршрут для генерации контента через Perplexity API
   app.post("/api/content/generate-deepseek", async (req, res) => {
     try {
       const { prompt, keywords, tone, platform, campaignId } = req.body;

@@ -96,11 +96,8 @@ export class FalAiService {
             'Accept': 'application/json',
             'Host': 'api.fal.ai' // Добавляем хост-заголовок для правильной маршрутизации на CDN
           },
-          timeout: 300000, // 5 минут таймаут
-          httpsAgent: new (require('https').Agent)({
-            rejectUnauthorized: false, // Отключаем проверку SSL сертификата при использовании IP
-            timeout: 300000 // Также добавляем таймаут для https агента
-          })
+          // Отключаем проверку SSL при использовании IP адреса и устанавливаем таймаут
+          timeout: 300000 // 5 минут таймаут
         }
       );
 
