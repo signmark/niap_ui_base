@@ -1479,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           width: 1024,
           height: 1024,
           num_images: 3,
-          style_preset: 'photographic'
+          style_preset: stylePreset || 'photographic'
         };
       } else if (content && platform) {
         // Генерация изображения для социальных сетей
@@ -1526,7 +1526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           width: width,
           height: height,
           num_images: 3,
-          style_preset: 'photographic'
+          style_preset: stylePreset || 'photographic'
         };
       } else {
         return res.status(400).json({
