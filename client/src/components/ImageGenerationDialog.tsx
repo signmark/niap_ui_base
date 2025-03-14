@@ -37,7 +37,7 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<"sdxl" | "sdxl-turbo" | "sdxl-lightning" | "fooocus" | "schnell">("sdxl"); // По умолчанию используем SDXL
+  const [modelType, setModelType] = useState<"sdxl" | "fooocus" | "schnell">("sdxl"); // По умолчанию используем SDXL
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   
   const { toast } = useToast();
@@ -302,21 +302,14 @@ export function ImageGenerationDialog({
                 <RadioGroupItem value="sdxl" id="m1" />
                 <Label htmlFor="m1">SDXL</Label>
               </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="sdxl-turbo" id="m2" />
-                <Label htmlFor="m2">SDXL Turbo</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="sdxl-lightning" id="m3" />
-                <Label htmlFor="m3">SDXL Lightning</Label>
+
+              <div className="flex items-center space-x-1 mt-2">
+                <RadioGroupItem value="fooocus" id="m2" />
+                <Label htmlFor="m2">Fooocus</Label>
               </div>
               <div className="flex items-center space-x-1 mt-2">
-                <RadioGroupItem value="fooocus" id="m4" />
-                <Label htmlFor="m4">Fooocus</Label>
-              </div>
-              <div className="flex items-center space-x-1 mt-2">
-                <RadioGroupItem value="schnell" id="m5" />
-                <Label htmlFor="m5">Schnell</Label>
+                <RadioGroupItem value="schnell" id="m3" />
+                <Label htmlFor="m3">Schnell</Label>
               </div>
             </RadioGroup>
           </div>
