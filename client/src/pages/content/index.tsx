@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
-  Wand2, Share
+  Wand2, Share, Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
@@ -22,6 +22,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
+import { ImageGenerationDialog } from "@/components/ImageGenerationDialog";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
 
@@ -84,6 +85,7 @@ export default function ContentPage() {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
+  const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -780,7 +782,19 @@ export default function ContentPage() {
             </div>
             {(newContent.contentType === "text-image") && (
               <div className="space-y-2">
-                <Label htmlFor="imageUrl">URL изображения</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="imageUrl">URL изображения</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center gap-1"
+                    onClick={() => setIsImageGenerationDialogOpen(true)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Сгенерировать изображение
+                  </Button>
+                </div>
                 <Input
                   id="imageUrl"
                   placeholder="Введите URL изображения"
