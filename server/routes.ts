@@ -6380,7 +6380,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         if (prompt) {
           // Базовая генерация по промпту
           console.log('Генерация изображения по промпту:', prompt.substring(0, 50) + '...');
-          const result = await falAiSdk.generateImage('fal-ai/sdxl', {
+          const result = await falAiSdk.generateImage('fal-ai/fast-sdxl', {
             prompt: prompt,
             negative_prompt: negativePrompt || 'text, words, letters, logos, watermarks, low quality, blurry, grainy',
             width: width,
@@ -6783,7 +6783,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         };
         
         // Выполняем запрос через SDK
-        const responseData = await falAiSdk.generateImage("fal-ai/stable-diffusion-xl", data);
+        const responseData = await falAiSdk.generateImage("fal-ai/fast-sdxl", data);
         
         console.log("[FAL.AI API] Изображение успешно сгенерировано:", 
           responseData && responseData.images ? `Получено ${responseData.images.length} изображений` : "Пустой ответ");
@@ -6817,7 +6817,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         } else if (statusCode === 401 || statusCode === 403) {
           errorMessage = "Ошибка авторизации в FAL.AI API. Проверьте API ключ.";
         } else if (statusCode === 404) {
-          errorMessage = "Эндпоинт 'fal-ai/stable-diffusion-xl' не найден в FAL.AI API.";
+          errorMessage = "Эндпоинт 'fal-ai/fast-sdxl' не найден в FAL.AI API.";
         } else if (statusCode >= 500) {
           errorMessage = "Внутренняя ошибка сервера FAL.AI API. Попробуйте повторить запрос позже.";
         }
