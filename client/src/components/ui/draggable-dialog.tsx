@@ -140,7 +140,7 @@ export const DraggableDialogContent = forwardRef<
 
 DraggableDialogContent.displayName = "DraggableDialogContent"
 
-// Модифицированные версии DialogOverlay и DialogPortal с прозрачным фоном
+// Полностью прозрачный оверлей, чтобы сквозь него было видно контент страницы
 const TransparentDialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -148,9 +148,14 @@ const TransparentDialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-transparent data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-40 bg-transparent data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 pointer-events-none",
       className
     )}
+    onClick={(e) => {
+      // Предотвращаем всплытие и закрытие диалога по клику на оверлей
+      e.stopPropagation();
+      e.preventDefault();
+    }}
     {...props}
   />
 ))
