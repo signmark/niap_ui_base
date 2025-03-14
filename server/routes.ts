@@ -5379,17 +5379,43 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      // Получаем API ключ DeepSeek
-      const deepseekKey = process.env.DEEPSEEK_API_KEY || '';
-      if (!deepseekKey) {
-        return res.status(500).json({ 
+      // Получаем API ключ DeepSeek из настроек пользователя
+      try {
+        const userId = req.userId;
+        
+        // Получение API ключей пользователя из Directus
+        const userKeysResponse = await directusApi.get('/items/user_api_keys', {
+          params: {
+            filter: {
+              user_id: { _eq: userId },
+              service_name: { _eq: 'deepseek' }
+            },
+            fields: ['api_key']
+          },
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const userKeys = userKeysResponse.data?.data || [];
+        const deepseekKey = userKeys.length > 0 ? userKeys[0].api_key : '';
+        
+        if (!deepseekKey) {
+          return res.status(400).json({
+            success: false,
+            error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
+          });
+        }
+        
+        // Обновляем API ключ в сервисе
+        deepseekService.updateApiKey(deepseekKey);
+      } catch (error) {
+        console.error("Ошибка при получении API ключа DeepSeek:", error);
+        return res.status(500).json({
           success: false,
-          error: "DeepSeek API ключ не настроен" 
+          error: "Не удалось получить API ключ для анализа сайта"
         });
       }
-      
-      // Обновляем API ключ в сервисе
-      deepseekService.updateApiKey(deepseekKey);
       
       // Системное сообщение с инструкциями для анализа
       const messages = [

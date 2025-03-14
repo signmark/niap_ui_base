@@ -19,6 +19,7 @@ export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
   const [socialSearcherKey, setSocialSearcherKey] = useState("");
+  const [deepseekKey, setDeepseekKey] = useState("");
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
@@ -50,6 +51,7 @@ export function SettingsDialog() {
       const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
       const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
       const socialSearcherKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'social_searcher');
+      const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -59,6 +61,9 @@ export function SettingsDialog() {
       }
       if (socialSearcherKeyData) {
         setSocialSearcherKey(socialSearcherKeyData.api_key);
+      }
+      if (deepseekKeyData) {
+        setDeepseekKey(deepseekKeyData.api_key);
       }
     }
   }, [apiKeys]);
@@ -72,7 +77,8 @@ export function SettingsDialog() {
       const services = [
         { name: 'perplexity', key: perplexityKey },
         { name: 'apify', key: apifyKey },
-        { name: 'social_searcher', key: socialSearcherKey }
+        { name: 'social_searcher', key: socialSearcherKey },
+        { name: 'deepseek', key: deepseekKey }
       ];
 
       for (const service of services) {
@@ -160,6 +166,19 @@ export function SettingsDialog() {
           />
           <p className="text-sm text-muted-foreground">
             Ключ используется для парсинга социальных сетей
+          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>API Ключ DeepSeek</Label>
+          <Input
+            type="password"
+            value={deepseekKey}
+            onChange={(e) => setDeepseekKey(e.target.value)}
+            placeholder="Введите API ключ"
+          />
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для анализа веб-сайтов и генерации контента
           </p>
         </div>
 
