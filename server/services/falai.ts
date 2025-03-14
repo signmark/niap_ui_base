@@ -15,8 +15,8 @@ export interface FalAiConfig {
  */
 export class FalAiService {
   private apiKey: string;
-  // Используем официальный URL API FAL.AI
-  private readonly baseUrl = 'https://api.fal.ai/v1';
+  // Используем современный URL очереди FAL.AI
+  private readonly baseUrl = 'https://queue.fal.run/fal-ai';
   private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
@@ -65,31 +65,28 @@ export class FalAiService {
       
       console.log(`Генерация изображения через FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
-      // Формируем запрос в соответствии с обновленной документацией FAL.AI
-      // https://www.fal.ai/models/stable-diffusion-xl
+      // Формируем запрос точно как в успешном запросе
       const requestData = {
         prompt: prompt,
         negative_prompt: negativePrompt,
         width: width,
         height: height,
-        num_images: numImages,
-        sync_mode: true // Добавляем синхронный режим запроса для современного API
+        num_images: numImages
       };
 
-      // Используем современный формат API endpoint для v1 API
-      const apiUrl = `${this.baseUrl}/stable-diffusion/sdxl`;
+      // Используем endpoint fast-sdxl, который мы видели на скриншоте
+      const apiUrl = `${this.baseUrl}/fast-sdxl`;
       
       console.log('Используем FAL.AI API URL:', apiUrl);
       console.log('Данные запроса:', JSON.stringify(requestData));
       
-      // Отправляем запрос на API FAL.AI
-      // Увеличиваем таймаут до 5 минут (300000 мс)
+      // Отправляем запрос на API FAL.AI точно как на скриншоте
       const response = await axios.post(
         apiUrl,
         requestData,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            'Authorization': `Key ${this.apiKey}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -109,44 +106,123 @@ export class FalAiService {
       // Извлекаем URL изображений из ответа
       let images: string[] = [];
       
-      // Проверяем различные форматы ответов от разных API FAL.AI
-      // Новый формат ответа API v1/stable-diffusion/sdxl
-      if (response.data && Array.isArray(response.data)) {
-        // Если ответ - массив объектов (характерно для нового API)
-        images = response.data
-          .map((item: any) => {
-            // Определяем URL изображения из различных полей
-            if (item.image && typeof item.image === 'string') return item.image;
-            if (item.url && typeof item.url === 'string') return item.url;
-            return null;
-          })
-          .filter(Boolean);
+      // По данным со скриншота и тестового запроса, ответ будет в формате:
+      // { "status": "IN_QUEUE", "request_id": "...", "response_url": "...", "status_url": "..." } для ожидания
+      // А готовый результат получаем по response_url
+      
+      console.log("Тип ответа FAL.AI:", response.data && typeof response.data);
+      
+      if (response.data && response.data.status === "IN_QUEUE") {
+        console.log("Запрос поставлен в очередь, начинаем периодический опрос результата");
+        
+        if (!response.data.status_url) {
+          throw new Error("Ошибка API: отсутствует URL статуса запроса");
+        }
+        
+        // Создаем функцию для ожидания результата
+        const waitForResult = async (): Promise<any[]> => {
+          // Максимальное время ожидания - 2 минуты (240 секунд)
+          const maxWaitTime = 240; // секунд
+          const startTime = Date.now();
+          
+          // Проверяем статус каждые 3 секунды
+          let statusResponse;
+          let resultData;
+          
+          while ((Date.now() - startTime) / 1000 < maxWaitTime) {
+            try {
+              // Проверяем статус
+              console.log("Проверяем статус генерации по URL:", response.data.status_url);
+              statusResponse = await axios.get(response.data.status_url, {
+                headers: {
+                  'Authorization': `Key ${this.apiKey}`,
+                  'Accept': 'application/json'
+                }
+              });
+              
+              console.log("Статус запроса:", statusResponse.data?.status);
+              
+              // Если запрос все еще обрабатывается, ждем
+              if (statusResponse.data?.status === "IN_PROGRESS" || statusResponse.data?.status === "IN_QUEUE") {
+                console.log("Изображение все еще генерируется, ожидаем...");
+                await new Promise(resolve => setTimeout(resolve, 3000)); // Ждем 3 секунды
+                continue;
+              }
+              
+              // Если запрос завершился, получаем результат
+              if (statusResponse.data?.status === "COMPLETED") {
+                console.log("Генерация завершена, получаем результат");
+                
+                // Получаем результат по URL ответа
+                const resultResponse = await axios.get(response.data.response_url, {
+                  headers: {
+                    'Authorization': `Key ${this.apiKey}`,
+                    'Accept': 'application/json'
+                  }
+                });
+                
+                resultData = resultResponse.data;
+                console.log("Получен результат генерации:", Object.keys(resultData));
+                break;
+              }
+              
+              // Если статус неожиданный, бросаем ошибку
+              if (statusResponse.data?.status === "FAILED" || statusResponse.data?.status === "CANCELED") {
+                throw new Error(`Ошибка генерации изображения: ${statusResponse.data?.status}`);
+              }
+              
+              // Если статус неизвестен, продолжаем проверять
+              console.log("Неизвестный статус:", statusResponse.data?.status);
+              await new Promise(resolve => setTimeout(resolve, 3000)); // Ждем 3 секунды
+              
+            } catch (pollError) {
+              console.error("Ошибка при проверке статуса:", pollError);
+              // Продолжаем проверять несмотря на ошибку
+              await new Promise(resolve => setTimeout(resolve, 3000)); // Ждем 3 секунды
+            }
+          }
+          
+          // Если время ожидания истекло, бросаем ошибку
+          if (!resultData) {
+            throw new Error("Время ожидания генерации изображения истекло");
+          }
+          
+          return resultData;
+        };
+        
+        // Ожидаем результат
+        console.log("Начинаем ожидание результата...");
+        const result = await waitForResult();
+        console.log("Результат получен:", result);
+        
+        // Обновляем response.data чтобы использовать существующую логику извлечения изображений
+        response.data = result;
       }
-      // Старый формат где images - массив внутри объекта
-      else if (response.data.images && Array.isArray(response.data.images)) {
-        // Формат v1/generation/stable-diffusion-xl
-        images = response.data.images.map((img: any) => {
-          if (typeof img === 'string') return img;
-          return img.url || img.image || '';
-        }).filter(Boolean);
+      
+      // Проверяем различные форматы ответов, начиная с формата, который мы видели на скриншоте
+      // 1. Проверяем формат FAL.AI fast-sdxl (ответ в images/output/image)
+      if (response.data?.images) {
+        console.log("Обнаружен массив изображений в ответе");
+        if (Array.isArray(response.data.images)) {
+          images = response.data.images;
+        } else if (typeof response.data.images === 'string') {
+          images = [response.data.images];
+        }
       }
-      else if (response.data.image) {
-        // Один URL изображения
+      else if (response.data?.image) {
+        console.log("Обнаружено одно изображение в ответе");
         images = [response.data.image];
       }
-      else if (response.data.output) {
-        // Формат fal.run API
+      else if (response.data?.output) {
+        console.log("Обнаружен output в ответе");
         if (Array.isArray(response.data.output)) {
           images = response.data.output;
         } else {
           images = [response.data.output];
         }
       }
-      else if (response.data.url) {
-        // Простой ответ с одним URL
-        images = [response.data.url];
-      }
       
+      // Если после всех проверок у нас еще нет URL изображений, выбрасываем ошибку
       if (!images.length) {
         console.error('Полная структура ответа FAL.AI (не удалось найти URL изображений):', JSON.stringify(response.data));
         throw new Error('Не удалось найти URL изображений в ответе API FAL.AI');
