@@ -7283,14 +7283,14 @@ ${datesText}
           settings,
           businessData,
           keywords: keywords || [],
-          trends: selectedTrends || [],
-          directusToken: req.headers.authorization
+          selectedTrendTopics, // Передаем список ID выбранных трендов напрямую
+          directusToken: req.headers.authorization?.replace("Bearer ", "") || ""
         }
       };
 
       // Вызываем n8n webhook напрямую
       try {
-        const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK;
+        const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK || 'https://n8n.nplanner.ru/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b';
         const apiKey = process.env.N8N_API_KEY;
         
         if (!webhookUrl) {
@@ -7304,7 +7304,7 @@ ${datesText}
         console.log(`Отправка запроса на webhook: ${webhookUrl}`);
         console.log(`Данные запроса:`, JSON.stringify(workflowData).substring(0, 200) + "...");
         
-        // В n8n workflowData должен быть отправлен напрямую, без обертывания в data
+        // Отправляем данные в формате { data: {...} } напрямую, так как n8n webhook ожидает этот формат
         const n8nResponse = await axios.post(webhookUrl, workflowData, {
           headers: {
             'Content-Type': 'application/json',

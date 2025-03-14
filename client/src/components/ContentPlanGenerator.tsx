@@ -179,10 +179,14 @@ export function ContentPlanGenerator({
       
       // Прямой запрос к n8n webhook для отладки (опционально)
       try {
+        // Получаем API ключ из локального хранилища или из окружения
+        const n8nApiKey = localStorage.getItem('n8nApiKey') || '';
+        
         const directResponse = await fetch('https://n8n.nplanner.ru/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-N8N-API-KEY': n8nApiKey
           },
           body: JSON.stringify({ 
             data: {
