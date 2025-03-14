@@ -1590,12 +1590,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         );
         
+        // Объявляем переменную на уровне внешнего блока try
+        let falApiResponse: any = null;
+        
         // Отправляем прямой запрос к FAL.AI API
         try {
           // Максимальное количество попыток
           const maxRetries = 2; 
           let currentRetry = 0;
-          let falApiResponse;
           let lastError;
           
           // Цикл с повторными попытками при неудаче
