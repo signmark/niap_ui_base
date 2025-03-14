@@ -1040,6 +1040,86 @@ async function extractFullSiteContent(url: string): Promise<string> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Прокси для запросов к FAL.AI API (для обхода проблем с DNS в среде Replit)
+  app.post('/api/fal-ai-proxy', async (req, res) => {
+    try {
+      const { endpoint, data, apiKey } = req.body;
+      
+      if (!endpoint || !data || !apiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Отсутствуют необходимые параметры (endpoint, data, apiKey)" 
+        });
+      }
+      
+      try {
+        // Используем прямой IP-адрес вместо доменного имени
+        // const apiUrl = `https://api.fal.ai${endpoint}`;
+        const apiUrl = `https://13.224.103.72${endpoint}`;
+        console.log(`[FAL.AI Прокси] Выполняем запрос к: ${apiUrl}`);
+        console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
+        
+        // Создаём HTTPS агента для отключения проверки сертификата при использовании IP
+        const httpsAgent = new (require('https').Agent)({
+          rejectUnauthorized: false
+        });
+        
+        // Отправляем запрос через axios с переданными данными
+        const response = await axios.post(
+          apiUrl,
+          data,
+          {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Host': 'api.fal.ai' // Необходимо для правильной обработки запроса на CloudFront
+            },
+            httpsAgent
+          }
+        );
+        
+        console.log(`[FAL.AI Прокси] Статус ответа: ${response.status}`);
+        console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(response.data));
+        
+        // Возвращаем результат клиенту
+        return res.json({
+          success: true,
+          data: response.data
+        });
+      } catch (proxyError: any) {
+        console.error("[FAL.AI Прокси] Ошибка запроса:", proxyError);
+        
+        // Возвращаем детальную информацию об ошибке
+        if (proxyError.response) {
+          return res.status(proxyError.response.status).json({
+            success: false,
+            error: `Ошибка FAL.AI API: ${proxyError.response.status}`,
+            details: proxyError.response.data
+          });
+        } else if (proxyError.code === 'ENOTFOUND') {
+          return res.status(500).json({
+            success: false,
+            error: `Не удалось разрешить домен API. Код ошибки: ${proxyError.code}`,
+            details: proxyError.message
+          });
+        } else {
+          return res.status(500).json({
+            success: false,
+            error: `Ошибка запроса к FAL.AI: ${proxyError.message}`, 
+            details: proxyError.code || 'unknown_error'
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("[FAL.AI Прокси] Ошибка при обработке запроса:", error);
+      return res.status(500).json({ 
+        success: false, 
+        error: `Ошибка прокси: ${error.message}` 
+      });
+    }
+  });
+
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', async (req, res) => {
     try {
@@ -1060,10 +1140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем токен из заголовка
       const authHeader = req.headers.authorization;
       let userId = null;
+      let falAiApiKey = process.env.FAL_AI_API_KEY || "";
       
-      // Пробуем инициализировать сервис FAL.AI напрямую с ключом из переменных окружения
+      // Пробуем инициализировать сервис с ключом из переменных окружения
       // Это позволит работать даже без валидного пользовательского токена
-      let apiInitialized = await falAiService.initialize("", "");
+      let apiInitialized = falAiApiKey.length > 0;
       
       // Если не получилось инициализировать напрямую, и есть токен - пробуем через токен
       if (!apiInitialized && authHeader) {
@@ -1081,8 +1162,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (userId) {
             console.log(`Пользователь найден: ${userId}`);
-            // Инициализируем сервис FAL.AI с ключом пользователя
-            apiInitialized = await falAiService.initialize(userId, token);
+            
+            // Получаем ключ API из настроек пользователя
+            try {
+              const apiKeysResponse = await directusApi.get('/items/user_api_keys', {
+                params: {
+                  filter: {
+                    user_id: { _eq: userId },
+                    service_name: { _eq: 'fal_ai' }
+                  },
+                  fields: ['api_key']
+                },
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+              
+              const items = apiKeysResponse.data?.data || [];
+              if (items.length && items[0].api_key) {
+                falAiApiKey = items[0].api_key;
+                apiInitialized = true;
+                console.log('FAL.AI API ключ успешно получен из Directus');
+              }
+            } catch (apiKeyError) {
+              console.error("Ошибка при получении ключа API:", apiKeyError);
+            }
           }
         } catch (authError) {
           console.error("Ошибка авторизации:", authError);
@@ -1104,69 +1208,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      let images = [];
-      console.log("FAL.AI сервис инициализирован успешно, начинаем генерацию");
+      console.log("FAL.AI API ключ получен, начинаем генерацию");
 
-      // В зависимости от типа запроса генерируем изображение
-      if (prompt) {
-        console.log(`Генерация по промпту: ${prompt.substring(0, 50)}...`);
-        // Генерация по промпту
-        images = await falAiService.generateImage(
-          prompt, 
-          { 
-            negativePrompt, 
-            width: width || 1024, 
+      try {
+        // Подготавливаем данные для запроса в зависимости от типа запроса
+        let requestData;
+        let endpoint = '/v1/generation/stable-diffusion-xl';
+        
+        if (prompt) {
+          console.log(`Генерация по промпту: ${prompt.substring(0, 50)}...`);
+          
+          requestData = {
+            model_name: 'stable-diffusion-xl',
+            prompt: prompt,
+            negative_prompt: negativePrompt || '',
+            width: width || 1024,
             height: height || 1024,
-            numImages: numImages || 1
+            num_images: numImages || 1
+          };
+        } else if (businessData) {
+          console.log(`Генерация для бизнеса: ${businessData.companyName}`);
+          
+          const businessPrompt = `Create a professional, brand-appropriate image for ${businessData.companyName}. 
+            The business is described as: ${businessData.brandImage}. 
+            They provide: ${businessData.productsServices}. 
+            Style: clean, professional, modern corporate design with soft colors, minimalist approach.
+            Make it appropriate for business marketing materials, websites, and social media. 
+            No text or logos, just the visual elements that represent the brand.`;
+            
+          const negPrompt = 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional';
+          
+          requestData = {
+            model_name: 'stable-diffusion-xl',
+            prompt: businessPrompt,
+            negative_prompt: negPrompt,
+            width: 1024,
+            height: 1024,
+            num_images: 3
+          };
+        } else if (content && platform) {
+          console.log(`Генерация для соцсетей (${platform}): ${content.substring(0, 50)}...`);
+          
+          // Короткий контент для промпта
+          const shortContent = content.slice(0, 300);
+          
+          // Адаптируем размеры и стиль под платформу
+          let width = 1080;
+          let height = 1080;
+          let stylePrompt = '';
+          
+          switch (platform) {
+            case 'instagram':
+              width = 1080;
+              height = 1080;
+              stylePrompt = 'vibrant, eye-catching, social media ready, Instagram style';
+              break;
+            case 'facebook':
+              width = 1200;
+              height = 630;
+              stylePrompt = 'clean, professional, engaging, Facebook style';
+              break;
+            case 'vk':
+              width = 1200;
+              height = 800;
+              stylePrompt = 'modern, appealing to Russian audience, VK style';
+              break;
+            case 'telegram':
+              width = 1200;
+              height = 900;
+              stylePrompt = 'minimalist, informative, Telegram channel style';
+              break;
+          }
+          
+          const socialPrompt = `Create an image that visually represents: "${shortContent}". ${stylePrompt}. 
+            Make it suitable for ${platform} posts, with no text overlay. 
+            High quality, professional look, eye-catching design.`;
+            
+          requestData = {
+            model_name: 'stable-diffusion-xl',
+            prompt: socialPrompt,
+            negative_prompt: 'text, words, letters, logos, watermarks, low quality',
+            width: width,
+            height: height,
+            num_images: 3
+          };
+        } else {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Не указаны необходимые параметры для генерации изображения" 
+          });
+        }
+        
+        // Отправляем запрос через прокси
+        const proxyResponse = await axios.post(
+          `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
+          {
+            endpoint: endpoint,
+            data: requestData,
+            apiKey: falAiApiKey
           }
         );
-        console.log(`Сгенерировано ${images.length} изображений`);
-      } else if (businessData) {
-        console.log(`Генерация для бизнеса: ${businessData.companyName}`);
-        // Генерация для бизнеса
-        const imageUrl = await falAiService.generateBusinessImage(businessData);
-        images = [imageUrl];
-        console.log("Сгенерировано изображение для бизнеса");
-      } else if (content && platform) {
-        console.log(`Генерация для соцсетей (${platform}): ${content.substring(0, 50)}...`);
-        // Генерация для соцсетей
-        const imageUrl = await falAiService.generateSocialMediaImage(content, platform);
-        images = [imageUrl];
-        console.log("Сгенерировано изображение для соцсетей");
-      } else {
-        return res.status(400).json({ 
+        
+        // Обрабатываем ответ от прокси
+        if (!proxyResponse.data.success) {
+          throw new Error(proxyResponse.data.error || 'Ошибка прокси-запроса');
+        }
+        
+        // Извлекаем URL изображений из ответа
+        let images: string[] = [];
+        const responseData = proxyResponse.data.data;
+        
+        // Проверяем различные форматы ответов
+        if (responseData.images && Array.isArray(responseData.images)) {
+          images = responseData.images.map((img: any) => {
+            if (typeof img === 'string') return img;
+            return img.url || img.image || '';
+          }).filter(Boolean);
+        }
+        else if (responseData.image) {
+          images = [responseData.image];
+        }
+        else if (responseData.output) {
+          if (Array.isArray(responseData.output)) {
+            images = responseData.output;
+          } else {
+            images = [responseData.output];
+          }
+        }
+        else if (responseData.url) {
+          images = [responseData.url];
+        }
+        
+        if (!images.length) {
+          console.error('Полная структура ответа (не удалось найти URL изображений):', JSON.stringify(responseData));
+          throw new Error('Не удалось найти URL изображений в ответе API');
+        }
+        
+        console.log(`Успешно получено ${images.length} изображений`);
+        
+        // Возвращаем URL сгенерированных изображений
+        return res.json({ 
+          success: true, 
+          data: images
+        });
+        
+      } catch (generationError: any) {
+        console.error("Ошибка при генерации изображения:", generationError);
+        
+        if (generationError.response) {
+          return res.status(generationError.response.status || 500).json({
+            success: false,
+            error: `Ошибка API: ${generationError.response.data?.error || generationError.message}`,
+            details: generationError.response.data
+          });
+        }
+        
+        return res.status(500).json({ 
           success: false, 
-          error: "Не указаны необходимые параметры для генерации изображения" 
+          error: `Ошибка при генерации изображения: ${generationError.message}` 
         });
       }
-
-      // Возвращаем URL сгенерированных изображений в новом формате API
-      // Теперь поддерживаем два формата: data.images и просто массив изображений
-      res.json({ 
-        success: true, 
-        data: images.length > 0 ? images : [] 
-      });
     } catch (error: any) {
-      console.error("Ошибка при генерации изображения:", error);
+      console.error("Ошибка при обработке запроса на генерацию:", error);
       
-      // Проверяем на специфические ошибки FAL.AI API
-      if (error.response && error.response.status === 401) {
-        return res.status(401).json({
-          success: false,
-          error: "Неверный API ключ FAL.AI. Проверьте настройки."
+      // Различные обработки ошибок
+      if (error.code === 'ENOTFOUND') {
+        return res.status(500).json({ 
+          success: false, 
+          error: "Не удалось подключиться к серверу API. Возможно, проблемы с сетью."
         });
       }
       
-      if (error.response && error.response.status === 400) {
-        return res.status(400).json({
+      if (error.response && error.response.data) {
+        return res.status(error.response.status || 500).json({
           success: false,
-          error: "Ошибка в параметрах запроса к FAL.AI API: " + (error.response.data?.message || error.message)
+          error: `Ошибка API: ${error.response.data.detail || error.message}`,
+          details: error.response.data
         });
       }
       
       res.status(500).json({ 
         success: false, 
-        error: error.message || "Произошла ошибка при генерации изображения" 
+        error: `Ошибка при обработке запроса: ${error.message || 'Неизвестная ошибка'}` 
       });
     }
   });
