@@ -185,8 +185,11 @@ Return only the translated text, no explanations or comments.`;
           seed: Math.floor(Math.random() * 2147483647) // Случайный сид для разнообразия результатов
         };
       } else if (model === 'flux' || model === 'schnell') {
-        // Endpoint и параметры для Flux (Schnell)
-        apiUrl = `${this.baseUrl}/flux/schnell`;
+        // Endpoint и параметры для Flux (Schnell) - используем прямой URL
+        apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
+      } else if (model === 'stable-diffusion-v35-medium') {
+        // Endpoint для Stable Diffusion v3.5 Medium - используем прямой URL
+        apiUrl = 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium';
         requestData = {
           prompt: processedPrompt,
           negative_prompt: negativePrompt || "",
