@@ -220,43 +220,63 @@ export class FalAiService {
    */
   async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
-      // Если есть API ключ в переменных окружения, используем его для разработки
+      // Всегда проверяем сначала ключ из переменных окружения
       if (process.env.FAL_AI_API_KEY) {
         this.updateApiKey(process.env.FAL_AI_API_KEY);
         log('FAL.AI API ключ успешно установлен из переменных окружения', 'fal-ai');
+        console.log('FAL.AI API ключ успешно установлен из переменных окружения');
         return true;
       }
       
+      // Если нет ключа в окружении, но нет также userId или authToken, ошибка
       if (!userId || !authToken) {
         log('Не удалось инициализировать FAL.AI сервис: отсутствует userId или authToken', 'fal-ai');
+        console.log('Не удалось инициализировать FAL.AI сервис: отсутствует userId или authToken');
         return false;
       }
 
-      // Получаем API ключ из настроек пользователя в Directus
-      const response = await directusApi.get('/items/user_api_keys', {
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: 'fal_ai' }
+      try {
+        // Получаем API ключ из настроек пользователя в Directus
+        const response = await directusApi.get('/items/user_api_keys', {
+          params: {
+            filter: {
+              user_id: { _eq: userId },
+              service_name: { _eq: 'fal_ai' }
+            },
+            fields: ['api_key']
           },
-          fields: ['api_key']
-        },
-        headers: {
-          Authorization: `Bearer ${authToken}`
-        }
-      });
+          headers: {
+            Authorization: `Bearer ${authToken}`
+          }
+        });
 
-      const items = response.data?.data || [];
-      if (items.length && items[0].api_key) {
-        this.updateApiKey(items[0].api_key);
-        log('FAL.AI API ключ успешно получен и установлен из Directus', 'fal-ai');
-        return true;
-      } else {
-        log('FAL.AI API ключ не найден в настройках пользователя', 'fal-ai');
+        const items = response.data?.data || [];
+        if (items.length && items[0].api_key) {
+          this.updateApiKey(items[0].api_key);
+          log('FAL.AI API ключ успешно получен и установлен из Directus', 'fal-ai');
+          console.log('FAL.AI API ключ успешно получен и установлен из Directus');
+          return true;
+        } else {
+          log('FAL.AI API ключ не найден в настройках пользователя', 'fal-ai');
+          console.log('FAL.AI API ключ не найден в настройках пользователя');
+          return false;
+        }
+      } catch (directusError) {
+        console.error('Ошибка при получении ключа из Directus:', directusError);
+        // Если запрос к Directus не удался, но у нас есть ключ в окружении - используем его
+        if (this.apiKey && this.apiKey.length > 0) {
+          console.log('Используем существующий API ключ FAL.AI');
+          return true;
+        }
         return false;
       }
     } catch (error) {
       console.error('Ошибка при инициализации FAL.AI сервиса:', error);
+      // Если у нас все равно есть валидный ключ - можно использовать
+      if (this.apiKey && this.apiKey.length > 0) {
+        console.log('Несмотря на ошибку, используем существующий API ключ FAL.AI');
+        return true;
+      }
       return false;
     }
   }
