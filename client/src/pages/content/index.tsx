@@ -86,6 +86,7 @@ export default function ContentPage() {
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
+  const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -569,6 +570,15 @@ export default function ContentPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Управление контентом</h1>
         <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setIsContentPlanDialogOpen(true)}
+            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
+            variant="outline"
+            className="bg-blue-50 border-blue-200 hover:bg-blue-100"
+          >
+            <CalendarDays className="mr-2 h-4 w-4" />
+            Сгенерировать контент-план
+          </Button>
           <Button 
             onClick={() => setIsGenerateDialogOpen(true)}
             disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
