@@ -5342,6 +5342,145 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
 
+  // API для анализа веб-сайта и автоматического заполнения бизнес-анкеты
+  app.post("/api/website-analysis", authenticateUser, async (req: any, res) => {
+    try {
+      const { url, campaignId } = req.body;
+      const authHeader = req.headers['authorization'];
+      
+      if (!url) {
+        return res.status(400).json({ error: "URL сайта не указан" });
+      }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      log(`Запрос на анализ сайта: ${url} для кампании ${campaignId}`);
+      
+      // Получаем содержимое сайта
+      let websiteContent = '';
+      try {
+        websiteContent = await extractFullSiteContent(url);
+      } catch (error) {
+        console.error("Ошибка при извлечении содержимого сайта:", error);
+        return res.status(400).json({ 
+          success: false,
+          error: "Не удалось получить содержимое с указанного URL" 
+        });
+      }
+      
+      if (!websiteContent) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Не удалось извлечь содержимое сайта" 
+        });
+      }
+      
+      // Получаем API ключ DeepSeek
+      const deepseekKey = process.env.DEEPSEEK_API_KEY || '';
+      if (!deepseekKey) {
+        return res.status(500).json({ 
+          success: false,
+          error: "DeepSeek API ключ не настроен" 
+        });
+      }
+      
+      // Обновляем API ключ в сервисе
+      deepseekService.updateApiKey(deepseekKey);
+      
+      // Системное сообщение с инструкциями для анализа
+      const messages = [
+        {
+          role: 'system',
+          content: `Ты - эксперт по бизнес-анализу. Твоя задача - проанализировать содержимое сайта компании и извлечь информацию для заполнения бизнес-анкеты на русском языке. 
+          Необходимо структурировать информацию в следующие поля:
+          1. companyName - название компании
+          2. businessDescription - общее описание бизнеса
+          3. mainDirections - основные направления деятельности
+          4. brandImage - образ бренда
+          5. productsServices - продукты и услуги компании
+          6. targetAudience - целевая аудитория
+          7. companyFeatures - особенности компании
+          8. businessValues - ценности бизнеса
+          9. competitiveAdvantages - конкурентные преимущества
+          
+          Ответ должен быть структурированным JSON объектом, содержащим только запрашиваемые поля:
+          {
+            "companyName": "...",
+            "businessDescription": "...",
+            "mainDirections": "...",
+            "brandImage": "...",
+            "productsServices": "...",
+            "targetAudience": "...",
+            "companyFeatures": "...",
+            "businessValues": "...",
+            "competitiveAdvantages": "..."
+          }
+          
+          Если какие-то данные отсутствуют на сайте, оставь поле пустым. Не добавляй поля, которых нет в списке. Все значения должны быть на русском языке, даже если сайт на другом языке.`
+        },
+        {
+          role: 'user',
+          content: `Вот содержимое сайта для анализа: ${websiteContent}`
+        }
+      ];
+      
+      // Запрос к DeepSeek API для анализа содержимого сайта
+      let analysisResponse = '';
+      try {
+        analysisResponse = await deepseekService.generateText(messages, {
+          model: 'deepseek-chat',
+          temperature: 0.3,
+          max_tokens: 1500
+        });
+      } catch (aiError) {
+        console.error("Ошибка при обращении к DeepSeek API:", aiError);
+        return res.status(500).json({ 
+          success: false,
+          error: "Ошибка при анализе данных сайта через AI" 
+        });
+      }
+      
+      // Парсим ответ для извлечения JSON
+      let result = {};
+      try {
+        // Поиск JSON в ответе
+        const jsonPattern = /{[\s\S]*}/;
+        const match = analysisResponse.match(jsonPattern);
+        
+        if (match) {
+          result = JSON.parse(match[0]);
+        } else {
+          return res.status(500).json({ 
+            success: false,
+            error: "Не удалось найти JSON в ответе AI" 
+          });
+        }
+      } catch (parseError) {
+        console.error('Ошибка при парсинге JSON:', parseError);
+        return res.status(500).json({ 
+          success: false,
+          error: "Не удалось обработать результат анализа" 
+        });
+      }
+      
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error: any) {
+      console.error('Ошибка при анализе сайта:', error);
+      return res.status(500).json({ 
+        success: false,
+        error: "Произошла ошибка при анализе сайта",
+        details: error.message 
+      });
+    }
+  });
+  
   return httpServer;
 }
 
