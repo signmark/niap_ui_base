@@ -15,7 +15,7 @@ export interface FalAiConfig {
  */
 export class FalAiService {
   private apiKey: string;
-  private readonly baseUrl = 'https://api.fal.ai/v1';
+  private readonly baseUrl = 'https://cloud.fal.ai/v1';
   private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
@@ -75,8 +75,8 @@ export class FalAiService {
         num_images: numImages
       };
 
-      // Используем официальный API endpoint
-      const apiUrl = 'https://api.fal.ai/v1/generation/stable-diffusion-xl';
+      // Используем актуальный API endpoint из baseUrl
+      const apiUrl = `${this.baseUrl}/generation/stable-diffusion-xl`;
       
       console.log('Используем FAL.AI API URL:', apiUrl);
       console.log('Данные запроса:', JSON.stringify(requestData));
