@@ -47,6 +47,12 @@ export class DeepSeekService {
       const max_tokens = options.max_tokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
+      // Проверяем, что API ключ установлен
+      if (!this.apiKey || this.apiKey.trim() === '') {
+        console.error('DeepSeek API key is not set');
+        throw new Error('DeepSeek API ключ не установлен. Пожалуйста, добавьте API ключ в настройках пользователя.');
+      }
+      
       console.log(`Sending request to DeepSeek API (model: ${model}, temp: ${temperature})`);
       
       const response = await axios.post(
@@ -68,12 +74,26 @@ export class DeepSeekService {
       );
       
       if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid response format from DeepSeek API');
+        console.error('Invalid response format from DeepSeek API:', response.data);
+        throw new Error('Некорректный ответ от DeepSeek API. Пожалуйста, проверьте настройки или попробуйте позже.');
       }
       
       return response.data.choices[0].message.content;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calling DeepSeek API:', error);
+      
+      // Проверяем, содержит ли сообщение об ошибке "Invalid API key"
+      if (error.response?.data?.error) {
+        const errorMessage = error.response.data.error.message || error.response.data.error;
+        
+        if (typeof errorMessage === 'string' && 
+           (errorMessage.includes('API key') || errorMessage.includes('authentication') || 
+            errorMessage.includes('auth') || errorMessage.includes('token') || 
+            error.response.status === 401 || error.response.status === 403)) {
+          throw new Error('Недействительный API ключ DeepSeek. Пожалуйста, проверьте ключ в настройках пользователя.');
+        }
+      }
+      
       throw error;
     }
   }
@@ -376,3 +396,6 @@ ${originalContent}
 export const deepseekService = new DeepSeekService({
   apiKey: process.env.DEEPSEEK_API_KEY || ""
 });
+
+// Логируем статус инициализации сервиса
+console.log(`DeepSeek service initialized. API key from env: ${process.env.DEEPSEEK_API_KEY ? 'Present' : 'Not found'}`);
