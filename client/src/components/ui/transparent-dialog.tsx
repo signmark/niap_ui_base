@@ -10,10 +10,8 @@ interface TransparentDialogProps {
   title: string;
   children: React.ReactNode;
   className?: string;
-  initialWidth?: number;
-  initialHeight?: number;
-  minWidth?: number;
-  minHeight?: number;
+  width?: number;
+  height?: number;
 }
 
 export function TransparentDialog({
@@ -22,10 +20,8 @@ export function TransparentDialog({
   title,
   children,
   className,
-  initialWidth = 800,
-  initialHeight = 600,
-  minWidth = 400,
-  minHeight = 300
+  width = 800,
+  height = 700
 }: TransparentDialogProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -35,21 +31,19 @@ export function TransparentDialog({
     if (isOpen && dialogRef.current) {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-      const dialogWidth = initialWidth;
-      const dialogHeight = initialHeight;
       
       setPosition({
-        x: (windowWidth - dialogWidth) / 2,
-        y: (windowHeight - dialogHeight) / 2
+        x: (windowWidth - width) / 2,
+        y: Math.max(0, (windowHeight - height) / 3)
       });
     }
-  }, [isOpen, initialWidth, initialHeight]);
+  }, [isOpen, width, height]);
   
   if (!isOpen) return null;
   
   return (
     <div 
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 overflow-hidden flex items-center justify-center"
+      className="fixed inset-0 bg-black/20 z-50 overflow-hidden"
       onClick={(e) => {
         // Закрываем диалог только при клике непосредственно на backdrop
         if (e.target === e.currentTarget) {
@@ -68,14 +62,12 @@ export function TransparentDialog({
         <div 
           ref={dialogRef}
           className={cn(
-            "bg-background rounded-lg shadow-lg overflow-hidden flex flex-col",
+            "bg-background rounded-lg shadow-lg flex flex-col",
             className
           )}
           style={{ 
-            width: initialWidth, 
-            height: initialHeight,
-            minWidth,
-            minHeight
+            width: width,
+            maxHeight: height
           }}
           onClick={(e) => e.stopPropagation()}
         >
