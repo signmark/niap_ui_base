@@ -66,19 +66,19 @@ export class FalAiService {
       
       console.log(`Генерация изображения через FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
-      // Формируем запрос в соответствии с официальной документацией FAL.AI
-      // https://fal.ai/models/stable-diffusion-xl
+      // Формируем запрос в соответствии с обновленной документацией FAL.AI
+      // https://www.fal.ai/models/stable-diffusion-xl
       const requestData = {
-        model_name: model,
         prompt: prompt,
         negative_prompt: negativePrompt,
         width: width,
         height: height,
-        num_images: numImages
+        num_images: numImages,
+        sync_mode: true // Добавляем синхронный режим запроса для современного API
       };
 
-      // Используем новый формат API endpoint
-      const apiUrl = `${this.baseUrl}/generation/stable-diffusion-xl`;
+      // Используем современный формат API endpoint для v1 API
+      const apiUrl = `${this.baseUrl}/stable-diffusion/sdxl`;
       
       console.log('Используем FAL.AI API URL:', apiUrl);
       console.log('Данные запроса:', JSON.stringify(requestData));
@@ -117,7 +117,20 @@ export class FalAiService {
       let images: string[] = [];
       
       // Проверяем различные форматы ответов от разных API FAL.AI
-      if (response.data.images && Array.isArray(response.data.images)) {
+      // Новый формат ответа API v1/stable-diffusion/sdxl
+      if (response.data && Array.isArray(response.data)) {
+        // Если ответ - массив объектов (характерно для нового API)
+        images = response.data
+          .map((item: any) => {
+            // Определяем URL изображения из различных полей
+            if (item.image && typeof item.image === 'string') return item.image;
+            if (item.url && typeof item.url === 'string') return item.url;
+            return null;
+          })
+          .filter(Boolean);
+      }
+      // Старый формат где images - массив внутри объекта
+      else if (response.data.images && Array.isArray(response.data.images)) {
         // Формат v1/generation/stable-diffusion-xl
         images = response.data.images.map((img: any) => {
           if (typeof img === 'string') return img;

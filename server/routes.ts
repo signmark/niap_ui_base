@@ -1609,19 +1609,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               // Выполняем прямой запрос к FAL.AI REST API без промежуточного прокси
+              // Используем актуальный API эндпоинт для генерации изображений
               falApiResponse = await axios.post(
-                'https://queue.fal.ai/fal-ai/fast-sdxl/requests',
+                'https://api.fal.ai/v1/stable-diffusion/sdxl',
                 {
                   prompt: requestData.prompt,
                   negative_prompt: requestData.negative_prompt || "",
                   width: requestData.width || 1024,
                   height: requestData.height || 1024,
-                  num_images: requestData.num_images || 1
+                  num_images: requestData.num_images || 1,
+                  sync_mode: true // Синхронный режим для мгновенного результата
                 },
                 {
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Key ${falAiApiKey}`
+                    'Authorization': `Key ${falAiApiKey}`,
+                    'Accept': 'application/json'
                   },
                   timeout: 300000 // 5 минут таймаут
                 }
@@ -1715,13 +1718,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // Обработка разных форматов ответа
-        if (apiData.images && Array.isArray(apiData.images)) {
+        // Обработка разных форматов ответа API FAL.AI
+        // Современный формат ответа API v1 для stable-diffusion/sdxl
+        if (apiData && Array.isArray(apiData)) {
+          // Если ответ - массив объектов (характерно для нового API)
+          images = apiData
+            .map((item: any) => {
+              // Определяем URL изображения из различных полей
+              if (item.image && typeof item.image === 'string') return item.image;
+              if (item.url && typeof item.url === 'string') return item.url;
+              return null;
+            })
+            .filter(Boolean);
+        }
+        // Если ответ содержит поле 'images'
+        else if (apiData.images && Array.isArray(apiData.images)) {
           images = apiData.images.filter(Boolean);
         }
+        // Если ответ содержит поле 'image'
         else if (apiData.image) {
           images = [apiData.image];
         }
+        // Если ответ содержит поле 'output'
         else if (apiData.output) {
           if (Array.isArray(apiData.output)) {
             images = apiData.output.filter(Boolean);
@@ -1729,10 +1747,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             images = [apiData.output];
           }
         }
+        // Если ответ содержит поле 'url'
         else if (apiData.url) {
           images = [apiData.url];
         }
-        // Формат с массивом ресурсов, характерный для FAL.AI
+        // Формат с массивом ресурсов, характерный для старого API FAL.AI
         else if (apiData.resources && Array.isArray(apiData.resources)) {
           images = apiData.resources
             .map((r: any) => r.url || r.image || r.output || null)
