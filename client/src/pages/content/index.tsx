@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
-  Wand2, Share, Sparkles
+  Wand2, Share, Sparkles, CalendarDays
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
@@ -23,6 +23,7 @@ import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
 import { ImageGenerationDialog } from "@/components/ImageGenerationDialog";
+import { ContentPlanGenerator } from "@/components/ContentPlanGenerator";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
 
@@ -1400,6 +1401,30 @@ export default function ContentPage() {
           }}
           onClose={() => setIsImageGenerationDialogOpen(false)}
         />
+      </Dialog>
+
+      {/* Диалог генерации контент-плана */}
+      <Dialog open={isContentPlanDialogOpen} onOpenChange={setIsContentPlanDialogOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          {selectedCampaignId && (
+            <ContentPlanGenerator
+              isOpen={isContentPlanDialogOpen}
+              onClose={() => setIsContentPlanDialogOpen(false)}
+              campaignId={selectedCampaignId}
+              onPlanGenerated={(contentItems) => {
+                console.log("Сгенерирован контент-план:", contentItems);
+                // После успешной генерации и сохранения, обновляем список контента
+                queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+                  .then(() => {
+                    toast({
+                      description: "Контент-план успешно создан и сохранен",
+                    });
+                    setIsContentPlanDialogOpen(false);
+                  });
+              }}
+            />
+          )}
+        </DialogContent>
       </Dialog>
     </div>
   );
