@@ -1436,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', async (req, res) => {
     try {
-      const { prompt, negativePrompt, width, height, numImages, modelName, businessData, content, platform } = req.body;
+      const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform } = req.body;
       const falAiApiKey = process.env.FAL_AI_API_KEY;
       
       if (!falAiApiKey) {
@@ -1460,7 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           width: width || 1024,
           height: height || 1024,
           num_images: numImages || 1,
-          style_preset: 'photographic'
+          style_preset: stylePreset || 'photographic'
         };
       } else if (businessData) {
         // Генерация изображения для бизнеса
@@ -1540,7 +1540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
         
         // Прямой запрос к API fal.ai
-        const apiUrl = `https://queue.fal.run/fal-ai/text-to-image/${model}`;
+        const apiUrl = `https://queue.fal.run/fal-ai/${model}`;
         console.log(`URL запроса: ${apiUrl}`);
         console.log(`Данные запроса: ${JSON.stringify(requestData).substring(0, 200)}`);
         
