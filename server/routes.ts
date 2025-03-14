@@ -7260,7 +7260,8 @@ ${datesText}
       console.log("Заголовки:", JSON.stringify(req.headers));
       
       const { campaignId, settings, selectedTrendTopics, keywords, businessData } = req.body;
-      const userId = req.user?.id;
+      // Получаем userId из заголовка x-user-id (как это делается в других частях API)
+      const userId = req.headers['x-user-id'] as string;
       
       console.log("Извлеченные данные:");
       console.log("- campaignId:", campaignId);
@@ -7270,22 +7271,13 @@ ${datesText}
       console.log("- keywords:", keywords ? `${keywords.length} элементов` : "отсутствует");
       console.log("- businessData:", businessData ? "присутствует" : "отсутствует");
       
-      // Проверка обязательных параметров
+      // Проверка только campaignId
       if (!campaignId) {
         console.error("Ошибка: отсутствует campaignId");
         return res.status(400).json({
           success: false,
           error: "Отсутствуют обязательные параметры",
           message: "Необходимо указать ID кампании"
-        });
-      }
-      
-      if (!userId) {
-        console.error("Ошибка: отсутствует userId (пользователь не аутентифицирован)");
-        return res.status(400).json({
-          success: false,
-          error: "Отсутствуют обязательные параметры",
-          message: "Пользователь не аутентифицирован"
         });
       }
 
