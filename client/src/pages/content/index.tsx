@@ -1351,6 +1351,7 @@ export default function ContentPage() {
         <ImageGenerationDialog 
           campaignId={selectedCampaignId}
           onImageGenerated={(imageUrl) => {
+            console.log("Изображение успешно сгенерировано:", imageUrl);
             // Проверяем, находимся ли мы в режиме редактирования или создания
             if (currentContent) {
               // Обновляем URL изображения в форме редактирования
