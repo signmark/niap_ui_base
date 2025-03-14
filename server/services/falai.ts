@@ -18,7 +18,7 @@ export class FalAiService {
   private apiKey: string;
   // Используем современный URL очереди FAL.AI
   private readonly baseUrl = 'https://queue.fal.run/fal-ai';
-  private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
+  private readonly defaultModel = 'fast-sdxl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
     this.apiKey = config.apiKey || '';
@@ -154,7 +154,7 @@ Return only the translated text, no explanations or comments.`;
         negativePrompt = '',
         width = 1024,
         height = 1024,
-        model = 'flux', // Теперь Flux/Schnell модель будет по умолчанию
+        model = 'fast-sdxl', // Используем fast-sdxl как новую модель по умолчанию
         numImages = 1,
         translatePrompt = true,
         stylePreset = 'photographic'
@@ -200,7 +200,7 @@ Return only the translated text, no explanations or comments.`;
           num_inference_steps: 25,
           guidance_scale: 7.0
         };
-      } else if (model === 'sdxl' || model === 'stable-diffusion-xl' || model === 'fast-sdxl') {
+      } else if (model === 'sdxl' || model === 'stable-diffusion-xl') {
         // Endpoint и параметры для SDXL
         apiUrl = `${this.baseUrl}/sdxl`;
         requestData = {
@@ -209,6 +209,19 @@ Return only the translated text, no explanations or comments.`;
           width: width,
           height: height,
           num_images: numImages
+        };
+      } else if (model === 'fast-sdxl') {
+        // Endpoint и параметры для Fast-SDXL
+        apiUrl = `${this.baseUrl}/fast-sdxl`;
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt || "",
+          width: width,
+          height: height,
+          num_images: numImages,
+          scheduler: "K_EULER", // Планировщик для Fast-SDXL
+          num_inference_steps: 25,
+          guidance_scale: 7.0
         };
       } else {
         // Если указана другая модель, используем общий формат
@@ -446,7 +459,7 @@ Return only the translated text, no explanations or comments.`;
       let width = 1080;
       let height = 1080;
       let stylePrompt = '';
-      let useModel = 'schnell'; // Используем Schnell как новую модель по умолчанию для быстрой генерации
+      let useModel = 'fast-sdxl'; // Используем fast-sdxl как модель по умолчанию для соцсетей
 
       switch (platform) {
         case 'instagram':

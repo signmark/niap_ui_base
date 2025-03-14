@@ -1450,7 +1450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let requestData: any = {};
       
       // Определяем используемую модель и данные для запроса
-      let model = modelName || 'sdxl'; // По умолчанию используем SDXL
+      let model = modelName || 'fast-sdxl'; // По умолчанию используем fast-sdxl (быстрая версия)
       
       // Особая обработка для специальных моделей
       if (model === 'fooocus') {
@@ -1459,6 +1459,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (model === 'schnell') {
         console.log('Используем специальную модель Schnell');
         model = 'flux/schnell';
+      } else if (model === 'fast-sdxl') {
+        console.log('Используем модель Fast-SDXL для быстрой генерации');
+        model = 'fal-ai/fast-sdxl';
       }
       
       if (prompt) {
