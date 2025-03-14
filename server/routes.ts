@@ -6310,7 +6310,9 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
   // Обработчик для социальных данных пользователя
   
   // Тестовый эндпоинт для проверки состояния FAL.AI API
-  app.get("/api/test/fal-ai-status", async (req, res) => {
+  app.get("/api/tools/test/fal-ai-status.json", async (req, res) => {
+    // Устанавливаем Content-Type явно, чтобы предотвратить перехват Vite
+    res.setHeader('Content-Type', 'application/json');
     try {
       const apiKey = process.env.FAL_AI_API_KEY;
       
