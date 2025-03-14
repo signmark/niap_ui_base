@@ -7254,14 +7254,38 @@ ${datesText}
   // API для генерации контент-плана через n8n
   app.post("/api/content-plan/generate", authenticateUser, async (req, res) => {
     try {
+      // Подробно логируем тело запроса
+      console.log("Получен запрос на генерацию контент-плана:");
+      console.log("Тело запроса:", JSON.stringify(req.body));
+      console.log("Заголовки:", JSON.stringify(req.headers));
+      
       const { campaignId, settings, selectedTrendTopics, keywords, businessData } = req.body;
       const userId = req.user?.id;
-
-      if (!campaignId || !userId) {
+      
+      console.log("Извлеченные данные:");
+      console.log("- campaignId:", campaignId);
+      console.log("- userId:", userId);
+      console.log("- settings:", settings ? "присутствует" : "отсутствует");
+      console.log("- selectedTrendTopics:", selectedTrendTopics ? `${selectedTrendTopics.length} элементов` : "отсутствует");
+      console.log("- keywords:", keywords ? `${keywords.length} элементов` : "отсутствует");
+      console.log("- businessData:", businessData ? "присутствует" : "отсутствует");
+      
+      // Проверка обязательных параметров
+      if (!campaignId) {
+        console.error("Ошибка: отсутствует campaignId");
         return res.status(400).json({
           success: false,
           error: "Отсутствуют обязательные параметры",
           message: "Необходимо указать ID кампании"
+        });
+      }
+      
+      if (!userId) {
+        console.error("Ошибка: отсутствует userId (пользователь не аутентифицирован)");
+        return res.status(400).json({
+          success: false,
+          error: "Отсутствуют обязательные параметры",
+          message: "Пользователь не аутентифицирован"
         });
       }
 
