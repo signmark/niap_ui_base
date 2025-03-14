@@ -1068,8 +1068,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Подготавливаем endpoint для SDK (удаляем начальный слеш, если есть)
         const sdkEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
         
-        // Выполняем запрос через официальный SDK
-        const responseData = await falAiSdk.generateImage(sdkEndpoint, data);
+        // Устанавливаем увеличенный таймаут для операции
+        // 300000 мс = 5 минут
+        const requestTimeoutMs = 300000; 
+        
+        // Создаем промис с таймаутом для контроля времени выполнения
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout: FAL.AI API не ответил в течение 5 минут')), requestTimeoutMs);
+        });
+        
+        // Выполняем запрос через официальный SDK с контролем таймаута
+        // Promise.race возвращает результат первого завершившегося промиса
+        const responseData = await Promise.race([
+          falAiSdk.generateImage(sdkEndpoint, data),
+          timeoutPromise
+        ]);
         
         console.log(`[FAL.AI Прокси] Запрос выполнен успешно через SDK`);
         console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(responseData || {}));

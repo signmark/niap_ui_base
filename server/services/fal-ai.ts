@@ -100,56 +100,77 @@ export class FalAiService {
       // Используем функцию run для запуска модели с опцией таймаута
       console.log(`Отправляем запрос к FAL.AI на эндпоинт: ${sdkEndpoint}`);
       
-      // Добавляем опцию таймаута 5 минут (300000 мс)
-      // Настраиваем максимальное число попыток
-      const options = {
-        timeout: 300000, // 5 минут таймаут
-        maxRetries: 2,
-        onRetry: (err: any, attempt: number) => {
-          console.log(`Повторная попытка ${attempt} после ошибки: ${err.message}`);
-        }
-      };
+      // Добавляем опцию таймаута и повторных попыток в sdkPayload
+      // SDK ожидает не более 2 аргументов
+      sdkPayload.timeout = 300000; // 5 минут таймаут
       
-      const result = await run(sdkEndpoint, sdkPayload, options);
+      // Логируем полный запрос
+      console.log('Полный запрос к FAL.AI SDK:', JSON.stringify({
+        endpoint: sdkEndpoint,
+        payload: sdkPayload
+      }));
+      
+      // Выполняем запрос к API с увеличенным таймаутом
+      const result = await run(sdkEndpoint, sdkPayload);
       
       console.log('Изображение успешно сгенерировано через FAL.AI');
       console.log('Структура ответа SDK:', Object.keys(result || {}));
       
       // Подробный лог для отладки ответа
+      console.log('Детальная структура ответа:', JSON.stringify(result).substring(0, 500));
+      
       if (result) {
-        if (result.output) console.log('Найдено поле "output" в ответе:', typeof result.output);
-        if (result.images) console.log('Найдено поле "images" в ответе:', Array.isArray(result.images) ? `Массив из ${result.images.length} элементов` : typeof result.images);
+        // Тайпскрипт ругается на эти поля, поэтому используем индексацию
+        if (result['output']) console.log('Найдено поле "output" в ответе:', typeof result['output']);
+        if (result['images']) {
+          const images = result['images'];
+          console.log('Найдено поле "images" в ответе:', Array.isArray(images) ? `Массив из ${images.length} элементов` : typeof images);
+        }
       }
       
       // Проверяем различные форматы ответа
-      if (result?.images && Array.isArray(result.images)) {
+      // Используем индексацию вместо прямого доступа к полям для совместимости с TypeScript
+      
+      // Определение типа для результата API
+      type ApiResult = Record<string, any>;
+      const typedResult = result as ApiResult;
+      
+      // Проверяем формат с images
+      if (typedResult['images'] && Array.isArray(typedResult['images'])) {
         // Формат SDXL может возвращать массив объектов с полем url
         return {
-          images: result.images.map((img: any) => {
+          images: typedResult['images'].map((img: any) => {
             if (typeof img === 'string') return img;
             return img.url || img.image || img;
           })
         };
-      } else if (result?.output) {
+      } 
+      // Проверяем формат с output
+      else if (typedResult['output']) {
         // Формат результата с полем output (SDXL через официальный API)
-        if (Array.isArray(result.output)) {
+        const output = typedResult['output'];
+        if (Array.isArray(output)) {
           return {
-            images: result.output
+            images: output
           };
         } else {
           return {
-            images: [result.output]
+            images: [output]
           };
         }
-      } else if (typeof result === 'string') {
+      } 
+      // Проверяем формат строкового ответа
+      else if (typeof result === 'string') {
         // Простая строка URL
         return {
           images: [result]
         };
-      } else if (result?.url || result?.image) {
+      } 
+      // Проверяем формат с url или image
+      else if (typedResult['url'] || typedResult['image']) {
         // Объект с полем url или image
         return {
-          images: [result.url || result.image]
+          images: [typedResult['url'] || typedResult['image']]
         };
       }
       
