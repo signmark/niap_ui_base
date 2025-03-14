@@ -99,13 +99,19 @@ export function BusinessQuestionnaireForm({
   // Мутация для создания анкеты
   const createQuestionnaireMutation = useMutation({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
-      return await apiRequest('/api/business-questionnaire', {
-        method: 'POST',
-        data: {
-          ...values,
-          campaignId,
-        },
-      });
+      try {
+        const response = await apiRequest('/api/business-questionnaire', {
+          method: 'POST',
+          data: {
+            ...values,
+            campaignId,
+          },
+        });
+        return response;
+      } catch (error) {
+        console.error('Error in create mutation:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -116,6 +122,9 @@ export function BusinessQuestionnaireForm({
       if (onQuestionnaireUpdated) {
         onQuestionnaireUpdated();
       }
+      
+      // Обновляем данные в кэше React Query
+      queryClient.invalidateQueries({ queryKey: ['business-questionnaire', campaignId] });
     },
     onError: (error: Error) => {
       console.error('Error creating questionnaire:', error);
@@ -212,17 +221,32 @@ export function BusinessQuestionnaireForm({
     setIsEditMode(!isEditMode);
   };
 
+  // Состояние для индикатора прогресса
+  const [progress, setProgress] = useState(0);
+  const [showProgress, setShowProgress] = useState(false);
+
   const analyzeWebsite = async () => {
     if (!websiteUrl) return;
     
     setIsAnalyzing(true);
+    setShowProgress(true);
+    setProgress(10); // Начальный прогресс
     
-    // Показываем уведомление о начале анализа
-    const toastId = toast({
+    // Используем простое уведомление без dismiss
+    toast({
       title: 'Анализ сайта',
       description: 'Извлечение данных с сайта и анализ контента...',
-      duration: 100000, // Длительное уведомление до завершения анализа
     });
+    
+    // Симулируем прогресс во время ожидания ответа API
+    const progressInterval = setInterval(() => {
+      setProgress((prevProgress) => {
+        // Увеличиваем прогресс постепенно, но не превышаем 90%
+        // Последние 10% будут добавлены при успешном получении данных
+        const newProgress = prevProgress + Math.random() * 5;
+        return newProgress < 90 ? newProgress : 90;
+      });
+    }, 1000);
     
     try {
       console.log('Starting website analysis for URL:', websiteUrl);
@@ -235,7 +259,13 @@ export function BusinessQuestionnaireForm({
         },
       });
       
+      // Останавливаем симуляцию прогресса
+      clearInterval(progressInterval);
+      
       if (response && response.data) {
+        // Завершаем прогресс
+        setProgress(100);
+        
         const { data } = response;
         
         console.log('Received analysis data:', data);
@@ -269,9 +299,6 @@ export function BusinessQuestionnaireForm({
         form.setValue('competitiveAdvantages', data.competitiveAdvantages || prevValues.competitiveAdvantages);
         form.setValue('brandImage', data.brandImage || prevValues.brandImage);
         
-        // Закрываем уведомление о процессе анализа
-        toast.dismiss(toastId);
-        
         toast({
           title: 'Анализ сайта завершен',
           description: 'Данные успешно получены и заполнены в анкету.',
@@ -283,12 +310,18 @@ export function BusinessQuestionnaireForm({
           console.log('Automatically saving updated questionnaire after analysis');
           updateQuestionnaireMutation.mutate(formValues);
         }
+        
+        // Скрываем индикатор прогресса через 1 секунду
+        setTimeout(() => {
+          setShowProgress(false);
+        }, 1000);
       }
     } catch (error) {
       console.error('Error analyzing website:', error);
       
-      // Закрываем уведомление о процессе анализа
-      toast.dismiss(toastId);
+      // Останавливаем симуляцию прогресса
+      clearInterval(progressInterval);
+      setShowProgress(false);
       
       toast({
         title: 'Ошибка анализа',
@@ -639,6 +672,22 @@ export function BusinessQuestionnaireForm({
                     </FormItem>
                   )}
                 />
+
+                {/* Индикатор прогресса анализа сайта */}
+                {showProgress && (
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">Анализ сайта...</span>
+                      <span className="text-sm font-medium">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                        style={{ width: `${progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
 
                 {isEditMode && (
                   <div className="flex justify-end space-x-2">
