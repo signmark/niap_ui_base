@@ -3383,13 +3383,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Эндпоинт для получения трендов кампании (для ContentPlanGenerator)
-  app.get("/api/campaign-trend-topics", async (req, res) => {
+  app.get("/api/campaign-trend-topics", authenticateUser, async (req, res) => {
     try {
       const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "campaignId is required" });
       }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
       
       console.log(`Fetching campaign trends for campaign: ${campaignId}`);
       
