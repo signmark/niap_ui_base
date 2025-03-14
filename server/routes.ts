@@ -1055,48 +1055,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         numImages = 1
       } = req.body;
 
+      console.log(`Получен запрос на генерацию изображения: ${prompt ? 'По промпту' : businessData ? 'Для бизнеса' : 'Для соцсетей'}`);
+
       // Получаем токен из заголовка
       const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ 
-          success: false, 
-          error: "Не авторизован: Отсутствует заголовок авторизации" 
-        });
-      }
+      let userId = null;
       
-      const token = authHeader.replace('Bearer ', '');
+      // Пробуем инициализировать сервис FAL.AI напрямую с ключом из переменных окружения
+      // Это позволит работать даже без валидного пользовательского токена
+      let apiInitialized = await falAiService.initialize("", "");
       
-      // Получаем информацию о пользователе из токена
-      const userResponse = await directusApi.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Если не получилось инициализировать напрямую, и есть токен - пробуем через токен
+      if (!apiInitialized && authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          userId = userResponse.data?.data?.id;
+          
+          if (userId) {
+            console.log(`Пользователь найден: ${userId}`);
+            // Инициализируем сервис FAL.AI с ключом пользователя
+            apiInitialized = await falAiService.initialize(userId, token);
+          }
+        } catch (authError) {
+          console.error("Ошибка авторизации:", authError);
+          // Продолжаем выполнение, если не удалось получить пользователя, но ключ уже настроен из окружения
+          if (!apiInitialized) {
+            return res.status(401).json({ 
+              success: false, 
+              error: "Ошибка авторизации. Пожалуйста, войдите в систему заново." 
+            });
+          }
         }
-      });
-      
-      const userId = userResponse.data?.data?.id;
-      
-      if (!userId) {
-        return res.status(401).json({ 
-          success: false, 
-          error: "Не удалось определить ID пользователя из токена" 
-        });
       }
-      
-      // Инициализируем сервис FAL.AI с ключом пользователя, если это необходимо
-      // Это позволяет использовать ключ пользователя для запросов к API
-      const apiInitialized = await falAiService.initialize(userId, token);
     
+      // Если API не инициализирован, возвращаем ошибку
       if (!apiInitialized) {
         return res.status(400).json({ 
           success: false, 
-          error: "API ключ для FAL.AI не настроен в профиле пользователя" 
+          error: "API ключ для FAL.AI не настроен. Проверьте настройки или переменные окружения." 
         });
       }
 
       let images = [];
+      console.log("FAL.AI сервис инициализирован успешно, начинаем генерацию");
 
       // В зависимости от типа запроса генерируем изображение
       if (prompt) {
+        console.log(`Генерация по промпту: ${prompt.substring(0, 50)}...`);
         // Генерация по промпту
         images = await falAiService.generateImage(
           prompt, 
@@ -1107,14 +1120,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             numImages: numImages || 1
           }
         );
+        console.log(`Сгенерировано ${images.length} изображений`);
       } else if (businessData) {
+        console.log(`Генерация для бизнеса: ${businessData.companyName}`);
         // Генерация для бизнеса
         const imageUrl = await falAiService.generateBusinessImage(businessData);
         images = [imageUrl];
+        console.log("Сгенерировано изображение для бизнеса");
       } else if (content && platform) {
+        console.log(`Генерация для соцсетей (${platform}): ${content.substring(0, 50)}...`);
         // Генерация для соцсетей
         const imageUrl = await falAiService.generateSocialMediaImage(content, platform);
         images = [imageUrl];
+        console.log("Сгенерировано изображение для соцсетей");
       } else {
         return res.status(400).json({ 
           success: false, 
@@ -1129,6 +1147,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Ошибка при генерации изображения:", error);
+      
+      // Проверяем на специфические ошибки FAL.AI API
+      if (error.response && error.response.status === 401) {
+        return res.status(401).json({
+          success: false,
+          error: "Неверный API ключ FAL.AI. Проверьте настройки."
+        });
+      }
+      
+      if (error.response && error.response.status === 400) {
+        return res.status(400).json({
+          success: false,
+          error: "Ошибка в параметрах запроса к FAL.AI API: " + (error.response.data?.message || error.message)
+        });
+      }
+      
       res.status(500).json({ 
         success: false, 
         error: error.message || "Произошла ошибка при генерации изображения" 
