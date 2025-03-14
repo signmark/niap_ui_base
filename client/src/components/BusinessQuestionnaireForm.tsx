@@ -218,7 +218,7 @@ export function BusinessQuestionnaireForm({
     setIsAnalyzing(true);
     
     try {
-      const response = await apiRequest('/api/analyze-website', {
+      const response = await apiRequest('/api/analyze-website-for-questionnaire', {
         method: 'POST',
         data: {
           url: websiteUrl,
