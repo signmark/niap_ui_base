@@ -15,8 +15,8 @@ export interface FalAiConfig {
  */
 export class FalAiService {
   private apiKey: string;
-  private readonly baseUrl = 'https://fal.run/api';
-  private readonly defaultModel = '110602490'; // ID модели fal-ai/fast-sdxl по умолчанию
+  private readonly baseUrl = 'https://api.fal.ai/v1';
+  private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
     this.apiKey = config.apiKey || '';
@@ -58,29 +58,28 @@ export class FalAiService {
         negativePrompt = '',
         width = 1024,
         height = 1024,
-        model = this.defaultModel,
+        model = 'stable-diffusion-xl',
         numImages = 1
       } = options;
       
-      console.log(`Generating image with FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
+      console.log(`Генерация изображения через FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
 
-      // Формируем запрос в соответствии с документацией FAL.AI
-      // https://docs.fal.ai/reference/fal-ai-text-to-image
+      // Формируем запрос в соответствии с официальной документацией FAL.AI
+      // https://fal.ai/models/stable-diffusion-xl
       const requestData = {
+        model_name: model,
         prompt: prompt,
         negative_prompt: negativePrompt,
-        image_size: `${width}x${height}`,
-        batch_size: numImages,
-        scheduler: "euler_a",
-        num_inference_steps: 30,
-        guidance_scale: 7.5
+        width: width,
+        height: height,
+        num_images: numImages
       };
 
-      // URL для Fast SDXL API
-      const apiUrl = 'https://8cf71aa7-9952-4607-b77f-4d4151e777a5.defaults-profile.lm.fal.ai/sdxl';
+      // Используем официальный API endpoint
+      const apiUrl = 'https://api.fal.ai/v1/generation/stable-diffusion-xl';
       
-      console.log('Using FAL.AI API URL:', apiUrl);
-      console.log('Request data:', JSON.stringify(requestData));
+      console.log('Используем FAL.AI API URL:', apiUrl);
+      console.log('Данные запроса:', JSON.stringify(requestData));
       
       // Отправляем запрос на API FAL.AI
       const response = await axios.post(
@@ -88,46 +87,57 @@ export class FalAiService {
         requestData,
         {
           headers: {
-            'Authorization': `Key ${this.apiKey}`,
+            'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         }
       );
 
-      // Проверяем успешный ответ
-      if (response.status !== 200) {
-        throw new Error(`Ошибка при запросе к FAL.AI API: ${response.statusText}`);
-      }
-
-      console.log('FAL.AI response:', JSON.stringify(response.data).substr(0, 200) + '...');
-
-      console.log('FAL.AI response structure:', Object.keys(response.data));
+      console.log('Статус ответа FAL.AI:', response.status);
+      console.log('Структура ответа FAL.AI:', Object.keys(response.data));
       
-      // В новом SDXL API изображения находятся в свойстве 'images' в виде массива строк
-      let images = [];
+      // Детальное логирование для отладки
+      const truncatedData = JSON.stringify(response.data).length > 500 
+        ? JSON.stringify(response.data).substring(0, 500) + '...' 
+        : JSON.stringify(response.data);
+      console.log('Данные ответа FAL.AI (усечено):', truncatedData);
       
-      // Проверяем разные возможные структуры ответа
+      // Извлекаем URL изображений из ответа
+      let images: string[] = [];
+      
+      // Проверяем различные форматы ответов от разных API FAL.AI
       if (response.data.images && Array.isArray(response.data.images)) {
-        if (typeof response.data.images[0] === 'string') {
-          // Если напрямую массив строк с URL
-          images = response.data.images;
-        } else if (typeof response.data.images[0] === 'object' && response.data.images[0].url) {
-          // Если массив объектов с url внутри
-          images = response.data.images.map((img: any) => img.url || '').filter(Boolean);
-        }
-      } else if (response.data.image) {
-        // Если одно изображение
+        // Формат v1/generation/stable-diffusion-xl
+        images = response.data.images.map((img: any) => {
+          if (typeof img === 'string') return img;
+          return img.url || img.image || '';
+        }).filter(Boolean);
+      }
+      else if (response.data.image) {
+        // Один URL изображения
         images = [response.data.image];
-      } else if (response.data.output && Array.isArray(response.data.output)) {
-        // Новая структура с 'output'
-        images = response.data.output;
+      }
+      else if (response.data.output) {
+        // Формат fal.run API
+        if (Array.isArray(response.data.output)) {
+          images = response.data.output;
+        } else {
+          images = [response.data.output];
+        }
+      }
+      else if (response.data.url) {
+        // Простой ответ с одним URL
+        images = [response.data.url];
       }
       
       if (!images.length) {
-        console.error('Структура ответа FAL.AI:', response.data);
-        throw new Error('Не удалось получить сгенерированные изображения из ответа API');
+        console.error('Полная структура ответа FAL.AI (не удалось найти URL изображений):', JSON.stringify(response.data));
+        throw new Error('Не удалось найти URL изображений в ответе API FAL.AI');
       }
 
+      console.log(`Получено ${images.length} изображений от FAL.AI API`);
+      
       // Возвращаем массив URL изображений
       return images;
     } catch (error: any) {
