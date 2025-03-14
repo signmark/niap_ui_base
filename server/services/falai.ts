@@ -154,7 +154,7 @@ Return only the translated text, no explanations or comments.`;
         negativePrompt = '',
         width = 1024,
         height = 1024,
-        model = 'foocus', // Теперь Foocus модель будет по умолчанию
+        model = 'flux', // Теперь Flux/Schnell модель будет по умолчанию
         numImages = 1,
         translatePrompt = true,
         stylePreset = 'photographic'
