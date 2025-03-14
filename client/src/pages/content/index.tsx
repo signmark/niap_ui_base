@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { DraggableDialogContent } from "@/components/ui/draggable-dialog";
+import { DraggableDialogContent, TransparentDialogOverlay } from "@/components/ui/draggable-dialog";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
@@ -975,7 +975,18 @@ export default function ContentPage() {
       </Dialog>
 
       {/* Диалог редактирования контента */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog 
+        open={isEditDialogOpen} 
+        onOpenChange={(open) => {
+          // Сохраняем предыдущее значение open, чтобы знать, закрывается ли диалог
+          if (open === false && isEditDialogOpen === true) {
+            // Диалог закрывается
+            setIsEditDialogOpen(false);
+          } else if (open === true && isEditDialogOpen === false) {
+            // Диалог открывается
+            setIsEditDialogOpen(true);
+          }
+        }}>
         <DialogContent className="hidden">
           {/* Этот DialogContent скрыт и нужен только для соответствия API Dialog */}
         </DialogContent>
