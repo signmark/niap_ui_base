@@ -146,7 +146,7 @@ export function BusinessQuestionnaireForm({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
       if (!questionnaireData?.id) return null;
       
-      return await apiRequest(`/api/business-questionnaire/${questionnaireData.id}`, {
+      return await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
         method: 'PATCH',
         data: values,
       });
