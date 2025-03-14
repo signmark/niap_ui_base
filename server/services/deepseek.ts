@@ -374,5 +374,5 @@ ${originalContent}
 
 // Экспортируем экземпляр сервиса для использования в других модулях
 export const deepseekService = new DeepSeekService({
-  apiKey: process.env.DEEPSEEK_API_KEY || "sk-7debde066de4456bbf2b029beb789db3"
+  apiKey: process.env.DEEPSEEK_API_KEY || ""
 });
