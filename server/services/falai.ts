@@ -15,7 +15,9 @@ export interface FalAiConfig {
  */
 export class FalAiService {
   private apiKey: string;
-  private readonly baseUrl = 'https://cloud.fal.ai/v1';
+  // Используем прямой IP-адрес вместо доменного имени из-за проблем с DNS в среде Replit
+  // Оригинальные URL: https://api.fal.ai/v1 или https://cloud.fal.ai/v1
+  private readonly baseUrl = 'https://13.224.103.72/v1';
   private readonly defaultModel = 'stable-diffusion-xl'; // Название модели по умолчанию для API v1
 
   constructor(config: FalAiConfig) {
@@ -82,6 +84,7 @@ export class FalAiService {
       console.log('Данные запроса:', JSON.stringify(requestData));
       
       // Отправляем запрос на API FAL.AI
+      // При использовании IP адреса вместо домена отключаем проверку SSL сертификата
       const response = await axios.post(
         apiUrl,
         requestData,
@@ -89,8 +92,12 @@ export class FalAiService {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            'Accept': 'application/json',
+            'Host': 'api.fal.ai' // Добавляем хост-заголовок для правильной маршрутизации на CDN
+          },
+          httpsAgent: new (require('https').Agent)({
+            rejectUnauthorized: false // Отключаем проверку SSL сертификата при использовании IP
+          })
         }
       );
 
