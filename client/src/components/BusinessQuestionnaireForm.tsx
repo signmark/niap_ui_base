@@ -3,6 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 // Определение схемы валидации для формы бизнес-анкеты
 const businessQuestionnaireSchema = z.object({
@@ -74,6 +84,9 @@ export function BusinessQuestionnaireForm({
   onQuestionnaireUpdated,
 }: BusinessQuestionnaireFormProps) {
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [isWebsiteDialogOpen, setIsWebsiteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
