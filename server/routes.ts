@@ -1322,43 +1322,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // Отправляем запрос через прокси
-        const proxyResponse = await axios.post(
-          `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
-          {
-            endpoint: endpoint,
-            data: requestData,
-            apiKey: falAiApiKey
-          }
+        // Добавляем логирование для отслеживания запроса
+        console.log(`Отправляем запрос на прокси FAL.AI с параметрами:`, 
+          JSON.stringify({
+            endpoint,
+            data: {
+              ...requestData,
+              prompt: requestData.prompt?.substring(0, 30) + '...'
+            }
+          })
         );
         
-        // Обрабатываем ответ от прокси
-        if (!proxyResponse.data.success) {
-          throw new Error(proxyResponse.data.error || 'Ошибка прокси-запроса');
+        // Отправляем запрос через прокси
+        try {
+          const proxyResponse = await axios.post(
+            `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
+            {
+              endpoint: endpoint,
+              data: requestData,
+              apiKey: falAiApiKey
+            }
+          );
+          
+          // Добавляем логирование полученного ответа
+          console.log(`Получен ответ от прокси FAL.AI:`, 
+            JSON.stringify({
+              success: proxyResponse.data.success,
+              status: proxyResponse.status,
+              hasData: !!proxyResponse.data.data,
+              hasError: !!proxyResponse.data.error
+            })
+          );
+          
+          // Обрабатываем ответ от прокси
+          if (!proxyResponse.data.success) {
+            console.error(`Ошибка прокси FAL.AI:`, proxyResponse.data.error);
+            throw new Error(proxyResponse.data.error || 'Ошибка прокси-запроса');
+          }
+        } catch (proxyCallError) {
+          console.error(`Ошибка при вызове прокси FAL.AI:`, proxyCallError.message);
+          
+          // Если это ошибка от axios при вызове прокси
+          if (proxyCallError.response) {
+            console.error(`Детали ошибки прокси:`, 
+              JSON.stringify({
+                status: proxyCallError.response.status,
+                data: proxyCallError.response.data
+              })
+            );
+            throw new Error(`Ошибка прокси-запроса: ${proxyCallError.response.data.error || proxyCallError.message}`);
+          }
+          
+          throw proxyCallError;
         }
         
-        // Извлекаем URL изображений из ответа
+        // Извлекаем URL изображений из ответа после успешного запроса
         let images: string[] = [];
-        const responseData = proxyResponse.data.data;
+        const responseData = proxyResponse?.data?.data;
         
         // Проверяем различные форматы ответов
-        if (responseData.images && Array.isArray(responseData.images)) {
+        if (responseData?.images && Array.isArray(responseData.images)) {
           images = responseData.images.map((img: any) => {
             if (typeof img === 'string') return img;
             return img.url || img.image || '';
           }).filter(Boolean);
         }
-        else if (responseData.image) {
+        else if (responseData?.image) {
           images = [responseData.image];
         }
-        else if (responseData.output) {
+        else if (responseData?.output) {
           if (Array.isArray(responseData.output)) {
             images = responseData.output;
           } else {
             images = [responseData.output];
           }
         }
-        else if (responseData.url) {
+        else if (responseData?.url) {
           images = [responseData.url];
         }
         
