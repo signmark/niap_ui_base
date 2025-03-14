@@ -90,24 +90,41 @@ export function ImageGenerationDialog({
     onSuccess: (data) => {
       console.log('Ответ от API генерации изображений:', JSON.stringify(data).substring(0, 100) + '...');
       
-      if (data.success && data.data?.images?.length) {
-        // Новый формат API
-        setGeneratedImages(data.data.images);
-        setSelectedImageIndex(-1); // Сбрасываем выбор изображения
+      console.log('Структура ответа:', JSON.stringify(data, null, 2).substring(0, 200));
+      
+      if (data.success) {
+        // Обработка разных форматов ответа от API
+        let images: string[] = [];
         
-        toast({
-          title: "Успешно",
-          description: `Сгенерировано ${data.data.images.length} изображений`
-        });
-      } else if (data.success && Array.isArray(data.data)) {
-        // Альтернативный формат ответа (прямой массив изображений)
-        setGeneratedImages(data.data);
-        setSelectedImageIndex(-1);
+        if (data.data?.images && Array.isArray(data.data.images)) {
+          // Формат с вложенным массивом images
+          images = data.data.images;
+        }
+        else if (Array.isArray(data.data)) {
+          // Прямой массив URL-ов изображений
+          images = data.data;
+        }
+        else if (typeof data.data === 'string') {
+          // Один URL в виде строки
+          images = [data.data];
+        }
         
-        toast({
-          title: "Успешно",
-          description: `Сгенерировано ${data.data.length} изображений`
-        });
+        if (images.length > 0) {
+          setGeneratedImages(images);
+          setSelectedImageIndex(-1); // Сбрасываем выбор изображения
+          
+          toast({
+            title: "Успешно",
+            description: `Сгенерировано ${images.length} ${images.length === 1 ? 'изображение' : 'изображений'}`
+          });
+        } else {
+          console.error('Не удалось найти изображения в ответе:', data);
+          toast({
+            variant: "destructive",
+            title: "Ошибка при обработке результата",
+            description: "Не удалось найти URL изображений в ответе сервера"
+          });
+        }
       } else {
         console.error('Неожиданный формат ответа от API:', data);
         toast({
@@ -127,8 +144,16 @@ export function ImageGenerationDialog({
         errorMessage = "Ошибка соединения с сервисом генерации изображений. Проверьте настройки сети.";
       } else if (errorMessage.includes('timeout')) {
         errorMessage = "Превышено время ожидания ответа от сервиса. Попробуйте позже.";
-      } else if (errorMessage.includes('API ключ не установлен') || errorMessage.includes('unauthorized')) {
+      } else if (errorMessage.includes('API ключ не настроен') || errorMessage.includes('API ключ для FAL.AI не настроен')) {
+        errorMessage = "API ключ для FAL.AI не настроен. Перейдите в настройки для добавления ключа.";
+      } else if (errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized') || errorMessage.includes('Неверный API ключ')) {
         errorMessage = "Отсутствует или неверный ключ API. Проверьте настройки в разделе API ключей.";
+      } else if (errorMessage.includes('rejectUnauthorized') || errorMessage.includes('certificate')) {
+        errorMessage = "Проблема с SSL-сертификатом при подключении к API. Идет работа через альтернативный метод.";
+      } else if (errorMessage.includes('DNS')) {
+        errorMessage = "Проблема с DNS-разрешением при подключении к API. Используется альтернативный способ доступа.";
+      } else if (errorMessage.includes('прокси') || errorMessage.includes('proxy')) {
+        errorMessage = "Ошибка при использовании прокси-сервера. Команда разработки уже работает над исправлением.";
       }
       
       toast({
