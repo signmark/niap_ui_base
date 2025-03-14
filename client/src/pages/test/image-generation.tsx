@@ -21,20 +21,31 @@ export default function ImageGenerationTest() {
           return;
         }
 
-        // Проверка наличия API ключа FAL.AI в настройках пользователя
-        const response = await fetch('/api/check-api-key?service=fal_ai', {
+        // Проверка наличия и работоспособности API ключа FAL.AI через новый эндпоинт
+        const response = await fetch('/api/tools/test/fal-ai-status.json', {
           method: 'GET',
           headers: {
+            'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }
         });
 
+        // Если ответ не в формате JSON, возможно Vite перехватил запрос
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Неверный формат ответа от сервера:', contentType);
+          setApiKeyStatus('error');
+          return;
+        }
+
         const data = await response.json();
         
-        if (response.ok && data.success && data.hasKey) {
+        if (response.ok && data.success) {
+          console.log('FAL.AI API статус:', data.message);
           setApiKeyStatus('ok');
         } else {
+          console.error('Ошибка FAL.AI API:', data.message || data.error);
           setApiKeyStatus('missing');
         }
       } catch (error) {
@@ -43,7 +54,9 @@ export default function ImageGenerationTest() {
       }
     };
 
-    checkApiKey();
+    if (user) {
+      checkApiKey();
+    }
   }, [user]);
 
   const handleSettingsOpen = () => {

@@ -6309,6 +6309,103 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
 
   // Обработчик для социальных данных пользователя
   
+  // API для генерации изображений через FAL.AI
+  app.post('/api/v1/image-gen', async (req, res) => {
+    // Устанавливаем заголовок Content-Type: application/json для предотвращения перехвата Vite
+    res.setHeader('Content-Type', 'application/json');
+    
+    try {
+      const { prompt, negativePrompt, width, height, numImages } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          error: "Необходимо указать промпт для генерации изображения"
+        });
+      }
+      
+      // Получаем API ключ из переменной окружения
+      const apiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "API ключ FAL.AI не найден в конфигурации сервера"
+        });
+      }
+      
+      console.log(`[FAL.AI API] Генерация изображения для промпта: "${prompt.substring(0, 50)}..."`);
+      
+      try {
+        // Инициализируем сервис с API ключом
+        falAiSdk.initialize(apiKey);
+        
+        // Параметры для генерации
+        const data = {
+          prompt: prompt,
+          negative_prompt: negativePrompt || "",
+          width: width || 1024,
+          height: height || 1024,
+          num_images: numImages || 1
+        };
+        
+        // Выполняем запрос через SDK
+        const responseData = await falAiSdk.generateImage("fal-ai/stable-diffusion-xl", data);
+        
+        console.log("[FAL.AI API] Изображение успешно сгенерировано:", 
+          responseData && responseData.images ? `Получено ${responseData.images.length} изображений` : "Пустой ответ");
+        
+        if (!responseData || !responseData.images || responseData.images.length === 0) {
+          throw new Error("Не удалось получить URL сгенерированного изображения");
+        }
+        
+        return res.json({
+          success: true,
+          images: responseData.images
+        });
+      } catch (error: any) {
+        console.error("[FAL.AI API] Ошибка при генерации изображения:", error);
+        
+        // Анализируем тип ошибки для более информативного сообщения
+        let errorMessage = error.message || "Неизвестная ошибка";
+        let statusCode = 500;
+        let errorDetails: any = {};
+        
+        // Проверяем наличие HTTP статуса в ошибке
+        if (error.response) {
+          statusCode = error.response.status || 500;
+          errorDetails.status = error.response.status;
+          errorDetails.data = error.response.data;
+        }
+        
+        // Специфические сообщения об ошибках
+        if (error.message.includes('Timeout')) {
+          errorMessage = "Превышено время ожидания ответа от FAL.AI API (5 минут)";
+        } else if (statusCode === 401 || statusCode === 403) {
+          errorMessage = "Ошибка авторизации в FAL.AI API. Проверьте API ключ.";
+        } else if (statusCode === 404) {
+          errorMessage = "Эндпоинт 'fal-ai/stable-diffusion-xl' не найден в FAL.AI API.";
+        } else if (statusCode >= 500) {
+          errorMessage = "Внутренняя ошибка сервера FAL.AI API. Попробуйте повторить запрос позже.";
+        }
+        
+        return res.status(statusCode).json({
+          success: false,
+          error: "Ошибка при обращении к API FAL.AI",
+          message: errorMessage,
+          details: errorDetails
+        });
+      }
+    } catch (error: any) {
+      console.error("[FAL.AI API] Непредвиденная ошибка при генерации изображения:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Непредвиденная ошибка при генерации изображения",
+        message: error.message
+      });
+    }
+  });
+  
   // Тестовый эндпоинт для проверки состояния FAL.AI API
   app.get("/api/tools/test/fal-ai-status.json", async (req, res) => {
     // Устанавливаем Content-Type явно, чтобы предотвратить перехват Vite

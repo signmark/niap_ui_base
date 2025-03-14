@@ -91,6 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/trends", label: "Trends", icon: TrendingUp },
     { path: "/tasks", label: "Tasks", icon: Database },
     { path: "/analytics", label: "Analytics", icon: BarChart },
+    { path: "/test/image-generation", label: "FAL.AI Тест", icon: BarChart },
   ];
 
   const renderNavItems = () => (
