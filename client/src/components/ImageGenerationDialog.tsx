@@ -88,7 +88,10 @@ export function ImageGenerationDialog({
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.success && data.data.images?.length) {
+      console.log('Ответ от API генерации изображений:', JSON.stringify(data).substring(0, 100) + '...');
+      
+      if (data.success && data.data?.images?.length) {
+        // Новый формат API
         setGeneratedImages(data.data.images);
         setSelectedImageIndex(-1); // Сбрасываем выбор изображения
         
@@ -96,19 +99,42 @@ export function ImageGenerationDialog({
           title: "Успешно",
           description: `Сгенерировано ${data.data.images.length} изображений`
         });
+      } else if (data.success && Array.isArray(data.data)) {
+        // Альтернативный формат ответа (прямой массив изображений)
+        setGeneratedImages(data.data);
+        setSelectedImageIndex(-1);
+        
+        toast({
+          title: "Успешно",
+          description: `Сгенерировано ${data.data.length} изображений`
+        });
       } else {
+        console.error('Неожиданный формат ответа от API:', data);
         toast({
           variant: "destructive",
-          title: "Ошибка",
-          description: "Не удалось сгенерировать изображения"
+          title: "Ошибка при обработке результата",
+          description: "Получен неожиданный формат данных от сервера"
         });
       }
     },
     onError: (error: Error) => {
+      console.error('Ошибка при генерации изображения:', error);
+      
+      // Определяем тип ошибки для более понятного сообщения
+      let errorMessage = error.message || "Произошла ошибка при генерации изображения";
+      
+      if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
+        errorMessage = "Ошибка соединения с сервисом генерации изображений. Проверьте настройки сети.";
+      } else if (errorMessage.includes('timeout')) {
+        errorMessage = "Превышено время ожидания ответа от сервиса. Попробуйте позже.";
+      } else if (errorMessage.includes('API ключ не установлен') || errorMessage.includes('unauthorized')) {
+        errorMessage = "Отсутствует или неверный ключ API. Проверьте настройки в разделе API ключей.";
+      }
+      
       toast({
         variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Произошла ошибка при генерации изображения"
+        title: "Ошибка генерации",
+        description: errorMessage
       });
     }
   });

@@ -1140,10 +1140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Возвращаем URL сгенерированных изображений
+      // Возвращаем URL сгенерированных изображений в новом формате API
+      // Теперь поддерживаем два формата: data.images и просто массив изображений
       res.json({ 
         success: true, 
-        data: { images } 
+        data: images.length > 0 ? images : [] 
       });
     } catch (error: any) {
       console.error("Ошибка при генерации изображения:", error);
