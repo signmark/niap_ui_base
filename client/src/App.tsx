@@ -28,7 +28,7 @@ function Router() {
       <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
-      <Route path="/test/image-generation" component={ImageGenerationTest} />
+      <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
