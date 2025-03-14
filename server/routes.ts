@@ -5179,6 +5179,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Анализ сайта для автоматического заполнения анкеты
+  app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
+    try {
+      const { url, campaignId } = req.body;
+      const authHeader = req.headers['authorization'];
+      
+      if (!url) {
+        return res.status(400).json({ error: "URL сайта не указан" });
+      }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Analyzing website ${url} for questionnaire data...`);
+      
+      // Извлекаем контент сайта с помощью существующей функции
+      let websiteContent = '';
+      try {
+        websiteContent = await extractFullSiteContent(url);
+        console.log(`Successfully extracted content from ${url}, content length: ${websiteContent.length} characters`);
+      } catch (error) {
+        console.error(`Error extracting content from ${url}:`, error);
+        return res.status(400).json({ 
+          error: "Не удалось получить содержимое сайта", 
+          details: error.message 
+        });
+      }
+      
+      if (!websiteContent || websiteContent.length < 100) {
+        return res.status(400).json({ error: "Получено недостаточно контента с сайта для анализа" });
+      }
+      
+      // Используем DeepSeek для анализа контента
+      const prompt = `
+Проанализируй содержимое сайта и предоставь следующую информацию в формате JSON:
+
+1. companyName: название компании
+2. contactInfo: контактная информация (адрес, телефоны, email и т.д.)
+3. businessDescription: краткое описание бизнеса (1-2 предложения)
+4. mainDirections: основные направления деятельности, перечисленные через запятую
+5. brandImage: как компания позиционирует себя (имидж, статус)
+6. productsServices: основные продукты и услуги, перечисленные через запятую
+7. targetAudience: описание целевой аудитории
+8. customerResults: какие результаты получают клиенты
+9. companyFeatures: отличительные особенности компании
+10. businessValues: ценности компании
+11. productBeliefs: что компания думает о своих продуктах/услугах
+12. competitiveAdvantages: конкурентные преимущества
+13. marketingExpectations: цели маркетинга, ожидания от маркетинговых кампаний
+
+Формат должен быть строго JSON без дополнительных комментариев. Если какой-то информации не удается найти, оставь соответствующее поле пустым.
+
+Контент сайта:
+${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы не превысить лимиты токенов
+`;
+
+      try {
+        const analysisResponse = await deepseekService.generateText([
+          { role: 'system', content: 'Ты бизнес-аналитик, который анализирует содержимое веб-сайтов и извлекает деловую информацию о компании.' },
+          { role: 'user', content: prompt }
+        ], { max_tokens: 2000 });
+        
+        console.log('Received analysis from DeepSeek');
+        
+        // Извлекаем JSON из ответа
+        let jsonData = {};
+        try {
+          // Попытка найти JSON в ответе, даже если он не полностью соответствует формату
+          const jsonMatch = analysisResponse.content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonData = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Не удалось извлечь JSON из ответа');
+          }
+        } catch (parseError) {
+          console.error('Error parsing JSON from DeepSeek response:', parseError);
+          return res.status(500).json({ 
+            error: "Ошибка при обработке результатов анализа", 
+            details: parseError.message 
+          });
+        }
+        
+        return res.json({
+          success: true,
+          data: jsonData
+        });
+      } catch (aiError) {
+        console.error('Error calling DeepSeek API:', aiError);
+        return res.status(500).json({ 
+          error: "Ошибка при выполнении анализа сайта", 
+          details: aiError.message 
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing website for questionnaire:', error);
+      return res.status(500).json({ 
+        error: "Ошибка при анализе сайта для заполнения анкеты", 
+        details: error.message 
+      });
+    }
+  });
+
   // Обновление существующей анкеты
   app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req: any, res) => {
     try {
