@@ -314,24 +314,31 @@ export function BusinessQuestionnaireForm({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Бизнес-анкета</CardTitle>
           <div className="flex gap-2">
-            {hasQuestionnaire && (
+            {hasQuestionnaire && !isEditMode && (
               <Button 
-                variant={isEditMode ? "outline" : "default"} 
+                variant="default" 
                 onClick={toggleEditMode}
               >
-                {isEditMode ? "Отмена" : "Редактировать"}
+                Редактировать
               </Button>
             )}
             {isEditMode && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setIsWebsiteDialogOpen(true)}
-              >
-                <Search className="h-4 w-4" />
-                Анализ сайта
-              </Button>
+              <>
+                <Button 
+                  variant="default" 
+                  className="flex items-center gap-1"
+                  onClick={() => setIsWebsiteDialogOpen(true)}
+                >
+                  <Search className="h-4 w-4" />
+                  Анализ сайта
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={toggleEditMode}
+                >
+                  Отмена
+                </Button>
+              </>
             )}
           </div>
         </CardHeader>
@@ -590,13 +597,6 @@ export function BusinessQuestionnaireForm({
 
                 {isEditMode && (
                   <div className="flex justify-end space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={toggleEditMode}
-                    >
-                      Отмена
-                    </Button>
                     <Button 
                       type="submit"
                       disabled={createQuestionnaireMutation.isPending || updateQuestionnaireMutation.isPending}
