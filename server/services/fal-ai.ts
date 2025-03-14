@@ -120,35 +120,59 @@ export class FalAiService {
       console.log('Детальная структура ответа:', JSON.stringify(result).substring(0, 500));
       
       if (result) {
-        // Тайпскрипт ругается на эти поля, поэтому используем индексацию
-        if (result['output']) console.log('Найдено поле "output" в ответе:', typeof result['output']);
-        if (result['images']) {
-          const images = result['images'];
-          console.log('Найдено поле "images" в ответе:', Array.isArray(images) ? `Массив из ${images.length} элементов` : typeof images);
+        // Определяем результат как объект с индексированным доступом для избегания проблем с типизацией
+        const resultObj = result as Record<string, unknown>;
+        
+        // Логируем информацию о структуре ответа для отладки
+        if (resultObj.output !== undefined) {
+          console.log('Найдено поле "output" в ответе:', typeof resultObj.output);
+        }
+        
+        if (resultObj.images !== undefined) {
+          const images = resultObj.images;
+          console.log('Найдено поле "images" в ответе:', 
+            Array.isArray(images) 
+              ? `Массив из ${images.length} элементов` 
+              : typeof images
+          );
         }
       }
       
       // Проверяем различные форматы ответа
-      // Используем индексацию вместо прямого доступа к полям для совместимости с TypeScript
+      // Строго типизируем для избегания проблем с TypeScript
       
-      // Определение типа для результата API
-      type ApiResult = Record<string, any>;
-      const typedResult = result as ApiResult;
+      // Определяем интерфейс для возможных форматов ответа API
+      interface ApiResponseFormat {
+        images?: string[] | {url?: string; image?: string}[];
+        output?: string | string[];
+        url?: string;
+        image?: string;
+      }
+      
+      // Преобразуем результат в типизированный объект
+      const typedResult = result as unknown as ApiResponseFormat;
+      
+      // Создаем функцию для обработки изображения в зависимости от формата
+      const processImageItem = (img: any): string => {
+        if (typeof img === 'string') return img;
+        // Если это объект, проверяем наличие полей url или image
+        if (img && typeof img === 'object') {
+          return (img.url as string) || (img.image as string) || '';
+        }
+        return '';
+      };
       
       // Проверяем формат с images
-      if (typedResult['images'] && Array.isArray(typedResult['images'])) {
+      if (typedResult.images && Array.isArray(typedResult.images)) {
         // Формат SDXL может возвращать массив объектов с полем url
         return {
-          images: typedResult['images'].map((img: any) => {
-            if (typeof img === 'string') return img;
-            return img.url || img.image || img;
-          })
+          images: typedResult.images.map(processImageItem).filter(Boolean)
         };
       } 
       // Проверяем формат с output
-      else if (typedResult['output']) {
+      else if (typedResult.output !== undefined) {
         // Формат результата с полем output (SDXL через официальный API)
-        const output = typedResult['output'];
+        const output = typedResult.output;
         if (Array.isArray(output)) {
           return {
             images: output
@@ -167,10 +191,10 @@ export class FalAiService {
         };
       } 
       // Проверяем формат с url или image
-      else if (typedResult['url'] || typedResult['image']) {
+      else if (typedResult.url !== undefined || typedResult.image !== undefined) {
         // Объект с полем url или image
         return {
-          images: [typedResult['url'] || typedResult['image']]
+          images: [typedResult.url || typedResult.image || '']
         };
       }
       

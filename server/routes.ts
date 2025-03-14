@@ -1346,17 +1346,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Отправляем запрос через прокси
         try {
-          const proxyResponse = await axios.post(
-            `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
-            {
-              endpoint: endpoint,
-              data: requestData,
-              apiKey: falAiApiKey
+          // Максимальное количество попыток
+          const maxRetries = 2; 
+          let currentRetry = 0;
+          let proxyResponse;
+          let lastError;
+          
+          // Цикл с повторными попытками при неудаче
+          while (currentRetry <= maxRetries) {
+            try {
+              // Если это повторная попытка, добавляем лог
+              if (currentRetry > 0) {
+                console.log(`Повторная попытка запроса к FAL.AI (${currentRetry}/${maxRetries})...`);
+              }
+              
+              // Выполняем запрос к прокси с увеличенным таймаутом
+              proxyResponse = await axios.post(
+                `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
+                {
+                  endpoint: endpoint,
+                  data: requestData,
+                  apiKey: falAiApiKey
+                },
+                { 
+                  timeout: 300000 // 5 минут таймаут
+                }
+              );
+              
+              // Если получили успешный ответ, выходим из цикла
+              if (proxyResponse?.data?.success) {
+                break;
+              } else if (proxyResponse?.data) {
+                // Если получили ответ, но с ошибкой, записываем её и продолжаем
+                lastError = new Error(proxyResponse.data.error || 'Неуспешный ответ от прокси FAL.AI');
+                console.error(`Неудачная попытка ${currentRetry+1}: ${lastError.message}`);
+              }
+            } catch (error: any) {
+              // Записываем ошибку и продолжаем цикл при следующих условиях:
+              // 1. Ошибка таймаута
+              // 2. Серверная ошибка (5xx)
+              // 3. Ошибка сети
+              lastError = error;
+              
+              const isTimeoutError = error.code === 'ECONNABORTED' || 
+                                    error.message?.includes('timeout');
+              const isServerError = error.response?.status >= 500;
+              const isNetworkError = !error.response && error.request;
+              
+              if (isTimeoutError || isServerError || isNetworkError) {
+                console.error(`Попытка ${currentRetry+1} не удалась:`, error.message);
+                currentRetry++;
+                // Ждем перед повторной попыткой (экспоненциальное увеличение)
+                const delay = Math.pow(2, currentRetry) * 1000; // 2, 4 секунды
+                console.log(`Ожидаем ${delay}мс перед повторной попыткой...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+              }
+              
+              // Для других типов ошибок повторять не будем
+              throw error;
             }
-          );
+            
+            // Увеличиваем счетчик попыток
+            currentRetry++;
+          }
+          
+          // Если после всех попыток не получили успешный ответ, выбрасываем исключение
+          if (!proxyResponse?.data?.success) {
+            throw lastError || new Error('Не удалось получить ответ от FAL.AI после нескольких попыток');
+          }
           
           // Добавляем логирование полученного ответа
-          console.log(`Получен ответ от прокси FAL.AI:`, 
+          console.log(`Получен успешный ответ от прокси FAL.AI:`, 
             JSON.stringify({
               success: proxyResponse.data.success,
               status: proxyResponse.status,
@@ -1364,13 +1425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               hasError: !!proxyResponse.data.error
             })
           );
-          
-          // Обрабатываем ответ от прокси
-          if (!proxyResponse.data.success) {
-            console.error(`Ошибка прокси FAL.AI:`, proxyResponse.data.error);
-            throw new Error(proxyResponse.data.error || 'Ошибка прокси-запроса');
-          }
-        } catch (proxyCallError) {
+        } catch (proxyCallError: any) {
           console.error(`Ошибка при вызове прокси FAL.AI:`, proxyCallError.message);
           
           // Если это ошибка от axios при вызове прокси
@@ -1388,32 +1443,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Извлекаем URL изображений из ответа после успешного запроса
+        // Объявляем типы для корректной обработки
+        type ApiResponse = {
+          data: {
+            success: boolean;
+            data: any;
+            error?: string;
+          };
+          status: number;
+        };
+        
+        // Получаем данные из proxyResponse, который должен быть определен выше после успешной попытки
         let images: string[] = [];
-        const responseData = proxyResponse?.data?.data;
+        // TypeScript проверка типа переменной proxyResponse
+        if (!proxyResponse) {
+          throw new Error('Переменная proxyResponse не определена после успешных попыток');
+        }
+        const proxyResponseData = (proxyResponse as ApiResponse)?.data?.data;
         
         // Проверяем различные форматы ответов
-        if (responseData?.images && Array.isArray(responseData.images)) {
-          images = responseData.images.map((img: any) => {
+        if (proxyResponseData?.images && Array.isArray(proxyResponseData.images)) {
+          images = proxyResponseData.images.map((img: any) => {
             if (typeof img === 'string') return img;
             return img.url || img.image || '';
           }).filter(Boolean);
         }
-        else if (responseData?.image) {
-          images = [responseData.image];
+        else if (proxyResponseData?.image) {
+          images = [proxyResponseData.image];
         }
-        else if (responseData?.output) {
-          if (Array.isArray(responseData.output)) {
-            images = responseData.output;
+        else if (proxyResponseData?.output) {
+          if (Array.isArray(proxyResponseData.output)) {
+            images = proxyResponseData.output;
           } else {
-            images = [responseData.output];
+            images = [proxyResponseData.output];
           }
         }
-        else if (responseData?.url) {
-          images = [responseData.url];
+        else if (proxyResponseData?.url) {
+          images = [proxyResponseData.url];
         }
         
         if (!images.length) {
-          console.error('Полная структура ответа (не удалось найти URL изображений):', JSON.stringify(responseData));
+          console.error('Полная структура ответа (не удалось найти URL изображений):', JSON.stringify(proxyResponseData));
           throw new Error('Не удалось найти URL изображений в ответе API');
         }
         
