@@ -325,7 +325,7 @@ export function BusinessQuestionnaireForm({
             {isEditMode && (
               <>
                 <Button 
-                  variant="default" 
+                  variant="secondary" 
                   className="flex items-center gap-1"
                   onClick={() => setIsWebsiteDialogOpen(true)}
                 >
