@@ -6880,6 +6880,360 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       });
     }
   });
+
+  // API для генерации контент-плана
+  app.post("/api/content/generate-plan", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId, settings, selectedTrendTopics, keywords, businessData } = req.body;
+      const userId = req.user?.id;
+
+      if (!campaignId || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: "Отсутствуют обязательные параметры",
+          message: "Необходимо указать ID кампании"
+        });
+      }
+
+      // Получаем deepseek API ключ из настроек пользователя
+      let deepseekKey = process.env.DEEPSEEK_API_KEY || "";
+      const userApiKeys = await directusApi.get(`/users/${userId}/api_keys`, {
+        headers: { Authorization: `Bearer ${req.headers.authorization}` }
+      });
+      
+      const deepseekKeyData = userApiKeys.data.data?.find((k: any) => k.service_name === 'deepseek');
+      if (deepseekKeyData?.api_key) {
+        deepseekKey = deepseekKeyData.api_key;
+        // Обновляем ключ API в сервисе
+        deepseekService.updateApiKey(deepseekKey);
+      }
+
+      if (!deepseekKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Отсутствует API ключ DeepSeek",
+          message: "Для генерации контент-плана необходимо установить API ключ DeepSeek в настройках профиля"
+        });
+      }
+
+      console.log(`Генерация контент-плана для кампании ${campaignId}. Настройки:`, settings);
+      
+      // Получаем тренды, которые выбрал пользователь
+      let selectedTrends = [];
+      if (selectedTrendTopics && selectedTrendTopics.length > 0) {
+        const trendTopics = await storage.getCampaignTrendTopics({ campaignId });
+        selectedTrends = trendTopics.filter((trend) => selectedTrendTopics.includes(trend.id));
+      }
+
+      // Подготовка промпта для генерации контент-плана
+      const businessInfo = businessData ? `
+Информация о бизнесе:
+- Название компании: ${businessData.companyName}
+- Описание бизнеса: ${businessData.businessDescription}
+- Основная аудитория: ${businessData.targetAudience}
+- Ценности бренда: ${businessData.businessValues}
+- Продукты и услуги: ${businessData.productsServices}
+- Конкурентные преимущества: ${businessData.competitiveAdvantages}
+      ` : 'Информация о бизнесе отсутствует.';
+
+      const keywordsText = keywords?.length > 0 
+        ? `Ключевые слова для кампании: ${keywords.map((k: any) => k.keyword).join(', ')}`
+        : 'Ключевые слова отсутствуют.';
+
+      const trendsText = selectedTrends.length > 0
+        ? `Выбранные тренды:
+${selectedTrends.map((trend) => `- ${trend.title} (Реакции: ${trend.reactions}, Комментарии: ${trend.comments}, Просмотры: ${trend.views})`).join('\n')}`
+        : 'Тренды не выбраны.';
+
+      const contentTypeTranslation: { [key: string]: string } = {
+        'mixed': 'смешанный',
+        'educational': 'обучающий',
+        'promotional': 'рекламный',
+        'entertaining': 'развлекательный'
+      };
+
+      const contentTypeText = settings.contentType 
+        ? `Тип контента: ${contentTypeTranslation[settings.contentType] || settings.contentType}`
+        : 'Тип контента: смешанный';
+
+      const mediaTypeText = `Типы медиа: ${settings.includeImages ? 'изображения' : ''}${settings.includeImages && settings.includeVideos ? ' и ' : ''}${settings.includeVideos ? 'видео' : ''}`;
+      
+      // Создаем массив дат равномерно распределенных в периоде
+      const now = new Date();
+      const endDate = new Date(now);
+      endDate.setDate(endDate.getDate() + settings.period);
+      
+      const dates = [];
+      const dateInterval = settings.period / settings.postsCount;
+      
+      for (let i = 0; i < settings.postsCount; i++) {
+        const postDate = new Date(now);
+        postDate.setDate(postDate.getDate() + Math.round(i * dateInterval));
+        // Устанавливаем случайное время дня между 9:00 и 20:00
+        postDate.setHours(9 + Math.floor(Math.random() * 11), Math.floor(Math.random() * 60));
+        dates.push(postDate);
+      }
+
+      // Сортируем даты
+      dates.sort((a, b) => a.getTime() - b.getTime());
+
+      // Форматируем даты для включения в промпт
+      const datesText = `Даты публикаций:
+${dates.map((date, index) => `${index + 1}. ${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`).join('\n')}`;
+
+      // Формируем промпт для генерации контент-плана
+      const prompt = `Создай детальный контент-план для социальных сетей на ${settings.period} дней с ${settings.postsCount} постами. 
+
+${businessInfo}
+
+${keywordsText}
+
+${trendsText}
+
+${contentTypeText}
+${mediaTypeText}
+
+${datesText}
+
+Для каждой даты создай пост со следующей структурой:
+1. Заголовок
+2. Текст поста (HTML-форматирование)
+3. Тип контента (text, text-image, video, video-text)
+4. Хештеги (до 5-7 релевантных)
+5. Ключевые слова (3-5 слов)
+6. Промпт для генерации изображения, если пост с изображением
+
+Ответ должен быть в формате JSON, содержащем массив постов, где каждый пост имеет следующие поля:
+- title: заголовок поста
+- content: HTML отформатированный текст поста
+- contentType: тип контента (один из: text, text-image, video, video-text)
+- scheduledAt: дата публикации (формат ISO)
+- hashtags: массив хештегов
+- keywords: массив ключевых слов
+- prompt: промпт для генерации изображения (только для постов с изображениями)
+
+Адаптируй контент под указанный тип, используй информацию из трендов и ключевых слов, чтобы сделать посты релевантными и интересными для целевой аудитории.`;
+
+      console.log("Отправка запроса в DeepSeek для генерации контент-плана");
+
+      // Выполняем запрос к API DeepSeek
+      const messages: DeepSeekMessage[] = [
+        { role: 'system', content: 'Ты - эксперт по SMM-стратегии и контент-маркетингу для российской аудитории. Ты создаешь детальные контент-планы для бизнеса в социальных сетях.' },
+        { role: 'user', content: prompt }
+      ];
+
+      const response = await deepseekService.generateText(messages, {
+        temperature: 0.7,
+        max_tokens: 4000
+      });
+
+      let planData;
+      try {
+        // Извлекаем JSON из ответа
+        const jsonMatch = response.match(/```json([\s\S]*?)```/) || response.match(/({[\s\S]*})/);
+        const jsonText = jsonMatch ? jsonMatch[1].trim() : response;
+        
+        // Парсим JSON
+        planData = JSON.parse(jsonText);
+        
+        // Если это не массив, но имеет поле "posts", используем его
+        if (!Array.isArray(planData) && planData.posts && Array.isArray(planData.posts)) {
+          planData = planData.posts;
+        }
+        
+        // Если это все еще не массив, создаем ошибку
+        if (!Array.isArray(planData)) {
+          throw new Error("Ответ не является массивом постов");
+        }
+      } catch (error: any) {
+        console.error("Ошибка при парсинге JSON ответа DeepSeek:", error);
+        console.log("Ответ DeepSeek:", response);
+        
+        // Попытка восстановить из неструктурированного текста
+        try {
+          // Поиск паттернов в тексте, которые могут указывать на записи
+          const posts = [];
+          const postSections = response.split(/Пост \d+:|План на день \d+:/g).filter(Boolean);
+          
+          for (let i = 0; i < postSections.length; i++) {
+            const section = postSections[i].trim();
+            const titleMatch = section.match(/Заголовок:?\s*([^\n]+)/i);
+            const contentMatch = section.match(/Текст[^:]*:?\s*([\s\S]*?)(?=Тип контента|Хештеги|Ключевые слова|$)/i);
+            const contentTypeMatch = section.match(/Тип контента:?\s*([^\n]+)/i);
+            const hashtagsMatch = section.match(/Хештеги:?\s*([\s\S]*?)(?=Ключевые слова|Промпт|$)/i);
+            const keywordsMatch = section.match(/Ключевые слова:?\s*([\s\S]*?)(?=Промпт|$)/i);
+            const promptMatch = section.match(/Промпт:?\s*([\s\S]*?)(?=$)/i);
+            
+            if (titleMatch) {
+              const post = {
+                title: titleMatch[1].trim(),
+                content: contentMatch ? contentMatch[1].trim() : "",
+                contentType: contentTypeMatch ? contentTypeMatch[1].trim().toLowerCase() : "text",
+                scheduledAt: dates[i] ? dates[i].toISOString() : new Date().toISOString(),
+                hashtags: hashtagsMatch ? hashtagsMatch[1].split(/[,\s#]+/).filter(Boolean).map(h => h.startsWith('#') ? h : `#${h}`) : [],
+                keywords: keywordsMatch ? keywordsMatch[1].split(/[,\s]+/).filter(Boolean) : [],
+                prompt: promptMatch ? promptMatch[1].trim() : ""
+              };
+              posts.push(post);
+            }
+          }
+          
+          if (posts.length > 0) {
+            planData = posts;
+          } else {
+            throw new Error("Не удалось восстановить структуру постов из текста");
+          }
+        } catch (recoveryError) {
+          console.error("Не удалось восстановить структуру JSON из текста:", recoveryError);
+          return res.status(500).json({
+            success: false,
+            error: "Ошибка при обработке ответа от DeepSeek",
+            message: "Не удалось получить корректный формат контент-плана",
+            rawResponse: response.substring(0, 1000) + "..." // Обрезаем длинный ответ
+          });
+        }
+      }
+
+      // Постобработка контент-плана
+      const processedPlan = planData.map((post: any, index: number) => {
+        // Проверяем и устанавливаем правильные типы контента
+        let contentType = post.contentType || "text";
+        if (typeof contentType === 'string') {
+          contentType = contentType.toLowerCase();
+          // Normalize content type
+          if (contentType.includes("image") || contentType.includes("изображ")) {
+            contentType = "text-image";
+          } else if (contentType.includes("video") || contentType.includes("видео")) {
+            contentType = "video-text";
+          } else {
+            contentType = "text";
+          }
+        } else {
+          contentType = "text";
+        }
+
+        // Обрабатываем хештеги
+        let hashtags = post.hashtags || [];
+        if (typeof hashtags === 'string') {
+          hashtags = hashtags.split(/[,\s]+/).filter(Boolean).map((h: string) => h.startsWith('#') ? h : `#${h}`);
+        }
+
+        // Обрабатываем ключевые слова
+        let keywords = post.keywords || [];
+        if (typeof keywords === 'string') {
+          keywords = keywords.split(/[,\s]+/).filter(Boolean);
+        }
+
+        // Убедимся, что у нас есть промпт для генерации изображения для постов с изображениями
+        let prompt = post.prompt || "";
+        if (contentType === "text-image" && !prompt) {
+          prompt = `Изображение для поста "${post.title}". ${post.content.substring(0, 100)}`;
+        }
+
+        // Устанавливаем дату публикации
+        const scheduledAt = post.scheduledAt || (dates[index] ? dates[index].toISOString() : new Date().toISOString());
+
+        return {
+          title: post.title || `Пост №${index + 1}`,
+          content: post.content || "",
+          contentType,
+          scheduledAt,
+          hashtags,
+          keywords,
+          prompt
+        };
+      });
+
+      return res.json({
+        success: true,
+        plan: processedPlan
+      });
+    } catch (error: any) {
+      console.error("Ошибка при генерации контент-плана:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при генерации контент-плана",
+        message: error.message
+      });
+    }
+  });
+
+  // API для сохранения контент-плана
+  app.post("/api/content/save-plan", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId, contentPlan } = req.body;
+      const userId = req.user?.id;
+
+      if (!campaignId || !userId || !contentPlan || !Array.isArray(contentPlan)) {
+        return res.status(400).json({
+          success: false,
+          error: "Некорректный запрос",
+          message: "Необходимо указать ID кампании и массив контент-плана"
+        });
+      }
+
+      console.log(`Сохранение контент-плана для кампании ${campaignId} (${contentPlan.length} постов)`);
+
+      const savedContent = [];
+      
+      // Сохраняем каждый пост из плана
+      for (const item of contentPlan) {
+        try {
+          // Подготавливаем данные для сохранения
+          const contentData: any = {
+            campaignId,
+            userId,
+            title: item.title || "",
+            content: item.content || "",
+            contentType: item.contentType || "text",
+            scheduledAt: item.scheduledAt ? new Date(item.scheduledAt) : null,
+            status: "draft"
+          };
+
+          // Добавляем поля в зависимости от типа контента
+          if (item.contentType === "text-image" || item.contentType === "image-text") {
+            contentData.prompt = item.prompt || "";
+          }
+
+          if (item.hashtags && Array.isArray(item.hashtags)) {
+            contentData.hashtags = item.hashtags;
+          } else if (item.hashtags && typeof item.hashtags === 'string') {
+            contentData.hashtags = item.hashtags.split(/[,\s]+/).filter(Boolean).map((h: string) => h.startsWith('#') ? h : `#${h}`);
+          } else {
+            contentData.hashtags = [];
+          }
+
+          if (item.keywords && Array.isArray(item.keywords)) {
+            contentData.keywords = item.keywords;
+          } else if (item.keywords && typeof item.keywords === 'string') {
+            contentData.keywords = item.keywords.split(/[,\s]+/).filter(Boolean);
+          } else {
+            contentData.keywords = [];
+          }
+
+          // Сохраняем контент в базу данных
+          const savedItem = await storage.createCampaignContent(contentData);
+          savedContent.push(savedItem);
+        } catch (itemError: any) {
+          console.error(`Ошибка при сохранении элемента контент-плана: ${itemError.message}`);
+          // Продолжаем сохранять другие элементы
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: `Сохранено ${savedContent.length} из ${contentPlan.length} элементов контент-плана`,
+        data: savedContent
+      });
+    } catch (error: any) {
+      console.error("Ошибка при сохранении контент-плана:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при сохранении контент-плана",
+        message: error.message
+      });
+    }
+  });
   
   return httpServer;
 }
