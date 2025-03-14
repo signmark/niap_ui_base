@@ -11,6 +11,7 @@ import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
+import ImageGenerationTest from "@/pages/test/image-generation";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
+      <Route path="/test/image-generation" component={ImageGenerationTest} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
