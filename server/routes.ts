@@ -1058,14 +1058,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Извлекаем API ключ из переменных окружения
-      const apiKey = process.env.FAL_AI_API_KEY;
+      // Сначала проверим ключ в переменных окружения
+      let apiKey = process.env.FAL_AI_API_KEY;
+      
+      // Если ключа нет в переменных, попробуем получить из Directus
+      if (!apiKey) {
+        try {
+          console.log('FAL_AI_API_KEY отсутствует в переменных окружения. Пробуем получить из Directus...');
+          
+          // Пробуем получить API ключ из системных настроек Directus
+          const systemSettings = await directusApi.get('/items/system_settings', {
+            params: {
+              filter: {
+                key: { _eq: 'fal_ai_api_key' }
+              }
+            }
+          });
+          
+          if (systemSettings.data?.data?.length > 0 && systemSettings.data.data[0].value) {
+            apiKey = systemSettings.data.data[0].value;
+            console.log('Найден API ключ FAL.AI в системных настройках Directus');
+          }
+        } catch (directusError) {
+          console.error('Ошибка при запросе к Directus API:', directusError);
+        }
+      }
       
       if (!apiKey) {
-        console.error('FAL_AI_API_KEY отсутствует в переменных окружения');
+        console.error('API ключ FAL.AI не найден ни в переменных окружения, ни в Directus');
         return res.status(500).json({ 
           success: false, 
-          error: "API ключ FAL.AI не настроен" 
+          error: "API ключ FAL.AI не настроен. Добавьте ключ в системные настройки." 
         });
       }
       
@@ -1154,30 +1177,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Получение API ключа FAL.AI из настроек
+  // Получение API ключа FAL.AI из настроек Directus
   app.get('/api/settings/fal_ai', async (req, res) => {
     try {
-      // Проверяем наличие API ключа в переменных окружения
-      const apiKey = process.env.FAL_AI_API_KEY;
+      const authHeader = req.headers.authorization;
       
-      if (!apiKey) {
-        return res.status(404).json({
-          success: false,
-          error: "API ключ FAL.AI не найден в настройках"
+      // Проверяем, есть ли ключ в переменных окружения как запасной вариант
+      const envApiKey = process.env.FAL_AI_API_KEY;
+      
+      if (envApiKey) {
+        console.log('Используем FAL.AI API ключ из переменных окружения');
+        return res.json({
+          success: true,
+          data: {
+            api_key: envApiKey,
+            source: "env"
+          }
         });
       }
       
-      return res.json({
-        success: true,
-        data: {
-          api_key: apiKey
+      try {
+        // Пробуем получить API ключ из Directus
+        // Сначала пробуем получить из системных настроек
+        const systemSettings = await directusApi.get('/items/system_settings', {
+          params: {
+            filter: {
+              key: { _eq: 'fal_ai_api_key' }
+            }
+          }
+        });
+        
+        if (systemSettings.data?.data?.length > 0 && systemSettings.data.data[0].value) {
+          console.log('Найден API ключ FAL.AI в системных настройках Directus');
+          return res.json({
+            success: true,
+            data: {
+              api_key: systemSettings.data.data[0].value,
+              source: "system_settings"
+            }
+          });
         }
-      });
+        
+        // Если не нашли в системных настройках и есть токен пользователя,
+        // пробуем найти в пользовательских API ключах
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.split(' ')[1];
+          
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const userId = userResponse.data?.data?.id;
+          
+          if (userId) {
+            // Запрашиваем API ключ из настроек пользователя
+            const apiKeysResponse = await directusApi.get('/items/user_api_keys', {
+              params: {
+                filter: {
+                  user_id: { _eq: userId },
+                  service_name: { _eq: 'fal_ai' }
+                },
+                fields: ['api_key']
+              },
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            const items = apiKeysResponse.data?.data || [];
+            if (items.length && items[0].api_key) {
+              console.log('Найден API ключ FAL.AI в пользовательских настройках Directus');
+              return res.json({
+                success: true,
+                data: {
+                  api_key: items[0].api_key,
+                  source: "user_settings"
+                }
+              });
+            }
+          }
+        }
+        
+        // Если API ключ не найден ни в системных настройках, ни в пользовательских
+        return res.status(404).json({
+          success: false,
+          error: "API ключ FAL.AI не найден в настройках системы"
+        });
+      } catch (directusError: any) {
+        console.error('Ошибка при запросе к Directus API:', directusError);
+        
+        // Если ошибка авторизации в Directus, но есть ключ в переменных окружения, используем его
+        if (envApiKey) {
+          console.log('Используем запасной FAL.AI API ключ из переменных окружения из-за ошибки Directus');
+          return res.json({
+            success: true,
+            data: {
+              api_key: envApiKey,
+              source: "env_fallback"
+            }
+          });
+        }
+        
+        // Если нет запасного варианта, возвращаем ошибку
+        return res.status(500).json({
+          success: false,
+          error: "Ошибка при получении API ключа из Directus"
+        });
+      }
     } catch (error: any) {
-      console.error('Ошибка при получении API ключа FAL.AI:', error.message);
+      console.error('Общая ошибка при получении API ключа FAL.AI:', error.message);
       return res.status(500).json({
         success: false,
-        error: "Ошибка при получении настроек"
+        error: "Ошибка при получении настроек API ключа"
       });
     }
   });
@@ -1480,12 +1590,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         );
         
-        // Отправляем запрос через прокси
+        // Отправляем прямой запрос к FAL.AI API
         try {
           // Максимальное количество попыток
           const maxRetries = 2; 
           let currentRetry = 0;
-          let proxyResponse;
+          let falApiResponse;
           let lastError;
           
           // Цикл с повторными попытками при неудаче
@@ -1493,28 +1603,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               // Если это повторная попытка, добавляем лог
               if (currentRetry > 0) {
-                console.log(`Повторная попытка запроса к FAL.AI (${currentRetry}/${maxRetries})...`);
+                console.log(`Повторная попытка прямого запроса к FAL.AI (${currentRetry}/${maxRetries})...`);
               }
               
-              // Выполняем запрос к прокси с увеличенным таймаутом
-              proxyResponse = await axios.post(
-                `${req.protocol}://${req.get('host')}/api/fal-ai-proxy`,
+              // Выполняем прямой запрос к FAL.AI REST API без промежуточного прокси
+              falApiResponse = await axios.post(
+                'https://queue.fal.ai/fal-ai/fast-sdxl/requests',
                 {
-                  endpoint: endpoint,
-                  data: requestData,
-                  apiKey: falAiApiKey
+                  prompt: requestData.prompt,
+                  negative_prompt: requestData.negative_prompt || "",
+                  width: requestData.width || 1024,
+                  height: requestData.height || 1024,
+                  num_images: requestData.num_images || 1
                 },
-                { 
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Key ${falAiApiKey}`
+                  },
                   timeout: 300000 // 5 минут таймаут
                 }
               );
               
               // Если получили успешный ответ, выходим из цикла
-              if (proxyResponse?.data?.success) {
+              if (falApiResponse?.data) {
                 break;
-              } else if (proxyResponse?.data) {
-                // Если получили ответ, но с ошибкой, записываем её и продолжаем
-                lastError = new Error(proxyResponse.data.error || 'Неуспешный ответ от прокси FAL.AI');
+              } else {
+                // Если получили ответ, но непонятный, записываем ошибку и продолжаем
+                lastError = new Error('Неуспешный ответ от FAL.AI API');
                 console.error(`Неудачная попытка ${currentRetry+1}: ${lastError.message}`);
               }
             } catch (error: any) {
