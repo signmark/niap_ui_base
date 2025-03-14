@@ -995,6 +995,27 @@ export default function ContentPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="contentType">Тип контента</Label>
+                <Select
+                  value={currentContent.contentType || 'text'}
+                  onValueChange={(value) => {
+                    const updatedContent = {...currentContent, contentType: value};
+                    setCurrentContentSafe(updatedContent);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите тип контента" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Только текст</SelectItem>
+                    <SelectItem value="text-image">Текст с изображением</SelectItem>
+                    <SelectItem value="video">Видео</SelectItem>
+                    <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="content">Контент</Label>
                 <div className="max-h-[200px] overflow-y-auto">
                   <RichTextEditor
