@@ -7288,24 +7288,50 @@ ${datesText}
       // Вызываем n8n webhook напрямую
       try {
         const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK;
+        const apiKey = process.env.N8N_API_KEY;
+        
         if (!webhookUrl) {
           throw new Error("Не настроен URL webhook для генерации контент-плана");
+        }
+        
+        if (!apiKey) {
+          throw new Error("Не настроен API ключ для доступа к n8n");
         }
 
         console.log(`Отправка запроса на webhook: ${webhookUrl}`);
         const n8nResponse = await axios.post(webhookUrl, { data: workflowData }, {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-N8N-API-KEY': apiKey
           }
         });
         
-        // Проверяем структуру ответа от n8n webhook
-        if (!n8nResponse.data || !n8nResponse.data.success || !n8nResponse.data.data || !n8nResponse.data.data.contentPlan) {
-          console.error("Некорректный ответ от n8n webhook:", n8nResponse.data);
+        console.log("Ответ от n8n webhook получен:", JSON.stringify(n8nResponse.data).substring(0, 200) + "...");
+        
+        // Проверяем структуру ответа от n8n webhook (гибкая проверка)
+        if (!n8nResponse.data) {
+          console.error("Пустой ответ от n8n webhook");
           return res.status(500).json({
             success: false,
             error: "Ошибка при генерации контент-плана",
-            message: "Webhook вернул некорректные данные"
+            message: "Webhook вернул пустой ответ"
+          });
+        }
+        
+        // Извлекаем контент-план из ответа, учитывая разные варианты структуры
+        let contentPlan;
+        if (n8nResponse.data.contentPlan) {
+          contentPlan = n8nResponse.data.contentPlan;
+        } else if (n8nResponse.data.data && n8nResponse.data.data.contentPlan) {
+          contentPlan = n8nResponse.data.data.contentPlan;
+        } else if (Array.isArray(n8nResponse.data)) {
+          contentPlan = n8nResponse.data;
+        } else {
+          console.error("Не удалось найти контент-план в ответе n8n:", n8nResponse.data);
+          return res.status(500).json({
+            success: false,
+            error: "Ошибка при генерации контент-плана",
+            message: "Webhook вернул данные без контент-плана"
           });
         }
 
@@ -7313,7 +7339,7 @@ ${datesText}
         return res.json({
           success: true,
           data: {
-            contentPlan: n8nResponse.data.contentPlan
+            contentPlan: contentPlan
           }
         });
         
