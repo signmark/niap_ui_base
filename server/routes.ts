@@ -12,7 +12,7 @@ import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { log } from "./vite";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
-import * as falServerless from '@fal-ai/serverless-client';
+import { falAiSdk } from './services/fal-ai';
 
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
@@ -1060,48 +1060,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         console.log(`[FAL.AI Прокси] Выполняем запрос к API FAL.AI к эндпоинту ${endpoint}`);
-        
-        // Настраиваем SDK с API ключом
-        falServerless.config({
-          credentials: apiKey
-        });
         console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
         
-        // Создаём HTTPS агента для отключения проверки сертификата при использовании IP
-        const httpsAgent = new https.Agent({
-          rejectUnauthorized: false
-        });
+        // Инициализация FalAI SDK с ключом API
+        falAiSdk.initialize(apiKey);
         
-        // Отправляем запрос через node-fetch вместо axios, используя HTTPS с отключенной проверкой сертификата
-        // Вместо прямого IP адреса, используем обычный домен api.fal.ai
-        const apiUrl = `https://api.fal.ai${endpoint}`;
+        // Подготавливаем endpoint для SDK (удаляем начальный слеш, если есть)
+        const sdkEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
         
-        console.log(`[FAL.AI Прокси] Выполняем запрос к: ${apiUrl}`);
-        console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
+        // Выполняем запрос через официальный SDK
+        const responseData = await falAiSdk.generateImage(sdkEndpoint, data);
         
-        // Импортируем https нативный модуль для создания агента
-        const agentOptions = {
-          rejectUnauthorized: false
-        };
-        
-        // Создаем агента, который игнорирует ошибки сертификата
-        const agent = new https.Agent(agentOptions);
-        
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(data),
-          agent
-        });
-        
-        console.log(`[FAL.AI Прокси] Статус ответа: ${response.status}`);
-        
-        // Получаем JSON данные из ответа fetch
-        const responseData = await response.json();
+        console.log(`[FAL.AI Прокси] Запрос выполнен успешно через SDK`);
         console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(responseData));
         
         // Возвращаем результат клиенту

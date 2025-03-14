@@ -1,4 +1,4 @@
-import * as falServerless from '@fal-ai/serverless-client';
+import { config, run } from '@fal-ai/serverless-client';
 
 /**
  * Отдельный сервис для работы с FAL.AI через официальный SDK
@@ -9,7 +9,7 @@ export class FalAiService {
    * @param apiKey API ключ для FAL.AI
    */
   initialize(apiKey: string) {
-    falServerless.config({
+    config({
       credentials: apiKey
     });
     console.log('FAL.AI SDK инициализирован с API ключом');
@@ -28,11 +28,9 @@ export class FalAiService {
     const sdkEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
     
     try {
-      const result = await falServerless.submit({
-        url: sdkEndpoint,
-        data: data,
-        connectionTimeoutMs: 60000, // Таймаут 60 секунд
-        pollIntervalMs: 2000 // Проверка каждые 2 секунды
+      // Используем функцию run для запуска модели
+      const result = await run(sdkEndpoint, {
+        input: data
       });
       
       console.log('Изображение успешно сгенерировано через FAL.AI');
@@ -49,11 +47,10 @@ export class FalAiService {
    */
   async checkStatus(): Promise<boolean> {
     try {
-      // Простой запрос к API для проверки доступности
-      await falServerless.submit({
-        url: 'v1/info',
-        data: {},
-        connectionTimeoutMs: 5000
+      // Простой запрос для проверки подключения
+      await run('fal-ai/info', {
+        input: {},
+        method: 'get'
       });
       return true;
     } catch (error) {
