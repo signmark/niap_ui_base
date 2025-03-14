@@ -1,5 +1,17 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { falAiService } from './services/falai';
+import express, { Express, Request, Response, NextFunction } from "express";
+import { createServer, Server } from "http";
+import path from "path";
+import axios from "axios";
+import * as https from 'https';
+import { WebSocketServer } from "ws";
+import { storage } from "./storage";
+import { directusApi } from "./directus";
+import { crawler } from "./services/crawler";
+import { apifyService } from "./services/apify";
+import { log } from "./vite";
+import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
@@ -95,20 +107,13 @@ function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deeps
     .slice(0, 15); // Ограничиваем до 15 самых популярных ключевых слов
 }
 
-import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
 import { insertBusinessQuestionnaireSchema } from "../shared/schema";
 import { 
   insertContentSourceSchema, 
   insertCampaignContentSchema,
   insertCampaignTrendTopicSchema,
-  InsertCampaignTrendTopic,
   InsertCampaignContent
 } from "@shared/schema";
-import { crawler } from "./services/crawler";
-import axios from "axios";
-import { directusApi } from './directus';
 import * as crypto from 'crypto';
 
 // Add type for follower requirements
@@ -1060,32 +1065,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
         
         // Создаём HTTPS агента для отключения проверки сертификата при использовании IP
-        const httpsAgent = new (require('https').Agent)({
+        const httpsAgent = new https.Agent({
           rejectUnauthorized: false
         });
         
-        // Отправляем запрос через axios с переданными данными
-        const response = await axios.post(
-          apiUrl,
-          data,
-          {
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Host': 'api.fal.ai' // Необходимо для правильной обработки запроса на CloudFront
-            },
-            httpsAgent
-          }
-        );
+        // Отправляем запрос через node-fetch вместо axios
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Host': 'api.fal.ai' // Необходимо для правильной обработки запроса на CloudFront
+          },
+          body: JSON.stringify(data)
+        });
         
         console.log(`[FAL.AI Прокси] Статус ответа: ${response.status}`);
-        console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(response.data));
+        
+        // Получаем JSON данные из ответа fetch
+        const responseData = await response.json();
+        console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(responseData));
         
         // Возвращаем результат клиенту
         return res.json({
           success: true,
-          data: response.data
+          data: responseData
         });
       } catch (proxyError: any) {
         console.error("[FAL.AI Прокси] Ошибка запроса:", proxyError);
