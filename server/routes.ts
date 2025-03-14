@@ -1046,7 +1046,7 @@ async function extractFullSiteContent(url: string): Promise<string> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Прокси для запросов к FAL.AI API (для обхода проблем с DNS в среде Replit)
+  // Прокси для запросов к FAL.AI API через официальный SDK
   app.post('/api/fal-ai-proxy', async (req, res) => {
     try {
       const { endpoint, data, apiKey } = req.body;
@@ -1072,12 +1072,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const responseData = await falAiSdk.generateImage(sdkEndpoint, data);
         
         console.log(`[FAL.AI Прокси] Запрос выполнен успешно через SDK`);
-        console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(responseData));
+        console.log(`[FAL.AI Прокси] Структура ответа:`, Object.keys(responseData || {}));
         
-        // Возвращаем результат клиенту
+        // Обработка нескольких возможных форматов ответа
+        let images: string[] = [];
+        
+        if (responseData?.images && Array.isArray(responseData.images)) {
+          // Формат из нашего сервиса
+          images = responseData.images;
+        } else if (Array.isArray(responseData)) {
+          // Прямой массив URL-ов изображений
+          images = responseData;
+        } else if (typeof responseData === 'string') {
+          // Один URL в виде строки
+          images = [responseData];
+        } else if (responseData?.data?.images && Array.isArray(responseData.data.images)) {
+          // Вложенный массив изображений
+          images = responseData.data.images;
+        } else if (responseData?.image || responseData?.url) {
+          // Один URL в объекте
+          images = [responseData.image || responseData.url];
+        } else if (responseData?.output) {
+          // Формат output из fal.ai
+          if (Array.isArray(responseData.output)) {
+            images = responseData.output;
+          } else {
+            images = [responseData.output];
+          }
+        }
+        
+        console.log(`[FAL.AI Прокси] Извлечено изображений: ${images.length}`);
+        
+        // Возвращаем результат клиенту в едином формате
         return res.json({
           success: true,
-          data: responseData
+          data: {
+            images: images
+          }
         });
       } catch (proxyError: any) {
         console.error("[FAL.AI Прокси] Ошибка запроса:", proxyError);
