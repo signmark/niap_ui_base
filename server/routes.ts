@@ -1446,9 +1446,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Инициализируем объект с данными запроса
+      let requestData: any = {};
+      
       // Определяем используемую модель и данные для запроса
       let model = modelName || 'sdxl'; // По умолчанию используем SDXL
-      let requestData: any = {};
       
       if (prompt) {
         // Генерация по прямому промпту
@@ -1540,7 +1542,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
         
         // Прямой запрос к API fal.ai
-        const apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+        // Для fooocus используем специальный формат URL
+        let apiUrl = "";
+        if (model === 'fal-ai/fooocus') {
+          apiUrl = `https://queue.fal.run/${model}`;
+        } else {
+          apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+        }
+        
         console.log(`URL запроса: ${apiUrl}`);
         console.log(`Данные запроса: ${JSON.stringify(requestData).substring(0, 200)}`);
         
