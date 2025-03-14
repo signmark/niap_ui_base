@@ -101,18 +101,57 @@ export function ImageGenerationDialog({
         // Обработка разных форматов ответа от API
         let images: string[] = [];
         
+        console.log('Структура данных изображений:', JSON.stringify(data.data, null, 2).substring(0, 500));
+        
         if (data.data?.images && Array.isArray(data.data.images)) {
+          console.log('Обнаружен массив images в ответе API');
           // Формат с вложенным массивом images
-          images = data.data.images;
+          // Обрабатываем оба варианта: массив URL-строк и массив объектов
+          images = data.data.images.map((img: any) => {
+            if (typeof img === 'string') return img;
+            // Если объект, то ищем поле url или image
+            if (img && typeof img === 'object') {
+              return img.url || img.image || '';
+            }
+            return '';
+          }).filter(Boolean);
         }
         else if (Array.isArray(data.data)) {
-          // Прямой массив URL-ов изображений
-          images = data.data;
+          console.log('Обнаружен массив в корне ответа API');
+          // Прямой массив URL-ов или объектов изображений
+          images = data.data.map((img: any) => {
+            if (typeof img === 'string') return img;
+            // Проверяем наличие полей url или image в объекте
+            if (img && typeof img === 'object') {
+              return img.url || img.image || '';
+            }
+            return '';
+          }).filter(Boolean);
         }
         else if (typeof data.data === 'string') {
+          console.log('Обнаружена строка в корне ответа API');
           // Один URL в виде строки
           images = [data.data];
         }
+        else if (data.data && typeof data.data === 'object') {
+          console.log('Обнаружен объект в корне ответа API:', Object.keys(data.data));
+          // Проверяем разные варианты структуры объекта
+          
+          // Вариант где сам data.data содержит поля url или image
+          if (data.data.url || data.data.image) {
+            const imgUrl = data.data.url || data.data.image;
+            if (imgUrl) images = [imgUrl];
+          }
+          // Вариант для формата fast-sdxl где images - массив объектов с url
+          else if (data.data.images && Array.isArray(data.data.images)) {
+            images = data.data.images.map((img: any) => {
+              if (typeof img === 'string') return img;
+              return img?.url || img?.image || '';
+            }).filter(Boolean);
+          }
+        }
+        
+        console.log('Извлеченные URL изображений:', images);
         
         if (images.length > 0) {
           setGeneratedImages(images);
