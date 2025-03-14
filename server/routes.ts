@@ -7223,22 +7223,27 @@ ${datesText}
         directusToken: req.headers.authorization
       };
 
-      // Вызываем n8n workflow
+      // Вызываем n8n webhook напрямую
       try {
-        const workflowId = process.env.N8N_CONTENT_PLAN_WORKFLOW_ID;
-        if (!workflowId) {
-          throw new Error("Не настроен ID workflow для генерации контент-плана");
+        const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK;
+        if (!webhookUrl) {
+          throw new Error("Не настроен URL webhook для генерации контент-плана");
         }
 
-        const n8nResponse = await triggerN8nWorkflow(workflowId, workflowData);
+        console.log(`Отправка запроса на webhook: ${webhookUrl}`);
+        const n8nResponse = await axios.post(webhookUrl, { data: workflowData }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         
-        // Проверяем структуру ответа от n8n
-        if (!n8nResponse || !n8nResponse.data || !n8nResponse.data.contentPlan) {
-          console.error("Некорректный ответ от n8n:", n8nResponse);
+        // Проверяем структуру ответа от n8n webhook
+        if (!n8nResponse.data || !n8nResponse.data.success || !n8nResponse.data.data || !n8nResponse.data.data.contentPlan) {
+          console.error("Некорректный ответ от n8n webhook:", n8nResponse.data);
           return res.status(500).json({
             success: false,
             error: "Ошибка при генерации контент-плана",
-            message: "Сервис n8n вернул некорректные данные"
+            message: "Webhook вернул некорректные данные"
           });
         }
 
