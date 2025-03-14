@@ -124,16 +124,16 @@ export function ContentPlanGenerator({
     queryFn: async () => {
       if (!campaignId) return null;
       
-      const response = await fetch(`/api/business-questionnaire?campaignId=${campaignId}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null; // Анкета может отсутствовать, это не ошибка
+      try {
+        const response = await apiRequest(`/api/business-questionnaire?campaignId=${campaignId}`);
+        return response.data || null;
+      } catch (error: any) {
+        // Если ошибка 404, значит анкеты нет, это не ошибка
+        if (error.response && error.response.status === 404) {
+          return null;
         }
-        throw new Error('Ошибка при загрузке данных бизнеса');
+        throw error;
       }
-      
-      const data = await response.json();
-      return data.data || null;
     },
     enabled: !!campaignId && isOpen && includeBusiness,
     onError: (error: any) => {

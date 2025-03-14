@@ -6085,6 +6085,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Дополнительный эндпоинт для получения бизнес-анкеты (используется в ContentPlanGenerator)
+  app.get("/api/business-questionnaire", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId } = req.query;
+      const authHeader = req.headers['authorization'];
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "ID кампании не указан" });
+      }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Getting business questionnaire for campaign ${campaignId}`);
+      const questionnaire = await storage.getBusinessQuestionnaire(campaignId as string, token);
+      
+      return res.json({
+        success: true,
+        data: questionnaire
+      });
+    } catch (error: any) {
+      console.error('Error getting business questionnaire:', error);
+      return res.status(500).json({ 
+        error: "Ошибка при получении бизнес-анкеты",
+        details: error.message 
+      });
+    }
+  });
+  
   // Создание новой анкеты
   app.post("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req: any, res) => {
     try {
