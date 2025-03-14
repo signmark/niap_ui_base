@@ -426,13 +426,13 @@ Return only the translated text, no explanations or comments.`;
       // Негативный промпт для улучшения качества
       const negativePrompt = 'text, logos, watermarks, bad quality, distorted, blurry, low resolution, amateur, unprofessional';
 
-      // Генерируем несколько вариантов с использованием Schnell для быстрой генерации
+      // Генерируем несколько вариантов с использованием fast-sdxl для быстрой генерации
       return await this.generateImage(prompt, {
         negativePrompt,
         width: 1024,
         height: 1024,
         numImages: 3,
-        model: 'schnell',
+        model: 'fast-sdxl',
         translatePrompt: true
       });
     } catch (error) {
@@ -489,7 +489,7 @@ Return only the translated text, no explanations or comments.`;
       Make it suitable for ${platform} posts, with no text overlay. 
       High quality, professional look, eye-catching design.`;
 
-      // Генерируем несколько вариантов, используя Schnell модель
+      // Генерируем несколько вариантов, используя Fast SDXL модель
       return await this.generateImage(prompt, {
         negativePrompt: 'text, words, letters, logos, watermarks, low quality',
         width,
