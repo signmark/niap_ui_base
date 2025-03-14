@@ -1878,11 +1878,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);
   
-  // Тестовый маршрут для проверки генерации изображений через FAL.AI API
-  app.post("/api/test-fal-image", async (req, res) => {
+  // Тестовый маршрут для проверки генерации изображений через новый FAL.AI API
+  app.post("/api/test/image-generation", async (req, res) => {
     try {
       // Проверяем, работает ли API FAL.AI
       console.log("Тестирование генерации изображения через FAL.AI API");
+      
+      // Получаем данные из запроса
+      const { prompt, negativePrompt, width, height } = req.body;
+      
+      // Проверяем обязательный параметр
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          error: "Промпт (prompt) является обязательным параметром"
+        });
+      }
+      
+      // Получаем API ключ FAL.AI
+      const apiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "API ключ FAL.AI не настроен. Пожалуйста, добавьте его в переменные окружения."
+        });
+      }
+      
+      // Обновляем ключ в сервисе
+      falAiService.updateApiKey(apiKey);
+      
+      // Запускаем генерацию изображения
+      console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
+      const imageUrls = await falAiService.generateImage(prompt, {
+        negativePrompt: negativePrompt || "",
+        width: width || 1024,
+        height: height || 1024,
+        numImages: 1
+      });
+      
+      return res.json({
+        success: true,
+        imageUrls
+      });
+    } catch (error: any) {
+      console.error("Ошибка при тестировании генерации изображения:", error);
+      return res.status(500).json({
+        success: false, 
+        error: error.message || "Неизвестная ошибка при генерации изображения"
+      });
+    }
+  });
+  
+  // Старый тестовый маршрут для обратной совместимости
+  app.post("/api/test-fal-image", async (req, res) => {
+    try {
+      // Проверяем, работает ли API FAL.AI
+      console.log("Тестирование генерации изображения через FAL.AI API (устаревший маршрут)");
       
       // Получаем FAL.AI API ключ из переменных окружения
       const falAiApiKey = process.env.FAL_AI_API_KEY;
