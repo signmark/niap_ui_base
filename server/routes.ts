@@ -7275,14 +7275,17 @@ ${datesText}
       }
 
       // Формируем данные для отправки в n8n
+      // n8n webhook ожидает данные в поле data, согласно коду в представленном n8n workflow
       const workflowData = {
-        campaignId,
-        userId,
-        settings,
-        businessData,
-        keywords: keywords || [],
-        trends: selectedTrends || [],
-        directusToken: req.headers.authorization
+        data: {
+          campaignId,
+          userId,
+          settings,
+          businessData,
+          keywords: keywords || [],
+          trends: selectedTrends || [],
+          directusToken: req.headers.authorization
+        }
       };
 
       // Вызываем n8n webhook напрямую
@@ -7299,7 +7302,10 @@ ${datesText}
         }
 
         console.log(`Отправка запроса на webhook: ${webhookUrl}`);
-        const n8nResponse = await axios.post(webhookUrl, { data: workflowData }, {
+        console.log(`Данные запроса:`, JSON.stringify(workflowData).substring(0, 200) + "...");
+        
+        // В n8n workflowData должен быть отправлен напрямую, без обертывания в data
+        const n8nResponse = await axios.post(webhookUrl, workflowData, {
           headers: {
             'Content-Type': 'application/json',
             'X-N8N-API-KEY': apiKey
