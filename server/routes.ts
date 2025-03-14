@@ -1236,13 +1236,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Подготавливаем данные для запроса в зависимости от типа запроса
         let requestData;
-        let endpoint = '/v1/generation/stable-diffusion-xl';
+        // Используем правильный формат эндпоинта для FAL.AI API
+        let endpoint = 'fal-ai/sdxl';
         
         if (prompt) {
           console.log(`Генерация по промпту: ${prompt.substring(0, 50)}...`);
           
           requestData = {
-            model_name: 'stable-diffusion-xl',
             prompt: prompt,
             negative_prompt: negativePrompt || '',
             width: width || 1024,
