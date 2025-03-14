@@ -20,36 +20,73 @@ export function ImageGenerationTester() {
 
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
-      // Используем новый эндпоинт для избежания конфликтов с Vite
-      const response = await api.post('/api/v1/image-gen', {
-        prompt,
-        negativePrompt,
-        width: 1024,
-        height: 1024,
-        numImages: 1
-      }, {
-        timeout: 300000, // 5 минут таймаут
+      // Получаем API ключ из системных настроек
+      // Сначала запрашиваем ключ с сервера
+      const apiResponse = await api.get('/api/settings/fal_ai');
+      
+      if (!apiResponse.data?.success || !apiResponse.data?.data?.api_key) {
+        throw new Error('API ключ FAL.AI не найден в настройках системы');
+      }
+      
+      const falApiKey = apiResponse.data.data.api_key;
+      
+      // Прямой запрос к FAL.AI API с полученным ключом
+      const response = await fetch('https://queue.fal.ai/fal-ai/fast-sdxl/requests', {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Authorization': `Key ${falApiKey}`,
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          negative_prompt: negativePrompt || "",
+          width: 1024,
+          height: 1024,
+          num_images: 1
+        })
       });
-      return response.data;
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || error.message || 'Ошибка при генерации изображения');
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
-      console.log('Ответ от API генерации изображений:', data);
+      console.log('Ответ от FAL.AI API:', data);
       
-      if (data.success && data.images) {
-        // Извлекаем все URL изображений из ответа
-        const imageUrls = data.images.map((img: any) => {
-          if (typeof img === 'string') {
-            return img;
-          } else if (img && (img.url || img.image)) {
-            return img.url || img.image;
-          }
-          return null;
-        }).filter(Boolean);
+      // Проверяем, есть ли URL изображения в ответе
+      if (data && data.status === "IN_QUEUE") {
+        toast({
+          title: 'Запрос в очереди',
+          description: 'Запрос на генерацию изображения поставлен в очередь. Подождите немного.',
+        });
         
+        return;
+      }
+      
+      // Получаем URL изображений из ответа
+      const imageUrls: string[] = [];
+      
+      if (data.resources && Array.isArray(data.resources)) {
+        // Формат через resources
+        imageUrls.push(...data.resources.map((r: any) => r.url).filter(Boolean));
+      } else if (data.output && Array.isArray(data.output)) {
+        // Формат через output - массив
+        imageUrls.push(...data.output.filter(Boolean));
+      } else if (data.output) {
+        // Формат через output - строка
+        imageUrls.push(data.output);
+      } else if (data.images && Array.isArray(data.images)) {
+        // Формат через images
+        imageUrls.push(...data.images.map((img: any) => {
+          if (typeof img === 'string') return img;
+          return img.url || img.image || '';
+        }).filter(Boolean));
+      }
+      
+      if (imageUrls.length > 0) {
         setGeneratedImages(imageUrls);
         
         toast({
@@ -59,30 +96,18 @@ export function ImageGenerationTester() {
       } else {
         toast({
           variant: 'destructive',
-          title: 'Ошибка',
-          description: data.message || data.error || 'Неизвестная ошибка при генерации изображения',
+          title: 'Ошибка формата',
+          description: 'Не удалось получить URL изображений из ответа API',
         });
       }
     },
     onError: (error: any) => {
       console.error('Ошибка при генерации изображения:', error);
       
-      // Улучшенная обработка ошибок с детальной информацией
-      const errorDetails = error.response?.data;
-      let errorMessage = error.message || 'Ошибка при генерации изображения';
-      
-      if (errorDetails) {
-        if (errorDetails.message) {
-          errorMessage = errorDetails.message;
-        } else if (errorDetails.error) {
-          errorMessage = errorDetails.error;
-        }
-      }
-      
       toast({
         variant: 'destructive',
         title: 'Ошибка генерации',
-        description: errorMessage,
+        description: error.message || 'Ошибка при генерации изображения',
       });
     }
   });
