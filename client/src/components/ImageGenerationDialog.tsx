@@ -60,7 +60,7 @@ export function ImageGenerationDialog({
           width,
           height,
           campaignId,
-          numImages: 3
+          numImages: 1 // Уменьшаем до 1 изображения для ускорения обработки
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
@@ -84,7 +84,12 @@ export function ImageGenerationDialog({
       }
       
       console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
-      const response = await api.post("/generate-image", requestData);
+      
+      // Устанавливаем увеличенный таймаут для запроса
+      const response = await api.post("/generate-image", requestData, {
+        timeout: 300000 // 5 минут таймаут
+      });
+      
       return response.data;
     },
     onSuccess: (data) => {
