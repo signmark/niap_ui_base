@@ -220,6 +220,13 @@ export class FalAiService {
    */
   async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
+      // Если есть API ключ в переменных окружения, используем его для разработки
+      if (process.env.FAL_AI_API_KEY) {
+        this.updateApiKey(process.env.FAL_AI_API_KEY);
+        log('FAL.AI API ключ успешно установлен из переменных окружения', 'fal-ai');
+        return true;
+      }
+      
       if (!userId || !authToken) {
         log('Не удалось инициализировать FAL.AI сервис: отсутствует userId или authToken', 'fal-ai');
         return false;
@@ -242,7 +249,7 @@ export class FalAiService {
       const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
         this.updateApiKey(items[0].api_key);
-        log('FAL.AI API ключ успешно получен и установлен', 'fal-ai');
+        log('FAL.AI API ключ успешно получен и установлен из Directus', 'fal-ai');
         return true;
       } else {
         log('FAL.AI API ключ не найден в настройках пользователя', 'fal-ai');
@@ -256,6 +263,7 @@ export class FalAiService {
 }
 
 // Создаем и экспортируем экземпляр сервиса
+// Создаем и экспортируем экземпляр сервиса с возможностью использования ключа из окружения при разработке
 export const falAiService = new FalAiService({
   apiKey: process.env.FAL_AI_API_KEY || ''
 });
