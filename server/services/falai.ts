@@ -61,17 +61,27 @@ export class FalAiService {
         model = this.defaultModel,
         numImages = 1
       } = options;
+      
+      console.log(`Generating image with FAL.AI: prompt=${prompt}, width=${width}, height=${height}, numImages=${numImages}`);
+
+      // Формируем запрос в соответствии с документацией FAL.AI
+      // https://docs.fal.ai/guides/generating-images-from-text
+      const requestData = {
+        model_name: "sdxl",
+        prompt: prompt,
+        negative_prompt: negativePrompt,
+        width: width,
+        height: height,
+        num_images: numImages,
+        scheduler: "K_EULER_ANCESTRAL",
+        steps: 25,
+        guidance_scale: 7.5
+      };
 
       // Отправляем запрос на API FAL.AI
       const response = await axios.post(
-        `${this.baseUrl}/v1/inference/${model}`,
-        {
-          prompt,
-          negative_prompt: negativePrompt,
-          image_width: width,
-          image_height: height,
-          num_images: numImages
-        },
+        'https://110602490-fast-sdxl.gateway.alpha.fal.ai/',
+        requestData,
         {
           headers: {
             'Authorization': `Key ${this.apiKey}`,
@@ -85,7 +95,9 @@ export class FalAiService {
         throw new Error(`Ошибка при запросе к FAL.AI API: ${response.statusText}`);
       }
 
-      // Извлекаем URL сгенерированных изображений
+      console.log('FAL.AI response:', JSON.stringify(response.data).substr(0, 200) + '...');
+
+      // Извлекаем URL сгенерированных изображений в соответствии с документацией FAL.AI
       const images = response.data.images || [];
       if (!images.length) {
         throw new Error('Не удалось получить сгенерированные изображения');
@@ -95,6 +107,12 @@ export class FalAiService {
       return images.map((image: any) => image.url || '').filter(Boolean);
     } catch (error: any) {
       console.error('Ошибка при генерации изображения через FAL.AI:', error);
+      if (error.response) {
+        console.error('Детали ошибки FAL.AI:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      }
       throw new Error(`Не удалось сгенерировать изображение: ${error.message}`);
     }
   }
