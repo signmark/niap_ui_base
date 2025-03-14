@@ -5349,16 +5349,30 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       const authHeader = req.headers['authorization'];
       
       if (!url) {
-        return res.status(400).json({ error: "URL сайта не указан" });
+        return res.status(400).json({ 
+          success: false,
+          error: "URL сайта не указан"
+        });
       }
       
       if (!authHeader) {
-        return res.status(401).json({ error: "Не авторизован" });
+        return res.status(401).json({ 
+          success: false,
+          error: "Не авторизован: Отсутствует токен авторизации"
+        });
       }
       
       const token = authHeader.replace('Bearer ', '');
+      const userId = req.userId;
       
-      console.log(`Запрос на анализ сайта: ${url} для кампании ${campaignId}`);
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Не авторизован: Не удалось определить пользователя"
+        });
+      }
+      
+      console.log(`Запрос на анализ сайта: ${url} для кампании ${campaignId} от пользователя ${userId}`);
       
       // Получаем содержимое сайта
       let websiteContent = '';
