@@ -12,6 +12,7 @@ import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { log } from "./vite";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
+import * as falServerless from '@fal-ai/serverless-client';
 
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
@@ -1058,10 +1059,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Используем прямой IP-адрес вместо доменного имени
-        // const apiUrl = `https://api.fal.ai${endpoint}`;
-        const apiUrl = `https://13.224.103.72${endpoint}`;
-        console.log(`[FAL.AI Прокси] Выполняем запрос к: ${apiUrl}`);
+        console.log(`[FAL.AI Прокси] Выполняем запрос к API FAL.AI к эндпоинту ${endpoint}`);
+        
+        // Настраиваем SDK с API ключом
+        falServerless.config({
+          credentials: apiKey
+        });
         console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
         
         // Создаём HTTPS агента для отключения проверки сертификата при использовании IP
