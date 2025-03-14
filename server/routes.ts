@@ -1040,6 +1040,85 @@ async function extractFullSiteContent(url: string): Promise<string> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Маршрут для генерации изображений через FAL.AI API
+  app.post('/api/generate-image', async (req, res) => {
+    try {
+      const { 
+        prompt, 
+        negativePrompt, 
+        width, 
+        height, 
+        campaignId, 
+        content, 
+        platform, 
+        businessData,
+        numImages = 1
+      } = req.body;
+
+      // Получаем токен из заголовка
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не авторизован: Отсутствует заголовок авторизации" 
+        });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Инициализируем сервис FAL.AI с ключом пользователя, если это необходимо
+      // Это позволяет использовать ключ пользователя для запросов к API
+      const apiInitialized = await falAiService.initialize('dummy-user-id', token);
+      
+      if (!apiInitialized) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "API ключ для FAL.AI не настроен в профиле пользователя" 
+        });
+      }
+
+      let images = [];
+
+      // В зависимости от типа запроса генерируем изображение
+      if (prompt) {
+        // Генерация по промпту
+        images = await falAiService.generateImage(
+          prompt, 
+          { 
+            negativePrompt, 
+            width: width || 1024, 
+            height: height || 1024,
+            numImages: numImages || 1
+          }
+        );
+      } else if (businessData) {
+        // Генерация для бизнеса
+        const imageUrl = await falAiService.generateBusinessImage(businessData);
+        images = [imageUrl];
+      } else if (content && platform) {
+        // Генерация для соцсетей
+        const imageUrl = await falAiService.generateSocialMediaImage(content, platform);
+        images = [imageUrl];
+      } else {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Не указаны необходимые параметры для генерации изображения" 
+        });
+      }
+
+      // Возвращаем URL сгенерированных изображений
+      res.json({ 
+        success: true, 
+        data: { images } 
+      });
+    } catch (error: any) {
+      console.error("Ошибка при генерации изображения:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message || "Произошла ошибка при генерации изображения" 
+      });
+    }
+  });
   // Вспомогательная функция для обработки ключевых слов
   function processKeywords(keywordsData: any): string[] {
     if (!keywordsData) return [];
