@@ -7509,9 +7509,20 @@ function normalizeSourceUrl(url: string, domain: string): string | undefined {
  * Используется для улучшения качества генерации изображений через Stable Diffusion
  * @param text Текст на русском языке
  * @returns Текст, переведенный на английский язык
+ * 
+ * @deprecated Используйте метод translatePrompt из falAiService для перевода промптов
  */
 async function translateToEnglish(text: string): Promise<string> {
   try {
+    // Используем метод translatePrompt из falAiService через его private-свойство
+    // ВАЖНО: При любой возможности обновите код для прямого использования falAiService.generateImage с параметром translatePrompt
+    
+    // Проверяем, есть ли метод translatePrompt в falAiService (на всякий случай)
+    if (typeof (falAiService as any).translatePrompt === 'function') {
+      return await (falAiService as any).translatePrompt(text);
+    }
+    
+    // Если метод недоступен, используем наш текущий метод
     // Используем DeepSeek для перевода, если API ключ доступен
     if (process.env.DEEPSEEK_API_KEY || deepseekService.hasApiKey()) {
       console.log('Переводим текст на английский через DeepSeek API');
