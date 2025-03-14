@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, Calendar, CheckCircle2, Clock, FileText, Image, Video, CheckSquare, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -66,6 +66,9 @@ export function ContentPlanGenerator({
   const [customInstructions, setCustomInstructions] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState("trends");
+  const [generatedContentPlan, setGeneratedContentPlan] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedContentItems, setSelectedContentItems] = useState<Set<number>>(new Set());
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -216,12 +219,17 @@ export function ContentPlanGenerator({
           description: "Контент-план успешно сгенерирован",
         });
         
-        if (onPlanGenerated) {
-          onPlanGenerated(response.data.contentPlan);
-        }
+        // Сохраняем сгенерированный контент-план для предварительного просмотра
+        setGeneratedContentPlan(response.data.contentPlan);
+        setShowPreview(true);
         
-        // Закрываем диалог после успешной генерации
-        onClose();
+        // По умолчанию выбираем все элементы контент-плана
+        const initialSelectedItems = new Set<number>();
+        response.data.contentPlan.forEach((_: any, index: number) => initialSelectedItems.add(index));
+        setSelectedContentItems(initialSelectedItems);
+        
+        // Переключаемся на вкладку предпросмотра
+        setActiveTab("preview");
       } else {
         console.error('Ответ не содержит contentPlan:', response);
         toast({
@@ -398,9 +406,10 @@ export function ContentPlanGenerator({
       </DialogHeader>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2">
+        <TabsList className="grid grid-cols-3">
           <TabsTrigger value="trends">Выбор трендов</TabsTrigger>
           <TabsTrigger value="settings">Настройки</TabsTrigger>
+          <TabsTrigger value="preview" disabled={!showPreview}>Предпросмотр</TabsTrigger>
         </TabsList>
         
         <TabsContent value="trends" className="space-y-4 mt-4">
@@ -586,25 +595,174 @@ export function ContentPlanGenerator({
             </div>
           )}
         </TabsContent>
+        
+        <TabsContent value="preview" className="space-y-4 mt-4">
+          {generatedContentPlan.length === 0 ? (
+            <div className="text-center py-8">
+              <p>Сначала сгенерируйте контент-план.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <span className="text-sm text-muted-foreground">
+                    Выбрано {selectedContentItems.size} из {generatedContentPlan.length} элементов
+                  </span>
+                </div>
+                <div className="space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const allItems = new Set<number>();
+                      generatedContentPlan.forEach((_: any, index: number) => allItems.add(index));
+                      setSelectedContentItems(allItems);
+                    }}
+                    disabled={generatedContentPlan.length === 0}
+                  >
+                    Выбрать все
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setSelectedContentItems(new Set())}
+                    disabled={selectedContentItems.size === 0}
+                  >
+                    Снять выбор
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-4 max-h-[50vh] overflow-y-auto pr-2">
+                {generatedContentPlan.map((item: any, index: number) => (
+                  <Card 
+                    key={index} 
+                    className={`cursor-pointer transition-colors ${
+                      selectedContentItems.has(index) ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => {
+                      const newSelected = new Set(selectedContentItems);
+                      if (newSelected.has(index)) {
+                        newSelected.delete(index);
+                      } else {
+                        newSelected.add(index);
+                      }
+                      setSelectedContentItems(newSelected);
+                    }}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-base">{item.title}</CardTitle>
+                        <Checkbox 
+                          checked={selectedContentItems.has(index)} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newSelected = new Set(selectedContentItems);
+                            if (newSelected.has(index)) {
+                              newSelected.delete(index);
+                            } else {
+                              newSelected.add(index);
+                            }
+                            setSelectedContentItems(newSelected);
+                          }}
+                        />
+                      </div>
+                      <CardDescription className="flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {item.scheduledAt ? format(new Date(item.scheduledAt), 'dd MMM yyyy', {locale: ru}) : 'Не запланировано'}
+                        </span>
+                        <span className="inline-flex items-center">
+                          {item.contentType === 'text' && <FileText className="h-3 w-3 mr-1" />}
+                          {item.contentType === 'text-image' && <Image className="h-3 w-3 mr-1" />}
+                          {item.contentType === 'video' && <Video className="h-3 w-3 mr-1" />}
+                          {item.contentType}
+                        </span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm line-clamp-3 mb-2">{item.content}</p>
+                      {item.hashtags && item.hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {item.hashtags.map((tag: string, tagIndex: number) => (
+                            <span key={tagIndex} className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md text-xs">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {item.keywords && item.keywords.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          <span className="block font-medium">Ключевые слова:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.keywords.map((kw: string, kwIndex: number) => (
+                              <span key={kwIndex} className="bg-muted px-2 py-0.5 rounded-md">
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
       
       <DialogFooter className="mt-4">
         <Button variant="outline" onClick={onClose}>
           Отмена
         </Button>
-        <Button 
-          onClick={handleGenerateContentPlan} 
-          disabled={isLoading || isGenerating || (activeTab === "trends" && selectedTopicIds.size === 0)}
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Генерация...
-            </>
-          ) : (
-            "Сгенерировать контент-план"
-          )}
-        </Button>
+        
+        {activeTab === "preview" && showPreview ? (
+          <Button 
+            onClick={() => {
+              // Выбираем только те элементы контент-плана, которые были отмечены пользователем
+              const selectedContent = Array.from(selectedContentItems).map(index => generatedContentPlan[index]);
+              
+              if (selectedContent.length === 0) {
+                toast({
+                  title: "Внимание",
+                  description: "Выберите хотя бы один элемент контент-плана",
+                  variant: "destructive"
+                });
+                return;
+              }
+              
+              console.log("Сохраняем выбранный контент:", selectedContent);
+              
+              if (onPlanGenerated) {
+                onPlanGenerated(selectedContent);
+              }
+              
+              toast({
+                description: "Контент-план сохранен",
+              });
+              
+              onClose();
+            }}
+            disabled={selectedContentItems.size === 0}
+          >
+            Сохранить выбранное
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleGenerateContentPlan} 
+            disabled={isLoading || isGenerating || (activeTab === "trends" && selectedTopicIds.size === 0)}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Генерация...
+              </>
+            ) : (
+              "Сгенерировать контент-план"
+            )}
+          </Button>
+        )}
       </DialogFooter>
     </>
   );
