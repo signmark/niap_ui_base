@@ -99,7 +99,9 @@ export const DraggableDialogContent = forwardRef<
           transform: "translateX(-50%)",
           padding: 0,
           overflow: "hidden",
-          backgroundColor: "white"
+          backgroundColor: "var(--background)",
+          boxShadow: "0 0 15px rgba(0, 0, 0, 0.1)",
+          zIndex: 50
         }}
         {...props}
       >
@@ -137,6 +139,22 @@ export const DraggableDialogContent = forwardRef<
 
 DraggableDialogContent.displayName = "DraggableDialogContent"
 
+// Модифицированные версии DialogOverlay и DialogPortal с прозрачным фоном
+const TransparentDialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-transparent data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+))
+TransparentDialogOverlay.displayName = "TransparentDialogOverlay"
+
 export {
   Dialog,
   DialogClose,
@@ -145,4 +163,5 @@ export {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  TransparentDialogOverlay
 }
