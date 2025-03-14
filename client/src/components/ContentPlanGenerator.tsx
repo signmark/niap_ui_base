@@ -145,7 +145,7 @@ export function ContentPlanGenerator({
     }
   });
 
-  // Мутация для генерации контент-плана
+  // Мутация для генерации контент-плана через n8n
   const generateContentPlanMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest('/api/content-plan/generate', {
@@ -156,13 +156,13 @@ export function ContentPlanGenerator({
     onSuccess: (response) => {
       setIsGenerating(false);
       
-      if (response.success && response.data && response.data.contentItems) {
+      if (response.success && response.data && response.data.contentPlan) {
         toast({
-          description: "Контент-план успешно сгенерирован",
+          description: "Контент-план успешно сгенерирован с использованием n8n",
         });
         
         if (onPlanGenerated) {
-          onPlanGenerated(response.data.contentItems);
+          onPlanGenerated(response.data.contentPlan);
         }
       } else {
         toast({
@@ -182,7 +182,7 @@ export function ContentPlanGenerator({
     }
   });
 
-  // Обработчик генерации контент-плана
+  // Обработчик генерации контент-плана через n8n
   const handleGenerateContentPlan = async () => {
     if (selectedTopicIds.size === 0 && activeTab === "trends") {
       toast({
@@ -199,20 +199,34 @@ export function ContentPlanGenerator({
       trendTopics.find((topic: CampaignTrendTopic) => topic.id === id)
     ).filter(Boolean);
 
-    // Формируем данные для запроса
+    // Формируем данные для запроса к n8n
     const requestData = {
       campaignId,
-      contentCount,
-      contentType: selectedType,
-      selectedTrends,
-      keywords: keywords || [],
-      includeBusiness: includeBusiness && !!businessData,
-      businessData: includeBusiness ? businessData : null,
-      includeGeneratedImage,
-      customInstructions
+      settings: {
+        postsCount: contentCount,
+        contentType: selectedType,
+        period: 14, // 2 недели по умолчанию
+        includeImages: includeGeneratedImage && selectedType !== "text",
+        includeVideos: selectedType === "video" || selectedType === "mixed",
+        customInstructions: customInstructions || null
+      },
+      selectedTrendTopics: Array.from(selectedTopicIds),
+      keywords: keywords.map((kw: any) => ({ 
+        keyword: kw.keyword, 
+        trendScore: kw.trend_score || kw.trendScore || 0 
+      })),
+      businessData: includeBusiness && businessData ? {
+        companyName: businessData.companyName,
+        businessDescription: businessData.businessDescription,
+        targetAudience: businessData.targetAudience,
+        productsServices: businessData.productsServices,
+        brandStyle: businessData.brandStyle,
+        businessValues: businessData.goals,
+        competitiveAdvantages: businessData.competitors
+      } : null
     };
 
-    // Отправляем запрос на генерацию
+    // Отправляем запрос на генерацию через n8n
     generateContentPlanMutation.mutate(requestData);
   };
 

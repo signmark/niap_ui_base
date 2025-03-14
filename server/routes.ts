@@ -7189,6 +7189,85 @@ ${datesText}
     }
   });
 
+  // API для генерации контент-плана через n8n
+  app.post("/api/content-plan/generate", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId, settings, selectedTrendTopics, keywords, businessData } = req.body;
+      const userId = req.user?.id;
+
+      if (!campaignId || !userId) {
+        return res.status(400).json({
+          success: false,
+          error: "Отсутствуют обязательные параметры",
+          message: "Необходимо указать ID кампании"
+        });
+      }
+
+      console.log(`Запуск генерации контент-плана через n8n для кампании ${campaignId}`);
+
+      // Получаем тренды, которые выбрал пользователь
+      let selectedTrends = [];
+      if (selectedTrendTopics && selectedTrendTopics.length > 0) {
+        const trendTopics = await storage.getCampaignTrendTopics({ campaignId });
+        selectedTrends = trendTopics.filter((trend) => selectedTrendTopics.includes(trend.id));
+      }
+
+      // Формируем данные для отправки в n8n
+      const workflowData = {
+        campaignId,
+        userId,
+        settings,
+        businessData,
+        keywords: keywords || [],
+        trends: selectedTrends || [],
+        directusToken: req.headers.authorization
+      };
+
+      // Вызываем n8n workflow
+      try {
+        const workflowId = process.env.N8N_CONTENT_PLAN_WORKFLOW_ID;
+        if (!workflowId) {
+          throw new Error("Не настроен ID workflow для генерации контент-плана");
+        }
+
+        const n8nResponse = await triggerN8nWorkflow(workflowId, workflowData);
+        
+        // Проверяем структуру ответа от n8n
+        if (!n8nResponse || !n8nResponse.data || !n8nResponse.data.contentPlan) {
+          console.error("Некорректный ответ от n8n:", n8nResponse);
+          return res.status(500).json({
+            success: false,
+            error: "Ошибка при генерации контент-плана",
+            message: "Сервис n8n вернул некорректные данные"
+          });
+        }
+
+        // Возвращаем сгенерированный контент-план
+        return res.json({
+          success: true,
+          data: {
+            contentPlan: n8nResponse.data.contentPlan
+          }
+        });
+        
+      } catch (error: any) {
+        console.error("Ошибка при вызове n8n workflow:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Ошибка при вызове n8n workflow",
+          message: error.message || "Неизвестная ошибка"
+        });
+      }
+    } catch (error: any) {
+      console.error("Ошибка при генерации контент-плана через n8n:", error);
+      res.status(500).json({
+        success: false,
+        error: "Ошибка сервера",
+        message: error.message || "Произошла ошибка при обработке запроса"
+      });
+    }
+  });
+
   // API для сохранения контент-плана
   app.post("/api/content/save-plan", authenticateUser, async (req, res) => {
     try {
