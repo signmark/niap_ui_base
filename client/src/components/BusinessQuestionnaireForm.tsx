@@ -427,7 +427,21 @@ export function BusinessQuestionnaireForm({
                 name="businessDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Описание бизнеса</FormLabel>
+                    <div className="flex flex-row justify-between items-center">
+                      <FormLabel>Описание бизнеса</FormLabel>
+                      {isEditMode && (
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex items-center gap-1"
+                          >
+                            <Search className="h-4 w-4" />
+                            Анализ сайта
+                          </Button>
+                        </DialogTrigger>
+                      )}
+                    </div>
                     <FormControl>
                       <Textarea
                         {...field}
