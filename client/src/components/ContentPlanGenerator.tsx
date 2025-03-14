@@ -72,12 +72,12 @@ export function ContentPlanGenerator({
 
   // Загружаем тренды кампании
   const { data: trendTopics = [], isLoading: isLoadingTrends } = useQuery({
-    queryKey: ["/api/campaign-trend-topics", campaignId],
+    queryKey: ["campaign-trends", campaignId],
     queryFn: async ({ queryKey }) => {
       if (!campaignId) return [];
       
       try {
-        const response = await apiRequest(`/api/campaign-trend-topics?campaignId=${campaignId}`);
+        const response = await apiRequest(`/api/campaign-trends?campaignId=${campaignId}`);
         return response.data || [];
       } catch (error) {
         console.error("Ошибка при загрузке трендов:", error);
