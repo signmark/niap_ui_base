@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -28,7 +29,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-import { apiRequest } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store';
 
 // Определяем схему валидации для формы бизнес-анкеты
@@ -90,8 +90,13 @@ export function BusinessQuestionnaireForm({
   const { data: questionnaireData, isLoading } = useQuery({
     queryKey: ['business-questionnaire', campaignId],
     queryFn: async () => {
-      const response = await apiRequest(`/api/business-questionnaire/${campaignId}`);
-      return response;
+      try {
+        const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching questionnaire:', error);
+        return null;
+      }
     },
     enabled: !!campaignId,
   });
@@ -100,7 +105,7 @@ export function BusinessQuestionnaireForm({
   const createQuestionnaireMutation = useMutation({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
       try {
-        const response = await apiRequest('/api/business-questionnaire', {
+        const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
           method: 'POST',
           data: {
             ...values,
