@@ -4,9 +4,8 @@ import { useForm } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ImageIcon } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { ImageGenerationDialog } from './ImageGenerationDialog';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
