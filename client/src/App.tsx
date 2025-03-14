@@ -13,6 +13,7 @@ import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
+import AuthBypass from "@/pages/test/auth-bypass";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
+      <Route path="/test/auth-bypass" component={AuthBypass} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
