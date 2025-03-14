@@ -20,29 +20,19 @@ export function ImageGenerationTester() {
 
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
-      // Получаем API ключ из системных настроек
-      // Сначала запрашиваем ключ с сервера
-      const apiResponse = await api.get('/api/settings/fal_ai');
-      
-      if (!apiResponse.data?.success || !apiResponse.data?.data?.api_key) {
-        throw new Error('API ключ FAL.AI не найден в настройках системы');
-      }
-      
-      const falApiKey = apiResponse.data.data.api_key;
-      
-      // Прямой запрос к FAL.AI API с полученным ключом
-      const response = await fetch('https://queue.fal.ai/fal-ai/fast-sdxl/requests', {
+      // Используем API ключ напрямую из переменных окружения на стороне сервера
+      // Прямой запрос к серверному API, который проксирует запрос к FAL.AI
+      const response = await fetch('/api/v1/image-gen', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Key ${falApiKey}`,
         },
         body: JSON.stringify({
           prompt: prompt,
-          negative_prompt: negativePrompt || "",
+          negativePrompt: negativePrompt || "",
           width: 1024,
           height: 1024,
-          num_images: 1
+          numImages: 1
         })
       });
       
