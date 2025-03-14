@@ -1664,78 +1664,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Если после всех попыток не получили успешный ответ, выбрасываем исключение
-          if (!proxyResponse?.data?.success) {
-            throw lastError || new Error('Не удалось получить ответ от FAL.AI после нескольких попыток');
+          if (!falApiResponse?.data) {
+            throw lastError || new Error('Не удалось получить ответ от FAL.AI API после нескольких попыток');
           }
           
           // Добавляем логирование полученного ответа
-          console.log(`Получен успешный ответ от прокси FAL.AI:`, 
+          console.log(`Получен успешный ответ от FAL.AI API:`, 
             JSON.stringify({
-              success: proxyResponse.data.success,
-              status: proxyResponse.status,
-              hasData: !!proxyResponse.data.data,
-              hasError: !!proxyResponse.data.error
+              status: falApiResponse.status,
+              dataKeys: Object.keys(falApiResponse.data || {})
             })
           );
-        } catch (proxyCallError: any) {
-          console.error(`Ошибка при вызове прокси FAL.AI:`, proxyCallError.message);
+        } catch (apiCallError: any) {
+          console.error(`Ошибка при прямом вызове FAL.AI API:`, apiCallError.message);
           
-          // Если это ошибка от axios при вызове прокси
-          if (proxyCallError.response) {
-            console.error(`Детали ошибки прокси:`, 
+          // Если это ошибка от axios при вызове API
+          if (apiCallError.response) {
+            console.error(`Детали ошибки API:`, 
               JSON.stringify({
-                status: proxyCallError.response.status,
-                data: proxyCallError.response.data
+                status: apiCallError.response.status,
+                data: apiCallError.response.data
               })
             );
-            throw new Error(`Ошибка прокси-запроса: ${proxyCallError.response.data.error || proxyCallError.message}`);
+            throw new Error(`Ошибка API-запроса: ${apiCallError.response.data?.detail || apiCallError.response.data?.error || apiCallError.message}`);
           }
           
-          throw proxyCallError;
+          throw apiCallError;
         }
         
         // Извлекаем URL изображений из ответа после успешного запроса
-        // Объявляем типы для корректной обработки
-        type ApiResponse = {
-          data: {
-            success: boolean;
-            data: any;
-            error?: string;
-          };
-          status: number;
-        };
-        
-        // Получаем данные из proxyResponse, который должен быть определен выше после успешной попытки
+        // Здесь обрабатываем ответ напрямую от FAL.AI API
         let images: string[] = [];
-        // TypeScript проверка типа переменной proxyResponse
-        if (!proxyResponse) {
-          throw new Error('Переменная proxyResponse не определена после успешных попыток');
-        }
-        const proxyResponseData = (proxyResponse as ApiResponse)?.data?.data;
         
-        // Проверяем различные форматы ответов
-        if (proxyResponseData?.images && Array.isArray(proxyResponseData.images)) {
-          images = proxyResponseData.images.map((img: any) => {
-            if (typeof img === 'string') return img;
-            return img.url || img.image || '';
-          }).filter(Boolean);
+        // TypeScript проверка типа переменной falApiResponse
+        if (!falApiResponse || !falApiResponse.data) {
+          throw new Error('Ответ от FAL.AI API некорректный или пустой');
         }
-        else if (proxyResponseData?.image) {
-          images = [proxyResponseData.image];
+        
+        const apiData = falApiResponse.data;
+        console.log('Структура ответа FAL.AI API:', Object.keys(apiData));
+        
+        // Проверяем различные форматы ответов FAL.AI API
+        if (apiData.status === "IN_QUEUE") {
+          return res.json({
+            success: true,
+            status: "queued",
+            message: "Запрос поставлен в очередь"
+          });
         }
-        else if (proxyResponseData?.output) {
-          if (Array.isArray(proxyResponseData.output)) {
-            images = proxyResponseData.output;
+        
+        // Обработка разных форматов ответа
+        if (apiData.images && Array.isArray(apiData.images)) {
+          images = apiData.images.filter(Boolean);
+        }
+        else if (apiData.image) {
+          images = [apiData.image];
+        }
+        else if (apiData.output) {
+          if (Array.isArray(apiData.output)) {
+            images = apiData.output.filter(Boolean);
           } else {
-            images = [proxyResponseData.output];
+            images = [apiData.output];
           }
         }
-        else if (proxyResponseData?.url) {
-          images = [proxyResponseData.url];
+        else if (apiData.url) {
+          images = [apiData.url];
+        }
+        // Формат с массивом ресурсов, характерный для FAL.AI
+        else if (apiData.resources && Array.isArray(apiData.resources)) {
+          images = apiData.resources
+            .map((r: any) => r.url || r.image || r.output || null)
+            .filter(Boolean);
         }
         
         if (!images.length) {
-          console.error('Полная структура ответа (не удалось найти URL изображений):', JSON.stringify(proxyResponseData));
+          console.error('Полная структура ответа (не удалось найти URL изображений):', JSON.stringify(apiData));
           throw new Error('Не удалось найти URL изображений в ответе API');
         }
         
