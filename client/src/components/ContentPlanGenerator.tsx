@@ -269,9 +269,10 @@ export function ContentPlanGenerator({
 
   // Обработчик генерации контент-плана через n8n
   const handleGenerateContentPlan = async () => {
-    // Проверяем авторизацию
-    const authToken = localStorage.getItem('authToken');
+    // Проверяем авторизацию используя правильный ключ из хранилища
+    const authToken = localStorage.getItem('auth_token');
     if (!authToken) {
+      console.log("Ошибка авторизации: токен не найден");
       toast({
         title: "Ошибка авторизации",
         description: "Вы не авторизованы в системе",
@@ -279,6 +280,8 @@ export function ContentPlanGenerator({
       });
       return;
     }
+    
+    console.log("Токен авторизации найден, продолжаем генерацию");
 
     // Проверяем обязательные параметры
     if (selectedTopicIds.size === 0 && activeTab === "trends") {
