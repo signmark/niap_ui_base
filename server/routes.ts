@@ -5096,12 +5096,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req, res) => {
     try {
       const { campaignId } = req.params;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании не указан" });
       }
       
-      const questionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log('Getting business questionnaire with user token');
+      const questionnaire = await storage.getBusinessQuestionnaire(campaignId, token);
       
       return res.json({
         success: true,
@@ -5120,13 +5128,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req: any, res) => {
     try {
       const { campaignId } = req.params;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании не указан" });
       }
       
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
       // Проверяем, существует ли уже анкета для этой кампании
-      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId, token);
       
       if (existingQuestionnaire) {
         return res.status(400).json({ 
@@ -5141,17 +5156,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId
       });
       
-      // Используем сервисный токен для создания анкеты
-      // Этот токен уже настроен с необходимыми правами в Directus
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      
-      if (!serviceToken) {
-        console.error('Service token is not configured in environment variables');
-        return res.status(500).json({ error: "Authentication configuration error" });
-      }
-      
-      console.log('Using service token for creating business questionnaire');
-      const newQuestionnaire = await storage.createBusinessQuestionnaire(questionnaireData, serviceToken);
+      console.log('Using user token for creating business questionnaire');
+      const newQuestionnaire = await storage.createBusinessQuestionnaire(questionnaireData, token);
       
       return res.status(201).json({
         success: true,
@@ -5177,13 +5183,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req: any, res) => {
     try {
       const { campaignId, id } = req.params;
+      const authHeader = req.headers['authorization'];
       
       if (!campaignId || !id) {
         return res.status(400).json({ error: "ID кампании или анкеты не указаны" });
       }
       
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
       // Проверяем существование анкеты
-      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId);
+      const existingQuestionnaire = await storage.getBusinessQuestionnaire(campaignId, token);
       
       if (!existingQuestionnaire) {
         return res.status(404).json({ error: "Анкета для этой кампании не найдена" });
@@ -5199,18 +5212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateSchema = insertBusinessQuestionnaireSchema.partial();
       const validatedUpdates = updateSchema.parse(req.body);
       
-      // Используем сервисный токен для обновления анкеты
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      
-      if (!serviceToken) {
-        console.error('Service token is not configured in environment variables');
-        return res.status(500).json({ error: "Authentication configuration error" });
-      }
-      
-      console.log('Using service token for updating business questionnaire');
+      console.log('Using user token for updating business questionnaire');
       
       // Обновляем анкету
-      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(id, validatedUpdates, serviceToken);
+      const updatedQuestionnaire = await storage.updateBusinessQuestionnaire(id, validatedUpdates, token);
       
       return res.json({
         success: true,
