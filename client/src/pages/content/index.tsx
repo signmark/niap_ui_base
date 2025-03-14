@@ -978,16 +978,19 @@ export default function ContentPage() {
       <Dialog 
         open={isEditDialogOpen} 
         onOpenChange={(open) => {
-          // Сохраняем предыдущее значение open, чтобы знать, закрывается ли диалог
+          // Проверяем, не клик ли это внутри контента
           if (open === false && isEditDialogOpen === true) {
-            // Диалог закрывается
+            // Диалог закрывается по клику вне диалога или кнопкой "Отмена/X"
             setIsEditDialogOpen(false);
           } else if (open === true && isEditDialogOpen === false) {
             // Диалог открывается
             setIsEditDialogOpen(true);
           }
         }}>
-        <DialogContent className="hidden">
+        {/* Используем прозрачный оверлей вместо стандартного черного */}
+        <TransparentDialogOverlay />
+        
+        <DialogContent className="hidden opacity-0 pointer-events-none">
           {/* Этот DialogContent скрыт и нужен только для соответствия API Dialog */}
         </DialogContent>
         
