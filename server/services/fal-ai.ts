@@ -111,7 +111,14 @@ export class FalAiService {
       }));
       
       // Выполняем запрос к API с увеличенным таймаутом
-      const result = await run(sdkEndpoint, sdkPayload);
+      // Для эндпоинта fal-ai/sdxl используем фиксированную ссылку
+      // на известную и работающую модель
+      const actualEndpoint = sdkEndpoint === 'fal-ai/sdxl' 
+        ? 'fal-ai/stable-diffusion-xl' 
+        : sdkEndpoint;
+      
+      console.log(`Преобразуем эндпоинт из '${sdkEndpoint}' в '${actualEndpoint}'`);
+      const result = await run(actualEndpoint, sdkPayload);
       
       console.log('Изображение успешно сгенерировано через FAL.AI');
       console.log('Структура ответа SDK:', Object.keys(result || {}));
@@ -217,10 +224,14 @@ export class FalAiService {
    */
   async checkStatus(): Promise<boolean> {
     try {
-      // Простой запрос для проверки подключения
-      await run('fal-ai/info', {
-        input: {},
-        method: 'get'
+      // Используем заведомо работающий эндпоинт для проверки связи
+      await run('fal-ai/stable-diffusion-xl', {
+        input: {
+          prompt: "test image",
+          width: 512,
+          height: 512,
+          num_images: 1
+        }
       });
       return true;
     } catch (error) {
