@@ -843,13 +843,13 @@ export default function ContentPage() {
                       Нет ключевых слов для этой кампании
                     </p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-1">
                       {campaignKeywords.map((keyword) => (
-                        <div key={keyword.id || keyword.keyword} className="flex items-center space-x-2">
+                        <div key={keyword.id || keyword.keyword} className="flex items-center space-x-1">
                           <input
                             type="checkbox"
                             id={`keyword-${keyword.id || keyword.keyword}`}
-                            className="h-4 w-4 rounded border-gray-300"
+                            className="h-3 w-3 rounded border-gray-300"
                             checked={newContent.keywords.includes(keyword.keyword)}
                             onChange={(e) => {
                               if (e.target.checked) {
@@ -1081,17 +1081,17 @@ export default function ContentPage() {
                         Нет ключевых слов для этой кампании
                       </p>
                     ) : (
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-1">
                         {campaignKeywords.map((keyword) => {
                           // Проверяем, выбрано ли это ключевое слово в нашем React-состоянии
                           const isSelected = selectedKeywordIds.has(keyword.id);
                           
                           return (
-                            <div key={keyword.id || keyword.keyword} className="flex items-center space-x-2">
+                            <div key={keyword.id || keyword.keyword} className="flex items-center space-x-1">
                               <input
                                 type="checkbox"
                                 id={`edit-keyword-${keyword.id || keyword.keyword}`}
-                                className="h-4 w-4 rounded border-gray-300"
+                                className="h-3 w-3 rounded border-gray-300"
                                 checked={isSelected}
                                 data-testid={`keyword-checkbox-${keyword.id}`}
                                 onChange={(e) => {
