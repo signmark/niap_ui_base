@@ -241,6 +241,18 @@ export function ContentPlanGenerator({
 
   // Обработчик генерации контент-плана через n8n
   const handleGenerateContentPlan = async () => {
+    // Проверяем авторизацию
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      toast({
+        title: "Ошибка авторизации",
+        description: "Вы не авторизованы в системе",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Проверяем обязательные параметры
     if (selectedTopicIds.size === 0 && activeTab === "trends") {
       toast({
         description: "Выберите хотя бы один тренд для генерации",
@@ -249,7 +261,19 @@ export function ContentPlanGenerator({
       return;
     }
 
+    if (!campaignId) {
+      toast({
+        title: "Ошибка",
+        description: "Не указан ID кампании",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
+
+    console.log("Начало генерации контент-плана для кампании:", campaignId);
+    console.log("Токен авторизации:", authToken ? "установлен" : "отсутствует");
 
     // Собираем выбранные тренды
     const selectedTrends = Array.from(selectedTopicIds).map(id => 
@@ -282,6 +306,8 @@ export function ContentPlanGenerator({
         competitiveAdvantages: businessData.competitors
       } : null
     };
+
+    console.log("Данные запроса:", requestData);
 
     // Отправляем запрос на генерацию через n8n
     generateContentPlanMutation.mutate(requestData);
