@@ -3381,6 +3381,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch trends" });
     }
   });
+  
+  // Эндпоинт для получения трендов кампании (для ContentPlanGenerator)
+  app.get("/api/campaign-trend-topics", async (req, res) => {
+    try {
+      const campaignId = req.query.campaignId ? String(req.query.campaignId) : undefined;
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: "campaignId is required" });
+      }
+      
+      console.log(`Fetching campaign trends for campaign: ${campaignId}`);
+      
+      // Получаем данные из базы данных
+      const trendTopics = await storage.getCampaignTrendTopics({ campaignId });
+      
+      console.log(`Found ${trendTopics.length} campaign trend topics`);
+      
+      res.json({ data: trendTopics });
+    } catch (error) {
+      console.error("Error in campaign-trend-topics route:", error);
+      res.status(500).json({ error: "Failed to fetch campaign trend topics" });
+    }
+  });
 
   // Source Posts routes - для получения постов из источников
   app.get("/api/source-posts", async (req, res) => {
