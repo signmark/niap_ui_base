@@ -5868,6 +5868,154 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
 
+  // Маршрут для генерации изображений с использованием FAL.AI
+  app.post("/api/generate-image", authenticateUser, async (req: any, res) => {
+    try {
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не авторизован" 
+        });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не удалось определить ID пользователя" 
+        });
+      }
+      
+      // Получаем данные запроса
+      const { 
+        prompt, 
+        negativePrompt, 
+        width = 1024, 
+        height = 1024, 
+        campaignId,
+        businessData,
+        content,
+        platform,
+        numImages = 1
+      } = req.body;
+      
+      // Проверяем наличие API ключа пользователя
+      try {
+        // Получаем API ключ FAL.AI из настроек пользователя
+        console.log('Получаем API ключ FAL.AI для пользователя', userId);
+        const userKeysResponse = await directusApi.get('/items/api_keys', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              service_name: {
+                _eq: 'fal_ai'
+              }
+            }
+          }
+        });
+        
+        const userKeys = userKeysResponse?.data?.data || [];
+        const falAiKey = userKeys.length > 0 ? userKeys[0].api_key : null;
+        
+        if (falAiKey) {
+          console.log('Найден API ключ FAL.AI в настройках пользователя');
+          // Инициализируем SDK с ключом пользователя
+          falAiSdk.initialize(falAiKey);
+        } else {
+          // Проверяем наличие ключа в переменных окружения
+          const envKey = process.env.FAL_AI_API_KEY;
+          if (envKey) {
+            console.log('Используем API ключ FAL.AI из переменных окружения');
+            falAiSdk.initialize(envKey);
+          } else {
+            console.warn('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
+            return res.status(400).json({ 
+              success: false, 
+              error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройках профиля." 
+            });
+          }
+        }
+        
+        // Определяем тип генерации на основе входных данных
+        let generatedImages: string[] = [];
+        
+        if (prompt) {
+          // Базовая генерация по промпту
+          console.log('Генерация изображения по промпту:', prompt.substring(0, 50) + '...');
+          const result = await falAiSdk.generateImage('fal-ai/sdxl', {
+            prompt: prompt,
+            negative_prompt: negativePrompt || 'text, words, letters, logos, watermarks, low quality, blurry, grainy',
+            width: width,
+            height: height,
+            num_images: numImages
+          });
+          
+          if (result.images && Array.isArray(result.images)) {
+            generatedImages = result.images;
+          } else {
+            throw new Error('Неожиданный формат ответа от API');
+          }
+        } 
+        else if (businessData) {
+          // Генерация на основе бизнес-данных
+          console.log('Генерация изображения на основе бизнес-данных');
+          // Используем альтернативный сервис для бизнес-генерации
+          const result = await falAiService.generateBusinessImage(businessData);
+          if (result && Array.isArray(result)) {
+            generatedImages = result;
+          } else if (typeof result === 'string') {
+            generatedImages = [result];
+          } else {
+            throw new Error('Неожиданный формат ответа при генерации бизнес-изображения');
+          }
+        }
+        else if (content && platform) {
+          // Генерация для социальных сетей
+          console.log('Генерация изображения для платформы:', platform);
+          const result = await falAiService.generateSocialMediaImage(content, platform);
+          if (result && Array.isArray(result)) {
+            generatedImages = result;
+          } else if (typeof result === 'string') {
+            generatedImages = [result];
+          } else {
+            throw new Error('Неожиданный формат ответа при генерации контента для соцсетей');
+          }
+        }
+        else {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Не указаны необходимые параметры для генерации изображения (prompt, businessData или content)" 
+          });
+        }
+        
+        // Возвращаем результат
+        return res.json({
+          success: true,
+          data: generatedImages
+        });
+      } catch (error: any) {
+        console.error('Ошибка при получении API ключа или генерации изображения:', error);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Ошибка при генерации изображения',
+          details: error.message
+        });
+      }
+    } catch (error: any) {
+      console.error('Ошибка при обработке запроса генерации изображения:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка сервера при генерации изображения',
+        details: error.message 
+      });
+    }
+  });
+
   // Обновление существующей анкеты по ID анкеты
   app.patch("/api/campaigns/:campaignId/questionnaire/:id", authenticateUser, async (req: any, res) => {
     try {
@@ -6105,6 +6253,60 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
   
+  // Маршрут для проверки наличия API ключа у пользователя
+  app.get("/api/check-api-key", authenticateUser, async (req: any, res) => {
+    try {
+      const { service } = req.query;
+      if (!service) {
+        return res.status(400).json({
+          success: false,
+          error: "Не указан сервис для проверки API ключа"
+        });
+      }
+      
+      const userId = req.user?.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!userId || !authHeader) {
+        return res.status(401).json({
+          success: false,
+          error: "Не авторизован"
+        });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Получаем API ключи пользователя
+      const userKeysResponse = await directusApi.get('/items/api_keys', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          filter: {
+            service_name: {
+              _eq: service
+            }
+          }
+        }
+      });
+      
+      const userKeys = userKeysResponse?.data?.data || [];
+      const hasKey = userKeys.length > 0 && userKeys[0].api_key;
+      
+      return res.json({
+        success: true,
+        hasKey: !!hasKey
+      });
+    } catch (error: any) {
+      console.error('Ошибка при проверке API ключа:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при проверке API ключа",
+        details: error.message
+      });
+    }
+  });
+
   // Обработчик для социальных данных пользователя
   
   return httpServer;
