@@ -15,6 +15,7 @@ import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
 import AuthBypass from "@/pages/test/auth-bypass";
 import FalAiTest from "@/pages/test/fal-ai-test";
+import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
       <Route path="/test/auth-bypass" component={AuthBypass} />
       <Route path="/test/fal-ai" component={() => <Layout><FalAiTest /></Layout>} />
+      <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
