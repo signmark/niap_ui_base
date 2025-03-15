@@ -1224,6 +1224,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Получение API ключа FAL.AI из настроек Directus
+  // Новый тестовый эндпоинт для проверки приоритизации API ключей
+  app.get('/api/test/api-keys/priority', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      let userId = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          userId = userResponse.data?.data?.id;
+        } catch (error) {
+          console.error('Ошибка при получении пользователя:', error);
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Требуется авторизация для проверки приоритизации API ключей'
+        });
+      }
+      
+      // Получаем ключ через новую систему приоритизации (сначала пользовательский, потом системный)
+      const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
+      
+      // Проверяем источники ключей для отладки
+      const envKey = process.env.FAL_AI_API_KEY || null;
+      let userKey = null;
+      let userKeySource = "не найден";
+      
+      try {
+        // Запрашиваем API ключ напрямую из настроек пользователя
+        const apiKeysResponse = await directusApi.get('/items/user_api_keys', {
+          params: {
+            filter: {
+              user_id: { _eq: userId },
+              service_name: { _eq: 'fal_ai' }
+            },
+            fields: ['api_key']
+          },
+          headers: authHeader ? { Authorization: authHeader } : {}
+        });
+        
+        const items = apiKeysResponse.data?.data || [];
+        if (items.length && items[0].api_key) {
+          userKey = items[0].api_key;
+          userKeySource = "найден в Directus";
+        }
+      } catch (error) {
+        userKeySource = `ошибка при запросе: ${error instanceof Error ? error.message : String(error)}`;
+      }
+      
+      // Сравниваем источники и возвращаем результат
+      const isPrioritizedCorrectly = userKey && falApiKey === userKey;
+      
+      return res.json({
+        success: true,
+        data: {
+          prioritization_working: isPrioritizedCorrectly,
+          selected_api_key: falApiKey ? falApiKey.substring(0, 5) + '...' + falApiKey.substring(falApiKey.length - 5) : 'null',
+          sources: {
+            env_key_present: !!envKey,
+            user_key: userKey ? userKey.substring(0, 5) + '...' + userKey.substring(userKey.length - 5) : 'null',
+            user_key_status: userKeySource
+          },
+          source: isPrioritizedCorrectly ? "user_settings (правильно)" : (falApiKey === envKey ? "env (некорректно)" : "неизвестно")
+        },
+        message: isPrioritizedCorrectly 
+          ? "Система приоритизации работает корректно: пользовательский ключ имеет приоритет" 
+          : "Система приоритизации не работает корректно или пользовательский ключ не найден"
+      });
+    } catch (error) {
+      console.error('Ошибка при проверке API ключей:', error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке приоритизации API ключей: ${error instanceof Error ? error.message : String(error)}`
+      });
+    }
+  });
+
+  // Обновляем существующий эндпоинт для получения API ключа FAL.AI с правильной приоритизацией
   app.get('/api/settings/fal_ai', async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
