@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { apiKeyService } from './api-keys';
+import { log } from '../vite';
 
 export interface DeepSeekConfig {
   apiKey: string;
