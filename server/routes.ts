@@ -1960,23 +1960,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               // Выполняем прямой запрос к FAL.AI REST API без промежуточного прокси
+              // КЛЮЧЕВОЕ МЕСТО: это основная точка отправки запроса к FAL.AI 
+              
+              // Подробное логирование API ключа для отладки (ПОЛНЫЙ ЗАПРОС)
+              console.log(`🔴🔴🔴 ПОЛНЫЙ ЗАПРОС К FAL.AI 🔴🔴🔴`);
+              console.log(`URL: https://queue.fal.run/fal-ai/fast-sdxl`);
+              
+              // Полный API ключ в логах (удалить в продакшене!)
+              console.log(`AUTHORIZATION HEADER (полный): "${falAiApiKey}"`);
+              
+              // Тело запроса
+              const requestBody = {
+                prompt: requestData.prompt,
+                negative_prompt: requestData.negative_prompt || "",
+                width: requestData.width || 1024,
+                height: requestData.height || 1024,
+                num_images: requestData.num_images || 1,
+                sync_mode: true // Синхронный режим для мгновенного результата
+              };
+              
+              // Выводим полное тело запроса
+              console.log(`REQUEST BODY: ${JSON.stringify(requestBody, null, 2)}`);
+              
+              // Заголовки запроса
+              const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': falAiApiKey, // ВАЖНО: используем ключ API в точно том же формате, как он получен из Directus
+                'Accept': 'application/json'
+              };
+              
+              // Выводим полные заголовки
+              console.log(`REQUEST HEADERS: ${JSON.stringify(headers, null, 2)}`);
+              console.log(`🔴🔴🔴 КОНЕЦ ЛОГИРОВАНИЯ ЗАПРОСА 🔴🔴🔴`);
+              
               // Используем актуальный API эндпоинт для генерации изображений
               falApiResponse = await axios.post(
                 'https://queue.fal.run/fal-ai/fast-sdxl',
+                requestBody,
                 {
-                  prompt: requestData.prompt,
-                  negative_prompt: requestData.negative_prompt || "",
-                  width: requestData.width || 1024,
-                  height: requestData.height || 1024,
-                  num_images: requestData.num_images || 1,
-                  sync_mode: true // Синхронный режим для мгновенного результата
-                },
-                {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': falAiApiKey,
-                    'Accept': 'application/json'
-                  },
+                  headers: headers,  // Используем заранее подготовленные заголовки
                   timeout: 300000 // 5 минут таймаут
                 }
               );
@@ -2009,6 +2031,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log(`Ожидаем ${delay}мс перед повторной попыткой...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 continue;
+              }
+              
+              // Особая обработка ошибок аутентификации
+              if (error.response && error.response.status === 401) {
+                const authHeader = headers ? headers['Authorization'] : 'Заголовок недоступен';
+                const headerPrefix = authHeader ? authHeader.substring(0, Math.min(15, authHeader.length)) : 'Н/Д';
+                
+                console.error(`ОШИБКА АУТЕНТИФИКАЦИИ FAL.AI (401 Unauthorized):`);
+                console.error(`Формат заголовка Authorization: ${headerPrefix}...`);
+                console.error(`Полный ответ: ${JSON.stringify({
+                  status: error.response.status,
+                  statusText: error.response.statusText,
+                  data: error.response.data
+                })}`);
               }
               
               // Для других типов ошибок повторять не будем
