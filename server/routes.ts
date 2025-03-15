@@ -1641,7 +1641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requestData,
           {
             headers: {
-              'Authorization': `Key ${falAiApiKey}`,
+              'Authorization': falAiApiKey.startsWith('Key ') ? falAiApiKey : `Key ${falAiApiKey}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
@@ -1668,7 +1668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             while (attempt < maxAttempts) {
               const statusResponse = await axios.get(statusUrl, {
                 headers: {
-                  'Authorization': `Key ${falAiApiKey}`,
+                  'Authorization': falAiApiKey,
                   'Accept': 'application/json'
                 }
               });
