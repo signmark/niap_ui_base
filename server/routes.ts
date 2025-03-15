@@ -7118,12 +7118,41 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     // Устанавливаем Content-Type явно, чтобы предотвратить перехват Vite
     res.setHeader('Content-Type', 'application/json');
     try {
-      const apiKey = process.env.FAL_AI_API_KEY;
+      // Получаем userId из запроса, если есть авторизация
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      // Пробуем получить ключ API из централизованной системы
+      let apiKey = null;
+      
+      if (userId) {
+        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
+      }
+      
+      // Если не удалось получить ключ пользователя, используем системный
+      if (!apiKey) {
+        apiKey = process.env.FAL_AI_API_KEY;
+      }
       
       if (!apiKey) {
         return res.status(400).json({
           success: false,
-          error: "FAL.AI API ключ не найден в переменных окружения"
+          error: "FAL.AI API ключ не найден"
         });
       }
       
