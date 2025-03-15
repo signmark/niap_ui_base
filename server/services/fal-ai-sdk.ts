@@ -182,8 +182,21 @@ export class FalAiSdkService {
         console.log(`[FAL.AI] API ключ без префикса "Key" - используем как есть для generateImage`);
       }
       
-      // Используем ключ БЕЗ модификаций
-      const authHeader = this.apiKey;
+      // ВАЖНО: проверяем формат ключа и добавляем префикс "Key" если нужно
+      let authHeader = this.apiKey;
+      if (!authHeader.startsWith('Key ') && authHeader.includes(':')) {
+        console.log(`🔑 ИСПРАВЛЕНИЕ ФОРМАТА КЛЮЧА: добавляем префикс 'Key '`);
+        authHeader = `Key ${authHeader}`;
+        // Сохраняем исправленный ключ для будущего использования
+        this.apiKey = authHeader;
+      }
+      
+      // Показываем полный заголовок для отладки (в тестовой среде)
+      console.log(`🔴 ПОЛНЫЙ ЗАГОЛОВОК AUTHORIZATION: "${authHeader}"`);
+      console.log(`🔴 ДЛИНА: ${authHeader.length} символов`);
+      console.log(`🔴 НАЧИНАЕТСЯ С 'Key ': ${authHeader.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
+      console.log(`🔴 СОДЕРЖИТ ':': ${authHeader.includes(':') ? 'ДА' : 'НЕТ'}`);
+      
         
       const requestConfig = {
         url: `https://queue.fal.run/${sanitizedModelId}`,
