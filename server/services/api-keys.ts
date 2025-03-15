@@ -38,27 +38,25 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
-    // Сначала проверяем переменные окружения
-    const envKey = this.getKeyFromEnvironment(serviceName);
-    if (envKey) {
-      log(`Using ${serviceName} API key from environment variables`, 'api-keys');
-      return envKey;
-    }
-    
-    // Если нет userId, не можем получить ключ из Directus
+    // Если нет userId, не можем получить ключ из Directus и сразу переходим к переменным окружения
     if (!userId) {
-      log(`Cannot fetch ${serviceName} API key: missing userId`, 'api-keys');
+      log(`Cannot fetch ${serviceName} API key from Directus: missing userId, checking environment variables`, 'api-keys');
+      const envKey = this.getKeyFromEnvironment(serviceName);
+      if (envKey) {
+        log(`Using ${serviceName} API key from environment variables as fallback`, 'api-keys');
+        return envKey;
+      }
       return null;
     }
     
-    // Проверяем кэш
+    // 1. Сначала проверяем кэш пользовательских ключей
     if (this.keyCache[userId]?.[serviceName]?.key &&
         this.keyCache[userId][serviceName]!.expiresAt > Date.now()) {
       log(`Using cached ${serviceName} API key for user ${userId}`, 'api-keys');
       return this.keyCache[userId][serviceName]!.key;
     }
     
-    // Если ключа нет в кэше или он устарел, получаем из Directus
+    // 2. Если ключа нет в кэше или он устарел, пытаемся получить из Directus
     try {
       // Используем улучшенный DirectusApiManager для запроса с автоматической авторизацией
       // Если есть authToken, используем его, иначе полагаемся на внутренний кэш токенов
@@ -104,7 +102,14 @@ export class ApiKeyService {
         log(`Successfully fetched ${serviceName} API key from Directus for user ${userId}`, 'api-keys');
         return apiKey;
       } else {
-        log(`${serviceName} API key not found in user settings for user ${userId}`, 'api-keys');
+        log(`${serviceName} API key not found in user settings for user ${userId}, checking environment variables`, 'api-keys');
+        
+        // 3. Если ключ не найден в Directus, используем ключ из переменных окружения в качестве резервного
+        const envKey = this.getKeyFromEnvironment(serviceName);
+        if (envKey) {
+          log(`Using ${serviceName} API key from environment variables as fallback`, 'api-keys');
+          return envKey;
+        }
         return null;
       }
     } catch (error) {
@@ -126,6 +131,14 @@ export class ApiKeyService {
       }
       
       log(`Error fetching ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
+      
+      // При ошибке запроса к Directus также пробуем использовать ключ из переменных окружения
+      const envKey = this.getKeyFromEnvironment(serviceName);
+      if (envKey) {
+        log(`Using ${serviceName} API key from environment variables after Directus API error`, 'api-keys');
+        return envKey;
+      }
+      
       return null;
     }
   }
