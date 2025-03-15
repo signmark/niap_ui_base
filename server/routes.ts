@@ -7060,6 +7060,95 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
   
+  // Тестовый маршрут для диагностики FAL.AI API
+  app.get('/api/test-fal-ai', async (req, res) => {
+    try {
+      // Получаем ключ из переменных окружения
+      const rawApiKey = process.env.FAL_AI_API_KEY || '';
+      
+      console.log('🧪 [FAL.AI TEST] Тестирование FAL.AI API');
+      console.log(`🧪 [FAL.AI TEST] Ключ (частично): ${rawApiKey.substring(0, 10)}...`);
+      console.log(`🧪 [FAL.AI TEST] Длина ключа: ${rawApiKey.length} символов`);
+      console.log(`🧪 [FAL.AI TEST] Содержит двоеточие: ${rawApiKey.includes(':') ? 'ДА' : 'НЕТ'}`);
+      console.log(`🧪 [FAL.AI TEST] Имеет префикс 'Key ': ${rawApiKey.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
+      
+      // Форматируем ключ если необходимо
+      let formattedKey = rawApiKey;
+      if (rawApiKey && !rawApiKey.startsWith('Key ') && rawApiKey.includes(':')) {
+        console.log(`🧪 [FAL.AI TEST] Добавляем префикс 'Key ' к ключу`);
+        formattedKey = `Key ${rawApiKey}`;
+      }
+      
+      console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${formattedKey.substring(0, 15)}...`);
+      console.log(`🧪 [FAL.AI TEST] ПОЛНЫЙ КЛЮЧ: ${formattedKey}`);
+      
+      // Выполняем тестовый запрос к FAL.AI API
+      try {
+        const response = await axios.post(
+          'https://queue.fal.run/fal-ai/fast-sdxl', 
+          {
+            prompt: 'A beautiful landscape, test image',
+            negative_prompt: 'blurry, text',
+            width: 512, // используем маленький размер для скорости
+            height: 512,
+            num_images: 1
+          },
+          {
+            headers: {
+              'Authorization': formattedKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }
+        );
+        
+        console.log(`🧪 [FAL.AI TEST] Успешный ответ! Статус: ${response.status}`);
+        console.log(`🧪 [FAL.AI TEST] Данные: ${JSON.stringify(response.data, null, 2)}`);
+        
+        return res.json({
+          success: true,
+          message: 'FAL.AI API работает корректно',
+          status: response.status,
+          data: response.data
+        });
+      } catch (apiError: any) {
+        console.error(`🧪 [FAL.AI TEST] Ошибка API: ${apiError.message}`);
+        
+        if (apiError.response) {
+          console.error(`🧪 [FAL.AI TEST] Статус: ${apiError.response.status}`);
+          console.error(`🧪 [FAL.AI TEST] Данные: ${JSON.stringify(apiError.response.data)}`);
+          
+          return res.status(apiError.response.status).json({
+            success: false,
+            error: 'Ошибка при запросе к FAL.AI API',
+            status: apiError.response.status,
+            data: apiError.response.data,
+            requestDetails: {
+              url: 'https://queue.fal.run/fal-ai/fast-sdxl',
+              headers: {
+                'Authorization': `${formattedKey.substring(0, 10)}...`,
+                'Content-Type': 'application/json'
+              }
+            }
+          });
+        }
+        
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка при запросе к FAL.AI API',
+          message: apiError.message
+        });
+      }
+    } catch (error: any) {
+      console.error(`🧪 [FAL.AI TEST] Общая ошибка: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при тестировании FAL.AI API',
+        message: error.message
+      });
+    }
+  });
+  
   // Маршрут для проверки наличия API ключа у пользователя
   app.get("/api/check-api-key", authenticateUser, async (req: any, res) => {
     try {
