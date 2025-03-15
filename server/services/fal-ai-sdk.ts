@@ -110,6 +110,7 @@ export class FalAiSdkService {
         url: 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium',
         method: 'POST',
         headers: {
+          // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
           'Authorization': `Key ${this.apiKey}`,
           'Content-Type': 'application/json'
         },
@@ -150,6 +151,7 @@ export class FalAiSdkService {
         url: `https://queue.fal.run/${sanitizedModelId}`,
         method: 'POST',
         headers: {
+          // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
           'Authorization': `Key ${this.apiKey}`,
           'Content-Type': 'application/json'
         },

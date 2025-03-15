@@ -245,6 +245,7 @@ Return only the translated text, no explanations or comments.`;
         requestData,
         {
           headers: {
+            // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
             'Authorization': `Key ${this.apiKey}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -294,6 +295,7 @@ Return only the translated text, no explanations or comments.`;
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
+                  // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
                   'Authorization': `Key ${this.apiKey}`,
                   'Accept': 'application/json'
                 }
@@ -315,6 +317,7 @@ Return only the translated text, no explanations or comments.`;
                 // Получаем результат по URL ответа
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
+                    // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
                     'Authorization': `Key ${this.apiKey}`,
                     'Accept': 'application/json'
                   }
