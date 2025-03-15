@@ -1,5 +1,6 @@
 import * as falClient from "@fal-ai/serverless-client";
 import { log } from '../vite';
+import { apiKeyService } from './api-keys';
 
 /**
  * Сервис для работы с fal.ai с использованием официального SDK
@@ -11,14 +12,14 @@ export class FalAiSdkService {
   constructor(apiKey: string = '') {
     this.apiKey = apiKey;
     if (apiKey) {
-      this.initialize(apiKey);
+      this.initializeWithKey(apiKey);
     }
   }
 
   /**
    * Инициализировать клиент с API ключом
    */
-  initialize(apiKey: string): void {
+  initializeWithKey(apiKey: string): void {
     this.apiKey = apiKey;
     try {
       // Используем объект falClient напрямую
@@ -29,13 +30,53 @@ export class FalAiSdkService {
       log(`FalAiSdkService: ошибка инициализации: ${err}`, 'fal-ai');
     }
   }
+  
+  /**
+   * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
+   */
+  async initialize(userId: string, authToken?: string): Promise<boolean> {
+    try {
+      // Используем централизованный сервис API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
+      
+      if (apiKey) {
+        this.initializeWithKey(apiKey);
+        log('FAL.AI SDK: API ключ успешно получен через API Key Service', 'fal-ai');
+        console.log('FAL.AI SDK: API ключ успешно получен через API Key Service');
+        return true;
+      } else {
+        // Проверяем, не установлен ли уже ключ в сервисе
+        if (this.apiKey && this.apiKey.length > 0) {
+          console.log('FAL.AI SDK: Используем существующий API ключ');
+          return true;
+        }
+        
+        log('FAL.AI SDK: API ключ не найден', 'fal-ai');
+        console.log('FAL.AI SDK: API ключ не найден');
+        return false;
+      }
+    } catch (error) {
+      console.error('Ошибка при инициализации FAL.AI SDK сервиса:', error);
+      
+      // Если у нас все равно есть валидный ключ - можно использовать
+      if (this.apiKey && this.apiKey.length > 0) {
+        console.log('FAL.AI SDK: Несмотря на ошибку, используем существующий API ключ');
+        return true;
+      }
+      
+      return false;
+    }
+  }
 
   /**
    * Обновить API ключ
    */
   updateApiKey(newApiKey: string): void {
     this.apiKey = newApiKey;
-    this.initialize(newApiKey);
+    this.initializeWithKey(newApiKey);
   }
 
   /**
@@ -120,5 +161,5 @@ export class FalAiSdkService {
   }
 }
 
-// Создаем экземпляр сервиса с ключом из переменных окружения
-export const falAiSdk = new FalAiSdkService(process.env.FAL_AI_API_KEY || '');
+// Создаем экземпляр сервиса без ключа, он будет инициализирован через apiKeyService
+export const falAiSdk = new FalAiSdkService();
