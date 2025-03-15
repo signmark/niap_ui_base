@@ -1353,8 +1353,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[FAL.AI Прокси] Выполняем запрос к API FAL.AI к эндпоинту ${endpoint}`);
         console.log(`[FAL.AI Прокси] Данные запроса:`, JSON.stringify(data).substring(0, 200));
         
-        // Инициализация FalAI SDK с ключом API
-        falAiSdk.initialize(apiKey);
+        // Инициализация FalAI SDK через централизованный сервис API ключей
+        const userId = (req as any).userId;
+        const initSuccess = await falAiSdk.initializeFromApiKeyService(userId, authToken);
+        
+        if (!initSuccess) {
+          // Если инициализация не удалась, но у нас есть apiKey из запроса - используем его
+          if (apiKey) {
+            console.log('[FAL.AI Прокси] Инициализация через API Key Service не удалась, используем ключ из запроса');
+            falAiSdk.initialize(apiKey);
+          } else {
+            console.log('[FAL.AI Прокси] Инициализация не удалась и нет прямого API ключа');
+            return res.status(401).json({ 
+              success: false, 
+              message: 'Не удалось инициализировать FAL.AI SDK. API ключ не найден.' 
+            });
+          }
+        }
         
         // Подготавливаем endpoint для SDK (проверяем, содержит ли путь 'fal-ai')
         const sdkEndpoint = endpoint.includes('fal-ai') ? endpoint : `fal-ai/${endpoint}`;

@@ -545,8 +545,8 @@ Return only the translated text, no explanations or comments.`;
   }
 }
 
-// Создаем и экспортируем экземпляр сервиса
-// Создаем и экспортируем экземпляр сервиса с возможностью использования ключа из окружения при разработке
+// Создаем и экспортируем экземпляр сервиса без ключа
+// Ключ будет получен через apiKeyService при инициализации
 export const falAiService = new FalAiService({
-  apiKey: process.env.FAL_AI_API_KEY || ''
+  apiKey: ''
 });
