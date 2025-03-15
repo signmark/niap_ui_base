@@ -2185,18 +2185,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Получаем API ключ FAL.AI
-      const apiKey = process.env.FAL_AI_API_KEY;
+      // Инициализируем FAL.AI сервис с использованием новой центральной системы API-ключей
+      // Используем userId из запроса, который был установлен в authenticateUser middleware
+      const userId = (req as any).userId;
       
-      if (!apiKey) {
-        return res.status(500).json({
+      if (!userId) {
+        return res.status(401).json({
           success: false,
-          error: "API ключ FAL.AI не настроен. Пожалуйста, добавьте его в переменные окружения."
+          error: "Для генерации изображений требуется авторизация"
         });
       }
       
-      // Обновляем ключ в сервисе
-      falAiService.updateApiKey(apiKey);
+      // Инициализируем сервис с API ключом пользователя
+      const initialized = await falAiService.initialize(userId);
+      
+      if (!initialized) {
+        return res.status(500).json({
+          success: false,
+          error: "API ключ FAL.AI не настроен. Пожалуйста, добавьте его в настройках пользователя."
+        });
+      }
       
       // Запускаем генерацию изображения
       console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
