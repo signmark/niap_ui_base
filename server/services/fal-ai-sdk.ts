@@ -22,6 +22,10 @@ export class FalAiSdkService {
   initializeWithKey(apiKey: string): void {
     // Расширенное логирование для отладки
     if (apiKey) {
+      console.log(`DEBUG FAL.AI SDK: Получен ключ API длиной ${apiKey.length} символов`);
+      console.log(`DEBUG FAL.AI SDK: Ключ начинается с "Key ": ${apiKey.startsWith('Key ')}`);
+      console.log(`DEBUG FAL.AI SDK: Первые 10 символов: "${apiKey.substring(0, 10)}..."`);
+      
       if (apiKey.startsWith('Key ')) {
         console.log(`[FAL.AI] Инициализация с ключом, имеющим префикс "Key" - правильный формат`);
       } else {
@@ -166,8 +170,10 @@ export class FalAiSdkService {
       // Формируем конфигурацию для запроса - автоматически добавляем префикс 'fal-ai/', если его нет
       const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
       // Используем ключ в точно таком же формате, как он хранится в Directus
-      // Только логирование для отладки
-      console.log(`[DEBUG] Текущий API ключ (маскировано): ${this.apiKey ? (this.apiKey.substring(0, 5) + '...') : 'отсутствует'}`);
+      // Расширенное логирование для отладки вызова FAL.AI
+      console.log(`DEBUG FAL.AI GENERATE IMAGE: Текущий API ключ длиной ${this.apiKey.length} символов`);
+      console.log(`DEBUG FAL.AI GENERATE IMAGE: Ключ начинается с "Key ": ${this.apiKey.startsWith('Key ')}`);
+      console.log(`DEBUG FAL.AI GENERATE IMAGE: Первые 10 символов: "${this.apiKey.substring(0, 10)}..."`);
       
       // Улучшенное логирование без модификации ключа
       if (this.apiKey.startsWith('Key ')) {

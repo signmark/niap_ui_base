@@ -1914,7 +1914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // Добавляем логирование для отслеживания запроса
+        // Добавляем расширенное логирование для отслеживания запроса и заголовков
         console.log(`Отправляем запрос на прокси FAL.AI с параметрами:`, 
           JSON.stringify({
             endpoint,
@@ -1924,6 +1924,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           })
         );
+        
+        // Логируем формат ключа API для отладки проблем аутентификации
+        console.log(`DEBUG FAL.AI AUTH: Формат ключа API: ${falAiApiKey.substring(0, 6)}... (длина: ${falAiApiKey.length})`);
+        console.log(`DEBUG FAL.AI AUTH: Начинается с 'Key ': ${falAiApiKey.startsWith('Key ')}`);
+        
+        const debugHeaders = {
+          'Content-Type': 'application/json',
+          'Authorization': falAiApiKey,
+          'Accept': 'application/json'
+        };
+        
+        console.log('DEBUG FAL.AI AUTH: Заголовки запроса:', JSON.stringify({
+          'Content-Type': debugHeaders['Content-Type'],
+          'Authorization': debugHeaders['Authorization'].substring(0, 10) + '...',
+          'Accept': debugHeaders['Accept']
+        }));
         
         // Объявляем переменную на уровне внешнего блока try
         let falApiResponse: any = null;
