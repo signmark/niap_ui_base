@@ -107,6 +107,13 @@ export class FalAiSdkService {
       // Пробуем быстрый запрос для проверки связи через прямой HTTP запрос
       const axios = require('axios');
       // Правильный формат заголовка: "Key <key_id>:<key_secret>"
+      // Логируем для улучшенной отладки и мониторинга
+      if (this.apiKey.startsWith('Key ')) {
+        console.log(`[FAL.AI] API ключ уже имеет правильный формат с префиксом "Key"`); 
+      } else {
+        console.log(`[FAL.AI] Добавляем префикс "Key" к API ключу для правильного формата`);
+      }
+      
       const authHeader = this.apiKey.startsWith('Key ') 
         ? this.apiKey 
         : `Key ${this.apiKey}`;
@@ -155,6 +162,13 @@ export class FalAiSdkService {
       // Проверяем, начинается ли ключ уже с "Key "
       // Также логируем для отладки, чтобы понять текущий формат ключа
       console.log(`[DEBUG] Текущий API ключ (маскировано): ${this.apiKey ? (this.apiKey.substring(0, 5) + '...') : 'отсутствует'}`);
+      
+      // Улучшенное логирование для отладки
+      if (this.apiKey.startsWith('Key ')) {
+        console.log(`[FAL.AI] API ключ уже имеет правильный формат с префиксом "Key" для генерации`); 
+      } else {
+        console.log(`[FAL.AI] Добавляем префикс "Key" к API ключу для генерации изображения`);
+      }
       
       const authHeader = this.apiKey.startsWith('Key ') 
         ? this.apiKey 
