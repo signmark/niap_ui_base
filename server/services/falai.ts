@@ -287,12 +287,17 @@ Return only the translated text, no explanations or comments.`;
       console.log(`REQUEST BODY: ${JSON.stringify(requestData, null, 2)}`);
       
       // Полные заголовки запроса (уже без отображения полного ключа для безопасности)
-      // По документации FAL.AI и примерам, формируем заголовок в формате "Key {apiKey}"
-      // Используем точный формат заголовка из официальной документации
-      const authHeaderValue = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
+      // ВАЖНО: Не модифицируем API ключ. Предполагаем, что ключ уже в правильном формате
+      // Пользователь сам вводит ключ в формате "Key {apiKey}" через интерфейс
+      const authHeaderValue = this.apiKey;
       
-      // Краткое логирование форматирования заголовка
-      console.log(`[FAL.AI] Формат заголовка: ${this.apiKey.startsWith('Key ') ? 'Сохранен исходный' : 'Добавлен префикс "Key "'}`);
+      // Подробное логирование заголовка для отладки
+      console.log(`[FAL.AI] ПОЛНЫЙ ЗАПРОС К API:`);
+      console.log(`[FAL.AI] URL: ${apiUrl}`);
+      console.log(`[FAL.AI] ЗАГОЛОВОК Authorization: "${authHeaderValue}"`);
+      console.log(`[FAL.AI] Content-Type: application/json`);
+      console.log(`[FAL.AI] Accept: application/json`);
+      console.log(`[FAL.AI] ТЕЛО ЗАПРОСА: ${JSON.stringify(requestData, null, 2)}`);
       
       const headers = {
         'Authorization': authHeaderValue,
@@ -355,9 +360,9 @@ Return only the translated text, no explanations or comments.`;
             try {
               // Проверяем статус
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
-              // По документации FAL.AI, формируем заголовок в формате "Key {apiKey}"
-              const statusAuthHeader = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
-              console.log(`[FAL.AI] Заголовок авторизации для проверки статуса: префикс "Key " ${this.apiKey.startsWith('Key ') ? 'уже присутствует' : 'добавлен'}`);
+              // Используем ключ как есть, без модификаций
+              const statusAuthHeader = this.apiKey;
+              console.log(`[FAL.AI] Используем оригинальный ключ для проверки статуса без модификаций`);
               
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
@@ -379,10 +384,9 @@ Return only the translated text, no explanations or comments.`;
               if (statusResponse.data?.status === "COMPLETED") {
                 console.log("Генерация завершена, получаем результат");
                 
-                // Получаем результат по URL ответа
-                // Формируем заголовок в формате "Key {apiKey}" для FAL.AI API
-                const resultAuthHeader = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
-                console.log(`[FAL.AI] Заголовок авторизации для получения результата: префикс "Key " ${this.apiKey.startsWith('Key ') ? 'уже присутствует' : 'добавлен'}`);
+                // Используем API ключ без модификаций
+                const resultAuthHeader = this.apiKey;
+                console.log(`[FAL.AI] Используем оригинальный ключ для получения результата без модификаций`);
                 
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
