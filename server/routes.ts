@@ -1355,6 +1355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Инициализация FalAI SDK через централизованный сервис API ключей
         const userId = (req as any).userId;
+        const authHeader = req.headers['authorization'];
+        const authToken = authHeader ? authHeader.replace('Bearer ', '') : undefined;
         const initSuccess = await falAiSdk.initializeFromApiKeyService(userId, authToken);
         
         if (!initSuccess) {
@@ -6635,17 +6637,13 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         // Инициализируем FAL.AI SDK с использованием централизованной системы API ключей
         console.log('Инициализация FAL.AI SDK для пользователя', userId);
         
-        // Инициализируем FalAiService (нормальная служба для работы через axios)
+        // Инициализируем FalAiService (сервис для работы через axios)
         const falAiInitialized = await falAiService.initialize(userId, token);
         
-        // Инициализируем FalAiSdk (служба для работы через официальный SDK)
-        // Получаем ключ через apiKeyService и инициализируем SDK 
-        const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        // Инициализируем FalAiSdk (сервис для работы через официальный SDK)
+        const sdkInitialized = await falAiSdk.initializeFromApiKeyService(userId, token);
         
-        if (apiKey) {
-          console.log('Найден API ключ FAL.AI в централизованной системе');
-          falAiSdk.initialize(apiKey);
-        } else if (!falAiInitialized) {
+        if (!sdkInitialized && !falAiInitialized) {
           console.warn('API ключ FAL.AI не найден в настройках');
           return res.status(400).json({ 
             success: false, 
@@ -7081,8 +7079,18 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       console.log(`[FAL.AI API] Генерация изображения для промпта: "${prompt.substring(0, 50)}..."`);
       
       try {
-        // Инициализируем сервис с API ключом
-        falAiSdk.initialize(apiKey);
+        // Инициализируем сервис через централизованный сервис API ключей
+        if (userId) {
+          const initSuccess = await falAiSdk.initializeFromApiKeyService(userId);
+          if (!initSuccess) {
+            // Если инициализация через API Key Service не удалась, используем прямой ключ
+            console.log('Инициализация через API Key Service не удалась, используем прямой ключ');
+            falAiSdk.initialize(apiKey);
+          }
+        } else {
+          // Если нет userId, используем прямой ключ
+          falAiSdk.initialize(apiKey);
+        }
         
         // Параметры для генерации
         const data = {
@@ -7198,8 +7206,18 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      // Инициализируем SDK с ключом
-      falAiSdk.initialize(apiKey);
+      // Инициализируем SDK через централизованный сервис API ключей
+      if (userId) {
+        const initSuccess = await falAiSdk.initializeFromApiKeyService(userId);
+        if (!initSuccess) {
+          // Если инициализация через API Key Service не удалась, используем прямой ключ
+          console.log('Инициализация через API Key Service не удалась, используем прямой ключ');
+          falAiSdk.initialize(apiKey);
+        }
+      } else {
+        // Если нет userId, используем прямой ключ
+        falAiSdk.initialize(apiKey);
+      }
       
       // Проверяем статус API
       const status = await falAiSdk.checkStatus();
