@@ -82,17 +82,18 @@ export class ApiKeyService {
         // Получаем ключ из ответа
         let apiKey = items[0].api_key;
         
-        // Особая обработка для fal_ai - проверка и нормализация формата ключа
+        // Особая обработка для fal_ai - только проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
         if (serviceName === 'fal_ai') {
-          // Сначала удаляем префикс "Key ", если он есть
+          // Логируем информацию о ключе, не модифицируя его
           if (apiKey.startsWith('Key ')) {
-            apiKey = apiKey.substring(4);
-            console.log(`[${serviceName}] Нормализован ключ: удален префикс "Key"`);
+            console.log(`[${serviceName}] Получен ключ с префиксом "Key", это правильный формат`);
+          } else {
+            console.log(`[${serviceName}] Получен ключ без префикса "Key", возможно потребуется добавить префикс`);
           }
           
-          // Затем проверяем формат ключа (должен содержать ":")
-          if (!apiKey.includes(':')) {
-            console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+          // Только логируем предупреждение если формат кажется неверным
+          if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
+            console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Ожидается "Key <key_id>:<key_secret>"`);
             log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате`, 'api-keys');
             
             // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
@@ -160,18 +161,19 @@ export class ApiKeyService {
         return false;
       }
       
-      // Особая обработка для fal_ai - проверка и нормализация формата ключа
+      // Особая обработка для fal_ai - только проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
       if (serviceName === 'fal_ai') {
-        // Сначала удаляем префикс "Key ", если он есть
+        // Логируем информацию о ключе, не модифицируя его
         if (apiKey.startsWith('Key ')) {
-          apiKey = apiKey.substring(4);
-          console.log(`[${serviceName}] Нормализован ключ: удален префикс "Key"`);
+          console.log(`[${serviceName}] Сохраняем ключ с префиксом "Key", это правильный формат`);
+        } else {
+          console.log(`[${serviceName}] Сохраняем ключ без префикса "Key"`);
         }
         
-        // Затем проверяем формат ключа (должен содержать ":")
-        if (!apiKey.includes(':')) {
-          console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
-          log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате при сохранении`, 'api-keys');
+        // Только логируем предупреждение если формат кажется неверным
+        if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
+          console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Ожидается "Key <key_id>:<key_secret>"`);
+          log(`[${serviceName}] API ключ для пользователя ${userId} может быть в неправильном формате при сохранении`, 'api-keys');
           
           // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
           // Пример: если ключ "abcd-1234-5678", преобразуем в "abcd-1234:5678"
@@ -314,17 +316,18 @@ export class ApiKeyService {
       return null;
     }
     
-    // Обработка для FAL.AI - нормализация формата ключа
+    // Обработка для FAL.AI - проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
     if (serviceName === 'fal_ai') {
-      // Удаляем префикс "Key ", если он есть
+      // Только проверяем формат, не модифицируя
       if (apiKey.startsWith('Key ')) {
-        apiKey = apiKey.substring(4);
-        console.log('Нормализован ключ FAL.AI: удален префикс "Key"');
+        console.log('Найден ключ FAL.AI с префиксом "Key" - правильный формат');
+      } else {
+        console.log('Найден ключ FAL.AI без префикса "Key"');
       }
       
-      // Проверка формата ключа (должен содержать ":")
-      if (!apiKey.includes(':')) {
-        console.warn(`[FAL.AI] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+      // Проверка формата ключа, только для логирования
+      if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
+        console.warn(`[FAL.AI] API ключ может быть в неправильном формате. Ожидается формат "Key <key_id>:<key_secret>"`);
       }
     }
     
