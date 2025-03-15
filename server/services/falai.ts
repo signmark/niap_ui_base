@@ -269,10 +269,11 @@ Return only the translated text, no explanations or comments.`;
         '(формат без двоеточия)');
       console.log(`[FAL.AI] Используем ключ (маскировано): ${maskedKey}`);
       
-      // Добавляем префикс "Bearer " перед API ключом для правильного формата заголовка Authorization
-      const authHeader = this.apiKey.startsWith('Bearer ') ? this.apiKey : `Bearer ${this.apiKey}`;
-      console.log(`[FAL.AI] Заголовок авторизации: ${this.apiKey.startsWith('Bearer ') ? 'Ключ уже содержит префикс "Bearer "' : 'Добавлен префикс "Bearer " к ключу'}`);
-      console.log(`[FAL.AI] Итоговый формат заголовка: ${authHeader.substring(0, 11)}...`);;
+      // НЕ меняем формат ключа, используем как есть (предполагается, что ключ уже в формате "Key xxxxxx:xxxxx")
+      // FAL.AI API требует формат "Key {apiKey}", НЕ используем Bearer
+      const authHeader = this.apiKey;
+      console.log(`[FAL.AI] Заголовок авторизации: используем ключ как есть, без изменений`);
+      console.log(`[FAL.AI] Итоговый формат заголовка: ${authHeader.substring(0, 10)}...`);;
       
       // Отправляем запрос на API FAL.AI точно как на скриншоте
       
@@ -366,10 +367,16 @@ Return only the translated text, no explanations or comments.`;
               
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
-                  'Authorization': statusAuthHeader,
+                  'Authorization': statusAuthHeader, // Используем API ключ как есть, предполагая формат "Key {apiKey}"
                   'Accept': 'application/json'
                 }
               });
+              
+              // Дополнительное логирование для отладки запроса статуса
+              console.log(`[FAL.AI] Запрос статуса: ${response.data.status_url}`);
+              console.log(`[FAL.AI] Заголовок Authorization для статуса: ${statusAuthHeader.substring(0, 10)}...`);
+              console.log(`[FAL.AI] Ответ статуса: ${statusResponse.status}`);
+              
               
               console.log("Статус запроса:", statusResponse.data?.status);
               
@@ -388,9 +395,13 @@ Return only the translated text, no explanations or comments.`;
                 const resultAuthHeader = this.apiKey;
                 console.log(`[FAL.AI] Используем оригинальный ключ для получения результата без модификаций`);
                 
+                // Дополнительное логирование заголовка для отладки запроса результата
+                console.log(`[FAL.AI] Запрос результата: ${response.data.response_url}`);
+                console.log(`[FAL.AI] Заголовок Authorization для результата: ${resultAuthHeader.substring(0, 10)}...`);
+                
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
-                    'Authorization': resultAuthHeader,
+                    'Authorization': resultAuthHeader, // Используем API ключ как есть
                     'Accept': 'application/json'
                   }
                 });
