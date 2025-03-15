@@ -37,6 +37,16 @@ export class FalAiSdkService {
    * @param authToken Токен авторизации для Directus (опционально)
    * @returns true в случае успешной инициализации, false в случае ошибки
    */
+  async initializeFromApiKeyService(userId: string, authToken?: string): Promise<boolean> {
+    return this.initialize(userId, authToken);
+  }
+  
+  /**
+   * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
+   */
   async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
       // Используем централизованный сервис API ключей

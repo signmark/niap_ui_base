@@ -443,8 +443,9 @@ ${originalContent}
 }
 
 // Экспортируем экземпляр сервиса для использования в других модулях
+// Инициализируем с пустым ключом, который будет заменен при вызове initialize
 export const deepseekService = new DeepSeekService({
-  apiKey: process.env.DEEPSEEK_API_KEY || ""
+  apiKey: ""
 });
 
 // Логируем статус инициализации сервиса
