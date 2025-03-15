@@ -79,18 +79,27 @@ export class ApiKeyService {
       
       const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
+        // Получаем ключ из ответа
+        let apiKey = items[0].api_key;
+        
+        // Особая обработка для fal_ai - проверка формата ключа
+        if (serviceName === 'fal_ai' && !apiKey.includes(':')) {
+          console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+          log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате`, 'api-keys');
+        }
+        
         // Сохраняем ключ в кэше
         if (!this.keyCache[userId]) {
           this.keyCache[userId] = {};
         }
         
         this.keyCache[userId][serviceName] = {
-          key: items[0].api_key,
+          key: apiKey,
           expiresAt: Date.now() + this.cacheDuration
         };
         
         log(`Successfully fetched ${serviceName} API key from Directus for user ${userId}`, 'api-keys');
-        return items[0].api_key;
+        return apiKey;
       } else {
         log(`${serviceName} API key not found in user settings for user ${userId}`, 'api-keys');
         return null;
@@ -131,6 +140,12 @@ export class ApiKeyService {
       if (!userId) {
         log(`Cannot save ${serviceName} API key: missing userId`, 'api-keys');
         return false;
+      }
+      
+      // Проверка формата ключа для FAL.AI
+      if (serviceName === 'fal_ai' && !apiKey.includes(':')) {
+        console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+        log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате при сохранении`, 'api-keys');
       }
       
       // Сначала проверяем, существует ли уже ключ для этого сервиса/пользователя
