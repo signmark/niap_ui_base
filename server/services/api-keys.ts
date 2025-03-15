@@ -271,7 +271,28 @@ export class ApiKeyService {
       fal_ai: process.env.FAL_AI_API_KEY || ''
     };
     
-    return envMapping[serviceName] || null;
+    let apiKey = envMapping[serviceName] || null;
+    
+    // Если ключ не найден, возвращаем null
+    if (!apiKey) {
+      return null;
+    }
+    
+    // Обработка для FAL.AI - нормализация формата ключа
+    if (serviceName === 'fal_ai') {
+      // Удаляем префикс "Key ", если он есть
+      if (apiKey.startsWith('Key ')) {
+        apiKey = apiKey.substring(4);
+        console.log('Нормализован ключ FAL.AI: удален префикс "Key"');
+      }
+      
+      // Проверка формата ключа (должен содержать ":")
+      if (!apiKey.includes(':')) {
+        console.warn(`[FAL.AI] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+      }
+    }
+    
+    return apiKey;
   }
   
   /**

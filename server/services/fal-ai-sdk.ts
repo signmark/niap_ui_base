@@ -106,12 +106,16 @@ export class FalAiSdkService {
     try {
       // Пробуем быстрый запрос для проверки связи через прямой HTTP запрос
       const axios = require('axios');
+      // Правильный формат заголовка: "Key <key_id>:<key_secret>"
+      const authHeader = this.apiKey.startsWith('Key ') 
+        ? this.apiKey 
+        : `Key ${this.apiKey}`;
+        
       const result = await axios({
         url: 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium',
         method: 'POST',
         headers: {
-          // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
-          'Authorization': `Key ${this.apiKey}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json'
         },
         data: {
