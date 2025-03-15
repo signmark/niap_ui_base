@@ -400,6 +400,46 @@ ${originalContent}
       throw error;
     }
   }
+  
+  /**
+   * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
+   */
+  async initialize(userId: string, authToken?: string): Promise<boolean> {
+    try {
+      // Используем централизованный сервис API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
+      
+      if (apiKey) {
+        this.updateApiKey(apiKey);
+        log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
+        console.log('DeepSeek API ключ успешно получен через API Key Service');
+        return true;
+      } else {
+        // Проверяем, не установлен ли уже ключ в сервисе
+        if (this.hasApiKey()) {
+          console.log('Используем существующий DeepSeek API ключ');
+          return true;
+        }
+        
+        log('DeepSeek API ключ не найден', 'deepseek');
+        console.log('DeepSeek API ключ не найден');
+        return false;
+      }
+    } catch (error) {
+      console.error('Ошибка при инициализации DeepSeek сервиса:', error);
+      
+      // Если у нас все равно есть валидный ключ - можно использовать
+      if (this.hasApiKey()) {
+        console.log('Несмотря на ошибку, используем существующий DeepSeek API ключ');
+        return true;
+      }
+      
+      return false;
+    }
+  }
 }
 
 // Экспортируем экземпляр сервиса для использования в других модулях
