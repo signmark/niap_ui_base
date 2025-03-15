@@ -147,12 +147,17 @@ export class FalAiSdkService {
     try {
       // Формируем конфигурацию для запроса - автоматически добавляем префикс 'fal-ai/', если его нет
       const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
+      // Правильный формат заголовка: "Key <key_id>:<key_secret>"
+      // Проверяем, начинается ли ключ уже с "Key "
+      const authHeader = this.apiKey.startsWith('Key ') 
+        ? this.apiKey 
+        : `Key ${this.apiKey}`;
+        
       const requestConfig = {
         url: `https://queue.fal.run/${sanitizedModelId}`,
         method: 'POST',
         headers: {
-          // FAL.AI ожидает ключ уже в формате "key_id:key_secret", просто добавляем префикс Key
-          'Authorization': `Key ${this.apiKey}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json'
         },
         data: input
