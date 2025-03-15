@@ -2372,83 +2372,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получаем API ключ Perplexity из настроек пользователя
-        const settings = await directusApi.get('/items/user_api_keys', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          params: {
-            filter: {
-              service_name: { _eq: 'perplexity' }
-            }
-          }
-        });
-        
-        const perplexityKey = settings.data?.data?.[0]?.api_key;
-        if (!perplexityKey) {
-          return res.status(400).json({ error: "Не найден API ключ для Perplexity. Добавьте его в настройках." });
+        // Инициализируем Perplexity API сервис с централизованным управлением ключами
+        const userId = (req as any).userId;
+        if (!userId) {
+          return res.status(401).json({ 
+            error: 'Не авторизован: Отсутствует ID пользователя' 
+          });
         }
         
-        // Создаем системный промт в зависимости от выбранного тона
-        let systemPrompt = "Ты - опытный копирайтер, который создает качественный контент для социальных сетей.";
-        
-        switch (tone) {
-          case "informative":
-            systemPrompt += " Твой стиль информативный, ясный и образовательный.";
-            break;
-          case "friendly":
-            systemPrompt += " Твой стиль дружелюбный, теплый и доступный, как разговор с другом.";
-            break;
-          case "professional":
-            systemPrompt += " Твой стиль профессиональный, авторитетный и основательный.";
-            break;
-          case "casual":
-            systemPrompt += " Твой стиль повседневный, непринужденный и разговорный.";
-            break;
-          case "humorous":
-            systemPrompt += " Твой стиль остроумный, забавный, с уместным юмором.";
-            break;
+        // Инициализируем сервис, передавая ID пользователя и токен для получения ключа
+        const initialized = await perplexityService.initialize(userId, token);
+        if (!initialized) {
+          return res.status(400).json({ 
+            error: "Не найден API ключ для Perplexity. Добавьте его в настройках." 
+          });
         }
         
-        // Формируем запрос к API для генерации контента
         console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
         
-        const response = await axios.post(
-          'https://api.perplexity.ai/chat/completions',
+        // Используем сервис для генерации контента
+        const content = await perplexityService.generateSocialContent(
+          keywords,
+          prompt,
+          tone as any,
           {
             model: "llama-3.1-sonar-small-128k-online",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt
-              },
-              {
-                role: "user",
-                content: `Создай контент для социальных сетей на основе следующего задания: ${prompt}
-                
-                Обязательно используй эти ключевые слова: ${keywords.join(", ")}
-                
-                Контент должен быть в русском языке, легко читаемым, структурированным, и длиной около 2000-3000 символов.`
-              }
-            ],
-            max_tokens: 4000,
-            temperature: 0.7
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${perplexityKey}`,
-              'Content-Type': 'application/json'
-            }
+            temperature: 0.7,
+            max_tokens: 4000
           }
         );
         
-        if (!response.data?.choices?.[0]?.message?.content) {
-          throw new Error('Invalid API response structure');
-        }
+        console.log(`Generated content with Perplexity, length: ${content.length} characters`);
         
-        const content = response.data.choices[0].message.content;
-        console.log(`Generated content length: ${content.length} characters`);
-        
+        // Возвращаем сгенерированный контент
         return res.json({ 
           success: true, 
           content,
