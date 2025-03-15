@@ -1,6 +1,7 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
+import { testFalApiConnection } from './services/fal-api-tester';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
@@ -7060,7 +7061,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
   
-  // Тестовый маршрут для диагностики FAL.AI API
+  // Расширенный тестовый маршрут для диагностики FAL.AI API с использованием tester
   app.get('/api/test-fal-ai', async (req, res) => {
     try {
       // Получаем ключ из переменных окружения
@@ -7072,17 +7073,68 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       console.log(`🧪 [FAL.AI TEST] Содержит двоеточие: ${rawApiKey.includes(':') ? 'ДА' : 'НЕТ'}`);
       console.log(`🧪 [FAL.AI TEST] Имеет префикс 'Key ': ${rawApiKey.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
       
-      // Форматируем ключ если необходимо
-      let formattedKey = rawApiKey;
-      if (rawApiKey && !rawApiKey.startsWith('Key ') && rawApiKey.includes(':')) {
-        console.log(`🧪 [FAL.AI TEST] Добавляем префикс 'Key ' к ключу`);
-        formattedKey = `Key ${rawApiKey}`;
+      // Используем наш сервис для автоматического тестирования различных форматов ключа
+      const testResults = await testFalApiConnection(rawApiKey);
+      
+      // Возвращаем подробные результаты тестирования
+      return res.json({
+        success: testResults.success,
+        message: testResults.success 
+          ? 'FAL.AI API работает корректно с одним из форматов ключа' 
+          : 'FAL.AI API не работает ни с одним из форматов ключа',
+        keyInfo: testResults.keyInfo,
+        results: testResults.results,
+        envKeyFormat: {
+          original: `${rawApiKey.substring(0, 10)}...`,
+          length: rawApiKey.length,
+          hasKeyPrefix: rawApiKey.startsWith('Key '),
+          hasColon: rawApiKey.includes(':')
+        }
+      });
+    } catch (error: any) {
+      console.error(`🧪 [FAL.AI TEST] Общая ошибка: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при тестировании FAL.AI API',
+        message: error.message
+      });
+    }
+  });
+  
+  // Альтернативный маршрут для проверки отдельных форматов ключа API
+  app.get('/api/test-fal-ai-formats', async (req, res) => {
+    try {
+      const { format } = req.query;
+      
+      // Получаем ключ из переменных окружения
+      const rawApiKey = process.env.FAL_AI_API_KEY || '';
+      
+      if (!rawApiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'FAL.AI API ключ не настроен в переменных окружения'
+        });
       }
       
-      console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${formattedKey.substring(0, 15)}...`);
-      console.log(`🧪 [FAL.AI TEST] ПОЛНЫЙ КЛЮЧ: ${formattedKey}`);
+      // Проверяем запрошенный формат и применяем его
+      let formattedKey = rawApiKey;
+      let formatDescription = 'original';
       
-      // Выполняем тестовый запрос к FAL.AI API
+      if (format === 'with-prefix' && !rawApiKey.startsWith('Key ')) {
+        formattedKey = `Key ${rawApiKey}`;
+        formatDescription = 'with Key prefix added';
+      } else if (format === 'without-prefix' && rawApiKey.startsWith('Key ')) {
+        formattedKey = rawApiKey.substring(4);
+        formatDescription = 'without Key prefix';
+      } else if (format === 'bearer') {
+        formattedKey = `Bearer ${rawApiKey}`;
+        formatDescription = 'with Bearer prefix';
+      }
+      
+      console.log(`🧪 [FAL.AI TEST] Тестирование формата ключа: ${formatDescription}`);
+      console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${formattedKey.substring(0, 15)}...`);
+      
+      // Выполняем тестовый запрос к FAL.AI API с указанным форматом ключа
       try {
         const response = await axios.post(
           'https://queue.fal.run/fal-ai/fast-sdxl', 
@@ -7098,52 +7150,44 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
               'Authorization': formattedKey,
               'Content-Type': 'application/json',
               'Accept': 'application/json'
-            }
+            },
+            timeout: 10000 // 10 секунд таймаут
           }
         );
         
-        console.log(`🧪 [FAL.AI TEST] Успешный ответ! Статус: ${response.status}`);
-        console.log(`🧪 [FAL.AI TEST] Данные: ${JSON.stringify(response.data, null, 2)}`);
+        console.log(`🧪 [FAL.AI TEST] Успешный ответ с форматом "${formatDescription}"! Статус: ${response.status}`);
         
         return res.json({
           success: true,
-          message: 'FAL.AI API работает корректно',
+          message: `FAL.AI API работает с форматом ключа: ${formatDescription}`,
+          format: formatDescription,
           status: response.status,
-          data: response.data
+          dataKeys: Object.keys(response.data || {})
         });
       } catch (apiError: any) {
-        console.error(`🧪 [FAL.AI TEST] Ошибка API: ${apiError.message}`);
+        console.error(`🧪 [FAL.AI TEST] Ошибка API с форматом "${formatDescription}": ${apiError.message}`);
         
-        if (apiError.response) {
-          console.error(`🧪 [FAL.AI TEST] Статус: ${apiError.response.status}`);
-          console.error(`🧪 [FAL.AI TEST] Данные: ${JSON.stringify(apiError.response.data)}`);
-          
-          return res.status(apiError.response.status).json({
-            success: false,
-            error: 'Ошибка при запросе к FAL.AI API',
-            status: apiError.response.status,
-            data: apiError.response.data,
-            requestDetails: {
-              url: 'https://queue.fal.run/fal-ai/fast-sdxl',
-              headers: {
-                'Authorization': `${formattedKey.substring(0, 10)}...`,
-                'Content-Type': 'application/json'
-              }
-            }
-          });
-        }
-        
-        return res.status(500).json({
+        const errorDetails = apiError.response 
+          ? {
+              status: apiError.response.status,
+              data: apiError.response.data
+            } 
+          : {
+              message: apiError.message
+            };
+            
+        return res.status(apiError.response?.status || 500).json({
           success: false,
-          error: 'Ошибка при запросе к FAL.AI API',
-          message: apiError.message
+          error: `Ошибка при запросе к FAL.AI API с форматом ключа: ${formatDescription}`,
+          format: formatDescription,
+          details: errorDetails
         });
       }
     } catch (error: any) {
       console.error(`🧪 [FAL.AI TEST] Общая ошибка: ${error.message}`);
       return res.status(500).json({
         success: false,
-        error: 'Ошибка при тестировании FAL.AI API',
+        error: 'Ошибка при тестировании форматов FAL.AI API ключа',
         message: error.message
       });
     }
