@@ -1091,30 +1091,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Сначала проверим ключ в переменных окружения
-      let apiKey = process.env.FAL_AI_API_KEY;
+      // Получаем userId из запроса
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
       
-      // Если ключа нет в переменных, попробуем получить из Directus
-      if (!apiKey) {
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
         try {
-          console.log('FAL_AI_API_KEY отсутствует в переменных окружения. Пробуем получить из Directus...');
-          
-          // Пробуем получить API ключ из системных настроек Directus
-          const systemSettings = await directusApi.get('/items/system_settings', {
-            params: {
-              filter: {
-                key: { _eq: 'fal_ai_api_key' }
-              }
-            }
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
           });
-          
-          if (systemSettings.data?.data?.length > 0 && systemSettings.data.data[0].value) {
-            apiKey = systemSettings.data.data[0].value;
-            console.log('Найден API ключ FAL.AI в системных настройках Directus');
-          }
-        } catch (directusError) {
-          console.error('Ошибка при запросе к Directus API:', directusError);
+          userId = userResponse?.data?.data?.id;
+          console.log('Определен пользователь из токена:', userId);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
         }
+      }
+      
+      // Инициализируем FAL.AI SDK с использованием централизованной системы API ключей
+      let apiKey = null;
+      
+      if (userId) {
+        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        if (apiKey) {
+          console.log('Найден API ключ FAL.AI в настройках пользователя');
+        }
+      }
+      
+      // Если не удалось получить ключ пользователя, используем системный
+      if (!apiKey) {
+        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
+        apiKey = process.env.FAL_AI_API_KEY;
       }
       
       if (!apiKey) {
@@ -1439,7 +1451,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/generate-image', async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform } = req.body;
-      const falAiApiKey = process.env.FAL_AI_API_KEY;
+      
+      // Получаем userId из запроса
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+          console.log('Определен пользователь из токена для генерации изображения:', userId);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      // Инициализируем FAL.AI с использованием централизованной системы API ключей
+      let falAiApiKey = null;
+      
+      if (userId) {
+        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        if (falAiApiKey) {
+          console.log('Найден API ключ FAL.AI в настройках пользователя');
+        }
+      }
+      
+      // Если не удалось получить ключ пользователя, используем системный
+      if (!falAiApiKey) {
+        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
+        falAiApiKey = process.env.FAL_AI_API_KEY;
+      }
       
       if (!falAiApiKey) {
         return res.status(400).json({ 
@@ -1713,71 +1762,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем токен из заголовка
       const authHeader = req.headers.authorization;
       let userId = null;
-      let falAiApiKey = process.env.FAL_AI_API_KEY || "";
+      let token = null;
       
-      // Пробуем инициализировать сервис с ключом из переменных окружения
-      // Это позволит работать даже без валидного пользовательского токена
-      let apiInitialized = falAiApiKey.length > 0;
-      
-      // Если не получилось инициализировать напрямую, и есть токен - пробуем через токен
-      if (!apiInitialized && authHeader) {
-        const token = authHeader.replace('Bearer ', '');
-        
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
         try {
           // Получаем информацию о пользователе из токена
           const userResponse = await directusApi.get('/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
           });
-          
-          userId = userResponse.data?.data?.id;
-          
-          if (userId) {
-            console.log(`Пользователь найден: ${userId}`);
-            
-            // Получаем ключ API из настроек пользователя
-            try {
-              const apiKeysResponse = await directusApi.get('/items/user_api_keys', {
-                params: {
-                  filter: {
-                    user_id: { _eq: userId },
-                    service_name: { _eq: 'fal_ai' }
-                  },
-                  fields: ['api_key']
-                },
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
-              });
-              
-              const items = apiKeysResponse.data?.data || [];
-              if (items.length && items[0].api_key) {
-                falAiApiKey = items[0].api_key;
-                apiInitialized = true;
-                console.log('FAL.AI API ключ успешно получен из Directus');
-              }
-            } catch (apiKeyError) {
-              console.error("Ошибка при получении ключа API:", apiKeyError);
-            }
-          }
-        } catch (authError) {
-          console.error("Ошибка авторизации:", authError);
-          // Продолжаем выполнение, если не удалось получить пользователя, но ключ уже настроен из окружения
-          if (!apiInitialized) {
-            return res.status(401).json({ 
-              success: false, 
-              error: "Ошибка авторизации. Пожалуйста, войдите в систему заново." 
-            });
-          }
+          userId = userResponse?.data?.data?.id;
+          console.log('Определен пользователь из токена для генерации изображения:', userId);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
         }
       }
+      
+      // Инициализируем FAL.AI с использованием централизованной системы API ключей
+      let falAiApiKey = null;
+      
+      if (userId) {
+        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        if (falAiApiKey) {
+          console.log('Найден API ключ FAL.AI в настройках пользователя');
+        }
+      }
+      
+      // Если не удалось получить ключ пользователя, используем системный
+      if (!falAiApiKey) {
+        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
+        falAiApiKey = process.env.FAL_AI_API_KEY || "";
+      }
+      
+      // Проверяем, есть ли API ключ
+      let apiInitialized = falAiApiKey && falAiApiKey.length > 0;
     
       // Если API не инициализирован, возвращаем ошибку
       if (!apiInitialized) {
         return res.status(400).json({ 
           success: false, 
-          error: "API ключ для FAL.AI не настроен. Проверьте настройки или переменные окружения." 
+          error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройки или переменные окружения." 
         });
       }
 
