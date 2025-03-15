@@ -9,14 +9,39 @@ export class FalAiService {
    * @param apiKey API ключ для FAL.AI
    */
   initialize(apiKey: string) {
-    // Сохраняем API ключ в переменной окружения для прямых вызовов через axios
-    process.env.FAL_AI_API_KEY = apiKey;
-    
-    // Инициализируем SDK (для совместимости с существующим кодом)
+    // Инициализируем SDK с API ключом
     config({
       credentials: apiKey
     });
     console.log('FAL.AI SDK инициализирован с API ключом');
+  }
+  
+  /**
+   * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
+   */
+  async initializeFromApiKeyService(userId: string, authToken?: string): Promise<boolean> {
+    try {
+      // Импортируем здесь, чтобы избежать циклических зависимостей
+      const { apiKeyService } = require('./api-keys');
+      
+      // Получаем API ключ из сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
+      
+      if (!apiKey) {
+        console.log('FAL.AI API ключ не найден');
+        return false;
+      }
+      
+      // Инициализируем сервис с полученным ключом
+      this.initialize(apiKey);
+      return true;
+    } catch (error) {
+      console.error('Ошибка при инициализации FAL.AI сервиса из API Key Service:', error);
+      return false;
+    }
   }
 
   /**
