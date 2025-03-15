@@ -245,8 +245,8 @@ Return only the translated text, no explanations or comments.`;
         requestData,
         {
           headers: {
-            // FAL.AI ожидает ключ в формате "key_id:key_secret"
-            'Authorization': this.apiKey, // Внимание! Без префикса "Key" - сам ключ должен быть в формате key_id:key_secret
+            // FAL.AI ожидает ключ в формате "Key key_id:key_secret"
+            'Authorization': `Key ${this.apiKey}`, // FAL.AI требует префикс "Key" в заголовке
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -295,8 +295,8 @@ Return only the translated text, no explanations or comments.`;
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
-                  // FAL.AI ожидает ключ в формате "key_id:key_secret"
-                  'Authorization': this.apiKey, // Внимание! Без префикса "Key" - сам ключ должен быть в формате key_id:key_secret
+                  // FAL.AI ожидает ключ в формате "Key key_id:key_secret"
+                  'Authorization': `Key ${this.apiKey}`, // FAL.AI требует префикс "Key" в заголовке
                   'Accept': 'application/json'
                 }
               });
@@ -317,8 +317,8 @@ Return only the translated text, no explanations or comments.`;
                 // Получаем результат по URL ответа
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
-                    // FAL.AI ожидает ключ в формате "key_id:key_secret"
-                    'Authorization': this.apiKey, // Внимание! Без префикса "Key" - сам ключ должен быть в формате key_id:key_secret
+                    // FAL.AI ожидает ключ в формате "Key key_id:key_secret"
+                    'Authorization': `Key ${this.apiKey}`, // FAL.AI требует префикс "Key" в заголовке
                     'Accept': 'application/json'
                   }
                 });
