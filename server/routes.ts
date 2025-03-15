@@ -1745,6 +1745,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (apiError.response) {
           console.error(`Статус ошибки: ${apiError.response.status}`);
           console.error(`Данные ошибки: ${JSON.stringify(apiError.response.data)}`);
+          
+          // Добавляем подробное логирование для отладки
+          console.error(`Применен формат AUTHORIZATION HEADER: ${falAiApiKey}`);
+          console.error(`Неотформатированный ключ из переменных: ${process.env.FAL_AI_API_KEY || 'не задан'}`);
+          console.error(`API ключ начинается с 'Key ': ${falAiApiKey?.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
+          console.error(`Длина API ключа: ${falAiApiKey?.length || 0} символов`);
         }
         
         throw new Error(`Ошибка API FAL.AI: ${apiError.message}`);
@@ -6708,6 +6714,28 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         
         // Инициализируем FalAiSdk (сервис для работы через официальный SDK)
         const sdkInitialized = await falAiSdk.initializeFromApiKeyService(userId, token);
+        
+        // ВАЖНО: Выведем полный лог API ключа и заголовка для отладки
+        // Получаем ключ через API Key Service для проверки формата напрямую
+        const falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        
+        if (falAiApiKey) {
+          // Проверяем формат ключа - должен быть "Key {apiKey}"
+          let formattedKey = falAiApiKey;
+          if (!falAiApiKey.startsWith('Key ') && falAiApiKey.includes(':')) {
+            console.log("🔑 ИСПРАВЛЯЕМ ФОРМАТ КЛЮЧА: добавляем префикс 'Key '");
+            formattedKey = `Key ${falAiApiKey}`;
+            
+            // Обновляем ключ в сервисе с правильным форматом
+            falAiService.updateApiKey(formattedKey);
+          }
+          
+          // Подробное логирование для отладки
+          console.log(`🔴 ТЕКУЩИЙ КЛЮЧ FAL.AI В СИСТЕМЕ (ПОЛНЫЙ): "${formattedKey}"`);
+          console.log(`🔴 ДЛИНА: ${formattedKey.length} символов`);
+          console.log(`🔴 ФОРМАТ ВЕРНЫЙ: ${formattedKey.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
+          console.log(`🔴 СОДЕРЖИТ ДВОЕТОЧИЕ: ${formattedKey.includes(':') ? 'ДА' : 'НЕТ'}`);
+        }
         
         if (!sdkInitialized && !falAiInitialized) {
           console.warn('API ключ FAL.AI не найден в настройках');

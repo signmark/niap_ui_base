@@ -27,26 +27,35 @@ export class FalAiService {
 
   /**
    * Обновляет API ключ сервиса
-   * Важно: сохраняем ключ в исходном формате без изменений!
+   * ИСПРАВЛЯЕМ: Для FAL.AI ключ должен быть в формате "Key {apiKey}"
    */
   updateApiKey(newApiKey: string): void {
     console.log(`🔑 ОБНОВЛЕНИЕ API КЛЮЧА FAL.AI:`);
-    console.log(`🔑 Новый ключ (показаны первые и последние 4 символа): ${newApiKey.substring(0, 4)}...${newApiKey.substring(newApiKey.length - 4)}`);
-    console.log(`🔑 Длина ключа: ${newApiKey.length} символов`);
-    console.log(`🔑 Формат ключа: ${newApiKey.startsWith('Key ') ? 'С префиксом "Key "' : 'Без префикса "Key"'}`);
+    console.log(`🔑 Оригинальный ключ (частично): ${newApiKey?.substring(0, 4)}...${newApiKey?.substring(newApiKey.length - 4)}`);
+    console.log(`🔑 Длина ключа: ${newApiKey?.length} символов`);
     
-    // СОХРАНЯЕМ КЛЮЧ В ТОЧНОСТИ КАК ЕСТЬ - БЕЗ ИЗМЕНЕНИЙ
-    this.apiKey = newApiKey;
+    // ИСПРАВЛЯЕМ! Проверяем и модифицируем формат ключа если нужно
+    let formattedKey = newApiKey;
     
-    // Финальная проверка правильного сохранения
-    console.log(`🔑 Сверка: ключ сохранен правильно = ${this.apiKey === newApiKey ? 'Да' : 'Нет'}`);
-    if (this.apiKey !== newApiKey) {
-      console.error(`🔴 ОШИБКА: Ключ сохранен неправильно!`);
-      console.error(`🔴 Оригинал: ${newApiKey}`);
-      console.error(`🔴 Сохранено: ${this.apiKey}`);
+    // Если ключ не начинается с "Key " но содержит ":", добавляем префикс
+    if (newApiKey && !newApiKey.startsWith('Key ') && newApiKey.includes(':')) {
+      console.log(`🔴 ИСПРАВЛЯЕМ ФОРМАТ КЛЮЧА: добавляем префикс 'Key '`);
+      formattedKey = `Key ${newApiKey}`;
+      console.log(`🔑 Новый формат ключа: "${formattedKey.substring(0, 8)}..."`);
+    } else {
+      console.log(`🔑 Формат ключа: ${newApiKey?.startsWith('Key ') ? 'С префиксом "Key "' : 'Без префикса "Key"'}`);
     }
     
-    log(`FAL.AI API key updated`, 'fal-ai');
+    // Сохраняем форматированный ключ
+    this.apiKey = formattedKey;
+    
+    // Лог для отладки
+    console.log(`🔴 ПОЛНЫЙ ФИНАЛЬНЫЙ ЗАГОЛОВОК AUTHORIZATION: "${this.apiKey}"`);
+    console.log(`🔴 ДЛИНА: ${this.apiKey?.length} символов`);
+    console.log(`🔴 НАЧИНАЕТСЯ С 'Key ': ${this.apiKey?.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
+    console.log(`🔴 СОДЕРЖИТ ':': ${this.apiKey?.includes(':') ? 'ДА' : 'НЕТ'}`);
+    
+    log(`FAL.AI API key updated with proper formatting`, 'fal-ai');
   }
 
   /**
