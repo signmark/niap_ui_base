@@ -1,4 +1,4 @@
-import { directusApi } from '../directus';
+import { directusApi, directusApiManager } from '../directus';
 import { log } from '../vite';
 
 // Типы API сервисов, используемых в приложении
@@ -60,12 +60,11 @@ export class ApiKeyService {
     
     // Если ключа нет в кэше или он устарел, получаем из Directus
     try {
-      if (!authToken) {
-        log(`Cannot fetch ${serviceName} API key: missing authToken`, 'api-keys');
-        return null;
-      }
-      
-      const response = await directusApi.get('/items/user_api_keys', {
+      // Используем улучшенный DirectusApiManager для запроса с автоматической авторизацией
+      // Если есть authToken, используем его, иначе полагаемся на внутренний кэш токенов
+      const requestConfig = {
+        url: '/items/user_api_keys',
+        method: 'get' as const,
         params: {
           filter: {
             user_id: { _eq: userId },
@@ -73,10 +72,10 @@ export class ApiKeyService {
           },
           fields: ['id', 'api_key']
         },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+      };
+      
+      const response = await directusApiManager.request(requestConfig, userId);
       
       const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
@@ -98,8 +97,121 @@ export class ApiKeyService {
       }
     } catch (error) {
       console.error(`Error fetching ${serviceName} API key:`, error);
+      
+      // Детальное логирование ошибки
+      if ('response' in (error as any)) {
+        const axiosError = error as any;
+        console.error('Error details:', {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          message: axiosError.message
+        });
+        
+        // Если ошибка 401, добавляем дополнительную информацию
+        if (axiosError.response?.status === 401) {
+          log(`Unauthorized error (401) while fetching ${serviceName} API key - token may be invalid or expired`, 'api-keys');
+        }
+      }
+      
       log(`Error fetching ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
       return null;
+    }
+  }
+  
+  /**
+   * Сохраняет новый API ключ в Directus
+   * @param userId ID пользователя
+   * @param serviceName Название сервиса
+   * @param apiKey API ключ для сохранения
+   * @param authToken Токен авторизации для Directus
+   * @returns true в случае успеха, false в случае ошибки
+   */
+  async saveApiKey(userId: string, serviceName: ApiServiceName, apiKey: string, authToken?: string): Promise<boolean> {
+    try {
+      if (!userId) {
+        log(`Cannot save ${serviceName} API key: missing userId`, 'api-keys');
+        return false;
+      }
+      
+      // Сначала проверяем, существует ли уже ключ для этого сервиса/пользователя
+      const requestConfig = {
+        url: '/items/user_api_keys',
+        method: 'get' as const,
+        params: {
+          filter: {
+            user_id: { _eq: userId },
+            service_name: { _eq: serviceName }
+          },
+          fields: ['id']
+        },
+        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+      };
+      
+      const existingKeys = await directusApiManager.request(requestConfig, userId);
+      const items = existingKeys.data?.data || [];
+      
+      let result;
+      
+      if (items.length > 0) {
+        // Обновляем существующий ключ
+        const keyId = items[0].id;
+        
+        const updateConfig = {
+          url: `/items/user_api_keys/${keyId}`,
+          method: 'patch' as const,
+          data: {
+            api_key: apiKey,
+            updated_at: new Date().toISOString()
+          },
+          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+        };
+        
+        result = await directusApiManager.request(updateConfig, userId);
+        log(`Updated ${serviceName} API key for user ${userId}`, 'api-keys');
+      } else {
+        // Создаем новый ключ
+        const createConfig = {
+          url: '/items/user_api_keys',
+          method: 'post' as const,
+          data: {
+            user_id: userId,
+            service_name: serviceName,
+            api_key: apiKey,
+            created_at: new Date().toISOString()
+          },
+          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+        };
+        
+        result = await directusApiManager.request(createConfig, userId);
+        log(`Created new ${serviceName} API key for user ${userId}`, 'api-keys');
+      }
+      
+      // Обновляем кэш
+      if (!this.keyCache[userId]) {
+        this.keyCache[userId] = {};
+      }
+      
+      this.keyCache[userId][serviceName] = {
+        key: apiKey,
+        expiresAt: Date.now() + this.cacheDuration
+      };
+      
+      return true;
+    } catch (error) {
+      console.error(`Error saving ${serviceName} API key:`, error);
+      
+      // Детальное логирование ошибки
+      if ('response' in (error as any)) {
+        const axiosError = error as any;
+        console.error('Error details:', {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          message: axiosError.message
+        });
+      }
+      
+      log(`Error saving ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
+      return false;
     }
   }
   
