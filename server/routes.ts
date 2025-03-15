@@ -1641,7 +1641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requestData,
           {
             headers: {
-              'Authorization': falAiApiKey, // Без префикса 'Key' - FAL.AI требует формат key_id:key_secret
+              'Authorization': `Key ${falAiApiKey}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
