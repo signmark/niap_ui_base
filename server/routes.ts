@@ -2279,8 +2279,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, работает ли API FAL.AI
       console.log("Тестирование генерации изображения через FAL.AI API (устаревший маршрут)");
       
-      // Получаем FAL.AI API ключ из переменных окружения
-      const falAiApiKey = process.env.FAL_AI_API_KEY;
+      // Получаем FAL.AI API ключ через сервис ключей
+      const userId = req.body.userId || req.query.userId || (req as any).user?.id;
+      const token = getAuthToken(req);
+      let falAiApiKey = null;
+      
+      try {
+        // Сначала пытаемся получить из сервиса API ключей
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      } catch (error) {
+        console.error('Ошибка при получении FAL.AI API ключа:', error);
+      }
+      
+      // Если ключ не найден в Directus, пробуем из переменных окружения (для обратной совместимости)
+      if (!falAiApiKey) {
+        falAiApiKey = process.env.FAL_AI_API_KEY;
+      }
       
       if (!falAiApiKey) {
         console.log("FAL.AI API ключ не найден в переменных окружения");
