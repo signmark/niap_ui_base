@@ -1,4 +1,5 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
+import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
@@ -2285,24 +2286,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получаем API ключ DeepSeek из настроек пользователя
-        const settings = await directusApi.get('/items/user_api_keys', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          params: {
-            filter: {
-              service_name: { _eq: 'deepseek' }
-            }
-          }
-        });
+        // Инициализируем DeepSeek API сервис с централизованным управлением ключами
+        const userId = req.userId;
+        if (!userId) {
+          return res.status(401).json({ 
+            error: 'Не авторизован: Отсутствует ID пользователя' 
+          });
+        }
         
-        const deepseekKey = settings.data?.data?.[0]?.api_key;
-        
-        // Если ключ найден в настройках, используем его
-        if (deepseekKey) {
-          // Обновляем ключ в сервисе
-          deepseekService.updateApiKey(deepseekKey);
+        const initialized = await deepseekService.initialize(userId, token);
+        if (!initialized) {
+          console.log('Предупреждение: DeepSeek API сервис не был полностью инициализирован');
         }
 
         // Конвертируем тон в формат, понятный DeepSeek
