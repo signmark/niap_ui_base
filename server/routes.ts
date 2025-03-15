@@ -1581,17 +1581,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let falAiApiKey = null;
       
       if (userId) {
-        // Если пользователь авторизован, пробуем получить ключ из его настроек
-        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
+        // Если пользователь авторизован, используем улучшенную систему приоритизации
+        console.log('Получаем API ключ FAL.AI с правильной приоритизацией для пользователя с ID:', userId);
         falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        
         if (falAiApiKey) {
-          console.log('Найден API ключ FAL.AI в настройках пользователя');
+          // Проверяем, из какого источника был получен ключ для диагностики
+          const envKey = process.env.FAL_AI_API_KEY;
+          
+          if (envKey && falAiApiKey === envKey) {
+            console.log('Используется FAL.AI API ключ из переменных окружения (резервный вариант)');
+          } else {
+            console.log('Используется FAL.AI API ключ из настроек пользователя (приоритетный источник)');
+          }
+        } else {
+          console.log('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
         }
-      }
-      
-      // Если не удалось получить ключ пользователя, используем системный
-      if (!falAiApiKey) {
-        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
+      } else {
+        // Если пользователь не авторизован, используем ключ из переменных окружения
+        console.log('Пользователь не авторизован, используем API ключ из переменных окружения');
         falAiApiKey = process.env.FAL_AI_API_KEY;
       }
       
@@ -1894,17 +1902,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let falAiApiKey = null;
       
       if (userId) {
-        // Если пользователь авторизован, пробуем получить ключ из его настроек
-        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
+        // Если пользователь авторизован, используем улучшенную систему приоритизации
+        console.log('Получаем API ключ FAL.AI с правильной приоритизацией для пользователя с ID:', userId);
         falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        
         if (falAiApiKey) {
-          console.log('Найден API ключ FAL.AI в настройках пользователя');
+          // Проверяем, из какого источника был получен ключ для диагностики
+          const envKey = process.env.FAL_AI_API_KEY;
+          
+          if (envKey && falAiApiKey === envKey) {
+            console.log('Используется FAL.AI API ключ из переменных окружения (резервный вариант)');
+          } else {
+            console.log('Используется FAL.AI API ключ из настроек пользователя (приоритетный источник)');
+          }
+        } else {
+          console.log('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
         }
-      }
-      
-      // Если не удалось получить ключ пользователя, используем системный
-      if (!falAiApiKey) {
-        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
+      } else {
+        // Если пользователь не авторизован, используем ключ из переменных окружения
+        console.log('Пользователь не авторизован, используем API ключ из переменных окружения');
         falAiApiKey = process.env.FAL_AI_API_KEY || "";
       }
       
