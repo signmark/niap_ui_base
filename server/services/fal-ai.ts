@@ -9,7 +9,12 @@ export class FalAiService {
    * @param apiKey API ключ для FAL.AI
    */
   initialize(apiKey: string) {
-    // Инициализируем SDK с API ключом
+    // Логируем формат ключа API для отладки
+    console.log(`FAL.AI SDK: Получен ключ API длиной ${apiKey.length} символов`);
+    console.log(`FAL.AI SDK: Ключ начинается с "Key ": ${apiKey.startsWith('Key ')}`);
+    console.log(`FAL.AI SDK: Первые 10 символов: "${apiKey.substring(0, 10)}..."`)
+    
+    // Инициализируем SDK с API ключом (БЕЗ ИЗМЕНЕНИЯ ФОРМАТА)
     config({
       credentials: apiKey
     });
