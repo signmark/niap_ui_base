@@ -153,6 +153,9 @@ export class FalAiSdkService {
       const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
       // Правильный формат заголовка: "Key <key_id>:<key_secret>"
       // Проверяем, начинается ли ключ уже с "Key "
+      // Также логируем для отладки, чтобы понять текущий формат ключа
+      console.log(`[DEBUG] Текущий API ключ (маскировано): ${this.apiKey ? (this.apiKey.substring(0, 5) + '...') : 'отсутствует'}`);
+      
       const authHeader = this.apiKey.startsWith('Key ') 
         ? this.apiKey 
         : `Key ${this.apiKey}`;
