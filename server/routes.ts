@@ -2391,7 +2391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
         
         // Используем сервис для генерации контента
-        const content = await perplexityService.generateSocialContent(
+        const generatedContent = await perplexityService.generateSocialContent(
           keywords,
           prompt,
           tone as any,
@@ -2402,12 +2402,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         );
         
-        console.log(`Generated content with Perplexity, length: ${content.length} characters`);
+        console.log(`Generated content with Perplexity, length: ${generatedContent.length} characters`);
         
         // Возвращаем сгенерированный контент
         return res.json({ 
           success: true, 
-          content,
+          content: generatedContent,
           service: 'perplexity'
         });
         
