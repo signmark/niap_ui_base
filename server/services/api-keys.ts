@@ -79,31 +79,15 @@ export class ApiKeyService {
       
       const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
-        // Получаем ключ из ответа
-        let apiKey = items[0].api_key;
+        // Получаем ключ из ответа БЕЗ МОДИФИКАЦИЙ
+        const apiKey = items[0].api_key;
         
-        // Особая обработка для fal_ai - только проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
+        // Только логирование для диагностики
         if (serviceName === 'fal_ai') {
-          // Логируем информацию о ключе, не модифицируя его
           if (apiKey.startsWith('Key ')) {
-            console.log(`[${serviceName}] Получен ключ с префиксом "Key", это правильный формат`);
+            console.log(`[${serviceName}] Получен ключ с префиксом "Key" - правильный формат`);
           } else {
-            console.log(`[${serviceName}] Получен ключ без префикса "Key", возможно потребуется добавить префикс`);
-          }
-          
-          // Только логируем предупреждение если формат кажется неверным
-          if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
-            console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Ожидается "Key <key_id>:<key_secret>"`);
-            log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате`, 'api-keys');
-            
-            // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
-            // Пример: если ключ "abcd-1234-5678", преобразуем в "abcd-1234:5678"
-            const parts = apiKey.match(/^(.*?)[-]([^-]*)$/);
-            if (parts && parts.length >= 3) {
-              const newKey = `${parts[1]}:${parts[2]}`;
-              console.log(`[${serviceName}] Попытка преобразования ключа в формат key_id:key_secret`);
-              apiKey = newKey;
-            }
+            console.log(`[${serviceName}] Получен ключ без префикса "Key"`);
           }
         }
         
@@ -161,28 +145,19 @@ export class ApiKeyService {
         return false;
       }
       
-      // Особая обработка для fal_ai - только проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
+      // Только логирование для FAL.AI - никаких модификаций!
       if (serviceName === 'fal_ai') {
-        // Логируем информацию о ключе, не модифицируя его
+        // Диагностическое логирование формата ключа
         if (apiKey.startsWith('Key ')) {
-          console.log(`[${serviceName}] Сохраняем ключ с префиксом "Key", это правильный формат`);
+          console.log(`[${serviceName}] Сохраняем ключ с префиксом "Key" - правильный формат`);
         } else {
           console.log(`[${serviceName}] Сохраняем ключ без префикса "Key"`);
         }
         
-        // Только логируем предупреждение если формат кажется неверным
+        // Только предупреждаем, если формат НЕ "Key <id>:<secret>"
         if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
-          console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Ожидается "Key <key_id>:<key_secret>"`);
-          log(`[${serviceName}] API ключ для пользователя ${userId} может быть в неправильном формате при сохранении`, 'api-keys');
-          
-          // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
-          // Пример: если ключ "abcd-1234-5678", преобразуем в "abcd-1234:5678"
-          const parts = apiKey.match(/^(.*?)[-]([^-]*)$/);
-          if (parts && parts.length >= 3) {
-            const newKey = `${parts[1]}:${parts[2]}`;
-            console.log(`[${serviceName}] Попытка преобразования ключа в формат key_id:key_secret`);
-            apiKey = newKey;
-          }
+          console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Правильный формат: "Key <key_id>:<key_secret>"`);
+          log(`[${serviceName}] API ключ для пользователя ${userId} сохраняется в оригинальном формате, но может не работать`, 'api-keys');
         }
       }
       
@@ -309,25 +284,19 @@ export class ApiKeyService {
       fal_ai: process.env.FAL_AI_API_KEY || ''
     };
     
-    let apiKey = envMapping[serviceName] || null;
+    const apiKey = envMapping[serviceName] || null;
     
     // Если ключ не найден, возвращаем null
     if (!apiKey) {
       return null;
     }
     
-    // Обработка для FAL.AI - проверка формата ключа, НЕ МОДИФИЦИРУЕМ!
+    // Только диагностическое логирование для FAL.AI, никаких модификаций
     if (serviceName === 'fal_ai') {
-      // Только проверяем формат, не модифицируя
       if (apiKey.startsWith('Key ')) {
-        console.log('Найден ключ FAL.AI с префиксом "Key" - правильный формат');
+        console.log('[FAL.AI] Найден ключ с префиксом "Key" в env - правильный формат');
       } else {
-        console.log('Найден ключ FAL.AI без префикса "Key"');
-      }
-      
-      // Проверка формата ключа, только для логирования
-      if (!apiKey.includes(':') && !apiKey.startsWith('Key ')) {
-        console.warn(`[FAL.AI] API ключ может быть в неправильном формате. Ожидается формат "Key <key_id>:<key_secret>"`);
+        console.log('[FAL.AI] Найден ключ без префикса "Key" в env');
       }
     }
     

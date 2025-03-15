@@ -20,12 +20,20 @@ export class FalAiSdkService {
    * Инициализировать клиент с API ключом
    */
   initializeWithKey(apiKey: string): void {
-    // Проверяем формат ключа - для FAL.AI требуется формат key_id:key_secret
-    if (apiKey && !apiKey.includes(':')) {
-      console.warn('FAL.AI API ключ в неправильном формате. Ожидается формат "key_id:key_secret"');
-      log('FalAiSdkService: неправильный формат ключа, должен быть "key_id:key_secret"', 'fal-ai');
+    // Расширенное логирование для отладки
+    if (apiKey) {
+      if (apiKey.startsWith('Key ')) {
+        console.log(`[FAL.AI] Инициализация с ключом, имеющим префикс "Key" - правильный формат`);
+      } else {
+        console.log(`[FAL.AI] Инициализация с ключом без префикса "Key"`);
+      }
+      
+      if (!apiKey.includes(':')) {
+        console.log(`[FAL.AI] Предупреждение: ключ не содержит символ ":", используем как есть`);
+      }
     }
     
+    // Сохраняем ключ в оригинальном формате БЕЗ модификаций
     this.apiKey = apiKey;
     try {
       // Используем объект falClient напрямую
@@ -106,17 +114,16 @@ export class FalAiSdkService {
     try {
       // Пробуем быстрый запрос для проверки связи через прямой HTTP запрос
       const axios = require('axios');
-      // Правильный формат заголовка: "Key <key_id>:<key_secret>"
-      // Логируем для улучшенной отладки и мониторинга
+      // Ключ должен использоваться в точно том же формате, как он хранится в Directus
+      // Только логируем для отладки
       if (this.apiKey.startsWith('Key ')) {
-        console.log(`[FAL.AI] API ключ уже имеет правильный формат с префиксом "Key"`); 
+        console.log(`[FAL.AI] API ключ имеет префикс "Key" - должен работать корректно`); 
       } else {
-        console.log(`[FAL.AI] Добавляем префикс "Key" к API ключу для правильного формата`);
+        console.log(`[FAL.AI] API ключ без префикса "Key" - используем как есть`);
       }
       
-      const authHeader = this.apiKey.startsWith('Key ') 
-        ? this.apiKey 
-        : `Key ${this.apiKey}`;
+      // Используем ключ как есть, без модификаций
+      const authHeader = this.apiKey;
         
       const result = await axios({
         url: 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium',
@@ -158,21 +165,19 @@ export class FalAiSdkService {
     try {
       // Формируем конфигурацию для запроса - автоматически добавляем префикс 'fal-ai/', если его нет
       const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
-      // Правильный формат заголовка: "Key <key_id>:<key_secret>"
-      // Проверяем, начинается ли ключ уже с "Key "
-      // Также логируем для отладки, чтобы понять текущий формат ключа
+      // Используем ключ в точно таком же формате, как он хранится в Directus
+      // Только логирование для отладки
       console.log(`[DEBUG] Текущий API ключ (маскировано): ${this.apiKey ? (this.apiKey.substring(0, 5) + '...') : 'отсутствует'}`);
       
-      // Улучшенное логирование для отладки
+      // Улучшенное логирование без модификации ключа
       if (this.apiKey.startsWith('Key ')) {
-        console.log(`[FAL.AI] API ключ уже имеет правильный формат с префиксом "Key" для генерации`); 
+        console.log(`[FAL.AI] API ключ имеет префикс "Key" - для generateImage`); 
       } else {
-        console.log(`[FAL.AI] Добавляем префикс "Key" к API ключу для генерации изображения`);
+        console.log(`[FAL.AI] API ключ без префикса "Key" - используем как есть для generateImage`);
       }
       
-      const authHeader = this.apiKey.startsWith('Key ') 
-        ? this.apiKey 
-        : `Key ${this.apiKey}`;
+      // Используем ключ БЕЗ модификаций
+      const authHeader = this.apiKey;
         
       const requestConfig = {
         url: `https://queue.fal.run/${sanitizedModelId}`,
