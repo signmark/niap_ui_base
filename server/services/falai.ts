@@ -269,9 +269,10 @@ Return only the translated text, no explanations or comments.`;
         '(формат без двоеточия)');
       console.log(`[FAL.AI] Используем ключ (маскировано): ${maskedKey}`);
       
-      // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ, точно как в скриншоте
-      const authHeader = this.apiKey;
-      console.log(`[FAL.AI] Заголовок авторизации использует исходный формат ключа без изменений`);
+      // Добавляем префикс "Key " перед API ключом для правильного формата заголовка Authorization
+      const authHeader = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
+      console.log(`[FAL.AI] Заголовок авторизации: ${this.apiKey.startsWith('Key ') ? 'Ключ уже содержит префикс "Key "' : 'Добавлен префикс "Key " к ключу'}`);
+      console.log(`[FAL.AI] Итоговый формат заголовка: ${authHeader.substring(0, 8)}...`);;
       
       // Отправляем запрос на API FAL.AI точно как на скриншоте
       
@@ -286,8 +287,19 @@ Return only the translated text, no explanations or comments.`;
       console.log(`REQUEST BODY: ${JSON.stringify(requestData, null, 2)}`);
       
       // Полные заголовки запроса (уже без отображения полного ключа для безопасности)
+      // Добавляем префикс "Key " к ключу в заголовке Authorization при отправке запроса
+      const authHeaderValue = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
+      
+      // Детальное логирование заголовка авторизации для дебага
+      console.log(`🔑🔑🔑 ЗАГОЛОВОК АВТОРИЗАЦИИ (ДЕБАГ):`);
+      console.log(`Оригинальный ключ: "${this.apiKey}"`);
+      console.log(`Итоговый заголовок: "${authHeaderValue}"`);
+      console.log(`Содержит префикс 'Key ': ${authHeaderValue.startsWith('Key ') ? 'Да' : 'Нет'}`);
+      console.log(`Длина заголовка: ${authHeaderValue.length}`);
+      console.log(`🔑🔑🔑 КОНЕЦ ДЕБАГ-ВЫВОДА`);
+      
       const headers = {
-        'Authorization': authHeader,
+        'Authorization': authHeaderValue,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
@@ -347,9 +359,9 @@ Return only the translated text, no explanations or comments.`;
             try {
               // Проверяем статус
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
-              // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ
-              const statusAuthHeader = this.apiKey;
-              console.log(`[FAL.AI] Используем исходный ключ для проверки статуса`);
+              // Добавляем префикс "Key " перед API ключом для правильного формата заголовка Authorization
+              const statusAuthHeader = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
+              console.log(`[FAL.AI] Заголовок авторизации для проверки статуса: ${this.apiKey.startsWith('Key ') ? 'Ключ уже содержит префикс "Key "' : 'Добавлен префикс "Key " к ключу'}`);
               
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
@@ -373,13 +385,12 @@ Return only the translated text, no explanations or comments.`;
                 console.log("Генерация завершена, получаем результат");
                 
                 // Получаем результат по URL ответа
-                // Используем исходный ключ БЕЗ МОДИФИКАЦИЙ
-                const resultAuthHeader = this.apiKey;
-                console.log(`[FAL.AI] Используем исходный ключ для получения результата`);
+                // Добавляем префикс "Key " к ключу в заголовке Authorization
+                const resultAuthHeader = this.apiKey.startsWith('Key ') ? this.apiKey : `Key ${this.apiKey}`;
+                console.log(`[FAL.AI] Заголовок авторизации для получения результата: ${this.apiKey.startsWith('Key ') ? 'Ключ уже содержит префикс "Key "' : 'Добавлен префикс "Key " к ключу'}`);
                 
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
-                    // Используем точный формат ключа из скриншота
                     'Authorization': resultAuthHeader,
                     'Accept': 'application/json'
                   }
