@@ -67,7 +67,7 @@ app.use((req, res, next) => {
       log("Static file serving setup completed");
     }
 
-    // Always bind to port 5000
+    // Используем стандартный порт 5000
     const PORT = 5000;
     log(`Attempting to start server on port ${PORT}...`);
 

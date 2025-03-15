@@ -27,25 +27,9 @@ export class FalAiService {
 
   /**
    * Обновляет API ключ сервиса
-   * Важно: сохраняем ключ в исходном формате без изменений!
    */
   updateApiKey(newApiKey: string): void {
-    console.log(`🔑 ОБНОВЛЕНИЕ API КЛЮЧА FAL.AI:`);
-    console.log(`🔑 Новый ключ (показаны первые и последние 4 символа): ${newApiKey.substring(0, 4)}...${newApiKey.substring(newApiKey.length - 4)}`);
-    console.log(`🔑 Длина ключа: ${newApiKey.length} символов`);
-    console.log(`🔑 Формат ключа: ${newApiKey.startsWith('Key ') ? 'С префиксом "Key "' : 'Без префикса "Key"'}`);
-    
-    // СОХРАНЯЕМ КЛЮЧ В ТОЧНОСТИ КАК ЕСТЬ - БЕЗ ИЗМЕНЕНИЙ
     this.apiKey = newApiKey;
-    
-    // Финальная проверка правильного сохранения
-    console.log(`🔑 Сверка: ключ сохранен правильно = ${this.apiKey === newApiKey ? 'Да' : 'Нет'}`);
-    if (this.apiKey !== newApiKey) {
-      console.error(`🔴 ОШИБКА: Ключ сохранен неправильно!`);
-      console.error(`🔴 Оригинал: ${newApiKey}`);
-      console.error(`🔴 Сохранено: ${this.apiKey}`);
-    }
-    
     log(`FAL.AI API key updated`, 'fal-ai');
   }
 
@@ -269,9 +253,9 @@ Return only the translated text, no explanations or comments.`;
         '(формат без двоеточия)');
       console.log(`[FAL.AI] Используем ключ (маскировано): ${maskedKey}`);
       
-      // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ, точно как в скриншоте
+      // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ
       const authHeader = this.apiKey;
-      console.log(`[FAL.AI] Заголовок авторизации использует исходный формат ключа без изменений`);
+      console.log(`[FAL.AI] Заголовок авторизации использует исходный формат ключа`);
       
       // Отправляем запрос на API FAL.AI точно как на скриншоте
       
@@ -347,13 +331,13 @@ Return only the translated text, no explanations or comments.`;
             try {
               // Проверяем статус
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
-              // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ
+              // Используем ключ в исходном формате БЕЗ МОДИФИКАЦИЙ для проверки статуса
               const statusAuthHeader = this.apiKey;
               console.log(`[FAL.AI] Используем исходный ключ для проверки статуса`);
               
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
-                  // Используем точный формат ключа из скриншота
+                  // Правильный формат заголовка: "Key <key_id>:<key_secret>"
                   'Authorization': statusAuthHeader,
                   'Accept': 'application/json'
                 }
@@ -379,7 +363,7 @@ Return only the translated text, no explanations or comments.`;
                 
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
-                    // Используем точный формат ключа из скриншота
+                    // Правильный формат заголовка: "Key <key_id>:<key_secret>"
                     'Authorization': resultAuthHeader,
                     'Accept': 'application/json'
                   }
@@ -462,38 +446,17 @@ Return only the translated text, no explanations or comments.`;
       if (error.response) {
         // Специальная обработка ошибки аутентификации (401)
         if (error.response.status === 401) {
-          // Выводим развернутую информацию об ошибке для отладки
+          // Выводим полный API ключ для отладки (в реальной среде его следует скрыть)
           console.error(`🔴🔴🔴 ОШИБКА АУТЕНТИФИКАЦИИ FAL.AI (401 Unauthorized):`);
-          
-          // Выводим ПОЛНЫЙ API ключ для диагностики (только для отладки)
-          console.error(`API ключ (ПОЛНЫЙ ДЛЯ ОТЛАДКИ): "${this.apiKey}"`);
-          
-          // Проверяем, начинается ли ключ с префикса "Key "
-          const keyHasPrefix = this.apiKey.startsWith('Key ');
-          console.error(`Ключ имеет префикс "Key": ${keyHasPrefix ? 'Да' : 'Нет'}`);
-          
-          // Проверяем формат ключа (ожидается "Key <key_id>:<key_secret>")
-          const hasKeyIdAndSecret = this.apiKey.includes(':');
-          console.error(`Ключ содержит разделитель ":": ${hasKeyIdAndSecret ? 'Да' : 'Нет'}`);
-          
-          // Пробуем выделить key_id и key_secret для проверки
-          if (hasKeyIdAndSecret) {
-            const colonIndex = this.apiKey.indexOf(':');
-            const keyPart1 = this.apiKey.substring(0, colonIndex);
-            const keyPart2 = this.apiKey.substring(colonIndex + 1);
-            console.error(`Первая часть ключа (до ":"): "${keyPart1}"`);
-            console.error(`Вторая часть ключа (после ":"): "${keyPart2}"`);
-          }
-          
-          // Полная информация об ответе
-          console.error(`Данные ответа об ошибке: ${JSON.stringify({
+          console.error(`Используемый API ключ: "${this.apiKey}"`);
+          console.error(`Формат Authorization заголовка: "${this.apiKey ? 'Key ' + this.apiKey : 'Не задан'}"`);
+          console.error(`Полные данные ответа: ${JSON.stringify({
             status: error.response.status,
             statusText: error.response.statusText,
             data: error.response.data,
-            detail: error.response.data?.detail || 'Нет подробностей',
             headers: error.response.headers
           }, null, 2)}`);
-          console.error(`🔴🔴🔴 КОНЕЦ ДИАГНОСТИКИ ОШИБКИ АУТЕНТИФИКАЦИИ 🔴🔴🔴`);
+          console.error(`🔴🔴🔴 КОНЕЦ ЛОГИРОВАНИЯ ОШИБКИ АУТЕНТИФИКАЦИИ 🔴🔴🔴`);
         }
         
         console.error('Детали ошибки FAL.AI:', {
@@ -620,15 +583,7 @@ Return only the translated text, no explanations or comments.`;
       const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
       
       if (apiKey) {
-        // Подробное логирование для диагностики API ключа
-        console.log(`🔍 ПОЛУЧЕН API КЛЮЧ FAL.AI: ${apiKey}`);
-        console.log(`🔍 Длина ключа: ${apiKey.length} символов`);
-        console.log(`🔍 Формат ключа: ${apiKey.startsWith('Key ') ? 'Начинается с "Key "' : 'Без префикса "Key"'}`);
-        console.log(`🔍 Содержит разделитель ":"? ${apiKey.includes(':') ? 'Да' : 'Нет'}`);
-        
-        // Сохраняем ключ БЕЗ ИЗМЕНЕНИЙ в исходном формате
         this.updateApiKey(apiKey);
-        
         log('FAL.AI API ключ успешно получен через API Key Service', 'fal-ai');
         console.log('FAL.AI API ключ успешно получен через API Key Service');
         return true;
