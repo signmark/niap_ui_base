@@ -11,6 +11,7 @@ import { storage } from "./storage";
 import { directusApi } from "./directus";
 import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
+import { apiKeyService } from './services/api-keys';
 import { log } from "./vite";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
@@ -6589,41 +6590,25 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       
       // Проверяем наличие API ключа пользователя
       try {
-        // Получаем API ключ FAL.AI из настроек пользователя
-        console.log('Получаем API ключ FAL.AI для пользователя', userId);
-        const userKeysResponse = await directusApi.get('/items/api_keys', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          params: {
-            filter: {
-              service_name: {
-                _eq: 'fal_ai'
-              }
-            }
-          }
-        });
+        // Инициализируем FAL.AI SDK с использованием централизованной системы API ключей
+        console.log('Инициализация FAL.AI SDK для пользователя', userId);
         
-        const userKeys = userKeysResponse?.data?.data || [];
-        const falAiKey = userKeys.length > 0 ? userKeys[0].api_key : null;
+        // Инициализируем FalAiService (нормальная служба для работы через axios)
+        const falAiInitialized = await falAiService.initialize(userId, token);
         
-        if (falAiKey) {
-          console.log('Найден API ключ FAL.AI в настройках пользователя');
-          // Инициализируем SDK с ключом пользователя
-          falAiSdk.initialize(falAiKey);
-        } else {
-          // Проверяем наличие ключа в переменных окружения
-          const envKey = process.env.FAL_AI_API_KEY;
-          if (envKey) {
-            console.log('Используем API ключ FAL.AI из переменных окружения');
-            falAiSdk.initialize(envKey);
-          } else {
-            console.warn('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
-            return res.status(400).json({ 
-              success: false, 
-              error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройках профиля." 
-            });
-          }
+        // Инициализируем FalAiSdk (служба для работы через официальный SDK)
+        // Получаем ключ через apiKeyService и инициализируем SDK 
+        const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        
+        if (apiKey) {
+          console.log('Найден API ключ FAL.AI в централизованной системе');
+          falAiSdk.initialize(apiKey);
+        } else if (!falAiInitialized) {
+          console.warn('API ключ FAL.AI не найден в настройках');
+          return res.status(400).json({ 
+            success: false, 
+            error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройках профиля." 
+          });
         }
         
         // Определяем тип генерации на основе входных данных
@@ -7012,13 +6997,42 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      // Получаем API ключ из переменной окружения
-      const apiKey = process.env.FAL_AI_API_KEY;
+      // Получаем userId из запроса
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем информацию о пользователе из токена
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      // Инициализируем FAL.AI SDK с использованием централизованной системы API ключей
+      let apiKey = null;
+      
+      if (userId) {
+        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
+      }
+      
+      // Если не удалось получить ключ, пробуем использовать ключ из переменных окружения
+      if (!apiKey) {
+        console.log('Ключ FAL.AI пользователя не найден, используем ключ из переменных окружения');
+        apiKey = process.env.FAL_AI_API_KEY;
+      }
       
       if (!apiKey) {
         return res.status(500).json({
           success: false,
-          error: "API ключ FAL.AI не найден в конфигурации сервера"
+          error: "API ключ FAL.AI не найден"
         });
       }
       
