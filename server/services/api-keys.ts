@@ -82,10 +82,28 @@ export class ApiKeyService {
         // Получаем ключ из ответа
         let apiKey = items[0].api_key;
         
-        // Особая обработка для fal_ai - проверка формата ключа
-        if (serviceName === 'fal_ai' && !apiKey.includes(':')) {
-          console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
-          log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате`, 'api-keys');
+        // Особая обработка для fal_ai - проверка и нормализация формата ключа
+        if (serviceName === 'fal_ai') {
+          // Сначала удаляем префикс "Key ", если он есть
+          if (apiKey.startsWith('Key ')) {
+            apiKey = apiKey.substring(4);
+            console.log(`[${serviceName}] Нормализован ключ: удален префикс "Key"`);
+          }
+          
+          // Затем проверяем формат ключа (должен содержать ":")
+          if (!apiKey.includes(':')) {
+            console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+            log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате`, 'api-keys');
+            
+            // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
+            // Пример: если ключ "abcd-1234-5678", преобразуем в "abcd-1234:5678"
+            const parts = apiKey.match(/^(.*?)[-]([^-]*)$/);
+            if (parts && parts.length >= 3) {
+              const newKey = `${parts[1]}:${parts[2]}`;
+              console.log(`[${serviceName}] Попытка преобразования ключа в формат key_id:key_secret`);
+              apiKey = newKey;
+            }
+          }
         }
         
         // Сохраняем ключ в кэше
@@ -142,10 +160,28 @@ export class ApiKeyService {
         return false;
       }
       
-      // Проверка формата ключа для FAL.AI
-      if (serviceName === 'fal_ai' && !apiKey.includes(':')) {
-        console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
-        log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате при сохранении`, 'api-keys');
+      // Особая обработка для fal_ai - проверка и нормализация формата ключа
+      if (serviceName === 'fal_ai') {
+        // Сначала удаляем префикс "Key ", если он есть
+        if (apiKey.startsWith('Key ')) {
+          apiKey = apiKey.substring(4);
+          console.log(`[${serviceName}] Нормализован ключ: удален префикс "Key"`);
+        }
+        
+        // Затем проверяем формат ключа (должен содержать ":")
+        if (!apiKey.includes(':')) {
+          console.warn(`[${serviceName}] API ключ в неправильном формате. Ожидается формат "key_id:key_secret"`);
+          log(`[${serviceName}] API ключ для пользователя ${userId} в неправильном формате при сохранении`, 'api-keys');
+          
+          // Попытаемся преобразовать строку в формат key_id:key_secret, если это возможно
+          // Пример: если ключ "abcd-1234-5678", преобразуем в "abcd-1234:5678"
+          const parts = apiKey.match(/^(.*?)[-]([^-]*)$/);
+          if (parts && parts.length >= 3) {
+            const newKey = `${parts[1]}:${parts[2]}`;
+            console.log(`[${serviceName}] Попытка преобразования ключа в формат key_id:key_secret`);
+            apiKey = newKey;
+          }
+        }
       }
       
       // Сначала проверяем, существует ли уже ключ для этого сервиса/пользователя
