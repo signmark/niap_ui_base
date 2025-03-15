@@ -1245,12 +1245,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Требуется авторизация для проверки приоритизации API ключей'
-        });
-      }
+      // Улучшение: Продолжаем проверку даже если пользователь не авторизован,
+      // чтобы можно было увидеть статус системы даже без логина
+      let isUserAuthenticated = !!userId;
       
       // Получаем ключ через новую систему приоритизации (сначала пользовательский, потом системный)
       const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
@@ -1283,23 +1280,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Сравниваем источники и возвращаем результат
-      const isPrioritizedCorrectly = userKey && falApiKey === userKey;
+      // Если пользователь не авторизован, проверяем только наличие ключа из окружения
+      const isPrioritizedCorrectly = isUserAuthenticated 
+        ? (userKey && falApiKey === userKey) 
+        : (!!falApiKey && falApiKey === envKey);
+      
+      // Улучшаем сообщение в зависимости от статуса авторизации
+      let statusMessage = '';
+      let source = '';
+      
+      if (isUserAuthenticated) {
+        // Для авторизованного пользователя
+        if (isPrioritizedCorrectly) {
+          statusMessage = "Система приоритизации работает корректно: пользовательский ключ имеет приоритет";
+          source = "user_settings (правильно)";
+        } else if (falApiKey === envKey) {
+          statusMessage = "Система приоритизации не работает корректно: используется ключ из переменных окружения вместо пользовательского";
+          source = "env (некорректно)";
+        } else {
+          statusMessage = "Система приоритизации не работает: не удалось определить источник ключа";
+          source = "неизвестно";
+        }
+      } else {
+        // Для неавторизованного пользователя
+        if (falApiKey && falApiKey === envKey) {
+          statusMessage = "Для неавторизованного пользователя корректно используется ключ из переменных окружения";
+          source = "env (правильно для гостя)";
+        } else {
+          statusMessage = "Не удалось получить ключ из переменных окружения для неавторизованного пользователя";
+          source = "неизвестно";
+        }
+      }
       
       return res.json({
         success: true,
         data: {
           prioritization_working: isPrioritizedCorrectly,
+          user_authenticated: isUserAuthenticated,
           selected_api_key: falApiKey ? falApiKey.substring(0, 5) + '...' + falApiKey.substring(falApiKey.length - 5) : 'null',
           sources: {
             env_key_present: !!envKey,
             user_key: userKey ? userKey.substring(0, 5) + '...' + userKey.substring(userKey.length - 5) : 'null',
             user_key_status: userKeySource
           },
-          source: isPrioritizedCorrectly ? "user_settings (правильно)" : (falApiKey === envKey ? "env (некорректно)" : "неизвестно")
+          source: source
         },
-        message: isPrioritizedCorrectly 
-          ? "Система приоритизации работает корректно: пользовательский ключ имеет приоритет" 
-          : "Система приоритизации не работает корректно или пользовательский ключ не найден"
+        message: statusMessage
       });
     } catch (error) {
       console.error('Ошибка при проверке API ключей:', error);
