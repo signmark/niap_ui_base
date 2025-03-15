@@ -20,6 +20,12 @@ export class FalAiSdkService {
    * Инициализировать клиент с API ключом
    */
   initializeWithKey(apiKey: string): void {
+    // Проверяем формат ключа - для FAL.AI требуется формат key_id:key_secret
+    if (apiKey && !apiKey.includes(':')) {
+      console.warn('FAL.AI API ключ в неправильном формате. Ожидается формат "key_id:key_secret"');
+      log('FalAiSdkService: неправильный формат ключа, должен быть "key_id:key_secret"', 'fal-ai');
+    }
+    
     this.apiKey = apiKey;
     try {
       // Используем объект falClient напрямую
