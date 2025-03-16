@@ -499,4 +499,46 @@ EXPOSE 5000
 CMD ["npm", "run", "dev"]
 ```
 
+### Environment Variables for Docker
+
+For proper operation of the infrastructure in Docker, the following environment variables need to be configured in the `.env.docker` file:
+
+```
+# Main domain settings
+DOMAIN_NAME=nplanner.ru
+SUBDOMAIN=n8n
+PGADMIN_SUBDOMAIN=pgadmin
+SSL_EMAIL=admin@example.com
+
+# Passwords
+POSTGRES_PASSWORD=your_secure_postgres_password
+PASSWORD_PGADMIN=your_secure_pgadmin_password
+
+# Directus settings
+DIRECTUS_DB_PASSWORD=your_secure_directus_db_password
+DIRECTUS_ADMIN_EMAIL=admin@example.com
+DIRECTUS_ADMIN_PASSWORD=your_secure_directus_admin_password
+
+# Timezone settings
+GENERIC_TIMEZONE=Europe/Moscow
+
+# SMM Manager settings
+DIRECTUS_URL=https://directus.nplanner.ru
+```
+
+### Running in Docker
+
+To start the entire infrastructure in Docker, execute:
+
+```bash
+# Create all necessary networks and containers
+docker-compose up -d
+
+# Check the status of services
+docker-compose ps
+
+# View logs of a specific service
+docker-compose logs -f smm
+```
+
 This prompt contains all the necessary details to recreate the SMM Manager project, taking into account the existing architecture, constraints, and technical features.

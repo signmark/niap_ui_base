@@ -303,7 +303,17 @@ Format each account as:
 ## Развертывание в продакшн
 
 ### Docker интеграция
-SMM Manager интегрируется в инфраструктуру с использованием Docker и Docker Compose. Ниже приведен полный пример конфигурации инфраструктуры, включающий все необходимые компоненты:
+SMM Manager интегрируется в инфраструктуру с использованием Docker и Docker Compose как часть более крупной системы, которая включает:
+
+1. **Traefik** - обратный прокси для маршрутизации и SSL-сертификатов
+2. **PostgreSQL** - центральная база данных для всех сервисов
+3. **Directus** - хранение и управление данными проекта
+4. **N8N** - автоматизация задач и интеграция с социальными сетями
+5. **Appsmith** - low-code платформа для внутренних приложений
+6. **Budibase** - платформа для создания бизнес-приложений
+7. **Redis**, **MinIO**, **CouchDB** - вспомогательные сервисы для Budibase
+
+Полная конфигурация docker-compose.yml:
 
 ```yaml
 services:
@@ -497,6 +507,48 @@ EXPOSE 5000
 
 # Команда для сборки и запуска приложения
 CMD ["npm", "run", "dev"]
+```
+
+### Переменные окружения для Docker
+
+Для корректной работы инфраструктуры в Docker необходимо настроить следующие переменные окружения в файле `.env.docker`:
+
+```
+# Основные настройки домена
+DOMAIN_NAME=nplanner.ru
+SUBDOMAIN=n8n
+PGADMIN_SUBDOMAIN=pgadmin
+SSL_EMAIL=admin@example.com
+
+# Пароли
+POSTGRES_PASSWORD=your_secure_postgres_password
+PASSWORD_PGADMIN=your_secure_pgadmin_password
+
+# Настройки Directus
+DIRECTUS_DB_PASSWORD=your_secure_directus_db_password
+DIRECTUS_ADMIN_EMAIL=admin@example.com
+DIRECTUS_ADMIN_PASSWORD=your_secure_directus_admin_password
+
+# Настройки временной зоны
+GENERIC_TIMEZONE=Europe/Moscow
+
+# Настройки SMM Manager
+DIRECTUS_URL=https://directus.nplanner.ru
+```
+
+### Запуск в Docker
+
+Для запуска всей инфраструктуры в Docker выполните:
+
+```bash
+# Создать все необходимые сети и контейнеры
+docker-compose up -d
+
+# Проверить статус сервисов
+docker-compose ps
+
+# Просмотр логов конкретного сервиса
+docker-compose logs -f smm
 ```
 
 Данный промт содержит все необходимые детали для воссоздания проекта SMM Manager с учетом существующей архитектуры, ограничений и технических особенностей.
