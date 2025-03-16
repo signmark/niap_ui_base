@@ -34,8 +34,8 @@ export class FalAiClient {
       return;
     }
 
-    // Сохраняем ключ без префикса "Key " для использования в заголовке Authorization
-    // FAL.AI ожидает заголовок в формате: Authorization: "Key id:secret"
+    // Сохраняем ключ как есть, включая префикс "Key " если он уже присутствует
+    // FAL.AI требует ключ в формате: id:secret, а в заголовке мы добавим "Key " позже
     this.apiKey = apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey;
     
     // Проверка наличия формата id:secret в ключе
@@ -72,6 +72,9 @@ export class FalAiClient {
         ...config.headers,
         'Authorization': `Key ${this.apiKey}`
       };
+      
+      // Добавляем отладочную информацию для важного заголовка
+      console.log(`[FalAiClient] Используемый заголовок Authorization: ${headers.Authorization}`);
 
       // Логируем детали запроса (для отладки)
       console.log(`[FalAiClient] Запрос к ${url}`);
@@ -171,9 +174,12 @@ export class FalAiClient {
     while (Date.now() - startTime < maxWaitTime) {
       try {
         // Запрашиваем статус
+        const authHeader = `Key ${this.apiKey}`;
+        console.log(`[FalAiClient] Запрос статуса с заголовком: ${authHeader}`);
+        
         const statusResponse = await axios.get(statusUrl, {
           headers: {
-            'Authorization': `Key ${this.apiKey}`,
+            'Authorization': authHeader,
             'Accept': 'application/json'
           }
         });

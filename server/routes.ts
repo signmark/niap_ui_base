@@ -1,6 +1,7 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
+import { falAiClient } from './services/fal-ai-client';
 import { testFalApiConnection } from './services/fal-api-tester';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
@@ -1082,10 +1083,43 @@ async function extractFullSiteContent(url: string): Promise<string> {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для FAL.AI API
-  app.get('/api/debug-fal-ai-header', (req, res) => {
+  app.get('/api/debug-fal-ai', async (req, res) => {
+    // Получаем userId из запроса
+    const authHeader = req.headers['authorization'];
+    let userId = null;
+    let token = null;
+    
+    // Если есть авторизация, получаем userId из токена
+    if (authHeader) {
+      token = authHeader.replace('Bearer ', '');
+      try {
+        // Получаем информацию о пользователе из токена
+        const userResponse = await directusApi.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        userId = userResponse?.data?.data?.id;
+      } catch (error) {
+        console.error("Ошибка при получении информации о пользователе:", error);
+      }
+    }
+    
+    // Получаем API ключ из сервиса ключей
+    let apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+    
+    // Инициализируем клиент FAL.AI с полученным ключом
+    if (apiKey) {
+      falAiClient.setApiKey(apiKey);
+    }
+    
+    // Проверяем формат API ключа и приводим его к правильной форме
+    const formattedKey = apiKey ? (apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`) : 'Ключ не найден';
+    
     res.json({
-      authorization: "Key 685ac509-3d57-4a53-89c8-563b2d91fda5:a43b38d07f7539218979bf4ffb725899",
-      prompt: "Wild cat"
+      status: 'success',
+      key_available: !!apiKey,
+      key_format: apiKey ? (apiKey.includes(':') ? 'Правильный формат (содержит :)' : 'Неправильный формат (нет :)') : 'Ключ отсутствует',
+      authorization_header: formattedKey,
+      test_prompt: "Wild cat"
     });
   });
   
