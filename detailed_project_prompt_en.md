@@ -303,7 +303,17 @@ Format each account as:
 ## Production Deployment
 
 ### Docker Integration
-SMM Manager is integrated into infrastructure using Docker and Docker Compose. Below is a complete example of the infrastructure configuration, including all necessary components:
+SMM Manager integrates into the infrastructure using Docker and Docker Compose as part of a larger system that includes:
+
+1. **Traefik** - reverse proxy for routing and SSL certificates
+2. **PostgreSQL** - central database for all services
+3. **Directus** - project data storage and management
+4. **N8N** - task automation and social media integration
+5. **Appsmith** - low-code platform for internal applications
+6. **Budibase** - platform for building business applications
+7. **Redis**, **MinIO**, **CouchDB** - auxiliary services for Budibase
+
+Complete docker-compose.yml configuration:
 
 ```yaml
 services:
@@ -439,6 +449,87 @@ services:
       - traefik.http.routers.directus.tls.certresolver=mytlschallenge
       - traefik.http.services.directus.loadbalancer.server.port=8055
 
+  # Appsmith - low-code platform for internal applications
+  appsmith:
+    image: appsmith/appsmith-ce
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - APPSMITH_ADMIN_EMAILS=${APPSMITH_ADMIN_EMAIL}
+      - APPSMITH_ADMIN_PASSWORD=${APPSMITH_ADMIN_PASSWORD}
+    volumes:
+      - ./appsmith-stacks:/appsmith-stacks
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.appsmith.rule=Host(`${APPSMITH_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.appsmith.tls=true
+      - traefik.http.routers.appsmith.entrypoints=web,websecure
+      - traefik.http.routers.appsmith.tls.certresolver=mytlschallenge
+      - traefik.http.services.appsmith.loadbalancer.server.port=80
+
+  # Budibase - platform for building business applications
+  budibase:
+    image: budibase/budibase:latest
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - couchdb
+    environment:
+      - MAIN_PORT=${MAIN_PORT}
+      - BUDIBASE_ENVIRONMENT=PRODUCTION
+      - API_ENCRYPTION_KEY=${API_ENCRYPTION_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:${REDIS_PORT}
+      - COUCH_DB_URL=http://${COUCH_DB_USER}:${COUCH_DB_PASSWORD}@couchdb:5984
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_URL=http://minio:9000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - BB_ADMIN_USER_EMAIL=${BB_ADMIN_USER_EMAIL}
+      - BB_ADMIN_USER_PASSWORD=${BB_ADMIN_USER_PASSWORD}
+    volumes:
+      - ./budibase_data:/app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.budibase.rule=Host(`${BUDIBASE_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.budibase.tls=true
+      - traefik.http.routers.budibase.entrypoints=web,websecure
+      - traefik.http.routers.budibase.tls.certresolver=mytlschallenge
+      - traefik.http.services.budibase.loadbalancer.server.port=${MAIN_PORT}
+
+  # Redis for Budibase
+  redis:
+    image: redis:6
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+
+  # MinIO for Budibase
+  minio:
+    image: minio/minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./minio_data:/data
+
+  # CouchDB for Budibase
+  couchdb:
+    image: couchdb:3
+    restart: always
+    environment:
+      - COUCHDB_USER=${COUCH_DB_USER}
+      - COUCHDB_PASSWORD=${COUCH_DB_PASSWORD}
+    volumes:
+      - ./couchdb_data:/opt/couchdb/data
+
   # SMM Manager - main application
   smm:
     build:
@@ -508,6 +599,8 @@ For proper operation of the infrastructure in Docker, the following environment 
 DOMAIN_NAME=nplanner.ru
 SUBDOMAIN=n8n
 PGADMIN_SUBDOMAIN=pgadmin
+APPSMITH_SUBDOMAIN=appsmith
+BUDIBASE_SUBDOMAIN=budibase
 SSL_EMAIL=admin@example.com
 
 # Passwords
@@ -518,6 +611,27 @@ PASSWORD_PGADMIN=your_secure_pgadmin_password
 DIRECTUS_DB_PASSWORD=your_secure_directus_db_password
 DIRECTUS_ADMIN_EMAIL=admin@example.com
 DIRECTUS_ADMIN_PASSWORD=your_secure_directus_admin_password
+
+# Appsmith settings
+APPSMITH_ADMIN_EMAIL=admin@example.com
+APPSMITH_ADMIN_PASSWORD=your_secure_appsmith_password
+
+# Budibase settings
+MAIN_PORT=10000
+API_ENCRYPTION_KEY=your_secure_api_encryption_key
+JWT_SECRET=your_secure_jwt_secret
+MINIO_ACCESS_KEY=your_minio_access_key
+MINIO_SECRET_KEY=your_minio_secret_key
+COUCH_DB_PASSWORD=your_couchdb_password
+COUCH_DB_USER=your_couchdb_user
+REDIS_PASSWORD=your_redis_password
+INTERNAL_API_KEY=your_internal_api_key
+REDIS_PORT=6379
+BUDIBASE_ENVIRONMENT=PRODUCTION
+MINIO_ROOT_USER=root
+MINIO_ROOT_PASSWORD=your_secure_minio_root_password
+BB_ADMIN_USER_EMAIL=admin@example.com
+BB_ADMIN_USER_PASSWORD=your_secure_bb_admin_password
 
 # Timezone settings
 GENERIC_TIMEZONE=Europe/Moscow

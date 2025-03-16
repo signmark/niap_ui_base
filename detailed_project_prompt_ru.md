@@ -518,6 +518,8 @@ CMD ["npm", "run", "dev"]
 DOMAIN_NAME=nplanner.ru
 SUBDOMAIN=n8n
 PGADMIN_SUBDOMAIN=pgadmin
+APPSMITH_SUBDOMAIN=appsmith
+BUDIBASE_SUBDOMAIN=budibase
 SSL_EMAIL=admin@example.com
 
 # Пароли
@@ -528,6 +530,27 @@ PASSWORD_PGADMIN=your_secure_pgadmin_password
 DIRECTUS_DB_PASSWORD=your_secure_directus_db_password
 DIRECTUS_ADMIN_EMAIL=admin@example.com
 DIRECTUS_ADMIN_PASSWORD=your_secure_directus_admin_password
+
+# Настройки Appsmith
+APPSMITH_ADMIN_EMAIL=admin@example.com
+APPSMITH_ADMIN_PASSWORD=your_secure_appsmith_password
+
+# Настройки Budibase
+MAIN_PORT=10000
+API_ENCRYPTION_KEY=your_secure_api_encryption_key
+JWT_SECRET=your_secure_jwt_secret
+MINIO_ACCESS_KEY=your_minio_access_key
+MINIO_SECRET_KEY=your_minio_secret_key
+COUCH_DB_PASSWORD=your_couchdb_password
+COUCH_DB_USER=your_couchdb_user
+REDIS_PASSWORD=your_redis_password
+INTERNAL_API_KEY=your_internal_api_key
+REDIS_PORT=6379
+BUDIBASE_ENVIRONMENT=PRODUCTION
+MINIO_ROOT_USER=root
+MINIO_ROOT_PASSWORD=your_secure_minio_root_password
+BB_ADMIN_USER_EMAIL=admin@example.com
+BB_ADMIN_USER_PASSWORD=your_secure_bb_admin_password
 
 # Настройки временной зоны
 GENERIC_TIMEZONE=Europe/Moscow
