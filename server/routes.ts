@@ -7190,45 +7190,8 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
     }
   });
   
-  // Расширенный тестовый маршрут для диагностики FAL.AI API с использованием tester
-  app.get('/api/test-fal-ai', async (req, res) => {
-    try {
-      // Получаем ключ из переменных окружения
-      const rawApiKey = process.env.FAL_AI_API_KEY || '';
-      
-      console.log('🧪 [FAL.AI TEST] Тестирование FAL.AI API');
-      console.log(`🧪 [FAL.AI TEST] Ключ (частично): ${rawApiKey.substring(0, 10)}...`);
-      console.log(`🧪 [FAL.AI TEST] Длина ключа: ${rawApiKey.length} символов`);
-      console.log(`🧪 [FAL.AI TEST] Содержит двоеточие: ${rawApiKey.includes(':') ? 'ДА' : 'НЕТ'}`);
-      console.log(`🧪 [FAL.AI TEST] Имеет префикс 'Key ': ${rawApiKey.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
-      
-      // Используем наш сервис для автоматического тестирования различных форматов ключа
-      const testResults = await testFalApiConnection(rawApiKey);
-      
-      // Возвращаем подробные результаты тестирования
-      return res.json({
-        success: testResults.success,
-        message: testResults.success 
-          ? 'FAL.AI API работает корректно с одним из форматов ключа' 
-          : 'FAL.AI API не работает ни с одним из форматов ключа',
-        keyInfo: testResults.keyInfo,
-        results: testResults.results,
-        envKeyFormat: {
-          original: `${rawApiKey.substring(0, 10)}...`,
-          length: rawApiKey.length,
-          hasKeyPrefix: rawApiKey.startsWith('Key '),
-          hasColon: rawApiKey.includes(':')
-        }
-      });
-    } catch (error: any) {
-      console.error(`🧪 [FAL.AI TEST] Общая ошибка: ${error.message}`);
-      return res.status(500).json({
-        success: false,
-        error: 'Ошибка при тестировании FAL.AI API',
-        message: error.message
-      });
-    }
-  });
+  // Этот маршрут удален для предотвращения дублирования,
+  // вместо него используется улучшенная версия ниже
   
   // Альтернативный маршрут для проверки отдельных форматов ключа API
   app.get('/api/test-fal-ai-formats', async (req, res) => {
@@ -8108,7 +8071,7 @@ ${datesText}
   });
   
   // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
-  app.get("/api/test-fal-ai", async (req, res) => {
+  app.get("/test-fal-ai", async (req, res) => {
     try {
       // Получаем API ключ из переменных окружения или системных настроек
       const envKey = process.env.FAL_AI_API_KEY || '';
@@ -8195,7 +8158,7 @@ ${datesText}
   });
   
   // Эндпоинт для тестирования конкретного формата ключа FAL.AI
-  app.get("/api/test-fal-ai-formats", async (req, res) => {
+  app.get("/test-fal-ai-formats", async (req, res) => {
     try {
       const { format } = req.query;
       
