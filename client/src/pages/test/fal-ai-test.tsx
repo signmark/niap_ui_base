@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Bug } from "lucide-react";
 import { api } from '@/lib/api';
 
 /**
@@ -12,8 +12,10 @@ import { api } from '@/lib/api';
 export default function FalAiTest() {
   const [loading, setLoading] = useState(false);
   const [formatLoading, setFormatLoading] = useState(false);
+  const [debugLoading, setDebugLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [formatResults, setFormatResults] = useState<any>(null);
+  const [debugResults, setDebugResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Проверка всех форматов одновременно
@@ -50,10 +52,78 @@ export default function FalAiTest() {
       setFormatLoading(false);
     }
   };
+  
+  // Отладка заголовков API
+  const debugHeaders = async () => {
+    setDebugLoading(true);
+    
+    try {
+      const response = await api.get('/debug-fal-ai-header');
+      setDebugResults(response.data);
+      console.log('Отладочная информация о заголовках:', response.data);
+    } catch (err: any) {
+      console.error('Ошибка при отладке заголовков:', err);
+      setDebugResults({
+        success: false,
+        error: err.message || 'Ошибка при получении отладочной информации'
+      });
+    } finally {
+      setDebugLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Тестирование FAL.AI API</h1>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Bug className="mr-2 h-5 w-5" /> 
+            Отладка заголовков API
+          </CardTitle>
+          <CardDescription>
+            Проверка полного формата заголовков для отладки проблем авторизации
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={debugHeaders}
+            disabled={debugLoading}
+            variant="destructive"
+            className="mb-4"
+          >
+            {debugLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Получение заголовков...
+              </>
+            ) : 'Показать полные заголовки'}
+          </Button>
+          
+          {debugResults && (
+            <div className="mt-4">
+              <Alert variant={debugResults.success ? "default" : "destructive"} className="mb-4">
+                <AlertTitle>
+                  {debugResults.success ? 'Информация о заголовках' : 'Ошибка при получении заголовков'}
+                </AlertTitle>
+                <AlertDescription>
+                  {debugResults.message || 'Получена информация о заголовках авторизации'}
+                </AlertDescription>
+              </Alert>
+              
+              {debugResults.keyAnalysis && (
+                <div className="mt-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded border border-red-500">
+                  <h4 className="font-medium mb-1">⚠️ ВНИМАНИЕ: Отладочные данные с полными значениями ключа</h4>
+                  <pre className="text-xs overflow-auto p-2 bg-gray-200 dark:bg-gray-900 rounded">
+                    {JSON.stringify(debugResults.keyAnalysis, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
       <Tabs defaultValue="auto">
         <TabsList className="mb-4">

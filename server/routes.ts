@@ -8220,6 +8220,74 @@ ${datesText}
     }
   });
   
+  // Эндпоинт для вывода текущего API ключа и заголовка Authorization
+  app.get("/debug-fal-ai-header", async (req, res) => {
+    try {
+      // Получаем API ключ из переменных окружения
+      const envKey = process.env.FAL_AI_API_KEY || '';
+      
+      if (!envKey) {
+        return res.status(400).json({
+          success: false,
+          message: "API ключ FAL.AI не настроен в переменных окружения"
+        });
+      }
+      
+      // Нормализуем ключ - убираем префикс Key, если он есть
+      let baseKey = envKey;
+      if (baseKey.startsWith('Key ')) {
+        baseKey = baseKey.substring(4);
+      }
+      
+      // Генерируем все варианты заголовков для тестирования
+      const headers = {
+        withKeyPrefix: `Key ${baseKey}`,
+        withoutPrefix: baseKey,
+        withBearerPrefix: `Bearer ${baseKey}`,
+        original: envKey
+      };
+      
+      // Выводим полные заголовки для отладки
+      // ВАЖНО: в реальном проекте не выводите полные API ключи в ответе API!
+      // Делаем это только для отладки в контролируемой среде
+      console.log('Тестовые заголовки для FAL.AI API:');
+      console.log('1. Оригинальный ключ:', envKey);
+      console.log('2. С префиксом Key:', `Key ${baseKey}`);
+      console.log('3. Без префикса:', baseKey);
+      
+      // Создаем объект с анализом формата ключа
+      const keyAnalysis = {
+        originalFormat: {
+          raw: envKey,
+          length: envKey.length,
+          hasPrefix: envKey.startsWith('Key '),
+          hasColon: envKey.includes(':'),
+          containsWhitespace: /\s/.test(envKey)
+        },
+        normalizedFormat: {
+          raw: baseKey,
+          length: baseKey.length,
+          hasColon: baseKey.includes(':'),
+          containsWhitespace: /\s/.test(baseKey)
+        },
+        allHeaders: headers
+      };
+      
+      return res.json({
+        success: true,
+        message: "Подробная информация о FAL.AI API ключе и вариантах заголовков",
+        keyAnalysis
+      });
+    } catch (error: any) {
+      console.error('Ошибка при отладке заголовка:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при отладке заголовка",
+        message: error.message
+      });
+    }
+  });
+
   // Эндпоинт для тестирования конкретного формата ключа FAL.AI
   app.get("/test-fal-ai-formats", async (req, res) => {
     try {
