@@ -26,7 +26,7 @@ export class FalAiClient {
 
   /**
    * Устанавливает API-ключ для клиента
-   * @param apiKey API-ключ FAL.AI без префикса "Key"
+   * @param apiKey API-ключ FAL.AI в формате 'id:secret' или с префиксом 'Key id:secret'
    */
   setApiKey(apiKey: string): void {
     if (!apiKey) {
@@ -34,14 +34,20 @@ export class FalAiClient {
       return;
     }
 
-    // ВАЖНО: API ключ должен использоваться как есть, без префикса "Key "
-    // FAL.AI ожидает заголовок Authorization: "Key {apiKey}"
-    this.apiKey = apiKey;
+    // Сохраняем ключ без префикса "Key " для использования в заголовке Authorization
+    // FAL.AI ожидает заголовок в формате: Authorization: "Key id:secret"
+    this.apiKey = apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey;
+    
+    // Проверка наличия формата id:secret в ключе
+    if (!this.apiKey.includes(':')) {
+      console.warn('FalAiClient: API-ключ не содержит символ ":", это может вызвать проблемы с авторизацией');
+    }
     
     // Маскируем ключ для логов
-    const maskedKey = apiKey.length > 10 
-      ? `${apiKey.substring(0, 5)}...${apiKey.substring(apiKey.length - 5)}` 
-      : '***';
+    const colonIndex = this.apiKey.indexOf(':');
+    const maskedKey = colonIndex > 0
+      ? `${this.apiKey.substring(0, 10)}...${colonIndex > 0 ? ':***' : ''}`
+      : `${this.apiKey.substring(0, 5)}...${this.apiKey.substring(this.apiKey.length - 5)}`;
     
     log(`FalAiClient: установлен API-ключ (${maskedKey})`, 'fal-ai');
   }

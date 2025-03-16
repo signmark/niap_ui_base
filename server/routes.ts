@@ -8120,33 +8120,96 @@ ${datesText}
         });
       }
       
+      // Проверка формата ключа
+      let formattedKey = apiKey;
+      
+      // Удаляем префикс 'Key ' если он уже есть, для консистентного форматирования
+      if (formattedKey.startsWith('Key ')) {
+        formattedKey = formattedKey.substring(4);
+      }
+      
+      // Проверяем наличие ":" в ключе
+      const hasColon = formattedKey.includes(':');
+      if (!hasColon) {
+        console.warn('API ключ не содержит символ ":", это может вызвать проблемы с авторизацией');
+      }
+      
       // Информация о ключе (без вывода самого ключа)
       const keyInfo = {
-        length: apiKey.length,
+        length: formattedKey.length,
         source: keySource,
-        hasPrefix: apiKey.startsWith('Key '),
-        hasColon: apiKey.includes(':'),
-        format: apiKey.startsWith('Key ') ? 'With Key prefix' : 'No Key prefix'
+        hasColon: hasColon,
+        format: 'id:secret format'
       };
       
       // Информация о ключе из переменных окружения
       const envKeyFormat = envKey ? {
         length: envKey.length,
         hasPrefix: envKey.startsWith('Key '),
+        hasColon: envKey.includes(':'),
         format: envKey.startsWith('Key ') ? 'With Key prefix' : 'No Key prefix'
       } : {
         message: 'Ключ в переменных окружения не установлен'
       };
       
-      // Запускаем тестирование API с различными форматами ключа
-      const testResults = await testFalApiConnection(apiKey);
+      // Запускаем тестирование API с правильным форматом ключа (с префиксом Key)
+      // ВАЖНО: API ключ всегда должен отправляться с префиксом "Key "
+      const correctFormattedKey = `Key ${formattedKey}`;
+      console.log(`Тестирование API с заголовком: Key ${formattedKey.substring(0, 8)}...`);
       
-      return res.json({
-        success: true,
-        keyInfo,
-        envKeyFormat,
-        results: testResults.results
-      });
+      // Тестовый запрос к FAL.AI API
+      const requestData = {
+        prompt: "Test image for authentication testing",
+        width: 512,
+        height: 512,
+        num_images: 1
+      };
+      
+      try {
+        const response = await axios.post(
+          'https://queue.fal.run/fal-ai/fast-sdxl',
+          requestData,
+          {
+            headers: {
+              'Authorization': correctFormattedKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 10000
+          }
+        );
+        
+        // Если запрос успешен, возвращаем результат и информацию о ключе
+        return res.json({
+          success: true,
+          keyInfo,
+          envKeyFormat,
+          apiTestResult: {
+            success: true,
+            status: response.status,
+            dataKeys: Object.keys(response.data || {})
+          }
+        });
+      } catch (error: any) {
+        // Если запрос не удался, возвращаем ошибку
+        const errorDetails = error.response ? {
+          status: error.response.status,
+          data: error.response.data
+        } : {
+          message: error.message
+        };
+        
+        return res.json({
+          success: false,
+          keyInfo,
+          envKeyFormat,
+          apiTestResult: {
+            success: false,
+            error: "Ошибка при запросе к FAL.AI API",
+            details: errorDetails
+          }
+        });
+      }
     } catch (error: any) {
       console.error('Ошибка при тестировании FAL.AI API:', error);
       return res.status(500).json({
@@ -8173,20 +8236,56 @@ ${datesText}
         });
       }
       
-      // Форматируем ключ в зависимости от запрошенного формата
-      let formattedKey = envKey;
-      let formatDescription = 'original';
+      // Нормализуем ключ - убираем префикс Key, если он есть
+      let baseKey = envKey;
+      if (baseKey.startsWith('Key ')) {
+        baseKey = baseKey.substring(4);
+      }
       
-      if (format === 'with-prefix' && !envKey.startsWith('Key ')) {
-        formattedKey = `Key ${envKey}`;
+      // Проверяем, содержит ли ключ символ ":"
+      if (!baseKey.includes(':')) {
+        console.warn('🧪 [FAL.AI TEST] Внимание: API ключ не содержит символ ":", это может вызвать проблемы с авторизацией');
+      }
+      
+      // Форматируем ключ в зависимости от запрошенного формата
+      let formattedKey = '';
+      let formatDescription = '';
+      
+      // Логируем тип тестирования
+      console.log(`🧪 [FAL.AI TEST] Тестирование формата ключа: ${format || 'original'}`);
+      
+      // Формируем ключ в запрошенном формате
+      if (format === 'with-prefix') {
+        // Формат "Key {apiKey}"
+        formattedKey = `Key ${baseKey}`;
         formatDescription = 'With Key prefix added';
-      } else if (format === 'without-prefix' && envKey.startsWith('Key ')) {
-        formattedKey = envKey.substring(4);
+      } else if (format === 'without-prefix') {
+        // Формат без префикса, только apiKey
+        formattedKey = baseKey;
         formatDescription = 'Without Key prefix';
       } else if (format === 'bearer') {
-        formattedKey = `Bearer ${envKey.startsWith('Key ') ? envKey.substring(4) : envKey}`;
+        // Формат "Bearer {apiKey}"
+        formattedKey = `Bearer ${baseKey}`;
         formatDescription = 'With Bearer prefix';
+      } else {
+        // Оригинальный формат (как в .env или пользовательских настройках)
+        formattedKey = envKey;
+        formatDescription = 'Original format';
       }
+      
+      // Логируем итоговый формат (для отладки, скрывая приватную часть)
+      const colonIndex = formattedKey.indexOf(':');
+      let maskedKey = '';
+      
+      if (colonIndex > 0) {
+        // Если в ключе есть ":", маскируем только часть после двоеточия
+        maskedKey = formattedKey.substring(0, colonIndex + 5) + '...';
+      } else {
+        // Если нет ":", маскируем ключ полностью, оставляя только первые символы
+        maskedKey = formattedKey.substring(0, 10) + '...';
+      }
+      
+      console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${maskedKey}`);
       
       // Тестовый запрос к FAL.AI API
       const requestData = {
@@ -8218,6 +8317,8 @@ ${datesText}
         });
       } catch (error: any) {
         // Возвращаем детали ошибки для анализа
+        console.log(`🧪 [FAL.AI TEST] Ошибка API с форматом "${formatDescription}": ${error.message}`);
+        
         const errorDetails = error.response ? {
           status: error.response.status,
           data: error.response.data
