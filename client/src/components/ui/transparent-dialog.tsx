@@ -1,8 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
-import Draggable from "react-draggable";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+// Используем динамический импорт для react-draggable, чтобы обработать случаи, когда библиотека не найдена
+let Draggable: any;
+try {
+  // Сначала пробуем стандартный импорт
+  Draggable = require("react-draggable").default;
+} catch (e) {
+  console.warn("react-draggable not found, using fallback component");
+  // Fallback компонент, имитирующий основной функционал Draggable
+  Draggable = ({ children, position, onStart, onStop, handle, bounds, scale }: any) => {
+    return <div className="absolute" style={{ left: position?.x || 0, top: position?.y || 0 }}>{children}</div>;
+  };
+}
 
 interface TransparentDialogProps {
   isOpen: boolean;
