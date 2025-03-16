@@ -7926,45 +7926,6 @@ ${datesText}
   // API для генерации контент-плана через n8n
   app.post("/api/content-plan/generate", async (req, res) => {
     // TODO: Временно убрана авторизация для отладки на сервере
-    
-    // ВРЕМЕННОЕ РЕШЕНИЕ: Возвращаем мок-данные для отладки на сервере
-    // Режим тестирования для решения проблемы с n8n
-    const DEBUG_MODE = true;
-    
-    if (DEBUG_MODE) {
-      console.log("DEBUG MODE АКТИВИРОВАН: Пропускаем вызов n8n webhook и возвращаем тестовые данные");
-      
-      // Получаем данные запроса для логирования
-      const { campaignId, settings } = req.body;
-      console.log("Получен запрос для кампании:", campaignId);
-      console.log("Настройки:", settings);
-      
-      // Создаем базовый тестовый контент-план
-      const mockContentPlan = [
-        {
-          title: "Тестовый пост 1",
-          content: "Это тестовый пост для отладки генерации контент-плана. Проблема с n8n webhook решается.",
-          contentType: "text",
-          keywords: ["тест", "отладка"],
-          hashtags: ["#тест", "#отладка"]
-        },
-        {
-          title: "Тестовый пост 2 с изображением",
-          content: "Второй тестовый пост с изображением для проверки функциональности.",
-          contentType: "text-image",
-          keywords: ["тест", "изображение"],
-          hashtags: ["#тест", "#изображение"]
-        }
-      ];
-      
-      // Возвращаем успешный ответ с тестовыми данными
-      return res.json({
-        success: true,
-        data: {
-          contentPlan: mockContentPlan
-        }
-      });
-    }
     try {
       // Подробно логируем тело запроса
       console.log("Получен запрос на генерацию контент-плана:");
