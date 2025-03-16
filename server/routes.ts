@@ -2619,8 +2619,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-// Маршрут для генерации контента через Perplexity API
-  app.post("/api/content/generate-deepseek", async (req, res) => {
+// Маршрут для генерации контента через DeepSeek API
+  app.post("/api/content/generate-deepseek", authenticateUser, async (req, res) => {
     try {
       const { prompt, keywords, tone, platform, campaignId } = req.body;
       
@@ -2628,17 +2628,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required parameters" });
       }
       
-      const authHeader = req.headers['authorization'];
-      
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Инициализация DeepSeek сервиса для пользователя: ${userId}`);
       
       try {
         // Инициализируем DeepSeek API сервис с централизованным управлением ключами
-        const userId = req.userId;
         if (!userId) {
           return res.status(401).json({ 
             error: 'Не авторизован: Отсутствует ID пользователя' 
@@ -2706,7 +2705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/generate-content", async (req, res) => {
+  app.post("/api/generate-content", authenticateUser, async (req, res) => {
     try {
       const { prompt, keywords, tone, campaignId } = req.body;
       
@@ -2714,17 +2713,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required parameters" });
       }
       
-      const authHeader = req.headers['authorization'];
-      
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Инициализация Perplexity сервиса для пользователя: ${userId}`);
       
       try {
         // Инициализируем Perplexity API сервис с централизованным управлением ключами
-        const userId = (req as any).userId;
         if (!userId) {
           return res.status(401).json({ 
             error: 'Не авторизован: Отсутствует ID пользователя' 
