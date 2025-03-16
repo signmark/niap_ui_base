@@ -1,5 +1,6 @@
 import { config, run } from '@fal-ai/serverless-client';
 import { log } from '../utils/logger';
+import { apiKeyService } from './api-keys';
 
 /**
  * Отдельный сервис для работы с FAL.AI через официальный SDK
@@ -30,10 +31,7 @@ export class FalAiService {
    */
   async initializeFromApiKeyService(userId: string, authToken?: string): Promise<boolean> {
     try {
-      // Импортируем здесь, чтобы избежать циклических зависимостей
-      const { apiKeyService } = require('./api-keys');
-      
-      // Получаем API ключ из сервиса ключей
+      // Получаем API ключ из сервиса ключей (импорт в начале файла)
       const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
       
       if (!apiKey) {
