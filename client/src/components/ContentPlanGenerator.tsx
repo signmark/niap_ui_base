@@ -180,31 +180,7 @@ export function ContentPlanGenerator({
     mutationFn: async (data: any) => {
       console.log('Отправляем запрос на генерацию контент-плана:', data);
       
-      // Прямой запрос к n8n webhook для отладки (опционально)
-      try {
-        // Получаем API ключ из локального хранилища или из окружения
-        const n8nApiKey = localStorage.getItem('n8nApiKey') || '';
-        
-        const directResponse = await fetch('https://n8n.nplanner.ru/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-N8N-API-KEY': n8nApiKey
-          },
-          body: JSON.stringify({ 
-            data: {
-              ...data, 
-              directusToken: localStorage.getItem('authToken') || ''
-            } 
-          })
-        });
-        
-        console.log('Прямой ответ от n8n webhook:', await directResponse.text());
-      } catch (directError) {
-        console.warn('Ошибка прямого запроса к n8n webhook:', directError);
-      }
-      
-      // Основной запрос через API бэкенда
+      // Основной запрос через API бэкенда (без прямого вызова n8n webhook)
       return await apiRequest('/api/content-plan/generate', {
         method: 'POST',
         data
@@ -214,27 +190,83 @@ export function ContentPlanGenerator({
       setIsGenerating(false);
       console.log('Успешный ответ от API генерации контент-плана:', response);
       
-      if (response.success && response.data && response.data.contentPlan) {
-        toast({
-          description: "Контент-план успешно сгенерирован",
-        });
+      try {
+        // Подробное логирование для отладки структуры ответа
+        console.log('Тип ответа:', typeof response);
+        console.log('Ответ является массивом?', Array.isArray(response));
         
-        // Сохраняем сгенерированный контент-план для предварительного просмотра
-        setGeneratedContentPlan(response.data.contentPlan);
-        setShowPreview(true);
+        // Обрабатываем различные форматы ответа
+        let contentPlanData = null;
         
-        // По умолчанию выбираем все элементы контент-плана
-        const initialSelectedItems = new Set<number>();
-        response.data.contentPlan.forEach((_: any, index: number) => initialSelectedItems.add(index));
-        setSelectedContentItems(initialSelectedItems);
+        // Формат 1: { success: true, data: { contentPlan: [...] } }
+        if (response.success && response.data && response.data.contentPlan) {
+          contentPlanData = response.data.contentPlan;
+          console.log('Обнаружен формат 1: success->data->contentPlan');
+        } 
+        // Формат 2: [{ success: true, data: { contentPlan: [...] } }]
+        else if (Array.isArray(response) && response.length > 0 && response[0].data?.contentPlan) {
+          contentPlanData = response[0].data.contentPlan;
+          console.log('Обнаружен формат 2: [0]->data->contentPlan');
+        }
+        // Формат 3: [{ success: true, contentPlan: [...] }]
+        else if (Array.isArray(response) && response.length > 0 && response[0].contentPlan) {
+          contentPlanData = response[0].contentPlan;
+          console.log('Обнаружен формат 3: [0]->contentPlan');
+        }
+        // Формат 4: { data: { contentPlan: [...] } }
+        else if (response.data?.contentPlan) {
+          contentPlanData = response.data.contentPlan;
+          console.log('Обнаружен формат 4: data->contentPlan');
+        }
+        // Формат 5: { contentPlan: [...] }
+        else if (response.contentPlan) {
+          contentPlanData = response.contentPlan;
+          console.log('Обнаружен формат 5: contentPlan');
+        }
+        // Формат 6: просто массив элементов контент-плана
+        else if (Array.isArray(response) && response.length > 0 && response[0].title) {
+          contentPlanData = response;
+          console.log('Обнаружен формат 6: массив элементов контента');
+        }
         
-        // Переключаемся на вкладку предпросмотра
-        setActiveTab("preview");
-      } else {
-        console.error('Ответ не содержит contentPlan:', response);
+        // Проверяем, что получили валидные данные
+        if (contentPlanData && Array.isArray(contentPlanData) && contentPlanData.length > 0) {
+          console.log(`Успешно извлечен контент-план (${contentPlanData.length} элементов)`);
+          toast({
+            description: `Контент-план успешно сгенерирован (${contentPlanData.length} постов)`,
+          });
+          
+          // Сохраняем сгенерированный контент-план для предварительного просмотра
+          setGeneratedContentPlan(contentPlanData);
+          setShowPreview(true);
+          
+          // По умолчанию выбираем все элементы контент-плана
+          const initialSelectedItems = new Set<number>();
+          contentPlanData.forEach((_: any, index: number) => initialSelectedItems.add(index));
+          setSelectedContentItems(initialSelectedItems);
+          
+          // Переключаемся на вкладку предпросмотра
+          setActiveTab("preview");
+          
+          // Вызываем колбэк если он передан
+          if (onPlanGenerated) {
+            onPlanGenerated(contentPlanData);
+          }
+        } else {
+          // Данные не найдены
+          console.error('Не удалось извлечь контент-план из ответа:', response);
+          toast({
+            title: "Ошибка формата данных",
+            description: "Не удалось извлечь контент-план из ответа сервера",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка при обработке ответа:', error);
         toast({
           title: "Ошибка",
-          description: "При генерации контент-плана произошла ошибка: " + (response.error || response.message || "структура данных некорректна"),
+          description: "При обработке контент-плана произошла ошибка: " + 
+            (error instanceof Error ? error.message : "непредвиденная ошибка"),
           variant: "destructive"
         });
       }
