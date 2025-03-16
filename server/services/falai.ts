@@ -299,11 +299,17 @@ Return only the translated text, no explanations or comments.`;
         '(формат без двоеточия)');
       console.log(`[FAL.AI] Используем ключ (маскировано): ${maskedKey}`);
       
-      // НЕ меняем формат ключа, используем как есть (предполагается, что ключ уже в формате "Key xxxxxx:xxxxx")
-      // FAL.AI API требует формат "Key {apiKey}", НЕ используем Bearer
-      const authHeader = this.apiKey;
-      console.log(`[FAL.AI] Заголовок авторизации: используем ключ как есть, без изменений`);
-      console.log(`[FAL.AI] Итоговый формат заголовка: ${authHeader.substring(0, 10)}...`);;
+      // ИСПРАВЛЕНИЕ: FAL.AI API требует ОБЯЗАТЕЛЬНО формат "Key {apiKey}" 
+      // Если ключ не начинается с "Key " - добавляем его
+      let authHeader = this.apiKey;
+      if (!authHeader.startsWith('Key ') && authHeader.includes(':')) {
+        console.log(`[FAL.AI] ВАЖНО: Добавляем префикс "Key " к ключу API`);
+        authHeader = `Key ${authHeader}`;
+      } else if (!authHeader.startsWith('Key ')) {
+        console.log(`[FAL.AI] ПРЕДУПРЕЖДЕНИЕ: Ключ API не начинается с "Key " и не содержит двоеточие`);
+      }
+      
+      console.log(`[FAL.AI] Итоговый формат заголовка: ${authHeader.substring(0, 10)}...`);
       
       // Отправляем запрос на API FAL.AI точно как на скриншоте
       
@@ -330,8 +336,10 @@ Return only the translated text, no explanations or comments.`;
       console.log(`[FAL.AI] Accept: application/json`);
       console.log(`[FAL.AI] ТЕЛО ЗАПРОСА: ${JSON.stringify(requestData, null, 2)}`);
       
+      // ИСПРАВЛЕНИЕ: Используем модифицированный authHeader вместо authHeaderValue (оригинальный ключ)
+      // Это критически важно для правильной авторизации
       const headers = {
-        'Authorization': authHeaderValue,
+        'Authorization': authHeader, // Используем authHeader, который уже содержит префикс "Key " если нужно
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
@@ -391,13 +399,19 @@ Return only the translated text, no explanations or comments.`;
             try {
               // Проверяем статус
               console.log("Проверяем статус генерации по URL:", response.data.status_url);
-              // Используем ключ как есть, без модификаций
-              const statusAuthHeader = this.apiKey;
-              console.log(`[FAL.AI] Используем оригинальный ключ для проверки статуса без модификаций`);
+              // ИСПРАВЛЕНИЕ: Здесь тоже нужно использовать правильный формат заголовка
+              let statusAuthHeader = this.apiKey;
+              // Форматируем заголовок если нужно
+              if (!statusAuthHeader.startsWith('Key ') && statusAuthHeader.includes(':')) {
+                console.log(`[FAL.AI] Добавляем префикс "Key " к ключу API для запроса статуса`);
+                statusAuthHeader = `Key ${statusAuthHeader}`;
+              }
+              
+              console.log(`[FAL.AI] Используем правильно форматированный ключ для проверки статуса`);
               
               statusResponse = await axios.get(response.data.status_url, {
                 headers: {
-                  'Authorization': statusAuthHeader, // Используем API ключ как есть, предполагая формат "Key {apiKey}"
+                  'Authorization': statusAuthHeader, // Используем API ключ с префиксом "Key " если нужно
                   'Accept': 'application/json'
                 }
               });
@@ -421,9 +435,15 @@ Return only the translated text, no explanations or comments.`;
               if (statusResponse.data?.status === "COMPLETED") {
                 console.log("Генерация завершена, получаем результат");
                 
-                // Используем API ключ без модификаций
-                const resultAuthHeader = this.apiKey;
-                console.log(`[FAL.AI] Используем оригинальный ключ для получения результата без модификаций`);
+                // ИСПРАВЛЕНИЕ: Здесь тоже нужно использовать правильный формат заголовка
+                let resultAuthHeader = this.apiKey;
+                // Форматируем заголовок если нужно
+                if (!resultAuthHeader.startsWith('Key ') && resultAuthHeader.includes(':')) {
+                  console.log(`[FAL.AI] Добавляем префикс "Key " к ключу API для запроса результата`);
+                  resultAuthHeader = `Key ${resultAuthHeader}`;
+                }
+                
+                console.log(`[FAL.AI] Используем правильно форматированный ключ для получения результата`);
                 
                 // Дополнительное логирование заголовка для отладки запроса результата
                 console.log(`[FAL.AI] Запрос результата: ${response.data.response_url}`);
@@ -431,7 +451,7 @@ Return only the translated text, no explanations or comments.`;
                 
                 const resultResponse = await axios.get(response.data.response_url, {
                   headers: {
-                    'Authorization': resultAuthHeader, // Используем API ключ как есть
+                    'Authorization': resultAuthHeader, // Используем API ключ с префиксом "Key " если нужно
                     'Accept': 'application/json'
                   }
                 });
