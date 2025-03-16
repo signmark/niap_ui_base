@@ -1673,29 +1673,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Маршрут для генерации изображений через FAL.AI API
-  app.post('/api/generate-image', async (req, res) => {
+  app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform } = req.body;
       
-      // Получаем userId из запроса
-      const authHeader = req.headers['authorization'];
-      let userId = null;
-      let token = null;
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
       
-      // Если есть авторизация, получаем userId из токена
-      if (authHeader) {
-        token = authHeader.replace('Bearer ', '');
-        try {
-          // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          userId = userResponse?.data?.data?.id;
-          console.log('Определен пользователь из токена для генерации изображения:', userId);
-        } catch (error) {
-          console.error("Ошибка при получении информации о пользователе:", error);
-        }
-      }
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log('Генерация изображения для пользователя:', userId);
       
       // Инициализируем FAL.AI с использованием централизованной системы API ключей
       let falAiApiKey = null;
@@ -7943,8 +7932,8 @@ ${datesText}
       console.log("Заголовки:", JSON.stringify(req.headers));
       
       const { campaignId, settings, selectedTrendTopics, keywords, businessData } = req.body;
-      // Получаем userId из заголовка x-user-id (как это делается в других частях API)
-      const userId = req.headers['x-user-id'] as string;
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
       
       console.log("Извлеченные данные:");
       console.log("- campaignId:", campaignId);
@@ -8091,7 +8080,7 @@ ${datesText}
   app.post("/api/content/save-plan", authenticateUser, async (req, res) => {
     try {
       const { campaignId, contentPlan } = req.body;
-      const userId = req.user?.id;
+      const userId = (req as any).userId;
 
       if (!campaignId || !userId || !contentPlan || !Array.isArray(contentPlan)) {
         return res.status(400).json({
