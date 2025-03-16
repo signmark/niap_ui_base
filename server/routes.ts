@@ -8035,12 +8035,34 @@ ${datesText}
         
         // Извлекаем контент-план из ответа, учитывая разные варианты структуры
         let contentPlan;
-        if (n8nResponse.data.contentPlan) {
+        
+        // Подробное логирование для отладки структуры
+        console.log("Тип ответа n8n:", typeof n8nResponse.data);
+        console.log("Ответ является массивом?", Array.isArray(n8nResponse.data));
+        if (Array.isArray(n8nResponse.data)) {
+          console.log("Длина массива ответа:", n8nResponse.data.length);
+        }
+        
+        // Обработка ответа в виде массива с одним объектом (формат n8n webhook)
+        if (Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
+          const responseItem = n8nResponse.data[0];
+          console.log("Первый элемент массива ответа:", JSON.stringify(responseItem).substring(0, 100) + "...");
+          
+          if (responseItem.data && responseItem.data.contentPlan) {
+            contentPlan = responseItem.data.contentPlan;
+            console.log("Найден contentPlan в первом элементе массива ответа");
+          } else if (responseItem.contentPlan) {
+            contentPlan = responseItem.contentPlan;
+            console.log("Найден contentPlan непосредственно в первом элементе массива ответа");
+          }
+        } 
+        // Обработка ответа в виде обычного объекта
+        else if (n8nResponse.data.contentPlan) {
           contentPlan = n8nResponse.data.contentPlan;
+          console.log("Найден contentPlan непосредственно в ответе");
         } else if (n8nResponse.data.data && n8nResponse.data.data.contentPlan) {
           contentPlan = n8nResponse.data.data.contentPlan;
-        } else if (Array.isArray(n8nResponse.data)) {
-          contentPlan = n8nResponse.data;
+          console.log("Найден contentPlan в поле data ответа");
         } else {
           console.error("Не удалось найти контент-план в ответе n8n:", n8nResponse.data);
           return res.status(500).json({
@@ -8049,6 +8071,18 @@ ${datesText}
             message: "Webhook вернул данные без контент-плана"
           });
         }
+        
+        // Проверяем, что contentPlan действительно является массивом
+        if (!Array.isArray(contentPlan)) {
+          console.error("Извлеченный contentPlan не является массивом:", contentPlan);
+          return res.status(500).json({
+            success: false,
+            error: "Ошибка при обработке контент-плана",
+            message: "Неверный формат контент-плана"
+          });
+        }
+        
+        console.log(`Успешно извлечен контент-план с ${contentPlan.length} элементами`);
 
         // Возвращаем сгенерированный контент-план
         return res.json({
