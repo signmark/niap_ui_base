@@ -7925,7 +7925,9 @@ ${datesText}
 
   // API для генерации контент-плана через n8n
   app.post("/api/content-plan/generate", async (req, res) => {
-    // TODO: Временно убрана авторизация для отладки на сервере
+    // ВАЖНО: Заблокировать все режимы тестирования и имитации
+    // Всегда отправляем реальный запрос к n8n webhook
+    const simulationMode = false; // НИКОГДА НЕ МЕНЯТЬ НА TRUE
     try {
       // Подробно логируем тело запроса
       console.log("Получен запрос на генерацию контент-плана:");
@@ -8637,7 +8639,10 @@ ${text}`;
   }
 }
 
+// ВАЖНО: Функция заблокирована и больше не используется
 function generateMockContentPlan(count: number = 5, contentType: string = 'mixed', keywords: any[] = []): any[] {
+  console.error("ОШИБКА: Попытка использовать заблокированную функцию generateMockContentPlan");
+  throw new Error("Использование моковых данных заблокировано на сервере");
   console.log(`Генерация имитационного контент-плана: ${count} элементов, тип: ${contentType}`);
   
   const contentPlan = [];
