@@ -551,7 +551,7 @@ services:
       - traefik.http.services.smm.loadbalancer.server.port=5000
 ```
 
-### Dockerfile
+### Dockerfile for SMM Manager
 
 ```dockerfile
 # Use current Node.js version
@@ -588,6 +588,49 @@ EXPOSE 5000
 
 # Command to build and run the application
 CMD ["npm", "run", "dev"]
+```
+
+### Dockerfile for N8N
+
+N8N requires its own container with specific settings:
+
+```dockerfile
+# Use official n8n image
+FROM n8nio/n8n:latest
+
+# Copy custom scripts or packages (if any)
+COPY ./n8n-custom-scripts /home/node/.n8n/custom-scripts
+
+# Install additional dependencies if needed
+USER root
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    git \
+    curl
+
+# Install additional Node.js packages
+RUN npm install -g \
+    n8n-nodes-telegram \
+    n8n-nodes-mysql \
+    n8n-nodes-text-manipulation
+
+# Return to unprivileged node user
+USER node
+
+# Components for working with SMM Manager
+RUN mkdir -p /home/node/.n8n/nodes/local
+COPY ./n8n-custom-nodes /home/node/.n8n/nodes/local
+
+# Set environment variables
+ENV N8N_HOST=n8n.nplanner.ru
+ENV N8N_PROTOCOL=https
+ENV NODE_ENV=production
+ENV N8N_DIAGNOSTICS_ENABLED=false
+ENV N8N_USER_MANAGEMENT_DISABLED=false
+
+# Command to start n8n in server mode
+CMD ["n8n", "start"]
 ```
 
 ### Environment Variables for Docker
@@ -642,7 +685,34 @@ DIRECTUS_URL=https://directus.nplanner.ru
 
 ### Running in Docker
 
-To start the entire infrastructure in Docker, execute:
+To launch the complete infrastructure in Docker, you can use a special script:
+
+```bash
+# Make the script executable
+chmod +x setup_infrastructure.sh
+
+# Start the entire infrastructure
+./setup_infrastructure.sh start
+
+# Stop the infrastructure
+./setup_infrastructure.sh stop
+
+# Restart the infrastructure
+./setup_infrastructure.sh restart
+
+# View services status
+./setup_infrastructure.sh status
+
+# View logs of all services
+./setup_infrastructure.sh logs
+
+# View logs of a specific service, for example, smm
+./setup_infrastructure.sh logs smm
+```
+
+The script will automatically check for Docker, prepare the necessary directories and configuration files.
+
+Alternatively, you can start the infrastructure manually:
 
 ```bash
 # Create all necessary networks and containers

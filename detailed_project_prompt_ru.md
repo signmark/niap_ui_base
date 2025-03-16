@@ -470,7 +470,7 @@ services:
       - traefik.http.services.smm.loadbalancer.server.port=5000
 ```
 
-### Dockerfile
+### Dockerfile для SMM Manager
 
 ```dockerfile
 # Используем актуальную версию Node.js
@@ -507,6 +507,49 @@ EXPOSE 5000
 
 # Команда для сборки и запуска приложения
 CMD ["npm", "run", "dev"]
+```
+
+### Dockerfile для N8N
+
+N8N требует свой собственный контейнер со специфическими настройками:
+
+```dockerfile
+# Используем официальный образ n8n
+FROM n8nio/n8n:latest
+
+# Копируем настраиваемые скрипты или пакеты (если есть)
+COPY ./n8n-custom-scripts /home/node/.n8n/custom-scripts
+
+# Устанавливаем дополнительные зависимости, если требуется
+USER root
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    git \
+    curl
+
+# Устанавливаем дополнительные пакеты Node.js
+RUN npm install -g \
+    n8n-nodes-telegram \
+    n8n-nodes-mysql \
+    n8n-nodes-text-manipulation
+
+# Возвращаемся к непривилегированному пользователю node
+USER node
+
+# Компоненты для работы с SMM Manager
+RUN mkdir -p /home/node/.n8n/nodes/local
+COPY ./n8n-custom-nodes /home/node/.n8n/nodes/local
+
+# Установка переменных среды
+ENV N8N_HOST=n8n.nplanner.ru
+ENV N8N_PROTOCOL=https
+ENV NODE_ENV=production
+ENV N8N_DIAGNOSTICS_ENABLED=false
+ENV N8N_USER_MANAGEMENT_DISABLED=false
+
+# Команда запуска n8n в режиме сервера
+CMD ["n8n", "start"]
 ```
 
 ### Переменные окружения для Docker
@@ -561,7 +604,37 @@ DIRECTUS_URL=https://directus.nplanner.ru
 
 ### Запуск в Docker
 
-Для запуска всей инфраструктуры в Docker выполните:
+Для запуска всей инфраструктуры в Docker можно использовать специальный скрипт (доступен на русском и английском языках):
+
+```bash
+# Сделать скрипт исполняемым (выбрать нужную языковую версию)
+chmod +x setup_infrastructure.sh    # Русская версия
+chmod +x setup_infrastructure_en.sh # Английская версия
+
+# Запустить всю инфраструктуру
+./setup_infrastructure.sh start     # Русская версия
+# или
+./setup_infrastructure_en.sh start  # Английская версия
+
+# Остановить инфраструктуру
+./setup_infrastructure.sh stop
+
+# Перезапустить инфраструктуру
+./setup_infrastructure.sh restart
+
+# Просмотреть статус сервисов
+./setup_infrastructure.sh status
+
+# Просмотреть логи всех сервисов
+./setup_infrastructure.sh logs
+
+# Просмотреть логи конкретного сервиса, например, smm
+./setup_infrastructure.sh logs smm
+```
+
+Скрипт автоматически проверит наличие Docker, подготовит необходимые директории и файлы конфигурации.
+
+Альтернативно, можно запустить инфраструктуру вручную:
 
 ```bash
 # Создать все необходимые сети и контейнеры
