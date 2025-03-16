@@ -1082,7 +1082,7 @@ async function extractFullSiteContent(url: string): Promise<string> {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Прокси для прямых запросов к FAL.AI REST API
-  // Отладочный маршрут для FAL.AI API
+  // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
     // Получаем userId из запроса
     const authHeader = req.headers['authorization'];
@@ -1116,11 +1116,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     res.json({
       status: 'success',
+      user_id: userId || 'Не авторизован',
+      key_source: userId ? 'Directus (настройки пользователя)' : 'Переменные окружения (fallback)',
       key_available: !!apiKey,
       key_format: apiKey ? (apiKey.includes(':') ? 'Правильный формат (содержит :)' : 'Неправильный формат (нет :)') : 'Ключ отсутствует',
       authorization_header: formattedKey,
       test_prompt: "Wild cat"
     });
+  });
+  
+  // Тестовый маршрут для проверки разных форматов API ключа
+  app.get('/api/test-fal-ai-formats', async (req, res) => {
+    try {
+      // Получаем userId из запроса
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      // Если есть авторизация, получаем userId из токена
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      // Получаем API ключ из сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      
+      if (!apiKey) {
+        return res.status(404).json({
+          success: false,
+          error: "API ключ FAL.AI не найден. Пожалуйста, добавьте его в настройки."
+        });
+      }
+      
+      // Тестируем с добавленным префиксом "Key "
+      console.log('🧪 [FAL.AI TEST] Тестирование формата ключа: with Key prefix added');
+      const authHeader1 = `Key ${apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey}`;
+      console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${authHeader1.substring(0, 15)}...`);
+      
+      try {
+        // Пробуем сделать запрос с этим форматом
+        await axios.get('https://queue.fal.run/ping', {
+          headers: {
+            Authorization: authHeader1
+          }
+        });
+        
+        return res.json({
+          success: true,
+          message: "API ключ FAL.AI работает корректно с префиксом Key!",
+          api_key_format: "Правильный формат",
+          auth_header: `${authHeader1.substring(0, 15)}...`
+        });
+      } catch (error: any) {
+        console.log(`🧪 [FAL.AI TEST] Ошибка API с форматом "with Key prefix added": ${error.message}`);
+        
+        // Если 401, ключ неправильный, но передача работает
+        if (error.response?.status === 401) {
+          return res.status(401).json({
+            success: false,
+            error: "Ошибка при проверке FAL.AI API ключа: неправильный ключ или формат",
+            format_used: "Key <id>:<secret>",
+            tip: "Ключ в правильном формате, но не авторизован. Проверьте сам ключ."
+          });
+        }
+        
+        return res.status(500).json({
+          success: false,
+          error: `Ошибка при проверке API: ${error.message}`
+        });
+      }
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        error: `Общая ошибка: ${error.message}`
+      });
+    }
   });
   
   app.post('/api/v1/image-gen', async (req, res) => {
