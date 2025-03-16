@@ -53,6 +53,7 @@ export class ApifyService {
 
       this.apiKey = response.data.data[0].api_key;
       console.log('Successfully initialized Apify service with API key from settings');
+      */
     } catch (error) {
       console.error('Error getting Apify API key:', error);
       throw error;
