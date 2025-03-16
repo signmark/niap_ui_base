@@ -22,7 +22,7 @@ export default function FalAiTest() {
     setError(null);
     
     try {
-      const response = await api.get('/api/test-fal-ai');
+      const response = await api.get('/test-fal-ai');
       setResults(response.data);
     } catch (err: any) {
       setError(err.message || 'Ошибка при тестировании API');
@@ -37,7 +37,7 @@ export default function FalAiTest() {
     setFormatLoading(true);
     
     try {
-      const response = await api.get(`/api/test-fal-ai-formats?format=${format}`);
+      const response = await api.get(`/test-fal-ai-formats?format=${format}`);
       setFormatResults(response.data);
     } catch (err: any) {
       setFormatResults({
