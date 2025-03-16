@@ -8107,6 +8107,178 @@ ${datesText}
     }
   });
   
+  // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
+  app.get("/api/test-fal-ai", async (req, res) => {
+    try {
+      // Получаем API ключ из переменных окружения или системных настроек
+      const envKey = process.env.FAL_AI_API_KEY || '';
+      
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+          console.log('Определен пользователь из токена:', userId);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      // Получаем API ключ для тестирования
+      let apiKey = envKey;
+      let keySource = 'environment';
+      
+      // Если пользователь авторизован, проверяем наличие пользовательского ключа
+      if (userId) {
+        try {
+          const userKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+          if (userKey) {
+            apiKey = userKey;
+            keySource = 'user_settings';
+            console.log('Используем ключ пользователя для тестирования API');
+          }
+        } catch (error) {
+          console.error('Ошибка при получении ключа пользователя:', error);
+        }
+      }
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "API ключ FAL.AI не настроен",
+          details: "Добавьте ключ в переменные окружения или настройки пользователя"
+        });
+      }
+      
+      // Информация о ключе (без вывода самого ключа)
+      const keyInfo = {
+        length: apiKey.length,
+        source: keySource,
+        hasPrefix: apiKey.startsWith('Key '),
+        hasColon: apiKey.includes(':'),
+        format: apiKey.startsWith('Key ') ? 'With Key prefix' : 'No Key prefix'
+      };
+      
+      // Информация о ключе из переменных окружения
+      const envKeyFormat = envKey ? {
+        length: envKey.length,
+        hasPrefix: envKey.startsWith('Key '),
+        format: envKey.startsWith('Key ') ? 'With Key prefix' : 'No Key prefix'
+      } : {
+        message: 'Ключ в переменных окружения не установлен'
+      };
+      
+      // Запускаем тестирование API с различными форматами ключа
+      const testResults = await testFalApiConnection(apiKey);
+      
+      return res.json({
+        success: true,
+        keyInfo,
+        envKeyFormat,
+        results: testResults.results
+      });
+    } catch (error: any) {
+      console.error('Ошибка при тестировании FAL.AI API:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при тестировании API",
+        message: error.message
+      });
+    }
+  });
+  
+  // Эндпоинт для тестирования конкретного формата ключа FAL.AI
+  app.get("/api/test-fal-ai-formats", async (req, res) => {
+    try {
+      const { format } = req.query;
+      
+      // Получаем API ключ из переменных окружения
+      const envKey = process.env.FAL_AI_API_KEY || '';
+      
+      if (!envKey) {
+        return res.status(400).json({
+          success: false,
+          error: "API ключ FAL.AI не настроен в переменных окружения",
+          details: "Добавьте ключ FAL.AI в переменные окружения"
+        });
+      }
+      
+      // Форматируем ключ в зависимости от запрошенного формата
+      let formattedKey = envKey;
+      let formatDescription = 'original';
+      
+      if (format === 'with-prefix' && !envKey.startsWith('Key ')) {
+        formattedKey = `Key ${envKey}`;
+        formatDescription = 'With Key prefix added';
+      } else if (format === 'without-prefix' && envKey.startsWith('Key ')) {
+        formattedKey = envKey.substring(4);
+        formatDescription = 'Without Key prefix';
+      } else if (format === 'bearer') {
+        formattedKey = `Bearer ${envKey.startsWith('Key ') ? envKey.substring(4) : envKey}`;
+        formatDescription = 'With Bearer prefix';
+      }
+      
+      // Тестовый запрос к FAL.AI API
+      const requestData = {
+        prompt: "Test image for format testing",
+        width: 512,
+        height: 512,
+        num_images: 1
+      };
+      
+      try {
+        const response = await axios.post(
+          'https://queue.fal.run/fal-ai/fast-sdxl',
+          requestData,
+          {
+            headers: {
+              'Authorization': formattedKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 10000
+          }
+        );
+        
+        return res.json({
+          success: true,
+          format: formatDescription,
+          status: response.status,
+          dataKeys: Object.keys(response.data || {})
+        });
+      } catch (error: any) {
+        // Возвращаем детали ошибки для анализа
+        const errorDetails = error.response ? {
+          status: error.response.status,
+          data: error.response.data
+        } : {
+          message: error.message
+        };
+        
+        return res.status(400).json({
+          success: false,
+          error: "Ошибка при запросе к FAL.AI API",
+          format: formatDescription,
+          details: errorDetails
+        });
+      }
+    } catch (error: any) {
+      console.error('Ошибка при тестировании формата ключа:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при тестировании формата ключа",
+        message: error.message
+      });
+    }
+  });
+  
   return httpServer;
 }
 
