@@ -1,5 +1,5 @@
 import { directusApi, directusApiManager } from '../directus';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 
 // Типы API сервисов, используемых в приложении
 export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai';
