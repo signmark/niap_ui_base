@@ -1411,7 +1411,7 @@ export default function ContentPage() {
               isOpen={isContentPlanDialogOpen}
               onClose={() => setIsContentPlanDialogOpen(false)}
               campaignId={selectedCampaignId}
-              onPlanGenerated={(contentItems) => {
+              onPlanGenerated={(contentItems, closeDialog) => {
                 console.log("Сгенерирован контент-план:", contentItems);
                 // После успешной генерации и сохранения, обновляем список контента
                 queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
@@ -1419,7 +1419,10 @@ export default function ContentPage() {
                     toast({
                       description: "Контент-план успешно создан и сохранен",
                     });
-                    setIsContentPlanDialogOpen(false);
+                    // Закрываем диалог только если closeDialog установлен в true
+                    if (closeDialog) {
+                      setIsContentPlanDialogOpen(false);
+                    }
                   });
               }}
             />

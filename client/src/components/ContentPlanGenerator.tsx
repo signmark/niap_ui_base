@@ -273,6 +273,7 @@ export function ContentPlanGenerator({
           // Вызываем колбэк если он передан, но не закрываем диалог автоматически
           if (onPlanGenerated) {
             // Передаем данные в родительский компонент, но не закрываем диалог
+            // Второй параметр: не закрывать диалог
             onPlanGenerated(contentPlanData, false);
             
             // Добавляем уведомление для пользователя
@@ -796,7 +797,8 @@ export function ContentPlanGenerator({
               console.log("Сохраняем выбранный контент:", selectedContent);
               
               if (onPlanGenerated) {
-                onPlanGenerated(selectedContent);
+                // Вызываем с параметром true для закрытия диалога
+                onPlanGenerated(selectedContent, true);
               }
               
               toast({
