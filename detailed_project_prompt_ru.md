@@ -29,9 +29,9 @@
 4. Необходимо следовать существующей структуре проекта
 5. Вся работа с данными происходит через Directus API, локальная база данных не используется
 
-## Структура базы данных
+## Структура данных
 
-### Основные таблицы:
+### Основные типы данных (хранятся в Directus):
 1. **campaigns** (кампании):
    - id (primary key, serial)
    - directusId (внешний идентификатор из Directus)
@@ -84,6 +84,8 @@
    - campaignId (связь с кампанией)
    - companyName, contactInfo, businessDescription, и т.д. (бизнес-информация)
    - createdAt (дата создания)
+
+Все данные хранятся и управляются через Directus API. В проекте используются только типы и интерфейсы TypeScript для описания данных, локальная база данных не используется.
 
 ## API интеграции и внешние сервисы
 
@@ -297,5 +299,204 @@ Format each account as:
 4. Оптимизировать загрузку изображений через прокси-серверы
 5. Использовать кэширование запросов к внешним API
 6. Разделить бизнес-логику и представление в компонентах
+
+## Развертывание в продакшн
+
+### Docker интеграция
+SMM Manager интегрируется в инфраструктуру с использованием Docker и Docker Compose. Ниже приведен полный пример конфигурации инфраструктуры, включающий все необходимые компоненты:
+
+```yaml
+services:
+  # Traefik - обратный прокси для маршрутизации запросов и SSL
+  traefik:
+    image: "traefik:v3.3"
+    restart: always
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik_data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # N8N - сервис автоматизации для обработки вебхуков и публикации контента
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile-n8n
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "127.0.0.1:5678:5678"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.routers.n8n.entrypoints=web,websecure
+      - traefik.http.routers.n8n.tls.certresolver=mytlschallenge
+      - traefik.http.middlewares.n8n.headers.SSLRedirect=true
+      - traefik.http.middlewares.n8n.headers.STSSeconds=315360000
+      - traefik.http.middlewares.n8n.headers.browserXSSFilter=true
+      - traefik.http.middlewares.n8n.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.n8n.headers.forceSTSHeader=true
+      - traefik.http.middlewares.n8n.headers.SSLHost=${DOMAIN_NAME}
+      - traefik.http.middlewares.n8n.headers.STSIncludeSubdomains=true
+      - traefik.http.middlewares.n8n.headers.STSPreload=true
+      - traefik.http.routers.n8n.middlewares=n8n@docker
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - DB_TYPE=postgresdb
+      - DB_TABLE_PREFIX=n8n_
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=10000
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - NODE_PATH=/home/node/.n8n/node_modules
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*  
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./local-files:/files
+
+  # PostgreSQL - центральная база данных для хранения данных Directus и N8N
+  postgres:
+    image: postgres:16
+    restart: always
+    shm_size: 128mb
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  # PgAdmin - интерфейс администрирования PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    depends_on:
+      - postgres
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${SSL_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PASSWORD_PGADMIN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin.entrypoints=web,websecure
+      - traefik.http.routers.pgadmin.tls=true
+      - traefik.http.routers.pgadmin.rule=Host(`${PGADMIN_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.pgadmin.tls.certresolver=mytlschallenge
+      - traefik.http.services.pgadmin.loadbalancer.server.port=80
+
+  # Directus - система управления данными и пользовательскими аккаунтами
+  directus:
+    image: directus/directus:latest
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - DB_CLIENT=pg
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=directus
+      - DB_USER=postgres
+      - DB_PASSWORD=${DIRECTUS_DB_PASSWORD}
+      - ADMIN_EMAIL=${DIRECTUS_ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${DIRECTUS_ADMIN_PASSWORD}
+      - CORS_ENABLED=true
+      - CORS_ORIGIN=true
+      - CORS_METHODS=GET,POST,PATCH,DELETE
+      - CORS_ALLOWED_HEADERS=Content-Type,Authorization
+      - CORS_EXPOSED_HEADERS=Content-Range
+      - CORS_CREDENTIALS=true
+      - CORS_MAX_AGE=18000
+    volumes:
+      - ./directus_data:/directus/uploads
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.directus.rule=Host(`directus.${DOMAIN_NAME}`)
+      - traefik.http.routers.directus.tls=true
+      - traefik.http.routers.directus.entrypoints=web,websecure
+      - traefik.http.routers.directus.tls.certresolver=mytlschallenge
+      - traefik.http.services.directus.loadbalancer.server.port=8055
+
+  # SMM Manager - основное приложение
+  smm:
+    build:
+      context: ./smm
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./smm:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.smm.rule=Host(`smm.nplanner.ru`)
+      - traefik.http.routers.smm.tls=true
+      - traefik.http.routers.smm.entrypoints=web,websecure
+      - traefik.http.routers.smm.tls.certresolver=mytlschallenge
+      - traefik.http.services.smm.loadbalancer.server.port=5000
+```
+
+### Dockerfile
+
+```dockerfile
+# Используем актуальную версию Node.js
+FROM node:18
+
+# Устанавливаем рабочий каталог
+WORKDIR /app
+
+# Устанавливаем системные зависимости через apt
+RUN apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+
+# Очищаем существующие node_modules и lock-файлы для чистой установки
+RUN rm -rf node_modules package-lock.json
+
+# Устанавливаем зависимости
+RUN npm install --no-audit --verbose
+
+# Явно устанавливаем react-draggable
+RUN npm install react-draggable@4.4.6 --save --no-audit
+
+# Проверяем наличие библиотеки
+RUN npm ls react-draggable
+
+# Копируем исходный код
+COPY . .
+
+# Экспортируем порт для приложения
+EXPOSE 5000
+
+# Команда для сборки и запуска приложения
+CMD ["npm", "run", "dev"]
+```
 
 Данный промт содержит все необходимые детали для воссоздания проекта SMM Manager с учетом существующей архитектуры, ограничений и технических особенностей.
