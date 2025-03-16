@@ -1,4 +1,5 @@
 import { config, run } from '@fal-ai/serverless-client';
+import { log } from '../utils/logger';
 
 /**
  * Отдельный сервис для работы с FAL.AI через официальный SDK
