@@ -278,7 +278,7 @@ export function ContentPlanGenerator({
   // Обработчик генерации контент-плана через n8n
   const handleGenerateContentPlan = async () => {
     // Проверяем авторизацию используя правильный ключ из хранилища
-    const authToken = localStorage.getItem('auth_token');
+    const authToken = localStorage.getItem('authToken');
     if (!authToken) {
       console.log("Ошибка авторизации: токен не найден");
       toast({
