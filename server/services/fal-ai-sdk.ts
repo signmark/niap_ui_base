@@ -1,5 +1,5 @@
 import * as falClient from "@fal-ai/serverless-client";
-import { log } from '../vite';
+import { log } from '../utils/logger';
 import { apiKeyService } from './api-keys';
 
 /**

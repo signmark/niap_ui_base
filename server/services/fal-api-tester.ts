@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 
 /**
  * Тестирует подключение к FAL.AI API с различными форматами ключа

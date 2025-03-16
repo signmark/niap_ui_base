@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiKeyService } from './api-keys';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 
 export interface PerplexityConfig {
   apiKey: string;
