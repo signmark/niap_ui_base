@@ -1859,7 +1859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requestData,
           {
             headers: {
-              'Authorization': falAiApiKey,
+              'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
@@ -1886,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             while (attempt < maxAttempts) {
               const statusResponse = await axios.get(statusUrl, {
                 headers: {
-                  'Authorization': falAiApiKey,
+                  'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
                   'Accept': 'application/json'
                 }
               });
@@ -1898,7 +1898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Получаем результат
                 const resultResponse = await axios.get(statusResponse.data.response_url, {
                   headers: {
-                    'Authorization': falAiApiKey,
+                    'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
                     'Accept': 'application/json'
                   }
                 });
