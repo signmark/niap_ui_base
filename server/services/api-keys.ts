@@ -38,21 +38,10 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
+    // ВАЖНОЕ ПРАВИЛО: Все API ключи должны браться ТОЛЬКО из Directus (через user_api_keys)
     // Если нет userId, не можем получить ключ из Directus
     if (!userId) {
-      // СПЕЦИАЛЬНОЕ ПРАВИЛО ДЛЯ FAL.AI - никогда не используем ключи из переменных окружения
-      if (serviceName === 'fal_ai') {
-        log(`Cannot fetch FAL.AI API key: missing userId, and environment variables are not allowed for FAL.AI`, 'api-keys');
-        return null;
-      }
-      
-      // Для других сервисов можно использовать ключи из переменных окружения
-      log(`Cannot fetch ${serviceName} API key from Directus: missing userId, checking environment variables`, 'api-keys');
-      const envKey = this.getKeyFromEnvironment(serviceName);
-      if (envKey) {
-        log(`Using ${serviceName} API key from environment variables as fallback`, 'api-keys');
-        return envKey;
-      }
+      log(`Cannot fetch ${serviceName} API key: missing userId. API keys must come only from Directus user settings.`, 'api-keys');
       return null;
     }
     
@@ -84,10 +73,10 @@ export class ApiKeyService {
       
       const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
-        // Получаем ключ из ответа и форматируем для FAL.AI
+        // Получаем ключ из ответа и форматируем если необходимо
         let apiKey = items[0].api_key;
         
-        // Только для FAL.AI - проверяем и добавляем префикс "Key " если это необходимо
+        // Специальная обработка для FAL.AI - проверяем и добавляем префикс "Key " если необходимо
         if (serviceName === 'fal_ai') {
           // Проверяем формат ключа
           if (apiKey.startsWith('Key ')) {
@@ -114,21 +103,8 @@ export class ApiKeyService {
         log(`Successfully fetched ${serviceName} API key from Directus for user ${userId}`, 'api-keys');
         return apiKey;
       } else {
-        // Для FAL.AI - никогда не используем ключи из переменных окружения
-        if (serviceName === 'fal_ai') {
-          log(`FAL.AI API key not found in user settings for user ${userId}, returning null as env vars are not allowed`, 'api-keys');
-          return null;
-        }
-        
-        log(`${serviceName} API key not found in user settings for user ${userId}, checking environment variables`, 'api-keys');
-        
-        // 3. Если ключ не найден в Directus, используем ключ из переменных окружения в качестве резервного
-        // (для всех сервисов кроме FAL.AI)
-        const envKey = this.getKeyFromEnvironment(serviceName);
-        if (envKey) {
-          log(`Using ${serviceName} API key from environment variables as fallback`, 'api-keys');
-          return envKey;
-        }
+        log(`${serviceName} API key not found in user settings for user ${userId}`, 'api-keys');
+        console.warn(`⚠️ [${serviceName}] API ключ не найден в настройках пользователя. Необходимо добавить ключ в Directus.`);
         return null;
       }
     } catch (error) {
@@ -150,20 +126,6 @@ export class ApiKeyService {
       }
       
       log(`Error fetching ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
-      
-      // При ошибке запроса к Directus проверяем, является ли сервис FAL.AI
-      if (serviceName === 'fal_ai') {
-        log(`Error fetching FAL.AI API key from Directus, and environment variables are not allowed for FAL.AI`, 'api-keys');
-        return null;
-      }
-      
-      // Для других сервисов можно использовать ключи из переменных окружения
-      const envKey = this.getKeyFromEnvironment(serviceName);
-      if (envKey) {
-        log(`Using ${serviceName} API key from environment variables after Directus API error`, 'api-keys');
-        return envKey;
-      }
-      
       return null;
     }
   }
@@ -311,34 +273,14 @@ export class ApiKeyService {
    * Получает API ключ из переменных окружения
    * @param serviceName Название сервиса
    * @returns API ключ или null, если ключ не найден
+   * @deprecated Согласно новой политике, НИКОГДА не используем ключи из переменных окружения!
    */
   private getKeyFromEnvironment(serviceName: ApiServiceName): string | null {
-    // СПЕЦИАЛЬНОЕ ПРАВИЛО: НИКОГДА не используем переменные окружения для FAL.AI
-    if (serviceName === 'fal_ai') {
-      console.log('🚫 [FAL.AI] Запрошен ключ из переменных окружения, но это запрещено согласно политике безопасности');
-      log(`FAL.AI API keys must ONLY come from Directus user settings, never from environment variables`, 'api-keys');
-      return null;
-    }
-    
-    // Для других сервисов используем ключи из переменных окружения
-    const envMapping: Record<Exclude<ApiServiceName, 'fal_ai'>, string> = {
-      perplexity: process.env.PERPLEXITY_API_KEY || '',
-      social_searcher: process.env.SOCIAL_SEARCHER_API_KEY || '',
-      apify: process.env.APIFY_API_KEY || '',
-      deepseek: process.env.DEEPSEEK_API_KEY || ''
-    };
-    
-    // Получаем ключ для всех сервисов кроме FAL.AI
-    // @ts-ignore - TypeScript может не понять, что мы уже исключили 'fal_ai' из проверки
-    const apiKey = envMapping[serviceName] || null;
-    
-    // Если ключ не найден, возвращаем null
-    if (!apiKey) {
-      return null;
-    }
-    
-    // Возвращаем ключ без модификаций для всех других сервисов
-    return apiKey;
+    // ВАЖНОЕ ПРАВИЛО: НИКОГДА не используем переменные окружения для API ключей
+    // ВСЕ API ключи ДОЛЖНЫ храниться в Directus!
+    console.log(`🚫 [${serviceName}] Запрошен ключ из переменных окружения, но это запрещено согласно политике безопасности`);
+    log(`All API keys (${serviceName}) must ONLY come from Directus user settings, never from environment variables`, 'api-keys');
+    return null;
   }
   
   /**
