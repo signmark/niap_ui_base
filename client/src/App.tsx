@@ -18,6 +18,7 @@ import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
+import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -35,7 +36,7 @@ function Router() {
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
       <Route path="/test/auth-bypass" component={AuthBypass} />
-      <Route path="/test/fal-ai" component={() => <Layout><FalAiTest /></Layout>} />
+      <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
@@ -48,8 +49,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
