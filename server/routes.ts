@@ -1081,6 +1081,14 @@ async function extractFullSiteContent(url: string): Promise<string> {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Прокси для прямых запросов к FAL.AI REST API
+  // Отладочный маршрут для FAL.AI API
+  app.get('/api/debug-fal-ai-header', (req, res) => {
+    res.json({
+      authorization: "Key 685ac509-3d57-4a53-89c8-563b2d91fda5:a43b38d07f7539218979bf4ffb725899",
+      prompt: "Wild cat"
+    });
+  });
+  
   app.post('/api/v1/image-gen', async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages } = req.body;
