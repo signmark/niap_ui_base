@@ -7,7 +7,7 @@ export const directusApi = axios.create({
 
 // Вспомогательная функция для проверки и получения токена
 export const getAuthToken = () => {
-  return localStorage.getItem('auth_token');
+  return localStorage.getItem('authToken');
 };
 
 // Вспомогательная функция для проверки авторизации
