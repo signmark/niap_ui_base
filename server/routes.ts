@@ -14,7 +14,7 @@ import { directusApi } from "./directus";
 import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { apiKeyService } from './services/api-keys';
-import { log } from "./vite";
+import { log } from "./utils/logger";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
 
