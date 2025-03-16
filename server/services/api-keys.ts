@@ -38,8 +38,15 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
-    // Если нет userId, не можем получить ключ из Directus и сразу переходим к переменным окружения
+    // Если нет userId, не можем получить ключ из Directus
     if (!userId) {
+      // СПЕЦИАЛЬНОЕ ПРАВИЛО ДЛЯ FAL.AI - никогда не используем ключи из переменных окружения
+      if (serviceName === 'fal_ai') {
+        log(`Cannot fetch FAL.AI API key: missing userId, and environment variables are not allowed for FAL.AI`, 'api-keys');
+        return null;
+      }
+      
+      // Для других сервисов можно использовать ключи из переменных окружения
       log(`Cannot fetch ${serviceName} API key from Directus: missing userId, checking environment variables`, 'api-keys');
       const envKey = this.getKeyFromEnvironment(serviceName);
       if (envKey) {
@@ -102,9 +109,16 @@ export class ApiKeyService {
         log(`Successfully fetched ${serviceName} API key from Directus for user ${userId}`, 'api-keys');
         return apiKey;
       } else {
+        // Для FAL.AI - никогда не используем ключи из переменных окружения
+        if (serviceName === 'fal_ai') {
+          log(`FAL.AI API key not found in user settings for user ${userId}, returning null as env vars are not allowed`, 'api-keys');
+          return null;
+        }
+        
         log(`${serviceName} API key not found in user settings for user ${userId}, checking environment variables`, 'api-keys');
         
         // 3. Если ключ не найден в Directus, используем ключ из переменных окружения в качестве резервного
+        // (для всех сервисов кроме FAL.AI)
         const envKey = this.getKeyFromEnvironment(serviceName);
         if (envKey) {
           log(`Using ${serviceName} API key from environment variables as fallback`, 'api-keys');
@@ -132,7 +146,13 @@ export class ApiKeyService {
       
       log(`Error fetching ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
       
-      // При ошибке запроса к Directus также пробуем использовать ключ из переменных окружения
+      // При ошибке запроса к Directus проверяем, является ли сервис FAL.AI
+      if (serviceName === 'fal_ai') {
+        log(`Error fetching FAL.AI API key from Directus, and environment variables are not allowed for FAL.AI`, 'api-keys');
+        return null;
+      }
+      
+      // Для других сервисов можно использовать ключи из переменных окружения
       const envKey = this.getKeyFromEnvironment(serviceName);
       if (envKey) {
         log(`Using ${serviceName} API key from environment variables after Directus API error`, 'api-keys');

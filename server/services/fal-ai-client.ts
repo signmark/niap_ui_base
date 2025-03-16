@@ -34,22 +34,29 @@ export class FalAiClient {
       return;
     }
 
-    // Сохраняем ключ как есть, включая префикс "Key " если он уже присутствует
-    // FAL.AI требует ключ в формате: id:secret, а в заголовке мы добавим "Key " позже
-    this.apiKey = apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey;
+    // Проверяем, приходит ли ключ уже с префиксом "Key "
+    const hasKeyPrefix = apiKey.startsWith('Key ');
+    
+    // Сохраняем базовый ключ (без префикса "Key ")
+    // Если префикс есть - убираем его для внутреннего хранения
+    // FAL.AI требует в заголовке формат: 'Key id:secret'
+    const baseKey = hasKeyPrefix ? apiKey.substring(4) : apiKey;
+    
+    // Сохраняем базовый ключ
+    this.apiKey = baseKey;
     
     // Проверка наличия формата id:secret в ключе
-    if (!this.apiKey.includes(':')) {
+    if (!baseKey.includes(':')) {
       console.warn('FalAiClient: API-ключ не содержит символ ":", это может вызвать проблемы с авторизацией');
     }
     
     // Маскируем ключ для логов
-    const colonIndex = this.apiKey.indexOf(':');
+    const colonIndex = baseKey.indexOf(':');
     const maskedKey = colonIndex > 0
-      ? `${this.apiKey.substring(0, 10)}...${colonIndex > 0 ? ':***' : ''}`
-      : `${this.apiKey.substring(0, 5)}...${this.apiKey.substring(this.apiKey.length - 5)}`;
+      ? `${baseKey.substring(0, 10)}...${colonIndex > 0 ? ':***' : ''}`
+      : `${baseKey.substring(0, 5)}...${baseKey.substring(baseKey.length - 5)}`;
     
-    log(`FalAiClient: установлен API-ключ (${maskedKey})`, 'fal-ai');
+    log(`FalAiClient: установлен API-ключ${hasKeyPrefix ? ' (с префиксом Key)' : ''} (${maskedKey})`, 'fal-ai');
   }
 
   /**
