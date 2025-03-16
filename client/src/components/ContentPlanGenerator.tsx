@@ -49,7 +49,7 @@ interface ContentPlanGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   campaignId: string;
-  onPlanGenerated?: (contentItems: any[]) => void;
+  onPlanGenerated?: (contentItems: any[], closeDialog?: boolean) => void;
 }
 
 export function ContentPlanGenerator({
@@ -241,8 +241,25 @@ export function ContentPlanGenerator({
           console.log("Структура первого элемента контент-плана:", contentPlanData[0]);
           console.log("Поля в первом элементе:", Object.keys(contentPlanData[0]));
           
-          // Сохраняем сгенерированный контент-план для предварительного просмотра
-          setGeneratedContentPlan(contentPlanData);
+          // Нормализуем структуру данных для предварительного просмотра
+          const normalizedContentPlan = contentPlanData.map((item: any) => {
+            // Создаем стандартизированный объект с ожидаемыми полями
+            return {
+              title: item.title || "Без названия",
+              content: item.content || item.text || "",
+              contentType: item.contentType || item.type || "text",
+              scheduledAt: item.scheduledAt || item.scheduled_at || null,
+              hashtags: item.hashtags || [],
+              keywords: item.keywords || [],
+              imageUrl: item.imageUrl || item.image_url || null,
+              videoUrl: item.videoUrl || item.video_url || null
+            };
+          });
+          
+          console.log("Нормализованный контент-план:", normalizedContentPlan[0]);
+          
+          // Сохраняем нормализованный контент-план для предварительного просмотра
+          setGeneratedContentPlan(normalizedContentPlan);
           setShowPreview(true);
           
           // По умолчанию выбираем все элементы контент-плана
@@ -253,9 +270,16 @@ export function ContentPlanGenerator({
           // Переключаемся на вкладку предпросмотра
           setActiveTab("preview");
           
-          // Вызываем колбэк если он передан
+          // Вызываем колбэк если он передан, но не закрываем диалог автоматически
           if (onPlanGenerated) {
-            onPlanGenerated(contentPlanData);
+            // Передаем данные в родительский компонент, но не закрываем диалог
+            onPlanGenerated(contentPlanData, false);
+            
+            // Добавляем уведомление для пользователя
+            toast({
+              title: "Готово!",
+              description: "Контент-план сгенерирован и готов к просмотру.",
+            });
           }
         } else {
           // Данные не найдены
