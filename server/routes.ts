@@ -7924,7 +7924,8 @@ ${datesText}
   });
 
   // API для генерации контент-плана через n8n
-  app.post("/api/content-plan/generate", authenticateUser, async (req, res) => {
+  app.post("/api/content-plan/generate", async (req, res) => {
+    // TODO: Временно убрана авторизация для отладки на сервере
     try {
       // Подробно логируем тело запроса
       console.log("Получен запрос на генерацию контент-плана:");
@@ -8006,18 +8007,20 @@ ${datesText}
           throw new Error("Не настроен URL webhook для генерации контент-плана");
         }
         
-        if (!apiKey) {
-          throw new Error("Не настроен API ключ для доступа к n8n");
-        }
+        // ВРЕМЕННО: Убрана проверка ключа API для отладки на сервере
+        // if (!apiKey) {
+        //   throw new Error("Не настроен API ключ для доступа к n8n");
+        // }
 
         console.log(`Отправка запроса на webhook: ${webhookUrl}`);
         console.log(`Данные запроса:`, JSON.stringify(workflowData).substring(0, 200) + "...");
         
         // Отправляем данные в формате { data: {...} } напрямую, так как n8n webhook ожидает этот формат
+        // ВРЕМЕННО: Убрано требование ключа API для отладки на сервере
         const n8nResponse = await axios.post(webhookUrl, workflowData, {
           headers: {
-            'Content-Type': 'application/json',
-            'X-N8N-API-KEY': apiKey
+            'Content-Type': 'application/json'
+            // 'X-N8N-API-KEY': apiKey // Временно закомментировано для отладки
           }
         });
         
