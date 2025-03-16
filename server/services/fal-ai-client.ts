@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 
 /**
  * Единый клиент для работы с FAL.AI API

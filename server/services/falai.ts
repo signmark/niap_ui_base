@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { directusApi } from '../directus';
-import { log } from '../vite';
+import { log } from '../utils/logger';
 import { deepseekService } from './deepseek';
 import { apiKeyService } from './api-keys';
 
