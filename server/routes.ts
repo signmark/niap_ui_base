@@ -1451,24 +1451,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Обновляем существующий эндпоинт для получения API ключа FAL.AI с правильной приоритизацией
+  // Маршрут для получения API ключа FAL.AI - только из настроек пользователя в Directus
   app.get('/api/settings/fal_ai', async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       
-      // Проверяем, есть ли ключ в переменных окружения как запасной вариант
-      const envApiKey = process.env.FAL_AI_API_KEY;
-      
-      if (envApiKey) {
-        console.log('Используем FAL.AI API ключ из переменных окружения');
-        return res.json({
-          success: true,
-          data: {
-            api_key: envApiKey,
-            source: "env"
-          }
-        });
-      }
+      // Переменные окружения для FAL.AI больше не используются
+      // Работаем только с ключами из Directus
       
       try {
         // Пробуем получить API ключ из Directus
@@ -1539,17 +1528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (directusError: any) {
         console.error('Ошибка при запросе к Directus API:', directusError);
         
-        // Если ошибка авторизации в Directus, но есть ключ в переменных окружения, используем его
-        if (envApiKey) {
-          console.log('Используем запасной FAL.AI API ключ из переменных окружения из-за ошибки Directus');
-          return res.json({
-            success: true,
-            data: {
-              api_key: envApiKey,
-              source: "env_fallback"
-            }
-          });
-        }
+        // Возвращаем ошибку, так как мы не используем ключи из переменных окружения для FAL.AI
         
         // Если нет запасного варианта, возвращаем ошибку
         return res.status(500).json({
@@ -1722,26 +1701,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let falAiApiKey = null;
       
       if (userId) {
-        // Если пользователь авторизован, используем улучшенную систему приоритизации
-        console.log('Получаем API ключ FAL.AI с правильной приоритизацией для пользователя с ID:', userId);
+        // Если пользователь авторизован, получаем ключ из настроек пользователя
+        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
         falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
-          // Проверяем, из какого источника был получен ключ для диагностики
-          const envKey = process.env.FAL_AI_API_KEY;
-          
-          if (envKey && falAiApiKey === envKey) {
-            console.log('Используется FAL.AI API ключ из переменных окружения (резервный вариант)');
-          } else {
-            console.log('Используется FAL.AI API ключ из настроек пользователя (приоритетный источник)');
-          }
+          console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
         } else {
-          console.log('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
+          console.log('API ключ FAL.AI не найден в настройках пользователя');
         }
       } else {
-        // Если пользователь не авторизован, используем ключ из переменных окружения
-        console.log('Пользователь не авторизован, используем API ключ из переменных окружения');
-        falAiApiKey = process.env.FAL_AI_API_KEY;
+        // Если пользователь не авторизован, отказываем в доступе
+        console.log('Пользователь не авторизован, доступ к FAL.AI API запрещен');
+        return res.status(403).json({ 
+          success: false, 
+          error: "Для использования генерации изображений необходимо авторизоваться и добавить ключ FAL.AI в настройки пользователя." 
+        });
       }
       
       if (!falAiApiKey) {
@@ -1985,7 +1960,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Добавляем подробное логирование для отладки
           console.error(`Применен формат AUTHORIZATION HEADER: ${falAiApiKey}`);
-          console.error(`Неотформатированный ключ из переменных: ${process.env.FAL_AI_API_KEY || 'не задан'}`);
           console.error(`API ключ начинается с 'Key ': ${falAiApiKey?.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
           console.error(`Длина API ключа: ${falAiApiKey?.length || 0} символов`);
         }
@@ -2043,26 +2017,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let falAiApiKey = null;
       
       if (userId) {
-        // Если пользователь авторизован, используем улучшенную систему приоритизации
-        console.log('Получаем API ключ FAL.AI с правильной приоритизацией для пользователя с ID:', userId);
+        // Если пользователь авторизован, получаем ключ из настроек пользователя в Directus
+        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
         falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
-          // Проверяем, из какого источника был получен ключ для диагностики
-          const envKey = process.env.FAL_AI_API_KEY;
-          
-          if (envKey && falAiApiKey === envKey) {
-            console.log('Используется FAL.AI API ключ из переменных окружения (резервный вариант)');
-          } else {
-            console.log('Используется FAL.AI API ключ из настроек пользователя (приоритетный источник)');
-          }
+          console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
         } else {
-          console.log('API ключ FAL.AI не найден ни в настройках пользователя, ни в переменных окружения');
+          console.log('API ключ FAL.AI не найден в настройках пользователя');
         }
       } else {
-        // Если пользователь не авторизован, используем ключ из переменных окружения
-        console.log('Пользователь не авторизован, используем API ключ из переменных окружения');
-        falAiApiKey = process.env.FAL_AI_API_KEY || "";
+        // Если пользователь не авторизован, отказываем в доступе
+        console.log('Пользователь не авторизован, доступ к FAL.AI API запрещен');
+        return res.status(403).json({ 
+          success: false, 
+          error: "Для использования генерации изображений необходимо авторизоваться и добавить ключ FAL.AI в настройки пользователя." 
+        });
       }
       
       // Проверяем, есть ли API ключ
@@ -2072,7 +2042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!apiInitialized) {
         return res.status(400).json({ 
           success: false, 
-          error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройки или переменные окружения." 
+          error: "API ключ для FAL.AI не настроен. Добавьте ключ в настройки пользователя в Directus." 
         });
       }
 
