@@ -198,9 +198,10 @@ export class PerplexityService {
 }
 
 // Экспортируем экземпляр сервиса для использования в других модулях
+// ВАЖНО: Инициализируем без API ключа, ключ будет получен из Directus при необходимости
 export const perplexityService = new PerplexityService({
-  apiKey: process.env.PERPLEXITY_API_KEY || ""
+  apiKey: "" // Пустой ключ, будет получен из Directus при вызове initialize()
 });
 
 // Логируем статус инициализации сервиса
-console.log(`Perplexity service initialized. API key from env: ${process.env.PERPLEXITY_API_KEY ? 'Present' : 'Not found'}`);
+console.log(`Perplexity service initialized. API keys will be obtained ONLY from Directus user settings.`);

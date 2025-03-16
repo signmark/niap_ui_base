@@ -443,10 +443,10 @@ ${originalContent}
 }
 
 // Экспортируем экземпляр сервиса для использования в других модулях
-// Инициализируем с пустым ключом, который будет заменен при вызове initialize
+// ВАЖНО: Инициализируем без API ключа, ключ будет получен из Directus при необходимости
 export const deepseekService = new DeepSeekService({
-  apiKey: ""
+  apiKey: "" // Пустой ключ, будет получен из Directus при вызове initialize()
 });
 
 // Логируем статус инициализации сервиса
-console.log(`DeepSeek service initialized. API key from env: ${process.env.DEEPSEEK_API_KEY ? 'Present' : 'Not found'}`);
+console.log(`DeepSeek service initialized. API keys will be obtained ONLY from Directus user settings.`);
