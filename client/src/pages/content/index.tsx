@@ -1413,8 +1413,42 @@ export default function ContentPage() {
               campaignId={selectedCampaignId}
               onPlanGenerated={(contentItems, closeDialog) => {
                 console.log("Сгенерирован контент-план:", contentItems);
-                // После успешной генерации и сохранения, обновляем список контента
-                queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+                
+                // Последовательно сохраняем каждый элемент контент-плана
+                const saveContentPromises = contentItems.map(item => {
+                  // Нормализуем структуру данных для API
+                  const contentData = {
+                    campaignId: selectedCampaignId,
+                    title: item.title || "Без названия",
+                    content: item.content || item.text || "",
+                    contentType: item.contentType || item.type || "text",
+                    scheduledAt: item.scheduledAt || item.scheduled_at || null,
+                    hashtags: item.hashtags || [],
+                    keywords: item.keywords || [],
+                    imageUrl: item.imageUrl || item.image_url || null,
+                    videoUrl: item.videoUrl || item.video_url || null,
+                    status: 'draft'
+                  };
+                  
+                  // Отправляем запрос на сохранение через API
+                  return apiRequest('/api/campaign-content', {
+                    method: 'POST',
+                    data: contentData
+                  }).catch(error => {
+                    console.error('Ошибка при сохранении элемента контент-плана:', error);
+                    return null; // Возвращаем null чтобы не прерывать Promise.all
+                  });
+                });
+                
+                // Ожидаем сохранение всех элементов
+                Promise.all(saveContentPromises)
+                  .then(results => {
+                    const successCount = results.filter(Boolean).length;
+                    console.log(`Успешно сохранено ${successCount} из ${contentItems.length} элементов`);
+                    
+                    // Обновляем список контента
+                    return queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+                  })
                   .then(() => {
                     toast({
                       description: "Контент-план успешно создан и сохранен",
@@ -1423,6 +1457,14 @@ export default function ContentPage() {
                     if (closeDialog) {
                       setIsContentPlanDialogOpen(false);
                     }
+                  })
+                  .catch(error => {
+                    console.error('Ошибка при сохранении контент-плана:', error);
+                    toast({
+                      variant: 'destructive',
+                      title: 'Ошибка',
+                      description: 'Не удалось сохранить контент-план'
+                    });
                   });
               }}
             />

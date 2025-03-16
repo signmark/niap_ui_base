@@ -798,14 +798,16 @@ export function ContentPlanGenerator({
               
               if (onPlanGenerated) {
                 // Вызываем с параметром true для закрытия диалога
+                // Родительский компонент сам позаботится о закрытии диалога
                 onPlanGenerated(selectedContent, true);
+              } else {
+                // Если onPlanGenerated не определен, просто закрываем диалог напрямую
+                toast({
+                  description: "Контент-план сохранен",
+                });
+                
+                onClose();
               }
-              
-              toast({
-                description: "Контент-план сохранен",
-              });
-              
-              onClose();
             }}
             disabled={selectedContentItems.size === 0}
           >
