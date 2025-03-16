@@ -1232,11 +1232,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Инициализируем FAL.AI SDK с использованием централизованной системы API ключей
+      // Инициализируем FAL.AI клиент с использованием только API ключа из Directus
       let apiKey = null;
       
       if (userId) {
-        // Если пользователь авторизован, пробуем получить ключ из его настроек
+        // Если пользователь авторизован, получаем ключ только из его настроек в Directus
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
         apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         if (apiKey) {
@@ -1244,17 +1244,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Если не удалось получить ключ пользователя, используем системный
+      // Если ключ не найден, возвращаем ошибку - не используем ключи из переменных окружения
       if (!apiKey) {
-        console.log('Ключ FAL.AI пользователя не найден, проверяем переменные окружения');
-        apiKey = process.env.FAL_AI_API_KEY;
-      }
-      
-      if (!apiKey) {
-        console.error('API ключ FAL.AI не найден ни в переменных окружения, ни в Directus');
-        return res.status(500).json({ 
+        console.error('API ключ FAL.AI не найден в настройках пользователя Directus');
+        return res.status(403).json({ 
           success: false, 
-          error: "API ключ FAL.AI не настроен. Добавьте ключ в системные настройки." 
+          error: "API ключ FAL.AI не настроен для вашего аккаунта. Пожалуйста, добавьте ключ в настройки пользователя." 
         });
       }
       
