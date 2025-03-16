@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { directusApi } from '../lib/directus';
+import { apiKeyService } from './api-keys';
+import { log } from '../utils/logger';
 
 interface ApifyRunResponse {
   id: string;
@@ -17,13 +18,21 @@ export class ApifyService {
 
   async initialize(userId: string, authToken?: string) {
     try {
-      console.log('Initializing Apify service for user:', userId);
+      log(`Initializing Apify service for user: ${userId}`, 'apify');
 
-      // Проверяем, передан ли токен авторизации
-      if (!authToken) {
-        console.warn('No auth token provided to initialize Apify service');
+      // Получаем API ключ из централизованного сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'apify', authToken);
+      
+      if (apiKey) {
+        this.apiKey = apiKey;
+        log('Apify API key successfully obtained', 'apify');
+        return true;
       }
-
+      
+      log('Apify API key not found', 'apify');
+      return false;
+      
+      /* Старый код для получения API ключа напрямую из Directus
       // Get API key from user settings
       const response = await directusApi.get('/items/user_api_keys', {
         params: {
@@ -56,7 +65,7 @@ export class ApifyService {
     }
 
     try {
-      console.log(`Starting Instagram scraper for username: ${username}`);
+      log(`Starting Instagram scraper for username: ${username}`, 'apify');
 
       // Simplified request body matching screenshot example
       const requestData = {
@@ -64,11 +73,10 @@ export class ApifyService {
         resultsLimit: 10
       };
 
-      console.log('Apify API Request:', {
+      log('Apify API Request: ' + JSON.stringify({
         url: `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
-        headers: { 'Authorization': `Bearer ${this.apiKey}` },
         data: requestData
-      });
+      }), 'apify');
 
       const response = await axios.post(
         `${this.baseUrl}/acts/zuzka~instagram-post-scraper/runs`,
@@ -81,15 +89,15 @@ export class ApifyService {
         }
       );
 
-      console.log('Apify API Response:', response.data);
+      log('Apify API Response status: ' + response.status, 'apify');
 
       const runData = response.data as ApifyRunResponse;
-      console.log('Run created with ID:', runData.id);
+      log('Run created with ID: ' + runData.id, 'apify');
       return runData.id;
     } catch (error) {
-      console.error('Error running Instagram scraper:', error);
+      log('Error running Instagram scraper: ' + error, 'apify');
       if (axios.isAxiosError(error) && error.response) {
-        console.error('Apify API error response:', error.response.data);
+        log('Apify API error response: ' + JSON.stringify(error.response.data), 'apify');
       }
       throw error;
     }
@@ -101,7 +109,7 @@ export class ApifyService {
     }
 
     try {
-      console.log(`Checking status for run ${runId}`);
+      log(`Checking status for run ${runId}`, 'apify');
       const response = await axios.get(
         `${this.baseUrl}/actor-runs/${runId}`,
         {
@@ -112,12 +120,12 @@ export class ApifyService {
         }
       );
 
-      console.log(`Run ${runId} status:`, response.data.status);
+      log(`Run ${runId} status: ${response.data.status}`, 'apify');
       return response.data.status;
     } catch (error) {
-      console.error('Error getting run status:', error);
+      log('Error getting run status: ' + error, 'apify');
       if (axios.isAxiosError(error) && error.response) {
-        console.error('Apify API error response:', error.response.data);
+        log('Apify API error response: ' + JSON.stringify(error.response.data), 'apify');
       }
       throw error;
     }
@@ -129,7 +137,7 @@ export class ApifyService {
     }
 
     try {
-      console.log(`Fetching results for run ${runId}`);
+      log(`Fetching results for run ${runId}`, 'apify');
       const response = await axios.get(
         `${this.baseUrl}/actor-runs/${runId}/dataset/items`,
         {
@@ -141,28 +149,28 @@ export class ApifyService {
       );
 
       const results = response.data as ApifyRunResult;
-      console.log(`Retrieved ${results.items.length} items from run ${runId}`);
+      log(`Retrieved ${results.items.length} items from run ${runId}`, 'apify');
       return results.items;
     } catch (error) {
-      console.error('Error getting run results:', error);
+      log('Error getting run results: ' + error, 'apify');
       if (axios.isAxiosError(error) && error.response) {
-        console.error('Apify API error response:', error.response.data);
+        log('Apify API error response: ' + JSON.stringify(error.response.data), 'apify');
       }
       throw error;
     }
   }
 
   async waitForRunToFinish(runId: string, checkInterval = 5000): Promise<void> {
-    console.log(`Waiting for run ${runId} to finish`);
+    log(`Waiting for run ${runId} to finish`, 'apify');
     while (true) {
       const status = await this.getRunStatus(runId);
-      console.log(`Current status for run ${runId}: ${status}`);
+      log(`Current status for run ${runId}: ${status}`, 'apify');
 
       if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED') {
         if (status !== 'SUCCEEDED') {
           throw new Error(`Run ${runId} failed with status: ${status}`);
         }
-        console.log(`Run ${runId} completed successfully`);
+        log(`Run ${runId} completed successfully`, 'apify');
         break;
       }
       await new Promise(resolve => setTimeout(resolve, checkInterval));
