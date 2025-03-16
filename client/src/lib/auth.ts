@@ -66,7 +66,7 @@ export const refreshAccessToken = async () => {
     console.log('Token refresh successful, new token length:', access_token.length);
 
     // Update tokens
-    localStorage.setItem('auth_token', access_token);
+    localStorage.setItem('authToken', access_token);
     localStorage.setItem('refresh_token', refresh_token);
 
     // Update auth store
@@ -83,7 +83,7 @@ export const refreshAccessToken = async () => {
     console.error('Error refreshing access token:', error);
     
     // Clear tokens on refresh failure
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('refresh_token');
     
     // Clear auth store
