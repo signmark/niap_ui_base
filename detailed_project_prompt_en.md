@@ -29,9 +29,9 @@ Develop SMM Manager - an advanced AI platform for social media analysis and cont
 4. Must follow the existing project structure
 5. All data interactions happen through Directus API, local database is not used
 
-## Database Structure
+## Data Structure
 
-### Main Tables:
+### Main Data Types (stored in Directus):
 1. **campaigns**:
    - id (primary key, serial)
    - directusId (external identifier from Directus)
@@ -84,6 +84,8 @@ Develop SMM Manager - an advanced AI platform for social media analysis and cont
    - campaignId (campaign relationship)
    - companyName, contactInfo, businessDescription, etc. (business information)
    - createdAt (creation date)
+
+All data is stored and managed through the Directus API. The project only uses TypeScript types and interfaces to describe data; no local database is used.
 
 ## API Integrations and External Services
 
@@ -277,7 +279,7 @@ Format each account as:
 
 3. **Technical**:
    - Avoid modifying configuration files (vite.config.ts, package.json)
-   - Do not use direct SQL queries, everything through Drizzle ORM
+   - Do not use local database, all data interactions through Directus API
    - Follow the existing project structure
 
 ## Implementation Requirements
@@ -297,5 +299,204 @@ Format each account as:
 4. Optimize image loading through proxy servers
 5. Use caching for external API requests
 6. Separate business logic and presentation in components
+
+## Production Deployment
+
+### Docker Integration
+SMM Manager is integrated into infrastructure using Docker and Docker Compose. Below is a complete example of the infrastructure configuration, including all necessary components:
+
+```yaml
+services:
+  # Traefik - reverse proxy for request routing and SSL
+  traefik:
+    image: "traefik:v3.3"
+    restart: always
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik_data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # N8N - automation service for webhook processing and content publishing
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile-n8n
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "127.0.0.1:5678:5678"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.routers.n8n.entrypoints=web,websecure
+      - traefik.http.routers.n8n.tls.certresolver=mytlschallenge
+      - traefik.http.middlewares.n8n.headers.SSLRedirect=true
+      - traefik.http.middlewares.n8n.headers.STSSeconds=315360000
+      - traefik.http.middlewares.n8n.headers.browserXSSFilter=true
+      - traefik.http.middlewares.n8n.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.n8n.headers.forceSTSHeader=true
+      - traefik.http.middlewares.n8n.headers.SSLHost=${DOMAIN_NAME}
+      - traefik.http.middlewares.n8n.headers.STSIncludeSubdomains=true
+      - traefik.http.middlewares.n8n.headers.STSPreload=true
+      - traefik.http.routers.n8n.middlewares=n8n@docker
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - DB_TYPE=postgresdb
+      - DB_TABLE_PREFIX=n8n_
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=10000
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - NODE_PATH=/home/node/.n8n/node_modules
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*  
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./local-files:/files
+
+  # PostgreSQL - central database for storing Directus and N8N data
+  postgres:
+    image: postgres:16
+    restart: always
+    shm_size: 128mb
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  # PgAdmin - PostgreSQL administration interface
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    depends_on:
+      - postgres
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${SSL_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PASSWORD_PGADMIN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin.entrypoints=web,websecure
+      - traefik.http.routers.pgadmin.tls=true
+      - traefik.http.routers.pgadmin.rule=Host(`${PGADMIN_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.pgadmin.tls.certresolver=mytlschallenge
+      - traefik.http.services.pgadmin.loadbalancer.server.port=80
+
+  # Directus - data management and user account system
+  directus:
+    image: directus/directus:latest
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - DB_CLIENT=pg
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=directus
+      - DB_USER=postgres
+      - DB_PASSWORD=${DIRECTUS_DB_PASSWORD}
+      - ADMIN_EMAIL=${DIRECTUS_ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${DIRECTUS_ADMIN_PASSWORD}
+      - CORS_ENABLED=true
+      - CORS_ORIGIN=true
+      - CORS_METHODS=GET,POST,PATCH,DELETE
+      - CORS_ALLOWED_HEADERS=Content-Type,Authorization
+      - CORS_EXPOSED_HEADERS=Content-Range
+      - CORS_CREDENTIALS=true
+      - CORS_MAX_AGE=18000
+    volumes:
+      - ./directus_data:/directus/uploads
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.directus.rule=Host(`directus.${DOMAIN_NAME}`)
+      - traefik.http.routers.directus.tls=true
+      - traefik.http.routers.directus.entrypoints=web,websecure
+      - traefik.http.routers.directus.tls.certresolver=mytlschallenge
+      - traefik.http.services.directus.loadbalancer.server.port=8055
+
+  # SMM Manager - main application
+  smm:
+    build:
+      context: ./smm
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./smm:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.smm.rule=Host(`smm.nplanner.ru`)
+      - traefik.http.routers.smm.tls=true
+      - traefik.http.routers.smm.entrypoints=web,websecure
+      - traefik.http.routers.smm.tls.certresolver=mytlschallenge
+      - traefik.http.services.smm.loadbalancer.server.port=5000
+```
+
+### Dockerfile
+
+```dockerfile
+# Use current Node.js version
+FROM node:18
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies via apt
+RUN apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Clean existing node_modules and lock files for clean installation
+RUN rm -rf node_modules package-lock.json
+
+# Install dependencies
+RUN npm install --no-audit --verbose
+
+# Explicitly install react-draggable
+RUN npm install react-draggable@4.4.6 --save --no-audit
+
+# Verify library presence
+RUN npm ls react-draggable
+
+# Copy source code
+COPY . .
+
+# Export application port
+EXPOSE 5000
+
+# Command to build and run the application
+CMD ["npm", "run", "dev"]
+```
 
 This prompt contains all the necessary details to recreate the SMM Manager project, taking into account the existing architecture, constraints, and technical features.
