@@ -202,6 +202,7 @@ export function ContentPlanGenerator({
         if (response.success && response.data && response.data.contentPlan) {
           contentPlanData = response.data.contentPlan;
           console.log('Обнаружен формат 1: success->data->contentPlan');
+          console.log('Содержимое contentPlan:', JSON.stringify(response.data.contentPlan).substring(0, 300) + '...');
         } 
         // Формат 2: [{ success: true, data: { contentPlan: [...] } }]
         else if (Array.isArray(response) && response.length > 0 && response[0].data?.contentPlan) {
@@ -235,6 +236,10 @@ export function ContentPlanGenerator({
           toast({
             description: `Контент-план успешно сгенерирован (${contentPlanData.length} постов)`,
           });
+          
+          // Проверяем структуру контент-плана перед сохранением
+          console.log("Структура первого элемента контент-плана:", contentPlanData[0]);
+          console.log("Поля в первом элементе:", Object.keys(contentPlanData[0]));
           
           // Сохраняем сгенерированный контент-план для предварительного просмотра
           setGeneratedContentPlan(contentPlanData);
