@@ -1726,6 +1726,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // ИСПРАВЛЕНИЕ: Проверяем и обновляем ключ API в нужном формате
+      if (falAiApiKey && !falAiApiKey.startsWith('Key ') && falAiApiKey.includes(':')) {
+        console.log('Автоматически добавляем префикс "Key " к ключу FAL.AI для запроса генерации');
+        falAiApiKey = `Key ${falAiApiKey}`;
+      }
+      
       // Инициализируем объект с данными запроса
       let requestData: any = {};
       
@@ -2577,8 +2583,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Обновляем ключ API в сервисе
-      falAiService.updateApiKey(falAiApiKey);
+      // ИСПРАВЛЕНИЕ: Проверяем и обновляем ключ API в нужном формате
+      if (falAiApiKey && !falAiApiKey.startsWith('Key ') && falAiApiKey.includes(':')) {
+        console.log('Автоматически добавляем префикс "Key " к ключу FAL.AI для тестового запроса');
+        falAiService.updateApiKey(`Key ${falAiApiKey}`);
+      } else {
+        falAiService.updateApiKey(falAiApiKey as string);
+      }
       
       // Генерируем тестовое изображение
       const prompt = "A beautiful landscape with mountains and a lake, digital art style";
