@@ -331,10 +331,10 @@ export function ImageGenerationDialog({
       
       try {
         // Добавляем детальное логирование запроса
-        console.log('Отправляем запрос PATCH к /api/campaign-content/' + contentId);
+        console.log('Отправляем запрос PATCH к /campaign-content/' + contentId);
         console.log('Данные запроса:', { prompt: promptText });
         
-        const response = await api.patch(`/api/campaign-content/${contentId}`, {
+        const response = await api.patch(`/campaign-content/${contentId}`, {
           prompt: promptText
         });
         
