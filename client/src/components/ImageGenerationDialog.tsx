@@ -13,14 +13,15 @@ import { api } from "@/lib/api";
 
 interface ImageGenerationDialogProps {
   campaignId?: string;
-  contentId?: string; // Добавляем ID контента для привязки изображений
+  contentId?: string; // ID контента для привязки изображений
   businessData?: {
     companyName: string;
     businessDescription: string;
     brandImage: string;
     productsServices: string;
   };
-  initialContent?: string; // Добавляем начальный контент для подсказки
+  initialContent?: string; // Начальный контент для подсказки
+  initialPrompt?: string; // Готовый промт из контент-плана
   onImageGenerated?: (imageUrl: string) => void;
   onClose: () => void;
 }
@@ -30,6 +31,7 @@ export function ImageGenerationDialog({
   contentId,
   businessData,
   initialContent,
+  initialPrompt,
   onImageGenerated,
   onClose
 }: ImageGenerationDialogProps) {
