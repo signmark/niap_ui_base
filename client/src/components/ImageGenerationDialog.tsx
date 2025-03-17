@@ -175,19 +175,33 @@ export function ImageGenerationDialog({
       
       console.log("Генерация промта на основе текста через DeepSeek");
       
-      // Пытаемся извлечь ключевые слова из текста
-      const keywords = await extractKeywordsFromText(content);
+      // Сбросим индикатор загрузки при окончании запроса в любом случае
+      const resetLoading = () => {
+        setTimeout(() => {
+          // Сбрасываем состояние загрузки через небольшую задержку
+          // Это нужно, чтобы визуально было понятно, что запрос завершился
+          setIsPromptGenerationPending(false);
+        }, 500);
+      };
       
-      // Генерируем промт через DeepSeek на основе контента
-      const response = await api.post("/generate-image-prompt", {
-        content: content,
-        keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
-      });
-      
-      if (response.data?.success && response.data?.prompt) {
-        return response.data.prompt;
-      } else {
-        throw new Error("Не удалось сгенерировать промт");
+      try {
+        // Пытаемся извлечь ключевые слова из текста
+        const keywords = await extractKeywordsFromText(content);
+        
+        // Генерируем промт через DeepSeek на основе контента
+        const response = await api.post("/generate-image-prompt", {
+          content: content,
+          keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
+        });
+        
+        if (response.data?.success && response.data?.prompt) {
+          return response.data.prompt;
+        } else {
+          throw new Error("Не удалось сгенерировать промт");
+        }
+      } catch (error) {
+        resetLoading();
+        throw error;
       }
     },
     onSuccess: (promptText) => {
