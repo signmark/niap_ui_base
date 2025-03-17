@@ -1704,7 +1704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
-      const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform } = req.body;
+      const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
       
       // Получаем userId, установленный в authenticateUser middleware
       const userId = (req as any).userId;
