@@ -6036,7 +6036,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
-          status: req.body.status
+          status: req.body.status,
+          prompt: req.body.prompt // Добавляем промт
         };
         
         // Обрабатываем ключевые слова особым образом
