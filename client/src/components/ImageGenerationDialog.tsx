@@ -224,35 +224,62 @@ export function ImageGenerationDialog({
   const stripHtml = (html: string): string => {
     if (!html || typeof html !== 'string') return '';
     
-    // Преобразуем некоторые теги в текстовые эквиваленты перед удалением
-    let processedHtml = html
-      // Параграфы превращаем в текст с переносами строк
-      .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-      // Заголовки
-      .replace(/<h[1-6]>(.*?)<\/h[1-6]>/gi, '$1\n\n')
-      // Переносы строк
-      .replace(/<br\s*\/?>/gi, '\n')
-      // Списки
-      .replace(/<li>(.*?)<\/li>/gi, '• $1\n')
-      // Ссылки преобразуем в текст (если есть текст ссылки, используем его, иначе URI)
-      .replace(/<a\s+[^>]*href=['"]([^'"]*)['"]\s*[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
-        return text && text.trim() ? `${text.trim()} (${url})` : url;
-      });
-    
-    // Создаем временный div элемент
-    const tempDiv = document.createElement('div');
-    // Устанавливаем HTML-содержимое
-    tempDiv.innerHTML = processedHtml;
-    // Получаем только текстовое содержимое (без HTML-тегов)
-    const plainText = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // Сохраняем эмодзи и основное форматирование, но удаляем лишние пробелы
-    const cleanedText = plainText
-      .replace(/\n\s+/g, '\n') // Удаляем пробелы после переносов строк
-      .replace(/\n{3,}/g, '\n\n') // Ограничиваем количество переносов строк до 2
-      .trim();
-    
-    return cleanedText;
+    try {
+      // Преобразуем некоторые теги в текстовые эквиваленты перед удалением
+      let processedHtml = html
+        // Параграфы превращаем в текст с переносами строк
+        .replace(/<p.*?>(.*?)<\/p>/gi, '$1\n\n')
+        // Заголовки
+        .replace(/<h[1-6].*?>(.*?)<\/h[1-6]>/gi, '$1\n\n')
+        // Переносы строк
+        .replace(/<br\s*\/?>/gi, '\n')
+        // Списки
+        .replace(/<li.*?>(.*?)<\/li>/gi, '• $1\n')
+        // Ссылки преобразуем в текст (если есть текст ссылки, используем его, иначе URI)
+        .replace(/<a\s+[^>]*href=['"]([^'"]*)['"]\s*[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
+          return text && text.trim() ? `${text.trim()} (${url})` : url;
+        });
+      
+      // Удаляем остальные HTML-теги простой регуляркой
+      processedHtml = processedHtml.replace(/<[^>]*>/g, '');
+      
+      // Декодируем HTML-сущности
+      processedHtml = processedHtml
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, '\'')
+        .replace(/&ndash;/g, '–')
+        .replace(/&mdash;/g, '—')
+        .replace(/&laquo;/g, '«')
+        .replace(/&raquo;/g, '»');
+      
+      // Создаем временный div элемент для обработки оставшихся HTML-сущностей
+      // Это будет работать только в браузере
+      let plainText = processedHtml;
+      try {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = processedHtml;
+        plainText = tempDiv.textContent || tempDiv.innerText || processedHtml;
+      } catch (e) {
+        console.warn('Не удалось создать DOM-элемент для декодирования HTML:', e);
+      }
+      
+      // Сохраняем эмодзи и основное форматирование, но удаляем лишние пробелы
+      const cleanedText = plainText
+        .replace(/\n\s+/g, '\n')           // Удаляем пробелы после переносов строк
+        .replace(/\n{3,}/g, '\n\n')        // Ограничиваем количество переносов строк до 2
+        .replace(/\s{2,}/g, ' ')           // Заменяем множественные пробелы на один
+        .trim();
+      
+      return cleanedText;
+    } catch (error) {
+      console.error('Ошибка при очистке HTML:', error);
+      // В случае ошибки, просто удаляем все теги
+      return html.replace(/<[^>]*>/g, '');
+    }
   };
   
   // Функция для перевода промта на английский
