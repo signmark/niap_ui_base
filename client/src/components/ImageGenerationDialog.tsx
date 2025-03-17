@@ -744,14 +744,20 @@ export function ImageGenerationDialog({
         <TabsContent value="social" className="space-y-2">
           <div className="space-y-1">
             <Label className="text-xs">Текст для генерации изображения</Label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
-              className="min-h-[180px] text-sm"
-            />
+            <div className="relative">
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
+                className="min-h-[180px] text-sm"
+              />
+              <div className="absolute inset-0 min-h-[180px] border rounded-md p-2 overflow-auto text-sm bg-white pointer-events-none opacity-0">
+                {content && stripHtml(content)}
+              </div>
+            </div>
             <div className="flex justify-between items-center mt-1.5">
-              <p className="text-xs text-muted-foreground">HTML-теги будут автоматически удалены при обработке текста</p>
+              <div className="flex-1">
+              </div>
               <Button 
                 variant="outline" 
                 size="sm" 
