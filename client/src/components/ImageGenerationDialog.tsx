@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,22 @@ export function ImageGenerationDialog({
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   
+  // При монтировании компонента сбрасываем все значения в исходное состояние
+  useEffect(() => {
+    // Сброс формы при первом рендере компонента
+    setPrompt("");
+    setNegativePrompt("");
+    setImageSize("1024x1024");
+    setContent("");
+    setPlatform("instagram");
+    setGeneratedImages([]);
+    setSelectedImageIndex(-1);
+    setModelType("fast-sdxl");
+    setStylePreset("photographic");
+    setNumImages(3);
+    setActiveTab("prompt");
+  }, []);
+  
   const { toast } = useToast();
   
   // Разбор размера изображения на ширину и высоту
@@ -64,7 +80,7 @@ export function ImageGenerationDialog({
           height,
           campaignId,
           modelName: modelType,
-          numImages: 1, // Уменьшаем до 1 изображения для ускорения обработки
+          numImages: numImages, // Используем выбранное пользователем значение
           stylePreset
         };
       } else if (activeTab === "business") {
@@ -335,6 +351,21 @@ export function ImageGenerationDialog({
                 <Label htmlFor="s4">Базовый</Label>
               </div>
             </RadioGroup>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Количество изображений</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={numImages}
+                onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
+                className="w-20"
+              />
+              <span className="text-sm text-muted-foreground">(от 1 до 5)</span>
+            </div>
           </div>
         </TabsContent>
         

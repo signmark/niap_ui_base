@@ -1814,7 +1814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           negative_prompt: 'text, words, letters, logos, watermarks, low quality',
           width: width,
           height: height,
-          num_images: 3,
+          num_images: numImages || 3, // Используем указанное число изображений или 3 по умолчанию
           style_preset: stylePreset || 'photographic'
         };
       } else {
