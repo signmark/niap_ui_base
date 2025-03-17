@@ -165,6 +165,7 @@ export default function ContentPage() {
     contentType: "text",
     imageUrl: "",
     videoUrl: "",
+    prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
   });
   const [scheduleDate, setScheduleDate] = useState("");
@@ -255,6 +256,7 @@ export default function ContentPage() {
             contentType: "text",
             imageUrl: "",
             videoUrl: "",
+            prompt: "", // Сохраняем поле prompt
             keywords: []
           });
           
@@ -476,6 +478,7 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
+      prompt: currentContent.prompt || "", // Добавляем поле промта для генерации изображений
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
     };
@@ -1384,6 +1387,7 @@ export default function ContentPage() {
           campaignId={selectedCampaignId}
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
           initialContent={currentContent?.content || newContent.content} // Передаем текст контента для генерации
+          initialPrompt={currentContent?.prompt || newContent.prompt} // Передаем готовый промт из контент-плана
           onImageGenerated={(imageUrl) => {
             console.log("Изображение успешно сгенерировано:", imageUrl);
             // Проверяем, находимся ли мы в режиме редактирования или создания
@@ -1429,6 +1433,7 @@ export default function ContentPage() {
                     keywords: item.keywords || [],
                     imageUrl: item.imageUrl || item.image_url || null,
                     videoUrl: item.videoUrl || item.video_url || null,
+                    prompt: item.prompt || "", // Добавляем поле промта для генерации изображений
                     status: 'draft'
                   };
                   
