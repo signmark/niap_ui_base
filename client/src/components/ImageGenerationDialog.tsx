@@ -11,6 +11,62 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Image, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 
+/**
+ * Извлекает ключевые слова из текста для улучшения промта
+ * Использует простой алгоритм частотного анализа и фильтрации стоп-слов
+ */
+async function extractKeywordsFromText(text: string): Promise<string[]> {
+  // Если текст пустой, возвращаем пустой массив
+  if (!text || text.trim() === '') {
+    return [];
+  }
+  
+  try {
+    // Очищаем HTML-теги из текста
+    const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Пытаемся получить ключевые слова через API
+    const response = await api.post('/analyze-text-keywords', { 
+      text: cleanText,
+      maxKeywords: 5 // Не более 5 ключевых слов
+    });
+    
+    if (response.data?.success && Array.isArray(response.data.keywords)) {
+      console.log("Извлечены ключевые слова из текста:", response.data.keywords);
+      return response.data.keywords;
+    }
+    
+    // Если API недоступно, используем локальное извлечение ключевых слов
+    console.log("Используем локальное извлечение ключевых слов");
+    
+    // Простой алгоритм извлечения ключевых слов:
+    // 1. Разбиваем текст на слова
+    // 2. Удаляем стоп-слова
+    // 3. Выбираем самые длинные слова
+    
+    // Разбиваем текст на слова, приводим к нижнему регистру
+    const words = cleanText.toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+      .split(/\s+/);
+    
+    // Фильтруем стоп-слова и короткие слова (меньше 4 символов)
+    const stopWords = new Set(['и', 'в', 'на', 'с', 'по', 'для', 'не', 'что', 'как', 'это', 'или', 'а', 'из', 'к', 'у']);
+    const filteredWords = words.filter(word => word.length >= 4 && !stopWords.has(word));
+    
+    // Выбираем уникальные слова
+    const uniqueWords = Array.from(new Set(filteredWords));
+    
+    // Сортируем по длине (более длинные слова обычно более значимы)
+    const sortedWords = uniqueWords.sort((a, b) => b.length - a.length);
+    
+    // Возвращаем до 5 ключевых слов
+    return sortedWords.slice(0, 5);
+  } catch (error) {
+    console.error("Ошибка при извлечении ключевых слов:", error);
+    return []; // В случае ошибки возвращаем пустой массив
+  }
+}
+
 interface ImageGenerationDialogProps {
   campaignId?: string;
   contentId?: string; // ID контента для привязки изображений
@@ -205,10 +261,13 @@ export function ImageGenerationDialog({
         console.log("Генерация промта на основе текста через DeepSeek");
         
         try {
+          // Пытаемся извлечь ключевые слова из текста
+          const keywords = await extractKeywordsFromText(content);
+          
           // Сначала генерируем промт через DeepSeek на основе контента
           const response = await api.post("/generate-image-prompt", {
             content: content,
-            keywords: [] // Можно добавить ключевые слова из контента если нужно
+            keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
           });
           
           if (response.data?.success && response.data?.prompt) {
@@ -368,6 +427,8 @@ export function ImageGenerationDialog({
         errorMessage = "Превышено время ожидания ответа от сервиса. Попробуйте позже.";
       } else if (errorMessage.includes('API ключ не настроен') || errorMessage.includes('API ключ для FAL.AI не настроен')) {
         errorMessage = "API ключ для FAL.AI не настроен. Перейдите в настройки для добавления ключа.";
+      } else if (errorMessage.includes('DeepSeek API') || errorMessage.includes('API ключ не найден')) {
+        errorMessage = "API ключ для DeepSeek не настроен. Перейдите в настройки пользователя для добавления ключа.";
       } else if (errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized') || errorMessage.includes('Неверный API ключ')) {
         errorMessage = "Отсутствует или неверный ключ API. Проверьте настройки в разделе API ключей.";
       } else if (errorMessage.includes('rejectUnauthorized') || errorMessage.includes('certificate')) {
