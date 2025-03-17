@@ -137,6 +137,9 @@ export function ImageGenerationDialog({
       // Если есть промт, переключаемся на вкладку прямого промта
       setActiveTab("prompt");
       console.log('Выбрана вкладка прямого промта, так как есть сохраненный промт');
+      
+      // Дополнительный лог для отладки
+      console.log(`Используем готовый промт из текущего поста: contentId=${contentId}`);
     } else if (initialContent) {
       // Если нет промта, но есть контент
       setActiveTab("social"); // Переключаемся на вкладку социальных сетей
