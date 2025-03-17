@@ -1,6 +1,36 @@
+
+# Dependencies
 node_modules
 dist
 .DS_Store
-server/public
-vite.config.ts.*
+
+# Environment files
+.env
+.env.*
+!.env.sample
+.env.local
+.env.docker
+
+# Security
+.secrets
+*.pem
+*.key
+*.cert
+*.log
+
+# Temp files
+temp_*
 *.tar.gz
+
+# Replit specific
+.config
+.upm
+.breakpoints
+replit.nix
+.replit
+
+# Build artifacts
+build/
+dist/
+server/public/
+vite.config.ts.*
