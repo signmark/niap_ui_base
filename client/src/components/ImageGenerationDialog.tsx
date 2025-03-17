@@ -609,9 +609,8 @@ export function ImageGenerationDialog({
           console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
         }
       }} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-2">
+        <TabsList className="grid grid-cols-2 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
-          <TabsTrigger value="business" disabled={!businessData}>Для бизнеса</TabsTrigger>
           <TabsTrigger value="social">На основе текста</TabsTrigger>
         </TabsList>
         
@@ -825,7 +824,6 @@ export function ImageGenerationDialog({
         disabled={
           isPending || 
           (activeTab === "prompt" && !prompt) || 
-          (activeTab === "business" && !businessData) || 
           (activeTab === "social" && (!generatedPrompt || !content))
         }
         className="w-full"
