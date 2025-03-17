@@ -838,13 +838,20 @@ export class DatabaseStorage implements IStorage {
       // Получаем данные текущего контента для доступа к userId
       const currentContent = await this.getCampaignContentById(id);
       if (!currentContent) {
+        console.error(`Ошибка: Контент с ID ${id} не найден в БД при попытке обновить промт`);
         throw new Error('Content not found');
       }
       
+      // Получаем токен авторизации
+      console.log(`Получение токена авторизации для пользователя: ${currentContent.userId}`);
       const authToken = await this.getAuthToken(currentContent.userId);
       if (!authToken) {
+        console.error(`Ошибка: Не найден токен авторизации для пользователя ${currentContent.userId}`);
         throw new Error('No auth token found for user');
       }
+      
+      console.log(`Успешно получен токен для обновления промта, длина: ${authToken.length}`);
+      
       
       // Преобразуем данные из нашей схемы в формат Directus
       const directusUpdates: Record<string, any> = {};
