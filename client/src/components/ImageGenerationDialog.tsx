@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Image, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -240,7 +241,8 @@ export function ImageGenerationDialog({
           contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
           numImages: numImages, // Используем выбранное пользователем значение
-          stylePreset
+          stylePreset,
+          savePrompt: savePrompt // Передаем флаг сохранения промта
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
@@ -304,7 +306,8 @@ export function ImageGenerationDialog({
               campaignId,
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
-              stylePreset
+              stylePreset,
+              savePrompt: savePrompt // Передаем флаг сохранения промта
             };
           }
         } catch (error) {
@@ -321,7 +324,8 @@ export function ImageGenerationDialog({
             campaignId,
             contentId, // Добавляем contentId для привязки к конкретному контенту
             modelName: modelType,
-            stylePreset
+            stylePreset,
+            savePrompt: savePrompt // Передаем флаг сохранения промта
           };
         }
       }
