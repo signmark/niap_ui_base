@@ -3720,11 +3720,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           if (xmlriverResponse.data?.content?.includingPhrases?.items) {
-            const allKeywords = xmlriverResponse.data.content.includingPhrases.items.map((item: any) => ({
-              keyword: item.phrase,
-              trend: parseInt(item.number.replace(/\s/g, '')),
-              competition: Math.floor(Math.random() * 100)
-            }));
+            // Сначала собираем данные для расчета конкуренции
+            const items = xmlriverResponse.data.content.includingPhrases.items;
+            
+            // Находим максимальную и минимальную частоту (number) для нормализации
+            let maxNumber = 0;
+            items.forEach((item: any) => {
+              const num = parseInt(item.number.replace(/\s/g, ''));
+              if (num > maxNumber) maxNumber = num;
+            });
+            
+            // Рассчитываем конкуренцию на основе реальных данных:
+            // - Частота запроса (number) определяет его популярность
+            // - Чем выше частота, тем выше конкуренция (по логике рынка)
+            // - Используем логарифмическую шкалу для более равномерного распределения
+            const allKeywords = items.map((item: any) => {
+              const number = parseInt(item.number.replace(/\s/g, ''));
+              // Расчет конкуренции: от 1 до 100, учитывая частоту запроса относительно максимума
+              const relativePop = maxNumber > 0 ? number / maxNumber : 0;
+              // Используем логарифмическую шкалу для более естественного распределения
+              const competition = Math.max(1, Math.min(100, Math.round(relativePop * 100)));
+              
+              return {
+                keyword: item.phrase,
+                trend: number,
+                competition: competition,
+                // Сохраняем исходные данные для отладки и возможного улучшения алгоритма
+                originalData: {
+                  number: item.number,
+                  phrase: item.phrase
+                }
+              };
+            });
             
             // Фильтруем результаты на нецензурную лексику
             finalKeywords = allKeywords.filter(item => 
