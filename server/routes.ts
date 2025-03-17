@@ -7418,9 +7418,9 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         } 
         else if (businessData) {
           // Генерация на основе бизнес-данных
-          console.log('Генерация изображения на основе бизнес-данных');
+          console.log('Генерация изображения на основе бизнес-данных, количество:', numImages);
           // Используем альтернативный сервис для бизнес-генерации
-          const result = await falAiService.generateBusinessImage(businessData);
+          const result = await falAiService.generateBusinessImage(businessData, numImages);
           if (result && Array.isArray(result)) {
             generatedImages = result;
           } else if (typeof result === 'string') {

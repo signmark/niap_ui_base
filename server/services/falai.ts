@@ -582,7 +582,8 @@ Return only the translated text, no explanations or comments.`;
   /**
    * Генерирует изображение для бизнеса на основе данных анкеты
    * @param businessData Данные бизнес-анкеты
-   * @returns URL сгенерированного изображения
+   * @param numImages Количество изображений для генерации (по умолчанию 3)
+   * @returns Массив URL сгенерированных изображений
    */
   async generateBusinessImage(businessData: {
     companyName: string;
@@ -607,7 +608,7 @@ Return only the translated text, no explanations or comments.`;
         negativePrompt,
         width: 1024,
         height: 1024,
-        numImages: 3,
+        numImages, // используем переданный параметр numImages
         model: 'fast-sdxl',
         translatePrompt: true
       });
@@ -622,7 +623,7 @@ Return only the translated text, no explanations or comments.`;
    * @param content Контент для генерации
    * @param platform Целевая социальная платформа
    * @param numImages Количество изображений для генерации (по умолчанию 3)
-   * @returns URL сгенерированного изображения
+   * @returns Массив URL сгенерированных изображений
    */
   async generateSocialMediaImage(
     content: string,
