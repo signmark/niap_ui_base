@@ -158,6 +158,55 @@ export function ImageGenerationDialog({
     const [width, height] = imageSize.split("x").map(Number);
     return { width, height };
   };
+  
+  // Мутация для генерации промта из текста
+  const { mutate: generateTextPrompt, isPending: isPromptGenerationPending } = useMutation({
+    mutationFn: async () => {
+      if (!content) {
+        throw new Error("Необходимо ввести текст для генерации промта");
+      }
+      
+      console.log("Генерация промта на основе текста через DeepSeek");
+      
+      // Пытаемся извлечь ключевые слова из текста
+      const keywords = await extractKeywordsFromText(content);
+      
+      // Генерируем промт через DeepSeek на основе контента
+      const response = await api.post("/generate-image-prompt", {
+        content: content,
+        keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
+      });
+      
+      if (response.data?.success && response.data?.prompt) {
+        return response.data.prompt;
+      } else {
+        throw new Error("Не удалось сгенерировать промт");
+      }
+    },
+    onSuccess: (promptText) => {
+      console.log("Промт успешно сгенерирован:", promptText);
+      
+      // Сохраняем сгенерированный промт для отображения
+      setGeneratedPrompt(promptText);
+      
+      // Автоматически устанавливаем промт и в поле произвольного запроса
+      setPrompt(promptText);
+      
+      toast({
+        title: "Успешно",
+        description: "Промт сгенерирован на основе текста"
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Ошибка при генерации промта:", error);
+      
+      toast({
+        variant: "destructive",
+        title: "Ошибка генерации промта",
+        description: error.message || "Произошла ошибка при генерации промта"
+      });
+    }
+  });
 
   // Функция для очистки HTML-тегов из текста с сохранением базового форматирования
   const stripHtml = (html: string): string => {
@@ -505,6 +554,37 @@ export function ImageGenerationDialog({
         <DialogTitle>Генерация изображений</DialogTitle>
       </DialogHeader>
       
+      {/* Общие настройки для всех вкладок */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="space-y-1">
+          <Label className="text-xs">Модель генерации</Label>
+          <Select value={modelType} onValueChange={(value) => setModelType(value)}>
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Выберите модель" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
+              <SelectItem value="fooocus">Fooocus</SelectItem>
+              <SelectItem value="schnell">Schnell</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Размер изображения</Label>
+          <Select value={imageSize} onValueChange={(value) => setImageSize(value)}>
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Выберите размер" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1024x1024">1024x1024</SelectItem>
+              <SelectItem value="1024x768">1024x768</SelectItem>
+              <SelectItem value="768x1024">768x1024</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={(value) => {
         // При переключении вкладок нужно сохранять промт для всех вкладок
         setActiveTab(value);
@@ -542,42 +622,20 @@ export function ImageGenerationDialog({
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Размер изображения</Label>
-              <RadioGroup value={imageSize} onValueChange={setImageSize} className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="1024x1024" id="r1" className="h-3 w-3" />
-                  <Label htmlFor="r1" className="text-xs">1024x1024</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="1024x768" id="r2" className="h-3 w-3" />
-                  <Label htmlFor="r2" className="text-xs">1024x768</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="768x1024" id="r3" className="h-3 w-3" />
-                  <Label htmlFor="r3" className="text-xs">768x1024</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-1">
-              <Label className="text-xs">Модель генерации</Label>
-              <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="fast-sdxl" id="m1" className="h-3 w-3" />
-                  <Label htmlFor="m1" className="text-xs">Fast SDXL</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="fooocus" id="m2" className="h-3 w-3" />
-                  <Label htmlFor="m2" className="text-xs">Fooocus</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RadioGroupItem value="schnell" id="m3" className="h-3 w-3" />
-                  <Label htmlFor="m3" className="text-xs">Schnell</Label>
-                </div>
-              </RadioGroup>
-            </div>
+          {/* Настройки стиля */}
+          <div className="space-y-1">
+            <Label className="text-xs">Стиль изображения</Label>
+            <Select value={stylePreset} onValueChange={(value) => setStylePreset(value)}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Выберите стиль" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="photographic">Фотореалистичный</SelectItem>
+                <SelectItem value="cinematic">Кинематографический</SelectItem>
+                <SelectItem value="anime">Аниме</SelectItem>
+                <SelectItem value="base">Базовый</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-1">
