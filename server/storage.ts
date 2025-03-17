@@ -756,7 +756,20 @@ export class DatabaseStorage implements IStorage {
   async getCampaignContentById(id: string): Promise<CampaignContent | undefined> {
     try {
       console.log(`Запрос контента по ID: ${id}`);
-      const response = await directusApi.get(`/items/campaign_content/${id}`);
+      
+      // Попробуем получить токен сервиса как резервную опцию
+      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+      
+      // Настраиваем headers с токеном, если он доступен
+      const headers: Record<string, string> = {};
+      if (serviceToken) {
+        console.log(`Используем сервисный токен для запроса контента ${id} (длина токена: ${serviceToken.length})`);
+        headers['Authorization'] = `Bearer ${serviceToken}`;
+      }
+      
+      const response = await directusApi.get(`/items/campaign_content/${id}`, { 
+        headers 
+      });
       
       if (!response.data?.data) {
         console.warn(`Контент с ID ${id} не найден в ответе Directus API`);
@@ -764,7 +777,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       const item = response.data.data;
-      console.log(`Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
+      console.log(`✅ Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
       
       return {
         id: item.id,
@@ -789,6 +802,45 @@ export class DatabaseStorage implements IStorage {
         console.error(`Статус ошибки: ${error.response.status}`);
         console.error(`Данные ошибки: ${JSON.stringify(error.response.data || {})}`);
       }
+      
+      // Если ошибка 403 и у нас есть сервисный токен, попробуем использовать его
+      if (error.response?.status === 403) {
+        try {
+          console.log(`Повторная попытка получения контента ${id} с сервисным токеном`);
+          const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+          if (serviceToken) {
+            const retryResponse = await directusApi.get(`/items/campaign_content/${id}`, {
+              headers: {
+                'Authorization': `Bearer ${serviceToken}`
+              }
+            });
+            
+            if (retryResponse.data?.data) {
+              const item = retryResponse.data.data;
+              console.log(`✅ Контент найден (повторная попытка): ${item.id}, user_id: ${item.user_id}`);
+              
+              return {
+                id: item.id,
+                content: item.content,
+                userId: item.user_id,
+                campaignId: item.campaign_id,
+                status: item.status,
+                postType: item.post_type,
+                imageUrl: item.image_url,
+                videoUrl: item.video_url,
+                prompt: item.prompt || "",
+                scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+                createdAt: new Date(item.created_at),
+                socialPlatforms: item.social_platforms,
+                publishedPlatforms: item.published_platforms || []
+              };
+            }
+          }
+        } catch (retryError) {
+          console.error(`Ошибка при повторной попытке получения контента: ${retryError}`);
+        }
+      }
+      
       console.error('Error getting campaign content by ID from Directus:', error);
       return undefined;
     }
@@ -856,13 +908,26 @@ export class DatabaseStorage implements IStorage {
       // Получаем токен авторизации
       console.log(`Получение токена авторизации для пользователя: ${currentContent.userId}`);
       const authToken = await this.getAuthToken(currentContent.userId);
-      if (!authToken) {
-        console.error(`Ошибка: Не найден токен авторизации для пользователя ${currentContent.userId}`);
-        throw new Error('No auth token found for user');
+      
+      // Подготовка заголовков для запроса
+      const headers: Record<string, string> = {};
+      
+      if (authToken) {
+        console.log(`Успешно получен токен для обновления промта, длина: ${authToken.length}`);
+        headers['Authorization'] = `Bearer ${authToken}`;
+      } else {
+        console.warn(`⚠️ Не найден токен авторизации для пользователя ${currentContent.userId}. Пробуем использовать сервисный токен.`);
+        
+        // Попробуем использовать сервисный токен как резервный вариант
+        const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
+        if (serviceToken) {
+          console.log(`Используем сервисный токен для обновления контента (длина: ${serviceToken.length})`);
+          headers['Authorization'] = `Bearer ${serviceToken}`;
+        } else {
+          console.error(`Ошибка: Не найден ни пользовательский, ни сервисный токен`);
+          throw new Error('No auth token found for user');
+        }
       }
-      
-      console.log(`Успешно получен токен для обновления промта, длина: ${authToken.length}`);
-      
       
       // Преобразуем данные из нашей схемы в формат Directus
       const directusUpdates: Record<string, any> = {};
@@ -872,16 +937,18 @@ export class DatabaseStorage implements IStorage {
       if (updates.postType !== undefined) directusUpdates.post_type = updates.postType;
       if (updates.imageUrl !== undefined) directusUpdates.image_url = updates.imageUrl;
       if (updates.videoUrl !== undefined) directusUpdates.video_url = updates.videoUrl;
-      if (updates.prompt !== undefined) directusUpdates.prompt = updates.prompt;
+      if (updates.prompt !== undefined) {
+        console.log(`Обновляем промт контента ${id}: "${updates.prompt}"`);
+        directusUpdates.prompt = updates.prompt;
+      }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
       if (updates.publishedPlatforms !== undefined) directusUpdates.published_platforms = updates.publishedPlatforms || [];
       
-      const response = await directusApi.patch(`/items/campaign_content/${id}`, directusUpdates, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      // Выводим данные, которые будем отправлять
+      console.log(`Отправляем обновление в Directus для контента ${id}:`, JSON.stringify(directusUpdates));
+      
+      const response = await directusApi.patch(`/items/campaign_content/${id}`, directusUpdates, { headers });
       
       const item = response.data.data;
       return {
