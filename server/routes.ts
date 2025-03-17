@@ -2960,11 +2960,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Анализ сайта с помощью DeepSeek для извлечения ключевых слов
-  app.get("/api/analyze-site/:url", async (req, res) => {
+  app.get("/api/analyze-site/:url", authenticateUser, async (req: any, res) => {
     try {
       const siteUrl = req.params.url;
       if (!siteUrl) {
         return res.status(400).json({ error: "URL не указан" });
+      }
+      
+      // Инициализируем DeepSeek с API ключом пользователя
+      const userId = req.userId;
+      const token = req.headers.authorization?.split(' ')[1];
+      const initialized = await deepseekService.initialize(userId, token);
+      
+      if (!initialized) {
+        return res.status(400).json({
+          success: false,
+          error: "Не удалось инициализировать DeepSeek API. Убедитесь, что у вас установлен API ключ в настройках."
+        });
       }
 
       // Нормализуем URL
