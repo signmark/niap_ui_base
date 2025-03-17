@@ -1684,8 +1684,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Сначала очищаем текст от HTML-тегов
+      const cleanedText = cleanupText(text);
+      console.log('Очищенный текст перед переводом:', cleanedText);
+      
       // Используем существующую функцию translateToEnglish
-      const translatedText = await translateToEnglish(text);
+      const translatedText = await translateToEnglish(cleanedText);
+      
+      // Логируем результат для отладки
+      console.log('Перевод текста:', {
+        original: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        cleaned: cleanedText.substring(0, 100) + (cleanedText.length > 100 ? '...' : ''),
+        translated: translatedText.substring(0, 100) + (translatedText.length > 100 ? '...' : '')
+      });
       
       res.json({
         success: true,

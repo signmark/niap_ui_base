@@ -340,8 +340,10 @@ export function ImageGenerationDialog({
         const translatedPrompt = await translateToEnglish(prompt);
         const translatedNegativePrompt = negativePrompt ? await translateToEnglish(negativePrompt) : negativePrompt;
         
+        console.log('ОТПРАВЛЯЕМ английский промт:', translatedPrompt);
+        
         requestData = {
-          prompt: translatedPrompt,
+          prompt: translatedPrompt, // <-- Отправляем переведенный промт на английском
           negativePrompt: translatedNegativePrompt,
           originalPrompt: prompt, // Сохраняем оригинальный промт для отладки
           width,
