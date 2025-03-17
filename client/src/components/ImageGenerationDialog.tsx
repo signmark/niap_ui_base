@@ -36,10 +36,10 @@ export function ImageGenerationDialog({
   onClose
 }: ImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(initialPrompt || "");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageSize, setImageSize] = useState<string>("1024x1024");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(initialContent || "");
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
@@ -53,20 +53,26 @@ export function ImageGenerationDialog({
     setNegativePrompt("");
     setImageSize("1024x1024");
     
-    // Если есть готовый промт из контент-плана, используем его
+    // Обновляем содержимое обоих полей ввода каждый раз при изменении пропсов
+    // Это важно, чтобы поля не были пустыми если пропсы приходят с задержкой
     if (initialPrompt) {
       setPrompt(initialPrompt);
-      setActiveTab("prompt"); // Переключаемся на вкладку с готовым промтом
+    }
+    if (initialContent) {
+      setContent(initialContent);
+      console.log('Установлен контент для генерации:', initialContent.substring(0, 100) + '...');
+    }
+    
+    // Определяем активную вкладку на основе пропсов
+    if (initialPrompt) {
+      setActiveTab("prompt"); // Приоритет у готового промта
       console.log('Используем готовый промт из контент-плана:', initialPrompt);
     } else if (initialContent) {
       // Если нет готового промта, но есть контент, используем его
-      setContent(initialContent);
       setActiveTab("social"); // Переключаемся на вкладку социальных сетей
-      console.log('Используем контент для генерации промта:', initialContent.substring(0, 100) + '...');
+      console.log('Выбрана вкладка для генерации на основе текста');
     } else {
-      setPrompt("");
-      setContent("");
-      setActiveTab("prompt");
+      setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
     }
     
     setPlatform("instagram");
