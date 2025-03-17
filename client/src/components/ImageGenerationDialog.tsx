@@ -751,9 +751,6 @@ export function ImageGenerationDialog({
                 placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
                 className="min-h-[180px] text-sm"
               />
-              <div className="absolute inset-0 min-h-[180px] border rounded-md p-2 overflow-auto text-sm bg-white pointer-events-none opacity-0">
-                {content && stripHtml(content)}
-              </div>
             </div>
             <div className="flex justify-between items-center mt-1.5">
               <div className="flex-1">
