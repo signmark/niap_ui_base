@@ -101,17 +101,11 @@ export function ImageGenerationDialog({
 }: ImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
   
-  // Очищаем начальный промпт от HTML тегов перед использованием
-  const cleanInitialPrompt = initialPrompt ? stripHtml(initialPrompt) : "";
-  
-  // Всегда используем пустой промпт при открытии диалога, или очищенный текущий промпт
-  const [prompt, setPrompt] = useState(cleanInitialPrompt);
+  // Инициализируем состояние с пустыми значениями, мы обновим их в useEffect
+  const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageSize, setImageSize] = useState<string>("1024x1024");
-  
-  // Очищаем начальный контент от HTML тегов перед использованием
-  const cleanInitialContent = initialContent ? stripHtml(initialContent) : "";
-  const [content, setContent] = useState(cleanInitialContent);
+  const [content, setContent] = useState("");
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
@@ -127,24 +121,35 @@ export function ImageGenerationDialog({
     setNegativePrompt("");
     setImageSize("1024x1024");
     
+    // Очищаем начальные данные от HTML
+    const simpleCleanHtml = (html: string): string => {
+      if (!html || typeof html !== 'string') return '';
+      return html.replace(/<[^>]*>/g, '');
+    };
+    
     // Обновляем содержимое обоих полей ввода каждый раз при изменении пропсов
     // Это важно, чтобы поля не были пустыми если пропсы приходят с задержкой
     if (initialPrompt) {
+      // Очищаем начальный промпт от HTML тегов перед использованием
+      const cleanPrompt = simpleCleanHtml(initialPrompt);
+      
       // Устанавливаем сохраненный промт во все поля интерфейса
-      setPrompt(initialPrompt);
-      setGeneratedPrompt(initialPrompt);
+      setPrompt(cleanPrompt);
+      setGeneratedPrompt(cleanPrompt);
+      
       // Если есть промт, переключаемся на вкладку произвольного запроса
       setActiveTab("prompt");
-      console.log('Загружен сохраненный промт из БД:', initialPrompt.substring(0, 100) + '...');
+      console.log('Загружен сохраненный промт из БД:', cleanPrompt.substring(0, 100) + '...');
     }
+    
     if (initialContent) {
       // Очищаем теги из начального контента
-      const cleanedContent = initialContent.replace(/<[^>]*>/g, '');
+      const cleanedContent = simpleCleanHtml(initialContent);
       setContent(cleanedContent);
       console.log('Установлен и очищен контент для генерации:', cleanedContent.substring(0, 100) + '...');
     }
     
-    // Уже определили активную вкладку выше, если был initialPrompt
+    // Выбираем активную вкладку на основе данных
     if (!initialPrompt) {
       if (initialContent) {
         // Если нет готового промта, но есть контент, используем его
@@ -154,7 +159,7 @@ export function ImageGenerationDialog({
         setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
       }
     } else {
-      console.log('Используем готовый промт из контент-плана:', initialPrompt);
+      console.log('Используем готовый промт из контент-плана');
     }
     
     setPlatform("instagram");
