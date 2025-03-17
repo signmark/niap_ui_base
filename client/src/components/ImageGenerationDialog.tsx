@@ -130,8 +130,10 @@ export function ImageGenerationDialog({
       console.log('Загружен сохраненный промт из БД:', initialPrompt.substring(0, 100) + '...');
     }
     if (initialContent) {
-      setContent(initialContent);
-      console.log('Установлен контент для генерации:', initialContent.substring(0, 100) + '...');
+      // Очищаем теги из начального контента
+      const cleanedContent = initialContent.replace(/<[^>]*>/g, '');
+      setContent(cleanedContent);
+      console.log('Установлен и очищен контент для генерации:', cleanedContent.substring(0, 100) + '...');
     }
     
     // Уже определили активную вкладку выше, если был initialPrompt
@@ -176,12 +178,21 @@ export function ImageGenerationDialog({
       console.log("Генерация промта на основе текста через DeepSeek");
       
       try {
-        // Пытаемся извлечь ключевые слова из текста
-        const keywords = await extractKeywordsFromText(content);
+        // Очищаем и переводим текст перед отправкой на генерацию промта
+        // Очистка от HTML-тегов произойдёт через stripHtml, а затем текст будет переведен на английский
+        const cleanedText = stripHtml(content);
+        console.log("Очищенный текст перед отправкой:", cleanedText);
         
-        // Генерируем промт через DeepSeek на основе контента
+        // Переводим текст на английский для улучшения качества генерации
+        const translatedText = await translateToEnglish(cleanedText);
+        console.log("Переведенный текст для генерации промта:", translatedText);
+        
+        // Пытаемся извлечь ключевые слова из очищенного и переведенного текста
+        const keywords = await extractKeywordsFromText(translatedText);
+        
+        // Генерируем промт через DeepSeek на основе переведенного контента
         const response = await api.post("/generate-image-prompt", {
-          content: content,
+          content: translatedText,
           keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
         });
         
@@ -381,12 +392,20 @@ export function ImageGenerationDialog({
           console.log("Генерация нового промта на основе текста через DeepSeek");
           
           try {
-            // Пытаемся извлечь ключевые слова из текста
-            const keywords = await extractKeywordsFromText(content);
+            // Очищаем текст от HTML-тегов перед генерацией промта
+            const cleanedText = stripHtml(content);
+            console.log("Очищенный текст перед отправкой в DeepSeek:", cleanedText);
             
-            // Сначала генерируем промт через DeepSeek на основе контента
+            // Переводим текст на английский для улучшения качества генерации
+            const translatedText = await translateToEnglish(cleanedText);
+            console.log("Переведенный текст для DeepSeek:", translatedText);
+            
+            // Пытаемся извлечь ключевые слова из очищенного текста
+            const keywords = await extractKeywordsFromText(translatedText);
+            
+            // Сначала генерируем промт через DeepSeek на основе переведенного контента
             const response = await api.post("/generate-image-prompt", {
-              content: content,
+              content: translatedText,
               keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
             });
             
@@ -832,7 +851,11 @@ export function ImageGenerationDialog({
             <Label>Текст для генерации изображения</Label>
             <Textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                // Очищаем HTML теги непосредственно при вводе
+                const cleanedText = e.target.value.replace(/<[^>]*>/g, '');
+                setContent(cleanedText);
+              }}
               placeholder="Введите контент поста для генерации изображения..."
               className="min-h-[100px]"
             />
