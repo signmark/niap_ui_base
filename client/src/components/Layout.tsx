@@ -84,12 +84,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   if (!token) return null;
 
   const navItems = [
-    { path: "/campaigns", label: "Campaigns", icon: FileText },
-    { path: "/keywords", label: "Keywords", icon: Search },
+    { path: "/campaigns", label: "Кампании", icon: FileText },
+    { path: "/keywords", label: "Ключевые слова", icon: Search },
     { path: "/content", label: "Контент", icon: PenTool },
-    { path: "/posts", label: "Posts", icon: Calendar },
-    { path: "/trends", label: "Trends", icon: TrendingUp },
-    { path: "/analytics", label: "Analytics", icon: BarChart },
+    { path: "/posts", label: "Публикации", icon: Calendar },
+    { path: "/trends", label: "Тренды", icon: TrendingUp },
+    { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
 
   const renderNavItems = () => (
@@ -136,7 +136,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Logout
+              Выход
             </Button>
           </div>
         </div>
@@ -156,7 +156,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Logout
+              Выход
             </Button>
           </div>
         </div>
