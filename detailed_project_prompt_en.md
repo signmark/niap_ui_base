@@ -685,29 +685,37 @@ DIRECTUS_URL=https://directus.nplanner.ru
 
 ### Running in Docker
 
-To launch the complete infrastructure in Docker, you can use a special script:
+To launch the complete infrastructure in Docker, you can use a special script (available in English and Russian):
 
 ```bash
-# Make the script executable
-chmod +x setup_infrastructure.sh
+# Make the script executable (choose your preferred language version)
+chmod +x setup_infrastructure_en.sh # English version
+chmod +x setup_infrastructure.sh    # Russian version
 
 # Start the entire infrastructure
-./setup_infrastructure.sh start
+./setup_infrastructure_en.sh start  # English version
+# or
+./setup_infrastructure.sh start     # Russian version
 
 # Stop the infrastructure
-./setup_infrastructure.sh stop
+./setup_infrastructure_en.sh stop    # English version
+./setup_infrastructure.sh stop       # Russian version
 
 # Restart the infrastructure
-./setup_infrastructure.sh restart
+./setup_infrastructure_en.sh restart # English version
+./setup_infrastructure.sh restart    # Russian version
 
 # View services status
-./setup_infrastructure.sh status
+./setup_infrastructure_en.sh status  # English version
+./setup_infrastructure.sh status     # Russian version
 
 # View logs of all services
-./setup_infrastructure.sh logs
+./setup_infrastructure_en.sh logs    # English version
+./setup_infrastructure.sh logs       # Russian version
 
 # View logs of a specific service, for example, smm
-./setup_infrastructure.sh logs smm
+./setup_infrastructure_en.sh logs smm # English version
+./setup_infrastructure.sh logs smm    # Russian version
 ```
 
 The script will automatically check for Docker, prepare the necessary directories and configuration files.
@@ -723,6 +731,48 @@ docker-compose ps
 
 # View logs of a specific service
 docker-compose logs -f smm
+```
+
+### Language Support
+
+The SMM Manager platform is designed with full bilingual support for both Russian and English languages:
+
+- **Documentation**: All project documentation is available in both English and Russian versions, with files named accordingly (e.g., `detailed_project_prompt_en.md` for English and `detailed_project_prompt_ru.md` for Russian).
+- **Infrastructure Scripts**: Setup and deployment scripts are available in both languages as well, with the English version having the `_en` suffix (e.g., `setup_infrastructure_en.sh` for English and `setup_infrastructure.sh` for Russian).
+- **User Interface**: The application interface supports both languages with automatic detection based on browser settings. Users can also manually switch the language in the application settings.
+- **API Documentation**: API endpoints are documented in both languages with consistent naming conventions.
+
+When deploying the application, administrators can choose which language version of the scripts to use based on their preference.
+
+### API Key Management
+
+The SMM Manager platform uses several external AI and analytics services that require API keys for operation. These services include:
+
+- **Perplexity API**: Used for content generation and keyword analysis
+- **DeepSeek API**: Used for text generation and analysis of structured content
+- **FAL.AI**: Used for image generation for social media content
+- **Social Searcher API**: Used for searching and monitoring social media
+
+API keys are managed through the Directus platform and are stored securely in the database. Users can set their API keys in the system through the admin panel. The system follows a priority scheme for API key usage:
+
+1. User-specific API keys have the highest priority
+2. System-wide API keys are used as a fallback when user keys are not available
+3. Feature-specific keys can be set separately for each function
+
+All API calls are proxied through the SMM Manager backend to ensure security and proper request formatting.
+
+For local development and testing, API keys can be specified in the `.env` file, but for production deployment, it's recommended to configure them through the Directus admin interface.
+
+## API Key Environment Variables
+
+```
+# AI Services
+PERPLEXITY_API_KEY=your_perplexity_key
+DEEPSEEK_API_KEY=your_deepseek_key
+FAL_AI_API_KEY=your_fal_ai_key
+
+# Social Media Analytics
+SOCIAL_SEARCHER_API_KEY=your_social_searcher_key
 ```
 
 This prompt contains all the necessary details to recreate the SMM Manager project, taking into account the existing architecture, constraints, and technical features.
