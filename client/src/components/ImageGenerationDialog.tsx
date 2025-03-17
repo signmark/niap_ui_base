@@ -80,6 +80,35 @@ export function ImageGenerationDialog({
     return { width, height };
   };
 
+  // Функция для перевода промта на английский
+  const translateToEnglish = async (text: string): Promise<string> => {
+    try {
+      // Проверяем, что текст не пустой
+      if (!text.trim()) return text;
+      
+      // Если текст уже на английском, возвращаем как есть
+      const englishPattern = /^[a-zA-Z0-9\s.,!?;:'"()\-_\[\]@#$%^&*+=<>/\\|{}~`]+$/;
+      if (englishPattern.test(text)) {
+        console.log('Текст уже на английском, перевод не требуется');
+        return text;
+      }
+      
+      console.log('Переводим промт на английский для улучшения качества генерации');
+      const response = await api.post('/translate-to-english', { text });
+      
+      if (response.data?.success && response.data?.translatedText) {
+        console.log('Промт переведен:', response.data.translatedText);
+        return response.data.translatedText;
+      } else {
+        console.warn('Не удалось перевести промт, используем оригинальный текст');
+        return text;
+      }
+    } catch (error) {
+      console.error('Ошибка при переводе промта:', error);
+      return text; // В случае ошибки используем оригинальный текст
+    }
+  };
+
   // Мутация для генерации изображения
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
@@ -88,9 +117,15 @@ export function ImageGenerationDialog({
       if (activeTab === "prompt") {
         // Прямая генерация по промпту
         const { width, height } = getImageDimensions();
+        
+        // Переводим промт на английский для улучшения качества генерации
+        const translatedPrompt = await translateToEnglish(prompt);
+        const translatedNegativePrompt = negativePrompt ? await translateToEnglish(negativePrompt) : negativePrompt;
+        
         requestData = {
-          prompt,
-          negativePrompt,
+          prompt: translatedPrompt,
+          negativePrompt: translatedNegativePrompt,
+          originalPrompt: prompt, // Сохраняем оригинальный промт для отладки
           width,
           height,
           campaignId,
@@ -116,8 +151,13 @@ export function ImageGenerationDialog({
         if (!content) {
           throw new Error("Необходимо ввести контент для генерации");
         }
+        
+        // Переводим контент на английский для улучшения качества генерации
+        const translatedContent = await translateToEnglish(content);
+        
         requestData = {
-          content,
+          content: translatedContent,
+          originalContent: content, // Сохраняем оригинальный контент для отладки
           platform,
           campaignId,
           contentId, // Добавляем contentId для привязки к конкретному контенту
@@ -288,7 +328,7 @@ export function ImageGenerationDialog({
         <TabsList className="grid grid-cols-3 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="business" disabled={!businessData}>Для бизнеса</TabsTrigger>
-          <TabsTrigger value="social">Для соцсетей</TabsTrigger>
+          <TabsTrigger value="social">На основе текста</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}
@@ -415,14 +455,14 @@ export function ImageGenerationDialog({
           )}
         </TabsContent>
         
-        {/* Содержимое вкладки для соцсетей */}
+        {/* Содержимое вкладки на основе текста */}
         <TabsContent value="social" className="space-y-2">
           <div className="space-y-1">
-            <Label className="text-xs">Контент для социальных сетей</Label>
+            <Label className="text-xs">Текст для генерации изображения</Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Введите текст поста, для которого нужно сгенерировать изображение..."
+              placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
               className="min-h-[80px] text-sm"
             />
           </div>
