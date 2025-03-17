@@ -353,6 +353,7 @@ export function ImageGenerationDialog({
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
               stylePreset,
+              numImages, // Добавляем параметр количества изображений
               savePrompt: savePrompt // Передаем флаг сохранения промта
             };
           } else {
@@ -373,6 +374,7 @@ export function ImageGenerationDialog({
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
               stylePreset,
+              numImages, // Добавляем параметр количества изображений
               savePrompt: savePrompt, // Передаем флаг сохранения промта
               prompt: translatedContent // Используем переведенный текст как промт
             };
@@ -395,6 +397,7 @@ export function ImageGenerationDialog({
             contentId, // Добавляем contentId для привязки к конкретному контенту
             modelName: modelType,
             stylePreset,
+            numImages, // Добавляем параметр количества изображений
             savePrompt: savePrompt, // Передаем флаг сохранения промта
             prompt: translatedContent // Используем переведенный текст как промт
           };
@@ -616,7 +619,7 @@ export function ImageGenerationDialog({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Опишите, какое изображение вы хотите получить..."
-              className="min-h-[100px]"
+              className="min-h-[180px]"
             />
           </div>
           
@@ -727,7 +730,7 @@ export function ImageGenerationDialog({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
-              className="min-h-[120px] text-sm"
+              className="min-h-[180px] text-sm"
             />
             <div className="flex justify-between items-center mt-1.5">
               <p className="text-xs text-muted-foreground">HTML-теги будут автоматически удалены при обработке текста</p>
@@ -804,7 +807,7 @@ export function ImageGenerationDialog({
               <div className="flex justify-between items-center">
                 <Label className="text-xs">Сгенерированный промт</Label>
               </div>
-              <div className="rounded-md border border-gray-200 bg-gray-50 p-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
                 <p className="text-xs font-mono whitespace-pre-wrap break-words">
                   {generatedPrompt}
                 </p>
