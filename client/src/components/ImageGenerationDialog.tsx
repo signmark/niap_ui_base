@@ -88,32 +88,50 @@ export function ImageGenerationDialog({
     return { width, height };
   };
 
+  // Функция для очистки HTML-тегов из текста
+  const stripHtml = (html: string): string => {
+    // Создаем временный div элемент
+    const tempDiv = document.createElement('div');
+    // Устанавливаем HTML-содержимое
+    tempDiv.innerHTML = html;
+    // Получаем только текстовое содержимое (без HTML-тегов)
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Удаляем лишние пробелы и переносы строк
+    return plainText.trim().replace(/\s+/g, ' ');
+  };
+  
   // Функция для перевода промта на английский
   const translateToEnglish = async (text: string): Promise<string> => {
     try {
       // Проверяем, что текст не пустой
       if (!text.trim()) return text;
       
+      // Очищаем текст от HTML-тегов перед дальнейшей обработкой
+      const cleanedText = stripHtml(text);
+      console.log('Очищенный текст от HTML:', cleanedText);
+      
       // Если текст уже на английском, возвращаем как есть
       const englishPattern = /^[a-zA-Z0-9\s.,!?;:'"()\-_\[\]@#$%^&*+=<>/\\|{}~`]+$/;
-      if (englishPattern.test(text)) {
+      if (englishPattern.test(cleanedText)) {
         console.log('Текст уже на английском, перевод не требуется');
-        return text;
+        return cleanedText;
       }
       
       console.log('Переводим промт на английский для улучшения качества генерации');
-      const response = await api.post('/translate-to-english', { text });
+      const response = await api.post('/translate-to-english', { text: cleanedText });
       
       if (response.data?.success && response.data?.translatedText) {
         console.log('Промт переведен:', response.data.translatedText);
         return response.data.translatedText;
       } else {
-        console.warn('Не удалось перевести промт, используем оригинальный текст');
-        return text;
+        console.warn('Не удалось перевести промт, используем очищенный текст');
+        return cleanedText;
       }
     } catch (error) {
       console.error('Ошибка при переводе промта:', error);
-      return text; // В случае ошибки используем оригинальный текст
+      // В случае ошибки используем очищенный текст без HTML
+      return stripHtml(text);
     }
   };
 
