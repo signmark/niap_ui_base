@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Image, RefreshCw, Sparkles } from "lucide-react";
+import { Loader2, Image, RefreshCw, Sparkles, Pencil } from "lucide-react";
 import { api } from "@/lib/api";
 
 /**
@@ -625,16 +625,6 @@ export function ImageGenerationDialog({
               placeholder="Опишите, какое изображение вы хотите получить..."
               className="min-h-[180px]"
             />
-            
-            {/* Предварительный просмотр очищенного промпта */}
-            {prompt && (
-              <div className="mt-2">
-                <Label className="text-xs text-muted-foreground mb-1">Предпросмотр очищенного текста:</Label>
-                <div className="bg-secondary p-2 rounded-md text-sm whitespace-pre-wrap">
-                  {stripHtml(prompt)}
-                </div>
-              </div>
-            )}
           </div>
           
           <div className="space-y-2">
@@ -758,23 +748,27 @@ export function ImageGenerationDialog({
         <TabsContent value="social" className="space-y-2">
           <div className="space-y-1">
             <Label className="text-xs">Текст для генерации изображения</Label>
-            <div className="relative">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
-                className="min-h-[180px] text-sm"
-              />
-              
-              {/* Предварительный просмотр очищенного текста */}
-              {content && (
-                <div className="mt-2">
-                  <Label className="text-xs text-muted-foreground mb-1">Предпросмотр очищенного текста:</Label>
-                  <div className="bg-secondary p-2 rounded-md text-sm whitespace-pre-wrap">
-                    {stripHtml(content)}
-                  </div>
-                </div>
-              )}
+            <div className="relative mt-1">
+              <div className="bg-white border rounded-md p-3 min-h-[180px] text-sm whitespace-pre-wrap">
+                {stripHtml(content)}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    // Открыть диалог для редактирования текста с HTML
+                    // Пока просто заглушка - вызываем confirm с текстом
+                    const newText = prompt("Введите текст:", content);
+                    if (newText !== null) {
+                      setContent(newText);
+                    }
+                  }}
+                >
+                  <Pencil className="h-3 w-3 mr-1" />
+                  Редактировать
+                </Button>
+              </div>
             </div>
             <div className="flex justify-between items-center mt-1.5">
               <div className="flex-1">
