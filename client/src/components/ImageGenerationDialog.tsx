@@ -175,14 +175,21 @@ export function ImageGenerationDialog({
       
       console.log("Генерация промта на основе текста через DeepSeek");
       
-      // Сбросим индикатор загрузки при окончании запроса в любом случае
-      const resetLoading = () => {
-        setTimeout(() => {
-          // Сбрасываем состояние загрузки через небольшую задержку
-          // Это нужно, чтобы визуально было понятно, что запрос завершился
-          setIsPromptGenerationPending(false);
-        }, 500);
-      };
+      // Определяем локальное состояние для индикатора загрузки
+      const [localPending, setLocalPending] = useState(false);
+      
+      // Сбрасываем индикатор загрузки при окончании запроса в любом случае
+      useEffect(() => {
+        if (isPromptGenerationPending) {
+          setLocalPending(true);
+        } else if (localPending) {
+          // Добавляем небольшую задержку для более плавного UX
+          const timer = setTimeout(() => {
+            setLocalPending(false);
+          }, 500);
+          return () => clearTimeout(timer);
+        }
+      }, [isPromptGenerationPending, localPending]);
       
       try {
         // Пытаемся извлечь ключевые слова из текста
@@ -580,12 +587,22 @@ export function ImageGenerationDialog({
     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
+        <DialogDescription className="text-xs text-muted-foreground mt-1">
+          Создавайте изображения на основе текста или произвольного запроса
+        </DialogDescription>
       </DialogHeader>
       
       {/* Общие настройки для всех вкладок */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="space-y-1">
-          <Label className="text-xs">Модель генерации</Label>
+          <Label className="text-xs flex justify-between items-center">
+            <span>Модель генерации</span>
+            <span className="text-xs text-muted-foreground">
+              {modelType === 'fast-sdxl' ? '(быстрая)' : 
+               modelType === 'fooocus' ? '(художественная)' : 
+               '(детализированная)'}
+            </span>
+          </Label>
           <Select value={modelType} onValueChange={(value) => setModelType(value)}>
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Выберите модель" />
@@ -599,15 +616,22 @@ export function ImageGenerationDialog({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Размер изображения</Label>
+          <Label className="text-xs flex justify-between items-center">
+            <span>Размер изображения</span>
+            <span className="text-xs text-muted-foreground">
+              {imageSize === '1024x1024' ? '(квадрат)' : 
+               imageSize === '1024x768' ? '(альбомная)' : 
+               imageSize === '768x1024' ? '(портретная)' : ''}
+            </span>
+          </Label>
           <Select value={imageSize} onValueChange={(value) => setImageSize(value)}>
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Выберите размер" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1024x1024">1024x1024</SelectItem>
-              <SelectItem value="1024x768">1024x768</SelectItem>
-              <SelectItem value="768x1024">768x1024</SelectItem>
+              <SelectItem value="1024x1024">1024x1024 (квадрат)</SelectItem>
+              <SelectItem value="1024x768">1024x768 (альбомная)</SelectItem>
+              <SelectItem value="768x1024">768x1024 (портретная)</SelectItem>
             </SelectContent>
           </Select>
         </div>
