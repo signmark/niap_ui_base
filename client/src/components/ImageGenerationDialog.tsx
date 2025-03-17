@@ -88,17 +88,35 @@ export function ImageGenerationDialog({
     return { width, height };
   };
 
-  // Функция для очистки HTML-тегов из текста
+  // Функция для очистки HTML-тегов из текста с сохранением базового форматирования
   const stripHtml = (html: string): string => {
+    if (!html || typeof html !== 'string') return '';
+    
+    // Преобразуем некоторые теги в текстовые эквиваленты перед удалением
+    let processedHtml = html
+      // Параграфы превращаем в текст с переносами строк
+      .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+      // Заголовки
+      .replace(/<h[1-6]>(.*?)<\/h[1-6]>/gi, '$1\n\n')
+      // Переносы строк
+      .replace(/<br\s*\/?>/gi, '\n')
+      // Списки
+      .replace(/<li>(.*?)<\/li>/gi, '• $1\n');
+    
     // Создаем временный div элемент
     const tempDiv = document.createElement('div');
     // Устанавливаем HTML-содержимое
-    tempDiv.innerHTML = html;
+    tempDiv.innerHTML = processedHtml;
     // Получаем только текстовое содержимое (без HTML-тегов)
     const plainText = tempDiv.textContent || tempDiv.innerText || '';
     
-    // Удаляем лишние пробелы и переносы строк
-    return plainText.trim().replace(/\s+/g, ' ');
+    // Сохраняем эмодзи и основное форматирование, но удаляем лишние пробелы
+    const cleanedText = plainText
+      .replace(/\n\s+/g, '\n') // Удаляем пробелы после переносов строк
+      .replace(/\n{3,}/g, '\n\n') // Ограничиваем количество переносов строк до 2
+      .trim();
+    
+    return cleanedText;
   };
   
   // Функция для перевода промта на английский
