@@ -3656,9 +3656,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userId = req.userId || 'guest';
           
           // Получаем ключ XMLRiver из центрального хранилища API ключей
-          const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver');
+          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver');
           
-          if (!xmlRiverKey) {
+          if (!xmlRiverConfig) {
             console.warn(`[${requestId}] XMLRiver API ключ не найден в настройках пользователя. Запрос не может быть выполнен.`);
             return res.status(400).json({
               error: "API ключ не настроен",
@@ -3666,10 +3666,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
+          // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
+          let xmlRiverUserId = "16797"; // Значение по умолчанию
+          let xmlRiverApiKey = xmlRiverConfig;
+          
+          try {
+            // Проверяем, является ли значение JSON-строкой
+            if (xmlRiverConfig.startsWith('{') && xmlRiverConfig.endsWith('}')) {
+              const configObj = JSON.parse(xmlRiverConfig);
+              if (configObj.user) xmlRiverUserId = configObj.user;
+              if (configObj.key) xmlRiverApiKey = configObj.key;
+              console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON`);
+            }
+          } catch (e) {
+            console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
+          }
+          
           const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
             params: {
-              user: "16797", // ID пользователя XMLRiver (одинаковый для всех запросов)
-              key: xmlRiverKey, // Ключ API из центрального хранилища
+              user: xmlRiverUserId,
+              key: xmlRiverApiKey,
               query: isUrl ? "контент для сайта" : req.params.keyword
             }
           });
