@@ -254,7 +254,8 @@ export function ImageGenerationDialog({
           campaignId,
           contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
-          stylePreset
+          stylePreset,
+          savePrompt: savePrompt // Передаем флаг сохранения промта
         };
       } else if (activeTab === "social") {
         // Генерация для социальных сетей
