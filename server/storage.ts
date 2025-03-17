@@ -755,13 +755,17 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignContentById(id: string): Promise<CampaignContent | undefined> {
     try {
+      console.log(`Запрос контента по ID: ${id}`);
       const response = await directusApi.get(`/items/campaign_content/${id}`);
       
       if (!response.data?.data) {
+        console.warn(`Контент с ID ${id} не найден в ответе Directus API`);
         return undefined;
       }
       
       const item = response.data.data;
+      console.log(`Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
+      
       return {
         id: item.id,
         content: item.content,
@@ -777,7 +781,14 @@ export class DatabaseStorage implements IStorage {
         socialPlatforms: item.social_platforms,
         publishedPlatforms: item.published_platforms || []
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`Ошибка при получении контента с ID ${id}:`, error);
+      
+      // Добавляем подробную информацию об ошибке
+      if (error.response) {
+        console.error(`Статус ошибки: ${error.response.status}`);
+        console.error(`Данные ошибки: ${JSON.stringify(error.response.data || {})}`);
+      }
       console.error('Error getting campaign content by ID from Directus:', error);
       return undefined;
     }
