@@ -115,9 +115,11 @@ export function ImageGenerationDialog({
     // Обновляем содержимое обоих полей ввода каждый раз при изменении пропсов
     // Это важно, чтобы поля не были пустыми если пропсы приходят с задержкой
     if (initialPrompt) {
+      // Устанавливаем сохраненный промт во все поля интерфейса
       setPrompt(initialPrompt);
-      // Устанавливаем сохраненный промт для отображения в интерфейсе
       setGeneratedPrompt(initialPrompt);
+      // Если есть промт, переключаемся на вкладку произвольного запроса
+      setActiveTab("prompt");
       console.log('Загружен сохраненный промт из БД:', initialPrompt.substring(0, 100) + '...');
     }
     if (initialContent) {
@@ -125,16 +127,17 @@ export function ImageGenerationDialog({
       console.log('Установлен контент для генерации:', initialContent.substring(0, 100) + '...');
     }
     
-    // Определяем активную вкладку на основе пропсов
-    if (initialPrompt) {
-      setActiveTab("prompt"); // Приоритет у готового промта
-      console.log('Используем готовый промт из контент-плана:', initialPrompt);
-    } else if (initialContent) {
-      // Если нет готового промта, но есть контент, используем его
-      setActiveTab("social"); // Переключаемся на вкладку социальных сетей
-      console.log('Выбрана вкладка для генерации на основе текста');
+    // Уже определили активную вкладку выше, если был initialPrompt
+    if (!initialPrompt) {
+      if (initialContent) {
+        // Если нет готового промта, но есть контент, используем его
+        setActiveTab("social"); // Переключаемся на вкладку социальных сетей
+        console.log('Выбрана вкладка для генерации на основе текста');
+      } else {
+        setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
+      }
     } else {
-      setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
+      console.log('Используем готовый промт из контент-плана:', initialPrompt);
     }
     
     setPlatform("instagram");
@@ -502,7 +505,16 @@ export function ImageGenerationDialog({
         <DialogTitle>Генерация изображений</DialogTitle>
       </DialogHeader>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        // При переключении вкладок нужно сохранять промт для всех вкладок
+        setActiveTab(value);
+        
+        // При переключении на вкладку произвольного запроса, если есть сгенерированный промт, устанавливаем его
+        if (value === "prompt" && generatedPrompt && !prompt) {
+          setPrompt(generatedPrompt);
+          console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
+        }
+      }} className="w-full">
         <TabsList className="grid grid-cols-3 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="business" disabled={!businessData}>Для бизнеса</TabsTrigger>
