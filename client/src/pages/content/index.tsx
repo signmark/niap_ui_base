@@ -478,7 +478,7 @@ export default function ContentPage() {
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
       videoUrl: currentContent.videoUrl,
-      prompt: currentContent.prompt || "", // Добавляем поле промта для генерации изображений
+      // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
     };
