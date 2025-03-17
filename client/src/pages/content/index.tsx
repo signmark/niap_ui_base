@@ -1386,8 +1386,10 @@ export default function ContentPage() {
         <ImageGenerationDialog 
           campaignId={selectedCampaignId}
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
-          initialContent={currentContent?.content || newContent.content} // Передаем текст контента для генерации
-          initialPrompt={currentContent?.prompt || newContent.prompt} // Передаем готовый промт из контент-плана
+          // Корректно передаем контент в зависимости от режима (редактирование или создание)
+          initialContent={currentContent ? currentContent.content : newContent.content}
+          // Передаем промт только если мы редактируем существующий контент, иначе пустая строка
+          initialPrompt={currentContent ? (currentContent.prompt || "") : ""}
           onImageGenerated={(imageUrl) => {
             console.log("Изображение успешно сгенерировано:", imageUrl);
             // Проверяем, находимся ли мы в режиме редактирования или создания
