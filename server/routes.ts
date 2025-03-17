@@ -3021,7 +3021,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const configObj = JSON.parse(xmlRiverConfig);
                   if (configObj.user) xmlRiverUserId = configObj.user;
                   if (configObj.key) xmlRiverApiKey = configObj.key;
-                  console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON`);
+                  console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
+                } else if (xmlRiverConfig.includes(':')) {
+                  // Для обратной совместимости обрабатываем формат user:key
+                  const [user, key] = xmlRiverConfig.split(':');
+                  xmlRiverUserId = user.trim();
+                  xmlRiverApiKey = key.trim();
+                  console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
                 }
               } catch (e) {
                 console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
@@ -3693,7 +3699,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const configObj = JSON.parse(xmlRiverConfig);
               if (configObj.user) xmlRiverUserId = configObj.user;
               if (configObj.key) xmlRiverApiKey = configObj.key;
-              console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON`);
+              console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
+            } else if (xmlRiverConfig.includes(':')) {
+              // Для обратной совместимости обрабатываем формат user:key
+              const [user, key] = xmlRiverConfig.split(':');
+              xmlRiverUserId = user.trim();
+              xmlRiverApiKey = key.trim();
+              console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
             }
           } catch (e) {
             console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
