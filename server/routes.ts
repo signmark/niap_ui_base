@@ -2723,6 +2723,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
+  app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
+    try {
+      const { content, keywords } = req.body;
+      
+      if (!content || content.trim() === '') {
+        return res.status(400).json({ error: "Отсутствует контент для генерации промта" });
+      }
+      
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
+      
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Инициализируем DeepSeek сервис с ключом пользователя
+      const initialized = await deepseekService.initialize(userId, token);
+      
+      if (!initialized) {
+        return res.status(400).json({ 
+          error: "Не удалось инициализировать DeepSeek API", 
+          details: "API ключ не найден. Пожалуйста, добавьте API ключ в настройках пользователя." 
+        });
+      }
+      
+      // Генерируем промт для изображения на основе текста
+      console.log(`Generating image prompt with DeepSeek. Content length: ${content.length} chars`);
+      
+      // Очищаем HTML теги из контента
+      const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
+      
+      const prompt = await deepseekService.generateImagePrompt(
+        cleanContent,
+        keywords || []
+      );
+      
+      console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
+      
+      // Возвращаем сгенерированный промт
+      return res.json({
+        success: true,
+        prompt,
+        service: 'deepseek'
+      });
+    } catch (error: any) {
+      console.error("Error generating prompt with DeepSeek:", error);
+      return res.status(400).json({ 
+        error: "Ошибка при генерации промта", 
+        details: error.message 
+      });
+    }
+  });
+
   app.post("/api/generate-content", authenticateUser, async (req, res) => {
     try {
       const { prompt, keywords, tone, campaignId } = req.body;
