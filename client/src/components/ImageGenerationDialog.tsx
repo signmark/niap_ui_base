@@ -102,6 +102,8 @@ export function ImageGenerationDialog({
   const [modelType, setModelType] = useState<"fast-sdxl" | "fooocus" | "schnell">("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
+  const [savePrompt, setSavePrompt] = useState<boolean>(true); // Флаг для сохранения промта в БД
   
   // При монтировании компонента сбрасываем все значения в исходное состояние
   useEffect(() => {
@@ -273,6 +275,9 @@ export function ImageGenerationDialog({
           if (response.data?.success && response.data?.prompt) {
             console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
             
+            // Сохраняем сгенерированный промт для отображения
+            setGeneratedPrompt(response.data.prompt);
+            
             // Используем полученный промт для генерации изображения
             // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
             requestData = {
@@ -282,7 +287,8 @@ export function ImageGenerationDialog({
               campaignId,
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
-              stylePreset
+              stylePreset,
+              savePrompt: savePrompt // Передаем флаг сохранения промта
             };
           } else {
             // Если DeepSeek не сработал, используем старый метод с переводом
@@ -619,8 +625,9 @@ export function ImageGenerationDialog({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
-              className="min-h-[80px] text-sm"
+              className="min-h-[120px] text-sm"
             />
+            <p className="text-xs text-muted-foreground">HTML-теги будут автоматически удалены при обработке текста</p>
           </div>
           
           <div className="space-y-1">
@@ -644,6 +651,45 @@ export function ImageGenerationDialog({
               </div>
             </RadioGroup>
           </div>
+          
+          <div className="space-y-1">
+            <Label className="text-xs">Количество изображений</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={numImages}
+                onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
+                className="w-16 h-8 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
+            </div>
+          </div>
+          
+          {generatedPrompt && (
+            <div className="space-y-1 mt-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs">Сгенерированный промт</Label>
+                <div className="flex items-center">
+                  <Checkbox 
+                    id="savePrompt" 
+                    checked={savePrompt} 
+                    onCheckedChange={(checked) => setSavePrompt(checked as boolean)}
+                    className="h-3 w-3 mr-1"
+                  />
+                  <Label htmlFor="savePrompt" className="text-xs cursor-pointer">
+                    Сохранить промт
+                  </Label>
+                </div>
+              </div>
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-2">
+                <p className="text-xs font-mono whitespace-pre-wrap break-words">
+                  {generatedPrompt}
+                </p>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
       
