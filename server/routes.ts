@@ -1959,7 +1959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Сохраняем промт в базу данных через storage
               if (storage.updateCampaignContent) {
                 await storage.updateCampaignContent(contentId, {
-                  imagePrompt: requestData.prompt
+                  prompt: requestData.prompt
                 });
                 console.log(`Промт успешно сохранен для контента ${contentId}`);
               } else {
@@ -1998,7 +1998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Сохраняем промт в базу данных через storage
               if (storage.updateCampaignContent) {
                 await storage.updateCampaignContent(contentId, {
-                  imagePrompt: requestData.prompt
+                  prompt: requestData.prompt
                 });
                 console.log(`Промт успешно сохранен для контента ${contentId}`);
               } else {
