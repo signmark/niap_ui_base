@@ -3002,8 +3002,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
           deepseekRequestId
         );
         
-        // Кешируем результаты
+        // Если нашли ключевые слова, попытаемся проверить их через XMLRiver для получения точных метрик
         if (deepseekKeywords && deepseekKeywords.length > 0) {
+          try {
+            // Получаем API ключ XMLRiver
+            const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver' as ApiServiceName, token);
+            
+            if (xmlRiverKey) {
+              console.log(`[${requestId}] Получен ключ XMLRiver, обогащаем метрики ключевых слов`);
+              
+              // Выбираем первые 5 ключевых слов для проверки через XMLRiver (чтобы не превышать лимиты API)
+              const topKeywords = deepseekKeywords.slice(0, 5).map(kw => kw.keyword);
+              
+              // Проверяем каждое ключевое слово через XMLRiver
+              const xmlRiverResults = await Promise.all(
+                topKeywords.map(async (keyword) => {
+                  try {
+                    // Запрос к XMLRiver API для получения статистики из Яндекс.Вордстат
+                    const response = await axios.get('https://xmlriver.com/search/yandex/wordstat', {
+                      params: {
+                        user: xmlRiverKey,
+                        key: keyword
+                      }
+                    });
+                    
+                    // Проверяем наличие данных в ответе
+                    if (response.data && response.data.report && response.data.report.shows) {
+                      const showsValue = parseInt(response.data.report.shows) || 0;
+                      
+                      console.log(`[${requestId}] XMLRiver данные для "${keyword}": ${showsValue} показов`);
+                      
+                      return {
+                        keyword,
+                        shows: showsValue
+                      };
+                    }
+                    return null;
+                  } catch (error) {
+                    console.error(`[${requestId}] Ошибка при запросе к XMLRiver для "${keyword}":`, error);
+                    return null;
+                  }
+                })
+              );
+              
+              // Фильтруем успешные результаты
+              const validResults = xmlRiverResults.filter(Boolean);
+              
+              // Создаем Map для быстрого поиска по ключевому слову
+              const xmlRiverDataMap = new Map();
+              validResults.forEach(result => {
+                if (result) xmlRiverDataMap.set(result.keyword.toLowerCase(), result);
+              });
+              
+              // Обновляем метрики в deepseekKeywords
+              deepseekKeywords.forEach(keyword => {
+                const xmlRiverData = xmlRiverDataMap.get(keyword.keyword.toLowerCase());
+                if (xmlRiverData) {
+                  console.log(`[${requestId}] Обновляем метрики для "${keyword.keyword}": DeepSeek (${keyword.trend}) -> XMLRiver (${xmlRiverData.shows})`);
+                  // Обновляем значение популярности на реальное от XMLRiver
+                  keyword.trend = xmlRiverData.shows;
+                  // Добавляем источник метрик
+                  keyword.source = 'xmlriver+deepseek';
+                }
+              });
+            }
+          } catch (xmlRiverError) {
+            console.error(`[${requestId}] Ошибка при использовании XMLRiver:`, xmlRiverError);
+            // Продолжаем с данными DeepSeek при ошибке XMLRiver
+          }
+          
+          // Кешируем результаты (уже обогащенные данными XMLRiver, если удалось)
           urlKeywordsCache.set(normalizedUrl, {
             timestamp: Date.now(),
             results: deepseekKeywords
