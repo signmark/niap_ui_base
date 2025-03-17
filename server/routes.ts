@@ -1672,6 +1672,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Маршрут для перевода текста с русского на английский
+  app.post('/api/translate-to-english', authenticateUser, async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Необходимо указать текст для перевода'
+        });
+      }
+      
+      // Используем существующую функцию translateToEnglish
+      const translatedText = await translateToEnglish(text);
+      
+      res.json({
+        success: true,
+        originalText: text,
+        translatedText
+      });
+    } catch (error) {
+      console.error('Ошибка при переводе текста:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка при переводе текста'
+      });
+    }
+  });
+
   // Маршрут для генерации изображений через FAL.AI API
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
