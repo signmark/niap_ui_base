@@ -177,7 +177,7 @@ export default function Keywords() {
   };
 
   // Функция для обработки выбранных ключевых слов из анализатора сайта
-  const handleWebsiteKeywordsSelected = async (selectedKeywords: string[]) => {
+  const handleWebsiteKeywordsSelected = async (selectedKeywords: any[]) => {
     if (!selectedCampaign || !campaignId) {
       toast({
         variant: "destructive",
@@ -191,13 +191,13 @@ export default function Keywords() {
       const now = new Date().toISOString();
       
       // Добавляем выбранные ключевые слова в кампанию
-      for (const keyword of selectedKeywords) {
-        // Используем значения по умолчанию для trend_score и mentions_count
+      for (const keywordObj of selectedKeywords) {
+        // Используем реальные значения метрик из анализа сайта
         const data = {
-          keyword: keyword,
+          keyword: typeof keywordObj === 'string' ? keywordObj : keywordObj.keyword,
           campaign_id: campaignId,
-          trend_score: 500, // Усредненное значение
-          mentions_count: 50, // Усредненное значение
+          trend_score: typeof keywordObj === 'string' ? 500 : keywordObj.trend,
+          mentions_count: typeof keywordObj === 'string' ? 50 : keywordObj.competition,
           date_created: now,
           last_checked: now
         };

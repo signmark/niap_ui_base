@@ -18,7 +18,7 @@ import {
 
 interface WebsiteKeywordAnalyzerProps {
   campaignId: string;
-  onKeywordsSelected?: (keywords: string[]) => void;
+  onKeywordsSelected?: (keywords: any[]) => void;
 }
 
 export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: WebsiteKeywordAnalyzerProps) {
@@ -142,17 +142,17 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
     }
 
     try {
-      // Если есть внешний обработчик, вызываем его с выбранными ключевыми словами
-      if (onKeywordsSelected) {
-        onKeywordsSelected(Array.from(selectedKeywords));
-      }
+      // Получаем полные объекты выбранных ключевых слов
+      const selectedKeywordObjects = keywords.filter((kw) => 
+        selectedKeywords.has(kw.keyword)
+      );
 
+      // Если есть внешний обработчик, вызываем его с выбранными объектами ключевых слов
+      if (onKeywordsSelected) {
+        onKeywordsSelected(selectedKeywordObjects);
+      }
       // В противном случае сохраняем ключевые слова сами
       else {
-        const selectedKeywordObjects = keywords.filter((kw) => 
-          selectedKeywords.has(kw.keyword)
-        );
-
         // Отправляем каждое ключевое слово отдельно
         for (const keyword of selectedKeywordObjects) {
           await api.post("/user-keywords", {
