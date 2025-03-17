@@ -167,22 +167,6 @@ export function ImageGenerationDialog({
   };
   
   // Мутация для генерации промта из текста
-  // Локальное состояние для отслеживания задержки индикатора загрузки
-  const [isLocalLoading, setIsLocalLoading] = useState(false);
-
-  // Эффект для контроля задержки отображения загрузки
-  useEffect(() => {
-    if (isPromptGenerationPending) {
-      setIsLocalLoading(true);
-    } else if (isLocalLoading) {
-      // Добавляем небольшую задержку для более плавного UX
-      const timer = setTimeout(() => {
-        setIsLocalLoading(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isPromptGenerationPending, isLocalLoading]);
-
   const { mutate: generateTextPrompt, isPending: isPromptGenerationPending } = useMutation({
     mutationFn: async () => {
       if (!content) {
