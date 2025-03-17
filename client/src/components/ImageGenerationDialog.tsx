@@ -50,15 +50,21 @@ export function ImageGenerationDialog({
   // При монтировании компонента сбрасываем все значения в исходное состояние
   useEffect(() => {
     // Сброс формы при первом рендере компонента
-    setPrompt("");
     setNegativePrompt("");
     setImageSize("1024x1024");
     
-    // Если есть начальный контент, используем его
-    if (initialContent) {
+    // Если есть готовый промт из контент-плана, используем его
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+      setActiveTab("prompt"); // Переключаемся на вкладку с готовым промтом
+      console.log('Используем готовый промт из контент-плана:', initialPrompt);
+    } else if (initialContent) {
+      // Если нет готового промта, но есть контент, используем его
       setContent(initialContent);
       setActiveTab("social"); // Переключаемся на вкладку социальных сетей
+      console.log('Используем контент для генерации промта:', initialContent.substring(0, 100) + '...');
     } else {
+      setPrompt("");
       setContent("");
       setActiveTab("prompt");
     }
@@ -72,7 +78,7 @@ export function ImageGenerationDialog({
     
     // Здесь можно добавить загрузку сохраненных изображений для contentId, если он передан
     // Но для этого нужно будет добавить дополнительные API эндпоинты
-  }, [contentId, initialContent]); // Зависимость от contentId и initialContent
+  }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от initialPrompt
   
   const { toast } = useToast();
   
