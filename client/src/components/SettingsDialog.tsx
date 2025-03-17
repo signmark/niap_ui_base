@@ -7,12 +7,20 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { Loader2 } from "lucide-react";
+import { Loader2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 interface ApiKey {
   id: string;
   service_name: string;
   api_key: string;
+}
+
+// Интерфейс для XMLRiver ключа
+interface XMLRiverCredentials {
+  user: string;
+  key: string;
 }
 
 export function SettingsDialog() {
@@ -21,10 +29,14 @@ export function SettingsDialog() {
   const [socialSearcherKey, setSocialSearcherKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
+  // XMLRiver API credentials
+  const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
+  const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
+  
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
-  const { data: apiKeys, isLoading } = useQuery({
+  const { data: apiKeys, isLoading, refetch } = useQuery({
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
@@ -54,6 +66,7 @@ export function SettingsDialog() {
       const socialSearcherKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'social_searcher');
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
+      const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -70,6 +83,28 @@ export function SettingsDialog() {
       if (falAiKeyData) {
         setFalAiKey(falAiKeyData.api_key);
       }
+      
+      // Обработка XMLRiver ключа
+      if (xmlRiverKeyData) {
+        try {
+          // Пытаемся распарсить JSON с user и key
+          const credentials = JSON.parse(xmlRiverKeyData.api_key) as XMLRiverCredentials;
+          setXmlRiverUserId(credentials.user);
+          setXmlRiverApiKey(credentials.key);
+        } catch (e) {
+          // Если не получилось распарсить, значит ключ в старом формате
+          // Пробуем разделить на user_id:api_key
+          const apiKey = xmlRiverKeyData.api_key;
+          if (apiKey.includes(':')) {
+            const [user, key] = apiKey.split(':');
+            setXmlRiverUserId(user.trim());
+            setXmlRiverApiKey(key.trim());
+          } else {
+            // Если разделителя нет, считаем что это просто ключ
+            setXmlRiverApiKey(apiKey.trim());
+          }
+        }
+      }
     }
   }, [apiKeys]);
 
@@ -79,16 +114,25 @@ export function SettingsDialog() {
         throw new Error("Пользователь не авторизован");
       }
 
+      // Формируем ключ для XMLRiver, объединяя user_id и api_key в JSON
+      const xmlRiverCombinedKey = JSON.stringify({
+        user: xmlRiverUserId.trim(),
+        key: xmlRiverApiKey.trim()
+      });
+
       const services = [
         { name: 'perplexity', key: perplexityKey },
         { name: 'apify', key: apifyKey },
         { name: 'social_searcher', key: socialSearcherKey },
         { name: 'deepseek', key: deepseekKey },
-        { name: 'fal_ai', key: falAiKey }
+        { name: 'fal_ai', key: falAiKey },
+        { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
 
       for (const service of services) {
-        if (!service.key) continue;
+        // Пропускаем пустые ключи, кроме XMLRiver, которому нужно сохранить user_id даже если ключ пуст
+        if (!service.key && service.name !== 'xmlriver') continue;
+        if (service.name === 'xmlriver' && !xmlRiverApiKey.trim()) continue;
 
         const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
@@ -104,6 +148,8 @@ export function SettingsDialog() {
           });
         }
       }
+      // Обновляем список ключей после сохранения
+      await refetch();
     },
     onSuccess: () => {
       toast({
@@ -131,7 +177,7 @@ export function SettingsDialog() {
   }
 
   return (
-    <DialogContent>
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Настройки API ключей</DialogTitle>
       </DialogHeader>
@@ -200,11 +246,60 @@ export function SettingsDialog() {
             Ключ используется для генерации изображений и медиа-контента
           </p>
         </div>
+        
+        <Separator className="my-4" />
+        
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <Label className="text-lg font-semibold">XMLRiver (Yandex.Wordstat)</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>XMLRiver используется для получения точных данных по ключевым словам из Яндекс.Вордстат. Требует user ID и API ключ.</p>
+                  <p className="mt-2">Получить можно на сайте: <a href="https://xmlriver.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">xmlriver.com</a></p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>User ID в XMLRiver</Label>
+              <Input
+                type="text"
+                value={xmlRiverUserId}
+                onChange={(e) => setXmlRiverUserId(e.target.value)}
+                placeholder="Введите ID пользователя XMLRiver"
+              />
+              <p className="text-sm text-muted-foreground">
+                ID вашего аккаунта в XMLRiver
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>API Ключ XMLRiver</Label>
+              <Input
+                type="password"
+                value={xmlRiverApiKey}
+                onChange={(e) => setXmlRiverApiKey(e.target.value)}
+                placeholder="Введите API ключ XMLRiver"
+              />
+              <p className="text-sm text-muted-foreground">
+                Ключ для доступа к API XMLRiver
+              </p>
+            </div>
+          </div>
+        </div>
 
         <Button
           onClick={() => saveSettings()}
           disabled={isPending}
-          className="w-full"
+          className="w-full mt-6"
         >
           {isPending ? (
             <>
