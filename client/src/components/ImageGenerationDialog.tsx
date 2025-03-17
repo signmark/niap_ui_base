@@ -228,7 +228,11 @@ export function ImageGenerationDialog({
       // Переносы строк
       .replace(/<br\s*\/?>/gi, '\n')
       // Списки
-      .replace(/<li>(.*?)<\/li>/gi, '• $1\n');
+      .replace(/<li>(.*?)<\/li>/gi, '• $1\n')
+      // Ссылки преобразуем в текст (если есть текст ссылки, используем его, иначе URI)
+      .replace(/<a\s+[^>]*href=['"]([^'"]*)['"]\s*[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
+        return text && text.trim() ? `${text.trim()} (${url})` : url;
+      });
     
     // Создаем временный div элемент
     const tempDiv = document.createElement('div');
@@ -621,6 +625,16 @@ export function ImageGenerationDialog({
               placeholder="Опишите, какое изображение вы хотите получить..."
               className="min-h-[180px]"
             />
+            
+            {/* Предварительный просмотр очищенного промпта */}
+            {prompt && (
+              <div className="mt-2">
+                <Label className="text-xs text-muted-foreground mb-1">Предпросмотр очищенного текста:</Label>
+                <div className="bg-secondary p-2 rounded-md text-sm whitespace-pre-wrap">
+                  {stripHtml(prompt)}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -751,6 +765,16 @@ export function ImageGenerationDialog({
                 placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
                 className="min-h-[180px] text-sm"
               />
+              
+              {/* Предварительный просмотр очищенного текста */}
+              {content && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground mb-1">Предпросмотр очищенного текста:</Label>
+                  <div className="bg-secondary p-2 rounded-md text-sm whitespace-pre-wrap">
+                    {stripHtml(content)}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex justify-between items-center mt-1.5">
               <div className="flex-1">
