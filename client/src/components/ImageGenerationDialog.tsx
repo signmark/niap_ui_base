@@ -330,8 +330,19 @@ export function ImageGenerationDialog({
       console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
       
       try {
+        // Добавляем детальное логирование запроса
+        console.log('Отправляем запрос PATCH к /api/campaign-content/' + contentId);
+        console.log('Данные запроса:', { prompt: promptText });
+        
         const response = await api.patch(`/api/campaign-content/${contentId}`, {
           prompt: promptText
+        });
+        
+        // Добавляем детальное логирование ответа
+        console.log('Ответ от сервера:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.data
         });
         
         if (response.data && response.status === 200) {
@@ -343,6 +354,11 @@ export function ImageGenerationDialog({
         }
       } catch (error) {
         console.error('❌ Ошибка при сохранении промта:', error);
+        console.error('Детали ошибки:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
         return false;
       }
     }
@@ -502,7 +518,7 @@ export function ImageGenerationDialog({
               modelName: modelType,
               stylePreset,
               numImages, // Добавляем параметр количества изображений
-              savePrompt: savePrompt, // Передаем флаг сохранения промта
+              savePrompt: true, // Всегда сохраняем промт в случае ошибки
               prompt: translatedContent // Используем переведенный текст как промт
             };
           }
