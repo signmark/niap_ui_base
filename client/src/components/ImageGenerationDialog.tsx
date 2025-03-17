@@ -13,19 +13,23 @@ import { api } from "@/lib/api";
 
 interface ImageGenerationDialogProps {
   campaignId?: string;
+  contentId?: string; // Добавляем ID контента для привязки изображений
   businessData?: {
     companyName: string;
     businessDescription: string;
     brandImage: string;
     productsServices: string;
   };
+  initialContent?: string; // Добавляем начальный контент для подсказки
   onImageGenerated?: (imageUrl: string) => void;
   onClose: () => void;
 }
 
 export function ImageGenerationDialog({
   campaignId,
+  contentId,
   businessData,
+  initialContent,
   onImageGenerated,
   onClose
 }: ImageGenerationDialogProps) {
@@ -47,15 +51,26 @@ export function ImageGenerationDialog({
     setPrompt("");
     setNegativePrompt("");
     setImageSize("1024x1024");
-    setContent("");
+    
+    // Если есть начальный контент, используем его
+    if (initialContent) {
+      setContent(initialContent);
+      setActiveTab("social"); // Переключаемся на вкладку социальных сетей
+    } else {
+      setContent("");
+      setActiveTab("prompt");
+    }
+    
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
     setModelType("fast-sdxl");
     setStylePreset("photographic");
     setNumImages(3);
-    setActiveTab("prompt");
-  }, []);
+    
+    // Здесь можно добавить загрузку сохраненных изображений для contentId, если он передан
+    // Но для этого нужно будет добавить дополнительные API эндпоинты
+  }, [contentId, initialContent]); // Зависимость от contentId и initialContent
   
   const { toast } = useToast();
   
@@ -79,6 +94,7 @@ export function ImageGenerationDialog({
           width,
           height,
           campaignId,
+          contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
           numImages: numImages, // Используем выбранное пользователем значение
           stylePreset
@@ -91,6 +107,7 @@ export function ImageGenerationDialog({
         requestData = {
           businessData,
           campaignId,
+          contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
           stylePreset
         };
@@ -103,6 +120,7 @@ export function ImageGenerationDialog({
           content,
           platform,
           campaignId,
+          contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
           stylePreset
         };
