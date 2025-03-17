@@ -850,6 +850,7 @@ export class DatabaseStorage implements IStorage {
       if (updates.postType !== undefined) directusUpdates.post_type = updates.postType;
       if (updates.imageUrl !== undefined) directusUpdates.image_url = updates.imageUrl;
       if (updates.videoUrl !== undefined) directusUpdates.video_url = updates.videoUrl;
+      if (updates.prompt !== undefined) directusUpdates.prompt = updates.prompt;
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
       if (updates.publishedPlatforms !== undefined) directusUpdates.published_platforms = updates.publishedPlatforms || [];
