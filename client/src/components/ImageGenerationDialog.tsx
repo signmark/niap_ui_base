@@ -9,6 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
 import { Loader2, Image, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -100,7 +107,7 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<"fast-sdxl" | "fooocus" | "schnell">("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
+  const [modelType, setModelType] = useState<string>("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
@@ -638,28 +645,7 @@ export function ImageGenerationDialog({
             </Select>
           </div>
           
-          <div className="space-y-1">
-            <Label className="text-xs">Стиль изображения</Label>
-            <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="grid grid-cols-2 gap-x-3 gap-y-1">
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="photographic" id="s1" className="h-3 w-3" />
-                <Label htmlFor="s1" className="text-xs">Фотореалистичный</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="cinematic" id="s2" className="h-3 w-3" />
-                <Label htmlFor="s2" className="text-xs">Кинематографический</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="anime" id="s3" className="h-3 w-3" />
-                <Label htmlFor="s3" className="text-xs">Аниме</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="base" id="s4" className="h-3 w-3" />
-                <Label htmlFor="s4" className="text-xs">Базовый</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
+          {/* Настройки количества изображений */}
           <div className="space-y-1">
             <Label className="text-xs">Количество изображений</Label>
             <div className="flex items-center space-x-2">
@@ -743,7 +729,23 @@ export function ImageGenerationDialog({
               placeholder="Введите текст, на основе которого будет сгенерировано изображение..."
               className="min-h-[120px] text-sm"
             />
-            <p className="text-xs text-muted-foreground">HTML-теги будут автоматически удалены при обработке текста</p>
+            <div className="flex justify-between items-center mt-1.5">
+              <p className="text-xs text-muted-foreground">HTML-теги будут автоматически удалены при обработке текста</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => generateTextPrompt()}
+                disabled={isPromptGenerationPending || !content}
+                className="mt-1"
+              >
+                {isPromptGenerationPending ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3 mr-1" />
+                )}
+                Сгенерировать промт
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-1">
