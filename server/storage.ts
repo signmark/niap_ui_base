@@ -799,6 +799,7 @@ export class DatabaseStorage implements IStorage {
         post_type: content.postType,
         image_url: content.imageUrl,
         video_url: content.videoUrl,
+        prompt: content.prompt || "",  // Добавляем поле промта при создании
         scheduled_at: content.scheduledAt?.toISOString() || null,
         social_platforms: content.socialPlatforms,
         published_platforms: content.publishedPlatforms || []
@@ -820,6 +821,7 @@ export class DatabaseStorage implements IStorage {
         postType: item.post_type,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
+        prompt: item.prompt || "",  // Добавляем поле промта при возвращении результата
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
