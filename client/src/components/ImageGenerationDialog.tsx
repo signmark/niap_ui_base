@@ -116,6 +116,9 @@ export function ImageGenerationDialog({
     // Это важно, чтобы поля не были пустыми если пропсы приходят с задержкой
     if (initialPrompt) {
       setPrompt(initialPrompt);
+      // Устанавливаем сохраненный промт для отображения в интерфейсе
+      setGeneratedPrompt(initialPrompt);
+      console.log('Загружен сохраненный промт из БД:', initialPrompt.substring(0, 100) + '...');
     }
     if (initialContent) {
       setContent(initialContent);
