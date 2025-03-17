@@ -207,7 +207,7 @@ export function ImageGenerationDialog({
           throw new Error("Не удалось сгенерировать промт");
         }
       } catch (error) {
-        resetLoading();
+        // Обработка ошибки происходит в onError
         throw error;
       }
     },
@@ -588,7 +588,7 @@ export function ImageGenerationDialog({
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
         <DialogDescription className="text-xs text-muted-foreground mt-1">
-          Создавайте изображения на основе текста или произвольного запроса
+          Создавайте изображения на основе текста или произвольного запроса. Для достижения лучших результатов добавляйте детали и стилевые особенности в запрос.
         </DialogDescription>
       </DialogHeader>
       
