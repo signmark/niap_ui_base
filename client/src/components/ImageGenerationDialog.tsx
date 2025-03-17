@@ -300,6 +300,9 @@ export function ImageGenerationDialog({
             // Переводим контент на английский для улучшения качества генерации
             const translatedContent = await translateToEnglish(content);
             
+            // Устанавливаем переведенный текст как промт для отображения в интерфейсе
+            setGeneratedPrompt(translatedContent);
+            
             requestData = {
               content: translatedContent,
               originalContent: content, // Сохраняем оригинальный контент для отладки
@@ -308,7 +311,8 @@ export function ImageGenerationDialog({
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
               stylePreset,
-              savePrompt: savePrompt // Передаем флаг сохранения промта
+              savePrompt: savePrompt, // Передаем флаг сохранения промта
+              prompt: translatedContent // Используем переведенный текст как промт
             };
           }
         } catch (error) {
@@ -318,6 +322,9 @@ export function ImageGenerationDialog({
           // Переводим контент на английский для улучшения качества генерации
           const translatedContent = await translateToEnglish(content);
           
+          // Устанавливаем переведенный текст как промт для отображения в интерфейсе
+          setGeneratedPrompt(translatedContent);
+          
           requestData = {
             content: translatedContent,
             originalContent: content, // Сохраняем оригинальный контент для отладки
@@ -326,7 +333,8 @@ export function ImageGenerationDialog({
             contentId, // Добавляем contentId для привязки к конкретному контенту
             modelName: modelType,
             stylePreset,
-            savePrompt: savePrompt // Передаем флаг сохранения промта
+            savePrompt: savePrompt, // Передаем флаг сохранения промта
+            prompt: translatedContent // Используем переведенный текст как промт
           };
         }
       }
