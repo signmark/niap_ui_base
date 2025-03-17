@@ -1724,6 +1724,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
       
+      console.log(`Получен запрос на генерацию изображения. contentId: ${contentId}, savePrompt: ${savePrompt}`);
+      
+      // Если передан contentId и savePrompt=true, проверим наличие контента перед генерацией изображения
+      if (contentId && savePrompt) {
+        try {
+          const existingContent = await storage.getCampaignContentById(contentId);
+          if (existingContent) {
+            console.log(`Контент с ID ${contentId} найден: userId: ${existingContent.userId}`);
+          } else {
+            console.warn(`⚠️ Контент с ID ${contentId} НЕ НАЙДЕН в базе данных! Проверьте передачу contentId.`);
+          }
+        } catch (contentError) {
+          console.error(`❌ Ошибка при проверке контента ${contentId}: ${contentError}`);
+        }
+      }
+      
       console.log('Генерация изображения для пользователя:', userId);
       
       // Инициализируем FAL.AI с использованием централизованной системы API ключей
