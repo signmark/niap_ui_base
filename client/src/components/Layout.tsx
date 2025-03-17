@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Database, Image, Sparkles, LayoutGrid } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { Dialog } from "@/components/ui/dialog";
@@ -89,10 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/content", label: "Контент", icon: PenTool },
     { path: "/posts", label: "Posts", icon: Calendar },
     { path: "/trends", label: "Trends", icon: TrendingUp },
-    { path: "/tasks", label: "Tasks", icon: Database },
     { path: "/analytics", label: "Analytics", icon: BarChart },
-    { path: "/test/image-generation", label: "FAL.AI Тест", icon: Sparkles },
-    { path: "/test/transparent-dialog", label: "Прозрачные окна", icon: LayoutGrid },
   ];
 
   const renderNavItems = () => (
