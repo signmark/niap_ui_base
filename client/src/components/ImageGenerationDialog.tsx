@@ -382,30 +382,12 @@ export function ImageGenerationDialog({
           stylePreset,
           savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
         };
-      } else if (activeTab === "business") {
-        // Генерация на основе данных бизнеса
-        if (!businessData) {
-          throw new Error("Необходимо заполнить данные о бизнесе в анкете");
-        }
-        
-        // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-        if (savePrompt && contentId && prompt) {
-          console.log('Сначала сохраняем бизнес-промт в БД, а потом генерируем изображение');
-          await savePromptToDb(prompt);
-        }
-        
-        requestData = {
-          businessData,
-          campaignId,
-          contentId, // Добавляем contentId для привязки к конкретному контенту
-          modelName: modelType,
-          stylePreset,
-          savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
-        };
-      } else if (activeTab === "social") {
-        // Генерация для социальных сетей
+      // Единственным активным табом кроме "prompt" теперь является "text",
+      // который заменяет собой предыдущие табы social и business
+      } else if (activeTab === "text") {
+        // Генерация для контента на основе текста
         if (!content) {
-          throw new Error("Необходимо ввести контент для генерации");
+          throw new Error("Необходимо ввести текст для генерации");
         }
         
         // Если у нас уже есть сгенерированный промт, используем его напрямую
@@ -414,14 +396,13 @@ export function ImageGenerationDialog({
           
           // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
           if (savePrompt && contentId && generatedPrompt) {
-            console.log('Сначала сохраняем социальный промт в БД, а потом генерируем изображение');
+            console.log('Сначала сохраняем текстовый промт в БД, а потом генерируем изображение');
             await savePromptToDb(generatedPrompt);
           }
           
           requestData = {
             prompt: generatedPrompt,
             originalContent: content,
-            platform,
             campaignId,
             contentId,
             modelName: modelType,
@@ -468,7 +449,6 @@ export function ImageGenerationDialog({
               requestData = {
                 prompt: response.data.prompt,
                 originalContent: content, // Сохраняем оригинальный контент для отладки
-                platform,
                 campaignId,
                 contentId, // Добавляем contentId для привязки к конкретному контенту
                 modelName: modelType,
@@ -495,7 +475,6 @@ export function ImageGenerationDialog({
               requestData = {
                 content: translatedContent,
                 originalContent: content, // Сохраняем оригинальный контент для отладки
-                platform,
                 campaignId,
                 contentId, // Добавляем contentId для привязки к конкретному контенту
                 modelName: modelType,
@@ -518,7 +497,6 @@ export function ImageGenerationDialog({
             requestData = {
               content: translatedContent,
               originalContent: content, // Сохраняем оригинальный контент для отладки
-              platform,
               campaignId,
               contentId, // Добавляем contentId для привязки к конкретному контенту
               modelName: modelType,
@@ -682,8 +660,8 @@ export function ImageGenerationDialog({
         if (activeTab === "prompt") {
           // Если использовали вкладку с прямым вводом промта
           finalPrompt = prompt;
-        } else if (activeTab === "social" && generatedPrompt) {
-          // Если использовали вкладку генерации из контента
+        } else if (activeTab === "text" && generatedPrompt) {
+          // Если использовали вкладку генерации на основе текста
           finalPrompt = generatedPrompt;
         }
         
@@ -773,7 +751,7 @@ export function ImageGenerationDialog({
       }} className="w-full">
         <TabsList className="grid grid-cols-2 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
-          <TabsTrigger value="social">На основе текста</TabsTrigger>
+          <TabsTrigger value="text">На основе текста</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}
@@ -844,85 +822,8 @@ export function ImageGenerationDialog({
           </div>
         </TabsContent>
         
-        {/* Содержимое вкладки для бизнеса */}
-        <TabsContent value="business" className="space-y-2">
-          {businessData ? (
-            <div className="rounded-md border p-2 space-y-1">
-              <div>
-                <Label className="font-semibold text-sm">Название:</Label>
-                <p className="text-sm">{businessData.companyName}</p>
-              </div>
-              <div>
-                <Label className="font-semibold text-sm">Описание:</Label>
-                <p className="text-sm line-clamp-3">{businessData.businessDescription}</p>
-              </div>
-              <div>
-                <Label className="font-semibold text-sm">Продукты/услуги:</Label>
-                <p className="text-sm line-clamp-3">{businessData.productsServices}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 border border-dashed rounded-md text-center">
-              <p className="text-muted-foreground text-sm">Заполните анкету бизнеса в настройках кампании для использования этой функции</p>
-            </div>
-          )}
-          
-          {/* Настройки стиля */}
-          <div className="space-y-1">
-            <Label className="text-xs">Стиль изображения</Label>
-            <Select value={stylePreset} onValueChange={(value) => setStylePreset(value)}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Выберите стиль" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="photographic">Фотореалистичный</SelectItem>
-                <SelectItem value="cinematic">Кинематографический</SelectItem>
-                <SelectItem value="anime">Аниме</SelectItem>
-                <SelectItem value="base">Базовый</SelectItem>
-                <SelectItem value="digital-art">Цифровое искусство</SelectItem>
-                <SelectItem value="enhance">Улучшенный</SelectItem>
-                <SelectItem value="fantasy-art">Фэнтези</SelectItem>
-                <SelectItem value="isometric">Изометрический</SelectItem>
-                <SelectItem value="neon-punk">Неон-панк</SelectItem>
-                <SelectItem value="origami">Оригами</SelectItem>
-                <SelectItem value="3d-model">3D-модель</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Настройки количества изображений */}
-          <div className="space-y-1">
-            <Label className="text-xs">Количество изображений</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                value={numImages}
-                onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-16 h-8 text-sm"
-              />
-              <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2 mt-2">
-            <Checkbox 
-              id="save-prompt-business" 
-              checked={savePrompt}
-              onCheckedChange={(checked) => setSavePrompt(!!checked)}
-            />
-            <label
-              htmlFor="save-prompt-business"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Сохранить промт
-            </label>
-          </div>
-        </TabsContent>
-        
-        {/* Содержимое вкладки для социальных сетей */}
-        <TabsContent value="social" className="space-y-2">
+        {/* Содержимое вкладки на основе текста */}
+        <TabsContent value="text" className="space-y-2">
           <div className="space-y-1">
             <Label>Текст для генерации изображения</Label>
             <Textarea
@@ -978,12 +879,12 @@ export function ImageGenerationDialog({
           
           <div className="flex items-center space-x-2 mt-2">
             <Checkbox 
-              id="save-prompt-social" 
+              id="save-prompt-text" 
               checked={savePrompt}
               onCheckedChange={(checked) => setSavePrompt(!!checked)}
             />
             <label
-              htmlFor="save-prompt-social"
+              htmlFor="save-prompt-text"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Сохранить промт
@@ -1011,7 +912,7 @@ export function ImageGenerationDialog({
         disabled={
           isPending || 
           (activeTab === "prompt" && !prompt) || 
-          (activeTab === "social" && (!generatedPrompt || !content))
+          (activeTab === "text" && (!generatedPrompt || !content))
         }
         className="w-full"
       >
