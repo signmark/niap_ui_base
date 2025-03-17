@@ -319,6 +319,35 @@ export function ImageGenerationDialog({
     }
   };
 
+  // Мутация для сохранения промта отдельно от генерации (чтобы избежать ошибок)
+  const { mutate: savePromptToDb } = useMutation({
+    mutationFn: async (promptText: string) => {
+      if (!contentId) {
+        console.warn('Невозможно сохранить промт: contentId не указан');
+        return false;
+      }
+      
+      console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
+      
+      try {
+        const response = await api.patch(`/api/campaign-content/${contentId}`, {
+          prompt: promptText
+        });
+        
+        if (response.data && response.status === 200) {
+          console.log('✅ Промт успешно сохранен в базе данных');
+          return true;
+        } else {
+          console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ Ошибка при сохранении промта:', error);
+        return false;
+      }
+    }
+  });
+
   // Мутация для генерации изображения
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
@@ -327,6 +356,12 @@ export function ImageGenerationDialog({
       if (activeTab === "prompt") {
         // Прямая генерация по промпту
         const { width, height } = getImageDimensions();
+
+        // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
+        if (savePrompt && contentId && prompt) {
+          console.log('Сначала сохраняем промт в БД, а потом генерируем изображение');
+          await savePromptToDb(prompt);
+        }
         
         // Переводим промт на английский для улучшения качества генерации
         const translatedPrompt = await translateToEnglish(prompt);
@@ -345,20 +380,27 @@ export function ImageGenerationDialog({
           modelName: modelType,
           numImages: numImages, // Используем выбранное пользователем значение
           stylePreset,
-          savePrompt: savePrompt // Передаем флаг сохранения промта
+          savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
         };
       } else if (activeTab === "business") {
         // Генерация на основе данных бизнеса
         if (!businessData) {
           throw new Error("Необходимо заполнить данные о бизнесе в анкете");
         }
+        
+        // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
+        if (savePrompt && contentId && prompt) {
+          console.log('Сначала сохраняем бизнес-промт в БД, а потом генерируем изображение');
+          await savePromptToDb(prompt);
+        }
+        
         requestData = {
           businessData,
           campaignId,
           contentId, // Добавляем contentId для привязки к конкретному контенту
           modelName: modelType,
           stylePreset,
-          savePrompt: savePrompt // Передаем флаг сохранения промта
+          savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
         };
       } else if (activeTab === "social") {
         // Генерация для социальных сетей
@@ -370,6 +412,12 @@ export function ImageGenerationDialog({
         if (generatedPrompt) {
           console.log("Используем ранее сгенерированный промт:", generatedPrompt.substring(0, 100) + "...");
           
+          // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
+          if (savePrompt && contentId && generatedPrompt) {
+            console.log('Сначала сохраняем социальный промт в БД, а потом генерируем изображение');
+            await savePromptToDb(generatedPrompt);
+          }
+          
           requestData = {
             prompt: generatedPrompt,
             originalContent: content,
@@ -379,7 +427,7 @@ export function ImageGenerationDialog({
             modelName: modelType,
             stylePreset,
             numImages,
-            savePrompt: savePrompt
+            savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
           };
         } else {
           // Если промт еще не был сгенерирован
@@ -409,6 +457,12 @@ export function ImageGenerationDialog({
               // Сохраняем сгенерированный промт для отображения
               setGeneratedPrompt(response.data.prompt);
               
+              // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
+              if (savePrompt && contentId && response.data.prompt) {
+                console.log('Сначала сохраняем DeepSeek-промт в БД, а потом генерируем изображение');
+                await savePromptToDb(response.data.prompt);
+              }
+              
               // Используем полученный промт для генерации изображения
               // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
               requestData = {
@@ -420,7 +474,7 @@ export function ImageGenerationDialog({
                 modelName: modelType,
                 stylePreset,
                 numImages, // Добавляем параметр количества изображений
-                savePrompt: savePrompt // Передаем флаг сохранения промта
+                savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
               };
             } else {
               // Если DeepSeek не сработал, используем старый метод с переводом
@@ -432,6 +486,12 @@ export function ImageGenerationDialog({
               // Устанавливаем переведенный текст как промт для отображения в интерфейсе
               setGeneratedPrompt(translatedContent);
               
+              // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
+              if (savePrompt && contentId && translatedContent) {
+                console.log('Сначала сохраняем резервный переведенный промт в БД, а потом генерируем изображение');
+                await savePromptToDb(translatedContent);
+              }
+              
               requestData = {
                 content: translatedContent,
                 originalContent: content, // Сохраняем оригинальный контент для отладки
@@ -441,7 +501,7 @@ export function ImageGenerationDialog({
                 modelName: modelType,
                 stylePreset,
                 numImages, // Добавляем параметр количества изображений
-                savePrompt: savePrompt, // Передаем флаг сохранения промта
+                savePrompt: false, // Отключаем флаг сохранения на сервере, так как мы уже сохранили
                 prompt: translatedContent // Используем переведенный текст как промт
               };
             }
