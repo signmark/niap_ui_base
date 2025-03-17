@@ -346,6 +346,73 @@ ${platformSpecifics}
   }
   
   /**
+   * Генерирует промт для изображения на основе текстового контента
+   * @param content Текстовый контент, на основе которого нужно сгенерировать промт
+   * @param keywords Ключевые слова для усиления релевантности промта (опционально)
+   * @returns Промт для генерации изображения на английском языке
+   */
+  async generateImagePrompt(
+    content: string,
+    keywords: string[] = []
+  ): Promise<string> {
+    try {
+      // Очищаем HTML-теги из контента, но сохраняем структуру текста
+      const cleanedContent = content
+        .replace(/<[^>]*>/g, ' ')  // Заменяем HTML-теги пробелами
+        .replace(/\s+/g, ' ')      // Заменяем множественные пробелы одним
+        .trim();                    // Убираем пробелы в начале и конце
+      
+      // Формируем системный промт
+      const systemPrompt = `You are an expert image prompt generator for Stable Diffusion AI.
+Your task is to create detailed, vivid, and highly specific prompts for generating images based on Russian text content.
+
+INSTRUCTIONS:
+1. Read the provided Russian text content carefully
+2. Create a SINGLE, detailed image generation prompt in ENGLISH
+3. Focus on the main subject, scene, mood, and style from the content
+4. Include visual details like lighting, color scheme, and composition
+5. DO NOT mention text, captions, or writing in the image
+6. Output ONLY the image prompt text in English - nothing else
+7. Format the prompt to be optimized for Stable Diffusion AI
+8. DO NOT put quotation marks around the prompt
+9. DO NOT include any explanations or comments
+10. Length should be 1-3 sentences maximum
+11. Include adjectives like "detailed", "high quality", "photorealistic" or art styles
+
+The ideal prompt should create a visually appealing, professional image that captures the essence of the source content.`;
+
+      // Добавляем ключевые слова в запрос, если они предоставлены
+      const keywordsText = keywords && keywords.length > 0 
+        ? `\n\nReference keywords (use if relevant): ${keywords.join(', ')}` 
+        : '';
+      
+      const userPrompt = `Create a professional image generation prompt based on this Russian text:
+
+${cleanedContent}${keywordsText}
+
+Remember to output ONLY the English prompt without any explanations.`;
+
+      const messages: DeepSeekMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+
+      // Вызываем генерацию с соответствующими параметрами
+      const result = await this.generateText(messages, {
+        model: 'deepseek-chat',
+        temperature: 0.7,  // Более высокая температура для творческих результатов
+        max_tokens: 300    // Ограничиваем длину промта
+      });
+      
+      // Чистим результат от лишних кавычек, если они добавлены моделью
+      return result.replace(/^["']|["']$/g, '').trim();
+    } catch (error) {
+      console.error('Error generating image prompt with DeepSeek:', error);
+      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message}`);
+    }
+  }
+
+  /**
    * Адаптирует контент для разных платформ
    */
   async adaptContentForPlatform(

@@ -202,18 +202,63 @@ export function ImageGenerationDialog({
           throw new Error("Необходимо ввести контент для генерации");
         }
         
-        // Переводим контент на английский для улучшения качества генерации
-        const translatedContent = await translateToEnglish(content);
+        console.log("Генерация промта на основе текста через DeepSeek");
         
-        requestData = {
-          content: translatedContent,
-          originalContent: content, // Сохраняем оригинальный контент для отладки
-          platform,
-          campaignId,
-          contentId, // Добавляем contentId для привязки к конкретному контенту
-          modelName: modelType,
-          stylePreset
-        };
+        try {
+          // Сначала генерируем промт через DeepSeek на основе контента
+          const response = await api.post("/generate-image-prompt", {
+            content: content,
+            keywords: [] // Можно добавить ключевые слова из контента если нужно
+          });
+          
+          if (response.data?.success && response.data?.prompt) {
+            console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
+            
+            // Используем полученный промт для генерации изображения
+            // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
+            requestData = {
+              prompt: response.data.prompt,
+              originalContent: content, // Сохраняем оригинальный контент для отладки
+              platform,
+              campaignId,
+              contentId, // Добавляем contentId для привязки к конкретному контенту
+              modelName: modelType,
+              stylePreset
+            };
+          } else {
+            // Если DeepSeek не сработал, используем старый метод с переводом
+            console.warn("Не удалось сгенерировать промт через DeepSeek, используем традиционный метод");
+            
+            // Переводим контент на английский для улучшения качества генерации
+            const translatedContent = await translateToEnglish(content);
+            
+            requestData = {
+              content: translatedContent,
+              originalContent: content, // Сохраняем оригинальный контент для отладки
+              platform,
+              campaignId,
+              contentId, // Добавляем contentId для привязки к конкретному контенту
+              modelName: modelType,
+              stylePreset
+            };
+          }
+        } catch (error) {
+          console.error("Ошибка при генерации промта через DeepSeek:", error);
+          
+          // В случае ошибки используем традиционный метод
+          // Переводим контент на английский для улучшения качества генерации
+          const translatedContent = await translateToEnglish(content);
+          
+          requestData = {
+            content: translatedContent,
+            originalContent: content, // Сохраняем оригинальный контент для отладки
+            platform,
+            campaignId,
+            contentId, // Добавляем contentId для привязки к конкретному контенту
+            modelName: modelType,
+            stylePreset
+          };
+        }
       }
       
       console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
