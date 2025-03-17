@@ -2723,6 +2723,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Эндпоинт для извлечения ключевых слов из текста
+  app.post("/api/analyze-text-keywords", authenticateUser, async (req, res) => {
+    try {
+      const { text, maxKeywords = 5 } = req.body;
+      
+      if (!text || text.trim() === '') {
+        return res.status(400).json({ error: "Отсутствует текст для анализа" });
+      }
+      
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
+      
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Инициализируем DeepSeek сервис с ключом пользователя
+      const initialized = await deepseekService.initialize(userId, token);
+      
+      if (!initialized) {
+        // Если не удалось инициализировать DeepSeek, используем простой алгоритм извлечения ключевых слов
+        console.log("Используем локальный алгоритм извлечения ключевых слов (DeepSeek недоступен)");
+        
+        // Очищаем текст от HTML-тегов
+        const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        // Простой алгоритм извлечения ключевых слов:
+        // 1. Разбиваем текст на слова
+        // 2. Удаляем стоп-слова
+        // 3. Выбираем самые длинные слова
+        
+        // Разбиваем текст на слова, приводим к нижнему регистру
+        const words = cleanText.toLowerCase()
+          .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+          .split(/\s+/);
+        
+        // Фильтруем стоп-слова и короткие слова (меньше 4 символов)
+        const stopWords = new Set(['и', 'в', 'на', 'с', 'по', 'для', 'не', 'что', 'как', 'это', 'или', 'а', 'из', 'к', 'у', 'о', 'во', 'от', 'со', 'при', 'со', 'то', 'за', 'бы', 'был', 'была', 'были', 'мы', 'вы', 'он', 'она', 'оно', 'они', 'его', 'ее', 'их', 'себя']);
+        const filteredWords = words.filter(word => word.length >= 4 && !stopWords.has(word));
+        
+        // Выбираем уникальные слова
+        const uniqueWords = Array.from(new Set(filteredWords));
+        
+        // Сортируем по длине (более длинные слова обычно более значимы)
+        const sortedWords = uniqueWords.sort((a, b) => b.length - a.length);
+        
+        // Возвращаем до maxKeywords ключевых слов
+        const keywords = sortedWords.slice(0, maxKeywords);
+        
+        console.log(`Извлечено ${keywords.length} ключевых слов из текста локально`);
+        
+        return res.json({
+          success: true,
+          keywords
+        });
+      }
+      
+      // Если DeepSeek инициализирован, используем его для извлечения ключевых слов
+      console.log(`Извлечение ключевых слов с помощью DeepSeek из текста длиной ${text.length} символов`);
+      
+      // Используем встроенный системный промт DeepSeek для извлечения ключевых слов
+      const systemPrompt = `You are a keyword extraction specialist. 
+      Extract the most important and relevant keywords from the given text in Russian language.
+      
+      RULES:
+      1. Return ONLY keywords, no explanations or additional text
+      2. Extract up to ${maxKeywords} keywords
+      3. Keywords should be single words or short phrases (max 3 words)
+      4. Keywords should be in the original language (Russian)
+      5. Keywords should represent the main topics and concepts in the text
+      6. Return the keywords as a JSON array, for example: ["keyword1", "keyword2", "keyword3"]
+      7. Don't include common stopwords like "и", "в", "на", "с", etc.`;
+      
+      const userPrompt = `Extract keywords from this text:
+      
+      ${text}
+      
+      Remember to return ONLY a JSON array of keywords.`;
+      
+      try {
+        const result = await deepseekService.generateText(
+          [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          {
+            temperature: 0.2,  // Низкая температура для стабильности результата
+            max_tokens: 100    // Ограничиваем длину ответа
+          }
+        );
+        
+        // Парсим результат как JSON массив
+        let keywords = [];
+        try {
+          // Ищем массив в тексте с помощью регулярного выражения
+          const match = result.match(/\[.*\]/);
+          if (match) {
+            keywords = JSON.parse(match[0]);
+          } else {
+            // Если не найден массив, пытаемся разделить по запятым
+            keywords = result
+              .replace(/"/g, '')
+              .split(/,|\n/)
+              .map(k => k.trim())
+              .filter(Boolean);
+          }
+        } catch (parseError) {
+          console.error("Ошибка при парсинге результата DeepSeek:", parseError);
+          // Если не удалось распарсить как JSON, используем простое разделение по запятым
+          keywords = result
+            .replace(/[\[\]"]/g, '')
+            .split(/,|\n/)
+            .map(k => k.trim())
+            .filter(Boolean);
+        }
+        
+        // Ограничиваем количество ключевых слов
+        keywords = keywords.slice(0, maxKeywords);
+        
+        console.log(`Извлечено ${keywords.length} ключевых слов из текста с помощью DeepSeek:`, keywords);
+        
+        return res.json({
+          success: true,
+          keywords,
+          service: 'deepseek'
+        });
+      } catch (aiError) {
+        console.error("Ошибка при использовании DeepSeek API для извлечения ключевых слов:", aiError);
+        // Возвращаемся к простому алгоритму
+        return res.status(400).json({ 
+          error: "Ошибка при извлечении ключевых слов", 
+          details: "Не удалось использовать DeepSeek API" 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error extracting keywords:", error);
+      return res.status(400).json({ 
+        error: "Ошибка при извлечении ключевых слов", 
+        details: error.message 
+      });
+    }
+  });
+
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
   app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
