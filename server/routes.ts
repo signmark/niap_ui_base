@@ -2599,9 +2599,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Запускаем генерацию изображения
-      console.log(`Генерация изображения с промптом: "${prompt.substring(0, 30)}..."`);
-      const imageUrls = await falAiService.generateImage(prompt, {
+      // Очищаем промпт от HTML-тегов и переводим на английский
+      const cleanedPrompt = cleanupText(prompt);
+      console.log(`Очищенный промпт: "${cleanedPrompt.substring(0, 30)}..."`);
+      
+      // Переводим промпт на английский
+      const translatedPrompt = await translateToEnglish(cleanedPrompt);
+      console.log(`Переведенный промпт: "${translatedPrompt.substring(0, 30)}..."`);
+      
+      // Запускаем генерацию изображения с переведенным промптом
+      console.log(`Генерация изображения с промптом: "${translatedPrompt.substring(0, 30)}..."`);
+      const imageUrls = await falAiService.generateImage(translatedPrompt, {
         negativePrompt: negativePrompt || "",
         width: width || 1024,
         height: height || 1024,
