@@ -2,7 +2,7 @@ import { directusApi, directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 
 // Типы API сервисов, используемых в приложении
-export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai';
+export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
 
 // Интерфейс для хранения API ключей и метаданных
 interface ApiKeyCache {

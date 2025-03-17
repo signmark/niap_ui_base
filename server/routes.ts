@@ -3006,7 +3006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (deepseekKeywords && deepseekKeywords.length > 0) {
           try {
             // Получаем API ключ XMLRiver
-            const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver' as ApiServiceName, token);
+            const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver', token);
             
             if (xmlRiverKey) {
               console.log(`[${requestId}] Получен ключ XMLRiver, обогащаем метрики ключевых слов`);
@@ -3652,10 +3652,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (finalKeywords.length === 0) {
         console.log('Falling back to XMLRiver for keyword search');
         try {
+          // Получаем userId из запроса или используем временный ID для неавторизованных запросов
+          const userId = req.userId || 'guest';
+          
+          // Получаем ключ XMLRiver из центрального хранилища API ключей
+          const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver');
+          
+          if (!xmlRiverKey) {
+            console.warn(`[${requestId}] XMLRiver API ключ не найден в настройках пользователя. Запрос не может быть выполнен.`);
+            return res.status(400).json({
+              error: "API ключ не настроен",
+              message: "Пожалуйста, добавьте API ключ XMLRiver в настройках профиля"
+            });
+          }
+          
           const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
             params: {
-              user: process.env.XMLRIVER_USER || "16797",
-              key: process.env.XMLRIVER_KEY || "f7947eff83104621deb713275fe3260bfde4f001",
+              user: "16797", // ID пользователя XMLRiver (одинаковый для всех запросов)
+              key: xmlRiverKey, // Ключ API из центрального хранилища
               query: isUrl ? "контент для сайта" : req.params.keyword
             }
           });
