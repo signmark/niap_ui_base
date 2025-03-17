@@ -100,10 +100,18 @@ export function ImageGenerationDialog({
   onClose
 }: ImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
-  const [prompt, setPrompt] = useState(initialPrompt || "");
+  
+  // Очищаем начальный промпт от HTML тегов перед использованием
+  const cleanInitialPrompt = initialPrompt ? stripHtml(initialPrompt) : "";
+  
+  // Всегда используем пустой промпт при открытии диалога, или очищенный текущий промпт
+  const [prompt, setPrompt] = useState(cleanInitialPrompt);
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageSize, setImageSize] = useState<string>("1024x1024");
-  const [content, setContent] = useState(initialContent || "");
+  
+  // Очищаем начальный контент от HTML тегов перед использованием
+  const cleanInitialContent = initialContent ? stripHtml(initialContent) : "";
+  const [content, setContent] = useState(cleanInitialContent);
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
