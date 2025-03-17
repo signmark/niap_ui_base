@@ -1951,6 +1951,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error('Не удалось получить URL изображений из результата');
           }
           
+          // Сохраняем промт, если указан флаг savePrompt и есть contentId
+          if (savePrompt && contentId && requestData.prompt) {
+            try {
+              console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+              
+              // Сохраняем промт в базу данных через storage
+              if (storage.updateCampaignContent) {
+                await storage.updateCampaignContent(contentId, {
+                  imagePrompt: requestData.prompt
+                });
+                console.log(`Промт успешно сохранен для контента ${contentId}`);
+              } else {
+                console.warn("Метод сохранения промта не реализован в storage");
+              }
+            } catch (promptError) {
+              console.error(`Ошибка при сохранении промта: ${promptError}`);
+              // Продолжаем выполнение даже при ошибке сохранения промта
+            }
+          }
+          
           return res.json({
             success: true,
             data: imageUrls
@@ -1968,6 +1988,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else {
             console.error(`Неизвестный формат мгновенного результата: ${JSON.stringify(response.data).substring(0, 200)}`);
             throw new Error('Не удалось получить URL изображений из мгновенного результата');
+          }
+          
+          // Сохраняем промт, если указан флаг savePrompt и есть contentId
+          if (savePrompt && contentId && requestData.prompt) {
+            try {
+              console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+              
+              // Сохраняем промт в базу данных через storage
+              if (storage.updateCampaignContent) {
+                await storage.updateCampaignContent(contentId, {
+                  imagePrompt: requestData.prompt
+                });
+                console.log(`Промт успешно сохранен для контента ${contentId}`);
+              } else {
+                console.warn("Метод сохранения промта не реализован в storage");
+              }
+            } catch (promptError) {
+              console.error(`Ошибка при сохранении промта: ${promptError}`);
+              // Продолжаем выполнение даже при ошибке сохранения промта
+            }
           }
           
           return res.json({
