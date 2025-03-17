@@ -7431,8 +7431,8 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         }
         else if (content && platform) {
           // Генерация для социальных сетей
-          console.log('Генерация изображения для платформы:', platform);
-          const result = await falAiService.generateSocialMediaImage(content, platform);
+          console.log('Генерация изображения для платформы:', platform, 'количество:', numImages);
+          const result = await falAiService.generateSocialMediaImage(content, platform, numImages);
           if (result && Array.isArray(result)) {
             generatedImages = result;
           } else if (typeof result === 'string') {

@@ -589,7 +589,7 @@ Return only the translated text, no explanations or comments.`;
     businessDescription: string;
     brandImage: string;
     productsServices: string;
-  }): Promise<string[]> {
+  }, numImages: number = 3): Promise<string[]> {
     try {
       // Составляем подробный промпт для генерации изображения
       const prompt = `Create a professional, brand-appropriate image for ${businessData.companyName}. 
@@ -621,11 +621,13 @@ Return only the translated text, no explanations or comments.`;
    * Генерирует изображение для социальных сетей на основе контента
    * @param content Контент для генерации
    * @param platform Целевая социальная платформа
+   * @param numImages Количество изображений для генерации (по умолчанию 3)
    * @returns URL сгенерированного изображения
    */
   async generateSocialMediaImage(
     content: string,
-    platform: 'instagram' | 'facebook' | 'vk' | 'telegram' = 'instagram'
+    platform: 'instagram' | 'facebook' | 'vk' | 'telegram' = 'instagram',
+    numImages: number = 3
   ): Promise<string[]> {
     try {
       // Короткий контент для промпта
@@ -670,7 +672,7 @@ Return only the translated text, no explanations or comments.`;
         negativePrompt: 'text, words, letters, logos, watermarks, low quality',
         width,
         height,
-        numImages: 3,
+        numImages, // используем переданный параметр numImages
         model: useModel,
         translatePrompt: true
       });
