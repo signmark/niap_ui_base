@@ -261,20 +261,20 @@ export function ImageGenerationDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
+    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
       </DialogHeader>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList className="grid grid-cols-3 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="business" disabled={!businessData}>Для бизнеса</TabsTrigger>
           <TabsTrigger value="social">Для соцсетей</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}
-        <TabsContent value="prompt" className="space-y-4">
+        <TabsContent value="prompt" className="space-y-2">
           <div className="space-y-2">
             <Label>Запрос (промпт)</Label>
             <Textarea
@@ -294,67 +294,68 @@ export function ImageGenerationDialog({
             />
           </div>
           
-          <div className="space-y-2">
-            <Label>Размер изображения</Label>
-            <RadioGroup value={imageSize} onValueChange={setImageSize} className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Размер изображения</Label>
+              <RadioGroup value={imageSize} onValueChange={setImageSize} className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="1024x1024" id="r1" className="h-3 w-3" />
+                  <Label htmlFor="r1" className="text-xs">1024x1024</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="1024x768" id="r2" className="h-3 w-3" />
+                  <Label htmlFor="r2" className="text-xs">1024x768</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="768x1024" id="r3" className="h-3 w-3" />
+                  <Label htmlFor="r3" className="text-xs">768x1024</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-1">
+              <Label className="text-xs">Модель генерации</Label>
+              <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="fast-sdxl" id="m1" className="h-3 w-3" />
+                  <Label htmlFor="m1" className="text-xs">Fast SDXL</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="fooocus" id="m2" className="h-3 w-3" />
+                  <Label htmlFor="m2" className="text-xs">Fooocus</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="schnell" id="m3" className="h-3 w-3" />
+                  <Label htmlFor="m3" className="text-xs">Schnell</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-xs">Стиль изображения</Label>
+            <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="grid grid-cols-2 gap-x-3 gap-y-1">
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="1024x1024" id="r1" />
-                <Label htmlFor="r1">1024x1024</Label>
+                <RadioGroupItem value="photographic" id="s1" className="h-3 w-3" />
+                <Label htmlFor="s1" className="text-xs">Фотореалистичный</Label>
               </div>
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="1024x768" id="r2" />
-                <Label htmlFor="r2">1024x768</Label>
+                <RadioGroupItem value="cinematic" id="s2" className="h-3 w-3" />
+                <Label htmlFor="s2" className="text-xs">Кинематографический</Label>
               </div>
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="768x1024" id="r3" />
-                <Label htmlFor="r3">768x1024</Label>
+                <RadioGroupItem value="anime" id="s3" className="h-3 w-3" />
+                <Label htmlFor="s3" className="text-xs">Аниме</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="base" id="s4" className="h-3 w-3" />
+                <Label htmlFor="s4" className="text-xs">Базовый</Label>
               </div>
             </RadioGroup>
           </div>
           
-          <div className="space-y-2">
-            <Label>Модель генерации</Label>
-            <RadioGroup value={modelType} onValueChange={(value: any) => setModelType(value)} className="flex space-x-2 flex-wrap">
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="fast-sdxl" id="m1" />
-                <Label htmlFor="m1">Fast SDXL</Label>
-              </div>
-
-              <div className="flex items-center space-x-1 mt-2">
-                <RadioGroupItem value="fooocus" id="m2" />
-                <Label htmlFor="m2">Fooocus</Label>
-              </div>
-              <div className="flex items-center space-x-1 mt-2">
-                <RadioGroupItem value="schnell" id="m3" />
-                <Label htmlFor="m3">Schnell</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Стиль изображения</Label>
-            <RadioGroup value={stylePreset} onValueChange={setStylePreset} className="flex space-x-2 flex-wrap">
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="photographic" id="s1" />
-                <Label htmlFor="s1">Фотореалистичный</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="cinematic" id="s2" />
-                <Label htmlFor="s2">Кинематографический</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="anime" id="s3" />
-                <Label htmlFor="s3">Аниме</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="base" id="s4" />
-                <Label htmlFor="s4">Базовый</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Количество изображений</Label>
+          <div className="space-y-1">
+            <Label className="text-xs">Количество изображений</Label>
             <div className="flex items-center space-x-2">
               <Input
                 type="number"
@@ -362,70 +363,70 @@ export function ImageGenerationDialog({
                 max={5}
                 value={numImages}
                 onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-20"
+                className="w-16 h-8 text-sm"
               />
-              <span className="text-sm text-muted-foreground">(от 1 до 5)</span>
+              <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
             </div>
           </div>
         </TabsContent>
         
         {/* Содержимое вкладки для бизнеса */}
-        <TabsContent value="business" className="space-y-4">
+        <TabsContent value="business" className="space-y-2">
           {businessData ? (
-            <div className="rounded-md border p-4 space-y-2">
+            <div className="rounded-md border p-2 space-y-1">
               <div>
-                <Label className="font-semibold">Название компании:</Label>
-                <p>{businessData.companyName}</p>
+                <Label className="font-semibold text-sm">Название:</Label>
+                <p className="text-sm">{businessData.companyName}</p>
               </div>
               <div>
-                <Label className="font-semibold">Описание бизнеса:</Label>
-                <p className="text-sm">{businessData.businessDescription}</p>
+                <Label className="font-semibold text-sm">Описание:</Label>
+                <p className="text-xs">{businessData.businessDescription}</p>
               </div>
               <div>
-                <Label className="font-semibold">Образ бренда:</Label>
-                <p className="text-sm">{businessData.brandImage}</p>
+                <Label className="font-semibold text-sm">Образ бренда:</Label>
+                <p className="text-xs">{businessData.brandImage}</p>
               </div>
-              <p className="text-xs text-muted-foreground italic mt-2">
-                Изображение будет сгенерировано автоматически на основе этих данных
+              <p className="text-xs text-muted-foreground italic mt-1">
+                Изображение будет сгенерировано на основе этих данных
               </p>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p>Необходимо заполнить бизнес-анкету для использования этой опции</p>
+            <div className="text-center py-6">
+              <p className="text-sm">Необходимо заполнить бизнес-анкету</p>
             </div>
           )}
         </TabsContent>
         
         {/* Содержимое вкладки для соцсетей */}
-        <TabsContent value="social" className="space-y-4">
-          <div className="space-y-2">
-            <Label>Контент для социальных сетей</Label>
+        <TabsContent value="social" className="space-y-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Контент для социальных сетей</Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Введите текст поста, для которого нужно сгенерировать изображение..."
-              className="min-h-[100px]"
+              className="min-h-[80px] text-sm"
             />
           </div>
           
-          <div className="space-y-2">
-            <Label>Платформа</Label>
-            <RadioGroup value={platform} onValueChange={(value: any) => setPlatform(value)} className="flex space-x-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Платформа</Label>
+            <RadioGroup value={platform} onValueChange={(value: any) => setPlatform(value)} className="grid grid-cols-2 gap-x-3 gap-y-1">
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="instagram" id="p1" />
-                <Label htmlFor="p1">Instagram</Label>
+                <RadioGroupItem value="instagram" id="p1" className="h-3 w-3" />
+                <Label htmlFor="p1" className="text-xs">Instagram</Label>
               </div>
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="telegram" id="p2" />
-                <Label htmlFor="p2">Telegram</Label>
+                <RadioGroupItem value="telegram" id="p2" className="h-3 w-3" />
+                <Label htmlFor="p2" className="text-xs">Telegram</Label>
               </div>
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="vk" id="p3" />
-                <Label htmlFor="p3">VK</Label>
+                <RadioGroupItem value="vk" id="p3" className="h-3 w-3" />
+                <Label htmlFor="p3" className="text-xs">VK</Label>
               </div>
               <div className="flex items-center space-x-1">
-                <RadioGroupItem value="facebook" id="p4" />
-                <Label htmlFor="p4">Facebook</Label>
+                <RadioGroupItem value="facebook" id="p4" className="h-3 w-3" />
+                <Label htmlFor="p4" className="text-xs">Facebook</Label>
               </div>
             </RadioGroup>
           </div>
@@ -459,8 +460,8 @@ export function ImageGenerationDialog({
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
         <div className="mt-4 space-y-4">
-          <h3 className="text-lg font-semibold">Сгенерированные изображения</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <h3 className="text-base font-semibold">Сгенерированные изображения</h3>
+          <div className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
             {generatedImages.map((imageUrl, index) => (
               <div 
                 key={index}
@@ -469,24 +470,25 @@ export function ImageGenerationDialog({
               >
                 <img 
                   src={imageUrl} 
-                  alt={`Сгенерированное изображение ${index + 1}`} 
+                  alt={`Изображение ${index + 1}`} 
                   className="w-full h-auto object-cover aspect-square"
                 />
               </div>
             ))}
           </div>
           
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => generateImage()}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Сгенерировать еще
+          <div className="flex justify-between mt-2">
+            <Button variant="outline" size="sm" onClick={() => generateImage()}>
+              <RefreshCw className="mr-1 h-3 w-3" />
+              Ещё
             </Button>
             <Button 
+              size="sm"
               onClick={confirmSelection}
               disabled={selectedImageIndex < 0}
             >
-              <Image className="mr-2 h-4 w-4" />
-              Использовать выбранное
+              <Image className="mr-1 h-3 w-3" />
+              Использовать
             </Button>
           </div>
         </div>
