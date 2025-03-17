@@ -3005,11 +3005,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Если нашли ключевые слова, попытаемся проверить их через XMLRiver для получения точных метрик
         if (deepseekKeywords && deepseekKeywords.length > 0) {
           try {
-            // Получаем API ключ XMLRiver
-            const xmlRiverKey = await apiKeyService.getApiKey(userId, 'xmlriver', token);
+            // Получаем конфигурацию XMLRiver из централизованного хранилища
+            const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
             
-            if (xmlRiverKey) {
+            if (xmlRiverConfig) {
               console.log(`[${requestId}] Получен ключ XMLRiver, обогащаем метрики ключевых слов`);
+              
+              // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
+              let xmlRiverUserId = "16797"; // Значение по умолчанию
+              let xmlRiverApiKey = xmlRiverConfig;
+              
+              try {
+                // Проверяем, является ли значение JSON-строкой
+                if (xmlRiverConfig.startsWith('{') && xmlRiverConfig.endsWith('}')) {
+                  const configObj = JSON.parse(xmlRiverConfig);
+                  if (configObj.user) xmlRiverUserId = configObj.user;
+                  if (configObj.key) xmlRiverApiKey = configObj.key;
+                  console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON`);
+                }
+              } catch (e) {
+                console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
+              }
               
               // Выбираем первые 5 ключевых слов для проверки через XMLRiver (чтобы не превышать лимиты API)
               const topKeywords = deepseekKeywords.slice(0, 5).map(kw => kw.keyword);
@@ -3021,8 +3037,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     // Запрос к XMLRiver API для получения статистики из Яндекс.Вордстат
                     const response = await axios.get('https://xmlriver.com/search/yandex/wordstat', {
                       params: {
-                        user: xmlRiverKey,
-                        key: keyword
+                        user: xmlRiverUserId,
+                        key: xmlRiverApiKey,
+                        query: keyword
                       }
                     });
                     
