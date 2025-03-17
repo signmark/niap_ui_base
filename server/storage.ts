@@ -873,6 +873,7 @@ export class DatabaseStorage implements IStorage {
         postType: item.post_type,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
+        prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
