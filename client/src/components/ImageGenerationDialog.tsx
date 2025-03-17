@@ -167,6 +167,22 @@ export function ImageGenerationDialog({
   };
   
   // Мутация для генерации промта из текста
+  // Локальное состояние для отслеживания задержки индикатора загрузки
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+
+  // Эффект для контроля задержки отображения загрузки
+  useEffect(() => {
+    if (isPromptGenerationPending) {
+      setIsLocalLoading(true);
+    } else if (isLocalLoading) {
+      // Добавляем небольшую задержку для более плавного UX
+      const timer = setTimeout(() => {
+        setIsLocalLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isPromptGenerationPending, isLocalLoading]);
+
   const { mutate: generateTextPrompt, isPending: isPromptGenerationPending } = useMutation({
     mutationFn: async () => {
       if (!content) {
@@ -174,22 +190,6 @@ export function ImageGenerationDialog({
       }
       
       console.log("Генерация промта на основе текста через DeepSeek");
-      
-      // Определяем локальное состояние для индикатора загрузки
-      const [localPending, setLocalPending] = useState(false);
-      
-      // Сбрасываем индикатор загрузки при окончании запроса в любом случае
-      useEffect(() => {
-        if (isPromptGenerationPending) {
-          setLocalPending(true);
-        } else if (localPending) {
-          // Добавляем небольшую задержку для более плавного UX
-          const timer = setTimeout(() => {
-            setLocalPending(false);
-          }, 500);
-          return () => clearTimeout(timer);
-        }
-      }, [isPromptGenerationPending, localPending]);
       
       try {
         // Пытаемся извлечь ключевые слова из текста
@@ -800,7 +800,7 @@ export function ImageGenerationDialog({
                 disabled={isPromptGenerationPending || !content}
                 className="mt-1"
               >
-                {isPromptGenerationPending ? (
+                {isPromptGenerationPending || isLocalLoading ? (
                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                 ) : (
                   <Sparkles className="h-3 w-3 mr-1" />
