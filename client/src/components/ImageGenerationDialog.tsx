@@ -592,8 +592,10 @@ export function ImageGenerationDialog({
     if (index >= 0 && index < generatedImages.length) {
       setSelectedImageIndex(index);
       
+      // При выборе изображения передаем также текущий промт, если он есть
       if (onImageGenerated) {
-        onImageGenerated(generatedImages[index]);
+        const currentPrompt = generatedPrompt || prompt;
+        onImageGenerated(generatedImages[index], currentPrompt);
       }
     }
   };
