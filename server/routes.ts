@@ -7433,13 +7433,26 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         if (contentId && savePrompt && prompt) {
           console.log(`Сохраняем промт для контента с ID: ${contentId} перед генерацией`);
           try {
-            // Обновляем запись контента, добавляя промт
-            await storage.updateCampaignContent(contentId, {
-              prompt: prompt
-            });
-            console.log('Промт успешно сохранен в базе данных');
+            // Проверяем существование контента прежде чем обновлять
+            const existingContent = await storage.getCampaignContentById(contentId);
+            if (!existingContent) {
+              console.warn(`⚠️ Контент с ID ${contentId} не найден, сохранение промта не выполнено`);
+            } else {
+              console.log(`✅ Контент с ID ${contentId} найден, userId: ${existingContent.userId}`);
+              
+              // Обновляем запись контента, добавляя промт
+              await storage.updateCampaignContent(contentId, {
+                prompt: prompt
+              });
+              console.log('Промт успешно сохранен в базе данных');
+            }
           } catch (error: any) {
             console.error('Ошибка при сохранении промта:', error);
+            console.error('Детали ошибки:', error.message);
+            if (error.response) {
+              console.error('API response status:', error.response.status);
+              console.error('API response data:', error.response.data);
+            }
             // Продолжаем выполнение и не прерываем генерацию
           }
         }
