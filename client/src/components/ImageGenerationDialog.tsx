@@ -702,21 +702,24 @@ export function ImageGenerationDialog({
             </div>
           </div>
           
+          <div className="flex items-center space-x-2 mt-2">
+            <Checkbox 
+              id="save-prompt-social" 
+              checked={savePrompt}
+              onCheckedChange={(checked) => setSavePrompt(!!checked)}
+            />
+            <label
+              htmlFor="save-prompt-social"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Сохранить промт
+            </label>
+          </div>
+          
           {generatedPrompt && (
             <div className="space-y-1 mt-2">
               <div className="flex justify-between items-center">
                 <Label className="text-xs">Сгенерированный промт</Label>
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="savePrompt" 
-                    checked={savePrompt} 
-                    onCheckedChange={(checked) => setSavePrompt(checked as boolean)}
-                    className="h-3 w-3 mr-1"
-                  />
-                  <Label htmlFor="savePrompt" className="text-xs cursor-pointer">
-                    Сохранить промт
-                  </Label>
-                </div>
               </div>
               <div className="rounded-md border border-gray-200 bg-gray-50 p-2">
                 <p className="text-xs font-mono whitespace-pre-wrap break-words">
