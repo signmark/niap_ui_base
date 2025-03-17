@@ -39,6 +39,7 @@ export function ImageGenerationDialog({
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
   const [modelType, setModelType] = useState<"fast-sdxl" | "fooocus" | "schnell">("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
+  const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   
   const { toast } = useToast();
   
