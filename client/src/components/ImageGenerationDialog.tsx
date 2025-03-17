@@ -334,41 +334,81 @@ export function ImageGenerationDialog({
           throw new Error("Необходимо ввести контент для генерации");
         }
         
-        console.log("Генерация промта на основе текста через DeepSeek");
-        
-        try {
-          // Пытаемся извлечь ключевые слова из текста
-          const keywords = await extractKeywordsFromText(content);
+        // Если у нас уже есть сгенерированный промт, используем его напрямую
+        if (generatedPrompt) {
+          console.log("Используем ранее сгенерированный промт:", generatedPrompt.substring(0, 100) + "...");
           
-          // Сначала генерируем промт через DeepSeek на основе контента
-          const response = await api.post("/generate-image-prompt", {
-            content: content,
-            keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
-          });
+          requestData = {
+            prompt: generatedPrompt,
+            originalContent: content,
+            platform,
+            campaignId,
+            contentId,
+            modelName: modelType,
+            stylePreset,
+            numImages,
+            savePrompt: savePrompt
+          };
+        } else {
+          // Если промт еще не был сгенерирован
+          console.log("Генерация нового промта на основе текста через DeepSeek");
           
-          if (response.data?.success && response.data?.prompt) {
-            console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
+          try {
+            // Пытаемся извлечь ключевые слова из текста
+            const keywords = await extractKeywordsFromText(content);
             
-            // Сохраняем сгенерированный промт для отображения
-            setGeneratedPrompt(response.data.prompt);
+            // Сначала генерируем промт через DeepSeek на основе контента
+            const response = await api.post("/generate-image-prompt", {
+              content: content,
+              keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
+            });
             
-            // Используем полученный промт для генерации изображения
-            // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
-            requestData = {
-              prompt: response.data.prompt,
-              originalContent: content, // Сохраняем оригинальный контент для отладки
-              platform,
-              campaignId,
-              contentId, // Добавляем contentId для привязки к конкретному контенту
-              modelName: modelType,
-              stylePreset,
-              numImages, // Добавляем параметр количества изображений
-              savePrompt: savePrompt // Передаем флаг сохранения промта
-            };
-          } else {
-            // Если DeepSeek не сработал, используем старый метод с переводом
-            console.warn("Не удалось сгенерировать промт через DeepSeek, используем традиционный метод");
+            if (response.data?.success && response.data?.prompt) {
+              console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
+              
+              // Сохраняем сгенерированный промт для отображения
+              setGeneratedPrompt(response.data.prompt);
+              
+              // Используем полученный промт для генерации изображения
+              // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
+              requestData = {
+                prompt: response.data.prompt,
+                originalContent: content, // Сохраняем оригинальный контент для отладки
+                platform,
+                campaignId,
+                contentId, // Добавляем contentId для привязки к конкретному контенту
+                modelName: modelType,
+                stylePreset,
+                numImages, // Добавляем параметр количества изображений
+                savePrompt: savePrompt // Передаем флаг сохранения промта
+              };
+            } else {
+              // Если DeepSeek не сработал, используем старый метод с переводом
+              console.warn("Не удалось сгенерировать промт через DeepSeek, используем традиционный метод");
+              
+              // Переводим контент на английский для улучшения качества генерации
+              const translatedContent = await translateToEnglish(content);
+              
+              // Устанавливаем переведенный текст как промт для отображения в интерфейсе
+              setGeneratedPrompt(translatedContent);
+              
+              requestData = {
+                content: translatedContent,
+                originalContent: content, // Сохраняем оригинальный контент для отладки
+                platform,
+                campaignId,
+                contentId, // Добавляем contentId для привязки к конкретному контенту
+                modelName: modelType,
+                stylePreset,
+                numImages, // Добавляем параметр количества изображений
+                savePrompt: savePrompt, // Передаем флаг сохранения промта
+                prompt: translatedContent // Используем переведенный текст как промт
+              };
+            }
+          } catch (error) {
+            console.error("Ошибка при генерации промта через DeepSeek:", error);
             
+            // В случае ошибки используем традиционный метод
             // Переводим контент на английский для улучшения качества генерации
             const translatedContent = await translateToEnglish(content);
             
@@ -388,28 +428,6 @@ export function ImageGenerationDialog({
               prompt: translatedContent // Используем переведенный текст как промт
             };
           }
-        } catch (error) {
-          console.error("Ошибка при генерации промта через DeepSeek:", error);
-          
-          // В случае ошибки используем традиционный метод
-          // Переводим контент на английский для улучшения качества генерации
-          const translatedContent = await translateToEnglish(content);
-          
-          // Устанавливаем переведенный текст как промт для отображения в интерфейсе
-          setGeneratedPrompt(translatedContent);
-          
-          requestData = {
-            content: translatedContent,
-            originalContent: content, // Сохраняем оригинальный контент для отладки
-            platform,
-            campaignId,
-            contentId, // Добавляем contentId для привязки к конкретному контенту
-            modelName: modelType,
-            stylePreset,
-            numImages, // Добавляем параметр количества изображений
-            savePrompt: savePrompt, // Передаем флаг сохранения промта
-            prompt: translatedContent // Используем переведенный текст как промт
-          };
         }
       }
       
@@ -714,72 +732,93 @@ export function ImageGenerationDialog({
               </div>
               <div>
                 <Label className="font-semibold text-sm">Описание:</Label>
-                <p className="text-xs">{businessData.businessDescription}</p>
+                <p className="text-sm line-clamp-3">{businessData.businessDescription}</p>
               </div>
               <div>
-                <Label className="font-semibold text-sm">Образ бренда:</Label>
-                <p className="text-xs">{businessData.brandImage}</p>
+                <Label className="font-semibold text-sm">Продукты/услуги:</Label>
+                <p className="text-sm line-clamp-3">{businessData.productsServices}</p>
               </div>
-              <p className="text-xs text-muted-foreground italic mt-1">
-                Изображение будет сгенерировано на основе этих данных
-              </p>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <p className="text-sm">Необходимо заполнить бизнес-анкету</p>
+            <div className="p-4 border border-dashed rounded-md text-center">
+              <p className="text-muted-foreground text-sm">Заполните анкету бизнеса в настройках кампании для использования этой функции</p>
             </div>
           )}
           
-          {businessData && (
-            <div>
-              {/* Настройки количества изображений */}
-              <div className="space-y-1 mt-2">
-                <Label className="text-xs">Количество изображений</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={5}
-                    value={numImages}
-                    onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                    className="w-16 h-8 text-sm"
-                  />
-                  <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
-                </div>
-              </div>
-            
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox 
-                  id="save-prompt-business" 
-                  checked={savePrompt}
-                  onCheckedChange={(checked) => setSavePrompt(!!checked)}
-                />
-                <label
-                  htmlFor="save-prompt-business"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Сохранить промт
-                </label>
-              </div>
+          {/* Настройки стиля */}
+          <div className="space-y-1">
+            <Label className="text-xs">Стиль изображения</Label>
+            <Select value={stylePreset} onValueChange={(value) => setStylePreset(value)}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Выберите стиль" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="photographic">Фотореалистичный</SelectItem>
+                <SelectItem value="cinematic">Кинематографический</SelectItem>
+                <SelectItem value="anime">Аниме</SelectItem>
+                <SelectItem value="base">Базовый</SelectItem>
+                <SelectItem value="digital-art">Цифровое искусство</SelectItem>
+                <SelectItem value="enhance">Улучшенный</SelectItem>
+                <SelectItem value="fantasy-art">Фэнтези</SelectItem>
+                <SelectItem value="isometric">Изометрический</SelectItem>
+                <SelectItem value="neon-punk">Неон-панк</SelectItem>
+                <SelectItem value="origami">Оригами</SelectItem>
+                <SelectItem value="3d-model">3D-модель</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Настройки количества изображений */}
+          <div className="space-y-1">
+            <Label className="text-xs">Количество изображений</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={numImages}
+                onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
+                className="w-16 h-8 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
             </div>
-          )}
+          </div>
+          
+          <div className="flex items-center space-x-2 mt-2">
+            <Checkbox 
+              id="save-prompt-business" 
+              checked={savePrompt}
+              onCheckedChange={(checked) => setSavePrompt(!!checked)}
+            />
+            <label
+              htmlFor="save-prompt-business"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Сохранить промт
+            </label>
+          </div>
         </TabsContent>
         
-        {/* Содержимое вкладки на основе текста */}
+        {/* Содержимое вкладки для социальных сетей */}
         <TabsContent value="social" className="space-y-2">
           <div className="space-y-1">
-            <Label className="text-xs">Текст для генерации изображения</Label>
-            <div className="relative mt-1">
-              <div className="bg-white border rounded-md p-3 min-h-[180px] text-sm whitespace-pre-wrap">
-                {stripHtml(content)}
-              </div>
+            <Label>Текст для генерации изображения</Label>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Введите контент поста для генерации изображения..."
+              className="min-h-[100px]"
+            />
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="font-medium text-xs text-muted-foreground">
+              Введите текст и нажмите кнопку ниже для генерации промта из текста.
             </div>
-            <div className="flex justify-between items-center mt-1.5">
-              <div className="flex-1">
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+            <div>
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => generateTextPrompt()}
                 disabled={isPromptGenerationPending || !content}
                 className="mt-1"
