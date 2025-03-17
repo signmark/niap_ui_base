@@ -752,23 +752,6 @@ export function ImageGenerationDialog({
               <div className="bg-white border rounded-md p-3 min-h-[180px] text-sm whitespace-pre-wrap">
                 {stripHtml(content)}
               </div>
-              <div className="mt-2 flex justify-end">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => {
-                    // Открыть диалог для редактирования текста с HTML
-                    // Пока просто заглушка - вызываем confirm с текстом
-                    const newText = prompt("Введите текст:", content);
-                    if (newText !== null) {
-                      setContent(newText);
-                    }
-                  }}
-                >
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Редактировать
-                </Button>
-              </div>
             </div>
             <div className="flex justify-between items-center mt-1.5">
               <div className="flex-1">
@@ -863,7 +846,7 @@ export function ImageGenerationDialog({
           isPending || 
           (activeTab === "prompt" && !prompt) || 
           (activeTab === "business" && !businessData) || 
-          (activeTab === "social" && !content)
+          (activeTab === "social" && (!generatedPrompt || !content))
         }
         className="w-full"
       >
