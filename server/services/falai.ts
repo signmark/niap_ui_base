@@ -94,27 +94,33 @@ export class FalAiService {
    * @returns Промпт на английском языке
    */
   private async translatePrompt(prompt: string): Promise<string> {
+    // Сначала очистим текст от HTML тегов
+    const cleanedPrompt = prompt.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    console.log(`[TRANSLATION] Очищенный от HTML тегов промпт: "${cleanedPrompt.substring(0, 50)}${cleanedPrompt.length > 50 ? '...' : ''}"`);
+    
     // Проверяем, нужен ли перевод (если текст уже содержит много английских слов)
     const russianRegex = /[а-яА-ЯёЁ]/g;
     const englishRegex = /[a-zA-Z]/g;
-    const russianChars = (prompt.match(russianRegex) || []).length;
-    const englishChars = (prompt.match(englishRegex) || []).length;
+    const russianChars = (cleanedPrompt.match(russianRegex) || []).length;
+    const englishChars = (cleanedPrompt.match(englishRegex) || []).length;
     
     // Если текст уже преимущественно на английском, возвращаем его как есть
     if (englishChars > russianChars * 2) {
-      console.log('Промпт уже на английском языке, перевод не требуется');
-      return prompt;
+      console.log('[TRANSLATION] Промпт уже на английском языке, перевод не требуется');
+      return cleanedPrompt;
     }
+    
+    console.log(`[TRANSLATION] Промпт содержит ${russianChars} русских символов и ${englishChars} английских символов. Требуется перевод.`);
     
     try {
       // Попытка использовать deepseekService для перевода, если он доступен
       if (process.env.DEEPSEEK_API_KEY || 
           (typeof deepseekService?.hasApiKey === 'function' && deepseekService.hasApiKey())) {
         
-        console.log('Переводим промпт с помощью DeepSeek API...');
+        console.log('[TRANSLATION] Переводим промпт с помощью DeepSeek API...');
         const deepseekPrompt = `Translate the following text from Russian to English, optimizing it for AI image generation:
         
-${prompt}
+${cleanedPrompt}
 
 Focus on clear, descriptive language that works well with image generation models.
 Return only the translated text, no explanations or comments.`;
@@ -167,15 +173,17 @@ Return only the translated text, no explanations or comments.`;
       'суп': 'soup'
     };
     
-    let translatedPrompt = prompt;
+    // Используем очищенный промпт вместо оригинального
+    let translatedPrompt = cleanedPrompt;
     
-    // Заменяем все найденные слова и фразы
+    // Заменяем все найденные слова и фразы в очищенном промпте
     Object.entries(translationDict).forEach(([rus, eng]) => {
       translatedPrompt = translatedPrompt.replace(new RegExp(rus, 'gi'), eng);
     });
     
-    console.log(`Оригинальный промпт: "${prompt}"`);
-    console.log(`Базово переведенный промпт: "${translatedPrompt}"`);
+    console.log(`[TRANSLATION] Оригинальный промпт: "${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}"`);
+    console.log(`[TRANSLATION] Очищенный промпт: "${cleanedPrompt.substring(0, 50)}${cleanedPrompt.length > 50 ? '...' : ''}"`);
+    console.log(`[TRANSLATION] Базово переведенный промпт: "${translatedPrompt.substring(0, 50)}${translatedPrompt.length > 50 ? '...' : ''}"`);
     
     return translatedPrompt;
   }
