@@ -706,18 +706,36 @@ export function ImageGenerationDialog({
           )}
           
           {businessData && (
-            <div className="flex items-center space-x-2 mt-2">
-              <Checkbox 
-                id="save-prompt-business" 
-                checked={savePrompt}
-                onCheckedChange={(checked) => setSavePrompt(!!checked)}
-              />
-              <label
-                htmlFor="save-prompt-business"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Сохранить промт
-              </label>
+            <div>
+              {/* Настройки количества изображений */}
+              <div className="space-y-1 mt-2">
+                <Label className="text-xs">Количество изображений</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={numImages}
+                    onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
+                    className="w-16 h-8 text-sm"
+                  />
+                  <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
+                </div>
+              </div>
+            
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox 
+                  id="save-prompt-business" 
+                  checked={savePrompt}
+                  onCheckedChange={(checked) => setSavePrompt(!!checked)}
+                />
+                <label
+                  htmlFor="save-prompt-business"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Сохранить промт
+                </label>
+              </div>
             </div>
           )}
         </TabsContent>
