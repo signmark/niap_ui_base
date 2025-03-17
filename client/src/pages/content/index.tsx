@@ -1390,18 +1390,27 @@ export default function ContentPage() {
           initialContent={currentContent ? currentContent.content : newContent.content}
           // Передаем промт только если мы редактируем существующий контент, иначе пустая строка
           initialPrompt={currentContent ? (currentContent.prompt || "") : ""}
-          onImageGenerated={(imageUrl) => {
+          onImageGenerated={(imageUrl, promptText) => {
             console.log("Изображение успешно сгенерировано:", imageUrl);
+            console.log("Промт использованный для генерации:", promptText?.substring(0, 100) + "...");
+            
             // Проверяем, находимся ли мы в режиме редактирования или создания
             if (currentContent) {
-              // Обновляем URL изображения в форме редактирования
-              const updatedContent = {...currentContent, imageUrl};
+              // Обновляем URL изображения и промт в форме редактирования
+              const updatedContent = {
+                ...currentContent, 
+                imageUrl,
+                // Сохраняем промт только если он был передан
+                ...(promptText ? { prompt: promptText } : {})
+              };
               setCurrentContentSafe(updatedContent);
             } else {
-              // Обновляем URL изображения в форме создания контента
+              // Обновляем URL изображения и промт в форме создания контента
               setNewContent({
                 ...newContent,
-                imageUrl
+                imageUrl,
+                // Сохраняем промт только если он был передан
+                ...(promptText ? { prompt: promptText } : {})
               });
             }
             // Закрываем диалог после выбора изображения

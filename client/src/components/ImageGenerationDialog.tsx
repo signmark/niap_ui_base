@@ -43,7 +43,7 @@ interface ImageGenerationDialogProps {
   };
   initialContent?: string; // Начальный контент для подсказки
   initialPrompt?: string; // Готовый промт из контент-плана
-  onImageGenerated?: (imageUrl: string) => void;
+  onImageGenerated?: (imageUrl: string, promptText?: string) => void;
   onClose: () => void;
 }
 
@@ -602,7 +602,27 @@ export function ImageGenerationDialog({
   const confirmSelection = () => {
     if (selectedImageIndex >= 0) {
       if (onImageGenerated) {
-        onImageGenerated(generatedImages[selectedImageIndex]);
+        // Определяем, какой промт использовался для генерации изображения
+        // В зависимости от активной вкладки это может быть prompt или generatedPrompt
+        let finalPrompt = "";
+        
+        if (activeTab === "prompt") {
+          // Если использовали вкладку с прямым вводом промта
+          finalPrompt = prompt;
+        } else if (activeTab === "social" && generatedPrompt) {
+          // Если использовали вкладку генерации из контента
+          finalPrompt = generatedPrompt;
+        }
+        
+        // Если по какой-то причине промт пустой, используем тот который был передан изначально
+        if (!finalPrompt && initialPrompt) {
+          finalPrompt = initialPrompt;
+        }
+        
+        console.log(`Возвращаем изображение с промтом: ${finalPrompt.substring(0, 50)}...`);
+        
+        // Возвращаем и URL изображения, и промт использованный для его генерации
+        onImageGenerated(generatedImages[selectedImageIndex], finalPrompt);
       }
       onClose();
     } else {
