@@ -773,27 +773,7 @@ export function ImageGenerationDialog({
             </div>
           </div>
           
-          <div className="space-y-1">
-            <Label className="text-xs">Платформа</Label>
-            <RadioGroup value={platform} onValueChange={(value: any) => setPlatform(value)} className="grid grid-cols-2 gap-x-3 gap-y-1">
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="instagram" id="p1" className="h-3 w-3" />
-                <Label htmlFor="p1" className="text-xs">Instagram</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="telegram" id="p2" className="h-3 w-3" />
-                <Label htmlFor="p2" className="text-xs">Telegram</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="vk" id="p3" className="h-3 w-3" />
-                <Label htmlFor="p3" className="text-xs">VK</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="facebook" id="p4" className="h-3 w-3" />
-                <Label htmlFor="p4" className="text-xs">Facebook</Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {/* Платформы социальных сетей убраны, так как они не влияют на генерацию изображений */}
           
           <div className="space-y-1">
             <Label className="text-xs">Количество изображений</Label>
