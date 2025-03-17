@@ -593,6 +593,20 @@ export function ImageGenerationDialog({
               <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
             </div>
           </div>
+          
+          <div className="flex items-center space-x-2 mt-2">
+            <Checkbox 
+              id="save-prompt-direct" 
+              checked={savePrompt}
+              onCheckedChange={(checked) => setSavePrompt(!!checked)}
+            />
+            <label
+              htmlFor="save-prompt-direct"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Сохранить промт
+            </label>
+          </div>
         </TabsContent>
         
         {/* Содержимое вкладки для бизнеса */}
@@ -618,6 +632,22 @@ export function ImageGenerationDialog({
           ) : (
             <div className="text-center py-6">
               <p className="text-sm">Необходимо заполнить бизнес-анкету</p>
+            </div>
+          )}
+          
+          {businessData && (
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox 
+                id="save-prompt-business" 
+                checked={savePrompt}
+                onCheckedChange={(checked) => setSavePrompt(!!checked)}
+              />
+              <label
+                htmlFor="save-prompt-business"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Сохранить промт
+              </label>
             </div>
           )}
         </TabsContent>
