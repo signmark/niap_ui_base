@@ -199,14 +199,13 @@ export default function EditScheduledPublication({
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      // Отправляем данные на сервер
-      await apiRequest(`/api/campaign-content/${content.id}`, {
-        method: 'PATCH',
+      // Отправляем данные на сервер через новый endpoint direct-schedule
+      await apiRequest(`/api/direct-schedule/${content.id}`, {
+        method: 'POST',
         headers,
         data: {
           scheduledAt: scheduledAt.toISOString(),
-          socialPlatforms,
-          status: 'scheduled'
+          socialPlatforms
         }
       });
       
