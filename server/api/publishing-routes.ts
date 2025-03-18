@@ -247,21 +247,61 @@ export function registerPublishingRoutes(app: Express): void {
       // Проверяем наличие заголовка авторизации
       if (!authHeader) {
         log('No authorization header provided for scheduled content', 'api');
+        
+        // Даже если нет заголовка, продолжаем выполнение для возможности получения локального контента
+        // который мы сформировали ранее без Directus
       }
       
-      // Получаем запланированные публикации
-      // Если есть authHeader, мы передаем token напрямую в storage
+      // Получаем запланированные публикации из базы данных
       let scheduledContent: any[] = [];
       
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        
-        // Настраиваем временно токен для пользователя
-        directusApiManager.cacheAuthToken(userId, token);
-        
-        scheduledContent = await storage.getScheduledContent(userId, campaignId);
-      } else {
-        scheduledContent = await storage.getScheduledContent(userId, campaignId);
+      try {
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.substring(7);
+          
+          // Настраиваем временно токен для пользователя
+          directusApiManager.cacheAuthToken(userId, token);
+          
+          scheduledContent = await storage.getScheduledContent(userId, campaignId);
+          log(`Получено ${scheduledContent.length} запланированных публикаций из БД`, 'api');
+        } else {
+          scheduledContent = await storage.getScheduledContent(userId, campaignId);
+        }
+      } catch (dbError: any) {
+        log(`Ошибка при получении запланированных публикаций из БД: ${dbError.message}`, 'api');
+      }
+      
+      // Если нет данных через Directus, ищем локально запланированные публикации
+      if (scheduledContent.length === 0) {
+        // Получаем все контенты пользователя и фильтруем по запланированным
+        try {
+          const allContent = await storage.getCampaignContent(userId, campaignId);
+          log(`Получено ${allContent.length} единиц контента для поиска запланированных`, 'api');
+          
+          // Фильтруем только те, у которых статус scheduled или есть socialPlatforms с pending/scheduled
+          scheduledContent = allContent.filter(content => {
+            // Проверяем статус
+            if (content.status === 'scheduled' && content.scheduledAt) return true;
+            
+            // Проверяем socialPlatforms
+            if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+              for (const platform of Object.keys(content.socialPlatforms)) {
+                const platformData = content.socialPlatforms[platform];
+                if (platformData && 
+                   (platformData.status === 'pending' || platformData.status === 'scheduled') && 
+                    platformData.scheduledAt) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          });
+          
+          log(`Найдено ${scheduledContent.length} локально запланированных публикаций`, 'api');
+        } catch (error: any) {
+          log(`Ошибка при поиске локально запланированных публикаций: ${error.message}`, 'api');
+        }
       }
       
       return res.status(200).json({ 
