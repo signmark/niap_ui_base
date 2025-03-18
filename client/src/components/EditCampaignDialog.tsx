@@ -8,6 +8,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendAnalysisSettings } from "@/components/TrendAnalysisSettings";
+import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { TrendAnalysisSettings as TrendSettings } from "@shared/schema";
 import { SocialMediaSettings as SocialSettings } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
@@ -104,6 +105,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
         <TabsList className="mb-4">
           <TabsTrigger value="general">Основные настройки</TabsTrigger>
           <TabsTrigger value="trend-analysis">Анализ трендов</TabsTrigger>
+          <TabsTrigger value="social-media">Социальные сети</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general" className="space-y-4 py-2">
@@ -142,6 +144,17 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
           <TrendAnalysisSettings 
             campaignId={campaignId} 
             initialSettings={trendSettings}
+            onSettingsUpdated={() => {
+              // После обновления настроек обновляем кэш
+              queryClient.invalidateQueries({ queryKey: [`campaign-details-${campaignId}`] });
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="social-media" className="space-y-4 py-2">
+          <SocialMediaSettings 
+            campaignId={campaignId} 
+            initialSettings={socialSettings}
             onSettingsUpdated={() => {
               // После обновления настроек обновляем кэш
               queryClient.invalidateQueries({ queryKey: [`campaign-details-${campaignId}`] });
