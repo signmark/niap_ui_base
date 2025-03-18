@@ -171,7 +171,7 @@ export default function ScheduledPublications() {
               <SelectValue placeholder="Все кампании" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem key="all" value={null}>Все кампании</SelectItem>
+              <SelectItem key="all" value="">Все кампании</SelectItem>
               {campaigns && campaigns.map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
