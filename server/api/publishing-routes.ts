@@ -431,7 +431,7 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Контент найден: ${contentId}, user_id: ${contentData.user_id}`, 'api');
         
         // Формируем данные для обновления в Directus
-        const directusUpdates = {
+        const directusUpdates: Record<string, any> = {
           status: 'scheduled',
           scheduled_at: new Date(scheduledAt).toISOString(),
           social_platforms: socialPlatforms
