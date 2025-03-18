@@ -117,10 +117,9 @@ export class PublishScheduler {
       if (platformsToPublish.length === 0) {
         log(`Для контента ${content.id} не указаны платформы`, 'scheduler');
         
-        // Обновляем статус
+        // Обновляем статус - не передаем publishedAt напрямую, это внутреннее поле контента
         await storage.updateCampaignContent(content.id, {
-          status: 'published',
-          publishedAt: new Date()
+          status: 'published'
         });
         
         return;
