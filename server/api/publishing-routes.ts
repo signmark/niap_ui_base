@@ -170,15 +170,15 @@ export function registerPublishingRoutes(app: Express): void {
       const updatedPlatforms: Record<string, any> = {};
       
       for (const platform in socialPlatforms) {
-        if (socialPlatforms[platform] && 
-            (socialPlatforms[platform].status === 'scheduled' || 
-             socialPlatforms[platform].status === 'pending')) {
+        if (socialPlatforms && platform in socialPlatforms && 
+            (socialPlatforms[platform as keyof typeof socialPlatforms].status === 'scheduled' || 
+             socialPlatforms[platform as keyof typeof socialPlatforms].status === 'pending')) {
           updatedPlatforms[platform] = {
-            ...socialPlatforms[platform],
+            ...socialPlatforms[platform as keyof typeof socialPlatforms],
             status: 'cancelled'
           };
-        } else {
-          updatedPlatforms[platform] = socialPlatforms[platform];
+        } else if (socialPlatforms && platform in socialPlatforms) {
+          updatedPlatforms[platform] = socialPlatforms[platform as keyof typeof socialPlatforms];
         }
       }
       
