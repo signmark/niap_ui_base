@@ -99,7 +99,7 @@ export function SocialMediaSettings({
     
     try {
       setTelegramStatus({ isLoading: true });
-      const response = await api.post('/api/validate/telegram', { token });
+      const response = await api.post('/validate/telegram', { token });
       
       setTelegramStatus({
         isLoading: false,
@@ -140,7 +140,7 @@ export function SocialMediaSettings({
     
     try {
       setVkStatus({ isLoading: true });
-      const response = await api.post('/api/validate/vk', { token, groupId });
+      const response = await api.post('/validate/vk', { token, groupId });
       
       setVkStatus({
         isLoading: false,
@@ -180,7 +180,7 @@ export function SocialMediaSettings({
     
     try {
       setInstagramStatus({ isLoading: true });
-      const response = await api.post('/api/validate/instagram', { token });
+      const response = await api.post('/validate/instagram', { token });
       
       setInstagramStatus({
         isLoading: false,
@@ -221,7 +221,7 @@ export function SocialMediaSettings({
     
     try {
       setFacebookStatus({ isLoading: true });
-      const response = await api.post('/api/validate/facebook', { token, pageId });
+      const response = await api.post('/validate/facebook', { token, pageId });
       
       setFacebookStatus({
         isLoading: false,
