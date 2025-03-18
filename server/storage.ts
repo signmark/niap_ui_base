@@ -753,18 +753,15 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getCampaignContentById(id: string): Promise<CampaignContent | undefined> {
+  async getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined> {
     try {
       console.log(`Запрос контента по ID: ${id}`);
       
-      // Попробуем получить токен сервиса как резервную опцию
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      
-      // Настраиваем headers с токеном, если он доступен
+      // Настраиваем headers с токеном, если он передан
       const headers: Record<string, string> = {};
-      if (serviceToken) {
-        console.log(`Используем сервисный токен для запроса контента ${id} (длина токена: ${serviceToken.length})`);
-        headers['Authorization'] = `Bearer ${serviceToken}`;
+      if (authToken) {
+        console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+        headers['Authorization'] = `Bearer ${authToken}`;
       }
       
       const response = await directusApi.get(`/items/campaign_content/${id}`, { 
@@ -803,42 +800,9 @@ export class DatabaseStorage implements IStorage {
         console.error(`Данные ошибки: ${JSON.stringify(error.response.data || {})}`);
       }
       
-      // Если ошибка 403 и у нас есть сервисный токен, попробуем использовать его
+      // Если ошибка 403, логируем это
       if (error.response?.status === 403) {
-        try {
-          console.log(`Повторная попытка получения контента ${id} с сервисным токеном`);
-          const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-          if (serviceToken) {
-            const retryResponse = await directusApi.get(`/items/campaign_content/${id}`, {
-              headers: {
-                'Authorization': `Bearer ${serviceToken}`
-              }
-            });
-            
-            if (retryResponse.data?.data) {
-              const item = retryResponse.data.data;
-              console.log(`✅ Контент найден (повторная попытка): ${item.id}, user_id: ${item.user_id}`);
-              
-              return {
-                id: item.id,
-                content: item.content,
-                userId: item.user_id,
-                campaignId: item.campaign_id,
-                status: item.status,
-                postType: item.post_type,
-                imageUrl: item.image_url,
-                videoUrl: item.video_url,
-                prompt: item.prompt || "",
-                scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-                createdAt: new Date(item.created_at),
-                socialPlatforms: item.social_platforms,
-                publishedPlatforms: item.published_platforms || []
-              };
-            }
-          }
-        } catch (retryError) {
-          console.error(`Ошибка при повторной попытке получения контента: ${retryError}`);
-        }
+        console.log(`Ошибка доступа 403 при получении контента ${id} - недостаточно прав`);
       }
       
       console.error('Error getting campaign content by ID from Directus:', error);
@@ -996,21 +960,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
+  async getScheduledContent(userId?: string, campaignId?: string): Promise<CampaignContent[]> {
     try {
       let authToken: string | null = null;
       
-      // Если userId = 'system', используем сервисный токен
-      if (userId === 'system') {
-        authToken = process.env.DIRECTUS_SERVICE_TOKEN || null;
-        console.log('Using service token for scheduled content');
-      } else {
-        // Для обычных пользователей получаем токен стандартным образом
+      // Если указан userId, получаем токен для этого пользователя
+      if (userId) {
         authToken = await this.getAuthToken(userId);
       }
       
+      // Если не указан userId или нет токена, получаем список активных токенов
+      // и пробуем получить данные для каждого пользователя
       if (!authToken) {
-        console.error('No auth token found for user', userId);
+        console.log('Получение запланированных публикаций для всех пользователей');
+        // Вернем пустой массив, публикации будут получаться через API запросы с клиента
         return [];
       }
       
@@ -1023,8 +986,8 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
-      // Если это реальный пользователь (не systemX, то добавляем фильтр по ID пользователя
-      if (userId !== 'system') {
+      // Если указан userId, добавляем фильтр
+      if (userId) {
         filter.user_id = {
           _eq: userId
         };
@@ -1186,22 +1149,8 @@ export class DatabaseStorage implements IStorage {
         
         // Если ошибка 403 - скорее всего проблема с правами доступа
         if (apiError.response?.status === 403) {
-          console.log('Attempting to use service token as fallback for creating questionnaire');
-          const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-          
-          if (serviceToken) {
-            // Пробуем использовать сервисный токен как запасной вариант
-            const fallbackResponse = await directusApi.post('/items/business_questionnaire', directusQuestionnaire, {
-              headers: {
-                'Authorization': `Bearer ${serviceToken}`
-              }
-            });
-            
-            console.log('Successfully created business questionnaire using service token');
-            return this.mapDirectusQuestionnaire(fallbackResponse.data.data);
-          } else {
-            throw new Error('Access denied and no service token available');
-          }
+          console.log('Access denied - не хватает прав доступа');
+          throw new Error('Не хватает прав доступа для создания анкеты');
         }
         
         // Прокидываем ошибку дальше
