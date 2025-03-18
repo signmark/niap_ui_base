@@ -17,6 +17,13 @@ import { apiKeyService } from './services/api-keys';
 import { log } from "./utils/logger";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
+import { 
+  validateTelegramToken,
+  validateVkToken,
+  validateInstagramToken,
+  validateFacebookToken, 
+  validateYoutubeApiKey
+} from './services/social-api-validator';
 
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
@@ -5278,6 +5285,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Маршрут для получения кампаний пользователя
+  // Эндпоинты для проверки API ключей социальных сетей
+  
+  // Проверка Telegram бота
+  app.post("/api/validate/telegram", authenticateUser, async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Токен не указан" 
+        });
+      }
+      
+      const result = await validateTelegramToken(token);
+      return res.json({
+        success: result.isValid,
+        message: result.message,
+        details: result.details
+      });
+    } catch (error: any) {
+      console.error("Ошибка при проверке токена Telegram:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке: ${error.message}`
+      });
+    }
+  });
+
+  // Проверка токена VK
+  app.post("/api/validate/vk", authenticateUser, async (req, res) => {
+    try {
+      const { token, groupId } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Токен не указан" 
+        });
+      }
+      
+      const result = await validateVkToken(token, groupId);
+      return res.json({
+        success: result.isValid,
+        message: result.message,
+        details: result.details
+      });
+    } catch (error: any) {
+      console.error("Ошибка при проверке токена VK:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке: ${error.message}`
+      });
+    }
+  });
+
+  // Проверка токена Instagram
+  app.post("/api/validate/instagram", authenticateUser, async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Токен не указан" 
+        });
+      }
+      
+      const result = await validateInstagramToken(token);
+      return res.json({
+        success: result.isValid,
+        message: result.message,
+        details: result.details
+      });
+    } catch (error: any) {
+      console.error("Ошибка при проверке токена Instagram:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке: ${error.message}`
+      });
+    }
+  });
+
+  // Проверка токена Facebook
+  app.post("/api/validate/facebook", authenticateUser, async (req, res) => {
+    try {
+      const { token, pageId } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Токен не указан" 
+        });
+      }
+      
+      const result = await validateFacebookToken(token, pageId);
+      return res.json({
+        success: result.isValid,
+        message: result.message,
+        details: result.details
+      });
+    } catch (error: any) {
+      console.error("Ошибка при проверке токена Facebook:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке: ${error.message}`
+      });
+    }
+  });
+
+  // Проверка API ключа YouTube
+  app.post("/api/validate/youtube", authenticateUser, async (req, res) => {
+    try {
+      const { apiKey, channelId } = req.body;
+      
+      if (!apiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "API ключ не указан" 
+        });
+      }
+      
+      const result = await validateYoutubeApiKey(apiKey, channelId);
+      return res.json({
+        success: result.isValid,
+        message: result.message,
+        details: result.details
+      });
+    } catch (error: any) {
+      console.error("Ошибка при проверке API ключа YouTube:", error);
+      return res.status(500).json({
+        success: false,
+        message: `Ошибка при проверке: ${error.message}`
+      });
+    }
+  });
+
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       // Получаем userId двумя способами - из middleware authenticateUser или из заголовка
