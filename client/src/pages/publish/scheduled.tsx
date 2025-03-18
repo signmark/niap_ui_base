@@ -33,7 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ScheduledPublications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
@@ -106,7 +106,7 @@ export default function ScheduledPublications() {
   
   // Обработчики событий
   const handleCampaignChange = (campaignId: string) => {
-    setSelectedCampaignId(campaignId);
+    setSelectedCampaignId(campaignId === "all" ? undefined : campaignId);
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,14 +164,14 @@ export default function ScheduledPublications() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
           <Select 
-            value={selectedCampaignId || null} 
+            value={selectedCampaignId || "all"} 
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger>
               <SelectValue placeholder="Все кампании" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem key="all" value="">Все кампании</SelectItem>
+              <SelectItem key="all" value="all">Все кампании</SelectItem>
               {campaigns && campaigns.map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
