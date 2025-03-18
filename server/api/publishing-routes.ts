@@ -433,7 +433,7 @@ export function registerPublishingRoutes(app: Express): void {
           });
         }
         
-        const content = await storage.getCampaignContentById(contentId, token);
+        let content = await storage.getCampaignContentById(contentId, token);
         
         if (!content) {
           log(`Контент с ID ${contentId} не найден в базе данных`, 'api');
@@ -457,9 +457,10 @@ export function registerPublishingRoutes(app: Express): void {
               });
             }
             
-            // Создаем "фейковый" объект контента из прямого ответа API для дальнейшей обработки
+            // Создаем объект контента из прямого ответа API для дальнейшей обработки
             const contentData = directResponse.data.data;
-            const content = {
+            // Преобразуем имена полей из snake_case в camelCase для совместимости с нашей моделью
+            content = {
               id: contentData.id,
               title: contentData.title || "",
               content: contentData.content || "",
@@ -488,12 +489,18 @@ export function registerPublishingRoutes(app: Express): void {
               message: `Контент с ID ${contentId} не найден` 
             });
           }
-          
-          // Если дошли до этого места, значит content может отсутствовать, присвоим его нашему "фейковому" объекту
-          content = content || {};
         }
         
-        log(`Контент найден: ${contentId}, userId: ${content.userId}`, 'api');
+        // Проверяем, что контент определен, иначе создаем пустой объект
+        if (!content) {
+          log(`ВНИМАНИЕ: Не удалось найти контент с ID ${contentId} всеми возможными способами`, 'api');
+          return res.status(404).json({ 
+            error: 'Контент не найден', 
+            message: `Контент с ID ${contentId} не найден после всех проверок` 
+          });
+        }
+        
+        log(`Контент найден: ${contentId}, userId: ${content.userId || 'не указан'}`, 'api');
         
         // Подготавливаем обновления для контента
         const scheduledAtDate = new Date(scheduledAt);
@@ -515,6 +522,8 @@ export function registerPublishingRoutes(app: Express): void {
         // Если userId из контента не определен, но у нас есть userId из токена, добавляем его
         if (!content.userId && userId) {
           updates.userId = userId;
+          // Также добавляем userId в сам контент для логики ниже
+          content.userId = userId;
         }
         
         log(`Обновляем контент в базе данных: ${JSON.stringify(updates)}`, 'api');
