@@ -1631,32 +1631,71 @@ export default function ContentPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>Платформы для публикации</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['instagram', 'telegram', 'vk', 'facebook'] as const).map(platform => (
-                    <div key={platform} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`platform-${platform}`} 
-                        checked={selectedPlatforms[platform]} 
-                        onCheckedChange={(checked) => 
+                <div className="grid grid-cols-2 gap-3">
+                  {(['instagram', 'telegram', 'vk', 'facebook'] as const).map(platform => {
+                    const platformIcons: Record<string, string> = {
+                      instagram: '📸',
+                      telegram: '📱',
+                      vk: '💬',
+                      facebook: '👥'
+                    };
+                    
+                    return (
+                      <div 
+                        key={platform} 
+                        className={`flex items-center gap-2 p-2 border rounded-md cursor-pointer transition-all 
+                          ${selectedPlatforms[platform] 
+                            ? 'bg-primary/5 border-primary/30' 
+                            : 'bg-muted/20 border-border hover:bg-muted/30'
+                          }`}
+                        onClick={() => {
                           setSelectedPlatforms(prev => ({
                             ...prev,
-                            [platform]: !!checked
-                          }))
-                        }
-                      />
-                      <Label 
-                        htmlFor={`platform-${platform}`}
-                        className="capitalize cursor-pointer"
+                            [platform]: !prev[platform]
+                          }));
+                        }}
                       >
-                        {platform}
-                      </Label>
-                    </div>
-                  ))}
+                        <Checkbox 
+                          id={`platform-${platform}`} 
+                          checked={selectedPlatforms[platform]} 
+                          onCheckedChange={(checked) => 
+                            setSelectedPlatforms(prev => ({
+                              ...prev,
+                              [platform]: !!checked
+                            }))
+                          }
+                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                        />
+                        <Label 
+                          htmlFor={`platform-${platform}`}
+                          className="capitalize cursor-pointer font-medium flex items-center gap-1.5 w-full"
+                        >
+                          <span className="text-lg">{platformIcons[platform]}</span>
+                          <span>{platform}</span>
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Выберите платформы, на которых будет опубликован контент
+                
+                {/* Summary of selected platforms */}
+                <div className="bg-muted/30 p-3 rounded-md mt-2">
+                  <h4 className="text-sm font-medium mb-1">Выбрано платформ: {Object.values(selectedPlatforms).filter(Boolean).length}</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(selectedPlatforms)
+                      .filter(([_, isSelected]) => isSelected)
+                      .map(([platform]) => (
+                        <Badge key={platform} variant="outline" className="capitalize">
+                          {platform}
+                        </Badge>
+                      ))
+                    }
+                    {!Object.values(selectedPlatforms).some(Boolean) && (
+                      <p className="text-xs text-muted-foreground">Выберите хотя бы одну платформу для публикации</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1672,7 +1711,11 @@ export default function ContentPage() {
             <Button 
               type="button" 
               onClick={handleScheduleContent}
-              disabled={scheduleContentMutation.isPending || !scheduleDate}
+              disabled={
+                scheduleContentMutation.isPending || 
+                !scheduleDate || 
+                !Object.values(selectedPlatforms).some(Boolean)
+              }
             >
               {scheduleContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Запланировать
