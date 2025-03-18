@@ -184,20 +184,30 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Для этого контента не запланирована публикация' });
       }
       
-      // Обновляем статус на "cancelled" для всех платформ
-      const socialPlatforms = content.socialPlatforms || {};
+      // Создаем типизированную копию объекта socialPlatforms
+      const typedPlatforms: Record<string, any> = content.socialPlatforms 
+        ? JSON.parse(JSON.stringify(content.socialPlatforms)) 
+        : {};
+      
+      // Создаем новый объект для обновленных платформ
       const updatedPlatforms: Record<string, any> = {};
       
-      for (const platform in socialPlatforms) {
-        if (socialPlatforms && platform in socialPlatforms && 
-            (socialPlatforms[platform as keyof typeof socialPlatforms].status === 'scheduled' || 
-             socialPlatforms[platform as keyof typeof socialPlatforms].status === 'pending')) {
-          updatedPlatforms[platform] = {
-            ...socialPlatforms[platform as keyof typeof socialPlatforms],
-            status: 'cancelled'
-          };
-        } else if (socialPlatforms && platform in socialPlatforms) {
-          updatedPlatforms[platform] = socialPlatforms[platform as keyof typeof socialPlatforms];
+      // Обрабатываем каждую платформу
+      for (const platform of Object.keys(typedPlatforms)) {
+        const platformData = typedPlatforms[platform];
+        
+        // Проверяем наличие данных и статуса
+        if (platformData && typeof platformData === 'object') {
+          if (platformData.status === 'scheduled' || platformData.status === 'pending') {
+            // Копируем все свойства и изменяем статус
+            updatedPlatforms[platform] = {
+              ...platformData,
+              status: 'cancelled'
+            };
+          } else {
+            // Сохраняем без изменений
+            updatedPlatforms[platform] = { ...platformData };
+          }
         }
       }
       
