@@ -107,10 +107,28 @@ export default function ScheduledPublications() {
     if (!filteredContent) return [];
     
     return filteredContent.filter((content: CampaignContent) => {
-      if (!content.scheduledAt) return false;
+      // Проверяем глобальную дату запланированной публикации
+      if (content.scheduledAt) {
+        const scheduledDate = new Date(content.scheduledAt);
+        if (scheduledDate > new Date()) return true;
+      }
       
-      const scheduledDate = new Date(content.scheduledAt);
-      return scheduledDate > new Date();
+      // Если нет глобальной даты, проверяем социальные платформы
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        for (const platform in content.socialPlatforms) {
+          const platformData = content.socialPlatforms[platform];
+          
+          // Проверяем наличие даты публикации в платформе
+          if (platformData && 
+              (platformData.status === 'pending' || platformData.status === 'scheduled') && 
+              platformData.scheduledAt) {
+            const platformScheduledDate = new Date(platformData.scheduledAt);
+            if (platformScheduledDate > new Date()) return true;
+          }
+        }
+      }
+      
+      return false;
     });
   }, [filteredContent]);
   
@@ -118,12 +136,24 @@ export default function ScheduledPublications() {
     if (!filteredContent) return [];
     
     return filteredContent.filter((content: CampaignContent) => {
-      if (!content.scheduledAt) return false;
+      // Исключаем контент, который находится в upcoming
+      const isUpcoming = upcomingContent.some(c => c.id === content.id);
+      if (isUpcoming) return false;
       
-      const scheduledDate = new Date(content.scheduledAt);
-      return scheduledDate <= new Date();
+      // Проверяем наличие запланированных дат
+      if (content.scheduledAt) return true;
+      
+      // Проверяем социальные платформы
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        for (const platform in content.socialPlatforms) {
+          const platformData = content.socialPlatforms[platform];
+          if (platformData && platformData.scheduledAt) return true;
+        }
+      }
+      
+      return false;
     });
-  }, [filteredContent]);
+  }, [filteredContent, upcomingContent]);
   
   // Обработчики событий
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
