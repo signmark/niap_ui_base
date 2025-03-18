@@ -366,4 +366,121 @@ export function registerPublishingRoutes(app: Express): void {
       });
     }
   });
+  
+  // Прямое API для планирования публикаций без использования storage
+  app.post('/api/direct-schedule/:contentId', async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      const { scheduledAt, socialPlatforms } = req.body;
+      const authHeader = req.headers.authorization;
+      
+      if (!contentId) {
+        return res.status(400).json({ error: 'Не указан ID контента' });
+      }
+      
+      if (!scheduledAt) {
+        return res.status(400).json({ error: 'Не указана дата публикации' });
+      }
+      
+      if (!socialPlatforms || typeof socialPlatforms !== 'object') {
+        return res.status(400).json({ error: 'Не указаны платформы для публикации' });
+      }
+      
+      if (!authHeader) {
+        log('No authorization header provided for direct scheduling', 'api');
+        return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+      }
+      
+      let token = '';
+      let userId = '';
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+        
+        try {
+          // Получаем информацию о пользователе из токена
+          const userInfo = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, token);
+          
+          if (userInfo && userInfo.data && userInfo.data.id) {
+            userId = userInfo.data.id;
+            log(`Определен userId из токена: ${userId}`, 'api');
+            directusApiManager.cacheAuthToken(userId, token);
+          }
+        } catch (error) {
+          log(`Ошибка получения информации о пользователе: ${error}`, 'api');
+        }
+      }
+      
+      // Проверяем существование контента
+      try {
+        // Прямой запрос к API с токеном авторизации
+        const response = await directusApiManager.request({
+          url: `/items/campaign_content/${contentId}`,
+          method: 'get'
+        }, token);
+        
+        if (!response || !response.data || !response.data.data) {
+          log(`Контент с ID ${contentId} не найден в Directus`, 'api');
+          return res.status(404).json({ error: 'Контент не найден' });
+        }
+        
+        const contentData = response.data.data;
+        log(`Контент найден: ${contentId}, user_id: ${contentData.user_id}`, 'api');
+        
+        // Формируем данные для обновления в Directus
+        const directusUpdates = {
+          status: 'scheduled',
+          scheduled_at: new Date(scheduledAt).toISOString(),
+          social_platforms: socialPlatforms
+        };
+        
+        // Если userId из контента не определен, но у нас есть userId из токена, добавляем его
+        if (!contentData.user_id && userId) {
+          directusUpdates.user_id = userId;
+        }
+        
+        log(`Обновляем контент через Directus API: ${JSON.stringify(directusUpdates)}`, 'api');
+        
+        // Обновляем контент через Directus API
+        const updateResponse = await directusApiManager.request({
+          url: `/items/campaign_content/${contentId}`,
+          method: 'patch',
+          data: directusUpdates
+        }, token);
+        
+        if (updateResponse && updateResponse.data) {
+          const updatedItem = updateResponse.data.data;
+          log(`Контент успешно обновлен в Directus: ${updatedItem.id}`, 'api');
+          
+          return res.status(200).json({
+            success: true,
+            message: 'Публикация успешно запланирована',
+            data: {
+              id: updatedItem.id,
+              scheduledAt: updatedItem.scheduled_at,
+              status: updatedItem.status,
+              socialPlatforms: updatedItem.social_platforms
+            }
+          });
+        } else {
+          throw new Error('Неизвестная ошибка при обновлении контента в Directus');
+        }
+      } catch (error: any) {
+        log(`Ошибка при прямом обновлении: ${error.message}`, 'api');
+        return res.status(500).json({
+          error: 'Ошибка при планировании публикации',
+          message: error.message
+        });
+      }
+    } catch (error: any) {
+      log(`Ошибка при планировании публикации: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при планировании публикации', 
+        message: error.message
+      });
+    }
+  });
 }
