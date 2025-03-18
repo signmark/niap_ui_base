@@ -66,12 +66,12 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                 <Badge variant="outline" className="flex items-center gap-1 px-2 py-0.5 h-5 bg-muted/40">
                   <Clock size={12} />
                   <span className="text-[10px]">
-                    {format(new Date(scheduledAt), 'dd.MM HH:mm')}
+                    {scheduledAt ? format(new Date(scheduledAt), 'dd.MM HH:mm') : ''}
                   </span>
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Запланировано на {format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</p>
+                <p>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -140,7 +140,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
       {isScheduled && (
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="text-muted-foreground" size={16} />
-          <span>Запланировано на {format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+          <span>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}</span>
         </div>
       )}
       
@@ -192,11 +192,11 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
           </div>
           
           {/* Links to published posts if available */}
-          {Object.values(socialPlatforms).some(status => status.postUrl) && (
+          {Object.values(safeSocialPlatforms).some(status => status.postUrl) && (
             <div className="mt-2">
               <h5 className="text-xs font-medium text-muted-foreground mb-1">Ссылки на публикации:</h5>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(socialPlatforms)
+                {Object.entries(safeSocialPlatforms)
                   .filter(([_, status]) => status.postUrl)
                   .map(([platform, status]) => (
                     <a 
