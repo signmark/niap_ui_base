@@ -945,9 +945,11 @@ export default function ContentPage() {
                                       <div 
                                         className="prose prose-sm max-w-none text-xs"
                                         dangerouslySetInnerHTML={{ 
-                                          __html: content.content.startsWith('<') 
-                                            ? content.content 
-                                            : processMarkdownSyntax(content.content) 
+                                          __html: typeof content.content === 'string' 
+                                            ? (content.content.startsWith('<') 
+                                              ? content.content 
+                                              : processMarkdownSyntax(content.content))
+                                            : ''
                                         }}
                                       />
                                       <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
@@ -1884,19 +1886,21 @@ export default function ContentPage() {
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <div 
                 dangerouslySetInnerHTML={{ 
-                  __html: previewContent?.content?.startsWith('<') 
-                    ? previewContent?.content 
-                    : processMarkdownSyntax(previewContent?.content || "") 
+                  __html: previewContent && typeof previewContent.content === 'string' 
+                    ? (previewContent.content.startsWith('<') 
+                      ? previewContent.content 
+                      : processMarkdownSyntax(previewContent.content))
+                    : ''
                 }}
               />
             </div>
 
             {/* Медиа-контент */}
-            {previewContent?.contentType === "text-image" && previewContent.imageUrl && (
+            {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
               <div className="mt-4">
                 <img
                   src={previewContent.imageUrl}
-                  alt={previewContent.title || "Content Image"}
+                  alt={previewContent?.title || "Content Image"}
                   className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Image+Error";
@@ -1905,7 +1909,7 @@ export default function ContentPage() {
               </div>
             )}
             
-            {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent.videoUrl && (
+            {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
               <div className="mt-4">
                 <video
                   src={previewContent.videoUrl}
@@ -1932,12 +1936,12 @@ export default function ContentPage() {
             {/* Информация о публикации - расширенная */}
             {previewContent?.socialPlatforms && 
              typeof previewContent.socialPlatforms === 'object' &&
-             ((previewContent.status === 'scheduled' && previewContent.scheduledAt) || 
-              (previewContent.status === 'published' && previewContent.publishedAt)) ? (
+             ((previewContent?.status === 'scheduled' && previewContent?.scheduledAt) || 
+              (previewContent?.status === 'published' && previewContent?.publishedAt)) ? (
               <ScheduledPostInfo 
                 socialPlatforms={previewContent.socialPlatforms as Record<string, any>} 
-                scheduledAt={typeof previewContent.scheduledAt === 'string' ? previewContent.scheduledAt : previewContent.scheduledAt?.toISOString() || null}
-                publishedAt={typeof previewContent.publishedAt === 'string' ? previewContent.publishedAt : previewContent.publishedAt?.toISOString() || null}
+                scheduledAt={typeof previewContent?.scheduledAt === 'string' ? previewContent.scheduledAt : previewContent?.scheduledAt?.toISOString() || null}
+                publishedAt={typeof previewContent?.publishedAt === 'string' ? previewContent.publishedAt : previewContent?.publishedAt?.toISOString() || null}
                 compact={false}
               />
             ) : (
@@ -1945,19 +1949,27 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <CheckCircle2 size={14} />
-                    <span>Опубликовано: {format(new Date(previewContent.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Опубликовано: {format(new Date(typeof previewContent.publishedAt === 'string' 
+                      ? previewContent.publishedAt 
+                      : (previewContent.publishedAt instanceof Date 
+                          ? previewContent.publishedAt.toISOString() 
+                          : String(previewContent.publishedAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
                   </div>
                 )}
                 {previewContent?.scheduledAt && !previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    <span>Запланировано: {format(new Date(previewContent.scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Запланировано: {format(new Date(typeof previewContent.scheduledAt === 'string' 
+                      ? previewContent.scheduledAt 
+                      : (previewContent.scheduledAt instanceof Date 
+                          ? previewContent.scheduledAt.toISOString() 
+                          : String(previewContent.scheduledAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
                   </div>
                 )}
                 {previewContent?.createdAt && (
                   <div className="flex items-center gap-1">
                     <CalendarDays size={14} />
-                    <span>Создано: {format(new Date(previewContent.createdAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Создано: {format(new Date(typeof previewContent.createdAt === 'string' ? previewContent.createdAt : previewContent.createdAt.toISOString()), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
                   </div>
                 )}
               </div>
