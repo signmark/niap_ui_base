@@ -640,7 +640,7 @@ export default function ContentPage() {
   };
 
   // Фильтрация и сортировка контента
-  const filteredContent = campaignContent
+  const filteredContent = Array.isArray(campaignContent) ? campaignContent
     .filter(content => {
       // Фильтр по статусу (вкладки)
       if (activeTab !== "all" && content.status !== activeTab) {
@@ -669,12 +669,12 @@ export default function ContentPage() {
       const dateA = new Date(a.publishedAt || a.scheduledAt || a.createdAt || 0);
       const dateB = new Date(b.publishedAt || b.scheduledAt || b.createdAt || 0);
       return dateB.getTime() - dateA.getTime();
-    });
+    }) : [];
     
   // Группировка контента по дате
   const contentByDate: Record<string, CampaignContent[]> = {};
   
-  filteredContent.forEach(content => {
+  filteredContent.forEach((content: CampaignContent) => {
     const dateStr = formatDateForGrouping(new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date()));
     if (!contentByDate[dateStr]) {
       contentByDate[dateStr] = [];
