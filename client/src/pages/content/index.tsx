@@ -573,6 +573,13 @@ export default function ContentPage() {
       return;
     }
 
+    // Создаем отладочный вывод
+    console.log("Планирование публикации:", {
+      id: currentContent.id,
+      scheduledAt: new Date(scheduleDate).toISOString(),
+      platforms: selectedPlatforms
+    });
+    
     scheduleContentMutation.mutate({
       id: currentContent.id,
       scheduledAt: new Date(scheduleDate).toISOString(),
