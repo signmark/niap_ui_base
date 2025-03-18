@@ -2582,6 +2582,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const httpServer = createServer(app);
   
+  // Регистрируем маршруты валидации API ключей социальных сетей
+  registerValidationRoutes(app);
+  
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);
   
