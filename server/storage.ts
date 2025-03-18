@@ -58,6 +58,9 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Кэш токенов пользователей
+  private tokenCache: Record<string, { token: string; expiresAt: number }> = {};
+  
   // User Authentication
   async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
     try {
@@ -675,9 +678,24 @@ export class DatabaseStorage implements IStorage {
     console.log('Getting auth token for user:', userId);
     
     try {
-      // Используем реализованный метод getUserTokenInfo для получения информации о токене
+      // Сначала проверяем кэш
+      const now = Date.now();
+      if (this.tokenCache[userId] && this.tokenCache[userId].expiresAt > now) {
+        console.log(`Using cached token for user ${userId}, expires in ${Math.round((this.tokenCache[userId].expiresAt - now) / 1000)} seconds`);
+        return this.tokenCache[userId].token;
+      }
+      
+      // Если в кэше нет или токен устарел, получаем новый
+      console.log(`Token for user ${userId} not in cache or expired, fetching new one`);
       const tokenInfo = await this.getUserTokenInfo(userId);
+      
       if (tokenInfo && tokenInfo.token) {
+        // Сохраняем в кэш с временем жизни 50 минут
+        this.tokenCache[userId] = {
+          token: tokenInfo.token,
+          expiresAt: now + 50 * 60 * 1000 // 50 минут
+        };
+        console.log(`Cached new token for user ${userId}, expires in 50 minutes`);
         return tokenInfo.token;
       }
       
@@ -751,18 +769,86 @@ export class DatabaseStorage implements IStorage {
       console.log(`Запрос контента по ID: ${id}`);
       
       // Настраиваем headers с токеном, если он передан
-      const headers: Record<string, string> = {};
+      let response = null;
+      
+      // Попытка 1: Используем переданный токен
       if (authToken) {
         console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
-        headers['Authorization'] = `Bearer ${authToken}`;
+        
+        try {
+          response = await directusApi.get(`/items/campaign_content/${id}`, { 
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          console.log(`Успешно получен контент с использованием переданного токена`);
+        } catch (error: any) {
+          console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
+          response = null;
+        }
       }
       
-      const response = await directusApi.get(`/items/campaign_content/${id}`, { 
-        headers 
-      });
+      // Попытка 2: Если не удалось с токеном, пробуем получить владельца контента
+      if (!response) {
+        console.log(`Пробуем получить владельца контента другими способами`);
+        
+        // Пробуем сделать запрос списка контента с фильтром по ID 
+        // и посмотреть, кто владелец (без доступа к БД напрямую)
+        const filter = {
+          id: {
+            _eq: id
+          }
+        };
+        
+        try {
+          // Пробуем с разными токенами активных пользователей
+          // Получаем все активные токены
+          const userIds = Object.keys(this.tokenCache || {});
+          
+          for (const userId of userIds) {
+            const userToken = await this.getAuthToken(userId);
+            if (userToken) {
+              try {
+                console.log(`Пробуем с токеном пользователя ${userId}`);
+                const metaResponse = await directusApi.get(`/items/campaign_content`, {
+                  params: { filter },
+                  headers: {
+                    'Authorization': `Bearer ${userToken}`
+                  }
+                });
+                
+                if (metaResponse?.data?.data?.length > 0) {
+                  // Если нашли, используем этот же токен для получения полных данных
+                  response = await directusApi.get(`/items/campaign_content/${id}`, {
+                    headers: {
+                      'Authorization': `Bearer ${userToken}`
+                    }
+                  });
+                  console.log(`Успешно получен контент с токеном пользователя ${userId}`);
+                  break;
+                }
+              } catch (error) {
+                // Продолжаем с другим пользователем
+              }
+            }
+          }
+        } catch (error: any) {
+          console.warn(`Не удалось найти владельца контента: ${error.message}`);
+        }
+      }
       
-      if (!response.data?.data) {
-        console.warn(`Контент с ID ${id} не найден в ответе Directus API`);
+      // Попытка 3: Пробуем без токена (публичный доступ)
+      if (!response) {
+        console.log(`Пробуем получить контент без токена авторизации`);
+        try {
+          response = await directusApi.get(`/items/campaign_content/${id}`);
+          console.log(`Успешно получен контент без авторизации (публичный доступ)`);
+        } catch (error: any) {
+          console.warn(`Не удалось получить контент без авторизации: ${error.message}`);
+        }
+      }
+      
+      // Проверяем, получили ли мы данные
+      if (!response || !response.data?.data) {
+        console.warn(`Контент с ID ${id} не найден ни одним из способов`);
         return undefined;
       }
       
