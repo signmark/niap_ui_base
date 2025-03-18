@@ -182,6 +182,12 @@ export default function ContentPage() {
     keywords: [] as string[]
   });
   const [scheduleDate, setScheduleDate] = useState("");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
+    instagram: false,
+    telegram: false,
+    vk: false,
+    facebook: false
+  });
   const [activeTab, setActiveTab] = useState<string>("all");
   
   // Состояние для фильтрации по датам
