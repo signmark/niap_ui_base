@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
@@ -378,12 +379,31 @@ export default function ContentPage() {
 
   // Мутация для планирования публикации
   const scheduleContentMutation = useMutation({
-    mutationFn: async ({ id, scheduledAt }: { id: string, scheduledAt: string }) => {
+    mutationFn: async ({ id, scheduledAt, platforms }: { id: string, scheduledAt: string, platforms?: {[key: string]: boolean} }) => {
+      // Подготовка данных о платформах
+      const socialPlatformsData: Record<string, any> = {};
+      
+      // Если есть выбранные платформы, настраиваем их в JSON-структуру
+      if (platforms) {
+        Object.entries(platforms).forEach(([platform, isEnabled]) => {
+          if (isEnabled) {
+            socialPlatformsData[platform] = {
+              status: 'pending',
+              publishedAt: null,
+              postId: null,
+              postUrl: null,
+              error: null
+            };
+          }
+        });
+      }
+
       return await apiRequest(`/api/campaign-content/${id}`, { 
         method: 'PATCH',
         data: {
           scheduledAt,
-          status: 'scheduled'
+          status: 'scheduled',
+          socialPlatforms: Object.keys(socialPlatformsData).length > 0 ? socialPlatformsData : undefined
         }
       });
     },
@@ -526,9 +546,22 @@ export default function ContentPage() {
   const handleScheduleContent = () => {
     if (!currentContent || !scheduleDate) return;
 
+    // Проверяем наличие выбранных платформ
+    const selectedPlatformsCount = Object.values(selectedPlatforms).filter(Boolean).length;
+    
+    // Если платформы не выбраны, показываем предупреждение
+    if (selectedPlatformsCount === 0) {
+      toast({
+        description: "Выберите хотя бы одну платформу для публикации",
+        variant: "destructive"
+      });
+      return;
+    }
+
     scheduleContentMutation.mutate({
       id: currentContent.id,
-      scheduledAt: new Date(scheduleDate).toISOString()
+      scheduledAt: new Date(scheduleDate).toISOString(),
+      platforms: selectedPlatforms
     });
   };
 
@@ -1581,6 +1614,35 @@ export default function ContentPage() {
                   value={scheduleDate}
                   onChange={(e) => setScheduleDate(e.target.value)}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Платформы для публикации</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['instagram', 'telegram', 'vk', 'facebook'] as const).map(platform => (
+                    <div key={platform} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`platform-${platform}`} 
+                        checked={selectedPlatforms[platform]} 
+                        onCheckedChange={(checked) => 
+                          setSelectedPlatforms(prev => ({
+                            ...prev,
+                            [platform]: !!checked
+                          }))
+                        }
+                      />
+                      <Label 
+                        htmlFor={`platform-${platform}`}
+                        className="capitalize cursor-pointer"
+                      >
+                        {platform}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Выберите платформы, на которых будет опубликован контент
+                </div>
               </div>
             </div>
           )}
