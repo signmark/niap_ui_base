@@ -40,8 +40,9 @@ import { ImageGenerationDialog } from "@/components/ImageGenerationDialog";
 import { ContentPlanGenerator } from "@/components/ContentPlanGenerator";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
-import { SocialMediaFilter } from "@/components/SocialMediaFilter";
-import { SocialMediaIcon } from "@/components/SocialMediaIcon";
+import SocialMediaFilter from "@/components/SocialMediaFilter";
+import SocialMediaIcon from "@/components/SocialMediaIcon";
+import PlatformSelector from "@/components/PlatformSelector";
 import { 
   Popover, 
   PopoverContent, 
@@ -1648,52 +1649,20 @@ export default function ContentPage() {
 
               <div className="space-y-3">
                 <Label>Платформы для публикации</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(['instagram', 'telegram', 'vk', 'facebook'] as const).map(platform => {
-                    const platformIcons: Record<string, string> = {
-                      instagram: '📸',
-                      telegram: '📱',
-                      vk: '💬',
-                      facebook: '👥'
-                    };
-                    
-                    return (
-                      <div 
-                        key={platform} 
-                        className={`flex items-center gap-2 p-2 border rounded-md cursor-pointer transition-all 
-                          ${selectedPlatforms[platform] 
-                            ? 'bg-primary/5 border-primary/30' 
-                            : 'bg-muted/20 border-border hover:bg-muted/30'
-                          }`}
-                        onClick={() => {
-                          setSelectedPlatforms(prev => ({
-                            ...prev,
-                            [platform]: !prev[platform]
-                          }));
-                        }}
-                      >
-                        <Checkbox 
-                          id={`platform-${platform}`} 
-                          checked={selectedPlatforms[platform]} 
-                          onCheckedChange={(checked) => 
-                            setSelectedPlatforms(prev => ({
-                              ...prev,
-                              [platform]: !!checked
-                            }))
-                          }
-                          className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                        />
-                        <Label 
-                          htmlFor={`platform-${platform}`}
-                          className="capitalize cursor-pointer font-medium flex items-center gap-1.5 w-full"
-                        >
-                          <span className="text-lg">{platformIcons[platform]}</span>
-                          <span>{platform}</span>
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </div>
+                <PlatformSelector 
+                  selectedPlatforms={{
+                    instagram: selectedPlatforms.instagram || false,
+                    telegram: selectedPlatforms.telegram || false,
+                    vk: selectedPlatforms.vk || false,
+                    facebook: selectedPlatforms.facebook || false
+                  }}
+                  onChange={(platform, isSelected) => {
+                    setSelectedPlatforms(prev => ({
+                      ...prev,
+                      [platform]: isSelected
+                    }));
+                  }}
+                />
                 
                 {/* Summary of selected platforms */}
                 <div className="bg-muted/30 p-3 rounded-md mt-2">
