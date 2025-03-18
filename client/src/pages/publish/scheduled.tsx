@@ -57,7 +57,17 @@ export default function ScheduledPublications() {
     queryKey: ['/api/publish/scheduled', userId, selectedCampaignId],
     queryFn: async () => {
       const url = `/api/publish/scheduled?userId=${userId}${selectedCampaignId ? `&campaignId=${selectedCampaignId}` : ''}`;
-      const result = await apiRequest(url);
+      
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
+      
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const result = await apiRequest(url, { headers });
       return result.data;
     },
     enabled: !!userId,

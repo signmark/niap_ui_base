@@ -190,9 +190,19 @@ export default function EditScheduledPublication({
         return;
       }
       
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
+      
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // Отправляем данные на сервер
       await apiRequest(`/api/campaign-content/${content.id}`, {
         method: 'PATCH',
+        headers,
         data: {
           scheduledAt: scheduledAt.toISOString(),
           socialPlatforms,

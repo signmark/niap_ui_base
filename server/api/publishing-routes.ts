@@ -148,16 +148,35 @@ export function registerPublishingRoutes(app: Express): void {
   app.post('/api/publish/cancel/:contentId', async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;
+      const authHeader = req.headers.authorization;
       
       // Проверяем параметры
       if (!contentId) {
         return res.status(400).json({ error: 'Не указан ID контента' });
       }
       
+      // Проверяем наличие заголовка авторизации
+      if (!authHeader) {
+        log('No authorization header provided for cancel publication', 'api');
+        return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+      }
+      
       // Получаем контент
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
         return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Получаем токен авторизации
+      let authToken = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+        
+        // Настраиваем временно токен для пользователя, если есть userId в контенте
+        if (content.userId) {
+          const directusManager = require('../directus').directusApiManager;
+          directusManager.cacheAuthToken(content.userId, authToken);
+        }
       }
       
       // Проверяем, что контент запланирован
@@ -209,13 +228,32 @@ export function registerPublishingRoutes(app: Express): void {
     try {
       const userId = req.query.userId as string;
       const campaignId = req.query.campaignId as string;
+      const authHeader = req.headers.authorization;
       
       if (!userId) {
         return res.status(400).json({ error: 'Не указан ID пользователя' });
       }
       
+      // Проверяем наличие заголовка авторизации
+      if (!authHeader) {
+        log('No authorization header provided for scheduled content', 'api');
+      }
+      
       // Получаем запланированные публикации
-      const scheduledContent = await storage.getScheduledContent(userId, campaignId);
+      // Если есть authHeader, мы передаем token напрямую в storage
+      let scheduledContent: any[] = [];
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        // Настраиваем временно токен для пользователя
+        const directusManager = require('../directus').directusApiManager;
+        directusManager.cacheAuthToken(userId, token);
+        
+        scheduledContent = await storage.getScheduledContent(userId, campaignId);
+      } else {
+        scheduledContent = await storage.getScheduledContent(userId, campaignId);
+      }
       
       return res.status(200).json({ 
         success: true, 

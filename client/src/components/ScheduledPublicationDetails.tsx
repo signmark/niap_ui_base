@@ -57,9 +57,19 @@ export default function ScheduledPublicationDetails({
   // Обработчик отмены публикации
   const handleCancelPublication = async () => {
     try {
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
+      
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // Отменяем запланированную публикацию
       await apiRequest(`/api/publish/cancel/${content.id}`, {
-        method: 'POST'
+        method: 'POST',
+        headers
       });
       
       toast({
