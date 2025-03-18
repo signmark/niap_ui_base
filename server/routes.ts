@@ -26,6 +26,7 @@ import {
 } from './services/social-api-validator';
 import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
+import { registerAuthRoutes } from './api/auth-routes';
 import { publishScheduler } from './services/publish-scheduler';
 
 // Функция для взаимодействия с n8n API
