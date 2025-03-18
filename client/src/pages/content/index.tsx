@@ -931,7 +931,7 @@ export default function ContentPage() {
                                 </div>
                                 
                                 {/* Content title */}
-                                {content.title && (
+                                {typeof content.title === 'string' && content.title && (
                                   <div className="mb-1.5">
                                     <h3 className="text-base font-medium line-clamp-1">{content.title}</h3>
                                   </div>
