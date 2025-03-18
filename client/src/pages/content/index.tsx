@@ -1008,16 +1008,16 @@ export default function ContentPage() {
                                 )}
                                 
                                 {/* Enhanced scheduled post information */}
-                                {content.status === 'scheduled' && content.scheduledAt && 
+                                {((content.status === 'scheduled' && content.scheduledAt) || 
+                                  (content.status === 'published' && content.publishedAt)) && 
                                  content.socialPlatforms && 
                                  typeof content.socialPlatforms === 'object' && (
-                                  <div className="mt-2">
-                                    <ScheduledPostInfo 
-                                      socialPlatforms={content.socialPlatforms as Record<string, any>} 
-                                      scheduledAt={content.scheduledAt}
-                                      className="mt-1" 
-                                    />
-                                  </div>
+                                  <ScheduledPostInfo 
+                                    socialPlatforms={content.socialPlatforms as Record<string, any>} 
+                                    scheduledAt={typeof content.scheduledAt === 'string' ? content.scheduledAt : content.scheduledAt?.toISOString() || null}
+                                    publishedAt={typeof content.publishedAt === 'string' ? content.publishedAt : content.publishedAt?.toISOString() || null}
+                                    compact={true}
+                                  />
                                 )}
                                 
                                 {/* Dates */}
@@ -1929,27 +1929,39 @@ export default function ContentPage() {
               </div>
             )}
 
-            {/* Информация о публикации */}
-            <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {previewContent?.publishedAt && (
-                <div className="flex items-center gap-1">
-                  <CheckCircle2 size={14} />
-                  <span>Опубликовано: {format(new Date(previewContent.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
-                </div>
-              )}
-              {previewContent?.scheduledAt && !previewContent?.publishedAt && (
-                <div className="flex items-center gap-1">
-                  <Clock size={14} />
-                  <span>Запланировано: {format(new Date(previewContent.scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
-                </div>
-              )}
-              {previewContent?.createdAt && (
-                <div className="flex items-center gap-1">
-                  <CalendarDays size={14} />
-                  <span>Создано: {format(new Date(previewContent.createdAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
-                </div>
-              )}
-            </div>
+            {/* Информация о публикации - расширенная */}
+            {previewContent?.socialPlatforms && 
+             typeof previewContent.socialPlatforms === 'object' &&
+             ((previewContent.status === 'scheduled' && previewContent.scheduledAt) || 
+              (previewContent.status === 'published' && previewContent.publishedAt)) ? (
+              <ScheduledPostInfo 
+                socialPlatforms={previewContent.socialPlatforms as Record<string, any>} 
+                scheduledAt={typeof previewContent.scheduledAt === 'string' ? previewContent.scheduledAt : previewContent.scheduledAt?.toISOString() || null}
+                publishedAt={typeof previewContent.publishedAt === 'string' ? previewContent.publishedAt : previewContent.publishedAt?.toISOString() || null}
+                compact={false}
+              />
+            ) : (
+              <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                {previewContent?.publishedAt && (
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 size={14} />
+                    <span>Опубликовано: {format(new Date(previewContent.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                  </div>
+                )}
+                {previewContent?.scheduledAt && !previewContent?.publishedAt && (
+                  <div className="flex items-center gap-1">
+                    <Clock size={14} />
+                    <span>Запланировано: {format(new Date(previewContent.scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                  </div>
+                )}
+                {previewContent?.createdAt && (
+                  <div className="flex items-center gap-1">
+                    <CalendarDays size={14} />
+                    <span>Создано: {format(new Date(previewContent.createdAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button 
