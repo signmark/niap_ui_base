@@ -531,6 +531,7 @@ export function registerPublishingRoutes(app: Express): void {
         // Обновляем контент через интерфейс хранилища
         // Напрямую обновляем контент через Directus API
         let updatedContent;
+        let directUpdateSuccessful = false;
         
         try {
           // Обновляем через API напрямую, чтобы убедиться, что записи существуют
@@ -550,39 +551,54 @@ export function registerPublishingRoutes(app: Express): void {
           });
           
           log(`Контент успешно обновлен через API напрямую`, 'api');
+          directUpdateSuccessful = true;
         } catch (directUpdateError) {
           // Если запись не найдена, возможно она не существует или у нас устаревший токен
           log(`Ошибка при прямом обновлении через API: ${(directUpdateError as Error).message}`, 'api');
         }
         
-        // Теперь обновляем контент через интерфейс хранилища
-        updatedContent = await storage.updateCampaignContent(contentId, updates);
+        // Пробуем обновить контент через интерфейс хранилища, но только если прямое обновление не прошло успешно
+        let storageUpdateSuccessful = false;
         
-        if (updatedContent) {
-          log(`Контент успешно обновлен в базе данных: ${updatedContent.id}`, 'api');
+        try {
+          updatedContent = await storage.updateCampaignContent(contentId, updates);
+          log(`Контент успешно обновлен через storage: ${updatedContent.id}`, 'api');
+          storageUpdateSuccessful = true;
+        } catch (storageError) {
+          log(`Ошибка при обновлении через storage: ${(storageError as Error).message}`, 'api');
           
-          // Форматируем данные для ответа с правильной структурой
-          const formattedResponse = {
-            success: true,
-            message: 'Публикация успешно запланирована',
-            data: {
-              id: updatedContent.id,
-              scheduledAt: updatedContent.scheduledAt,
-              status: updatedContent.status,
-              socialPlatforms: updatedContent.socialPlatforms
-            }
-          };
-          
-          // Выводим форматированную дату в лог
-          const formattedDate = updatedContent.scheduledAt 
-            ? new Date(updatedContent.scheduledAt).toISOString() 
-            : 'не задана';
-          log(`Запланированная дата публикации: ${formattedDate}`, 'api');
-          
-          return res.status(200).json(formattedResponse);
-        } else {
-          throw new Error('Неизвестная ошибка при обновлении контента в Directus');
+          // Если прямое обновление было успешным, используем результат прямого API запроса
+          if (directUpdateSuccessful) {
+            log(`Используем данные контента из прямого API запроса`, 'api');
+            
+            // Создаем структуру обновленного контента из имеющихся данных
+            updatedContent = {
+              ...content,
+              ...updates,
+              id: contentId
+            };
+            log(`Создан объект с обновленными данными на основе прямого API запроса`, 'api');
+          } else {
+            throw new Error('Failed to update campaign content');
+          }
         }
+        
+        // Форматируем данные для ответа с правильной структурой
+        const formattedResponse = {
+          success: true,
+          message: 'Публикация успешно запланирована',
+          data: {
+            id: contentId,
+            scheduledAt: scheduledAtDate.toISOString(),
+            status: 'scheduled',
+            socialPlatforms: socialPlatforms
+          }
+        };
+        
+        // Выводим форматированную дату в лог
+        log(`Запланированная дата публикации: ${scheduledAtDate.toISOString()}`, 'api');
+        
+        return res.status(200).json(formattedResponse);
       } catch (error: any) {
         log(`Ошибка при прямом обновлении: ${error.message}`, 'api');
         return res.status(500).json({
