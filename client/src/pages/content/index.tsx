@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
+import { ScheduledPostInfo } from "@/components/ScheduledPostInfo";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -997,11 +998,25 @@ export default function ContentPage() {
                                   )}
                                 </div>
                                 
-                                {/* Publishing status */}
-                                {content.socialPlatforms && typeof content.socialPlatforms === 'object' && 
+                                {/* Publishing status for published content */}
+                                {content.status === 'published' && content.socialPlatforms && 
+                                 typeof content.socialPlatforms === 'object' && 
                                  Object.keys(content.socialPlatforms as Record<string, any>).length > 0 && (
                                   <div className="mt-2">
                                     <PublishingStatus contentId={content.id} className="mt-1" />
+                                  </div>
+                                )}
+                                
+                                {/* Enhanced scheduled post information */}
+                                {content.status === 'scheduled' && content.scheduledAt && 
+                                 content.socialPlatforms && 
+                                 typeof content.socialPlatforms === 'object' && (
+                                  <div className="mt-2">
+                                    <ScheduledPostInfo 
+                                      socialPlatforms={content.socialPlatforms as Record<string, any>} 
+                                      scheduledAt={content.scheduledAt}
+                                      className="mt-1" 
+                                    />
                                   </div>
                                 )}
                                 
@@ -1010,7 +1025,7 @@ export default function ContentPage() {
                                   {content.publishedAt && (
                                     <span>Опубл.: {formatDate(content.publishedAt)}</span>
                                   )}
-                                  {content.scheduledAt && !content.publishedAt && (
+                                  {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
                                     <span>План: {formatDate(content.scheduledAt)}</span>
                                   )}
                                   {!content.publishedAt && !content.scheduledAt && (
