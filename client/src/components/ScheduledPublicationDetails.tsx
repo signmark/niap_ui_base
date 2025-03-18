@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CampaignContent } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -14,11 +14,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Clock, Calendar, Ban, Eye, CheckCircle, AlertCircle } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Clock, Calendar, Ban, Eye, CheckCircle, AlertCircle, Edit2, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import EditScheduledPublication from './EditScheduledPublication';
 
 // Определяем типы социальных платформ для безопасного использования
 export const safeSocialPlatforms = ['instagram', 'facebook', 'telegram', 'vk'] as const;
@@ -44,6 +52,7 @@ export default function ScheduledPublicationDetails({
   onViewDetails 
 }: ScheduledPublicationDetailsProps) {
   const { toast } = useToast();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   
   // Обработчик отмены публикации
   const handleCancelPublication = async () => {
@@ -80,6 +89,31 @@ export default function ScheduledPublicationDetails({
     }
   };
   
+  // Обработчик редактирования публикации
+  const handleEditPublication = () => {
+    setIsEditDialogOpen(true);
+  };
+  
+  // Обработчик закрытия диалога редактирования
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+  };
+  
+  // Обработчик успешного сохранения изменений
+  const handleSaveSuccess = () => {
+    setIsEditDialogOpen(false);
+    
+    // Вызываем колбэк для обновления списка запланированных публикаций
+    if (onCancelSuccess) {
+      onCancelSuccess();
+    }
+    
+    toast({
+      title: "Изменения сохранены",
+      description: "Настройки публикации успешно обновлены.",
+    });
+  };
+  
   // Форматируем дату публикации для отображения
   const formatScheduledDate = (date: string | Date | null | undefined) => {
     if (!date) return "Не запланировано";
@@ -102,6 +136,15 @@ export default function ScheduledPublicationDetails({
       content.socialPlatforms[platform] &&
       content.socialPlatforms[platform].status !== 'cancelled'
     );
+  };
+  
+  // Получаем дату публикации для конкретной платформы
+  const getPlatformScheduledDate = (platform: SafeSocialPlatform) => {
+    if (!content.socialPlatforms || !content.socialPlatforms[platform]) {
+      return content.scheduledAt;
+    }
+    
+    return content.socialPlatforms[platform].scheduledAt || content.scheduledAt;
   };
   
   // Отображаем статус публикации на платформе
@@ -127,88 +170,119 @@ export default function ScheduledPublicationDetails({
   const platforms = getPlatforms();
   
   return (
-    <Card className="w-full mt-4">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center">
-          <Clock className="mr-2" size={18} />
-          Запланированная публикация
-        </CardTitle>
-        <CardDescription>
-          {content.title || 'Без названия'}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <Calendar className="mr-2" size={16} />
-            <span className="text-sm font-medium">Дата публикации:</span>
-            <span className="ml-2 text-sm">{formatScheduledDate(content.scheduledAt)}</span>
-          </div>
-          
-          {platforms.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Целевые платформы:</h4>
-              <div className="space-y-2">
-                {platforms.map(platform => (
-                  <div key={platform} className="flex items-center text-sm">
-                    <span>{platformNames[platform] || platform}</span>
-                    {getStatusBadge(platform)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {content.keywords && content.keywords.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
-              <div className="flex flex-wrap gap-2">
-                {content.keywords.map((keyword, idx) => (
-                  <Badge key={idx} variant="secondary">{keyword}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={handleViewDetails}
-          size="sm"
-        >
-          <Eye className="mr-2" size={16} />
-          Детали
-        </Button>
+    <>
+      <Card className="w-full mt-4">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center">
+            <Clock className="mr-2" size={18} />
+            Запланированная публикация
+          </CardTitle>
+          <CardDescription>
+            {content.title || 'Без названия'}
+          </CardDescription>
+        </CardHeader>
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <Calendar className="mr-2" size={16} />
+              <span className="text-sm font-medium">Дата публикации:</span>
+              <span className="ml-2 text-sm">{formatScheduledDate(content.scheduledAt)}</span>
+            </div>
+            
+            {platforms.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Целевые платформы:</h4>
+                <div className="space-y-2">
+                  {platforms.map(platform => (
+                    <div key={platform} className="flex items-center text-sm">
+                      <span>{platformNames[platform] || platform}</span>
+                      {getStatusBadge(platform)}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {formatScheduledDate(getPlatformScheduledDate(platform))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {content.keywords && content.keywords.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {content.keywords.map((keyword, idx) => (
+                    <Badge key={idx} variant="secondary">{keyword}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between flex-wrap gap-2">
+          <div className="flex space-x-2">
             <Button 
-              variant="destructive" 
+              variant="outline" 
+              onClick={handleViewDetails}
               size="sm"
             >
-              <Ban className="mr-2" size={16} />
-              Отменить публикацию
+              <Eye className="mr-2" size={16} />
+              Детали
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Это действие отменит запланированную публикацию. Отмена не может быть отменена.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Отмена</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCancelPublication}>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleEditPublication}
+              size="sm"
+            >
+              <Edit2 className="mr-2" size={16} />
+              Изменить
+            </Button>
+          </div>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="destructive" 
+                size="sm"
+              >
+                <Ban className="mr-2" size={16} />
                 Отменить публикацию
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardFooter>
-    </Card>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Это действие отменит запланированную публикацию. Отмена не может быть отменена.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCancelPublication}>
+                  Отменить публикацию
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
+      </Card>
+      
+      {/* Диалог редактирования публикации */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Редактирование запланированной публикации</DialogTitle>
+          </DialogHeader>
+          
+          <EditScheduledPublication 
+            content={content}
+            onCancel={handleCloseEditDialog}
+            onSave={handleSaveSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
