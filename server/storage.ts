@@ -1042,9 +1042,11 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Если не указан userId или нет токена, выводим сообщение
-      // но все равно пытаемся получить данные, так как токен может быть передан напрямую в API
       if (!authToken) {
         console.log('Получение запланированных публикаций, токен не найден в хранилище');
+        // Возвращаем пустой массив вместо выполнения запроса с пустым токеном
+        console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
+        return [];
       }
       
       const filter: any = {
@@ -1069,14 +1071,18 @@ export class DatabaseStorage implements IStorage {
         };
       }
       
+      // Добавляем заголовок авторизации только если токен есть
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await directusApi.get('/items/campaign_content', {
         params: {
           filter,
           sort: ['scheduled_at']
         },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+        headers
       });
       
       const content = (response.data?.data || []).map((item: any) => ({
