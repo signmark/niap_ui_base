@@ -25,6 +25,8 @@ import {
   validateYoutubeApiKey
 } from './services/social-api-validator';
 import { registerValidationRoutes } from './api/validation-routes';
+import { registerPublishingRoutes } from './api/publishing-routes';
+import { publishScheduler } from './services/publish-scheduler';
 
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
@@ -2584,6 +2586,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты валидации API ключей социальных сетей
   registerValidationRoutes(app);
+  registerPublishingRoutes(app);
+  
+  // Запускаем планировщик публикаций
+  publishScheduler.start();
   
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);
