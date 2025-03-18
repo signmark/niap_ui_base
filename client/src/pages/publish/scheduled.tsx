@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CampaignContent, Campaign } from '@/types';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useCampaignStore } from '@/lib/campaignStore';
 
 import {
   Card,
@@ -16,47 +17,42 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScheduledPublicationDetails from '@/components/ScheduledPublicationDetails';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Search, RefreshCw } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ScheduledPublications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
   const [viewTab, setViewTab] = useState<string>('upcoming');
   
+  // Используем глобальное состояние для получения текущей выбранной кампании
+  const { selectedCampaign } = useCampaignStore();
+  
   // ID пользователя берём из локального хранилища
   const userId = localStorage.getItem('user_id') || '';
   
-  // Получаем список кампаний пользователя
-  const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
+  // Получаем список кампаний пользователя (для отображения названия кампании)
+  const { data: campaigns = [] } = useQuery<Campaign[]>({
     queryKey: ['/api/campaigns'],
     enabled: !!userId,
   });
   
-  // Получаем запланированные публикации
+  // Получаем запланированные публикации для текущей кампании
   const { 
     data: scheduledContent = [], 
     isLoading: scheduledLoading,
     refetch: refetchScheduled,
   } = useQuery<CampaignContent[]>({
-    queryKey: ['/api/publish/scheduled', userId, selectedCampaignId],
+    queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
     queryFn: async () => {
-      const url = `/api/publish/scheduled?userId=${userId}${selectedCampaignId ? `&campaignId=${selectedCampaignId}` : ''}`;
+      const url = `/api/publish/scheduled?userId=${userId}${selectedCampaign?.id ? `&campaignId=${selectedCampaign.id}` : ''}`;
       
       // Получаем токен авторизации из localStorage
       const authToken = localStorage.getItem('auth_token');
@@ -70,8 +66,15 @@ export default function ScheduledPublications() {
       const result = await apiRequest(url, { headers });
       return result.data;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!selectedCampaign?.id,
   });
+  
+  // Обновляем данные при изменении выбранной кампании
+  useEffect(() => {
+    if (selectedCampaign?.id) {
+      refetchScheduled();
+    }
+  }, [selectedCampaign?.id, refetchScheduled]);
   
   // Фильтрация контента по поисковому запросу
   const filteredContent = React.useMemo(() => {
@@ -115,10 +118,6 @@ export default function ScheduledPublications() {
   }, [filteredContent]);
   
   // Обработчики событий
-  const handleCampaignChange = (campaignId: string) => {
-    setSelectedCampaignId(campaignId === "all" ? undefined : campaignId);
-  };
-  
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -171,26 +170,7 @@ export default function ScheduledPublications() {
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Запланированные публикации</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div>
-          <Select 
-            value={selectedCampaignId || "all"} 
-            onValueChange={handleCampaignChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Все кампании" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="all" value="all">Все кампании</SelectItem>
-              {Array.isArray(campaigns) && campaigns.length > 0 && campaigns.map((campaign: Campaign) => (
-                <SelectItem key={campaign.id} value={campaign.id}>
-                  {campaign.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <Input
