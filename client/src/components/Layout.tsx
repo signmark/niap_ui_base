@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { Dialog } from "@/components/ui/dialog";
@@ -88,6 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/keywords", label: "Ключевые слова", icon: Search },
     { path: "/content", label: "Контент", icon: PenTool },
     { path: "/posts", label: "Публикации", icon: Calendar },
+    { path: "/publish/scheduled", label: "Запланированные", icon: Clock },
     { path: "/trends", label: "Тренды", icon: TrendingUp },
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];

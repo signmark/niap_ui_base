@@ -34,6 +34,7 @@ function Router() {
       <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
+      <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
       <Route path="/test/auth-bypass" component={AuthBypass} />
