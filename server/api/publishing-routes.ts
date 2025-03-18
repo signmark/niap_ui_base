@@ -423,10 +423,14 @@ export function registerPublishingRoutes(app: Express): void {
       // Проверяем существование контента
       try {
         // Прямой запрос к API с токеном авторизации
+        log(`Запрос получения контента с ID ${contentId}, токен: ${token.substring(0, 15)}...`, 'api');
         const response = await directusApiManager.request({
           url: `/items/campaign_content/${contentId}`,
-          method: 'get'
-        }, token);
+          method: 'get',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response || !response.data || !response.data.data) {
           log(`Контент с ID ${contentId} не найден в Directus`, 'api');
@@ -460,11 +464,15 @@ export function registerPublishingRoutes(app: Express): void {
         }
 
         // Обновляем контент через Directus API с передачей токена
+        log(`Отправляем запрос обновления контента с ID ${contentId}, токен: ${token.substring(0, 15)}...`, 'api');
         const updateResponse = await directusApiManager.request({
           url: `/items/campaign_content/${contentId}`,
           method: 'patch',
-          data: directusUpdates
-        }, token);
+          data: directusUpdates,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (updateResponse && updateResponse.data) {
           const updatedItem = updateResponse.data.data;
