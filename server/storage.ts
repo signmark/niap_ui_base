@@ -902,13 +902,13 @@ export class DatabaseStorage implements IStorage {
         user_id: content.userId,
         campaign_id: content.campaignId,
         status: content.status,
-        post_type: content.postType,
         image_url: content.imageUrl,
         video_url: content.videoUrl,
         prompt: content.prompt || "",  // Добавляем поле промта при создании
         scheduled_at: content.scheduledAt?.toISOString() || null,
         social_platforms: content.socialPlatforms,
-        published_platforms: content.publishedPlatforms || []
+        title: content.title || "",
+        content_type: content.contentType || "text"
       };
       
       const response = await directusApi.post('/items/campaign_content', directusContent, {
@@ -924,14 +924,14 @@ export class DatabaseStorage implements IStorage {
         userId: item.user_id,
         campaignId: item.campaign_id,
         status: item.status,
-        postType: item.post_type,
+        contentType: item.content_type || "text",
+        title: item.title || null,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
         prompt: item.prompt || "",  // Добавляем поле промта при возвращении результата
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
-        publishedPlatforms: item.published_platforms || []
+        socialPlatforms: item.social_platforms
       };
     } catch (error) {
       console.error('Error creating campaign content in Directus:', error);
@@ -969,7 +969,8 @@ export class DatabaseStorage implements IStorage {
       
       if (updates.content !== undefined) directusUpdates.content = updates.content;
       if (updates.status !== undefined) directusUpdates.status = updates.status;
-      if (updates.postType !== undefined) directusUpdates.post_type = updates.postType;
+      if (updates.contentType !== undefined) directusUpdates.content_type = updates.contentType;
+      if (updates.title !== undefined) directusUpdates.title = updates.title;
       if (updates.imageUrl !== undefined) directusUpdates.image_url = updates.imageUrl;
       if (updates.videoUrl !== undefined) directusUpdates.video_url = updates.videoUrl;
       if (updates.prompt !== undefined) {
@@ -978,7 +979,6 @@ export class DatabaseStorage implements IStorage {
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
-      if (updates.publishedPlatforms !== undefined) directusUpdates.published_platforms = updates.publishedPlatforms || [];
       
       // Выводим данные, которые будем отправлять
       console.log(`Отправляем обновление в Directus для контента ${id}:`, JSON.stringify(directusUpdates));
@@ -992,14 +992,14 @@ export class DatabaseStorage implements IStorage {
         userId: item.user_id,
         campaignId: item.campaign_id,
         status: item.status,
-        postType: item.post_type,
+        contentType: item.content_type || "text",
+        title: item.title || null,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
         prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
-        publishedPlatforms: item.published_platforms || []
+        socialPlatforms: item.social_platforms
       };
     } catch (error) {
       console.error('Error updating campaign content in Directus:', error);
@@ -1091,14 +1091,14 @@ export class DatabaseStorage implements IStorage {
         userId: item.user_id,
         campaignId: item.campaign_id,
         status: item.status,
-        postType: item.post_type,
+        contentType: item.content_type || "text",
+        title: item.title || null,
         imageUrl: item.image_url,
         prompt: item.prompt || "",
         videoUrl: item.video_url,
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
-        publishedPlatforms: item.published_platforms || []
+        socialPlatforms: item.social_platforms
       }));
       
       return content;
@@ -1233,8 +1233,8 @@ export class DatabaseStorage implements IStorage {
         throw apiError;
       }
       
-      // Добавляем метод отображения, который используется в нескольких местах
-      return this.mapDirectusQuestionnaire(response.data.data);
+      // Ошибка: response не определен в этом месте, 
+  // метод уже возвращает результат в блоке try выше
     } catch (error) {
       console.error('Error creating business questionnaire in Directus:', error);
       throw new Error('Failed to create business questionnaire');
