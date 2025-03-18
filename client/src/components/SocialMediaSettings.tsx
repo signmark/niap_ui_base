@@ -13,8 +13,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { directusApi } from "@/lib/directus";
+import { api } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -46,6 +54,12 @@ interface SocialMediaSettingsProps {
   onSettingsUpdated?: () => void;
 }
 
+interface ValidationStatus {
+  isValid?: boolean;
+  message?: string;
+  isLoading: boolean;
+}
+
 export function SocialMediaSettings({
   campaignId,
   initialSettings,
@@ -53,6 +67,13 @@ export function SocialMediaSettings({
 }: SocialMediaSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Статусы валидации для каждой соцсети
+  const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
+  const [vkStatus, setVkStatus] = useState<ValidationStatus>({ isLoading: false });
+  const [instagramStatus, setInstagramStatus] = useState<ValidationStatus>({ isLoading: false });
+  const [facebookStatus, setFacebookStatus] = useState<ValidationStatus>({ isLoading: false });
+  const [youtubeStatus, setYoutubeStatus] = useState<ValidationStatus>({ isLoading: false });
 
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
@@ -64,6 +85,239 @@ export function SocialMediaSettings({
       youtube: { apiKey: null, channelId: null }
     }
   });
+
+  // Функции проверки API ключей
+  const validateTelegramToken = async () => {
+    const token = form.getValues("telegram.token");
+    if (!token) {
+      toast({
+        variant: "destructive",
+        description: "Введите токен Telegram бота для проверки"
+      });
+      return;
+    }
+    
+    try {
+      setTelegramStatus({ isLoading: true });
+      const response = await api.post('/api/validate/telegram', { token });
+      
+      setTelegramStatus({
+        isLoading: false,
+        isValid: response.data.success,
+        message: response.data.message
+      });
+      
+      toast({
+        variant: response.data.success ? "default" : "destructive",
+        description: response.data.message
+      });
+    } catch (error) {
+      console.error('Error validating Telegram token:', error);
+      setTelegramStatus({
+        isLoading: false,
+        isValid: false,
+        message: 'Ошибка при проверке токена'
+      });
+      
+      toast({
+        variant: "destructive",
+        description: "Не удалось проверить токен Telegram"
+      });
+    }
+  };
+  
+  const validateVkToken = async () => {
+    const token = form.getValues("vk.token");
+    const groupId = form.getValues("vk.groupId");
+    
+    if (!token) {
+      toast({
+        variant: "destructive",
+        description: "Введите токен ВКонтакте для проверки"
+      });
+      return;
+    }
+    
+    try {
+      setVkStatus({ isLoading: true });
+      const response = await api.post('/api/validate/vk', { token, groupId });
+      
+      setVkStatus({
+        isLoading: false,
+        isValid: response.data.success,
+        message: response.data.message
+      });
+      
+      toast({
+        variant: response.data.success ? "default" : "destructive",
+        description: response.data.message
+      });
+    } catch (error) {
+      console.error('Error validating VK token:', error);
+      setVkStatus({
+        isLoading: false,
+        isValid: false,
+        message: 'Ошибка при проверке токена'
+      });
+      
+      toast({
+        variant: "destructive",
+        description: "Не удалось проверить токен ВКонтакте"
+      });
+    }
+  };
+  
+  const validateInstagramToken = async () => {
+    const token = form.getValues("instagram.token");
+    
+    if (!token) {
+      toast({
+        variant: "destructive",
+        description: "Введите токен Instagram для проверки"
+      });
+      return;
+    }
+    
+    try {
+      setInstagramStatus({ isLoading: true });
+      const response = await api.post('/api/validate/instagram', { token });
+      
+      setInstagramStatus({
+        isLoading: false,
+        isValid: response.data.success,
+        message: response.data.message
+      });
+      
+      toast({
+        variant: response.data.success ? "default" : "destructive",
+        description: response.data.message
+      });
+    } catch (error) {
+      console.error('Error validating Instagram token:', error);
+      setInstagramStatus({
+        isLoading: false,
+        isValid: false,
+        message: 'Ошибка при проверке токена'
+      });
+      
+      toast({
+        variant: "destructive",
+        description: "Не удалось проверить токен Instagram"
+      });
+    }
+  };
+  
+  const validateFacebookToken = async () => {
+    const token = form.getValues("facebook.token");
+    const pageId = form.getValues("facebook.pageId");
+    
+    if (!token) {
+      toast({
+        variant: "destructive",
+        description: "Введите токен Facebook для проверки"
+      });
+      return;
+    }
+    
+    try {
+      setFacebookStatus({ isLoading: true });
+      const response = await api.post('/api/validate/facebook', { token, pageId });
+      
+      setFacebookStatus({
+        isLoading: false,
+        isValid: response.data.success,
+        message: response.data.message
+      });
+      
+      toast({
+        variant: response.data.success ? "default" : "destructive",
+        description: response.data.message
+      });
+    } catch (error) {
+      console.error('Error validating Facebook token:', error);
+      setFacebookStatus({
+        isLoading: false,
+        isValid: false,
+        message: 'Ошибка при проверке токена'
+      });
+      
+      toast({
+        variant: "destructive",
+        description: "Не удалось проверить токен Facebook"
+      });
+    }
+  };
+  
+  const validateYoutubeApiKey = async () => {
+    const apiKey = form.getValues("youtube.apiKey");
+    const channelId = form.getValues("youtube.channelId");
+    
+    if (!apiKey) {
+      toast({
+        variant: "destructive",
+        description: "Введите API ключ YouTube для проверки"
+      });
+      return;
+    }
+    
+    try {
+      setYoutubeStatus({ isLoading: true });
+      const response = await api.post('/api/validate/youtube', { apiKey, channelId });
+      
+      setYoutubeStatus({
+        isLoading: false,
+        isValid: response.data.success,
+        message: response.data.message
+      });
+      
+      toast({
+        variant: response.data.success ? "default" : "destructive",
+        description: response.data.message
+      });
+    } catch (error) {
+      console.error('Error validating YouTube API key:', error);
+      setYoutubeStatus({
+        isLoading: false,
+        isValid: false,
+        message: 'Ошибка при проверке API ключа'
+      });
+      
+      toast({
+        variant: "destructive",
+        description: "Не удалось проверить API ключ YouTube"
+      });
+    }
+  };
+  
+  // Компонент статуса валидации
+  const ValidationBadge = ({ status }: { status: ValidationStatus }) => {
+    if (status.isLoading) {
+      return <Badge variant="outline" className="ml-2"><Loader2 className="h-4 w-4 animate-spin" /></Badge>;
+    }
+    
+    if (status.isValid === undefined) {
+      return null;
+    }
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant={status.isValid ? "success" : "destructive"} className="ml-2">
+              {status.isValid ? 
+                <CheckCircle className="h-4 w-4 mr-1" /> : 
+                <XCircle className="h-4 w-4 mr-1" />
+              }
+              {status.isValid ? "Валиден" : "Ошибка"}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{status.message || (status.isValid ? "Ключ валиден" : "Ключ не валиден")}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   const onSubmit = async (data: SocialMediaSettings) => {
     try {
@@ -93,21 +347,39 @@ export function SocialMediaSettings({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Telegram Settings */}
         <div className="space-y-4">
-          <h3 className="font-medium">Telegram</h3>
+          <div className="flex items-center">
+            <h3 className="font-medium">Telegram</h3>
+            <ValidationBadge status={telegramStatus} />
+          </div>
           <FormField
             control={form.control}
             name="telegram.token"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Bot Token</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Введите токен бота" 
-                    {...field} 
-                    value={field.value || ''} 
-                  />
-                </FormControl>
+                <div className="flex space-x-2">
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Введите токен бота" 
+                      {...field} 
+                      value={field.value || ''} 
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={validateTelegramToken}
+                    disabled={telegramStatus.isLoading}
+                  >
+                    {telegramStatus.isLoading ? 
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                    }
+                    Проверить
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

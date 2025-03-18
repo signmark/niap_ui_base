@@ -4,8 +4,11 @@
  */
 
 import axios from 'axios';
+import { log } from '../utils/logger';
 
-// Интерфейс для результата проверки API ключа
+/**
+ * Результат проверки API ключа
+ */
 export interface ApiKeyValidationResult {
   isValid: boolean;
   message: string;
@@ -18,33 +21,41 @@ export interface ApiKeyValidationResult {
  * @returns Результат проверки
  */
 export async function validateTelegramToken(token: string): Promise<ApiKeyValidationResult> {
-  if (!token) {
-    return { isValid: false, message: "Токен не предоставлен" };
-  }
-
   try {
-    // Telegram Bot API - получение информации о боте
-    const response = await axios.get(`https://api.telegram.org/bot${token}/getMe`);
+    log(`Проверка токена Telegram: ${token.slice(0, 5)}...`, 'api-validator');
+    
+    // Запрос к Telegram API для получения информации о боте
+    const response = await axios.get(`https://api.telegram.org/bot${token}/getMe`, {
+      timeout: 10000
+    });
     
     if (response.data && response.data.ok) {
       const botInfo = response.data.result;
-      return { 
-        isValid: true, 
-        message: `Бот подключен: ${botInfo.first_name} (@${botInfo.username})`,
+      return {
+        isValid: true,
+        message: `Бот успешно авторизован: ${botInfo.first_name} (@${botInfo.username})`,
         details: botInfo
       };
     } else {
-      return { 
-        isValid: false, 
-        message: "Не удалось получить информацию о боте",
-        details: response.data 
+      return {
+        isValid: false,
+        message: 'Некорректный формат ответа от Telegram API',
+        details: response.data
       };
     }
   } catch (error: any) {
-    const errorMessage = error.response?.data?.description || error.message || "Неизвестная ошибка";
-    return { 
-      isValid: false, 
-      message: `Ошибка при проверке токена: ${errorMessage}`,
+    log(`Ошибка при проверке токена Telegram: ${error.message}`, 'api-validator');
+    
+    let message = 'Ошибка при проверке токена';
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data?.description || 
+                error.response?.data?.error || 
+                error.message;
+    }
+    
+    return {
+      isValid: false,
+      message: message,
       details: error.response?.data
     };
   }
@@ -57,55 +68,80 @@ export async function validateTelegramToken(token: string): Promise<ApiKeyValida
  * @returns Результат проверки
  */
 export async function validateVkToken(token: string, groupId?: string): Promise<ApiKeyValidationResult> {
-  if (!token) {
-    return { isValid: false, message: "Токен не предоставлен" };
-  }
-
   try {
-    // VK API - получение информации о пользователе или группе
-    let apiUrl = `https://api.vk.com/method/users.get?v=5.131&access_token=${token}`;
+    log(`Проверка токена VK: ${token.slice(0, 5)}...${groupId ? ` для группы ${groupId}` : ''}`, 'api-validator');
     
-    // Если предоставлен ID группы, проверяем доступ к группе
-    if (groupId) {
-      apiUrl = `https://api.vk.com/method/groups.getById?group_id=${groupId}&v=5.131&access_token=${token}`;
-    }
+    // Запрос к VK API для получения информации о пользователе
+    const response = await axios.get('https://api.vk.com/method/users.get', {
+      params: {
+        access_token: token,
+        v: '5.131'
+      },
+      timeout: 10000
+    });
     
-    const response = await axios.get(apiUrl);
-    
-    if (response.data && response.data.response) {
-      if (groupId && response.data.response.length > 0) {
-        const groupInfo = response.data.response[0];
-        return { 
-          isValid: true, 
-          message: `Группа подключена: ${groupInfo.name}`,
-          details: groupInfo
-        };
-      } else if (!groupId && response.data.response.length > 0) {
-        const userInfo = response.data.response[0];
-        return { 
-          isValid: true, 
-          message: `Пользователь подключен: ${userInfo.first_name} ${userInfo.last_name}`,
-          details: userInfo
-        };
-      } else {
-        return { 
-          isValid: false, 
-          message: "Не удалось получить информацию о пользователе или группе",
-          details: response.data
-        };
+    if (response.data && response.data.response && Array.isArray(response.data.response)) {
+      const userInfo = response.data.response[0];
+      
+      // Если указан ID группы, проверяем права на публикацию
+      if (groupId) {
+        try {
+          const groupResponse = await axios.get('https://api.vk.com/method/groups.getById', {
+            params: {
+              group_id: groupId,
+              access_token: token,
+              v: '5.131'
+            }
+          });
+          
+          if (groupResponse.data && groupResponse.data.response && Array.isArray(groupResponse.data.response)) {
+            const groupInfo = groupResponse.data.response[0];
+            return {
+              isValid: true,
+              message: `Токен валиден. Пользователь: ${userInfo.first_name} ${userInfo.last_name}, Группа: ${groupInfo.name}`,
+              details: {
+                user: userInfo,
+                group: groupInfo
+              }
+            };
+          }
+        } catch (groupError: any) {
+          return {
+            isValid: false,
+            message: `Токен валиден, но ошибка при проверке группы: ${groupError.message}`,
+            details: {
+              user: userInfo,
+              groupError: groupError.response?.data
+            }
+          };
+        }
       }
+      
+      return {
+        isValid: true,
+        message: `Токен валиден. Пользователь: ${userInfo.first_name} ${userInfo.last_name}`,
+        details: userInfo
+      };
     } else {
-      return { 
-        isValid: false, 
-        message: "Неверный ответ от VK API",
+      return {
+        isValid: false,
+        message: 'Некорректный формат ответа от VK API',
         details: response.data
       };
     }
   } catch (error: any) {
-    const errorMessage = error.response?.data?.error_msg || error.message || "Неизвестная ошибка";
-    return { 
-      isValid: false, 
-      message: `Ошибка при проверке токена: ${errorMessage}`,
+    log(`Ошибка при проверке токена VK: ${error.message}`, 'api-validator');
+    
+    let message = 'Ошибка при проверке токена';
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data?.error_description || 
+                error.response?.data?.error?.error_msg || 
+                error.message;
+    }
+    
+    return {
+      isValid: false,
+      message: message,
       details: error.response?.data
     };
   }
@@ -117,32 +153,55 @@ export async function validateVkToken(token: string, groupId?: string): Promise<
  * @returns Результат проверки
  */
 export async function validateInstagramToken(token: string): Promise<ApiKeyValidationResult> {
-  if (!token) {
-    return { isValid: false, message: "Токен не предоставлен" };
-  }
-
   try {
-    // Facebook Graph API - проверка токена
-    const response = await axios.get(`https://graph.facebook.com/v16.0/me?access_token=${token}`);
+    log(`Проверка токена Instagram: ${token.slice(0, 5)}...`, 'api-validator');
+    
+    // Запрос к Facebook Graph API для получения информации о токене
+    const response = await axios.get('https://graph.facebook.com/v16.0/me', {
+      params: {
+        access_token: token,
+        fields: 'id,name,instagram_business_account'
+      },
+      timeout: 10000
+    });
     
     if (response.data && response.data.id) {
-      return { 
-        isValid: true, 
-        message: `Аккаунт подключен: ${response.data.name || response.data.id}`,
-        details: response.data
-      };
+      // Проверяем наличие привязанного бизнес-аккаунта Instagram
+      const hasInstagramAccount = response.data.instagram_business_account && response.data.instagram_business_account.id;
+      
+      if (hasInstagramAccount) {
+        return {
+          isValid: true,
+          message: `Токен Facebook валиден, Instagram бизнес-аккаунт подключен: ID ${response.data.instagram_business_account.id}`,
+          details: response.data
+        };
+      } else {
+        return {
+          isValid: false,
+          message: 'Токен Facebook валиден, но Instagram бизнес-аккаунт не подключен',
+          details: response.data
+        };
+      }
     } else {
-      return { 
-        isValid: false, 
-        message: "Неверный ответ от Instagram API",
+      return {
+        isValid: false,
+        message: 'Некорректный формат ответа от Facebook Graph API',
         details: response.data
       };
     }
   } catch (error: any) {
-    const errorMessage = error.response?.data?.error?.message || error.message || "Неизвестная ошибка";
-    return { 
-      isValid: false, 
-      message: `Ошибка при проверке токена: ${errorMessage}`,
+    log(`Ошибка при проверке токена Instagram: ${error.message}`, 'api-validator');
+    
+    let message = 'Ошибка при проверке токена';
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data?.error?.message || 
+                error.response?.data?.error_description || 
+                error.message;
+    }
+    
+    return {
+      isValid: false,
+      message: message,
       details: error.response?.data
     };
   }
@@ -155,53 +214,66 @@ export async function validateInstagramToken(token: string): Promise<ApiKeyValid
  * @returns Результат проверки
  */
 export async function validateFacebookToken(token: string, pageId?: string): Promise<ApiKeyValidationResult> {
-  if (!token) {
-    return { isValid: false, message: "Токен не предоставлен" };
-  }
-
   try {
-    // Facebook Graph API - базовая проверка токена
-    let apiUrl = `https://graph.facebook.com/v16.0/me?access_token=${token}`;
+    log(`Проверка токена Facebook: ${token.slice(0, 5)}...${pageId ? ` для страницы ${pageId}` : ''}`, 'api-validator');
     
-    // Если предоставлен ID страницы, проверяем доступ к странице
-    if (pageId) {
-      apiUrl = `https://graph.facebook.com/v16.0/${pageId}?fields=name,id,access_token&access_token=${token}`;
-    }
-    
-    const response = await axios.get(apiUrl);
+    // Запрос к Facebook Graph API для получения информации о токене
+    const response = await axios.get('https://graph.facebook.com/v16.0/me', {
+      params: {
+        access_token: token,
+        fields: 'id,name,accounts'
+      },
+      timeout: 10000
+    });
     
     if (response.data && response.data.id) {
-      if (pageId && response.data.id === pageId) {
-        return { 
-          isValid: true, 
-          message: `Страница подключена: ${response.data.name}`,
-          details: response.data
-        };
-      } else if (!pageId) {
-        return { 
-          isValid: true, 
-          message: `Аккаунт подключен: ${response.data.name || response.data.id}`,
-          details: response.data
-        };
-      } else {
-        return { 
-          isValid: false, 
-          message: "ID страницы не соответствует полученному ответу",
-          details: response.data
-        };
+      // Если указан ID страницы, проверяем доступ к ней
+      if (pageId && response.data.accounts && response.data.accounts.data) {
+        const page = response.data.accounts.data.find((p: any) => p.id === pageId);
+        
+        if (page) {
+          return {
+            isValid: true,
+            message: `Токен валиден. Пользователь: ${response.data.name}, Страница: ${page.name}`,
+            details: {
+              user: response.data,
+              page: page
+            }
+          };
+        } else {
+          return {
+            isValid: false,
+            message: `Токен валиден, но страница с ID ${pageId} не найдена`,
+            details: response.data
+          };
+        }
       }
+      
+      return {
+        isValid: true,
+        message: `Токен валиден. Пользователь: ${response.data.name}`,
+        details: response.data
+      };
     } else {
-      return { 
-        isValid: false, 
-        message: "Неверный ответ от Facebook API",
+      return {
+        isValid: false,
+        message: 'Некорректный формат ответа от Facebook Graph API',
         details: response.data
       };
     }
   } catch (error: any) {
-    const errorMessage = error.response?.data?.error?.message || error.message || "Неизвестная ошибка";
-    return { 
-      isValid: false, 
-      message: `Ошибка при проверке токена: ${errorMessage}`,
+    log(`Ошибка при проверке токена Facebook: ${error.message}`, 'api-validator');
+    
+    let message = 'Ошибка при проверке токена';
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data?.error?.message || 
+                error.response?.data?.error_description || 
+                error.message;
+    }
+    
+    return {
+      isValid: false,
+      message: message,
       details: error.response?.data
     };
   }
@@ -214,51 +286,66 @@ export async function validateFacebookToken(token: string, pageId?: string): Pro
  * @returns Результат проверки
  */
 export async function validateYoutubeApiKey(apiKey: string, channelId?: string): Promise<ApiKeyValidationResult> {
-  if (!apiKey) {
-    return { isValid: false, message: "API ключ не предоставлен" };
-  }
-
   try {
-    // YouTube Data API - поиск простого запроса для проверки ключа
-    let apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=test&maxResults=1&key=${apiKey}`;
+    log(`Проверка API ключа YouTube: ${apiKey.slice(0, 5)}...${channelId ? ` для канала ${channelId}` : ''}`, 'api-validator');
     
-    // Если предоставлен ID канала, проверяем информацию о канале
+    // Запрос к YouTube API для получения информации о каналах
+    let url = 'https://www.googleapis.com/youtube/v3/channels';
+    let params: any = {
+      key: apiKey,
+      part: 'snippet,contentDetails,statistics'
+    };
+    
+    // Если указан ID канала, проверяем именно его
     if (channelId) {
-      apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelId}&key=${apiKey}`;
+      params.id = channelId;
+    } else {
+      // Иначе просто проверяем валидность API ключа, запрашивая самые популярные каналы
+      params.chart = 'mostPopular';
+      params.maxResults = 1;
     }
     
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(url, {
+      params: params,
+      timeout: 10000
+    });
     
-    if (response.data) {
-      if (channelId && response.data.items && response.data.items.length > 0) {
-        const channelInfo = response.data.items[0].snippet;
-        return { 
-          isValid: true, 
-          message: `Канал подключен: ${channelInfo.title}`,
-          details: channelInfo
-        };
-      } else {
-        return { 
-          isValid: true, 
-          message: "API ключ действителен",
-          details: { 
-            itemsReturned: response.data.items ? response.data.items.length : 0,
-            pageInfo: response.data.pageInfo
-          }
+    if (response.data && response.data.items) {
+      if (channelId && response.data.items.length === 0) {
+        return {
+          isValid: false,
+          message: `API ключ валиден, но канал с ID ${channelId} не найден`,
+          details: response.data
         };
       }
+      
+      return {
+        isValid: true,
+        message: channelId 
+          ? `API ключ валиден. Канал: ${response.data.items[0]?.snippet?.title || 'Не указано'}`
+          : 'API ключ YouTube валиден',
+        details: response.data
+      };
     } else {
-      return { 
-        isValid: false, 
-        message: "Неверный ответ от YouTube API",
+      return {
+        isValid: false,
+        message: 'Некорректный формат ответа от YouTube API',
         details: response.data
       };
     }
   } catch (error: any) {
-    const errorMessage = error.response?.data?.error?.message || error.message || "Неизвестная ошибка";
-    return { 
-      isValid: false, 
-      message: `Ошибка при проверке API ключа: ${errorMessage}`,
+    log(`Ошибка при проверке API ключа YouTube: ${error.message}`, 'api-validator');
+    
+    let message = 'Ошибка при проверке API ключа';
+    if (axios.isAxiosError(error)) {
+      message = error.response?.data?.error?.message || 
+                error.response?.data?.error?.errors?.[0]?.reason || 
+                error.message;
+    }
+    
+    return {
+      isValid: false,
+      message: message,
       details: error.response?.data
     };
   }
