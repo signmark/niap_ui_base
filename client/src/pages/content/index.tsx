@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
-  Wand2, Share, Sparkles, CalendarDays
+  Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
+  CalendarIcon, XCircle, Filter, Play
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
@@ -18,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import type { Campaign, CampaignContent } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { SocialContentAdaptationDialog } from "@/components/SocialContentAdaptationDialog";
@@ -26,6 +27,18 @@ import { ImageGenerationDialog } from "@/components/ImageGenerationDialog";
 import { ContentPlanGenerator } from "@/components/ContentPlanGenerator";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -170,6 +183,17 @@ export default function ContentPage() {
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [activeTab, setActiveTab] = useState<string>("all");
+  
+  // Состояние для фильтрации по датам
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
+  // Состояние для отображения фильтра по датам
+  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -535,13 +559,37 @@ export default function ContentPage() {
     });
   };
 
+  // Функция для сброса фильтрации по датам
+  const resetDateFilter = () => {
+    setDateRange({
+      from: undefined,
+      to: undefined
+    });
+  };
+
   // Фильтрация и сортировка контента
   const filteredContent = campaignContent
     .filter(content => {
-      if (activeTab === "all") return true;
-      if (activeTab === "draft") return content.status === "draft";
-      if (activeTab === "scheduled") return content.status === "scheduled";
-      if (activeTab === "published") return content.status === "published";
+      // Фильтр по статусу (вкладки)
+      if (activeTab !== "all" && content.status !== activeTab) {
+        return false;
+      }
+      
+      // Фильтр по диапазону дат, если указан
+      if (dateRange.from || dateRange.to) {
+        const contentDate = new Date(content.publishedAt || content.scheduledAt || content.createdAt || 0);
+        
+        // Проверка начальной даты диапазона
+        if (dateRange.from && contentDate < startOfDay(dateRange.from)) {
+          return false;
+        }
+        
+        // Проверка конечной даты диапазона
+        if (dateRange.to && contentDate > endOfDay(dateRange.to)) {
+          return false;
+        }
+      }
+      
       return true;
     })
     // Сортировка контента по дате (новые сверху)
@@ -661,7 +709,68 @@ export default function ContentPage() {
       {selectedCampaignId && (
         <Card>
           <CardHeader>
-            <CardTitle>Контент кампании</CardTitle>
+            <div className="flex justify-between items-center mb-4">
+              <CardTitle>Контент кампании</CardTitle>
+              <div className="flex items-center gap-2">
+                <Popover open={isDateFilterOpen} onOpenChange={setIsDateFilterOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date-range-filter"
+                      variant={dateRange.from || dateRange.to ? "default" : "outline"}
+                      size="sm"
+                      className={dateRange.from || dateRange.to ? "bg-blue-500 hover:bg-blue-600" : ""}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange.from || dateRange.to ? (
+                        <>
+                          {dateRange.from ? format(dateRange.from, "dd.MM.yyyy") : "..."}
+                          {" – "}
+                          {dateRange.to ? format(dateRange.to, "dd.MM.yyyy") : "..."}
+                        </>
+                      ) : (
+                        "Фильтр по дате"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <div className="flex flex-col space-y-2 p-2">
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">Выберите диапазон дат</div>
+                          {(dateRange.from || dateRange.to) && (
+                            <Button variant="ghost" size="sm" onClick={resetDateFilter} className="h-7 px-2">
+                              <XCircle className="h-4 w-4" />
+                              <span className="sr-only">Сбросить</span>
+                            </Button>
+                          )}
+                        </div>
+                        <CalendarComponent
+                          initialFocus
+                          mode="range"
+                          defaultMonth={dateRange.from}
+                          selected={{
+                            from: dateRange.from,
+                            to: dateRange.to,
+                          }}
+                          onSelect={(range) => {
+                            if (range?.from) {
+                              setDateRange({
+                                from: range.from,
+                                to: range.to,
+                              });
+                            } else {
+                              resetDateFilter();
+                            }
+                          }}
+                          numberOfMonths={2}
+                          locale={ru}
+                        />
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
             <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
                 <TabsTrigger value="all">Все</TabsTrigger>
@@ -679,124 +788,187 @@ export default function ContentPage() {
             ) : !filteredContent.length ? (
               <p className="text-center text-muted-foreground py-8">
                 Нет контента для этой кампании
+                {(dateRange.from || dateRange.to) && (
+                  <div className="text-center mt-2">
+                    <Button variant="outline" size="sm" onClick={resetDateFilter}>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Сбросить фильтр по датам
+                    </Button>
+                  </div>
+                )}
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredContent.map((content) => (
-                  <Card key={content.id} className="h-full flex flex-col">
-                    <CardContent className="p-4 flex-grow">
-                      <div className="flex items-start justify-between mb-4">
+              <div className="space-y-4">
+                {/* Группировка по датам */}
+                <Accordion type="multiple" defaultValue={Object.keys(contentByDate)}>
+                  {Object.entries(contentByDate).map(([dateStr, contents]) => (
+                    <AccordionItem key={dateStr} value={dateStr}>
+                      <AccordionTrigger className="py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <div className="flex items-center gap-2">
-                          {getContentTypeIcon(content.contentType || 'text')}
-                          <Badge variant={getStatusBadgeVariant(content.status || 'draft')}>
-                            {getStatusIcon(content.status || 'draft')}
-                            <span className="ml-1">{getStatusText(content.status || 'draft')}</span>
-                          </Badge>
+                          <CalendarIcon className="h-4 w-4 opacity-70" />
+                          <span className="font-medium">{dateStr}</span>
+                          <Badge className="ml-2">{contents.length}</Badge>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setCurrentContentSafe(content);
-                              setIsEditDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {content.status === "draft" && (
-                            <>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  setCurrentContentSafe(content);
-                                  setIsScheduleDialogOpen(true);
-                                }}
-                              >
-                                <Calendar className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  setCurrentContentSafe(content);
-                                  setIsAdaptDialogOpen(true);
-                                }}
-                              >
-                                <Share className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => deleteContentMutation.mutate(content.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      {content.title && (
-                        <div className="mb-2">
-                          <h3 className="text-lg font-semibold">{content.title}</h3>
-                        </div>
-                      )}
-                      <div className="mb-2 max-h-24 overflow-hidden relative card-content">
-                        <div 
-                          className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: content.content.startsWith('<') ? content.content : processMarkdownSyntax(content.content) }}
-                        />
-                        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
-                      </div>
-                      {content.socialPlatforms && typeof content.socialPlatforms === 'object' && 
-                       Object.keys(content.socialPlatforms as Record<string, any>).length > 0 && (
-                        <div className="mt-4">
-                          <h3 className="mb-2 text-sm font-medium">Статус публикации</h3>
-                          <PublishingStatus contentId={content.id} className="mb-4" />
-                        </div>
-                      )}
-
-                      {content.contentType === "text-image" && content.imageUrl && (
-                        <div className="mt-4">
-                          <img 
-                            src={content.imageUrl} 
-                            alt="Content Image" 
-                            className="rounded-md max-h-48 object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "https://placehold.co/400x225?text=Image+Error";
-                            }}
-                          />
-                        </div>
-                      )}
-                      {(content.contentType === "video" || content.contentType === "video-text") && content.videoUrl && (
-                        <div className="mt-4">
-                          <video 
-                            src={content.videoUrl} 
-                            controls 
-                            className="rounded-md max-h-48 w-full"
-                          />
-                        </div>
-                      )}
-                      {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {content.keywords.map((keyword, index) => (
-                            <Badge key={index} variant="secondary">{keyword}</Badge>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                          {contents.map((content) => (
+                            <Card key={content.id} className="overflow-hidden border border-muted">
+                              <div className="p-3">
+                                {/* Header with type, status and actions */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    {getContentTypeIcon(content.contentType || 'text')}
+                                    <Badge variant={getStatusBadgeVariant(content.status || 'draft')} className="text-xs px-2">
+                                      {getStatusIcon(content.status || 'draft')}
+                                      <span className="ml-1">{getStatusText(content.status || 'draft')}</span>
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => {
+                                        setCurrentContentSafe(content);
+                                        setIsEditDialogOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    {content.status === "draft" && (
+                                      <>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={() => {
+                                            setCurrentContentSafe(content);
+                                            setIsScheduleDialogOpen(true);
+                                          }}
+                                        >
+                                          <Calendar className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={() => {
+                                            setCurrentContentSafe(content);
+                                            setIsAdaptDialogOpen(true);
+                                          }}
+                                        >
+                                          <Share className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </>
+                                    )}
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                                      onClick={() => deleteContentMutation.mutate(content.id)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                
+                                {/* Content title */}
+                                {content.title && (
+                                  <div className="mb-1.5">
+                                    <h3 className="text-base font-medium line-clamp-1">{content.title}</h3>
+                                  </div>
+                                )}
+                                
+                                {/* Content preview */}
+                                <div className="flex gap-3">
+                                  {/* Text content */}
+                                  <div className="flex-1">
+                                    <div className="max-h-14 overflow-hidden relative card-content mb-2">
+                                      <div 
+                                        className="prose prose-sm max-w-none text-xs"
+                                        dangerouslySetInnerHTML={{ 
+                                          __html: content.content.startsWith('<') 
+                                            ? content.content 
+                                            : processMarkdownSyntax(content.content) 
+                                        }}
+                                      />
+                                      <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
+                                    </div>
+                                    
+                                    {/* Keywords */}
+                                    {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {content.keywords.slice(0, 3).map((keyword, index) => (
+                                          <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 h-5">
+                                            {keyword}
+                                          </Badge>
+                                        ))}
+                                        {content.keywords.length > 3 && (
+                                          <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+                                            +{content.keywords.length - 3}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Media content */}
+                                  {content.contentType === "text-image" && content.imageUrl && (
+                                    <div className="w-20 h-20 flex-shrink-0">
+                                      <img 
+                                        src={content.imageUrl} 
+                                        alt={content.title || "Content Image"} 
+                                        className="rounded-md w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = "https://placehold.co/400x225?text=Image+Error";
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  {(content.contentType === "video" || content.contentType === "video-text") && content.videoUrl && (
+                                    <div className="w-20 h-20 flex-shrink-0 relative bg-black rounded-md overflow-hidden">
+                                      <video 
+                                        src={content.videoUrl} 
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                        <Button variant="outline" size="sm" className="h-7 w-7 rounded-full p-0 bg-white bg-opacity-70">
+                                          <Play className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Publishing status */}
+                                {content.socialPlatforms && typeof content.socialPlatforms === 'object' && 
+                                 Object.keys(content.socialPlatforms as Record<string, any>).length > 0 && (
+                                  <div className="mt-2">
+                                    <PublishingStatus contentId={content.id} className="mt-1" />
+                                  </div>
+                                )}
+                                
+                                {/* Dates */}
+                                <div className="mt-2 pt-1.5 border-t text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                                  {content.publishedAt && (
+                                    <span>Опубл.: {formatDate(content.publishedAt)}</span>
+                                  )}
+                                  {content.scheduledAt && !content.publishedAt && (
+                                    <span>План: {formatDate(content.scheduledAt)}</span>
+                                  )}
+                                  {!content.publishedAt && !content.scheduledAt && (
+                                    <span>Создано: {formatDate(content.createdAt || new Date())}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </Card>
                           ))}
                         </div>
-                      )}
-                      <div className="mt-4 text-xs text-muted-foreground flex flex-wrap gap-x-4">
-                        <span>Создано: {formatDate(content.createdAt || new Date())}</span>
-                        {content.scheduledAt && (
-                          <span>Запланировано: {formatDate(content.scheduledAt)}</span>
-                        )}
-                        {content.publishedAt && (
-                          <span>Опубликовано: {formatDate(content.publishedAt)}</span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </div>
             )}
           </CardContent>
