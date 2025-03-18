@@ -154,6 +154,7 @@ export interface SocialPublication {
   postId?: string | null;
   postUrl?: string | null;
   error?: string | null;
+  userId?: string | null; // Добавляем поле userId для передачи информации об авторе
 }
 
 export const insertSourcePostSchema = createInsertSchema(sourcePosts)
