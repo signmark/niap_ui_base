@@ -66,7 +66,7 @@ export const refreshAccessToken = async () => {
     console.log('Token refresh successful, new token length:', access_token.length);
 
     // Update tokens
-    localStorage.setItem('authToken', access_token);
+    localStorage.setItem('auth_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
 
     // Update auth store

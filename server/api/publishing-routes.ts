@@ -244,37 +244,42 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Не указан ID пользователя' });
       }
       
-      // Проверяем наличие заголовка авторизации
-      if (!authHeader) {
-        log('No authorization header provided for scheduled content', 'api');
-        
-        // Даже если нет заголовка, продолжаем выполнение для возможности получения локального контента
-        // который мы сформировали ранее без Directus
-      }
-      
       // Получаем запланированные публикации из базы данных
       let scheduledContent: any[] = [];
       
+      // Пытаемся получить токен авторизации
+      let authToken: string | null = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+        
+        // Кэшируем токен для пользователя (для последующих запросов)
+        if (authToken) {
+          directusApiManager.cacheAuthToken(userId, authToken);
+          log(`Токен для пользователя ${userId} кэширован`, 'api');
+        }
+      } else {
+        log('No authorization header provided for scheduled content', 'api');
+      }
+      
       try {
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const token = authHeader.substring(7);
-          
-          // Настраиваем временно токен для пользователя
-          directusApiManager.cacheAuthToken(userId, token);
-          
+        if (authToken) {
+          // Если есть токен авторизации, запрашиваем данные из Directus
+          log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${userId}`, 'api');
           scheduledContent = await storage.getScheduledContent(userId, campaignId);
           log(`Получено ${scheduledContent.length} запланированных публикаций из БД`, 'api');
         } else {
-          scheduledContent = await storage.getScheduledContent(userId, campaignId);
+          // Если нет токена, пропускаем запрос к Directus
+          log('Пропускаем запрос запланированных публикаций к Directus API из-за отсутствия токена', 'api');
         }
       } catch (dbError: any) {
         log(`Ошибка при получении запланированных публикаций из БД: ${dbError.message}`, 'api');
       }
       
-      // Если нет данных через Directus, ищем локально запланированные публикации
+      // Если нет данных через Directus или нет токена, ищем локально запланированные публикации
       if (scheduledContent.length === 0) {
         // Получаем все контенты пользователя и фильтруем по запланированным
         try {
+          log(`Попытка поиска локально запланированных публикаций для пользователя ${userId}`, 'api');
           const allContent = await storage.getCampaignContent(userId, campaignId);
           log(`Получено ${allContent.length} единиц контента для поиска запланированных`, 'api');
           
@@ -304,6 +309,7 @@ export function registerPublishingRoutes(app: Express): void {
         }
       }
       
+      // Возвращаем результат, даже если список пустой
       return res.status(200).json({ 
         success: true, 
         data: scheduledContent
