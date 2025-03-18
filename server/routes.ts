@@ -6194,6 +6194,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           prompt: req.body.prompt // Добавляем промт
         };
         
+        // Обрабатываем дату запланированной публикации
+        if (req.body.scheduledAt !== undefined) {
+          console.log('Получена дата планирования публикации:', req.body.scheduledAt);
+          directusPayload.scheduled_at = req.body.scheduledAt;
+        }
+        
+        // Обрабатываем информацию о платформах социальных сетей
+        if (req.body.socialPlatforms !== undefined) {
+          console.log('Получены данные о платформах:', JSON.stringify(req.body.socialPlatforms, null, 2));
+          directusPayload.social_platforms = req.body.socialPlatforms;
+        }
+        
         // Обрабатываем ключевые слова особым образом
         if (req.body.keywords !== undefined) {
           console.log('Request keywords type:', typeof req.body.keywords, 'Value:', req.body.keywords);
