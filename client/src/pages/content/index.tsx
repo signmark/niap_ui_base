@@ -1732,6 +1732,120 @@ export default function ContentPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Диалог просмотра контента */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{previewContent?.title || "Просмотр контента"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Тип контента */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+              {previewContent?.contentType === "text" && <FileText size={16} />}
+              {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
+              {previewContent?.contentType === "video" && <Video size={16} />}
+              {previewContent?.contentType === "video-text" && <Video size={16} />}
+              <span>
+                {previewContent?.contentType === "text" && "Текстовый контент"}
+                {previewContent?.contentType === "text-image" && "Контент с изображением"}
+                {previewContent?.contentType === "video" && "Видео контент"}
+                {previewContent?.contentType === "video-text" && "Видео с текстом"}
+              </span>
+            </div>
+
+            {/* Основной контент */}
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <div 
+                dangerouslySetInnerHTML={{ 
+                  __html: previewContent?.content?.startsWith('<') 
+                    ? previewContent?.content 
+                    : processMarkdownSyntax(previewContent?.content || "") 
+                }}
+              />
+            </div>
+
+            {/* Медиа-контент */}
+            {previewContent?.contentType === "text-image" && previewContent.imageUrl && (
+              <div className="mt-4">
+                <img
+                  src={previewContent.imageUrl}
+                  alt={previewContent.title || "Content Image"}
+                  className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Image+Error";
+                  }}
+                />
+              </div>
+            )}
+            
+            {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent.videoUrl && (
+              <div className="mt-4">
+                <video
+                  src={previewContent.videoUrl}
+                  controls
+                  className="rounded-md max-h-[400px] max-w-full mx-auto"
+                />
+              </div>
+            )}
+
+            {/* Ключевые слова */}
+            {previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {previewContent.keywords.map((keyword, index) => (
+                    <Badge key={index} variant="secondary">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Информация о публикации */}
+            <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              {previewContent?.publishedAt && (
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 size={14} />
+                  <span>Опубликовано: {format(new Date(previewContent.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                </div>
+              )}
+              {previewContent?.scheduledAt && !previewContent?.publishedAt && (
+                <div className="flex items-center gap-1">
+                  <Clock size={14} />
+                  <span>Запланировано: {format(new Date(previewContent.scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                </div>
+              )}
+              {previewContent?.createdAt && (
+                <div className="flex items-center gap-1">
+                  <CalendarDays size={14} />
+                  <span>Создано: {format(new Date(previewContent.createdAt), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPreviewOpen(false)}
+            >
+              Закрыть
+            </Button>
+            {previewContent && (
+              <Button 
+                onClick={() => {
+                  setCurrentContentSafe(previewContent);
+                  setIsEditDialogOpen(true);
+                  setIsPreviewOpen(false);
+                }}
+              >
+                Редактировать
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
