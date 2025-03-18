@@ -503,13 +503,43 @@ export default function ContentPage() {
   };
 
   // Фильтруем контент в зависимости от выбранной вкладки
-  const filteredContent = campaignContent.filter(content => {
-    if (activeTab === "all") return true;
-    if (activeTab === "draft") return content.status === "draft";
-    if (activeTab === "scheduled") return content.status === "scheduled";
-    if (activeTab === "published") return content.status === "published";
-    return true;
-  });
+  // Функция для группировки контента по датам
+  const groupContentByDate = (content: CampaignContent[]) => {
+    const groups: { [key: string]: CampaignContent[] } = {};
+    
+    content.forEach(item => {
+      // Используем дату публикации, планирования или создания
+      const date = item.publishedAt || item.scheduledAt || item.createdAt;
+      if (!date) return;
+      
+      // Преобразуем в строку даты (только дата, без времени)
+      const dateStr = new Date(date).toISOString().split('T')[0];
+      
+      if (!groups[dateStr]) {
+        groups[dateStr] = [];
+      }
+      
+      groups[dateStr].push(item);
+    });
+    
+    return groups;
+  };
+  
+  // Фильтрация контента по активной вкладке
+  const filteredContent = campaignContent
+    .filter(content => {
+      if (activeTab === "all") return true;
+      if (activeTab === "draft") return content.status === "draft";
+      if (activeTab === "scheduled") return content.status === "scheduled";
+      if (activeTab === "published") return content.status === "published";
+      return true;
+    })
+    // Сортировка контента по дате (новые сверху)
+    .sort((a, b) => {
+      const dateA = new Date(a.publishedAt || a.scheduledAt || a.createdAt || 0);
+      const dateB = new Date(b.publishedAt || b.scheduledAt || b.createdAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
 
   // Получаем иконку для типа контента
   const getContentTypeIcon = (type: string) => {

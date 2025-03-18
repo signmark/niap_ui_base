@@ -262,7 +262,7 @@ export function SocialMediaSettings({
     
     try {
       setYoutubeStatus({ isLoading: true });
-      const response = await api.post('/api/validate/youtube', { apiKey, channelId });
+      const response = await api.post('/validate/youtube', { apiKey, channelId });
       
       setYoutubeStatus({
         isLoading: false,
