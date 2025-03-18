@@ -405,21 +405,39 @@ export function SocialMediaSettings({
 
         {/* VK Settings */}
         <div className="space-y-4">
-          <h3 className="font-medium">ВКонтакте</h3>
+          <div className="flex items-center">
+            <h3 className="font-medium">ВКонтакте</h3>
+            <ValidationBadge status={vkStatus} />
+          </div>
           <FormField
             control={form.control}
             name="vk.token"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Access Token</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Введите токен доступа" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
+                <div className="flex space-x-2">
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Введите токен доступа" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={validateVkToken}
+                    disabled={vkStatus.isLoading}
+                  >
+                    {vkStatus.isLoading ? 
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                    }
+                    Проверить
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -445,21 +463,39 @@ export function SocialMediaSettings({
 
         {/* Instagram Settings */}
         <div className="space-y-4">
-          <h3 className="font-medium">Instagram</h3>
+          <div className="flex items-center">
+            <h3 className="font-medium">Instagram</h3>
+            <ValidationBadge status={instagramStatus} />
+          </div>
           <FormField
             control={form.control}
             name="instagram.token"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Access Token</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Введите токен доступа" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
+                <div className="flex space-x-2">
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Введите токен доступа" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={validateInstagramToken}
+                    disabled={instagramStatus.isLoading}
+                  >
+                    {instagramStatus.isLoading ? 
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                    }
+                    Проверить
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -486,21 +522,39 @@ export function SocialMediaSettings({
 
         {/* Facebook Settings */}
         <div className="space-y-4">
-          <h3 className="font-medium">Facebook</h3>
+          <div className="flex items-center">
+            <h3 className="font-medium">Facebook</h3>
+            <ValidationBadge status={facebookStatus} />
+          </div>
           <FormField
             control={form.control}
             name="facebook.token"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Access Token</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Введите токен доступа"
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
+                <div className="flex space-x-2">
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Введите токен доступа"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={validateFacebookToken}
+                    disabled={facebookStatus.isLoading}
+                  >
+                    {facebookStatus.isLoading ? 
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                    }
+                    Проверить
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -526,21 +580,39 @@ export function SocialMediaSettings({
 
         {/* YouTube Settings */}
         <div className="space-y-4">
-          <h3 className="font-medium">YouTube</h3>
+          <div className="flex items-center">
+            <h3 className="font-medium">YouTube</h3>
+            <ValidationBadge status={youtubeStatus} />
+          </div>
           <FormField
             control={form.control}
             name="youtube.apiKey"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>API Key</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Введите API ключ" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
+                <div className="flex space-x-2">
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Введите API ключ" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={validateYoutubeApiKey}
+                    disabled={youtubeStatus.isLoading}
+                  >
+                    {youtubeStatus.isLoading ? 
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                    }
+                    Проверить
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
