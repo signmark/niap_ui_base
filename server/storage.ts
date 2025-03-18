@@ -681,13 +681,6 @@ export class DatabaseStorage implements IStorage {
         return tokenInfo.token;
       }
       
-      // Для тестирования и разработки, можно использовать сервисный токен
-      const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-      if (serviceToken) {
-        console.log('Using service token for authorization');
-        return serviceToken;
-      }
-      
       console.warn('No token found for user:', userId);
       return null;
     } catch (error) {
@@ -877,20 +870,12 @@ export class DatabaseStorage implements IStorage {
       const headers: Record<string, string> = {};
       
       if (authToken) {
-        console.log(`Успешно получен токен для обновления промта, длина: ${authToken.length}`);
+        console.log(`Успешно получен токен для обновления, длина: ${authToken.length}`);
         headers['Authorization'] = `Bearer ${authToken}`;
       } else {
-        console.warn(`⚠️ Не найден токен авторизации для пользователя ${currentContent.userId}. Пробуем использовать сервисный токен.`);
-        
-        // Попробуем использовать сервисный токен как резервный вариант
-        const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
-        if (serviceToken) {
-          console.log(`Используем сервисный токен для обновления контента (длина: ${serviceToken.length})`);
-          headers['Authorization'] = `Bearer ${serviceToken}`;
-        } else {
-          console.error(`Ошибка: Не найден ни пользовательский, ни сервисный токен`);
-          throw new Error('No auth token found for user');
-        }
+        console.warn(`⚠️ Не найден токен авторизации для пользователя ${currentContent.userId}.`);
+        console.error(`Ошибка: Пользовательский токен не найден`);
+        throw new Error('No auth token found for user');
       }
       
       // Преобразуем данные из нашей схемы в формат Directus
