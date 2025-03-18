@@ -276,4 +276,63 @@ export function registerPublishingRoutes(app: Express): void {
       });
     }
   });
+  
+  // Маршрут для обновления контента кампании (включая запланированные публикации)
+  app.patch('/api/campaign-content/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const authHeader = req.headers.authorization;
+      
+      // Проверяем заголовок авторизации
+      if (!authHeader) {
+        log('No authorization header provided for content update', 'api');
+        return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+      }
+      
+      let userId = '';
+      
+      // Получаем токен авторизации
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        try {
+          // Пробуем получить информацию о пользователе из токена
+          const userInfo = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, token);
+          
+          if (userInfo && userInfo.data && userInfo.data.id) {
+            userId = userInfo.data.id;
+            
+            // Кэшируем токен для последующих запросов
+            directusApiManager.cacheAuthToken(userId, token);
+          }
+        } catch (error) {
+          log(`Ошибка получения информации о пользователе: ${error}`, 'api');
+        }
+      }
+      
+      // Получаем контент для проверки прав доступа
+      const content = await storage.getCampaignContentById(id);
+      if (!content) {
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Обновляем контент
+      const updatedContent = await storage.updateCampaignContent(id, updates);
+      
+      return res.status(200).json({
+        success: true,
+        data: updatedContent
+      });
+    } catch (error: any) {
+      log(`Ошибка при обновлении контента: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при обновлении контента', 
+        message: error.message 
+      });
+    }
+  });
 }
