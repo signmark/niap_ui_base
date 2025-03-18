@@ -19,6 +19,7 @@ interface ScheduledPostInfoProps {
   publishedAt: string | null;
   socialPlatforms?: Record<string, SocialPublicationStatus> | null;
   compact?: boolean;
+  className?: string;
 }
 
 const platformIcons: Record<string, React.ReactNode> = {
@@ -41,7 +42,7 @@ const statusColors: Record<string, string> = {
   failed: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/30",
 };
 
-export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, compact = false }: ScheduledPostInfoProps) {
+export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, compact = false, className }: ScheduledPostInfoProps) {
   const hasPlatforms = socialPlatforms && Object.keys(socialPlatforms).length > 0;
   const isPublished = publishedAt !== null;
   const isScheduled = scheduledAt !== null && !isPublished;
@@ -50,11 +51,14 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
   if ((!isScheduled && !isPublished) || !hasPlatforms) {
     return null;
   }
+  
+  // Convert null to undefined for type safety with Object methods
+  const safeSocialPlatforms = socialPlatforms || {};
 
   // For compact display (inside a card)
   if (compact) {
     return (
-      <div className="flex flex-wrap gap-1.5 mt-2">
+      <div className={`flex flex-wrap gap-1.5 mt-2 ${className || ''}`}>
         {isScheduled && (
           <TooltipProvider>
             <Tooltip>
@@ -75,7 +79,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
         
         {hasPlatforms && (
           <div className="flex gap-1">
-            {Object.entries(socialPlatforms).map(([platform, status]) => {
+            {Object.entries(safeSocialPlatforms).map(([platform, status]) => {
               const statusIcon = 
                 status.status === 'published' ? <CheckCircle2 size={12} /> :
                 status.status === 'failed' ? <AlertTriangle size={12} /> :
@@ -130,7 +134,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
   
   // Full display (for details view)
   return (
-    <div className="space-y-3 mt-4">
+    <div className={`space-y-3 mt-4 ${className || ''}`}>
       <h4 className="text-sm font-medium">Информация о публикации</h4>
       
       {isScheduled && (
@@ -144,7 +148,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
         <div className="space-y-2">
           <h5 className="text-xs font-medium text-muted-foreground">Платформы:</h5>
           <div className="grid gap-2">
-            {Object.entries(socialPlatforms).map(([platform, status]) => (
+            {Object.entries(safeSocialPlatforms).map(([platform, status]) => (
               <div 
                 key={platform} 
                 className={`flex items-center justify-between p-2 rounded-md border ${
