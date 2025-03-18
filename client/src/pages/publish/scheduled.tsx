@@ -43,17 +43,17 @@ export default function ScheduledPublications() {
   const userId = localStorage.getItem('userId') || '';
   
   // Получаем список кампаний пользователя
-  const { data: campaigns, isLoading: campaignsLoading } = useQuery({
+  const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
     queryKey: ['/api/campaigns'],
     enabled: !!userId,
   });
   
   // Получаем запланированные публикации
   const { 
-    data: scheduledContent, 
+    data: scheduledContent = [], 
     isLoading: scheduledLoading,
     refetch: refetchScheduled,
-  } = useQuery({
+  } = useQuery<CampaignContent[]>({
     queryKey: ['/api/publish/scheduled', userId, selectedCampaignId],
     queryFn: async () => {
       const url = `/api/publish/scheduled?userId=${userId}${selectedCampaignId ? `&campaignId=${selectedCampaignId}` : ''}`;
@@ -148,10 +148,10 @@ export default function ScheduledPublications() {
   };
   
   // Функция получения названия кампании по ID
-  const getCampaignName = (campaignId: string) => {
-    if (!campaigns) return "Неизвестная кампания";
+  const getCampaignName = (campaignId: string): string => {
+    if (!campaigns || !campaigns.length) return "Неизвестная кампания";
     
-    const campaign = campaigns.find((c: Campaign) => c.id === campaignId);
+    const campaign = campaigns.find((c) => c.id === campaignId);
     return campaign ? campaign.name : "Неизвестная кампания";
   };
   
