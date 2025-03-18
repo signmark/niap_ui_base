@@ -24,6 +24,7 @@ import {
   validateFacebookToken, 
   validateYoutubeApiKey
 } from './services/social-api-validator';
+import { registerValidationRoutes } from './api/validation-routes';
 
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
