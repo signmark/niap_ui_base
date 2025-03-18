@@ -54,9 +54,9 @@ export class PublishScheduler {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
 
-      // Получаем все запланированные публикации
-      // Используем сервисный токен через serviceToken для доступа ко всем записям
-      const scheduledContent = await storage.getScheduledContent('system');
+      // Теперь нам не нужен сервисный токен, мы получаем все запланированные публикации
+      // без указания userId, и это будет обрабатываться на уровне хранилища
+      const scheduledContent = await storage.getScheduledContent();
 
       if (scheduledContent.length === 0) {
         log('Запланированные публикации не найдены', 'scheduler');
