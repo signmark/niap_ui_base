@@ -4,6 +4,7 @@ import { socialPublishingService } from '../services/social-publishing';
 import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';
+import { directusApiManager } from '../directus';
 
 /**
  * Регистрирует маршруты для управления публикациями
@@ -174,8 +175,7 @@ export function registerPublishingRoutes(app: Express): void {
         
         // Настраиваем временно токен для пользователя, если есть userId в контенте
         if (content.userId) {
-          const directusManager = require('../directus').directusApiManager;
-          directusManager.cacheAuthToken(content.userId, authToken);
+          directusApiManager.cacheAuthToken(content.userId, authToken);
         }
       }
       
@@ -257,8 +257,7 @@ export function registerPublishingRoutes(app: Express): void {
         const token = authHeader.substring(7);
         
         // Настраиваем временно токен для пользователя
-        const directusManager = require('../directus').directusApiManager;
-        directusManager.cacheAuthToken(userId, token);
+        directusApiManager.cacheAuthToken(userId, token);
         
         scheduledContent = await storage.getScheduledContent(userId, campaignId);
       } else {
