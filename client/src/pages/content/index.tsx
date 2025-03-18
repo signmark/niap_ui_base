@@ -428,8 +428,9 @@ export default function ContentPage() {
 
       console.log("Финальный запрос:", JSON.stringify(requestData, null, 2));
 
-      return await apiRequest(`/api/campaign-content/${id}`, { 
-        method: 'PATCH',
+      // Используем новый маршрут direct-schedule вместо patch к campaign-content
+      return await apiRequest(`/api/direct-schedule/${id}`, { 
+        method: 'POST',
         data: requestData
       });
     },
