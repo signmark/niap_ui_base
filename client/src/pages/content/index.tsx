@@ -526,6 +526,16 @@ export default function ContentPage() {
   };
   
   // Фильтрация контента по активной вкладке
+  // Функция для форматирования даты для группировки (только день, месяц, год)
+  const formatDateForGrouping = (date: Date): string => {
+    return new Date(date).toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'long',
+      year: 'numeric' 
+    });
+  };
+
+  // Фильтрация и сортировка контента
   const filteredContent = campaignContent
     .filter(content => {
       if (activeTab === "all") return true;
@@ -540,6 +550,20 @@ export default function ContentPage() {
       const dateB = new Date(b.publishedAt || b.scheduledAt || b.createdAt || 0);
       return dateB.getTime() - dateA.getTime();
     });
+    
+  // Группировка контента по дате
+  const contentByDate: Record<string, CampaignContent[]> = {};
+  
+  filteredContent.forEach(content => {
+    const dateStr = formatDateForGrouping(new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date()));
+    if (!contentByDate[dateStr]) {
+      contentByDate[dateStr] = [];
+    }
+    contentByDate[dateStr].push(content);
+  });
+  
+  // Состояние для отслеживания, какие группы развернуты/свернуты
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // Получаем иконку для типа контента
   const getContentTypeIcon = (type: string) => {
