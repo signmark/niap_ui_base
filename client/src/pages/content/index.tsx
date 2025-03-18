@@ -9,7 +9,9 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Play
+  CalendarIcon, XCircle, Filter, Play, Ban, AlertDialog, AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
@@ -29,6 +31,8 @@ import { ImageGenerationDialog } from "@/components/ImageGenerationDialog";
 import { ContentPlanGenerator } from "@/components/ContentPlanGenerator";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
+import { SocialMediaFilter } from "@/components/SocialMediaFilter";
+import { SocialMediaIcon } from "@/components/SocialMediaIcon";
 import { 
   Popover, 
   PopoverContent, 
