@@ -158,6 +158,16 @@ export default function EditScheduledPublication({
         return;
       }
       
+      // Проверяем и при необходимости обновляем токен авторизации
+      const { refreshAuthToken } = await import('@/lib/refreshAuth');
+      try {
+        // Пытаемся обновить токен перед отправкой запроса
+        await refreshAuthToken();
+        console.log("Попытка обновления токена выполнена");
+      } catch (refreshError) {
+        console.warn('Ошибка обновления токена:', refreshError);
+      }
+      
       // Формируем объект socialPlatforms для отправки на сервер
       const socialPlatforms: Record<string, any> = {};
       
@@ -194,9 +204,21 @@ export default function EditScheduledPublication({
       const authToken = localStorage.getItem('auth_token');
       
       // Формируем заголовки с авторизацией
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('Добавлен токен авторизации в заголовки запроса:', authToken.substring(0, 10) + '...');
+      } else {
+        console.warn('Токен авторизации не найден в localStorage!');
+        toast({
+          title: "Ошибка авторизации",
+          description: "Необходимо авторизоваться для планирования публикаций",
+          variant: "destructive"
+        });
+        return;
       }
       
       // Отправляем данные на сервер через новый endpoint direct-schedule

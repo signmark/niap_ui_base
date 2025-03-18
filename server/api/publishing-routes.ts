@@ -372,6 +372,8 @@ export function registerPublishingRoutes(app: Express): void {
     try {
       const { contentId } = req.params;
       const { scheduledAt, socialPlatforms } = req.body;
+      
+      log(`Получен запрос на планирование публикации ${contentId}`, 'api');
       const authHeader = req.headers.authorization;
       
       if (!contentId) {
@@ -399,10 +401,14 @@ export function registerPublishingRoutes(app: Express): void {
         
         try {
           // Получаем информацию о пользователе из токена
+          log(`Отправляем запрос к Directus API с токеном: ${token.substring(0, 15)}...`, 'api');
           const userInfo = await directusApiManager.request({
             url: '/users/me',
-            method: 'get'
-          }, token);
+            method: 'get',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
           
           if (userInfo && userInfo.data && userInfo.data.id) {
             userId = userInfo.data.id;
