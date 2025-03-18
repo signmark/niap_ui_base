@@ -612,6 +612,10 @@ export default function ContentPage() {
   
   // Состояние для отслеживания, какие группы развернуты/свернуты
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  
+  // Состояние для модального окна предпросмотра контента
+  const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Получаем иконку для типа контента
   const getContentTypeIcon = (type: string) => {
@@ -813,7 +817,14 @@ export default function ContentPage() {
                       <AccordionContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                           {contents.map((content) => (
-                            <Card key={content.id} className="overflow-hidden border border-muted">
+                            <Card 
+                              key={content.id} 
+                              className="overflow-hidden border border-muted cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all" 
+                              onClick={() => {
+                                setPreviewContent(content);
+                                setIsPreviewOpen(true);
+                              }}
+                            >
                               <div className="p-3">
                                 {/* Header with type, status and actions */}
                                 <div className="flex items-center justify-between mb-2">
@@ -829,7 +840,8 @@ export default function ContentPage() {
                                       variant="ghost" 
                                       size="sm"
                                       className="h-7 w-7 p-0"
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Предотвращаем открытие превью
                                         setCurrentContentSafe(content);
                                         setIsEditDialogOpen(true);
                                       }}
@@ -842,7 +854,8 @@ export default function ContentPage() {
                                           variant="ghost" 
                                           size="sm"
                                           className="h-7 w-7 p-0"
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Предотвращаем открытие превью
                                             setCurrentContentSafe(content);
                                             setIsScheduleDialogOpen(true);
                                           }}
@@ -853,7 +866,8 @@ export default function ContentPage() {
                                           variant="ghost" 
                                           size="sm"
                                           className="h-7 w-7 p-0"
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Предотвращаем открытие превью
                                             setCurrentContentSafe(content);
                                             setIsAdaptDialogOpen(true);
                                           }}
@@ -866,7 +880,10 @@ export default function ContentPage() {
                                       variant="ghost" 
                                       size="sm"
                                       className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                                      onClick={() => deleteContentMutation.mutate(content.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Предотвращаем открытие превью
+                                        deleteContentMutation.mutate(content.id);
+                                      }}
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
