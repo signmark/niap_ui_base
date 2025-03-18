@@ -403,7 +403,7 @@ export default function ContentPage() {
         data: {
           scheduledAt,
           status: 'scheduled',
-          socialPlatforms: Object.keys(socialPlatformsData).length > 0 ? socialPlatformsData : undefined
+          socialPlatforms: socialPlatformsData // Всегда передаем объект, даже если он пустой
         }
       });
     },
