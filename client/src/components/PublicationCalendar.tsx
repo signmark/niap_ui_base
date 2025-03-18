@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, startOfDay, endOfDay, isSameDay, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO, isToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { 
   Card, 
@@ -21,11 +21,10 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { SocialMediaFilter } from '@/components/SocialMediaFilter';
-import { SocialMediaIcon } from '@/components/SocialMediaIcon';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
 import { 
   Loader2, 
   Calendar as CalendarIcon, 
@@ -35,7 +34,8 @@ import {
   Video, 
   Ban,
   Eye,
-  Plus
+  Plus,
+  Filter
 } from 'lucide-react';
 import { 
   AlertDialog,
@@ -285,11 +285,13 @@ export function PublicationCalendar({ campaignId }: { campaignId: string }) {
       // Фильтрация по платформам
       let platformMatches = true;
       if (filteredPlatforms.length > 0 && content.socialPlatforms) {
-        platformMatches = filteredPlatforms.some(platform => 
-          content.socialPlatforms && 
-          content.socialPlatforms[platform] && 
-          content.socialPlatforms[platform].status !== 'cancelled'
-        );
+        platformMatches = filteredPlatforms.some(platform => {
+          // Проверяем, что socialPlatforms - это объект и имеет указанную платформу
+          return typeof content.socialPlatforms === 'object' && 
+            content.socialPlatforms !== null &&
+            platform in content.socialPlatforms &&
+            content.socialPlatforms[platform as keyof typeof content.socialPlatforms]?.status !== 'cancelled';
+        });
       }
       
       return dateMatches && platformMatches;
