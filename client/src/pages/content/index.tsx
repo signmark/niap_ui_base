@@ -1969,7 +1969,11 @@ export default function ContentPage() {
                 {previewContent?.createdAt && (
                   <div className="flex items-center gap-1">
                     <CalendarDays size={14} />
-                    <span>Создано: {format(new Date(typeof previewContent.createdAt === 'string' ? previewContent.createdAt : previewContent.createdAt.toISOString()), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Создано: {format(new Date(typeof previewContent.createdAt === 'string' 
+                      ? previewContent.createdAt 
+                      : (previewContent.createdAt instanceof Date 
+                          ? previewContent.createdAt.toISOString() 
+                          : String(previewContent.createdAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
                   </div>
                 )}
               </div>
