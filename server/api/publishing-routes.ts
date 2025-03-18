@@ -444,7 +444,16 @@ export function registerPublishingRoutes(app: Express): void {
         
         log(`Обновляем контент через Directus API: ${JSON.stringify(directusUpdates)}`, 'api');
         
-        // Обновляем контент через Directus API
+        // Проверяем, что у нас есть валидный токен
+        if (!token) {
+          log('Ошибка авторизации: отсутствует токен для обновления контента', 'api');
+          return res.status(401).json({ 
+            error: 'Ошибка авторизации', 
+            message: 'Для планирования публикации необходимо авторизоваться'
+          });
+        }
+
+        // Обновляем контент через Directus API с передачей токена
         const updateResponse = await directusApiManager.request({
           url: `/items/campaign_content/${contentId}`,
           method: 'patch',
