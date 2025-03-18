@@ -127,8 +127,13 @@ export class PublishScheduler {
 
       // Публикуем в каждую платформу
       for (const platform of platformsToPublish) {
+        // Проверяем, существует ли объект социальных платформ и платформа в нём
+        const platformStatus = socialPlatforms && typeof socialPlatforms === 'object' 
+          ? (socialPlatforms as Record<string, any>)[platform]?.status
+          : undefined;
+          
         // Пропускаем уже опубликованные
-        if (socialPlatforms[platform]?.status === 'published') {
+        if (platformStatus === 'published') {
           log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
           continue;
         }

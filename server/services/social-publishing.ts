@@ -279,14 +279,17 @@ export class SocialPublishingService {
 
       // Создаем или обновляем статус публикации
       const socialPlatforms = content.socialPlatforms || {};
-      socialPlatforms[platform] = publicationResult;
+      
+      // Используем безопасное приведение типов для предотвращения ошибок TypeScript
+      const typedSocialPlatforms = socialPlatforms as Record<string, SocialPublication>;
+      typedSocialPlatforms[platform] = publicationResult;
 
       // Обновляем статус в базе данных
       // Строим объект обновления, включая только существующие поля
       const updateObject: any = {
-        socialPlatforms,
+        socialPlatforms: typedSocialPlatforms,
         // Если все платформы опубликованы, обновляем статус контента
-        status: this.checkAllPlatformsPublished(socialPlatforms) ? 'published' : content.status
+        status: this.checkAllPlatformsPublished(typedSocialPlatforms) ? 'published' : content.status
       };
       
       // Обновляем контент в базе данных

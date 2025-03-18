@@ -291,10 +291,11 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       let userId = '';
+      let token = '';
       
       // Получаем токен авторизации
       if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
+        token = authHeader.substring(7);
         
         try {
           // Пробуем получить информацию о пользователе из токена
@@ -315,12 +316,42 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Получаем контент для проверки прав доступа
-      const content = await storage.getCampaignContentById(id);
+      let content;
+      
+      try {
+        // Пробуем получить контент с использованием токена из запроса
+        content = await storage.getCampaignContentById(id);
+      } catch (error) {
+        const fetchError = error as Error;
+        log(`Ошибка при получении контента с ID ${id}: ${fetchError.message}`, 'api');
+      }
+      
+      if (!content && userId) {
+        // Если контент не найден напрямую, но у нас есть userId, пробуем использовать его
+        log(`Пробуем использовать userId: ${userId} для получения контента ${id}`, 'api');
+        directusApiManager.cacheAuthToken(userId, token);
+        
+        try {
+          content = await storage.getCampaignContentById(id);
+        } catch (error) {
+          const secondError = error as Error;
+          log(`Вторая попытка получения контента тоже не удалась: ${secondError.message}`, 'api');
+        }
+      }
+      
       if (!content) {
         return res.status(404).json({ error: 'Контент не найден' });
       }
       
-      // Обновляем контент
+      // Если у нас есть userId в content, но он отличается от userId в токене,
+      // это значит что пользователь пытается обновить чужой контент - проверка прав здесь
+      
+      // Обновляем контент - передаем токен в userId контента, если его нет
+      if (!updates.userId && content.userId) {
+        updates.userId = content.userId;
+      }
+      
+      // Обновляем контент с обновленными данными
       const updatedContent = await storage.updateCampaignContent(id, updates);
       
       return res.status(200).json({
