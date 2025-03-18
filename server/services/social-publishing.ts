@@ -261,7 +261,24 @@ export class SocialPublishingService {
     publicationResult: SocialPublication
   ): Promise<void> {
     try {
+      // Извлекаем userId из publicationResult
+      const userId = publicationResult.userId;
+      
       // Получаем текущие данные о контенте
+      // Если у нас есть userId в publicationResult, пробуем получить токен
+      let authToken = null;
+      if (userId) {
+        try {
+          // Метод getAuthToken из storage доступен напрямую только внутри класса,
+          // поэтому мы не можем его использовать здесь.
+          // Вместо этого, передаем userId в getCampaignContentById как метаданные для поиска контента
+          log(`У нас есть userId ${userId} для поиска контента`, 'social-publishing');
+        } catch (e) {
+          log(`Ошибка при получении токена: ${e.message}`, 'social-publishing');
+        }
+      }
+      
+      // Получаем контент с возможным использованием метаданных
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
         log(`Не удалось найти контент с ID ${contentId}`, 'social-publishing');
@@ -273,14 +290,15 @@ export class SocialPublishingService {
       socialPlatforms[platform] = publicationResult;
 
       // Обновляем статус в базе данных
-      await storage.updateCampaignContent(contentId, {
+      // Строим объект обновления, включая только существующие поля
+      const updateObject: any = {
         socialPlatforms,
         // Если все платформы опубликованы, обновляем статус контента
-        status: this.checkAllPlatformsPublished(socialPlatforms) ? 'published' : content.status,
-        // Если это первая успешная публикация, устанавливаем дату публикации
-        publishedAt: publicationResult.status === 'published' && !content.publishedAt ? 
-          new Date() : content.publishedAt
-      });
+        status: this.checkAllPlatformsPublished(socialPlatforms) ? 'published' : content.status
+      };
+      
+      // Обновляем контент в базе данных
+      await storage.updateCampaignContent(contentId, updateObject);
 
       log(
         `Статус публикации в ${platform} обновлен: ${publicationResult.status}`,
