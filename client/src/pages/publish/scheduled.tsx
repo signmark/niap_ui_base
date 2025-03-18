@@ -149,7 +149,7 @@ export default function ScheduledPublications() {
   
   // Функция получения названия кампании по ID
   const getCampaignName = (campaignId: string): string => {
-    if (!campaigns || !campaigns.length) return "Неизвестная кампания";
+    if (!campaigns || !Array.isArray(campaigns) || campaigns.length === 0) return "Неизвестная кампания";
     
     const campaign = campaigns.find((c) => c.id === campaignId);
     return campaign ? campaign.name : "Неизвестная кампания";
@@ -172,7 +172,7 @@ export default function ScheduledPublications() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem key="all" value="all">Все кампании</SelectItem>
-              {campaigns && campaigns.map((campaign: Campaign) => (
+              {Array.isArray(campaigns) && campaigns.length > 0 && campaigns.map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
                 </SelectItem>
