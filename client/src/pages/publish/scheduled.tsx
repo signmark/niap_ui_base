@@ -40,7 +40,7 @@ export default function ScheduledPublications() {
   const [viewTab, setViewTab] = useState<string>('upcoming');
   
   // ID пользователя берём из локального хранилища
-  const userId = localStorage.getItem('userId') || '';
+  const userId = localStorage.getItem('user_id') || '';
   
   // Получаем список кампаний пользователя
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
