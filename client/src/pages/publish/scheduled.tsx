@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
+import { useAuthStore } from '@/lib/store';
 
 import {
   Card,
@@ -35,8 +36,9 @@ export default function ScheduledPublications() {
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
   
-  // ID пользователя берём из локального хранилища
-  const userId = localStorage.getItem('user_id') || '';
+  // Получаем информацию об авторизации из глобального хранилища
+  const userId = useAuthStore((state) => state.userId);
+  const getAuthToken = useAuthStore((state) => state.getAuthToken);
   
   // Получаем список кампаний пользователя (для отображения названия кампании)
   const { data: campaigns = [] } = useQuery<Campaign[]>({
@@ -54,8 +56,8 @@ export default function ScheduledPublications() {
     queryFn: async () => {
       const url = `/api/publish/scheduled?userId=${userId}${selectedCampaign?.id ? `&campaignId=${selectedCampaign.id}` : ''}`;
       
-      // Получаем токен авторизации из localStorage
-      const authToken = localStorage.getItem('auth_token');
+      // Получаем токен авторизации из хранилища авторизации
+      const authToken = getAuthToken();
       
       // Формируем заголовки с авторизацией
       const headers: Record<string, string> = {};
@@ -63,18 +65,24 @@ export default function ScheduledPublications() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      const result = await apiRequest(url, { headers });
+      console.log('Fetching scheduled content with token:', authToken ? 'Token available' : 'No token');
+      console.log('Using userId:', userId, 'campaignId:', selectedCampaign?.id);
+      
+      const result = await apiRequest(url, { 
+        method: 'GET',
+        headers 
+      });
       return result.data;
     },
     enabled: !!userId && !!selectedCampaign?.id,
   });
   
-  // Обновляем данные при изменении выбранной кампании
+  // Обновляем данные при изменении выбранной кампании или пользователя
   useEffect(() => {
-    if (selectedCampaign?.id) {
+    if (selectedCampaign?.id && userId) {
       refetchScheduled();
     }
-  }, [selectedCampaign?.id, refetchScheduled]);
+  }, [selectedCampaign?.id, userId, refetchScheduled]);
   
   // Фильтрация контента по поисковому запросу
   const filteredContent = React.useMemo(() => {
