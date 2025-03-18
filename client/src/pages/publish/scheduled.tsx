@@ -164,14 +164,14 @@ export default function ScheduledPublications() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
           <Select 
-            value={selectedCampaignId || undefined} 
+            value={selectedCampaignId || null} 
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger>
               <SelectValue placeholder="Все кампании" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Все кампании</SelectItem>
+              <SelectItem key="all" value={null}>Все кампании</SelectItem>
               {campaigns && campaigns.map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
