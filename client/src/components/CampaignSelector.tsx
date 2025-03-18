@@ -96,7 +96,7 @@ export function CampaignSelector() {
           </div>
         ) : (
           <Select
-            value={selectedCampaign?.id || ''}
+            value={selectedCampaign?.id || undefined}
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger>
