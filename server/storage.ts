@@ -998,16 +998,23 @@ export class DatabaseStorage implements IStorage {
 
   async getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
     try {
-      const authToken = await this.getAuthToken(userId);
+      let authToken: string | null = null;
+      
+      // Если userId = 'system', используем сервисный токен
+      if (userId === 'system') {
+        authToken = process.env.DIRECTUS_SERVICE_TOKEN || null;
+        console.log('Using service token for scheduled content');
+      } else {
+        // Для обычных пользователей получаем токен стандартным образом
+        authToken = await this.getAuthToken(userId);
+      }
+      
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
       }
       
       const filter: any = {
-        user_id: {
-          _eq: userId
-        },
         status: {
           _eq: 'scheduled'
         },
@@ -1015,6 +1022,13 @@ export class DatabaseStorage implements IStorage {
           _nnull: true
         }
       };
+      
+      // Если это реальный пользователь (не systemX, то добавляем фильтр по ID пользователя
+      if (userId !== 'system') {
+        filter.user_id = {
+          _eq: userId
+        };
+      }
       
       if (campaignId) {
         filter.campaign_id = {
