@@ -143,4 +143,90 @@ export function registerPublishingRoutes(app: Express): void {
       });
     }
   });
+
+  // Отмена запланированной публикации
+  app.post('/api/publish/cancel/:contentId', async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      
+      // Проверяем параметры
+      if (!contentId) {
+        return res.status(400).json({ error: 'Не указан ID контента' });
+      }
+      
+      // Получаем контент
+      const content = await storage.getCampaignContentById(contentId);
+      if (!content) {
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Проверяем, что контент запланирован
+      if (content.status !== 'scheduled' || !content.scheduledAt) {
+        return res.status(400).json({ error: 'Для этого контента не запланирована публикация' });
+      }
+      
+      // Обновляем статус на "cancelled" для всех платформ
+      const socialPlatforms = content.socialPlatforms || {};
+      const updatedPlatforms: Record<string, any> = {};
+      
+      for (const platform in socialPlatforms) {
+        if (socialPlatforms[platform] && 
+            (socialPlatforms[platform].status === 'scheduled' || 
+             socialPlatforms[platform].status === 'pending')) {
+          updatedPlatforms[platform] = {
+            ...socialPlatforms[platform],
+            status: 'cancelled'
+          };
+        } else {
+          updatedPlatforms[platform] = socialPlatforms[platform];
+        }
+      }
+      
+      // Обновляем контент
+      await storage.updateCampaignContent(contentId, {
+        status: 'draft', // Возвращаем в статус черновика
+        scheduledAt: null, // Убираем планирование
+        socialPlatforms: updatedPlatforms
+      });
+      
+      log(`Публикация ${contentId} отменена`, 'api');
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Публикация успешно отменена'
+      });
+    } catch (error: any) {
+      log(`Ошибка при отмене публикации: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при отмене публикации',
+        message: error.message
+      });
+    }
+  });
+  
+  // Получение списка запланированных публикаций
+  app.get('/api/publish/scheduled', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      const campaignId = req.query.campaignId as string;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'Не указан ID пользователя' });
+      }
+      
+      // Получаем запланированные публикации
+      const scheduledContent = await storage.getScheduledContent(userId, campaignId);
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: scheduledContent
+      });
+    } catch (error: any) {
+      log(`Ошибка при получении запланированных публикаций: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при получении запланированных публикаций',
+        message: error.message
+      });
+    }
+  });
 }

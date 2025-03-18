@@ -11,6 +11,7 @@ import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
+import ScheduledPublications from "@/pages/publish/scheduled";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
 import AuthBypass from "@/pages/test/auth-bypass";
