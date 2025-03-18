@@ -9,10 +9,19 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Play, Ban, AlertDialog, AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+  CalendarIcon, XCircle, Filter, Play, Ban
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PublishingStatus } from "@/components/PublishingStatus";
 import { ScheduledPostInfo } from "@/components/ScheduledPostInfo";
