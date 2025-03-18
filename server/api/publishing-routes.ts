@@ -434,11 +434,21 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Контент найден: ${contentId}, userId: ${content.userId}`, 'api');
         
         // Подготавливаем обновления для контента
+        const scheduledAtDate = new Date(scheduledAt);
         const updates: any = {
           status: 'scheduled',
-          scheduledAt: new Date(scheduledAt),
+          scheduledAt: scheduledAtDate,
           socialPlatforms: socialPlatforms
         };
+        
+        // Добавляем дату публикации в каждой платформе
+        if (socialPlatforms && typeof socialPlatforms === 'object') {
+          for (const platform in socialPlatforms) {
+            if (socialPlatforms[platform] && typeof socialPlatforms[platform] === 'object') {
+              socialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+            }
+          }
+        }
         
         // Если userId из контента не определен, но у нас есть userId из токена, добавляем его
         if (!content.userId && userId) {
@@ -453,7 +463,8 @@ export function registerPublishingRoutes(app: Express): void {
         if (updatedContent) {
           log(`Контент успешно обновлен в базе данных: ${updatedContent.id}`, 'api');
           
-          return res.status(200).json({
+          // Форматируем данные для ответа с правильной структурой
+          const formattedResponse = {
             success: true,
             message: 'Публикация успешно запланирована',
             data: {
@@ -462,7 +473,15 @@ export function registerPublishingRoutes(app: Express): void {
               status: updatedContent.status,
               socialPlatforms: updatedContent.socialPlatforms
             }
-          });
+          };
+          
+          // Выводим форматированную дату в лог
+          const formattedDate = updatedContent.scheduledAt 
+            ? new Date(updatedContent.scheduledAt).toISOString() 
+            : 'не задана';
+          log(`Запланированная дата публикации: ${formattedDate}`, 'api');
+          
+          return res.status(200).json(formattedResponse);
         } else {
           throw new Error('Неизвестная ошибка при обновлении контента в Directus');
         }
