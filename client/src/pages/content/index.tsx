@@ -413,13 +413,24 @@ export default function ContentPage() {
         });
       }
 
+      // Подробное логирование для отладки
+      console.log("🚀 Подготовленные данные для планирования публикации:");
+      console.log("ID контента:", id);
+      console.log("Дата публикации:", scheduledAt);
+      console.log("Выбранные платформы:", platforms);
+      console.log("Данные socialPlatforms для сохранения:", JSON.stringify(socialPlatformsData, null, 2));
+
+      const requestData = {
+        scheduledAt,
+        status: 'scheduled',
+        socialPlatforms: socialPlatformsData // Всегда передаем объект, даже если он пустой
+      };
+
+      console.log("Финальный запрос:", JSON.stringify(requestData, null, 2));
+
       return await apiRequest(`/api/campaign-content/${id}`, { 
         method: 'PATCH',
-        data: {
-          scheduledAt,
-          status: 'scheduled',
-          socialPlatforms: socialPlatformsData // Всегда передаем объект, даже если он пустой
-        }
+        data: requestData
       });
     },
     onSuccess: () => {
