@@ -422,13 +422,75 @@ export function registerPublishingRoutes(app: Express): void {
       
       // Проверяем существование контента и обновляем его через storage
       try {
-        // Получаем контент через storage
-        log(`Получаем контент с ID ${contentId} через хранилище`, 'api');
-        const content = await storage.getCampaignContentById(contentId);
+        // Получаем контент через storage, передаем токен авторизации
+        log(`Получаем контент с ID ${contentId} через хранилище, с токеном авторизации`, 'api');
+        
+        if (!token) {
+          log(`Ошибка авторизации: токен не определен при получении контента ${contentId}`, 'api');
+          return res.status(401).json({ 
+            error: 'Ошибка авторизации', 
+            message: 'Для планирования публикации необходимо авторизоваться'
+          });
+        }
+        
+        const content = await storage.getCampaignContentById(contentId, token);
         
         if (!content) {
           log(`Контент с ID ${contentId} не найден в базе данных`, 'api');
-          return res.status(404).json({ error: 'Контент не найден' });
+          
+          // Пробуем через прямой API запрос без storage
+          try {
+            log(`Пробуем получить контент напрямую через API с токеном`, 'api');
+            
+            const directResponse = await directusApiManager.request({
+              url: `/items/campaign_content/${contentId}`,
+              method: 'get',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (!directResponse || !directResponse.data || !directResponse.data.data) {
+              return res.status(404).json({ 
+                error: 'Контент не найден', 
+                message: `Контент с ID ${contentId} не найден ни одним из способов`
+              });
+            }
+            
+            // Создаем "фейковый" объект контента из прямого ответа API для дальнейшей обработки
+            const contentData = directResponse.data.data;
+            const content = {
+              id: contentData.id,
+              title: contentData.title || "",
+              content: contentData.content || "",
+              contentType: contentData.content_type || "text",
+              campaignId: contentData.campaign_id || "",
+              userId: contentData.user_id || userId,
+              createdAt: contentData.created_at ? new Date(contentData.created_at) : new Date(),
+              status: contentData.status || "draft",
+              imageUrl: contentData.image_url || null,
+              videoUrl: contentData.video_url || null,
+              imagePrompt: contentData.image_prompt || null,
+              keywords: contentData.keywords || null,
+              metadata: contentData.metadata || null,
+              scheduledAt: contentData.scheduled_at ? new Date(contentData.scheduled_at) : null,
+              publishedAt: contentData.published_at ? new Date(contentData.published_at) : null,
+              socialPlatforms: contentData.social_platforms || null
+            };
+            
+            log(`Контент ${contentId} найден через прямой API запрос`, 'api');
+            // Продолжаем работу, но сообщаем о проблеме с storage
+            log(`ВНИМАНИЕ: Контент найден через API, но не через storage. Возможно проблемы с кэшированием.`, 'api');
+          } catch (apiError) {
+            log(`Не удалось получить контент напрямую через API: ${(apiError as Error).message}`, 'api');
+            return res.status(404).json({ 
+              error: 'Контент не найден', 
+              message: `Контент с ID ${contentId} не найден` 
+            });
+          }
+          
+          // Если дошли до этого места, значит content может отсутствовать, присвоим его нашему "фейковому" объекту
+          content = content || {};
         }
         
         log(`Контент найден: ${contentId}, userId: ${content.userId}`, 'api');
@@ -458,7 +520,34 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Обновляем контент в базе данных: ${JSON.stringify(updates)}`, 'api');
         
         // Обновляем контент через интерфейс хранилища
-        const updatedContent = await storage.updateCampaignContent(contentId, updates);
+        // Напрямую обновляем контент через Directus API
+        let updatedContent;
+        
+        try {
+          // Обновляем через API напрямую, чтобы убедиться, что записи существуют
+          log(`Обновление контента через API напрямую`, 'api');
+          
+          const directUpdateResponse = await directusApiManager.request({
+            url: `/items/campaign_content/${contentId}`,
+            method: 'patch',
+            data: {
+              status: 'scheduled',
+              scheduled_at: scheduledAtDate.toISOString(),
+              social_platforms: socialPlatforms
+            },
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          log(`Контент успешно обновлен через API напрямую`, 'api');
+        } catch (directUpdateError) {
+          // Если запись не найдена, возможно она не существует или у нас устаревший токен
+          log(`Ошибка при прямом обновлении через API: ${(directUpdateError as Error).message}`, 'api');
+        }
+        
+        // Теперь обновляем контент через интерфейс хранилища
+        updatedContent = await storage.updateCampaignContent(contentId, updates);
         
         if (updatedContent) {
           log(`Контент успешно обновлен в базе данных: ${updatedContent.id}`, 'api');
