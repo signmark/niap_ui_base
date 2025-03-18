@@ -420,72 +420,47 @@ export function registerPublishingRoutes(app: Express): void {
         }
       }
       
-      // Проверяем существование контента
+      // Проверяем существование контента и обновляем его через storage
       try {
-        // Прямой запрос к API с токеном авторизации
-        log(`Запрос получения контента с ID ${contentId}, токен: ${token.substring(0, 15)}...`, 'api');
-        const response = await directusApiManager.request({
-          url: `/items/campaign_content/${contentId}`,
-          method: 'get',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Получаем контент через storage
+        log(`Получаем контент с ID ${contentId} через хранилище`, 'api');
+        const content = await storage.getCampaignContentById(contentId);
         
-        if (!response || !response.data || !response.data.data) {
-          log(`Контент с ID ${contentId} не найден в Directus`, 'api');
+        if (!content) {
+          log(`Контент с ID ${contentId} не найден в базе данных`, 'api');
           return res.status(404).json({ error: 'Контент не найден' });
         }
         
-        const contentData = response.data.data;
-        log(`Контент найден: ${contentId}, user_id: ${contentData.user_id}`, 'api');
+        log(`Контент найден: ${contentId}, userId: ${content.userId}`, 'api');
         
-        // Формируем данные для обновления в Directus
-        const directusUpdates: Record<string, any> = {
+        // Подготавливаем обновления для контента
+        const updates: any = {
           status: 'scheduled',
-          scheduled_at: new Date(scheduledAt).toISOString(),
-          social_platforms: socialPlatforms
+          scheduledAt: new Date(scheduledAt),
+          socialPlatforms: socialPlatforms
         };
         
         // Если userId из контента не определен, но у нас есть userId из токена, добавляем его
-        if (!contentData.user_id && userId) {
-          directusUpdates.user_id = userId;
+        if (!content.userId && userId) {
+          updates.userId = userId;
         }
         
-        log(`Обновляем контент через Directus API: ${JSON.stringify(directusUpdates)}`, 'api');
+        log(`Обновляем контент в базе данных: ${JSON.stringify(updates)}`, 'api');
         
-        // Проверяем, что у нас есть валидный токен
-        if (!token) {
-          log('Ошибка авторизации: отсутствует токен для обновления контента', 'api');
-          return res.status(401).json({ 
-            error: 'Ошибка авторизации', 
-            message: 'Для планирования публикации необходимо авторизоваться'
-          });
-        }
-
-        // Обновляем контент через Directus API с передачей токена
-        log(`Отправляем запрос обновления контента с ID ${contentId}, токен: ${token.substring(0, 15)}...`, 'api');
-        const updateResponse = await directusApiManager.request({
-          url: `/items/campaign_content/${contentId}`,
-          method: 'patch',
-          data: directusUpdates,
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Обновляем контент через интерфейс хранилища
+        const updatedContent = await storage.updateCampaignContent(contentId, updates);
         
-        if (updateResponse && updateResponse.data) {
-          const updatedItem = updateResponse.data.data;
-          log(`Контент успешно обновлен в Directus: ${updatedItem.id}`, 'api');
+        if (updatedContent) {
+          log(`Контент успешно обновлен в базе данных: ${updatedContent.id}`, 'api');
           
           return res.status(200).json({
             success: true,
             message: 'Публикация успешно запланирована',
             data: {
-              id: updatedItem.id,
-              scheduledAt: updatedItem.scheduled_at,
-              status: updatedItem.status,
-              socialPlatforms: updatedItem.social_platforms
+              id: updatedContent.id,
+              scheduledAt: updatedContent.scheduledAt,
+              status: updatedContent.status,
+              socialPlatforms: updatedContent.socialPlatforms
             }
           });
         } else {
