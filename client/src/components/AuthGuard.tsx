@@ -20,12 +20,63 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   
   console.log('AuthGuard: Checking auth state', { hasToken, hasStoredToken, isLoginPage });
 
-  // Проверяем валидность токена
-  const { isSuccess, data } = useQuery<{ authenticated: boolean; userId: string | null }>({
+  // Проверяем валидность токена с более надежной логикой
+  const { isSuccess, data, isError } = useQuery<{ authenticated: boolean; userId: string | null }>({
     queryKey: ['/api/auth/me'],
     enabled: hasToken || hasStoredToken, // выполняем запрос только если есть токен
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 минут
+    retry: 0, // отключаем повторные попытки чтобы не блокировать пользователя
+    staleTime: 1000 * 60 * 5, // 5 минут кэширования
+    // При ошибке возвращаем предустановленный результат вместо исключения
+    queryFn: async () => {
+      try {
+        // Получаем сохраненный токен и ID
+        const storedToken = localStorage.getItem('auth_token') || '';
+        const storedUserId = localStorage.getItem('user_id') || '';
+        
+        // Если токен отсутствует, сразу возвращаем unauthorized
+        if (!storedToken) {
+          return { authenticated: false, userId: null, message: 'No token found' };
+        }
+        
+        // Выполняем запрос к API для проверки токена
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${storedToken}`,
+            'x-user-id': storedUserId,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Даже при сетевой ошибке, мы получим объект
+        if (!response.ok) {
+          console.warn('Authentication check failed with status:', response.status);
+          
+          // Если получаем 401 или 403, однозначно считаем токен невалидным
+          if (response.status === 401 || response.status === 403) {
+            return { authenticated: false, userId: null, message: 'Invalid token' };
+          }
+          
+          // При других ошибках (например, 5xx) предполагаем, что токен валидный
+          // чтобы не выбрасывать пользователя из системы при временных проблемах сервера
+          return { authenticated: true, userId: storedUserId, message: 'Assumed valid (server error)' };
+        }
+        
+        // Нормально получен ответ - парсим его
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Authentication check error:', error);
+        
+        // При сетевых ошибках считаем токен валидным, чтобы не терять сессию
+        // при временных проблемах с соединением
+        const storedUserId = localStorage.getItem('user_id') || '';
+        return { 
+          authenticated: true, 
+          userId: storedUserId, 
+          message: 'Assumed valid (network error)'
+        };
+      }
+    }
   });
 
   useEffect(() => {
