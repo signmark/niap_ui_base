@@ -52,6 +52,41 @@ export const refreshAccessToken = async () => {
 
   try {
     console.log('Attempting to refresh token');
+    // First try our API endpoint
+    try {
+      console.log('Trying our API endpoint for token refresh');
+      const apiResponse = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+      
+      if (apiResponse.ok) {
+        const data = await apiResponse.json();
+        if (data.token) {
+          console.log('API endpoint refresh successful');
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('refresh_token', data.refresh_token);
+          
+          // Update auth store
+          const auth = useAuthStore.getState();
+          auth.setAuth(data.token, data.user_id);
+          
+          // Setup next refresh
+          setupTokenRefresh(data.expires);
+          
+          return data.token;
+        }
+      } else {
+        console.warn('API endpoint refresh failed, trying Directus directly');
+      }
+    } catch (error) {
+      console.warn('Error with API endpoint refresh, falling back to Directus:', error);
+    }
+    
+    // Fall back to direct Directus API
     const response = await directusApi.post<AuthResponse>('/auth/refresh', {
       refresh_token: refreshToken,
       mode: 'json'
@@ -138,11 +173,23 @@ export const logout = async () => {
     const auth = useAuthStore.getState();
     auth.clearAuth();
 
-    // Try to logout from Directus
+    // Try to logout via our API first
     try {
-      await directusApi.post('/auth/logout');
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     } catch (error) {
-      console.warn('Error during logout:', error);
+      console.warn('Error during API logout:', error);
+      
+      // Fall back to direct Directus logout
+      try {
+        await directusApi.post('/auth/logout');
+      } catch (directusError) {
+        console.warn('Error during Directus logout:', directusError);
+      }
     }
   } catch (error) {
     console.error('Logout error:', error);
