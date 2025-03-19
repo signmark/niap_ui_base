@@ -1,4 +1,6 @@
 import { directusCrud } from './directus-crud';
+import { directusAuthManager } from './directus-auth-manager';
+import { directusApi } from '../directus';
 import { log } from '../utils/logger';
 import {
   Campaign,
@@ -87,7 +89,7 @@ export class DirectusStorageAdapter {
       
       // Дополнительная фильтрация на стороне клиента для гарантии
       const filteredCampaigns = campaigns.filter(campaign => 
-        campaign.userId === userId || campaign.user_id === userId
+        campaign.userId === userId
       );
       
       log(`Found ${filteredCampaigns.length} campaigns for user ${userId}`, this.logPrefix);
@@ -256,8 +258,25 @@ export class DirectusStorageAdapter {
     try {
       log(`Fetching scheduled content for user: ${userId}${campaignId ? `, campaign: ${campaignId}` : ''}`, this.logPrefix);
       
+      // Получаем информацию о токене аутентификации
+      let authToken: string | null = null;
       const userToken = await this.getUserTokenInfo(userId);
       
+      if (userToken) {
+        authToken = userToken.token;
+        log(`Found token for user ${userId}`, this.logPrefix);
+      } else {
+        // Попробуем получить токен из авторизационного менеджера
+        const authManagerToken = await directusAuthManager.getAuthToken(userId);
+        if (authManagerToken) {
+          authToken = authManagerToken;
+          log(`Found token in auth manager for user ${userId}`, this.logPrefix);
+        } else {
+          log(`No auth token found for user ${userId}`, this.logPrefix);
+        }
+      }
+      
+      // Строим фильтр для запроса
       const filter: Record<string, any> = {
         status: { _eq: 'scheduled' },
         scheduled_at: { _nnull: true }
@@ -268,16 +287,64 @@ export class DirectusStorageAdapter {
         filter.campaign_id = campaignId;
       }
       
-      // Если нет токена, добавляем фильтр по userId
-      if (!userToken) {
-        filter.user_id = userId;
+      // Фильтрация по пользователю
+      filter.user_id = userId;
+      
+      // Опции запроса
+      const options = authToken 
+        ? { authToken, filter, sort: ['scheduled_at'] }
+        : { filter, sort: ['scheduled_at'] };
+      
+      log(`Requesting scheduled content with options: ${JSON.stringify({ 
+        hasToken: !!authToken, 
+        filterKeys: Object.keys(filter),
+        userId, 
+        campaignId
+      })}`, this.logPrefix);
+      
+      let scheduledContent: CampaignContent[] = [];
+      
+      try {
+        // Пытаемся получить данные из Directus через наш новый CRUD-интерфейс
+        const directusResponse = await directusCrud.list<CampaignContent>('campaign_content', options);
+        log(`Received ${directusResponse.length} scheduled items from Directus`, this.logPrefix);
+        scheduledContent = directusResponse;
+      } catch (directusError) {
+        log(`Error fetching from Directus: ${(directusError as Error).message}. Trying fallback method.`, this.logPrefix);
+        
+        // Запрос не удался, пробуем получить из хранилища через старый метод
+        // Получаем все контенты пользователя и фильтруем по запланированным
+        try {
+          const allContent = await directusApi.get('/items/campaign_content', {
+            params: {
+              filter,
+              sort: ['scheduled_at']
+            },
+            headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+          });
+          
+          const items = allContent.data?.data || [];
+          log(`Received ${items.length} items using fallback method`, this.logPrefix);
+          
+          scheduledContent = items.map((item: any) => ({
+            id: item.id,
+            content: item.content,
+            userId: item.user_id,
+            campaignId: item.campaign_id,
+            status: item.status,
+            contentType: item.content_type || "text",
+            title: item.title || null,
+            imageUrl: item.image_url,
+            prompt: item.prompt || "",
+            videoUrl: item.video_url,
+            scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+            createdAt: new Date(item.created_at),
+            socialPlatforms: item.social_platforms
+          }));
+        } catch (fallbackError) {
+          log(`Fallback method also failed: ${(fallbackError as Error).message}`, this.logPrefix);
+        }
       }
-      
-      const options = userToken 
-        ? { authToken: userToken.token, filter }
-        : { filter };
-      
-      const scheduledContent = await directusCrud.list<CampaignContent>('campaign_content', options);
       
       // Дополнительная фильтрация на стороне клиента
       const filteredContent = scheduledContent.filter(content => {
@@ -296,7 +363,7 @@ export class DirectusStorageAdapter {
         return isScheduled && hasScheduled && isUserContent && isCampaignMatch;
       });
       
-      log(`Found ${filteredContent.length} scheduled content items`, this.logPrefix);
+      log(`Found ${filteredContent.length} scheduled content items after filtering`, this.logPrefix);
       return filteredContent;
     } catch (error) {
       log(`Error getting scheduled content: ${(error as Error).message}`, this.logPrefix);
