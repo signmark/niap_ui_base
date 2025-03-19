@@ -372,8 +372,8 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
   
-  // Маршрут для обновления контента кампании (включая запланированные публикации)
-  app.patch('/api/campaign-content/:id', async (req: Request, res: Response) => {
+  // Маршрут для обновления контента кампании через специализированный публикационный интерфейс
+  app.patch('/api/publish/update-content/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updates = req.body;
