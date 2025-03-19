@@ -22,42 +22,40 @@ export const openPaths = [
  */
 export const authenticateApiRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Пропускаем проверку для не-API маршрутов
+    // Пропускаем проверку для не-API маршрутов и открытых путей
     if (!req.path.startsWith('/api') || openPaths.some(path => req.path.startsWith(path))) {
       return next();
     }
 
+    // ВАЖНО: Для обеспечения обратной совместимости проверяем заголовки и query параметры
+    
     // Получаем токен из заголовка
     const authHeader = req.headers['authorization'];
+    const queryToken = req.query.token as string;
+    const token = authHeader ? authHeader.replace('Bearer ', '') : queryToken || '';
     
-    if (!authHeader) {
-      log(`[api] Ошибка: Отсутствует токен авторизации в запросе ${req.path}`);
+    // Извлекаем ID пользователя из заголовка или query
+    const userId = (req.headers['x-user-id'] as string) || (req.query.userId as string);
+    
+    if (!token && !userId) {
+      log(`[api] Ошибка: Отсутствуют данные аутентификации в запросе ${req.path}`);
       return res.status(401).json({
         success: false,
         message: 'Необходимо авторизоваться'
       });
     }
     
-    // Извлекаем токен
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Извлекаем ID пользователя из заголовка (основной метод)
-    const userId = req.headers['x-user-id'] as string;
-    
-    if (!userId) {
-      log(`[api] Ошибка: Отсутствует ID пользователя в запросе ${req.path}`);
-      return res.status(401).json({
-        success: false,
-        message: 'Отсутствует ID пользователя'
-      });
+    // Добавляем информацию о пользователе в запрос
+    if (userId) {
+      (req as any).userId = userId;
     }
     
-    // Добавляем информацию о пользователе в запрос
-    (req as any).userId = userId;
-    (req as any).token = token;
+    if (token) {
+      (req as any).token = token;
+    }
     
     // Для запросов запланированных публикаций добавляем доп.информацию в логи
-    if (req.path.includes('/api/publish/scheduled')) {
+    if (req.path.includes('/api/publish/scheduled') && userId) {
       log(`[api] Запрос запланированных публикаций для пользователя ${userId}`);
     }
     
