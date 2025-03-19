@@ -7,8 +7,6 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
-import { platformNames, safeSocialPlatforms } from '@/lib/social-platforms';
-import SocialMediaIcon from '@/components/SocialMediaIcon';
 
 import {
   Card,
@@ -27,11 +25,11 @@ import { Calendar, Clock, Search, RefreshCw, Filter } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 
 export default function ScheduledPublications() {
@@ -41,7 +39,6 @@ export default function ScheduledPublications() {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
   const [viewTab, setViewTab] = useState<string>('upcoming');
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -95,52 +92,22 @@ export default function ScheduledPublications() {
   }, [selectedCampaign?.id, userId, refetchScheduled]);
   
   // Фильтрация контента по поисковому запросу
-  // Фильтрация контента по платформе
-  const platformFilteredContent = React.useMemo(() => {
+  const filteredContent = React.useMemo(() => {
     if (!scheduledContent) return [];
     
-    // Если выбраны все платформы, возвращаем весь контент
-    if (selectedPlatform === 'all') return scheduledContent;
-    
-    // Иначе фильтруем по выбранной платформе
     return scheduledContent.filter((content: CampaignContent) => {
-      if (!content.socialPlatforms) return false;
-      
-      // Проверяем наличие выбранной платформы в socialPlatforms
-      return Object.keys(content.socialPlatforms).some(platform => 
-        platform === selectedPlatform && 
-        content.socialPlatforms![platform] && 
-        content.socialPlatforms![platform].status !== 'cancelled'
-      );
-    });
-  }, [scheduledContent, selectedPlatform]);
-
-  // Фильтрация контента по поисковому запросу
-  const filteredContent = React.useMemo(() => {
-    if (!platformFilteredContent) return [];
-    
-    return platformFilteredContent.filter((content: CampaignContent) => {
       if (!searchQuery) return true;
       
       const query = searchQuery.toLowerCase();
       return (
         (content.title && content.title.toLowerCase().includes(query)) ||
         (content.content && content.content.toLowerCase().includes(query)) ||
-        (content.keywords && (
-          // Проверяем, является ли keywords массивом
-          Array.isArray(content.keywords) 
-            ? content.keywords.some(keyword => 
-                typeof keyword === 'string' && keyword.toLowerCase().includes(query)
-              )
-            // Если это строка, разбиваем ее на массив и выполняем поиск
-            : typeof content.keywords === 'string'
-              ? content.keywords.toLowerCase().includes(query) || 
-                content.keywords.split(',').some(k => k.trim().toLowerCase().includes(query))
-              : false
+        (content.keywords && content.keywords.some(keyword => 
+          keyword.toLowerCase().includes(query)
         ))
       );
     });
-  }, [platformFilteredContent, searchQuery]);
+  }, [scheduledContent, searchQuery]);
   
   // Разделение контента на предстоящие и прошедшие публикации
   const upcomingContent = React.useMemo(() => {
@@ -259,26 +226,7 @@ export default function ScheduledPublications() {
           />
         </div>
         
-        <div className="flex items-center justify-end space-x-3">
-          <div className="w-56">
-            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-              <SelectTrigger>
-                <SelectValue placeholder="Все платформы" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все платформы</SelectItem>
-                {safeSocialPlatforms.map(platform => (
-                  <SelectItem key={platform} value={platform}>
-                    <div className="flex items-center">
-                      <SocialMediaIcon platform={platform as SocialPlatform} className="mr-2" size={16} />
-                      <span>{platformNames[platform as SocialPlatform]}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
+        <div className="flex justify-end">
           <Button onClick={handleRefresh} variant="outline" className="gap-2">
             <RefreshCw size={16} />
             <span>Обновить</span>
@@ -386,28 +334,15 @@ export default function ScheduledPublications() {
                       </span>
                     </div>
                     
-                    {content.keywords && (
+                    {content.keywords && content.keywords.length > 0 && (
                       <div className="mt-3">
                         <div className="flex flex-wrap gap-2">
-                          {Array.isArray(content.keywords) ? (
-                            <>
-                              {content.keywords.slice(0, 3).map((keyword, idx) => (
-                                <Badge key={idx} variant="secondary">{keyword}</Badge>
-                              ))}
-                              {content.keywords.length > 3 && (
-                                <Badge variant="outline">+{content.keywords.length - 3}</Badge>
-                              )}
-                            </>
-                          ) : typeof content.keywords === 'string' ? (
-                            <>
-                              {content.keywords.split(',').slice(0, 3).map((keyword, idx) => (
-                                <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
-                              ))}
-                              {content.keywords.split(',').length > 3 && (
-                                <Badge variant="outline">+{content.keywords.split(',').length - 3}</Badge>
-                              )}
-                            </>
-                          ) : null}
+                          {content.keywords.slice(0, 3).map((keyword, idx) => (
+                            <Badge key={idx} variant="secondary">{keyword}</Badge>
+                          ))}
+                          {content.keywords.length > 3 && (
+                            <Badge variant="outline">+{content.keywords.length - 3}</Badge>
+                          )}
                         </div>
                       </div>
                     )}
@@ -476,20 +411,13 @@ export default function ScheduledPublications() {
               </div>
             )}
             
-            {previewContent?.keywords && (
+            {previewContent?.keywords && previewContent.keywords.length > 0 && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {Array.isArray(previewContent.keywords) 
-                    ? previewContent.keywords.map((keyword, idx) => (
-                        <Badge key={idx} variant="secondary">{keyword}</Badge>
-                      ))
-                    : typeof previewContent.keywords === 'string'
-                      ? previewContent.keywords.split(',').map((keyword, idx) => (
-                          <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
-                        ))
-                      : null
-                  }
+                  {previewContent.keywords.map((keyword, idx) => (
+                    <Badge key={idx} variant="secondary">{keyword}</Badge>
+                  ))}
                 </div>
               </div>
             )}
