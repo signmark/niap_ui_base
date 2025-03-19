@@ -51,6 +51,12 @@ app.use((req, res, next) => {
     log("Registering routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
+    
+    // Регистрируем специальные маршруты для XMLRiver API
+    log("Registering XMLRiver API routes...");
+    registerXmlRiverRoutes(app);
+    log("XMLRiver API routes registered successfully");
+    
     console.log("Route registration completed");
     log("Routes registered successfully");
 
