@@ -126,6 +126,49 @@ export function registerAuthRoutes(app: any): void {
     }
   });
   
+  // Маршрут для регистрации пользователя
+  app.post('/api/auth/register', async (req: Request, res: Response) => {
+    const { email, password, first_name, last_name } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Необходимо указать email и пароль'
+      });
+    }
+    
+    try {
+      // 1. Регистрируем пользователя через Directus
+      const userData = {
+        email,
+        password,
+        first_name: first_name || '',
+        last_name: last_name || '',
+        role: process.env.DIRECTUS_DEFAULT_ROLE || '9bb7b7ea-b540-4b21-b2b3-9bec98988a88' // ID роли по умолчанию
+      };
+      
+      const createResponse = await directusApi.post('/users', userData);
+      
+      if (!createResponse.data?.data?.id) {
+        throw new Error('Ошибка при создании пользователя');
+      }
+      
+      // 2. Выполняем вход с новыми учетными данными
+      const loginResponse = await directusApi.post('/auth/login', {
+        email,
+        password
+      });
+      
+      return res.json(loginResponse.data);
+    } catch (error: any) {
+      console.error('Registration error:', error.message);
+      return res.status(400).json({
+        success: false,
+        message: error.response?.data?.errors?.[0]?.message || 'Ошибка регистрации. Возможно, этот email уже используется.'
+      });
+    }
+  });
+
   // Маршрут для выхода из системы
   app.post('/api/auth/logout', (req: Request, res: Response) => {
     return res.json({
