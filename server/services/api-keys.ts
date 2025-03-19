@@ -76,8 +76,31 @@ export class ApiKeyService {
         // Получаем ключ из ответа и форматируем если необходимо
         let apiKey = items[0].api_key;
         
-        // Специальная обработка для XMLRiver - ничего не делаем, так как ключ уже сохранен в нужном формате
-        // Если необходимо, можно добавить дополнительную валидацию здесь
+        // Специальная обработка для XMLRiver - проверяем, что ключ в правильном формате JSON
+        if (serviceName === 'xmlriver') {
+          try {
+            // Проверяем, является ли ключ JSON строкой с необходимыми полями
+            const parsed = JSON.parse(apiKey);
+            if (typeof parsed === 'object' && parsed !== null && 'user' in parsed && 'key' in parsed) {
+              console.log(`[${serviceName}] Успешно получен и распознан ключ XMLRiver в формате JSON`);
+              // Используем API ключ как есть, так как он уже в нужном формате
+            } else {
+              console.warn(`[${serviceName}] API ключ в формате JSON, но не содержит обязательные поля user и key`);
+            }
+          } catch (e) {
+            console.warn(`[${serviceName}] API ключ не в формате JSON, пробуем преобразовать`);
+            // Если не удалось распарсить JSON, пробуем преобразовать в нужный формат
+            if (apiKey.includes(':')) {
+              const [user, key] = apiKey.split(':');
+              apiKey = JSON.stringify({ user: user.trim(), key: key.trim() });
+              console.log(`[${serviceName}] Преобразовали ключ в формат JSON с пользовательскими данными`);
+            } else {
+              // Если разделитель не найден, предполагаем, что это только API ключ без user ID
+              apiKey = JSON.stringify({ user: "16797", key: apiKey.trim() });
+              console.log(`[${serviceName}] Преобразовали ключ в формат JSON с user_id по умолчанию (16797)`);
+            }
+          }
+        }
         
         // Специальная обработка для FAL.AI - проверяем и добавляем префикс "Key " если необходимо
         if (serviceName === 'fal_ai') {
