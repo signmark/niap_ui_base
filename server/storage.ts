@@ -166,19 +166,23 @@ export class DatabaseStorage implements IStorage {
   }
   
   // User Authentication
-  async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
+  async getUserTokenInfo(userId: string, webToken?: string): Promise<UserTokenInfo | null> {
     try {
-      // Токены для каждого пользователя хранятся на клиенте в localStorage
-      // На сервере мы предполагаем, что токен передается через заголовок Authorization
-      // В продакшн-реализации следует хранить токены в защищенном хранилище
       console.log(`Getting token info for user: ${userId}`);
       
-      // Запрашиваем токен из системы сессий или временного хранилища
-      // В реальном приложении здесь будет запрос к БД или Redis
+      // Если передан токен из web-запроса, используем его напрямую
+      if (webToken) {
+        console.log(`Using web token for user ${userId}`);
+        return {
+          token: webToken,
+          userId: userId
+        };
+      }
       
-      // Для демонстрационных целей, можно использовать переменную окружения с токеном
+      // Для демонстрационных целей можно использовать переменную окружения с токеном
       const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
       if (serviceToken) {
+        console.log(`Using environment service token for user ${userId}`);
         return {
           token: serviceToken,
           userId: userId
@@ -186,6 +190,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Возвращаем null, если не нашли токен
+      console.log(`No token found for user: ${userId}`);
       return null;
     } catch (error) {
       console.error('Error getting user token info:', error);
@@ -778,10 +783,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Вспомогательный метод для получения токена пользователя
-  private async getAuthToken(userId: string): Promise<string | null> {
+  private async getAuthToken(userId: string, webToken?: string): Promise<string | null> {
     console.log('Getting auth token for user:', userId);
     
     try {
+      // Если передан токен из web-запроса, используем его напрямую
+      if (webToken) {
+        console.log(`Using provided web token for user ${userId}`);
+        
+        // Обновляем кэш
+        const now = Date.now();
+        this.tokenCache[userId] = {
+          token: webToken,
+          expiresAt: now + 50 * 60 * 1000 // 50 минут
+        };
+        
+        return webToken;
+      }
+      
       // Сначала проверяем кэш
       const now = Date.now();
       if (this.tokenCache[userId] && this.tokenCache[userId].expiresAt > now) {

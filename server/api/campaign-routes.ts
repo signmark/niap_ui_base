@@ -14,11 +14,13 @@ export function registerCampaignRoutes(router: Router) {
    */
   router.get('/campaigns', async (req: Request, res: Response) => {
     try {
-      // В реальном приложении здесь будет получение userId из сессии
-      // В данном случае используем userId из запроса
+      // Получаем userId из запроса (добавляется middleware auth)
       const userId = (req as any).userId;
+      // Получаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
       
-      console.log(`Fetching campaigns for user: ${userId}`);
+      console.log(`Fetching campaigns for user: ${userId}, token present: ${!!token}`);
       
       if (!userId) {
         return res.status(401).json({
@@ -28,7 +30,8 @@ export function registerCampaignRoutes(router: Router) {
       }
       
       try {
-        const campaigns = await storage.getCampaigns(userId);
+        // Передаем токен в метод getCampaigns
+        const campaigns = await storage.getCampaigns(userId, token || undefined);
         
         // Если кампании есть - возвращаем их
         if (campaigns && campaigns.length > 0) {
