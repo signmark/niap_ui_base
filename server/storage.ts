@@ -63,6 +63,108 @@ export class DatabaseStorage implements IStorage {
   // Кэш токенов пользователей
   private tokenCache: Record<string, { token: string; expiresAt: number }> = {};
   
+  // Метод для получения опубликованного контента
+  async getPublishedContent(userId?: string, campaignId?: string): Promise<CampaignContent[]> {
+    try {
+      let authToken: string | null = null;
+      
+      // Если указан userId, получаем токен для этого пользователя
+      if (userId) {
+        authToken = await this.getAuthToken(userId);
+        console.log(`Получен токен для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
+      }
+      
+      // Если не указан userId или нет токена, выводим сообщение
+      if (!authToken) {
+        console.log('Получение опубликованного контента, токен не найден в хранилище');
+        // Возвращаем пустой массив вместо выполнения запроса с пустым токеном
+        console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
+        return [];
+      }
+      
+      const filter: any = {
+        _or: [
+          {
+            status: {
+              _eq: 'published'
+            }
+          },
+          {
+            social_platforms: {
+              _has_any: ['instagram.status', 'telegram.status', 'vk.status', 'facebook.status']
+            }
+          }
+        ]
+      };
+      
+      // Если указан userId, добавляем фильтр
+      if (userId) {
+        filter.user_id = {
+          _eq: userId
+        };
+      }
+      
+      // Если указан campaignId, добавляем фильтр
+      if (campaignId) {
+        filter.campaign_id = {
+          _eq: campaignId
+        };
+      }
+      
+      // Выполняем запрос к Directus API
+      const response = await directusApi.get('/items/campaign_content', {
+        params: {
+          filter,
+          sort: ['-published_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      // Фильтруем и преобразуем данные из Directus в формат нашего приложения
+      const items = (response.data?.data || [])
+        .filter((item: any) => {
+          // Проверяем, имеет ли пост хотя бы одну успешную публикацию
+          if (item.status === 'published') return true;
+          
+          if (item.social_platforms && typeof item.social_platforms === 'object') {
+            return Object.values(item.social_platforms).some(
+              (platform: any) => platform && platform.status === 'published'
+            );
+          }
+          
+          return false;
+        })
+        .map((item: any) => ({
+          id: item.id,
+          content: item.content,
+          userId: item.user_id,
+          campaignId: item.campaign_id,
+          status: item.status,
+          contentType: item.content_type,
+          title: item.title,
+          imageUrl: item.image_url,
+          videoUrl: item.video_url,
+          prompt: item.prompt,
+          keywords: item.keywords || [],
+          hashtags: item.hashtags || [],
+          links: item.links || [],
+          scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+          publishedAt: item.published_at ? new Date(item.published_at) : null,
+          createdAt: new Date(item.created_at),
+          socialPlatforms: item.social_platforms || {},
+          metadata: item.metadata || {}
+        }));
+      
+      console.log(`Найдено ${items.length} опубликованных элементов контента`);
+      return items;
+    } catch (error) {
+      console.error('Ошибка при получении опубликованного контента:', error);
+      return [];
+    }
+  }
+  
   // User Authentication
   async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
     try {
