@@ -58,7 +58,7 @@ export interface DirectusUpdateOptions<T> extends DirectusRequestOptions {
  * Преобразование camelCase в snake_case для совместимости с Directus
  * @param obj Объект для преобразования
  */
-export function convertCamelToSnake<T extends Record<string, any>>(obj: T): Record<string, any> {
+export function convertCamelToSnake(obj: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
   
   for (const key in obj) {
@@ -82,7 +82,7 @@ export function convertCamelToSnake<T extends Record<string, any>>(obj: T): Reco
  * Преобразование snake_case в camelCase для удобства использования в коде
  * @param obj Объект для преобразования
  */
-export function convertSnakeToCamel<T extends Record<string, any>>(obj: T): Record<string, any> {
+export function convertSnakeToCamel(obj: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
   
   for (const key in obj) {
@@ -106,7 +106,7 @@ export function convertSnakeToCamel<T extends Record<string, any>>(obj: T): Reco
  * Преобразует даты в строковый формат ISO для передачи в Directus
  * @param obj Объект для преобразования
  */
-export function prepareDatesForDirectus<T extends Record<string, any>>(obj: T): Record<string, any> {
+export function prepareDatesForDirectus(obj: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
   
   for (const key in obj) {
@@ -133,7 +133,7 @@ export function prepareDatesForDirectus<T extends Record<string, any>>(obj: T): 
  * Преобразует строковые даты из Directus в объекты Date
  * @param obj Объект для преобразования
  */
-export function processDirectusDates<T extends Record<string, any>>(obj: T): Record<string, any> {
+export function processDirectusDates(obj: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
   
   for (const key in obj) {
