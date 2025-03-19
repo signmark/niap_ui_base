@@ -3,6 +3,7 @@
  */
 
 import { Request, Response, Express, NextFunction } from 'express';
+import axios from 'axios';
 import { xmlRiverClient } from '../services/xmlriver-client';
 import { log } from '../utils/logger';
 
@@ -19,14 +20,39 @@ const authenticateXmlRiverRequest = async (req: Request, res: Response, next: Ne
     });
   }
   
-  // Простое преобразование токена для передачи дальше
+  // Извлекаем токен
   const token = authHeader.substring(7);
   
-  // Сохраняем информацию о пользователе в запросе
-  (req as any).userId = req.query.userId || 'guest';
-  (req as any).token = token;
-  
-  next();
+  try {
+    // Получаем информацию о пользователе из Directus API
+    const response = await axios.get('https://directus.nplanner.ru/users/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.data?.data?.id) {
+      log('Invalid token: cannot get user info', 'xmlriver-auth');
+      return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
+    }
+
+    // Устанавливаем информацию о пользователе в объект запроса
+    const userId = response.data.data.id;
+    
+    log(`User authenticated: ${userId}`, 'xmlriver-auth');
+    
+    // Сохраняем информацию о пользователе в запросе
+    (req as any).userId = userId;
+    (req as any).token = token;
+    
+    next();
+  } catch (error) {
+    log(`Auth error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'xmlriver-auth');
+    return res.status(401).json({ 
+      error: 'Не авторизован: Ошибка проверки токена',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 };
 
 /**
