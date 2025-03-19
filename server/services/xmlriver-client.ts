@@ -10,6 +10,46 @@ import { log } from '../utils/logger';
 export class XmlRiverClient {
   private readonly baseUrl: string = 'http://xmlriver.com/wordstat/json';
   private defaultUserId: string = '16797';
+  
+  /**
+   * Получает данные о ключевых словах из XMLRiver API с фиксированными учетными данными
+   * @param query Поисковый запрос
+   * @param userId ID пользователя XMLRiver
+   * @param apiKey Ключ API XMLRiver
+   * @returns Массив данных о ключевых словах или null в случае ошибки
+   */
+  async getKeywordsWithFixedCredentials(query: string, userId: string, apiKey: string): Promise<any[] | null> {
+    try {
+      const requestId = Date.now().toString();
+      log(`[${requestId}] Запрос ключевых слов к XMLRiver с фиксированными данными для: ${query}`, 'xmlriver');
+      
+      log(`[${requestId}] Параметры запроса: user=${userId}, key=${apiKey.substring(0, 5)}..., query=${query}`, 'xmlriver');
+      
+      // Выполняем запрос к XMLRiver API напрямую с указанными user и key
+      const response = await axios.get(this.baseUrl, {
+        params: {
+          user: userId,
+          key: apiKey,
+          query: query
+        }
+      });
+      
+      // Проверяем структуру ответа
+      if (response.data?.content?.includingPhrases?.items) {
+        const items = response.data.content.includingPhrases.items;
+        log(`[${requestId}] Получено ${items.length} ключевых слов от XMLRiver`, 'xmlriver');
+        return items;
+      } else {
+        log(`[${requestId}] Некорректная структура ответа от XMLRiver API`, 'xmlriver');
+        console.log('XMLRiver API response:', JSON.stringify(response.data, null, 2));
+        return [];
+      }
+    } catch (error) {
+      log(`Ошибка при запросе к XMLRiver API: ${error instanceof Error ? error.message : 'Unknown error'}`, 'xmlriver');
+      console.error('XMLRiver API error:', error);
+      return null;
+    }
+  }
 
   /**
    * Получает данные о ключевых словах из XMLRiver API

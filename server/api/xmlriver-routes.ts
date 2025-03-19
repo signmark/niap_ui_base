@@ -8,6 +8,7 @@ import { xmlRiverClient } from '../services/xmlriver-client';
 import { log } from '../utils/logger';
 import { ApiServiceName, apiKeyService } from '../services/api-keys';
 
+
 /**
  * Middleware для авторизации запросов
  */
@@ -134,7 +135,7 @@ export function registerXmlRiverRoutes(app: Express): void {
     }
   });
   
-  // Маршрут для получения ключевых слов напрямую из XMLRiver API
+  // Маршрут для получения ключевых слов из XMLRiver API
   app.get('/api/xmlriver/keywords/:query', authenticateXmlRiverRequest, async (req: Request, res: Response) => {
     try {
       const query = req.params.query;
@@ -148,8 +149,16 @@ export function registerXmlRiverRoutes(app: Express): void {
         });
       }
       
-      log(`Поиск ключевых слов в XMLRiver для запроса: ${query}`, 'xmlriver-api');
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Необходима авторизация',
+          message: 'Для доступа к API необходимо авторизоваться'
+        });
+      }
       
+      log(`Поиск ключевых слов в XMLRiver для запроса: ${query} (userId: ${userId})`, 'xmlriver-api');
+      
+      // Получаем ключ из сервиса API ключей
       const keywords = await xmlRiverClient.getKeywords(query, userId, token);
       
       if (keywords === null) {
