@@ -12,6 +12,7 @@ import { directusStorageAdapter } from '../services/directus';
  * @param app Express приложение
  */
 export function registerPublishingRoutes(app: Express): void {
+  console.log('[publishing-routes] Регистрация маршрутов управления публикациями...');
   // Публикация контента вручную
   app.post('/api/publish/:contentId', async (req: Request, res: Response) => {
     try {
@@ -374,6 +375,7 @@ export function registerPublishingRoutes(app: Express): void {
   
   // Маршрут для обновления контента кампании через специализированный публикационный интерфейс
   app.patch('/api/publish/update-content/:id', async (req: Request, res: Response) => {
+    console.log(`Получен запрос PATCH на /api/publish/update-content/${req.params.id}`);
     try {
       const { id } = req.params;
       const updates = req.body;
