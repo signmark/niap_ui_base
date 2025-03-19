@@ -65,23 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+      // Используем наш API endpoint вместо прямого обращения к Directus
+      const data = await apiRequest('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...credentials,
-          mode: 'json'
-        }),
+        data: credentials
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.errors?.[0]?.message || 'Failed to login');
+      if (!data?.data?.access_token) {
+        throw new Error(data?.message || 'Ошибка авторизации');
       }
 
-      return response.json();
+      return data.data;
     },
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
