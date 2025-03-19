@@ -47,10 +47,51 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
 
+    // Получаем токен авторизации
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
+      toast({
+        variant: "destructive",
+        description: "Требуется авторизация. Пожалуйста, войдите в систему."
+      });
+      setIsSearching(false);
+      return;
+    }
+
     try {
       // Добавляем случайный параметр для предотвращения кеширования
       const nocache = Date.now();
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`);
+      const response = await fetch(
+        `/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+      
+      // Проверка на ошибки авторизации или отсутствие API ключа
+      if (response.status === 401) {
+        toast({
+          variant: "destructive",
+          description: "Ошибка авторизации. Пожалуйста, войдите в систему заново."
+        });
+        setIsSearching(false);
+        return;
+      }
+      
+      if (response.status === 400) {
+        const errorData = await response.json();
+        if (errorData.key_missing && errorData.service === 'xmlriver') {
+          toast({
+            variant: "destructive",
+            description: "Отсутствует API ключ XMLRiver. Пожалуйста, добавьте ключ в настройках."
+          });
+          setIsSearching(false);
+          return;
+        }
+      }
+      
       const data = await response.json();
 
       if (!data?.data?.keywords?.length) {
