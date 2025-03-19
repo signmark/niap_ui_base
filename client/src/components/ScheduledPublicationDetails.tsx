@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CampaignContent } from '@/types';
+import { CampaignContent, SocialPlatform } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import EditScheduledPublication from './EditScheduledPublication';
-import { SafeSocialPlatform, platformNames, safeSocialPlatforms, SocialPlatforms } from '@/lib/social-platforms';
+import { platformNames, safeSocialPlatforms, SafeSocialPlatform } from '@/lib/social-platforms';
 
 interface ScheduledPublicationDetailsProps {
   content: CampaignContent;

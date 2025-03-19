@@ -410,7 +410,7 @@ export default function ScheduledPublications() {
                       </span>
                     </div>
                     
-                    {content.keywords && content.keywords.length > 0 && (
+                    {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
                       <div className="mt-3">
                         <div className="flex flex-wrap gap-2">
                           {content.keywords.slice(0, 3).map((keyword, idx) => (
@@ -487,7 +487,7 @@ export default function ScheduledPublications() {
               </div>
             )}
             
-            {previewContent?.keywords && previewContent.keywords.length > 0 && (
+            {previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
