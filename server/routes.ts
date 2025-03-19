@@ -2547,6 +2547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Создаем "пользовательский" метод для замены переменной
   const fixCampaignContent = (routes: Express): void => {
+    // Обрабатываем GET запросы - фиксируем преобразования данных
     const getHandler = routes._router.stack.find((layer: any) => 
       layer.route && layer.route.path === '/api/campaign-content' && layer.route.methods.get);
     
@@ -6146,48 +6147,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contentId = req.params.id;
       const authHeader = req.headers['authorization'];
       
-      console.log(`Запрос на обновление контента через устаревший маршрут /api/campaign-content/${contentId}`);
-      console.log(`Перенаправляем запрос на новый маршрут /api/publish/update-content/${contentId}`);
+      log(`Перенаправление запроса с устаревшего маршрута /api/campaign-content/${contentId} на /api/publish/update-content/${contentId}`, 'api');
       
       if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "Не авторизован: Отсутствует заголовок авторизации" });
       }
       
-      // Преобразуем заголовок авторизации, если необходимо
-      const token = authHeader.startsWith('Bearer ') ? authHeader : `Bearer ${authHeader.replace('Bearer ', '')}`;
-      
-      // Передаем запрос на новый маршрут через Axios
-      try {
-        // Подготавливаем данные для запроса
-        const requestBody = { ...req.body };
-        
-        // Выполняем запрос к нашему собственному API
-        const response = await axios.patch(`http://localhost:5000/api/publish/update-content/${contentId}`, requestBody, {
-          headers: {
-            'Authorization': token,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        // Возвращаем результат
-        return res.status(response.status).json(response.data);
-      } catch (error: any) {
-        console.error('Ошибка при перенаправлении запроса:', error.message);
-        
-        // Если есть ответ от API, передаем его статус и данные
-        if (error.response) {
-          const { status, data } = error.response;
-          return res.status(status).json(data);
-        }
-        
-        // Если ошибка без ответа, возвращаем 500
-        return res.status(500).json({ 
-          error: "Ошибка при обновлении контента",
-          message: error.message
-        });
+      // Получаем токен авторизации
+      let token = '';
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      } else {
+        token = authHeader;
       }
+      
+      // Получаем контент для проверки его существования
+      const content = await storage.getCampaignContentById(contentId, token);
+      
+      if (!content) {
+        return res.status(404).json({ error: "Контент не найден" });
+      }
+      
+      // Обновляем контент напрямую через storage API
+      const updatedContent = await storage.updateCampaignContent(contentId, req.body, token);
+      
+      return res.status(200).json({
+        success: true,
+        data: updatedContent
+      });
     } catch (error: any) {
-      console.error("Ошибка при обработке запроса на обновление контента:", error.message);
+      log(`Ошибка при обработке запроса на обновление контента: ${error.message}`, 'api');
       res.status(500).json({ 
         error: "Ошибка при обновлении контента кампании",
         message: error.message
