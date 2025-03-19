@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
+import { safeSocialPlatforms, platformNames } from '@/lib/social-platforms';
 
 import {
   Card,
@@ -39,6 +40,7 @@ export default function ScheduledPublications() {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
   const [viewTab, setViewTab] = useState<string>('upcoming');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -91,23 +93,38 @@ export default function ScheduledPublications() {
     }
   }, [selectedCampaign?.id, userId, refetchScheduled]);
   
-  // Фильтрация контента по поисковому запросу
+  // Фильтрация контента по поисковому запросу и платформе
   const filteredContent = React.useMemo(() => {
     if (!scheduledContent) return [];
     
     return scheduledContent.filter((content: CampaignContent) => {
-      if (!searchQuery) return true;
+      // Фильтрация по поисковому запросу
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = (
+          (content.title && content.title.toLowerCase().includes(query)) ||
+          (content.content && content.content.toLowerCase().includes(query)) ||
+          (content.keywords && content.keywords.some(keyword => 
+            keyword.toLowerCase().includes(query)
+          ))
+        );
+        
+        if (!matchesSearch) return false;
+      }
       
-      const query = searchQuery.toLowerCase();
-      return (
-        (content.title && content.title.toLowerCase().includes(query)) ||
-        (content.content && content.content.toLowerCase().includes(query)) ||
-        (content.keywords && content.keywords.some(keyword => 
-          keyword.toLowerCase().includes(query)
-        ))
-      );
+      // Фильтрация по платформе
+      if (selectedPlatform && selectedPlatform !== 'all') {
+        // Проверяем наличие контента для выбранной платформы
+        if (!content.socialPlatforms) return false;
+        
+        // Преобразуем объект socialPlatforms в массив для типизированного доступа
+        const platformExists = Object.keys(content.socialPlatforms).includes(selectedPlatform);
+        if (!platformExists) return false;
+      }
+      
+      return true;
     });
-  }, [scheduledContent, searchQuery]);
+  }, [scheduledContent, searchQuery, selectedPlatform]);
   
   // Разделение контента на предстоящие и прошедшие публикации
   const upcomingContent = React.useMemo(() => {
@@ -209,13 +226,38 @@ export default function ScheduledPublications() {
     return campaign ? campaign.name : "Неизвестная кампания";
   };
   
+  // Расчет количества публикаций для каждой платформы
+  const platformCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {
+      all: filteredContent.length
+    };
+    
+    // Инициализируем счетчики для всех платформ
+    safeSocialPlatforms.forEach(platform => {
+      counts[platform] = 0;
+    });
+    
+    // Подсчитываем количество публикаций для каждой платформы
+    filteredContent.forEach(content => {
+      if (content.socialPlatforms) {
+        Object.keys(content.socialPlatforms).forEach(platform => {
+          if (counts[platform] !== undefined) {
+            counts[platform]++;
+          }
+        });
+      }
+    });
+    
+    return counts;
+  }, [filteredContent]);
+  
   const contentToDisplay = viewTab === 'upcoming' ? upcomingContent : pastContent;
   
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Запланированные публикации</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <Input
@@ -224,6 +266,40 @@ export default function ScheduledPublications() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
+        </div>
+        
+        <div>
+          <Select 
+            value={selectedPlatform}
+            onValueChange={setSelectedPlatform}
+          >
+            <SelectTrigger className="w-full">
+              <div className="flex items-center">
+                <Filter size={16} className="mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Все платформы" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <div className="flex justify-between w-full">
+                  <span>Все платформы</span>
+                  <span className="ml-2 text-xs px-2 py-0.5 bg-muted rounded-full">
+                    {platformCounts.all}
+                  </span>
+                </div>
+              </SelectItem>
+              {safeSocialPlatforms.map(platform => (
+                <SelectItem key={platform} value={platform}>
+                  <div className="flex justify-between w-full">
+                    <span>{platformNames[platform]}</span>
+                    <span className="ml-2 text-xs px-2 py-0.5 bg-muted rounded-full">
+                      {platformCounts[platform]}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="flex justify-end">
