@@ -238,13 +238,20 @@ export default function ScheduledPublicationDetails({
               </div>
             )}
             
-            {content.keywords && content.keywords.length > 0 && (
+            {content.keywords && (
               <div>
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {content.keywords.map((keyword, idx) => (
-                    <Badge key={idx} variant="secondary">{keyword}</Badge>
-                  ))}
+                  {Array.isArray(content.keywords) 
+                    ? content.keywords.map((keyword, idx) => (
+                        <Badge key={idx} variant="secondary">{keyword}</Badge>
+                      ))
+                    : typeof content.keywords === 'string'
+                      ? content.keywords.split(',').map((keyword, idx) => (
+                          <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
+                        ))
+                      : null
+                  }
                 </div>
               </div>
             )}
