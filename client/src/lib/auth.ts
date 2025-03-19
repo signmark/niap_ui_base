@@ -104,9 +104,9 @@ export const loginWithDirectus = async (email: string, password: string) => {
     const { access_token, refresh_token, expires, user } = response.data.data;
 
     // Save tokens and user ID
-    localStorage.setItem('authToken', access_token);
+    localStorage.setItem('auth_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
-    localStorage.setItem('userId', user.id);
+    localStorage.setItem('user_id', user.id);
 
     // Update auth store with user ID
     const auth = useAuthStore.getState();
@@ -130,8 +130,9 @@ export const logout = async () => {
     }
 
     // Clear tokens
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_id');
 
     // Clear auth store
     const auth = useAuthStore.getState();
