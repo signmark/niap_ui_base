@@ -27,8 +27,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import EditScheduledPublication from './EditScheduledPublication';
-import { platformNames, safeSocialPlatforms } from '@/lib/social-platforms';
-import { SocialPlatform } from '@/types';
+import { SafeSocialPlatform, platformNames, safeSocialPlatforms, SocialPlatforms } from '@/lib/social-platforms';
 
 interface ScheduledPublicationDetailsProps {
   content: CampaignContent;
@@ -49,7 +48,6 @@ export default function ScheduledPublicationDetails({
     try {
       // Получаем токен авторизации из localStorage
       const authToken = localStorage.getItem('auth_token');
-      const userId = localStorage.getItem('user_id');
       
       // Формируем заголовки с авторизацией
       const headers: Record<string, string> = {};
@@ -57,13 +55,10 @@ export default function ScheduledPublicationDetails({
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      // Отменяем запланированную публикацию, передаем userId как параметр запроса
-      const response = await apiRequest(`/api/publish/cancel/${content.id}?userId=${userId}`, {
+      // Отменяем запланированную публикацию
+      const response = await apiRequest(`/api/publish/cancel/${content.id}`, {
         method: 'POST',
-        headers,
-        body: {
-          userId: userId || content.userId || '', // Явно передаем userId в теле запроса тоже
-        }
+        headers
       });
       
       // Проверяем успешность выполнения запроса
@@ -243,20 +238,13 @@ export default function ScheduledPublicationDetails({
               </div>
             )}
             
-            {content.keywords && (
+            {content.keywords && content.keywords.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {Array.isArray(content.keywords) 
-                    ? content.keywords.map((keyword, idx) => (
-                        <Badge key={idx} variant="secondary">{keyword}</Badge>
-                      ))
-                    : typeof content.keywords === 'string'
-                      ? content.keywords.split(',').map((keyword, idx) => (
-                          <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
-                        ))
-                      : null
-                  }
+                  {content.keywords.map((keyword, idx) => (
+                    <Badge key={idx} variant="secondary">{keyword}</Badge>
+                  ))}
                 </div>
               </div>
             )}

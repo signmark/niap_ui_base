@@ -45,13 +45,12 @@ export interface IStorage {
   bookmarkCampaignTrendTopic(id: string, isBookmarked: boolean): Promise<CampaignTrendTopic>;
   
   // Campaign Content
-  getCampaignContent(userId: string, campaignId?: string, webToken?: string): Promise<CampaignContent[]>;
-  getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined>;
+  getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
+  getCampaignContentById(id: string): Promise<CampaignContent | undefined>;
   createCampaignContent(content: InsertCampaignContent): Promise<CampaignContent>;
   updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
   deleteCampaignContent(id: string): Promise<void>;
   getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
-  getPublishedContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
   
   // Business Questionnaire
   getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
@@ -63,126 +62,20 @@ export class DatabaseStorage implements IStorage {
   // Кэш токенов пользователей
   private tokenCache: Record<string, { token: string; expiresAt: number }> = {};
   
-  // Метод для получения опубликованного контента
-  async getPublishedContent(userId?: string, campaignId?: string): Promise<CampaignContent[]> {
-    try {
-      let authToken: string | null = null;
-      
-      // Если указан userId, получаем токен для этого пользователя
-      if (userId) {
-        authToken = await this.getAuthToken(userId);
-        console.log(`Получен токен для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
-      }
-      
-      // Если не указан userId или нет токена, выводим сообщение
-      if (!authToken) {
-        console.log('Получение опубликованного контента, токен не найден в хранилище');
-        // Возвращаем пустой массив вместо выполнения запроса с пустым токеном
-        console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
-        return [];
-      }
-      
-      const filter: any = {
-        _or: [
-          {
-            status: {
-              _eq: 'published'
-            }
-          },
-          {
-            social_platforms: {
-              _has_any: ['instagram.status', 'telegram.status', 'vk.status', 'facebook.status']
-            }
-          }
-        ]
-      };
-      
-      // Если указан userId, добавляем фильтр
-      if (userId) {
-        filter.user_id = {
-          _eq: userId
-        };
-      }
-      
-      // Если указан campaignId, добавляем фильтр
-      if (campaignId) {
-        filter.campaign_id = {
-          _eq: campaignId
-        };
-      }
-      
-      // Выполняем запрос к Directus API
-      const response = await directusApi.get('/items/campaign_content', {
-        params: {
-          filter,
-          sort: ['-published_at']
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      
-      // Фильтруем и преобразуем данные из Directus в формат нашего приложения
-      const items = (response.data?.data || [])
-        .filter((item: any) => {
-          // Проверяем, имеет ли пост хотя бы одну успешную публикацию
-          if (item.status === 'published') return true;
-          
-          if (item.social_platforms && typeof item.social_platforms === 'object') {
-            return Object.values(item.social_platforms).some(
-              (platform: any) => platform && platform.status === 'published'
-            );
-          }
-          
-          return false;
-        })
-        .map((item: any) => ({
-          id: item.id,
-          content: item.content,
-          userId: item.user_id,
-          campaignId: item.campaign_id,
-          status: item.status,
-          contentType: item.content_type,
-          title: item.title,
-          imageUrl: item.image_url,
-          videoUrl: item.video_url,
-          prompt: item.prompt,
-          keywords: item.keywords || [],
-          hashtags: item.hashtags || [],
-          links: item.links || [],
-          scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-          publishedAt: item.published_at ? new Date(item.published_at) : null,
-          createdAt: new Date(item.created_at),
-          socialPlatforms: item.social_platforms || {},
-          metadata: item.metadata || {}
-        }));
-      
-      console.log(`Найдено ${items.length} опубликованных элементов контента`);
-      return items;
-    } catch (error) {
-      console.error('Ошибка при получении опубликованного контента:', error);
-      return [];
-    }
-  }
-  
   // User Authentication
-  async getUserTokenInfo(userId: string, webToken?: string): Promise<UserTokenInfo | null> {
+  async getUserTokenInfo(userId: string): Promise<UserTokenInfo | null> {
     try {
+      // Токены для каждого пользователя хранятся на клиенте в localStorage
+      // На сервере мы предполагаем, что токен передается через заголовок Authorization
+      // В продакшн-реализации следует хранить токены в защищенном хранилище
       console.log(`Getting token info for user: ${userId}`);
       
-      // Если передан токен из web-запроса, используем его напрямую
-      if (webToken) {
-        console.log(`Using web token for user ${userId}`);
-        return {
-          token: webToken,
-          userId: userId
-        };
-      }
+      // Запрашиваем токен из системы сессий или временного хранилища
+      // В реальном приложении здесь будет запрос к БД или Redis
       
-      // Для демонстрационных целей можно использовать переменную окружения с токеном
+      // Для демонстрационных целей, можно использовать переменную окружения с токеном
       const serviceToken = process.env.DIRECTUS_SERVICE_TOKEN;
       if (serviceToken) {
-        console.log(`Using environment service token for user ${userId}`);
         return {
           token: serviceToken,
           userId: userId
@@ -190,7 +83,6 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Возвращаем null, если не нашли токен
-      console.log(`No token found for user: ${userId}`);
       return null;
     } catch (error) {
       console.error('Error getting user token info:', error);
@@ -657,10 +549,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Campaigns
-  async getCampaigns(userId: string, webToken?: string): Promise<Campaign[]> {
+  async getCampaigns(userId: string): Promise<Campaign[]> {
     console.log('Sending request to Directus with filter user_id =', userId);
     try {
-      const authToken = await this.getAuthToken(userId, webToken);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -783,24 +675,10 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Вспомогательный метод для получения токена пользователя
-  private async getAuthToken(userId: string, webToken?: string): Promise<string | null> {
+  private async getAuthToken(userId: string): Promise<string | null> {
     console.log('Getting auth token for user:', userId);
     
     try {
-      // Если передан токен из web-запроса, используем его напрямую
-      if (webToken) {
-        console.log(`Using provided web token for user ${userId}`);
-        
-        // Обновляем кэш
-        const now = Date.now();
-        this.tokenCache[userId] = {
-          token: webToken,
-          expiresAt: now + 50 * 60 * 1000 // 50 минут
-        };
-        
-        return webToken;
-      }
-      
       // Сначала проверяем кэш
       const now = Date.now();
       if (this.tokenCache[userId] && this.tokenCache[userId].expiresAt > now) {
@@ -831,10 +709,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Campaign Content
-  async getCampaignContent(userId: string, campaignId?: string, webToken?: string): Promise<CampaignContent[]> {
+  async getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
     console.log('Fetching content for campaign ID:', campaignId);
     try {
-      const authToken = await this.getAuthToken(userId, webToken);
+      const authToken = await this.getAuthToken(userId);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
@@ -1162,32 +1040,22 @@ export class DatabaseStorage implements IStorage {
 
   async getScheduledContent(userId?: string, campaignId?: string): Promise<CampaignContent[]> {
     try {
-      console.log(`Получение запланированных публикаций для пользователя ${userId || 'не указан'} и кампании ${campaignId || 'не указана'}`);
-      
       let authToken: string | null = null;
       
-      // Получаем токен для пользователя
+      // Если указан userId, получаем токен для этого пользователя
       if (userId) {
         authToken = await this.getAuthToken(userId);
         console.log(`Получен токен для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
-      } else {
-        console.log('Не передан userId для получения запланированных публикаций');
       }
       
-      // Если нет токена, возвращаем пустой массив
+      // Если не указан userId или нет токена, выводим сообщение
       if (!authToken) {
         console.log('Получение запланированных публикаций, токен не найден в хранилище');
+        // Возвращаем пустой массив вместо выполнения запроса с пустым токеном
         console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
         return [];
       }
       
-      // Формируем запрос с правильными фильтрами
-      let params: Record<string, any> = {
-        sort: 'scheduled_at',
-        fields: '*'
-      };
-      
-      // Формируем фильтр для публикаций со статусом 'scheduled'
       const filter: any = {
         status: {
           _eq: 'scheduled'
@@ -1197,46 +1065,34 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
-      // Добавляем фильтр по пользователю, если указан
+      // Если указан userId, добавляем фильтр
       if (userId) {
         filter.user_id = {
           _eq: userId
         };
       }
       
-      // Добавляем фильтр по кампании, если указана
       if (campaignId) {
         filter.campaign_id = {
           _eq: campaignId
         };
       }
       
-      // Добавляем параметр фильтра в запрос
-      params.filter = JSON.stringify(filter);
+      // Добавляем заголовок авторизации только если токен есть
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
       
-      console.log('Запрос запланированных публикаций с фильтром:', JSON.stringify(filter));
-      
-      // Заголовки авторизации
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${authToken}`
-      };
-      
-      // Делаем запрос к API
       const response = await directusApi.get('/items/campaign_content', {
-        params,
+        params: {
+          filter,
+          sort: ['scheduled_at']
+        },
         headers
       });
       
-      // Проверяем ответ и обрабатываем данные
-      if (!response.data || !response.data.data) {
-        console.log('Пустой ответ от Directus API при запросе запланированных публикаций');
-        return [];
-      }
-      
-      console.log(`Получено ${response.data.data.length} запланированных публикаций`);
-      
-      // Преобразуем данные из Directus в формат нашего приложения
-      const content = (response.data.data || []).map((item: any) => ({
+      const content = (response.data?.data || []).map((item: any) => ({
         id: item.id,
         content: item.content,
         userId: item.user_id,
@@ -1245,27 +1101,12 @@ export class DatabaseStorage implements IStorage {
         contentType: item.content_type || "text",
         title: item.title || null,
         imageUrl: item.image_url,
-        videoUrl: item.video_url,
         prompt: item.prompt || "",
+        videoUrl: item.video_url,
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
-        keywords: item.keywords || [], // Добавляем поля, которые могут отсутствовать в старых версиях
-        hashtags: item.hashtags || [],
-        links: item.links || [],
-        publishedAt: item.published_at ? new Date(item.published_at) : null,
-        metadata: item.metadata || {}
+        socialPlatforms: item.social_platforms
       }));
-      
-      // Выводим в лог информацию о первой публикации для отладки
-      if (content.length > 0) {
-        console.log('Пример первой запланированной публикации:', JSON.stringify({
-          id: content[0].id,
-          title: content[0].title,
-          status: content[0].status,
-          scheduledAt: content[0].scheduledAt
-        }));
-      }
       
       return content;
     } catch (error) {

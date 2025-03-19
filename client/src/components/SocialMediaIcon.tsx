@@ -5,22 +5,20 @@ import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from 'react-icon
 interface SocialMediaIconProps {
   platform: SocialPlatform | string;
   className?: string;
-  size?: number;
 }
 
-export default function SocialMediaIcon({ platform, className = 'h-4 w-4', size }: SocialMediaIconProps) {
-  const style = size ? { width: size, height: size } : {};
+export default function SocialMediaIcon({ platform, className = 'h-4 w-4' }: SocialMediaIconProps) {
   switch (platform) {
     case 'instagram':
-      return <SiInstagram className={`text-pink-600 ${className}`} style={style} />;
+      return <SiInstagram className={`text-pink-600 ${className}`} />;
     case 'telegram':
-      return <SiTelegram className={`text-blue-500 ${className}`} style={style} />;
+      return <SiTelegram className={`text-blue-500 ${className}`} />;
     case 'vk':
-      return <SiVk className={`text-blue-600 ${className}`} style={style} />;
+      return <SiVk className={`text-blue-600 ${className}`} />;
     case 'facebook':
-      return <SiFacebook className={`text-indigo-600 ${className}`} style={style} />;
+      return <SiFacebook className={`text-indigo-600 ${className}`} />;
     case 'youtube':
-      return <SiYoutube className={`text-red-600 ${className}`} style={style} />;
+      return <SiYoutube className={`text-red-600 ${className}`} />;
     default:
       return null;
   }

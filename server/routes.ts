@@ -28,7 +28,6 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { publishScheduler } from './services/publish-scheduler';
-import { registerAPIRoutes } from './api';
 
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
@@ -2590,11 +2589,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты валидации API ключей социальных сетей
   registerValidationRoutes(app);
   registerPublishingRoutes(app);
-  
-  // Создаем и регистрируем API-маршруты
-  const apiRouter = express.Router();
-  app.use('/api', apiRouter);
-  registerAPIRoutes(apiRouter);
   
   // Запускаем планировщик публикаций
   publishScheduler.start();

@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
-import { platformNames, safeSocialPlatforms } from '@/lib/social-platforms';
 
 import {
   Card,
@@ -22,10 +21,16 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScheduledPublicationDetails from '@/components/ScheduledPublicationDetails';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Search, RefreshCw, Filter, Instagram, MessageCircle, Facebook } from 'lucide-react';
+import { Calendar, Clock, Search, RefreshCw, Filter } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 export default function ScheduledPublications() {
   const { toast } = useToast();
@@ -34,7 +39,6 @@ export default function ScheduledPublications() {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
   const [viewTab, setViewTab] = useState<string>('upcoming');
-  const [platformFilter, setPlatformFilter] = useState<string[]>([]);
   
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -87,41 +91,23 @@ export default function ScheduledPublications() {
     }
   }, [selectedCampaign?.id, userId, refetchScheduled]);
   
-  // Фильтрация контента по поисковому запросу и социальным платформам
+  // Фильтрация контента по поисковому запросу
   const filteredContent = React.useMemo(() => {
     if (!scheduledContent) return [];
     
     return scheduledContent.filter((content: CampaignContent) => {
-      // Фильтр по поисковому запросу
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesQuery = (
-          (content.title && content.title.toLowerCase().includes(query)) ||
-          (content.content && content.content.toLowerCase().includes(query)) ||
-          (content.keywords && content.keywords.some(keyword => 
-            keyword.toLowerCase().includes(query)
-          ))
-        );
-        
-        if (!matchesQuery) return false;
-      }
+      if (!searchQuery) return true;
       
-      // Фильтр по выбранным социальным платформам
-      if (platformFilter && platformFilter.length > 0) {
-        if (!content.socialPlatforms) return false;
-        
-        // Проверяем наличие хотя бы одной из выбранных платформ у контента
-        const hasSelectedPlatform = platformFilter.some(platform => 
-          content.socialPlatforms && 
-          content.socialPlatforms[platform as SocialPlatform]
-        );
-        
-        return hasSelectedPlatform;
-      }
-      
-      return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        (content.title && content.title.toLowerCase().includes(query)) ||
+        (content.content && content.content.toLowerCase().includes(query)) ||
+        (content.keywords && content.keywords.some(keyword => 
+          keyword.toLowerCase().includes(query)
+        ))
+      );
     });
-  }, [scheduledContent, searchQuery, platformFilter]);
+  }, [scheduledContent, searchQuery]);
   
   // Разделение контента на предстоящие и прошедшие публикации
   const upcomingContent = React.useMemo(() => {
@@ -241,39 +227,11 @@ export default function ScheduledPublications() {
         </div>
         
         <div className="flex justify-end">
-          <Button onClick={handleRefresh} variant="outline" className="gap-2 mr-2">
+          <Button onClick={handleRefresh} variant="outline" className="gap-2">
             <RefreshCw size={16} />
             <span>Обновить</span>
           </Button>
-          <Button variant="outline" size="icon">
-            <Filter size={16} />
-          </Button>
         </div>
-      </div>
-      
-      {/* Фильтр по социальным платформам */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Filter size={16} className="text-muted-foreground" />
-          <span className="text-sm font-medium">Фильтр по социальным платформам</span>
-        </div>
-        <ToggleGroup type="multiple" value={platformFilter} onValueChange={setPlatformFilter}>
-          <ToggleGroupItem value="telegram" aria-label="Toggle Telegram">
-            <MessageCircle className="h-4 w-4 mr-1" />
-            Telegram
-          </ToggleGroupItem>
-          <ToggleGroupItem value="instagram" aria-label="Toggle Instagram">
-            <Instagram className="h-4 w-4 mr-1" />
-            Instagram
-          </ToggleGroupItem>
-          <ToggleGroupItem value="vk" aria-label="Toggle VK">
-            <span className="mr-1 text-sm font-bold">VK</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="facebook" aria-label="Toggle Facebook">
-            <Facebook className="h-4 w-4 mr-1" />
-            Facebook
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
       
       <Tabs value={viewTab} onValueChange={setViewTab}>

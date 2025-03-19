@@ -12,8 +12,6 @@ import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ScheduledPublications from "@/pages/publish/scheduled";
-import PublicationCalendar from "@/pages/publish";
-import PublishCalendarPage from "@/pages/publish/calendar";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
 import AuthBypass from "@/pages/test/auth-bypass";
@@ -22,7 +20,7 @@ import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
-import AuthGuard from "@/components/AuthGuard";
+import { AuthGuard } from "@/components/AuthGuard";
 
 function Router() {
   return (
@@ -38,8 +36,6 @@ function Router() {
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
-      <Route path="/publish/calendar" component={() => <Layout><PublishCalendarPage /></Layout>} />
-      <Route path="/publish" component={() => <Layout><PublicationCalendar /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
       <Route path="/test/auth-bypass" component={AuthBypass} />

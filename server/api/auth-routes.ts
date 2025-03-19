@@ -1,176 +1,243 @@
-import { Router, Request, Response } from 'express';
+/**
+ * Маршруты для авторизации и управления токенами
+ */
+
+import { Request, Response, Express } from 'express';
+import axios from 'axios';
+import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
-import { directusApi } from '../directus';
 
 /**
  * Регистрирует маршруты для авторизации
- * @param app Express Router
+ * @param app Express приложение
  */
-export function registerAuthRoutes(app: any): void {
-  log('Регистрация маршрутов авторизации...', 'auth-routes');
-
-  // Маршрут для проверки статуса авторизации
-  app.get('/api/auth/me', async (req: Request, res: Response) => {
-    const userId = req.headers['x-user-id'] as string;
-    const token = (req.headers['authorization'] || '').replace('Bearer ', '');
+export function registerAuthRoutes(app: Express): void {
+  // Маршрут для проверки валидности токена
+  app.get('/api/auth/check', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
     
-    console.log(`QueryClient [/api/auth/me]: Token length: ${token.length}, User ID: ${userId || 'none'}`);
-    
-    if (!token) {
-      return res.json({ 
-        authenticated: false,
-        userId: null,
-        message: 'No token provided'
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Не авторизован',
+        message: 'Требуется токен авторизации'
       });
     }
     
+    const token = authHeader.substring(7);
+    
     try {
-      // ВАЖНОЕ ИЗМЕНЕНИЕ: Основной метод - проверка локально по заголовкам
-      // Это устраняет необходимость проверки через Directus API на каждый запрос
-      if (userId && token.length > 100) {
-        log(`Быстрая проверка токена для пользователя ${userId} успешна`, 'auth-routes');
-        return res.json({
-          authenticated: true,
-          userId: userId,
-          message: 'Authenticated via header'
+      // Пытаемся получить информацию о пользователе с этим токеном
+      const userInfo = await directusApiManager.request({
+        url: '/users/me',
+        method: 'get'
+      }, token);
+      
+      // Если успешно получили информацию, токен валидный
+      if (userInfo && userInfo.data && userInfo.data.id) {
+        return res.status(200).json({
+          valid: true,
+          user_id: userInfo.data.id
         });
       }
       
-      // Мы НЕ проверяем токен через Directus API, потому что это вызывает лишние ошибки
-      // В условиях ограниченного бюджета и нестабильности Directus API, мы доверяем локальным токенам
-      log(`Проверка токена по длине: ${token.length > 100 ? 'успешна' : 'не пройдена'}`, 'auth-routes');
-      
-      // Если токен достаточно длинный - предполагаем, что он действителен
-      // Это безопасно, так как наличие длинного токена уже является признаком успешной аутентификации
-      if (token.length > 100) {
-        // Без user_id в заголовке используем временный ID
-        const tempUserId = 'temp-user-id';
-        return res.json({
-          authenticated: true,
-          userId: tempUserId,
-          message: 'Authenticated via token length'
-        });
-      }
-      
-      // Если токен короткий или отсутствует - не аутентифицирован
-      return res.json({
-        authenticated: false,
-        message: 'Invalid token format'
-      });
-      
-    } catch (error) {
-      console.error('Auth check error:', error);
-      log(`Ошибка проверки токена: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`, 'auth-routes');
-      return res.json({
-        authenticated: false,
-        message: 'Authentication error'
-      });
-    }
-  });
-  
-  // Маршрут для входа в систему
-  app.post('/api/auth/login', async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Необходимо указать email и пароль'
-      });
-    }
-    
-    try {
-      const response = await directusApi.post('/auth/login', {
-        email,
-        password
-      });
-      
-      return res.json(response.data);
-    } catch (error: any) {
-      console.error('Login error:', error.message);
+      // Если не смогли получить информацию, но не получили ошибку, токен невалидный
       return res.status(401).json({
-        success: false,
-        message: 'Ошибка авторизации. Проверьте email и пароль'
+        valid: false,
+        message: 'Недействительный токен'
+      });
+    } catch (error: any) {
+      // Ошибка при запросе, токен невалидный или сервер недоступен
+      log(`Ошибка при проверке токена: ${error.message}`, 'auth');
+      return res.status(401).json({
+        valid: false,
+        message: 'Недействительный токен или ошибка сервера'
       });
     }
   });
   
-  // Маршрут для обновления токена
+  // Маршрут для обновления токена через refresh token
   app.post('/api/auth/refresh', async (req: Request, res: Response) => {
     const { refresh_token } = req.body;
     
     if (!refresh_token) {
       return res.status(400).json({
-        success: false,
-        message: 'Необходим refresh_token'
+        error: 'Отсутствует refresh_token'
       });
     }
     
     try {
-      const response = await directusApi.post('/auth/refresh', {
-        refresh_token
+      // Обновляем токен через Directus API
+      const response = await axios.post(`${process.env.DIRECTUS_URL}/auth/refresh`, {
+        refresh_token,
+        mode: 'json'
       });
       
-      return res.json(response.data);
-    } catch (error: any) {
-      console.error('Token refresh error:', error.message);
+      if (response.data && response.data.data) {
+        const { access_token, refresh_token, expires } = response.data.data;
+        
+        // Получаем информацию о пользователе
+        const userInfo = await directusApiManager.request({
+          url: '/users/me',
+          method: 'get'
+        }, access_token);
+        
+        const userId = userInfo?.data?.data?.id;
+        
+        if (userId) {
+          // Кэшируем новый токен
+          directusApiManager.cacheAuthToken(userId, access_token, expires || 3600);
+          
+          return res.status(200).json({
+            token: access_token,
+            refresh_token,
+            user_id: userId,
+            expires
+          });
+        }
+      }
+      
       return res.status(401).json({
-        success: false,
-        message: 'Не удалось обновить токен'
+        error: 'Не удалось обновить токен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при обновлении токена: ${error.message}`, 'auth');
+      return res.status(500).json({
+        error: 'Ошибка при обновлении токена',
+        message: error.message
       });
     }
   });
   
-  // Маршрут для регистрации пользователя
-  app.post('/api/auth/register', async (req: Request, res: Response) => {
-    const { email, password, first_name, last_name } = req.body;
+  // Маршрут для выхода из системы
+  app.post('/api/auth/logout', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
     
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Необходимо указать email и пароль'
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(200).json({ 
+        success: true,
+        message: 'Сессия завершена'
       });
     }
     
+    const token = authHeader.substring(7);
+    
     try {
-      // 1. Регистрируем пользователя через Directus
-      const userData = {
-        email,
-        password,
-        first_name: first_name || '',
-        last_name: last_name || '',
-        role: process.env.DIRECTUS_DEFAULT_ROLE || '9bb7b7ea-b540-4b21-b2b3-9bec98988a88' // ID роли по умолчанию
-      };
+      // Пытаемся сделать logout в Directus
+      await directusApiManager.request({
+        url: '/auth/logout',
+        method: 'post'
+      }, token);
       
-      const createResponse = await directusApi.post('/users', userData);
-      
-      if (!createResponse.data?.data?.id) {
-        throw new Error('Ошибка при создании пользователя');
-      }
-      
-      // 2. Выполняем вход с новыми учетными данными
-      const loginResponse = await directusApi.post('/auth/login', {
-        email,
-        password
+      return res.status(200).json({
+        success: true,
+        message: 'Успешный выход из системы'
       });
-      
-      return res.json(loginResponse.data);
-    } catch (error: any) {
-      console.error('Registration error:', error.message);
-      return res.status(400).json({
-        success: false,
-        message: error.response?.data?.errors?.[0]?.message || 'Ошибка регистрации. Возможно, этот email уже используется.'
+    } catch (error) {
+      // Даже если произошла ошибка при выходе из Directus, 
+      // мы всё равно считаем операцию успешной с точки зрения клиента
+      log(`Ошибка при выходе из системы: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
+      return res.status(200).json({
+        success: true,
+        message: 'Сессия завершена'
       });
     }
   });
 
-  // Маршрут для выхода из системы
-  app.post('/api/auth/logout', (req: Request, res: Response) => {
-    return res.json({
-      success: true,
-      message: 'Выход выполнен успешно'
-    });
+  app.post('/api/auth/login', async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        error: 'Отсутствуют учетные данные'
+      });
+    }
+    
+    try {
+      // Авторизуемся через Directus API
+      const response = await axios.post(`${process.env.DIRECTUS_URL}/auth/login`, {
+        email,
+        password,
+        mode: 'json'
+      });
+      
+      if (response.data && response.data.data) {
+        const { access_token, refresh_token, expires } = response.data.data;
+        
+        // Получаем информацию о пользователе
+        const userInfo = await directusApiManager.request({
+          url: '/users/me',
+          method: 'get'
+        }, access_token);
+        
+        const userId = userInfo?.data?.data?.id;
+        
+        if (userId) {
+          // Кэшируем токен
+          directusApiManager.cacheAuthToken(userId, access_token, expires || 3600);
+          
+          return res.status(200).json({
+            token: access_token,
+            refresh_token,
+            user_id: userId,
+            expires
+          });
+        }
+      }
+      
+      return res.status(401).json({
+        error: 'Неверные учетные данные'
+      });
+    } catch (error: any) {
+      log(`Ошибка при авторизации: ${error.message}`, 'auth');
+      return res.status(500).json({
+        error: 'Ошибка при авторизации',
+        message: error.message
+      });
+    }
   });
-  
-  log('Маршруты авторизации зарегистрированы', 'auth-routes');
+
+  // Маршрут для получения информации о текущем пользователе
+  app.get('/api/auth/me', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Не авторизован',
+        message: 'Требуется токен авторизации'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Получаем информацию о пользователе по токену
+      const userInfo = await directusApiManager.request({
+        url: '/users/me',
+        method: 'get'
+      }, token);
+      
+      if (userInfo?.data?.data?.id) {
+        const userData = userInfo.data.data;
+        
+        // Возвращаем только нужные поля пользователя
+        return res.status(200).json({
+          id: userData.id,
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          role: userData.role
+        });
+      }
+      
+      return res.status(401).json({
+        error: 'Недействительный токен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при получении данных пользователя: ${error.message}`, 'auth');
+      return res.status(401).json({
+        error: 'Не удалось получить информацию о пользователе',
+        message: error.message
+      });
+    }
+  });
 }

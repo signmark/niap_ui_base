@@ -65,17 +65,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // Используем наш API endpoint вместо прямого обращения к Directus
-      const data = await apiRequest('/api/auth/login', {
+      const response = await fetch('https://directus.nplanner.ru/auth/login', {
         method: 'POST',
-        data: credentials
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...credentials,
+          mode: 'json'
+        }),
       });
 
-      if (!data?.data?.access_token) {
-        throw new Error(data?.message || 'Ошибка авторизации');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.errors?.[0]?.message || 'Failed to login');
       }
 
-      return data.data;
+      return response.json();
     },
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
@@ -95,17 +101,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterData) => {
-      // Используем наш API endpoint вместо прямого обращения к Directus
-      const response = await apiRequest('/api/auth/register', {
+      const response = await fetch('https://directus.nplanner.ru/users', {
         method: 'POST',
-        data
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
 
-      if (!response?.data?.access_token) {
-        throw new Error(response?.message || 'Ошибка регистрации');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.errors?.[0]?.message || 'Failed to register');
       }
 
-      return response.data;
+      return response.json();
     },
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
@@ -127,14 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       // Получаем текущий токен для выхода
       const token = localStorage.getItem('auth_token');
-      
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+
       try {
-        // Используем наш API endpoint вместо прямого обращения к Directus
-        if (token) {
-          await apiRequest('/api/auth/logout', {
-            method: 'POST'
-          });
-        }
+        await fetch('https://directus.nplanner.ru/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
       } finally {
         // Всегда очищаем локальное хранилище и состояние, даже если запрос logout не удался
         localStorage.removeItem('auth_token');

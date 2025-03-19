@@ -1,96 +1,85 @@
-import { useEffect, ReactNode, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore } from '@/lib/store';
-import { isTokenValid } from '@/lib/auth';
+import { refreshAccessToken } from '@/lib/auth';
 
-interface AuthGuardProps {
-  children: ReactNode;
+interface Props {
+  children: React.ReactNode;
 }
 
-export default function AuthGuard({ children }: AuthGuardProps) {
+export function AuthGuard({ children }: Props) {
   const [, navigate] = useLocation();
   const [location] = useLocation();
-  const { token, setAuth, clearAuth } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Получаем токен и ID из localStorage
-  const hasStoredToken = !!localStorage.getItem('auth_token');
-  const hasToken = !!token;
-  const isLoginPage = location === '/login' || location === '/auth/login';
-  
-  console.log('AuthGuard: Checking auth state', { hasToken, hasStoredToken, isLoginPage });
+  const [isSessionChecked, setIsSessionChecked] = useState(false);
+  const token = useAuthStore((state) => state.token);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-  // Проверяем токен локально, без запросов к API
-  const localTokenValid = isTokenValid();
-  
+  // Эффект при загрузке компонента для проверки авторизации
   useEffect(() => {
-    // Если нет токена и не на странице логина - перенаправляем
-    if (!hasToken && !hasStoredToken && !isLoginPage) {
-      console.log('AuthGuard: No token found, redirecting to login');
-      navigate('/login');
-      setIsLoading(false);
-      return;
-    }
+    // Проверяем, есть ли токен в хранилище
+    const storedToken = localStorage.getItem('auth_token');
+    const storedUserId = localStorage.getItem('user_id');
+    const storedRefreshToken = localStorage.getItem('refresh_token');
     
-    // Если на странице логина и есть валидный токен - перенаправляем на главную
-    if (isLoginPage && hasToken && localTokenValid) {
-      console.log('AuthGuard: Valid token present, redirecting to home from login page');
-      navigate('/campaigns');
-      setIsLoading(false);
-      return;
-    }
+    const isLoginPage = location === '/auth/login' || location === '/login';
     
-    // Если есть сохраненный токен, но нет в состоянии - восстанавливаем из localStorage
-    if (!hasToken && hasStoredToken) {
-      const storedToken = localStorage.getItem('auth_token') || '';
-      const storedUserId = localStorage.getItem('user_id') || '';
-      
-      console.log('AuthGuard: Restored token from localStorage', {
-        tokenLength: storedToken.length,
-        hasUserId: !!storedUserId,
-      });
-      
-      setAuth(storedToken, storedUserId);
-    }
-    
-    // Проверяем локальную валидность токена
-    if (hasToken || hasStoredToken) {
-      if (localTokenValid) {
-        console.log('AuthGuard: Token is valid locally');
-        
-        // Если на странице логина, перенаправляем на главную
-        if (isLoginPage) {
-          navigate('/campaigns');
-        }
-      } else {
-        // Если токен невалидный, очищаем сессию
-        console.log('AuthGuard: Token is invalid locally, clearing auth data');
-        clearAuth();
-        
-        // Если не на странице логина, перенаправляем
-        if (!isLoginPage) {
-          navigate('/login');
+    console.log('AuthGuard: Checking auth state', { 
+      hasToken: !!token, 
+      hasStoredToken: !!storedToken, 
+      isLoginPage 
+    });
+
+    const checkSession = async () => {
+      // Если нет сохраненного токена, но есть refresh токен, пробуем обновить сессию
+      if (!storedToken && storedRefreshToken) {
+        try {
+          console.log('AuthGuard: Attempting to refresh token');
+          await refreshAccessToken();
+          setIsSessionChecked(true);
+          return;
+        } catch (error) {
+          console.error('AuthGuard: Token refresh failed:', error);
+          // Если обновление не удалось, перенаправляем на страницу входа
+          if (!isLoginPage) {
+            navigate('/auth/login');
+          }
+          setIsSessionChecked(true);
+          return;
         }
       }
-    }
-    
-    setIsLoading(false);
-  }, [hasToken, hasStoredToken, isLoginPage, localTokenValid, navigate, setAuth, clearAuth]);
+      
+      // Если уже есть токен в store, считаем что авторизация в порядке
+      if (token) {
+        console.log('AuthGuard: Token already in store');
+        setIsSessionChecked(true);
+        return;
+      }
+      
+      // Если есть сохраненный токен, но он не в store, добавляем его
+      if (storedToken && storedUserId) {
+        console.log('AuthGuard: Restoring token from localStorage');
+        setAuth(storedToken, storedUserId);
+        setIsSessionChecked(true);
+        return;
+      }
+      
+      // Если нет ни токена, ни storedToken, перенаправляем на логин
+      if (!token && !storedToken && !isLoginPage) {
+        console.log('AuthGuard: No token found, redirecting to login');
+        navigate('/auth/login');
+      }
+      
+      setIsSessionChecked(true);
+    };
 
-  // Если идёт загрузка или проверка, показываем спиннер
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    checkSession();
+  }, [token, location, navigate, setAuth]);
+
+  // Показываем загрузку пока не проверили сессию
+  if (!isSessionChecked) {
+    return <div className="flex h-screen items-center justify-center">Проверка сессии...</div>;
   }
 
-  // Если не на странице логина и нет токена, не рендерим содержимое (будет редирект)
-  if (!isLoginPage && !hasToken && !hasStoredToken) {
-    return null;
-  }
-
-  // В остальных случаях рендерим содержимое
+  // Если проверка прошла, возвращаем дочерние компоненты
   return <>{children}</>;
 }

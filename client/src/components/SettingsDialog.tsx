@@ -36,61 +36,27 @@ export function SettingsDialog() {
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
-  const token = useAuthStore((state) => state.token);
-  
-  // Используем более надежную реализацию запроса API ключей
   const { data: apiKeys, isLoading, refetch } = useQuery({
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
-        // При ошибке просто возвращаем пустой массив, чтобы не блокировать работу приложения
-        try {
-          const response = await directusApi.get('/items/user_api_keys', {
-            params: {
-              filter: {
-                user_id: {
-                  _eq: userId
-                }
-              },
-              fields: ['id', 'service_name', 'api_key']
-            }
-          });
-          return response.data?.data || [];
-        } catch (directusError) {
-          console.warn('Could not load API keys from Directus, using fallback:', directusError);
-          
-          // Резервный вариант: использовать API нашего сервера
-          try {
-            const fallbackResponse = await fetch('/api/settings/api-keys', {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'x-user-id': userId || ''
+        const response = await directusApi.get('/items/user_api_keys', {
+          params: {
+            filter: {
+              user_id: {
+                _eq: userId
               }
-            });
-            
-            if (fallbackResponse.ok) {
-              const data = await fallbackResponse.json();
-              return data.data || [];
-            }
-          } catch (fallbackError) {
-            console.warn('Fallback API also failed:', fallbackError);
+            },
+            fields: ['id', 'service_name', 'api_key']
           }
-          
-          // Если всё равно не получилось, возвращаем пустой массив
-          return [];
-        }
+        });
+        return response.data?.data || [];
       } catch (error) {
         console.error('Error fetching API keys:', error);
-        // Возвращаем пустой массив вместо выбрасывания ошибки
-        return [];
+        throw error;
       }
     },
-    enabled: !!userId,
-    // Не пытаться повторять запрос при ошибке
-    retry: false,
-    // Приоритезируем кэшированные данные
-    staleTime: 1000 * 60 * 5 // 5 минут
+    enabled: !!userId
   });
 
   useEffect(() => {
@@ -163,9 +129,6 @@ export function SettingsDialog() {
         { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
 
-      let saveErrors = [];
-
-      // Используем более надежный метод сохранения - через нативный fetch с обработкой ошибок
       for (const service of services) {
         // Пропускаем пустые ключи, кроме XMLRiver, которому нужно сохранить user_id даже если ключ пуст
         if (!service.key && service.name !== 'xmlriver') continue;
@@ -173,83 +136,20 @@ export function SettingsDialog() {
 
         const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
-        try {
-          if (existingKey) {
-            // Пробуем сначала через наш внутренний API
-            try {
-              const response = await fetch(`/api/settings/api-keys/${existingKey.id}`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-                  'x-user-id': userId
-                },
-                body: JSON.stringify({ api_key: service.key })
-              });
-              
-              if (!response.ok) {
-                // Если не получилось через наш API, пробуем через Directus напрямую
-                await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
-                  api_key: service.key
-                });
-              }
-            } catch (e) {
-              // Если наш API не сработал, пробуем через Directus напрямую
-              await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
-                api_key: service.key
-              });
-            }
-          } else {
-            // Для новых ключей
-            try {
-              const response = await fetch('/api/settings/api-keys', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-                  'x-user-id': userId
-                },
-                body: JSON.stringify({
-                  user_id: userId,
-                  service_name: service.name,
-                  api_key: service.key
-                })
-              });
-              
-              if (!response.ok) {
-                // Если не получилось через наш API, пробуем через Directus напрямую
-                await directusApi.post('/items/user_api_keys', {
-                  user_id: userId,
-                  service_name: service.name,
-                  api_key: service.key
-                });
-              }
-            } catch (e) {
-              // Если наш API не сработал, пробуем через Directus напрямую
-              await directusApi.post('/items/user_api_keys', {
-                user_id: userId,
-                service_name: service.name,
-                api_key: service.key
-              });
-            }
-          }
-        } catch (err) {
-          console.error(`Ошибка при сохранении ключа ${service.name}:`, err);
-          saveErrors.push(service.name);
+        if (existingKey) {
+          await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
+            api_key: service.key
+          });
+        } else {
+          await directusApi.post('/items/user_api_keys', {
+            user_id: userId,
+            service_name: service.name,
+            api_key: service.key
+          });
         }
       }
-      
-      // Обновляем список ключей после сохранения независимо от результата
-      try {
-        await refetch();
-      } catch (e) {
-        console.warn("Не удалось обновить список API ключей после сохранения", e);
-      }
-      
-      // Если есть ошибки, сообщаем о них
-      if (saveErrors.length > 0) {
-        throw new Error(`Не удалось сохранить ключи для: ${saveErrors.join(', ')}`);
-      }
+      // Обновляем список ключей после сохранения
+      await refetch();
     },
     onSuccess: () => {
       toast({
