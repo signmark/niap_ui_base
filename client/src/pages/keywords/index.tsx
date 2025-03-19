@@ -62,15 +62,31 @@ export default function Keywords() {
     setIsSearching(true);
 
     try {
-      // Добавляем случайный параметр для предотвращения кеширования
-      const nocache = Date.now();
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`);
+      // Используем новый XMLRiver API endpoint
+      const authToken = localStorage.getItem('token');
+      const response = await fetch(`/api/xmlriver/keywords/${encodeURIComponent(searchQuery.trim())}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error("Ошибка при поиске ключевых слов");
+        if (data.key_missing) {
+          toast({
+            variant: "destructive",
+            title: "Требуется API ключ",
+            description: "API ключ XMLRiver не найден. Добавьте его в настройках профиля."
+          });
+          return;
+        }
+        
+        throw new Error(data.message || "Ошибка при поиске ключевых слов");
       }
 
-      const data = await response.json();
-      if (!data?.data?.keywords?.length) {
+      if (!data?.success || !data?.data?.keywords?.length) {
         toast({ 
           title: "Результаты",
           description: "Не найдено ключевых слов" 
@@ -80,8 +96,8 @@ export default function Keywords() {
 
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: parseInt(kw.trend),
-        competition: parseInt(kw.competition),
+        trend: parseInt(kw.frequency) || 0,
+        competition: parseInt(kw.competition || 0),
         selected: false
       }));
 
@@ -96,7 +112,7 @@ export default function Keywords() {
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось выполнить поиск"
+        description: error instanceof Error ? error.message : "Не удалось выполнить поиск"
       });
     } finally {
       setIsSearching(false);

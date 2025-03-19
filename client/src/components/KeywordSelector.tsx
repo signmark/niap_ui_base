@@ -1,242 +1,227 @@
-import { useState, useEffect, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { directusApi } from "@/lib/directus";
-import { Search, Loader2 } from "lucide-react";
-import { KeywordTable } from "@/components/KeywordTable";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search, AlertTriangle, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-interface KeywordSelectorProps {
-  campaignId: string;
+interface Keyword {
+  keyword: string;
+  frequency?: number;
+  trend?: number;
+  competition?: number;
+  source?: string;
 }
 
-export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const queryClient = useQueryClient();
-  const containerRef = useRef<HTMLDivElement>(null);
+interface KeywordSelectorProps {
+  onSelect: (keywords: string[]) => void;
+  selectedKeywords?: string[];
+  campaignId?: string;
+  label?: string;
+  placeholder?: string;
+}
+
+export function KeywordSelector({
+  onSelect,
+  selectedKeywords = [],
+  label = 'Ключевые слова',
+  placeholder = 'Введите ключевое слово или фразу',
+}: KeywordSelectorProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedItems, setSelectedItems] = useState<string[]>(selectedKeywords || []);
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setSearchResults([]);
-      }
+    if (selectedKeywords) {
+      setSelectedItems(selectedKeywords);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["/api/keywords", campaignId],
-    queryFn: async () => {
-      if (!campaignId) return [];
-      const response = await directusApi.get('/items/user_keywords', {
-        params: {
-          filter: { campaign_id: { _eq: campaignId } }
-        }
-      });
-      return response.data?.data || [];
-    },
-    enabled: !!campaignId
-  });
+  }, [selectedKeywords]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
+    if (!searchTerm.trim()) return;
     
-    // Получаем токен из состояния
-    const auth = directusApi.defaults.headers.common['Authorization'];
-    let authToken = '';
+    setIsLoading(true);
+    setErrorMessage('');
+    setKeywords([]);
     
-    if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
-      authToken = auth.substring(7);
-      console.log('Got token from directusApi:', authToken.substring(0, 10) + '...');
-    } else {
-      // Пробуем получить из localStorage как запасной вариант
-      authToken = localStorage.getItem('auth_token') || '';
-      console.log('Got token from localStorage:', authToken ? (authToken.substring(0, 10) + '...') : 'нет токена');
-    }
-    
-    if (!authToken) {
-      toast({
-        variant: "destructive",
-        description: "Требуется авторизация. Пожалуйста, войдите в систему."
-      });
-      setIsSearching(false);
-      return;
-    }
-
     try {
       // Добавляем случайный параметр для предотвращения кеширования
       const nocache = Date.now();
-      console.log('Отправляем запрос с токеном:', authToken.substring(0, 10) + '...');
-      const headers = new Headers();
-      headers.append('Authorization', `Bearer ${authToken}`);
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`);
       
-      const response = await fetch(
-        `/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`,
-        {
-          headers: headers,
-          credentials: 'same-origin'
-        }
-      );
-      
-      // Проверка на ошибки авторизации или отсутствие API ключа
-      if (response.status === 401) {
-        toast({
-          variant: "destructive",
-          description: "Ошибка авторизации. Пожалуйста, войдите в систему заново."
-        });
-        setIsSearching(false);
-        return;
-      }
-      
-      if (response.status === 400) {
-        const errorData = await response.json();
-        if (errorData.key_missing && errorData.service === 'xmlriver') {
-          toast({
-            variant: "destructive",
-            description: "Отсутствует API ключ XMLRiver. Пожалуйста, добавьте ключ в настройках."
-          });
-          setIsSearching(false);
+      if (!response.ok) {
+        if (response.status === 401) {
+          setShowApiKeyDialog(true);
+          setIsLoading(false);
           return;
         }
+        throw new Error(`Ошибка при поиске ключевых слов: ${response.status}`);
       }
-      
-      const data = await response.json();
 
+      const data = await response.json();
+      
       if (!data?.data?.keywords?.length) {
-        toast({ description: "Не найдено ключевых слов" });
+        toast({ 
+          title: "Результаты",
+          description: "Не найдено ключевых слов" 
+        });
+        setIsLoading(false);
         return;
       }
 
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: parseInt(kw.trend),
-        competition: parseInt(kw.competition),
-        selected: false
+        trend: parseInt(kw.trend) || 0,
+        competition: parseInt(kw.competition) || 0,
       }));
 
-      setSearchResults(formattedResults);
-      setSearchQuery(""); // Очищаем поле поиска после получения результатов
-      toast({ description: `Найдено ${formattedResults.length} ключевых слов` });
+      setKeywords(formattedResults);
+      
+      toast({ 
+        title: "Успешно",
+        description: `Найдено ${formattedResults.length} ключевых слов` 
+      });
+      
     } catch (error) {
+      console.error('Error searching keywords:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Произошла ошибка при поиске ключевых слов');
+      
       toast({
-        variant: "destructive",
-        description: "Не удалось выполнить поиск"
+        title: 'Ошибка поиска',
+        description: error instanceof Error ? error.message : 'Произошла ошибка при поиске ключевых слов',
+        variant: 'destructive'
       });
     } finally {
-      setIsSearching(false);
+      setIsLoading(false);
     }
   };
 
-  const handleKeywordToggle = (index: number) => {
-    setSearchResults(prev =>
-      prev.map((kw, i) => i === index ? { ...kw, selected: !kw.selected } : kw)
-    );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    setSearchResults(prev => prev.map(kw => ({ ...kw, selected: checked })));
+  const handleSelect = (keyword: string) => {
+    const newSelected = [...selectedItems];
+    
+    if (newSelected.includes(keyword)) {
+      const index = newSelected.indexOf(keyword);
+      newSelected.splice(index, 1);
+    } else {
+      newSelected.push(keyword);
+    }
+    
+    setSelectedItems(newSelected);
+    onSelect(newSelected);
   };
 
-  const handleSaveSelected = async () => {
-    const selectedKeywords = searchResults.filter(kw => kw.selected);
-    if (!selectedKeywords.length) {
-      toast({
-        variant: "destructive",
-        description: "Выберите ключевые слова"
-      });
-      return;
-    }
-
-    const authToken = localStorage.getItem('auth_token');
-    if (!authToken) {
-      toast({
-        variant: "destructive",
-        description: "Требуется авторизация"
-      });
-      return;
-    }
-
-    try {
-      const now = new Date().toISOString();
-
-      for (const keyword of selectedKeywords) {
-        const data = {
-          keyword: keyword.keyword,
-          campaign_id: campaignId,
-          trend_score: keyword.trend,
-          mentions_count: keyword.competition,
-          date_created: now,
-          last_checked: now
-        };
-
-        console.log('Отправляем в Directus:', data);
-
-        await directusApi.post('items/user_keywords', data);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-      setSearchResults([]);
-      toast({ description: "Ключевые слова добавлены" });
-    } catch (error: any) {
-      console.error('Error saving keywords:', error);
-      toast({
-        variant: "destructive",
-        description: "Не удалось сохранить ключевые слова"
-      });
-    }
+  const formatNumber = (num: number): string => {
+    return new Intl.NumberFormat('ru-RU').format(num);
   };
 
   return (
-    <div ref={containerRef} className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Введите запрос для поиска ключевых слов"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1"
-        />
-        <Button onClick={handleSearch} disabled={isSearching}>
-          {isSearching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск...
-            </>
-          ) : (
-            <>
-              <Search className="mr-2 h-4 w-4" />
-              Искать
-            </>
-          )}
-        </Button>
+    <div className="w-full space-y-4">
+      <div className="space-y-2">
+        <div className="font-medium">{label}</div>
+        <div className="flex space-x-2">
+          <Input
+            type="text"
+            placeholder={placeholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button onClick={handleSearch} disabled={isLoading || !searchTerm.trim()}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+            Поиск
+          </Button>
+        </div>
       </div>
 
-      <KeywordTable
-        keywords={keywords}
-        searchResults={searchResults}
-        isLoading={isLoadingKeywords || isSearching}
-        onDelete={async (id) => {
-          try {
-            await directusApi.delete(`items/user_keywords/${id}`);
-            queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-            toast({ description: "Ключевое слово удалено" });
-          } catch {
-            toast({
-              variant: "destructive",
-              description: "Не удалось удалить ключевое слово"
-            });
-          }
-        }}
-        onKeywordToggle={handleKeywordToggle}
-        onSelectAll={handleSelectAll}
-        onSaveSelected={handleSaveSelected}
-      />
+      {errorMessage && (
+        <div className="bg-destructive/15 p-3 rounded-md flex items-start space-x-2">
+          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="text-destructive text-sm">{errorMessage}</div>
+        </div>
+      )}
+
+      {selectedItems.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Выбранные ключевые слова:</div>
+          <div className="flex flex-wrap gap-2">
+            {selectedItems.map((keyword) => (
+              <Badge 
+                key={keyword} 
+                className="cursor-pointer hover:bg-primary/80"
+                onClick={() => handleSelect(keyword)}
+              >
+                {keyword}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {keywords.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Результаты поиска:</div>
+          <div className="max-h-60 overflow-y-auto border rounded-md">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ключевое слово</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Частота</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Добавить</th>
+                </tr>
+              </thead>
+              <tbody className="bg-background divide-y divide-border">
+                {keywords.map((item, index) => (
+                  <tr key={index} className={selectedItems.includes(item.keyword) ? 'bg-primary/10' : ''}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm">{item.keyword}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.trend || 0)}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm">
+                      <Button
+                        variant={selectedItems.includes(item.keyword) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSelect(item.keyword)}
+                      >
+                        {selectedItems.includes(item.keyword) ? 'Убрать' : 'Добавить'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <AlertDialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Требуется API ключ XMLRiver</AlertDialogTitle>
+            <AlertDialogDescription>
+              Для поиска ключевых слов необходимо добавить API ключ XMLRiver в настройках профиля.
+              <br /><br />
+              Вы можете получить API ключ на сайте <a href="https://xmlriver.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">XMLRiver</a>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowApiKeyDialog(false)}>
+              Понятно
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
