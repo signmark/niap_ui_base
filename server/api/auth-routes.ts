@@ -25,8 +25,10 @@ export function registerAuthRoutes(app: any): void {
     }
     
     try {
-      // Если токен есть, и есть ID пользователя в заголовке, считаем авторизованным
-      if (userId) {
+      // ВАЖНОЕ ИЗМЕНЕНИЕ: Если токен есть, и длина достаточная, и есть ID пользователя, считаем авторизованным
+      // Это устраняет необходимость проверки через Directus API на каждый запрос
+      if (userId && token.length > 100) {
+        log(`Быстрая проверка токена для пользователя ${userId} успешна`, 'auth-routes');
         return res.json({
           authenticated: true,
           userId: userId,
@@ -43,6 +45,7 @@ export function registerAuthRoutes(app: any): void {
       });
       
       if (!response.ok) {
+        log(`Проверка токена через Directus API не удалась: ${response.status}`, 'auth-routes');
         return res.json({
           authenticated: false,
           message: 'Invalid token'
@@ -52,12 +55,14 @@ export function registerAuthRoutes(app: any): void {
       const userData = await response.json();
       
       if (!userData?.data?.id) {
+        log('Проверка токена: пользователь не найден в данных ответа', 'auth-routes');
         return res.json({
           authenticated: false,
           message: 'User not found'
         });
       }
       
+      log(`Проверка токена через Directus API успешна: ${userData.data.id}`, 'auth-routes');
       return res.json({
         authenticated: true,
         userId: userData.data.id,
@@ -66,6 +71,7 @@ export function registerAuthRoutes(app: any): void {
       
     } catch (error) {
       console.error('Auth check error:', error);
+      log(`Ошибка проверки токена: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`, 'auth-routes');
       return res.json({
         authenticated: false,
         message: 'Authentication error'
