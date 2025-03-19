@@ -16,8 +16,11 @@ export function registerContentRoutes(router: Router) {
    */
   router.get('/campaign-content', async (req: Request, res: Response) => {
     try {
-      // В реальном приложении здесь будет получение userId из сессии
+      // Получаем userId из запроса (добавляется middleware auth)
       const userId = (req as any).userId;
+      // Получаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
       
       if (!userId) {
         return res.status(401).json({
@@ -28,9 +31,9 @@ export function registerContentRoutes(router: Router) {
       
       const campaignId = req.query.campaignId as string | undefined;
       
-      console.log(`Fetching content for campaign ID: ${campaignId}`);
+      console.log(`Fetching content for campaign ID: ${campaignId}, token present: ${!!token}`);
       
-      const content = await storage.getCampaignContent(userId, campaignId);
+      const content = await storage.getCampaignContent(userId, campaignId, token || undefined);
       
       // Логирование примера ключевых слов
       if (content.length > 0) {
@@ -61,7 +64,13 @@ export function registerContentRoutes(router: Router) {
     try {
       const contentId = req.params.id;
       
-      const content = await storage.getCampaignContentById(contentId);
+      // Получаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+      
+      console.log(`Fetching content by ID: ${contentId}, token present: ${!!token}`);
+      
+      const content = await storage.getCampaignContentById(contentId, token || undefined);
       
       if (!content) {
         return res.status(404).json({
