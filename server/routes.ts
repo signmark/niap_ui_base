@@ -2591,6 +2591,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerValidationRoutes(app);
   registerPublishingRoutes(app);
   
+  // Создаем и регистрируем API-маршруты
+  const apiRouter = express.Router();
+  app.use('/api', apiRouter);
+  registerAPIRoutes(apiRouter);
+  
   // Запускаем планировщик публикаций
   publishScheduler.start();
   
