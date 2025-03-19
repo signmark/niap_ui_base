@@ -182,21 +182,13 @@ export function registerXmlRiverRoutes(app: Express): void {
         }
       }
       
-      // Если не удалось получить ключевые слова с ключом пользователя, используем дефолтный ключ
-      if (keywords === null) {
-        log(`Поиск ключевых слов в XMLRiver для запроса: ${query} с дефолтным ключом`, 'xmlriver-api');
-        
-        // Используем прямые значения ключа и ID пользователя
-        const xmlRiverUserId = '16797';
-        const xmlRiverApiKey = 'f7947eff83104621deb713275fe3260bfde4f001';
-        
-        keywords = await xmlRiverClient.getKeywordsWithFixedCredentials(query, xmlRiverUserId, xmlRiverApiKey);
-      }
-      
+      // Если не удалось получить ключевые слова с ключом пользователя
       if (keywords === null) {
         return res.status(400).json({
-          error: 'Ошибка получения данных',
-          message: 'Не удалось получить данные от XMLRiver API. Проверьте настройки API ключа.'
+          success: false,
+          error: 'API ключ не настроен',
+          key_missing: true,
+          message: 'Ключ XMLRiver API не найден в настройках пользователя. Добавьте его в профиле.'
         });
       }
       
