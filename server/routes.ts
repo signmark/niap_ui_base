@@ -4003,14 +4003,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           
             // Обрабатываем полученные ключевые слова
-            if (parsedKeywords.length > 0) {
+            if (parsedKeywords && parsedKeywords.length > 0) {
               console.log(`[${requestId}] Extracted ${parsedKeywords.length} keywords from Perplexity`);
               
-              finalKeywords = parsedKeywords.map(item => ({
-                keyword: item.keyword || "",
-                trend: parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000,
-                competition: parseInt(item.competition) || Math.floor(Math.random() * 100)
-              })).filter(item => item.keyword && item.keyword.trim() !== "");
+              finalKeywords = parsedKeywords.map(item => {
+                if (!item || typeof item !== 'object') {
+                  console.warn(`[${requestId}] Invalid keyword item:`, item);
+                  return null;
+                }
+                
+                return {
+                  keyword: item.keyword || "",
+                  trend: typeof item.trend === 'number' ? item.trend : 
+                         typeof item.trend === 'string' ? parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000 : 
+                         Math.floor(Math.random() * 5000) + 1000,
+                  competition: typeof item.competition === 'number' ? item.competition : 
+                               typeof item.competition === 'string' ? parseInt(item.competition) || Math.floor(Math.random() * 100) : 
+                               Math.floor(Math.random() * 100)
+                };
+              })
+              .filter(item => item && item.keyword && item.keyword.trim() !== "");
               
               console.log(`[${requestId}] Processed ${finalKeywords.length} valid keywords`);
             }
@@ -4086,14 +4098,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // - Чем выше частота, тем выше конкуренция (по логике рынка)
             // - Используем логарифмическую шкалу для более равномерного распределения
             const allKeywords = items.map((item: any) => {
-              const number = parseInt(item.number.replace(/\s/g, ''));
+              if (!item || typeof item !== 'object') {
+                console.warn(`[${requestId}] Invalid XMLRiver item:`, item);
+                return null;
+              }
+              
+              // Валидация и безопасное извлечение значений
+              let number = 0;
+              try {
+                if (typeof item.number === 'string') {
+                  number = parseInt(item.number.replace(/\s/g, ''));
+                } else if (typeof item.number === 'number') {
+                  number = item.number;
+                }
+              } catch (e) {
+                console.warn(`[${requestId}] Error parsing number value:`, e);
+                number = Math.floor(Math.random() * 5000) + 1000; // Fallback value
+              }
+              
               // Расчет конкуренции: от 1 до 100, учитывая частоту запроса относительно максимума
               const relativePop = maxNumber > 0 ? number / maxNumber : 0;
               // Используем логарифмическую шкалу для более естественного распределения
               const competition = Math.max(1, Math.min(100, Math.round(relativePop * 100)));
               
               return {
-                keyword: item.phrase,
+                keyword: item.phrase || "",
                 trend: number,
                 competition: competition,
                 // Сохраняем исходные данные для отладки и возможного улучшения алгоритма
@@ -4104,10 +4133,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               };
             });
             
-            // Фильтруем результаты на нецензурную лексику
-            finalKeywords = allKeywords.filter(item => 
-              !offensiveWords.some(word => item.keyword.toLowerCase().includes(word))
-            );
+            // Фильтруем результаты на нецензурную лексику и проверяем на null/undefined
+            finalKeywords = allKeywords.filter(item => {
+              if (!item || !item.keyword) return false;
+              return !offensiveWords.some(word => typeof item.keyword === 'string' && item.keyword.toLowerCase().includes(word));
+            });
             
             // Сохраняем результаты в кеш для обычных ключевых слов
             if (!isUrl && finalKeywords.length > 0) {
