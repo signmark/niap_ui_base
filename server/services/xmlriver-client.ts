@@ -26,6 +26,8 @@ export class XmlRiverClient {
       // Получаем API ключ XMLRiver из сервиса API ключей
       const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver' as ApiServiceName, token);
       
+      log(`[${requestId}] Получен API ключ от сервиса: ${xmlRiverConfig ? 'ДА' : 'НЕТ'}`, 'xmlriver');
+      
       if (!xmlRiverConfig) {
         log(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`, 'xmlriver');
         return null;
@@ -74,6 +76,7 @@ export class XmlRiverClient {
       
       // Выполняем запрос к XMLRiver API
       log(`[${requestId}] Выполняем запрос к XMLRiver API: ${this.baseUrl}`, 'xmlriver');
+      log(`[${requestId}] Параметры запроса: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}..., query=${query}`, 'xmlriver');
       
       const response = await axios.get(this.baseUrl, {
         params: {

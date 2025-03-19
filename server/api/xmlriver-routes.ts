@@ -6,6 +6,7 @@ import { Request, Response, Express, NextFunction } from 'express';
 import axios from 'axios';
 import { xmlRiverClient } from '../services/xmlriver-client';
 import { log } from '../utils/logger';
+import { ApiServiceName, apiKeyService } from '../services/api-keys';
 
 /**
  * Middleware для авторизации запросов
