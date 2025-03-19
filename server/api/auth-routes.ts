@@ -161,4 +161,49 @@ export function registerAuthRoutes(app: Express): void {
       });
     }
   });
+
+  // Маршрут для получения информации о текущем пользователе
+  app.get('/auth/me', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Не авторизован',
+        message: 'Требуется токен авторизации'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Получаем информацию о пользователе по токену
+      const userInfo = await directusApiManager.request({
+        url: '/users/me',
+        method: 'get'
+      }, token);
+      
+      if (userInfo?.data?.data?.id) {
+        const userData = userInfo.data.data;
+        
+        // Возвращаем только нужные поля пользователя
+        return res.status(200).json({
+          id: userData.id,
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          role: userData.role
+        });
+      }
+      
+      return res.status(401).json({
+        error: 'Недействительный токен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при получении данных пользователя: ${error.message}`, 'auth');
+      return res.status(401).json({
+        error: 'Не удалось получить информацию о пользователе',
+        message: error.message
+      });
+    }
+  });
 }
