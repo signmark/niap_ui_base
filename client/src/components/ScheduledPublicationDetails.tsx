@@ -70,9 +70,9 @@ export default function ScheduledPublicationDetails({
         });
         
         // Создаем локально обновленную копию контента
-        const updatedContent = {
+        const updatedContent: CampaignContent = {
           ...content,
-          status: 'draft',
+          status: 'draft' as const,
           scheduledAt: null
         };
         
@@ -81,7 +81,8 @@ export default function ScheduledPublicationDetails({
           const platforms = { ...updatedContent.socialPlatforms };
           
           // Для каждой платформы меняем статус на 'cancelled'
-          Object.keys(platforms).forEach(platform => {
+          Object.keys(platforms).forEach(platformKey => {
+            const platform = platformKey as SocialPlatform;
             if (platforms[platform]) {
               platforms[platform] = {
                 ...platforms[platform],
@@ -103,11 +104,11 @@ export default function ScheduledPublicationDetails({
         // Обработка ошибки из ответа сервера
         throw new Error(response?.error || 'Не удалось отменить публикацию');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Ошибка при отмене публикации:", error);
       toast({
         title: "Ошибка отмены",
-        description: `Не удалось отменить запланированную публикацию: ${error.message || 'Неизвестная ошибка'}`,
+        description: `Не удалось отменить запланированную публикацию: ${error?.message || 'Неизвестная ошибка'}`,
         variant: "destructive",
       });
     }
@@ -238,7 +239,7 @@ export default function ScheduledPublicationDetails({
               </div>
             )}
             
-            {content.keywords && content.keywords.length > 0 && (
+            {Array.isArray(content.keywords) && content.keywords.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
