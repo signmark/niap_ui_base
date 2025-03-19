@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SocialMediaIcon } from '@/components/SocialMediaIcon';
+import SocialMediaIcon from '@/components/SocialMediaIcon';
 import { Loader2, Filter } from 'lucide-react';
 import { SocialPlatform } from '@shared/schema';
 import { useCampaigns } from '@/hooks/useCampaigns';
