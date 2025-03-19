@@ -1,37 +1,33 @@
-/**
- * Типы социальных платформ для публикаций
- */
+import { SocialPlatform } from "@/types";
 
-// Определяем типы социальных платформ для безопасного использования
-export const safeSocialPlatforms = ['instagram', 'facebook', 'telegram', 'vk'] as const;
-export type SafeSocialPlatform = typeof safeSocialPlatforms[number];
+// Массив доступных социальных платформ для безопасного использования в коде
+export const safeSocialPlatforms: SocialPlatform[] = [
+  'instagram',
+  'facebook',
+  'telegram',
+  'vk'
+];
 
-// Платформы на русском для отображения
-export const platformNames: Record<SafeSocialPlatform, string> = {
+// Словарь с переводами названий платформ для отображения в UI
+export const platformNames: Record<SocialPlatform, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
   telegram: 'Telegram',
   vk: 'ВКонтакте'
 };
 
-// Типы статусов публикаций
-export type PublicationStatus = 'pending' | 'scheduled' | 'published' | 'failed' | 'cancelled';
+// Иконки для платформ (можно расширить при необходимости)
+export const platformIcons: Record<SocialPlatform, string> = {
+  instagram: 'instagram',
+  facebook: 'facebook',
+  telegram: 'send',
+  vk: 'message-circle'
+};
 
-// Информация о платформе для публикации
-export interface PlatformPublishInfo {
-  status?: PublicationStatus;
-  scheduledAt?: string | Date | null;
-  publishedAt?: string | Date | null;
-  postId?: string | null;
-  postUrl?: string | null;
-  error?: string | null;
-}
-
-// Формат данных социальных платформ
-export interface SocialPlatforms {
-  instagram?: PlatformPublishInfo;
-  facebook?: PlatformPublishInfo;
-  telegram?: PlatformPublishInfo;
-  vk?: PlatformPublishInfo;
-  [key: string]: PlatformPublishInfo | undefined;
-}
+// Перечисление для удобства доступа к цветам платформ
+export const platformColors: Record<SocialPlatform, string> = {
+  instagram: 'bg-gradient-to-r from-purple-500 to-pink-500',
+  facebook: 'bg-blue-600',
+  telegram: 'bg-blue-400',
+  vk: 'bg-blue-500'
+};
