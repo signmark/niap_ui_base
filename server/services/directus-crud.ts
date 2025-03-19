@@ -1,26 +1,17 @@
 import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
+import { 
+  DirectusRequestOptions, 
+  DirectusAuthResult, 
+  DirectusUser,
+  prepareDataForDirectus,
+  processDirectusData
+} from './directus-types';
 
 /**
  * Типы операций для логирования
  */
 type CrudOperation = 'create' | 'read' | 'update' | 'delete' | 'list';
-
-/**
- * Опции для запросов
- */
-interface RequestOptions {
-  userId?: string;
-  authToken?: string;
-  fields?: string[];
-  sort?: string[];
-  limit?: number;
-  page?: number;
-  filter?: Record<string, any>;
-  search?: string;
-  meta?: string[];
-  deep?: Record<string, any>;
-}
 
 /**
  * Класс для унифицированного выполнения CRUD операций с Directus
