@@ -28,6 +28,22 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { publishScheduler } from './services/publish-scheduler';
+import { directusCrud } from './services/directus-crud';
+
+// Расширяем типы Express.Request для поддержки пользовательских полей в middleware
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        token: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+      };
+    }
+  }
+}
 
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
@@ -956,8 +972,19 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
         return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
       }
 
-      // Добавляем userId в объект запроса для дальнейшего использования
+      // Устанавливаем информацию о пользователе в объект запроса
+      req.user = {
+        id: response.data.data.id,
+        token: token,
+        email: response.data.data.email,
+        firstName: response.data.data.first_name,
+        lastName: response.data.data.last_name
+      };
+      
+      // Оставляем поддержку старого интерфейса для обратной совместимости
       (req as any).userId = response.data.data.id;
+      
+      console.log(`User authenticated: ${req.user.id} (${req.user.email || 'no email'})`);
       next();
     } catch (error) {
       console.error('Auth error:', error);
@@ -4038,30 +4065,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (finalKeywords.length === 0) {
         console.log('Falling back to XMLRiver for keyword search');
         try {
-          // Получаем userId из запроса или используем временный ID для неавторизованных запросов
-          const userId = req.userId || 'guest';
+          // Получаем userId из запроса, установленный authenticateUser middleware
+          // Если пользователь не авторизован, используем временный ID
+          const userId = req.user?.id || 'guest';
           
           console.log(`[${requestId}] Searching for XMLRiver API key for user: ${userId}`);
           
-          // Извлекаем токен из заголовка Authorization
-          const authHeader = req.headers.authorization;
+          // Извлекаем токен из заголовка Authorization или из req.user.token
           let authToken = null;
-          
-          if (authHeader && authHeader.startsWith('Bearer ')) {
-            authToken = authHeader.substring(7);
-            console.log(`[${requestId}] Found authorization token in request headers`);
+          if (req.user?.token) {
+            authToken = req.user.token;
+            console.log(`[${requestId}] Using token from authenticated user`);
           } else {
-            console.log(`[${requestId}] No authorization token in request headers`);
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              authToken = authHeader.substring(7);
+              console.log(`[${requestId}] Found authorization token in request headers`);
+            } else {
+              console.log(`[${requestId}] No authorization token in request headers`);
+            }
           }
           
           // Получаем ключ XMLRiver из центрального хранилища API ключей с передачей authToken
-          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver');
+          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', authToken);
           
           if (!xmlRiverConfig) {
             console.warn(`[${requestId}] XMLRiver API ключ не найден в настройках пользователя. Запрос не может быть выполнен.`);
             return res.status(400).json({
               error: "API ключ не настроен",
-              message: "Пожалуйста, добавьте API ключ XMLRiver в настройках профиля"
+              message: "Пожалуйста, добавьте API ключ XMLRiver в настройках профиля. Формат ключа: user_id:api_key (например, 16797:your_api_key)",
+              key_missing: true,
+              service: "xmlriver"
             });
           }
           
