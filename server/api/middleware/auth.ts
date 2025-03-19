@@ -60,7 +60,7 @@ export const authenticateApiRequest = async (req: Request, res: Response, next: 
       }
       
       // Если ID пользователя не указан в заголовке, пытаемся получить через Directus API
-      const userResponse = await fetch('https://dev-directus-nplanner.nplanner.ru/users/me', {
+      const userResponse = await fetch('https://directus.nplanner.ru/users/me', {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
