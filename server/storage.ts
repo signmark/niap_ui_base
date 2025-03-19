@@ -1,4 +1,5 @@
 import { directusApi } from "./lib/directus";
+import { directusStorageAdapter } from './services/directus';
 import { 
   type Campaign, 
   type InsertCampaign, 
