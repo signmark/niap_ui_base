@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerPublishedRoutes } from './published-routes';
+import publishedRoutes from './published-routes';
 import { registerPublishingRoutes } from './publishing-routes';
 
 /**
@@ -13,7 +13,7 @@ export function createApiRouter(): Router {
   registerPublishingRoutes(router);
   
   // Регистрируем маршруты для работы с опубликованным контентом
-  registerPublishedRoutes(router);
+  router.use(publishedRoutes);
   
   return router;
 }
