@@ -373,9 +373,8 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
   
-  // Маршрут для обновления контента кампании через специализированный публикационный интерфейс
+  // Маршрут для обновления контента кампании через публикационный интерфейс
   app.patch('/api/publish/update-content/:id', async (req: Request, res: Response) => {
-    console.log(`Получен запрос PATCH на /api/publish/update-content/${req.params.id}`);
     try {
       const { id } = req.params;
       const updates = req.body;
@@ -383,7 +382,6 @@ export function registerPublishingRoutes(app: Express): void {
       
       // Проверяем заголовок авторизации
       if (!authHeader) {
-        log('No authorization header provided for content update', 'api');
         return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
       }
       
@@ -401,10 +399,8 @@ export function registerPublishingRoutes(app: Express): void {
             method: 'get'
           }, token);
           
-          if (userInfo && userInfo.data && userInfo.data.id) {
+          if (userInfo?.data?.id) {
             userId = userInfo.data.id;
-            
-            // Кэшируем токен для последующих запросов
             directusApiManager.cacheAuthToken(userId, token);
           }
         } catch (error) {
@@ -412,46 +408,20 @@ export function registerPublishingRoutes(app: Express): void {
         }
       }
       
-      // Получаем контент для проверки прав доступа
-      let content;
+      // Получаем контент с помощью токена
+      let content = await storage.getCampaignContentById(id, token);
       
-      try {
-        // Пробуем получить контент с использованием токена из запроса
-        log(`Запрос контента по ID: ${id} с токеном авторизации`, 'api');
-        content = await storage.getCampaignContentById(id, token);
-      } catch (error) {
-        const fetchError = error as Error;
-        log(`Ошибка при получении контента с ID ${id}: ${fetchError.message}`, 'api');
-      }
-      
-      if (!content && userId) {
-        // Если контент не найден напрямую, но у нас есть userId, пробуем использовать его
-        log(`Пробуем использовать userId: ${userId} для получения контента ${id}`, 'api');
-        directusApiManager.cacheAuthToken(userId, token);
-        
-        try {
-          log(`Вторая попытка получения контента для ID ${id} с токеном из userId ${userId}`, 'api');
-          content = await storage.getCampaignContentById(id, token);
-        } catch (error) {
-          const secondError = error as Error;
-          log(`Вторая попытка получения контента тоже не удалась: ${secondError.message}`, 'api');
-        }
-      }
-      
+      // Если контент не найден, возвращаем 404
       if (!content) {
         return res.status(404).json({ error: 'Контент не найден' });
       }
       
-      // Если у нас есть userId в content, но он отличается от userId в токене,
-      // это значит что пользователь пытается обновить чужой контент - проверка прав здесь
-      
-      // Обновляем контент - передаем токен в userId контента, если его нет
+      // Используем идентификатор пользователя из контента, если он не указан в обновлениях
       if (!updates.userId && content.userId) {
         updates.userId = content.userId;
       }
       
-      // Обновляем контент с обновленными данными, передаем токен
-      log(`Обновляем контент ${id} с данными: ${JSON.stringify(updates)}`, 'api');
+      // Обновляем контент с передачей токена авторизации
       const updatedContent = await storage.updateCampaignContent(id, updates, token);
       
       return res.status(200).json({
