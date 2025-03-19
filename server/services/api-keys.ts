@@ -1,5 +1,6 @@
-import { directusApi, directusApiManager } from '../directus';
+import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
+import { directusCrud } from './directus-crud';
 
 // Типы API сервисов, используемых в приложении
 export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
@@ -54,24 +55,19 @@ export class ApiKeyService {
     
     // 2. Если ключа нет в кэше или он устарел, пытаемся получить из Directus
     try {
-      // Используем улучшенный DirectusApiManager для запроса с автоматической авторизацией
-      // Если есть authToken, используем его, иначе полагаемся на внутренний кэш токенов
-      const requestConfig = {
-        url: '/items/user_api_keys',
-        method: 'get' as const,
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: serviceName }
-          },
-          fields: ['id', 'api_key']
+      // Используем DirectusCrud для запроса с правильной авторизацией
+      console.log(`[${serviceName}] Fetching API key for user ${userId} using DirectusCrud`);
+      
+      const items = await directusCrud.list('user_api_keys', {
+        userId: userId,
+        authToken: authToken,
+        filter: {
+          user_id: { _eq: userId },
+          service_name: { _eq: serviceName }
         },
-        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-      };
+        fields: ['id', 'api_key']
+      });
       
-      const response = await directusApiManager.request(requestConfig, userId);
-      
-      const items = response.data?.data || [];
       if (items.length && items[0].api_key) {
         // Получаем ключ из ответа и форматируем если необходимо
         let apiKey = items[0].api_key;
