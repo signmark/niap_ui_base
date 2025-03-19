@@ -1,12 +1,12 @@
 import React from 'react';
-import { SocialPlatform } from '@/types';
+import { SafeSocialPlatform } from '@/lib/social-platforms';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 interface PlatformSelectorProps {
-  selectedPlatforms: Record<SocialPlatform, boolean>;
-  onChange: (platform: SocialPlatform, isSelected: boolean) => void;
+  selectedPlatforms: Record<SafeSocialPlatform, boolean>;
+  onChange: (platform: SafeSocialPlatform, isSelected: boolean) => void;
 }
 
 export default function PlatformSelector({
@@ -15,25 +15,25 @@ export default function PlatformSelector({
 }: PlatformSelectorProps) {
   const platforms = [
     {
-      id: 'instagram' as SocialPlatform,
+      id: 'instagram' as SafeSocialPlatform,
       name: 'Instagram',
       icon: SiInstagram,
       color: 'text-pink-600'
     },
     {
-      id: 'telegram' as SocialPlatform,
+      id: 'telegram' as SafeSocialPlatform,
       name: 'Telegram',
       icon: SiTelegram,
       color: 'text-blue-500'
     },
     {
-      id: 'vk' as SocialPlatform,
+      id: 'vk' as SafeSocialPlatform,
       name: 'ВКонтакте',
       icon: SiVk,
       color: 'text-blue-600'
     },
     {
-      id: 'facebook' as SocialPlatform,
+      id: 'facebook' as SafeSocialPlatform,
       name: 'Facebook',
       icon: SiFacebook,
       color: 'text-indigo-600'

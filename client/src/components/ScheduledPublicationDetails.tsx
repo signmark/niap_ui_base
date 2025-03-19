@@ -27,22 +27,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import EditScheduledPublication from './EditScheduledPublication';
-
-// Определяем типы социальных платформ для безопасного использования
-export const safeSocialPlatforms = ['instagram', 'facebook', 'telegram', 'vk'] as const;
-export type SafeSocialPlatform = typeof safeSocialPlatforms[number];
-
-// Платформы на русском для отображения
-const platformNames: Record<SafeSocialPlatform, string> = {
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  telegram: 'Telegram',
-  vk: 'ВКонтакте'
-};
+import { SafeSocialPlatform, platformNames, safeSocialPlatforms, SocialPlatforms } from '@/lib/social-platforms';
 
 interface ScheduledPublicationDetailsProps {
   content: CampaignContent;
-  onCancelSuccess?: () => void;
+  onCancelSuccess?: (updatedContent?: CampaignContent) => void;
   onViewDetails?: (content: CampaignContent) => void;
 }
 
@@ -67,26 +56,58 @@ export default function ScheduledPublicationDetails({
       }
       
       // Отменяем запланированную публикацию
-      await apiRequest(`/api/publish/cancel/${content.id}`, {
+      const response = await apiRequest(`/api/publish/cancel/${content.id}`, {
         method: 'POST',
         headers
       });
       
-      toast({
-        title: "Публикация отменена",
-        description: "Запланированная публикация была успешно отменена.",
-        variant: "default",
-      });
-      
-      // Вызываем колбэк в случае успешной отмены
-      if (onCancelSuccess) {
-        onCancelSuccess();
+      // Проверяем успешность выполнения запроса
+      if (response && !response.error) {
+        toast({
+          title: "Публикация отменена",
+          description: "Запланированная публикация была успешно отменена.",
+          variant: "default",
+        });
+        
+        // Создаем локально обновленную копию контента
+        const updatedContent = {
+          ...content,
+          status: 'draft',
+          scheduledAt: null
+        };
+        
+        // Обновляем статусы платформ
+        if (updatedContent.socialPlatforms) {
+          const platforms = { ...updatedContent.socialPlatforms };
+          
+          // Для каждой платформы меняем статус на 'cancelled'
+          Object.keys(platforms).forEach(platform => {
+            if (platforms[platform]) {
+              platforms[platform] = {
+                ...platforms[platform],
+                status: 'cancelled'
+              };
+            }
+          });
+          
+          updatedContent.socialPlatforms = platforms;
+        }
+        
+        console.log('Локально обновленный контент после отмены:', updatedContent);
+        
+        // Вызываем колбэк в случае успешной отмены, передавая обновленный контент
+        if (onCancelSuccess) {
+          onCancelSuccess(updatedContent);
+        }
+      } else {
+        // Обработка ошибки из ответа сервера
+        throw new Error(response?.error || 'Не удалось отменить публикацию');
       }
     } catch (error) {
       console.error("Ошибка при отмене публикации:", error);
       toast({
         title: "Ошибка отмены",
-        description: "Не удалось отменить запланированную публикацию. Пожалуйста, попробуйте снова.",
+        description: `Не удалось отменить запланированную публикацию: ${error.message || 'Неизвестная ошибка'}`,
         variant: "destructive",
       });
     }
