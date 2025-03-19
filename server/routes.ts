@@ -6139,168 +6139,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Маршрут для обновления контента кампании
+  // Делает проксирование запросов на новый маршрут в publishing-routes.ts
   app.patch("/api/campaign-content/:id", async (req, res) => {
     try {
       const contentId = req.params.id;
       const authHeader = req.headers['authorization'];
       
+      console.log(`Запрос на обновление контента через устаревший маршрут /api/campaign-content/${contentId}`);
+      console.log(`Перенаправляем запрос на новый маршрут /api/publish/update-content/${contentId}`);
+      
       if (!authHeader) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      // Преобразуем заголовок авторизации, если необходимо
+      const token = authHeader.startsWith('Bearer ') ? authHeader : `Bearer ${authHeader.replace('Bearer ', '')}`;
       
+      // Передаем запрос на новый маршрут через Axios
       try {
-        console.log(`Updating content with ID: ${contentId}`);
+        // Подготавливаем данные для запроса
+        const requestBody = { ...req.body };
         
-        // Получаем ID пользователя из токена - это может потребоваться для обновления
-        const userResponse = await directusApi.get('/users/me', {
+        // Выполняем запрос к нашему собственному API
+        const response = await axios.patch(`http://localhost:5000/api/publish/update-content/${contentId}`, requestBody, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': token,
+            'Content-Type': 'application/json'
           }
         });
         
-        const userId = userResponse.data.data.id;
+        // Возвращаем результат
+        return res.status(response.status).json(response.data);
+      } catch (error: any) {
+        console.error('Ошибка при перенаправлении запроса:', error.message);
         
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Получаем текущий контент напрямую из Directus API для проверки
-        const existingContentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!existingContentResponse.data || !existingContentResponse.data.data) {
-          return res.status(404).json({ error: "Content not found" });
-        }
-        
-        const existingItem = existingContentResponse.data.data;
-        
-        // Проверяем, принадлежит ли контент пользователю
-        if (existingItem.user_id !== userId) {
-          return res.status(403).json({ error: "You don't have permission to update this content" });
-        }
-        
-        // Преобразуем данные в формат Directus API
-        const directusPayload: any = {
-          content_type: req.body.contentType,
-          title: req.body.title,
-          content: req.body.content,
-          image_url: req.body.imageUrl,
-          video_url: req.body.videoUrl,
-          status: req.body.status,
-          prompt: req.body.prompt // Добавляем промт
-        };
-        
-        // Обрабатываем дату запланированной публикации
-        if (req.body.scheduledAt !== undefined) {
-          console.log('Получена дата планирования публикации:', req.body.scheduledAt);
-          directusPayload.scheduled_at = req.body.scheduledAt;
-        }
-        
-        // Обрабатываем информацию о платформах социальных сетей
-        if (req.body.socialPlatforms !== undefined) {
-          console.log('Получены данные о платформах:', JSON.stringify(req.body.socialPlatforms, null, 2));
-          directusPayload.social_platforms = req.body.socialPlatforms;
-        }
-        
-        // Обрабатываем ключевые слова особым образом
-        if (req.body.keywords !== undefined) {
-          console.log('Request keywords type:', typeof req.body.keywords, 'Value:', req.body.keywords);
-          
-          // Убедимся, что keywords - это массив
-          let keywordsArray: string[] = [];
-          
-          if (Array.isArray(req.body.keywords)) {
-            // Если уже массив, используем его напрямую
-            keywordsArray = req.body.keywords.map((k: any) => 
-              typeof k === 'string' ? k : String(k)
-            );
-          } else if (typeof req.body.keywords === 'string') {
-            try {
-              // Проверяем, может быть это JSON-строка
-              const parsed = JSON.parse(req.body.keywords);
-              if (Array.isArray(parsed)) {
-                keywordsArray = parsed.map((k: any) => typeof k === 'string' ? k : String(k));
-              } else {
-                // Одиночное значение, оборачиваем в массив
-                keywordsArray = [req.body.keywords];
-              }
-            } catch (e) {
-              // Если не удалось распарсить как JSON, то это просто строка
-              keywordsArray = [req.body.keywords];
-            }
-          } else if (req.body.keywords === null) {
-            keywordsArray = [];
-          } else {
-            // Для всех остальных типов пытаемся преобразовать
-            keywordsArray = [String(req.body.keywords)];
-          }
-          
-          // Фильтруем пустые значения и гарантируем уникальность
-          const uniqueKeywords = [...new Set(
-            keywordsArray
-              .filter(k => k && typeof k === 'string' && k.trim() !== '')
-              .map(k => k.trim())
-          )];
-          
-          directusPayload.keywords = uniqueKeywords;
-          console.log('Processed unique keywords array:', directusPayload.keywords);
-        }
-        
-        // Обновляем данные через Directus API
-        const response = await directusApi.patch(`/items/campaign_content/${contentId}`, directusPayload, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.data || !response.data.data) {
-          throw new Error('Failed to update content, invalid response from Directus');
-        }
-        
-        const item = response.data.data;
-        
-        // Преобразуем данные из формата Directus в наш формат
-        const updatedContent = {
-          id: item.id,
-          campaignId: item.campaign_id,
-          userId: item.user_id,
-          title: item.title,
-          content: item.content,
-          contentType: item.content_type,
-          imageUrl: item.image_url,
-          videoUrl: item.video_url,
-          prompt: item.prompt,
-          // Убедимся, что ключевые слова всегда возвращаются как массив
-          keywords: Array.isArray(item.keywords) ? item.keywords : [],
-          hashtags: Array.isArray(item.hashtags) ? item.hashtags : [],
-          links: Array.isArray(item.links) ? item.links : [],
-          createdAt: item.created_at,
-          scheduledAt: item.scheduled_at,
-          publishedAt: item.published_at,
-          status: item.status,
-          socialPlatforms: item.social_platforms || {},
-          metadata: item.metadata || {}
-        };
-        
-        res.json({ data: updatedContent });
-      } catch (error) {
-        console.error('Error updating campaign content:', error);
+        // Если есть ответ от API, передаем его статус и данные
         if (error.response) {
-          console.error('API error details:', error.response.data);
-          if (error.response.status === 404) {
-            return res.status(404).json({ error: "Content not found" });
-          }
+          const { status, data } = error.response;
+          return res.status(status).json(data);
         }
-        return res.status(401).json({ error: "Invalid token or failed to update content" });
+        
+        // Если ошибка без ответа, возвращаем 500
+        return res.status(500).json({ 
+          error: "Ошибка при обновлении контента",
+          message: error.message
+        });
       }
-    } catch (error) {
-      console.error("Error updating campaign content:", error);
-      res.status(500).json({ error: "Failed to update campaign content" });
+    } catch (error: any) {
+      console.error("Ошибка при обработке запроса на обновление контента:", error.message);
+      res.status(500).json({ 
+        error: "Ошибка при обновлении контента кампании",
+        message: error.message
+      });
     }
   });
 
