@@ -68,13 +68,22 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           navigate('/campaigns');
         }
       } else {
-        console.log('AuthGuard: Token is invalid, clearing auth data');
-        // Если токен невалидный, очищаем авторизацию
-        clearAuth();
+        // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем, нет ли токена в localStorage
+        // Если нет токена в localStorage, просто игнорируем ошибку
+        // Если есть токен, но сервер говорит, что он невалидный, очищаем
+        const storedToken = localStorage.getItem('auth_token');
         
-        // Если не на странице логина, перенаправляем
-        if (!isLoginPage) {
-          navigate('/login');
+        if (storedToken) {
+          console.log('AuthGuard: Token is invalid, clearing auth data');
+          // Если токен невалидный, очищаем авторизацию
+          clearAuth();
+          
+          // Если не на странице логина, перенаправляем
+          if (!isLoginPage) {
+            navigate('/login');
+          }
+        } else {
+          console.log('AuthGuard: No token in localStorage, ignoring authentication error');
         }
       }
     }

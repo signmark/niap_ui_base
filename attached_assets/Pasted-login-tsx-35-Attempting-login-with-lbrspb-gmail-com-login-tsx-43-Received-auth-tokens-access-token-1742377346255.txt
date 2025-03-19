@@ -1,0 +1,134 @@
+login.tsx:35 Attempting login with: lbrspb@gmail.com
+login.tsx:43 Received auth tokens, access token length: 321
+login.tsx:57 Login successful, user ID: 53921f16-f51d-4591-80b9-8caa4fde4d13
+store.ts:33 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:36 Token will expire in 900 seconds, scheduling refresh in 720 seconds
+AuthGuard.tsx:21 AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: false}
+Layout.tsx:37 Авторизован с токеном, длина: 321
+AuthGuard.tsx:71 AuthGuard: Token is invalid, clearing auth data
+store.ts:41 Очистка данных авторизации
+AuthGuard.tsx:21 AuthGuard: Checking auth state {hasToken: false, hasStoredToken: false, isLoginPage: true}
+AuthGuard.tsx:71 AuthGuard: Token is invalid, clearing auth data
+store.ts:41 Очистка данных авторизации
+AuthGuard.tsx:21 AuthGuard: Checking auth state {hasToken: false, hasStoredToken: false, isLoginPage: true}
+AuthGuard.tsx:21 AuthGuard: Checking auth state {hasToken: false, hasStoredToken: false, isLoginPage: true}
+SettingsDialog.tsx:43 
+            
+            
+           GET https://directus.nplanner.ru/items/user_api_keys?filter[user_id][_eq]=53921f16-f51d-4591-80b9-8caa4fde4d13&fields[]=id&fields[]=service_name&fields[]=api_key 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=16980b45:1653
+xhr @ axios.js?v=16980b45:1533
+dispatchRequest @ axios.js?v=16980b45:2008
+Promise.then
+_request @ axios.js?v=16980b45:2205
+request @ axios.js?v=16980b45:2120
+Axios.<computed> @ axios.js?v=16980b45:2242
+wrap @ axios.js?v=16980b45:8
+queryFn @ SettingsDialog.tsx:43
+fetchFn @ @tanstack_react-query.js?v=16980b45:840
+run @ @tanstack_react-query.js?v=16980b45:494
+start @ @tanstack_react-query.js?v=16980b45:536
+fetch @ @tanstack_react-query.js?v=16980b45:926
+executeFetch_fn @ @tanstack_react-query.js?v=16980b45:2211
+onSubscribe @ @tanstack_react-query.js?v=16980b45:1898
+subscribe @ @tanstack_react-query.js?v=16980b45:24
+(anonymous) @ @tanstack_react-query.js?v=16980b45:3022
+subscribeToStore @ chunk-276SZO74.js?v=16980b45:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=16980b45:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=16980b45:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=16980b45:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=16980b45:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=16980b45:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=16980b45:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=16980b45:19447
+commitRootImpl @ chunk-276SZO74.js?v=16980b45:19416
+commitRoot @ chunk-276SZO74.js?v=16980b45:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=16980b45:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=16980b45:9119
+(anonymous) @ chunk-276SZO74.js?v=16980b45:18627
+XMLHttpRequest.send
+dispatchXhrRequest @ axios.js?v=16980b45:1653
+xhr @ axios.js?v=16980b45:1533
+dispatchRequest @ axios.js?v=16980b45:2008
+Promise.then
+_request @ axios.js?v=16980b45:2205
+request @ axios.js?v=16980b45:2120
+Axios.<computed> @ axios.js?v=16980b45:2242
+wrap @ axios.js?v=16980b45:8
+onSubmit @ login.tsx:46
+await in onSubmit
+(anonymous) @ chunk-BW5TH624.js?v=16980b45:1675
+await in (anonymous)
+callCallback2 @ chunk-276SZO74.js?v=16980b45:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=16980b45:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=16980b45:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=16980b45:3736
+executeDispatch @ chunk-276SZO74.js?v=16980b45:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=16980b45:7034
+processDispatchQueue @ chunk-276SZO74.js?v=16980b45:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=16980b45:7051
+(anonymous) @ chunk-276SZO74.js?v=16980b45:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=16980b45:18913
+batchedUpdates @ chunk-276SZO74.js?v=16980b45:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=16980b45:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=16980b45:5478
+dispatchEvent @ chunk-276SZO74.js?v=16980b45:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=16980b45:5449Understand this errorAI
+SettingsDialog.tsx:55 Error fetching API keys: Error: You don't have permission to access collection "user_api_keys" or it does not exist. Queried in root.
+    at directus.ts:71:11
+    at async Axios.request (axios.js?v=16980b45:2120:14)
+    at async queryFn (SettingsDialog.tsx:43:26)
+    at Axios.request (axios.js?v=16980b45:2124:41)
+    at async queryFn (SettingsDialog.tsx:43:26)
+overrideMethod @ hook.js:608
+queryFn @ SettingsDialog.tsx:55
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=16980b45:840
+run @ @tanstack_react-query.js?v=16980b45:494
+start @ @tanstack_react-query.js?v=16980b45:536
+fetch @ @tanstack_react-query.js?v=16980b45:926
+executeFetch_fn @ @tanstack_react-query.js?v=16980b45:2211
+onSubscribe @ @tanstack_react-query.js?v=16980b45:1898
+subscribe @ @tanstack_react-query.js?v=16980b45:24
+(anonymous) @ @tanstack_react-query.js?v=16980b45:3022
+subscribeToStore @ chunk-276SZO74.js?v=16980b45:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=16980b45:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=16980b45:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=16980b45:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=16980b45:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=16980b45:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=16980b45:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=16980b45:19447
+commitRootImpl @ chunk-276SZO74.js?v=16980b45:19416
+commitRoot @ chunk-276SZO74.js?v=16980b45:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=16980b45:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=16980b45:9119
+(anonymous) @ chunk-276SZO74.js?v=16980b45:18627
+XMLHttpRequest.send
+dispatchXhrRequest @ axios.js?v=16980b45:1653
+xhr @ axios.js?v=16980b45:1533
+dispatchRequest @ axios.js?v=16980b45:2008
+Promise.then
+_request @ axios.js?v=16980b45:2205
+request @ axios.js?v=16980b45:2120
+Axios.<computed> @ axios.js?v=16980b45:2242
+wrap @ axios.js?v=16980b45:8
+onSubmit @ login.tsx:46
+await in onSubmit
+(anonymous) @ chunk-BW5TH624.js?v=16980b45:1675
+await in (anonymous)
+callCallback2 @ chunk-276SZO74.js?v=16980b45:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=16980b45:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=16980b45:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=16980b45:3736
+executeDispatch @ chunk-276SZO74.js?v=16980b45:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=16980b45:7034
+processDispatchQueue @ chunk-276SZO74.js?v=16980b45:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=16980b45:7051
+(anonymous) @ chunk-276SZO74.js?v=16980b45:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=16980b45:18913
+batchedUpdates @ chunk-276SZO74.js?v=16980b45:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=16980b45:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=16980b45:5478
+dispatchEvent @ chunk-276SZO74.js?v=16980b45:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=16980b45:5449Understand this errorAI
