@@ -46,9 +46,20 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
-
-    // Получаем токен авторизации
-    const authToken = localStorage.getItem('auth_token');
+    
+    // Получаем токен из состояния
+    const auth = directusApi.defaults.headers.common['Authorization'];
+    let authToken = '';
+    
+    if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+      authToken = auth.substring(7);
+      console.log('Got token from directusApi:', authToken.substring(0, 10) + '...');
+    } else {
+      // Пробуем получить из localStorage как запасной вариант
+      authToken = localStorage.getItem('auth_token') || '';
+      console.log('Got token from localStorage:', authToken ? (authToken.substring(0, 10) + '...') : 'нет токена');
+    }
+    
     if (!authToken) {
       toast({
         variant: "destructive",
