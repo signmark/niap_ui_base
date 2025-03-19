@@ -73,6 +73,7 @@ export default function ScheduledPublications() {
       const headers: Record<string, string> = {};
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
+        headers['X-User-ID'] = userId;
       }
       
       console.log('Fetching scheduled content with token:', authToken ? 'Token available' : 'No token');

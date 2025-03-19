@@ -1162,22 +1162,33 @@ export class DatabaseStorage implements IStorage {
 
   async getScheduledContent(userId?: string, campaignId?: string): Promise<CampaignContent[]> {
     try {
+      console.log(`Получение запланированных публикаций для пользователя ${userId || 'не указан'} и кампании ${campaignId || 'не указана'}`);
+      
       let authToken: string | null = null;
       
-      // Если указан userId, получаем токен для этого пользователя
+      // Получаем токен для пользователя
       if (userId) {
         authToken = await this.getAuthToken(userId);
         console.log(`Получен токен для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
+      } else {
+        console.log('Не передан userId для получения запланированных публикаций');
       }
       
-      // Если не указан userId или нет токена, выводим сообщение
+      // Если нет токена, возвращаем пустой массив
       if (!authToken) {
         console.log('Получение запланированных публикаций, токен не найден в хранилище');
-        // Возвращаем пустой массив вместо выполнения запроса с пустым токеном
         console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
         return [];
       }
       
+      // Формируем запрос с правильными фильтрами
+      let query = '';
+      let params: Record<string, any> = {
+        sort: 'scheduled_at',
+        fields: '*'
+      };
+      
+      // Формируем фильтр для публикаций со статусом 'scheduled'
       const filter: any = {
         status: {
           _eq: 'scheduled'
@@ -1187,34 +1198,46 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
-      // Если указан userId, добавляем фильтр
+      // Добавляем фильтр по пользователю, если указан
       if (userId) {
         filter.user_id = {
           _eq: userId
         };
       }
       
+      // Добавляем фильтр по кампании, если указана
       if (campaignId) {
         filter.campaign_id = {
           _eq: campaignId
         };
       }
       
-      // Добавляем заголовок авторизации только если токен есть
-      const headers: Record<string, string> = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
+      // Добавляем параметр фильтра в запрос
+      params.filter = JSON.stringify(filter);
       
+      console.log('Запрос запланированных публикаций с фильтром:', JSON.stringify(filter));
+      
+      // Заголовки авторизации
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${authToken}`
+      };
+      
+      // Делаем запрос к API
       const response = await directusApi.get('/items/campaign_content', {
-        params: {
-          filter,
-          sort: ['scheduled_at']
-        },
+        params,
         headers
       });
       
-      const content = (response.data?.data || []).map((item: any) => ({
+      // Проверяем ответ и обрабатываем данные
+      if (!response.data || !response.data.data) {
+        console.log('Пустой ответ от Directus API при запросе запланированных публикаций');
+        return [];
+      }
+      
+      console.log(`Получено ${response.data.data.length} запланированных публикаций`);
+      
+      // Преобразуем данные из Directus в формат нашего приложения
+      const content = (response.data.data || []).map((item: any) => ({
         id: item.id,
         content: item.content,
         userId: item.user_id,
@@ -1223,12 +1246,27 @@ export class DatabaseStorage implements IStorage {
         contentType: item.content_type || "text",
         title: item.title || null,
         imageUrl: item.image_url,
-        prompt: item.prompt || "",
         videoUrl: item.video_url,
+        prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms
+        socialPlatforms: item.social_platforms,
+        keywords: item.keywords || [], // Добавляем поля, которые могут отсутствовать в старых версиях
+        hashtags: item.hashtags || [],
+        links: item.links || [],
+        publishedAt: item.published_at ? new Date(item.published_at) : null,
+        metadata: item.metadata || {}
       }));
+      
+      // Выводим в лог информацию о первой публикации для отладки
+      if (content.length > 0) {
+        console.log('Пример первой запланированной публикации:', JSON.stringify({
+          id: content[0].id,
+          title: content[0].title,
+          status: content[0].status,
+          scheduledAt: content[0].scheduledAt
+        }));
+      }
       
       return content;
     } catch (error) {

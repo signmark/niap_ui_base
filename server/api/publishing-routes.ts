@@ -14,10 +14,20 @@ export function registerPublishingRoutes(router: Router): void {
    */
   router.get('/publish/scheduled', async (req: Request, res: Response) => {
     try {
-      const { userId, campaignId } = req.query;
+      // Получаем userId из заголовка X-User-ID, из запроса или из сессии аутентификации
+      let userId = req.header('X-User-ID') || req.query.userId as string;
+      
+      // Если userId отсутствует, но есть объект user в запросе, используем его
+      if (!userId && req.user && (req.user as any).id) {
+        userId = (req.user as any).id;
+      }
+      
+      // Получаем campaignId из запроса
+      const { campaignId } = req.query;
 
       // Проверяем наличие userId
       if (!userId) {
+        log('[api] Ошибка: User ID не предоставлен в запросе запланированных публикаций');
         return res.status(400).json({
           success: false,
           message: 'User ID is required'
