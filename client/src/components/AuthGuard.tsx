@@ -1,7 +1,7 @@
 import { useEffect, ReactNode, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore } from '@/lib/store';
-import { useQuery } from '@tanstack/react-query';
+import { isTokenValid } from '@/lib/auth';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -20,65 +20,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   
   console.log('AuthGuard: Checking auth state', { hasToken, hasStoredToken, isLoginPage });
 
-  // Проверяем валидность токена с более надежной логикой
-  const { isSuccess, data, isError } = useQuery<{ authenticated: boolean; userId: string | null }>({
-    queryKey: ['/api/auth/me'],
-    enabled: hasToken || hasStoredToken, // выполняем запрос только если есть токен
-    retry: 0, // отключаем повторные попытки чтобы не блокировать пользователя
-    staleTime: 1000 * 60 * 5, // 5 минут кэширования
-    // При ошибке возвращаем предустановленный результат вместо исключения
-    queryFn: async () => {
-      try {
-        // Получаем сохраненный токен и ID
-        const storedToken = localStorage.getItem('auth_token') || '';
-        const storedUserId = localStorage.getItem('user_id') || '';
-        
-        // Если токен отсутствует, сразу возвращаем unauthorized
-        if (!storedToken) {
-          return { authenticated: false, userId: null, message: 'No token found' };
-        }
-        
-        // Выполняем запрос к API для проверки токена
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${storedToken}`,
-            'x-user-id': storedUserId,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        // Даже при сетевой ошибке, мы получим объект
-        if (!response.ok) {
-          console.warn('Authentication check failed with status:', response.status);
-          
-          // Если получаем 401 или 403, однозначно считаем токен невалидным
-          if (response.status === 401 || response.status === 403) {
-            return { authenticated: false, userId: null, message: 'Invalid token' };
-          }
-          
-          // При других ошибках (например, 5xx) предполагаем, что токен валидный
-          // чтобы не выбрасывать пользователя из системы при временных проблемах сервера
-          return { authenticated: true, userId: storedUserId, message: 'Assumed valid (server error)' };
-        }
-        
-        // Нормально получен ответ - парсим его
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        console.error('Authentication check error:', error);
-        
-        // При сетевых ошибках считаем токен валидным, чтобы не терять сессию
-        // при временных проблемах с соединением
-        const storedUserId = localStorage.getItem('user_id') || '';
-        return { 
-          authenticated: true, 
-          userId: storedUserId, 
-          message: 'Assumed valid (network error)'
-        };
-      }
-    }
-  });
-
+  // Проверяем токен локально, без запросов к API
+  const localTokenValid = isTokenValid();
+  
   useEffect(() => {
     // Если нет токена и не на странице логина - перенаправляем
     if (!hasToken && !hasStoredToken && !isLoginPage) {
@@ -89,8 +33,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
     
     // Если на странице логина и есть валидный токен - перенаправляем на главную
-    if (isLoginPage && hasToken) {
-      console.log('AuthGuard: Token already in state, redirecting to home');
+    if (isLoginPage && hasToken && localTokenValid) {
+      console.log('AuthGuard: Valid token present, redirecting to home from login page');
       navigate('/campaigns');
       setIsLoading(false);
       return;
@@ -109,38 +53,29 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       setAuth(storedToken, storedUserId);
     }
     
-    // Если проверка токена прошла и получен результат
-    if (isSuccess) {
-      if (data?.authenticated) {
-        console.log('AuthGuard: Token is valid');
+    // Проверяем локальную валидность токена
+    if (hasToken || hasStoredToken) {
+      if (localTokenValid) {
+        console.log('AuthGuard: Token is valid locally');
         
         // Если на странице логина, перенаправляем на главную
         if (isLoginPage) {
           navigate('/campaigns');
         }
       } else {
-        // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем, нет ли токена в localStorage
-        // Если нет токена в localStorage, просто игнорируем ошибку
-        // Если есть токен, но сервер говорит, что он невалидный, очищаем
-        const storedToken = localStorage.getItem('auth_token');
+        // Если токен невалидный, очищаем сессию
+        console.log('AuthGuard: Token is invalid locally, clearing auth data');
+        clearAuth();
         
-        if (storedToken) {
-          console.log('AuthGuard: Token is invalid, clearing auth data');
-          // Если токен невалидный, очищаем авторизацию
-          clearAuth();
-          
-          // Если не на странице логина, перенаправляем
-          if (!isLoginPage) {
-            navigate('/login');
-          }
-        } else {
-          console.log('AuthGuard: No token in localStorage, ignoring authentication error');
+        // Если не на странице логина, перенаправляем
+        if (!isLoginPage) {
+          navigate('/login');
         }
       }
     }
     
     setIsLoading(false);
-  }, [hasToken, hasStoredToken, isLoginPage, isSuccess, data, navigate, setAuth, clearAuth]);
+  }, [hasToken, hasStoredToken, isLoginPage, localTokenValid, navigate, setAuth, clearAuth]);
 
   // Если идёт загрузка или проверка, показываем спиннер
   if (isLoading) {

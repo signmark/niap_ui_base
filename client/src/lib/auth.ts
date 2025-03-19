@@ -12,6 +12,25 @@ interface AuthResponse {
   };
 }
 
+/**
+ * Локальная проверка валидности токена без обращения к API
+ * @returns {boolean} true если токен валиден, false если нет
+ */
+export const isTokenValid = (): boolean => {
+  const token = localStorage.getItem('auth_token');
+  const userId = localStorage.getItem('user_id');
+  
+  // Если токена или ID пользователя нет, то считаем что авторизация невалидна
+  if (!token || !userId) {
+    return false;
+  }
+  
+  // Проверяем, что токен похож на JWT (содержит 2 точки, имеет достаточную длину)
+  const isJwtLike = token.split('.').length === 3 && token.length > 50;
+  
+  return isJwtLike;
+}
+
 let refreshTimeout: NodeJS.Timeout | null = null;
 
 export const setupTokenRefresh = (expires: number) => {
