@@ -417,7 +417,8 @@ export function registerPublishingRoutes(app: Express): void {
       
       try {
         // Пробуем получить контент с использованием токена из запроса
-        content = await storage.getCampaignContentById(id);
+        log(`Запрос контента по ID: ${id} с токеном авторизации`, 'api');
+        content = await storage.getCampaignContentById(id, token);
       } catch (error) {
         const fetchError = error as Error;
         log(`Ошибка при получении контента с ID ${id}: ${fetchError.message}`, 'api');
@@ -429,7 +430,8 @@ export function registerPublishingRoutes(app: Express): void {
         directusApiManager.cacheAuthToken(userId, token);
         
         try {
-          content = await storage.getCampaignContentById(id);
+          log(`Вторая попытка получения контента для ID ${id} с токеном из userId ${userId}`, 'api');
+          content = await storage.getCampaignContentById(id, token);
         } catch (error) {
           const secondError = error as Error;
           log(`Вторая попытка получения контента тоже не удалась: ${secondError.message}`, 'api');
@@ -448,8 +450,9 @@ export function registerPublishingRoutes(app: Express): void {
         updates.userId = content.userId;
       }
       
-      // Обновляем контент с обновленными данными
-      const updatedContent = await storage.updateCampaignContent(id, updates);
+      // Обновляем контент с обновленными данными, передаем токен
+      log(`Обновляем контент ${id} с данными: ${JSON.stringify(updates)}`, 'api');
+      const updatedContent = await storage.updateCampaignContent(id, updates, token);
       
       return res.status(200).json({
         success: true,
