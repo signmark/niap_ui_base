@@ -117,6 +117,18 @@ class DirectusApiManager {
   get instance(): AxiosInstance {
     return this.axiosInstance;
   }
+  
+  /**
+   * Получает токен из кэша для заданного пользователя
+   * @param userId ID пользователя
+   * @returns Объект с токеном и датой истечения, или null если токен не найден
+   */
+  getCachedToken(userId: string): { token: string; expiresAt: number } | null {
+    if (this.authTokenCache[userId] && this.authTokenCache[userId].expiresAt > Date.now()) {
+      return this.authTokenCache[userId];
+    }
+    return null;
+  }
 }
 
 // Создаем экземпляр менеджера Directus API
