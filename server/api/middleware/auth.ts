@@ -31,7 +31,7 @@ export const authenticateApiRequest = async (req: Request, res: Response, next: 
     const authHeader = req.headers['authorization'];
     
     if (!authHeader) {
-      log(`Аутентификация отклонена для ${req.path} - нет заголовка Authorization`, 'auth');
+      log(`[api] Ошибка: Отсутствует токен авторизации в запросе ${req.path}`);
       return res.status(401).json({
         success: false,
         message: 'Необходимо авторизоваться'
@@ -40,69 +40,34 @@ export const authenticateApiRequest = async (req: Request, res: Response, next: 
     
     // Извлекаем токен
     const token = authHeader.replace('Bearer ', '');
-    log(`API Auth: Обработка запроса ${req.path} с токеном длиной ${token.length}`, 'auth');
     
-    try {
-      // Извлекаем ID пользователя из заголовка (если есть)
-      const userId = req.headers['x-user-id'] as string || null;
-      
-      log(`API Auth [${req.path}]: Token length=${token.length}, UserId=${userId || 'не указан'}`, 'auth');
-      
-      if (userId) {
-        // Добавляем информацию о пользователе в запрос
-        (req as any).userId = userId;
-        (req as any).token = token;
-        
-        log(`Аутентификация успешна для ${req.path} - пользователь ${userId}`, 'auth');
-        
-        // Прямой доступ без запроса к Directus API
-        return next();
-      }
-      
-      // Если ID пользователя не указан в заголовке, пытаемся получить через Directus API
-      const userResponse = await fetch('https://directus.nplanner.ru/users/me', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!userResponse.ok) {
-        log(`Аутентификация отклонена для ${req.path} - ошибка API Directus: ${userResponse.status}`, 'auth');
-        return res.status(401).json({
-          success: false,
-          message: 'Требуется авторизация. Пожалуйста, войдите снова.'
-        });
-      }
-      
-      const userData = await userResponse.json();
-      
-      if (!userData?.data?.id) {
-        log(`Аутентификация отклонена для ${req.path} - нет данных пользователя`, 'auth');
-        return res.status(401).json({
-          success: false,
-          message: 'Требуется авторизация. Пользователь не найден.'
-        });
-      }
-      
-      // Добавляем информацию о пользователе в запрос
-      (req as any).userId = userData.data.id;
-      (req as any).token = token;
-      log(`Аутентификация успешна для ${req.path} - пользователь ${userData.data.id}`, 'auth');
-      
-      next();
-    } catch (error) {
-      console.error(`Ошибка аутентификации для ${req.path}:`, error);
+    // Извлекаем ID пользователя из заголовка (основной метод)
+    const userId = req.headers['x-user-id'] as string;
+    
+    if (!userId) {
+      log(`[api] Ошибка: Отсутствует ID пользователя в запросе ${req.path}`);
       return res.status(401).json({
         success: false,
-        message: 'Ошибка авторизации. Пожалуйста, попробуйте войти снова.'
+        message: 'Отсутствует ID пользователя'
       });
     }
+    
+    // Добавляем информацию о пользователе в запрос
+    (req as any).userId = userId;
+    (req as any).token = token;
+    
+    // Для запросов запланированных публикаций добавляем доп.информацию в логи
+    if (req.path.includes('/api/publish/scheduled')) {
+      log(`[api] Запрос запланированных публикаций для пользователя ${userId}`);
+    }
+    
+    next();
+    
   } catch (error) {
-    console.error('Глобальная ошибка в middleware аутентификации:', error);
+    log(`Ошибка middleware аутентификации: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, 'auth');
     return res.status(500).json({
       success: false,
-      message: 'Внутренняя ошибка сервера'
+      message: 'Внутренняя ошибка сервера при проверке аутентификации'
     });
   }
 };
