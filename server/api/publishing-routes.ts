@@ -212,14 +212,53 @@ export function registerPublishingRoutes(app: Express): void {
         }
       }
       
-      // Обновляем контент
-      await storage.updateCampaignContent(contentId, {
-        status: 'draft', // Возвращаем в статус черновика
-        scheduledAt: null, // Убираем планирование
-        socialPlatforms: updatedPlatforms
-      });
+      // Обновляем контент через интерфейс хранилища и напрямую через API
+      let directUpdateSuccessful = false;
       
-      log(`Публикация ${contentId} отменена`, 'api');
+      try {
+        // Сначала попробуем прямое обновление через API
+        if (authToken) {
+          log(`Отмена публикации ${contentId} через API напрямую`, 'api');
+          
+          const directUpdateResponse = await directusApiManager.request({
+            url: `/items/campaign_content/${contentId}`,
+            method: 'patch',
+            data: {
+              status: 'draft',
+              scheduled_at: null,
+              social_platforms: updatedPlatforms
+            },
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          log(`Публикация ${contentId} успешно отменена через API напрямую`, 'api');
+          directUpdateSuccessful = true;
+        }
+      } catch (directUpdateError: any) {
+        log(`Ошибка при прямом обновлении через API: ${directUpdateError.message}`, 'api');
+      }
+      
+      // Обновляем также через интерфейс хранилища
+      try {
+        await storage.updateCampaignContent(contentId, {
+          status: 'draft', // Возвращаем в статус черновика
+          scheduledAt: null, // Убираем планирование
+          socialPlatforms: updatedPlatforms
+        });
+        log(`Публикация ${contentId} отменена через storage`, 'api');
+      } catch (storageError: any) {
+        // Если прямое обновление не было успешным и произошла ошибка в хранилище,
+        // то выбрасываем исключение
+        if (!directUpdateSuccessful) {
+          throw new Error(`Failed to cancel publication: ${storageError.message}`);
+        } else {
+          log(`Предупреждение: Ошибка при отмене через storage, но прямое обновление прошло успешно: ${storageError.message}`, 'api');
+        }
+      }
+      
+      log(`Публикация ${contentId} полностью отменена`, 'api');
       
       return res.status(200).json({ 
         success: true, 
