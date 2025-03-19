@@ -4,6 +4,7 @@ import { registerContentRoutes } from './content-routes';
 import { registerWordStatRoutes } from './wordstat-routes';
 import { registerPublishedRoutes } from './published-routes';
 import { registerAuthRoutes } from './auth-routes';
+import { registerDirectScheduleRoutes } from './direct-schedule-routes';
 import { log } from '../utils/logger';
 import { authenticateApiRequest } from './middleware/auth';
 
@@ -121,6 +122,7 @@ export function registerAPIRoutes(app: Router) {
   registerContentRoutes(app);
   registerWordStatRoutes(app);
   registerPublishedRoutes(app);
+  registerDirectScheduleRoutes(app);
   
   log('Route registration completed', 'api');
 }
