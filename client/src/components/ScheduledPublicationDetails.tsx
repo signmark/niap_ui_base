@@ -27,7 +27,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import EditScheduledPublication from './EditScheduledPublication';
-import { SafeSocialPlatform, platformNames, safeSocialPlatforms, SocialPlatforms } from '@/lib/social-platforms';
+import { platformNames, safeSocialPlatforms } from '@/lib/social-platforms';
+import { SocialPlatform } from '@/types';
 
 interface ScheduledPublicationDetailsProps {
   content: CampaignContent;
