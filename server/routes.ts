@@ -5918,33 +5918,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Преобразуем данные из формата Directus в наш формат
-        const contentItems = response.data.data.map((item: any) => ({
-          id: item.id,
-          campaignId: item.campaign_id,
-          userId: item.user_id,
-          title: item.title,
-          content: item.content,
-          contentType: item.content_type,
-          imageUrl: item.image_url,
-          videoUrl: item.video_url,
-          prompt: item.prompt,
-          keywords: item.keywords || [],
-          hashtags: item.hashtags || [],
-          links: item.links || [],
-          createdAt: item.created_at,
-          scheduledAt: item.scheduled_at,
-          publishedAt: item.published_at,
-          status: item.status,
-          socialPlatforms: item.social_platforms || {},
-          metadata: item.metadata || {}
-        }));
+        const contentItems = response.data.data.map((item: any) => {
+          // Обработка keywords - если это строка, пытаемся преобразовать в массив
+          let keywords = [];
+          if (Array.isArray(item.keywords)) {
+            keywords = item.keywords;
+          } else if (typeof item.keywords === 'string') {
+            try {
+              // Пробуем распарсить JSON, если keywords пришли как строка
+              const parsedKeywords = JSON.parse(item.keywords);
+              keywords = Array.isArray(parsedKeywords) ? parsedKeywords : [];
+            } catch (e) {
+              // Если не удалось распарсить, создаем пустой массив
+              console.warn(`Failed to parse keywords for content ${item.id}:`, e);
+              keywords = [];
+            }
+          }
+          
+          // Аналогично обрабатываем hashtags и links
+          let hashtags = [];
+          if (Array.isArray(item.hashtags)) {
+            hashtags = item.hashtags;
+          } else if (typeof item.hashtags === 'string') {
+            try {
+              const parsedHashtags = JSON.parse(item.hashtags);
+              hashtags = Array.isArray(parsedHashtags) ? parsedHashtags : [];
+            } catch (e) {
+              hashtags = [];
+            }
+          }
+          
+          let links = [];
+          if (Array.isArray(item.links)) {
+            links = item.links;
+          } else if (typeof item.links === 'string') {
+            try {
+              const parsedLinks = JSON.parse(item.links);
+              links = Array.isArray(parsedLinks) ? parsedLinks : [];
+            } catch (e) {
+              links = [];
+            }
+          }
+          
+          return {
+            id: item.id,
+            campaignId: item.campaign_id,
+            userId: item.user_id,
+            title: item.title,
+            content: item.content,
+            contentType: item.content_type,
+            imageUrl: item.image_url,
+            videoUrl: item.video_url,
+            prompt: item.prompt,
+            keywords: keywords,
+            hashtags: hashtags,
+            links: links,
+            createdAt: item.created_at,
+            scheduledAt: item.scheduled_at,
+            publishedAt: item.published_at,
+            status: item.status,
+            socialPlatforms: item.social_platforms || {},
+            metadata: item.metadata || {}
+          };
+        });
         
         console.log(`Found ${contentItems.length} content items for campaign ${campaignId || 'all'}`);
         
         // Для отладки выводим ключевые слова из первого элемента
         if (contentItems.length > 0) {
           const sample = contentItems[0];
-          console.log('Sample keywords being sent to client:', typeof sample.keywords, JSON.stringify(sample.keywords));
+          console.log('Sample keywords being sent to client:', 
+            Array.isArray(sample.keywords) ? 'array' : typeof sample.keywords, 
+            `length: ${Array.isArray(sample.keywords) ? sample.keywords.length : 0}`,
+            JSON.stringify(sample.keywords).substring(0, 100));
         }
         
         res.json({ data: contentItems });
