@@ -157,6 +157,31 @@ export class DirectusAuthManager {
       return session.token;
     }
     
+    // Проверим токен у других компонентов, которые могут его кэшировать
+    try {
+      // Импортировать directusApiManager здесь нельзя из-за циклических зависимостей
+      // Проверим, есть ли переменная в global пространстве имен
+      if (global['directusApiManager'] && global['directusApiManager'].getCachedToken) {
+        const cachedToken = global['directusApiManager'].getCachedToken(userId);
+        if (cachedToken) {
+          log(`Found token in directusApiManager cache for user ${userId}`, this.logPrefix);
+          
+          // Кэшируем его локально для будущих вызовов
+          this.sessionCache[userId] = {
+            userId,
+            token: cachedToken.token,
+            refreshToken: '', // У нас нет refresh token из кэша API Manager
+            expiresAt: cachedToken.expiresAt || (Date.now() + 3600 * 1000),
+            user: undefined
+          };
+          
+          return cachedToken.token;
+        }
+      }
+    } catch (error) {
+      log(`Error when trying to get token from directusApiManager: ${error}`, this.logPrefix);
+    }
+    
     if (autoRefresh) {
       log(`No valid session found, attempting to refresh for user ${userId}`, this.logPrefix);
       const refreshedSession = await this.refreshSession(userId);
