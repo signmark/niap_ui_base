@@ -3,6 +3,7 @@ import { storage } from '../storage';
 import { socialPublishingService } from './social-publishing';
 import { CampaignContent, SocialPlatform } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
+import { directusApiManager } from '../directus';
 
 /**
  * Класс для планирования и выполнения автоматической публикации контента
@@ -49,15 +50,75 @@ export class PublishScheduler {
   }
 
   /**
-   * Проверяет запланированные публикации и публикует контент, который пора опубликовать
+   * Получает системный токен для доступа к API
+   * Пытается авторизоваться с системными учетными данными или использовать текущий валидный токен
    */
+  private async getSystemToken(): Promise<string | null> {
+    try {
+      // Попытка использовать системные учетные данные из переменных окружения
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID;
+      
+      if (email && password) {
+        log('Попытка авторизации с системными учетными данными', 'scheduler');
+        
+        try {
+          const response = await directusApiManager.request({
+            url: '/auth/login',
+            method: 'post',
+            data: {
+              email,
+              password
+            }
+          });
+          
+          if (response?.data?.data?.access_token) {
+            const token = response.data.data.access_token;
+            log('Получен новый системный токен', 'scheduler');
+            
+            // Кэшируем токен для администратора, если его ID указан
+            if (adminUserId) {
+              directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+              log(`Токен кэширован для администратора ${adminUserId}`, 'scheduler');
+            }
+            
+            return token;
+          }
+        } catch (error: any) {
+          log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // Если администратор указан, попробуем получить токен из кэша
+      if (adminUserId) {
+        const cachedToken = directusApiManager.getCachedToken(adminUserId);
+        if (cachedToken) {
+          log(`Найден кэшированный токен для администратора ${adminUserId}`, 'scheduler');
+          return cachedToken.token;
+        }
+      }
+      
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
+      return null;
+    }
+  }
+
   async checkScheduledContent() {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
-
-      // Пытаемся получить запланированные публикации для всех известных пользователей
-      // Так как у нас нет централизованного хранилища пользователей, попробуем 
-      // использовать известных системных пользователей (администраторов)
+      
+      // Пытаемся получить системный токен для доступа к API
+      const systemToken = await this.getSystemToken();
+      if (systemToken) {
+        log('Используем системный токен для получения запланированных публикаций', 'scheduler');
+      } else {
+        log('Системный токен не найден, будет использован анонимный доступ', 'scheduler');
+      }
+      
+      // Пытаемся получить запланированные публикации
       let scheduledContent: CampaignContent[] = [];
       
       // Пробуем получить запланированные публикации через новый адаптер
@@ -73,7 +134,52 @@ export class PublishScheduler {
         log(`Ошибка при получении публикаций через адаптер: ${error.message}`, 'scheduler');
       }
       
-      // Если ничего не нашли через адаптер, попробуем стандартный метод
+      // Если ничего не нашли через адаптер, попробуем прямой запрос с системным токеном
+      if (scheduledContent.length === 0 && systemToken) {
+        try {
+          log('Попытка получения публикаций напрямую через API с системным токеном', 'scheduler');
+          
+          const response = await directusApiManager.request({
+            url: '/items/campaign_content',
+            method: 'get',
+            params: {
+              filter: {
+                status: {
+                  _eq: 'scheduled'
+                },
+                scheduled_at: {
+                  _nnull: true
+                }
+              },
+              sort: ['scheduled_at']
+            }
+          }, systemToken);
+          
+          if (response?.data?.data) {
+            const items = response.data.data;
+            log(`Получено ${items.length} запланированных публикаций через прямой запрос API`, 'scheduler');
+            
+            scheduledContent = items.map((item: any) => ({
+              id: item.id,
+              content: item.content,
+              userId: item.user_id,
+              campaignId: item.campaign_id,
+              status: item.status,
+              contentType: item.content_type || "text",
+              title: item.title || null,
+              imageUrl: item.image_url,
+              videoUrl: item.video_url,
+              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+              createdAt: new Date(item.created_at),
+              socialPlatforms: item.social_platforms
+            }));
+          }
+        } catch (error: any) {
+          log(`Ошибка при прямом запросе к API: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // В последнюю очередь, если все еще нет данных, используем стандартное хранилище
       if (scheduledContent.length === 0) {
         log('Попытка получения запланированных публикаций через стандартное хранилище', 'scheduler');
         const storageContent = await storage.getScheduledContent();
