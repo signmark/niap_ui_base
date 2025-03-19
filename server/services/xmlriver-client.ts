@@ -61,12 +61,15 @@ export class XmlRiverClient {
   async getKeywords(query: string, userId: string, token?: string): Promise<any[] | null> {
     try {
       const requestId = Date.now().toString();
-      log(`[${requestId}] Запрос ключевых слов к XMLRiver для: ${query}`, 'xmlriver');
+      log(`[${requestId}] Запрос ключевых слов к XMLRiver для: ${query} (userId: ${userId})`, 'xmlriver');
 
       // Получаем API ключ XMLRiver из сервиса API ключей
       const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver' as ApiServiceName, token);
       
       log(`[${requestId}] Получен API ключ от сервиса: ${xmlRiverConfig ? 'ДА' : 'НЕТ'}`, 'xmlriver');
+      if (xmlRiverConfig) {
+        log(`[${requestId}] Содержимое ключа XMLRiver: ${xmlRiverConfig}`, 'xmlriver');
+      }
       
       if (!xmlRiverConfig) {
         log(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`, 'xmlriver');
