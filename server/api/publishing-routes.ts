@@ -5,6 +5,7 @@ import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
+import { directusStorageAdapter } from '../services/directus';
 
 /**
  * Регистрирует маршруты для управления публикациями
@@ -263,10 +264,19 @@ export function registerPublishingRoutes(app: Express): void {
       
       try {
         if (authToken) {
-          // Если есть токен авторизации, запрашиваем данные из Directus
+          // Если есть токен авторизации, запрашиваем данные из Directus через улучшенный адаптер
           log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${userId}`, 'api');
-          scheduledContent = await storage.getScheduledContent(userId, campaignId);
-          log(`Получено ${scheduledContent.length} запланированных публикаций из БД`, 'api');
+          
+          // Используем новый адаптер с улучшенным механизмом получения токена
+          scheduledContent = await directusStorageAdapter.getScheduledContent(userId, campaignId);
+          log(`Получено ${scheduledContent.length} запланированных публикаций из улучшенного адаптера`, 'api');
+          
+          // Если не удалось получить публикации через улучшенный адаптер, используем стандартный метод
+          if (scheduledContent.length === 0) {
+            log(`Используем стандартное хранилище для получения запланированных публикаций`, 'api');
+            scheduledContent = await storage.getScheduledContent(userId, campaignId);
+            log(`Получено ${scheduledContent.length} запланированных публикаций из стандартного хранилища`, 'api');
+          }
         } else {
           // Если нет токена, пропускаем запрос к Directus
           log('Пропускаем запрос запланированных публикаций к Directus API из-за отсутствия токена', 'api');

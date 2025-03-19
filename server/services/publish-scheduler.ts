@@ -2,6 +2,7 @@ import { log } from '../utils/logger';
 import { storage } from '../storage';
 import { socialPublishingService } from './social-publishing';
 import { CampaignContent, SocialPlatform } from '@shared/schema';
+import { directusStorageAdapter } from './directus';
 
 /**
  * Класс для планирования и выполнения автоматической публикации контента
@@ -54,10 +55,31 @@ export class PublishScheduler {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
 
-      // Теперь нам не нужен сервисный токен, мы получаем все запланированные публикации
-      // без указания userId, и это будет обрабатываться на уровне хранилища
-      const scheduledContent = await storage.getScheduledContent();
-
+      // Пытаемся получить запланированные публикации для всех известных пользователей
+      // Так как у нас нет централизованного хранилища пользователей, попробуем 
+      // использовать известных системных пользователей (администраторов)
+      let scheduledContent: CampaignContent[] = [];
+      
+      // Пробуем получить запланированные публикации через новый адаптер
+      try {
+        // Идентификатор администратора из .env
+        const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID;
+        if (adminUserId) {
+          log(`Поиск запланированных публикаций через учетную запись администратора ID: ${adminUserId}`, 'scheduler');
+          const adminContent = await directusStorageAdapter.getScheduledContent(adminUserId);
+          scheduledContent = [...scheduledContent, ...adminContent];
+        }
+      } catch (error: any) {
+        log(`Ошибка при получении публикаций через адаптер: ${error.message}`, 'scheduler');
+      }
+      
+      // Если ничего не нашли через адаптер, попробуем стандартный метод
+      if (scheduledContent.length === 0) {
+        log('Попытка получения запланированных публикаций через стандартное хранилище', 'scheduler');
+        const storageContent = await storage.getScheduledContent();
+        scheduledContent = [...scheduledContent, ...storageContent];
+      }
+      
       if (scheduledContent.length === 0) {
         log('Запланированные публикации не найдены', 'scheduler');
         return;
