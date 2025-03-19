@@ -10,7 +10,10 @@ export const openPaths = [
   '/api/auth/refresh',
   '/api/auth/me',
   '/api/auth/check',
-  '/api/auth/logout'
+  '/api/auth/logout',
+  '/login',
+  '/register',
+  '/auth'
 ];
 
 /**
@@ -19,8 +22,8 @@ export const openPaths = [
  */
 export const authenticateApiRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Для определенных маршрутов пропускаем проверку
-    if (openPaths.some(path => req.path.startsWith(path))) {
+    // Пропускаем проверку для не-API маршрутов
+    if (!req.path.startsWith('/api') || openPaths.some(path => req.path.startsWith(path))) {
       return next();
     }
 
