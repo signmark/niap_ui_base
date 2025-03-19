@@ -48,6 +48,7 @@ export default function ScheduledPublicationDetails({
     try {
       // Получаем токен авторизации из localStorage
       const authToken = localStorage.getItem('auth_token');
+      const userId = localStorage.getItem('user_id');
       
       // Формируем заголовки с авторизацией
       const headers: Record<string, string> = {};
@@ -55,10 +56,13 @@ export default function ScheduledPublicationDetails({
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      // Отменяем запланированную публикацию
-      const response = await apiRequest(`/api/publish/cancel/${content.id}`, {
+      // Отменяем запланированную публикацию, передаем userId как параметр запроса
+      const response = await apiRequest(`/api/publish/cancel/${content.id}?userId=${userId}`, {
         method: 'POST',
-        headers
+        headers,
+        body: {
+          userId: userId || content.userId || '', // Явно передаем userId в теле запроса тоже
+        }
       });
       
       // Проверяем успешность выполнения запроса
