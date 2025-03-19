@@ -53,8 +53,10 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = useAuthStore.getState().token;
-    const userId = useAuthStore.getState().userId;
+    const token = localStorage.getItem('auth_token') || useAuthStore.getState().token;
+    const userId = localStorage.getItem('user_id') || useAuthStore.getState().userId;
+
+    console.log(`QueryClient [${queryKey[0]}]: Token length: ${token?.length || 0}, User ID: ${userId || 'none'}`);
 
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
