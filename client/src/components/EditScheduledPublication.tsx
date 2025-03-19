@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { CampaignContent, SocialPlatform } from '@/types';
+import React from 'react';
+import { CampaignContent } from '@/types';
+import { SafeSocialPlatform, platformNames, safeSocialPlatforms } from '@/lib/social-platforms';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -35,15 +36,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import PlatformSelector from './PlatformSelector';
-import { safeSocialPlatforms } from './ScheduledPublicationDetails';
-
-// Платформы на русском для отображения
-const platformNames: Record<SocialPlatform, string> = {
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  telegram: 'Telegram',
-  vk: 'ВКонтакте'
-};
 
 // Создаем схему валидации
 const scheduledPublicationSchema = z.object({
@@ -83,7 +75,7 @@ export default function EditScheduledPublication({
 
   // Устанавливаем начальное состояние для выбранных платформ
   const getInitialPlatforms = () => {
-    const platforms: Record<SocialPlatform, boolean> = {
+    const platforms: Record<SafeSocialPlatform, boolean> = {
       instagram: false,
       telegram: false,
       vk: false,
@@ -92,8 +84,8 @@ export default function EditScheduledPublication({
     
     if (content.socialPlatforms) {
       Object.keys(content.socialPlatforms).forEach(key => {
-        if (safeSocialPlatforms.includes(key as SocialPlatform)) {
-          const platform = key as SocialPlatform;
+        if (safeSocialPlatforms.includes(key as SafeSocialPlatform)) {
+          const platform = key as SafeSocialPlatform;
           platforms[platform] = content.socialPlatforms?.[platform]?.status !== 'cancelled';
         }
       });
@@ -174,7 +166,7 @@ export default function EditScheduledPublication({
       Object.entries(selectedPlatforms).forEach(([platform, isSelected]) => {
         if (isSelected) {
           // Копируем существующие данные для платформы или создаем новые
-          const existingData = content.socialPlatforms?.[platform as SocialPlatform] || {};
+          const existingData = content.socialPlatforms?.[platform as SafeSocialPlatform] || {};
           
           // Создаем дату публикации для этой платформы
           const platformDate = new Date(scheduledAt);
@@ -252,7 +244,7 @@ export default function EditScheduledPublication({
   };
 
   // Обработчик изменения выбора платформы
-  const handlePlatformChange = (platform: SocialPlatform, isSelected: boolean) => {
+  const handlePlatformChange = (platform: SafeSocialPlatform, isSelected: boolean) => {
     form.setValue(`selectedPlatforms.${platform}`, isSelected);
   };
 
