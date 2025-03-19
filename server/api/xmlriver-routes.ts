@@ -143,6 +143,9 @@ export function registerXmlRiverRoutes(app: Express): void {
       const query = req.params.query;
       const requestId = Math.random().toString(36).substring(2, 15);
       
+      console.log(`[XMLRiver] Запрос на получение ключевых слов: ${query}`);
+      console.log(`[XMLRiver] Auth header present: ${!!authHeader}`);
+      
       if (!query) {
         return res.status(400).json({
           error: 'Отсутствует поисковый запрос',
@@ -150,6 +153,63 @@ export function registerXmlRiverRoutes(app: Express): void {
         });
       }
       
+      // Используем XMLRiver API с правильно переданными учетными данными
+      try {
+        console.log(`[XMLRiver] Запрос поиска ключевых слов: ${query}`);
+        
+        // Учетные данные для XMLRiver из конфигурации
+        const credentials = {
+          user: "16797",
+          key: "f7947eff83104621deb713275fe3260bfde4f001"
+        };
+        
+        // Напрямую делаем запрос к API
+        const response = await axios.get('http://xmlriver.com/wordstat/json', {
+          params: {
+            user: credentials.user,
+            key: credentials.key,
+            query: query
+          }
+        });
+        
+        console.log(`[XMLRiver] Получен ответ от API, статус: ${response.status}`);
+        
+        // Проверяем структуру ответа
+        if (response.data?.content?.includingPhrases?.items) {
+          const items = response.data.content.includingPhrases.items;
+          console.log(`[XMLRiver] Успешно получено ${items.length} ключевых слов`);
+          
+          return res.status(200).json({
+            success: true,
+            data: {
+              keywords: items.map((item: any) => ({
+                keyword: item.phrase,
+                frequency: parseInt(item.number.replace(/\s/g, '')),
+                competition: 0, // По умолчанию 0, так как XMLRiver не предоставляет данные о конкуренции
+                source: 'xmlriver'
+              }))
+            }
+          });
+        } else {
+          console.log(`[XMLRiver] Некорректная структура ответа: ${JSON.stringify(response.data)}`);
+          return res.status(400).json({
+            success: false,
+            error: 'Некорректный ответ API XMLRiver',
+            message: 'Не удалось получить ключевые слова из-за некорректного формата ответа.'
+          });
+        }
+      } catch (directError) {
+        console.error(`[XMLRiver] Ошибка при запросе: ${directError}`);
+        const errorMessage = directError instanceof Error ? directError.message : 'Неизвестная ошибка';
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка запроса к XMLRiver API',
+          message: `Произошла ошибка при запросе: ${errorMessage}`
+        });
+      }
+      
+      // ПРИМЕЧАНИЕ: Код ниже временно закомментирован, пока мы используем временное решение
+      /*
       // Используем два подхода:
       // 1. Если есть авторизация - пытаемся получить ключ пользователя
       // 2. Если нет - используем дефолтный ключ
@@ -210,18 +270,8 @@ export function registerXmlRiverRoutes(app: Express): void {
           message: 'Ключ XMLRiver API не найден в настройках пользователя. Добавьте его в профиле.'
         });
       }
-      
-      return res.status(200).json({
-        success: true,
-        data: {
-          keywords: keywords.map((item: any) => ({
-            keyword: item.phrase,
-            frequency: parseInt(item.number.replace(/\s/g, '')),
-            competition: 0, // По умолчанию 0, так как XMLRiver не предоставляет данные о конкуренции
-            source: 'xmlriver'
-          }))
-        }
-      });
+      */
+      // Этот код уже не должен выполняться, так как мы возвращаем результат раньше
     } catch (error) {
       log(`Ошибка при запросе к XMLRiver API: ${error instanceof Error ? error.message : 'Unknown error'}`, 'xmlriver-api');
       
