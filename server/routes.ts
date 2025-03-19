@@ -3431,14 +3431,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Для XMLRiver требуется POST запрос с JSON в теле
                   console.log(`[${requestId}] Отправляем запрос в XMLRiver API: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
                   
-                  // Формируем данные согласно документации XMLRiver API
-                  const xmlriverResponse = await axios.post(`https://xmlriver.com/exec/wordstat.php`, {
-                    user: xmlRiverUserId,
-                    key: xmlRiverApiKey,
-                    query: [keyword]
-                  }, {
-                    headers: {
-                      'Content-Type': 'application/json'
+                  // Формируем запрос согласно правильному формату XMLRiver API
+                  console.log(`[${requestId}] Sending XMLRiver API request to correct URL endpoint`);
+                  const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
+                    params: {
+                      user: xmlRiverUserId,
+                      key: xmlRiverApiKey,
+                      query: keyword
                     }
                   });
                   
