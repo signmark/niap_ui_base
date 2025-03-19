@@ -1164,25 +1164,30 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Получение запланированных публикаций для пользователя ${userId || 'не указан'} и кампании ${campaignId || 'не указана'}`);
       
-      let authToken: string | null = null;
-      
-      // Получаем токен для пользователя
-      if (userId) {
-        authToken = await this.getAuthToken(userId);
-        console.log(`Получен токен для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
-      } else {
-        console.log('Не передан userId для получения запланированных публикаций');
-      }
-      
-      // Если нет токена, возвращаем пустой массив
-      if (!authToken) {
-        console.log('Получение запланированных публикаций, токен не найден в хранилище');
-        console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
+      // Проверяем наличие userId
+      if (!userId) {
+        console.log('ОШИБКА: Не передан userId для получения запланированных публикаций');
         return [];
       }
       
+      // Получаем токен для пользователя
+      let authToken = await this.getAuthToken(userId);
+      
+      // Проверяем валидность токена
+      if (!authToken) {
+        console.log(`Токен не найден для пользователя ${userId}`);
+        
+        // Создаем временный токен для тестирования API (только в режиме разработки)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ РАЗРАБОТКА: Создаем временный токен для тестирования');
+          authToken = 'temp_token_for_development';
+        } else {
+          console.log('Пропускаем запрос к Directus API из-за отсутствия токена');
+          return [];
+        }
+      }
+      
       // Формируем запрос с правильными фильтрами
-      let query = '';
       let params: Record<string, any> = {
         sort: 'scheduled_at',
         fields: '*'
@@ -1191,19 +1196,28 @@ export class DatabaseStorage implements IStorage {
       // Формируем фильтр для публикаций со статусом 'scheduled'
       const filter: any = {
         status: {
-          _eq: 'scheduled'
-        },
-        scheduled_at: {
-          _nnull: true
+          _in: ['scheduled', 'pending']  // Включаем и запланированные, и ожидающие публикации
         }
       };
       
-      // Добавляем фильтр по пользователю, если указан
-      if (userId) {
-        filter.user_id = {
-          _eq: userId
-        };
-      }
+      // Добавляем фильтр либо по дате публикации, либо по наличию данных о соцсетях
+      filter._or = [
+        {
+          scheduled_at: {
+            _nnull: true
+          }
+        },
+        {
+          social_platforms: {
+            _nnull: true
+          }
+        }
+      ];
+      
+      // Добавляем фильтр по пользователю
+      filter.user_id = {
+        _eq: userId
+      };
       
       // Добавляем фильтр по кампании, если указана
       if (campaignId) {
