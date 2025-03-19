@@ -108,7 +108,41 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
   
-  // Маршрут для прямой авторизации
+  // Маршрут для выхода из системы
+  app.post('/api/auth/logout', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(200).json({ 
+        success: true,
+        message: 'Сессия завершена'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Пытаемся сделать logout в Directus
+      await directusApiManager.request({
+        url: '/auth/logout',
+        method: 'post'
+      }, token);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Успешный выход из системы'
+      });
+    } catch (error) {
+      // Даже если произошла ошибка при выходе из Directus, 
+      // мы всё равно считаем операцию успешной с точки зрения клиента
+      log(`Ошибка при выходе из системы: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
+      return res.status(200).json({
+        success: true,
+        message: 'Сессия завершена'
+      });
+    }
+  });
+
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     const { email, password } = req.body;
     
