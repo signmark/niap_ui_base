@@ -333,7 +333,7 @@ export default function ContentPage() {
         }
       }
       
-      return await apiRequest(`/api/campaign-content/${id}`, { 
+      return await apiRequest(`/api/publish/update-content/${id}`, { 
         method: 'PATCH',
         data
       });
