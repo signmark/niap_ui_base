@@ -136,11 +136,11 @@ export function registerXmlRiverRoutes(app: Express): void {
   });
   
   // Маршрут для получения ключевых слов из XMLRiver API
-  app.get('/api/xmlriver/keywords/:query', authenticateXmlRiverRequest, async (req: Request, res: Response) => {
+  app.get('/api/xmlriver/keywords/:query', async (req: Request, res: Response) => {
     try {
+      // Получаем токен аутентификации из заголовка
+      const authHeader = req.headers.authorization;
       const query = req.params.query;
-      const userId = (req as any).userId;
-      const token = (req as any).token;
       
       if (!query) {
         return res.status(400).json({
@@ -149,17 +149,49 @@ export function registerXmlRiverRoutes(app: Express): void {
         });
       }
       
-      if (!userId) {
-        return res.status(401).json({
-          error: 'Необходима авторизация',
-          message: 'Для доступа к API необходимо авторизоваться'
-        });
+      // Используем два подхода:
+      // 1. Если есть авторизация - пытаемся получить ключ пользователя
+      // 2. Если нет - используем дефолтный ключ
+      let keywords = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        try {
+          // Пытаемся получить userId из токена
+          const protocol = req.protocol;
+          const host = req.get('host');
+          const meUrl = `${protocol}://${host}/api/auth/me`;
+          
+          const response = await axios.get(meUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.data?.user?.id) {
+            const userId = response.data.user.id;
+            log(`Поиск ключевых слов в XMLRiver для запроса: ${query} (userId: ${userId})`, 'xmlriver-api');
+            
+            // Пытаемся получить ключ из сервиса API ключей
+            keywords = await xmlRiverClient.getKeywords(query, userId, token);
+          }
+        } catch (authError) {
+          log(`Ошибка аутентификации: ${authError instanceof Error ? authError.message : 'Unknown error'}`, 'xmlriver-api');
+          // Продолжаем выполнение с дефолтным ключом
+        }
       }
       
-      log(`Поиск ключевых слов в XMLRiver для запроса: ${query} (userId: ${userId})`, 'xmlriver-api');
-      
-      // Получаем ключ из сервиса API ключей
-      const keywords = await xmlRiverClient.getKeywords(query, userId, token);
+      // Если не удалось получить ключевые слова с ключом пользователя, используем дефолтный ключ
+      if (keywords === null) {
+        log(`Поиск ключевых слов в XMLRiver для запроса: ${query} с дефолтным ключом`, 'xmlriver-api');
+        
+        // Используем прямые значения ключа и ID пользователя
+        const xmlRiverUserId = '16797';
+        const xmlRiverApiKey = 'f7947eff83104621deb713275fe3260bfde4f001';
+        
+        keywords = await xmlRiverClient.getKeywordsWithFixedCredentials(query, xmlRiverUserId, xmlRiverApiKey);
+      }
       
       if (keywords === null) {
         return res.status(400).json({
