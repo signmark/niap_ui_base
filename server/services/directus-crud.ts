@@ -274,11 +274,7 @@ export class DirectusCrud {
    * @param password Пароль пользователя
    * @returns Информация о токене
    */
-  async login(email: string, password: string): Promise<{
-    access_token: string;
-    refresh_token: string;
-    expires: number;
-  }> {
+  async login(email: string, password: string): Promise<DirectusAuthResult> {
     return this.executeOperation('custom', 'auth/login', async () => {
       const response = await directusApiManager.request({
         method: 'POST',
@@ -299,11 +295,7 @@ export class DirectusCrud {
    * @param refreshToken Refresh token
    * @returns Новый access token и информация о нем
    */
-  async refreshToken(refreshToken: string): Promise<{
-    access_token: string;
-    refresh_token: string;
-    expires: number;
-  }> {
+  async refreshToken(refreshToken: string): Promise<DirectusAuthResult> {
     return this.executeOperation('custom', 'auth/refresh', async () => {
       const response = await directusApiManager.request({
         method: 'POST',
