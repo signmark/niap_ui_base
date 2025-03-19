@@ -1091,6 +1091,36 @@ async function extractFullSiteContent(url: string): Promise<string> {
   }
 }
 
+/**
+ * Преобразует строки и другие типы в массивы
+ * @param value Значение для преобразования
+ * @param itemId ID элемента для логирования ошибок (опционально)
+ * @returns Преобразованный массив
+ */
+function parseArrayField(value: any, itemId?: string): any[] {
+  // Если это уже массив, возвращаем как есть
+  if (Array.isArray(value)) {
+    return value;
+  }
+  
+  // Если это строка, пытаемся распарсить как JSON
+  if (typeof value === "string") {
+    try {
+      const parsedValue = JSON.parse(value);
+      return Array.isArray(parsedValue) ? parsedValue : [];
+    } catch (e) {
+      // Если не удалось распарсить, возвращаем пустой массив
+      if (itemId) {
+        console.warn(`Failed to parse array field for item ${itemId}:`, e);
+      }
+      return [];
+    }
+  }
+  
+  // В остальных случаях возвращаем пустой массив
+  return [];
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
