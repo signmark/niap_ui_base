@@ -64,28 +64,41 @@ export default function ScheduledPublications() {
   } = useQuery<CampaignContent[]>({
     queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
     queryFn: async () => {
+      // Строим URL, include userId всегда, campaignId только если доступен
       const url = `/api/publish/scheduled?userId=${userId}${selectedCampaign?.id ? `&campaignId=${selectedCampaign.id}` : ''}`;
       
       // Получаем токен авторизации из хранилища авторизации
       const authToken = getAuthToken();
       
-      // Формируем заголовки с авторизацией
-      const headers: Record<string, string> = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-        headers['X-User-ID'] = userId;
+      if (!authToken) {
+        console.error('No authentication token available for scheduled content request');
+        return [];
       }
       
-      console.log('Fetching scheduled content with token:', authToken ? 'Token available' : 'No token');
-      console.log('Using userId:', userId, 'campaignId:', selectedCampaign?.id);
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${authToken}`,
+        'X-User-ID': userId
+      };
       
-      const result = await apiRequest(url, { 
-        method: 'GET',
-        headers 
-      });
-      return result.data;
+      console.log('Fetching scheduled content with token:', 'Token available');
+      console.log('Using userId:', userId, 'campaignId:', selectedCampaign?.id || 'all campaigns');
+      
+      try {
+        const result = await apiRequest(url, { 
+          method: 'GET',
+          headers 
+        });
+        
+        console.log('Scheduled content result:', result.data ? `Found ${result.data.length} items` : 'No data returned');
+        return result.data || [];
+      } catch (error) {
+        console.error('Error fetching scheduled content:', error);
+        return [];
+      }
     },
-    enabled: !!userId && !!selectedCampaign?.id,
+    // Выполняем запрос, даже если кампания не выбрана, главное - userId должен быть
+    enabled: !!userId,
   });
   
   // Обновляем данные при изменении выбранной кампании или пользователя

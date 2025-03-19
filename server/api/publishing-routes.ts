@@ -14,16 +14,28 @@ export function registerPublishingRoutes(router: Router): void {
    */
   router.get('/publish/scheduled', async (req: Request, res: Response) => {
     try {
-      // Получаем userId из заголовка X-User-ID, из запроса или из сессии аутентификации
+      // Получаем authToken из заголовка
+      const authToken = req.header('Authorization')?.split(' ')[1];
+      
+      // Получаем userId из разных источников (с приоритетом)
       let userId = req.header('X-User-ID') || req.query.userId as string;
       
       // Если userId отсутствует, но есть объект user в запросе, используем его
-      if (!userId && req.user && (req.user as any).id) {
-        userId = (req.user as any).id;
+      if (!userId && (req as any).user && (req as any).user.id) {
+        userId = (req as any).user.id;
       }
       
       // Получаем campaignId из запроса
       const { campaignId } = req.query;
+
+      // Проверяем наличие токена авторизации
+      if (!authToken) {
+        log('[api] Ошибка: Отсутствует токен авторизации в запросе запланированных публикаций');
+        return res.status(401).json({
+          success: false,
+          message: 'Требуется авторизация. Пожалуйста, войдите снова.'
+        });
+      }
 
       // Проверяем наличие userId
       if (!userId) {
@@ -36,24 +48,40 @@ export function registerPublishingRoutes(router: Router): void {
 
       log('[api] Запрос запланированных публикаций для пользователя ' + userId);
 
+      // Добавляем дополнительные логи для отладки
+      log('[api] Параметры запроса: ' + JSON.stringify({
+        userId,
+        campaignId,
+        hasAuthToken: !!authToken
+      }));
+
       // Получаем запланированные публикации из хранилища
-      const scheduledContent = await storage.getScheduledContent(
-        userId as string,
-        campaignId as string
-      );
+      try {
+        const scheduledContent = await storage.getScheduledContent(
+          userId as string,
+          campaignId as string
+        );
 
-      log('[api] Получено ' + scheduledContent.length + ' запланированных публикаций');
+        log('[api] Получено ' + scheduledContent.length + ' запланированных публикаций');
 
-      return res.status(200).json({
-        success: true,
-        data: scheduledContent
-      });
+        return res.status(200).json({
+          success: true,
+          data: scheduledContent
+        });
+      } catch (storageError) {
+        log('[api] Ошибка при получении запланированных публикаций из хранилища: ' + storageError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error getting scheduled content from storage',
+          error: storageError instanceof Error ? storageError.message : String(storageError)
+        });
+      }
     } catch (error) {
       console.error('Error getting scheduled content:', error);
       return res.status(500).json({
         success: false,
         message: 'Error getting scheduled content',
-        error
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
