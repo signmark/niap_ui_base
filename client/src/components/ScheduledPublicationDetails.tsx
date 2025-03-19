@@ -60,7 +60,7 @@ export default function ScheduledPublicationDetails({
       const response = await apiRequest(`/api/publish/cancel/${content.id}?userId=${userId}`, {
         method: 'POST',
         headers,
-        data: {
+        body: {
           userId: userId || content.userId || '', // Явно передаем userId в теле запроса тоже
         }
       });

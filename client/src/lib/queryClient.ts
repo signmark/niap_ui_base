@@ -13,7 +13,6 @@ interface ApiRequestConfig {
   data?: unknown;
   params?: Record<string, string>;
   headers?: Record<string, string>;
-  body?: any; // Для совместимости с запросами
 }
 
 export async function apiRequest(
