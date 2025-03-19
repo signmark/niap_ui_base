@@ -3,18 +3,14 @@ import { storage } from '../storage';
 import { directusAuthManager } from '../services/directus-auth-manager';
 import { log } from '../utils/logger';
 
-/**
- * Регистрирует маршруты для работы с опубликованным контентом
- * @param router Экземпляр роутера Express
- */
-export function registerPublishedRoutes(router: Router): void {
-  console.log('[express] Регистрация маршрутов для работы с опубликованным контентом...');
+// Создаем роутер для маршрутов опубликованного контента
+const router = Router();
 
-  /**
-   * Получение опубликованного контента для отображения в календаре
-   * Поддерживает фильтрацию по кампании и диапазону дат
-   */
-  router.get('/published', async (req: Request, res: Response) => {
+/**
+ * Получение опубликованного контента для отображения в календаре
+ * Поддерживает фильтрацию по кампании и диапазону дат
+ */
+router.get('/published', async (req: Request, res: Response) => {
   try {
     const { campaignId, startDate, endDate } = req.query;
     const userId = req.headers['x-user-id'] as string;
@@ -84,4 +80,6 @@ export function registerPublishedRoutes(router: Router): void {
     });
   }
 });
-}
+
+// Экспортируем роутер
+export default router;
