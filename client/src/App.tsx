@@ -20,6 +20,7 @@ import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AuthGuard } from "@/components/AuthGuard";
 
 function Router() {
   return (
@@ -52,8 +53,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <AuthGuard>
+          <Router />
+          <Toaster />
+        </AuthGuard>
       </AuthProvider>
     </QueryClientProvider>
   );
