@@ -215,55 +215,48 @@ export class ApiKeyService {
       }
       
       // Сначала проверяем, существует ли уже ключ для этого сервиса/пользователя
-      const requestConfig = {
-        url: '/items/user_api_keys',
-        method: 'get' as const,
-        params: {
-          filter: {
-            user_id: { _eq: userId },
-            service_name: { _eq: serviceName }
-          },
-          fields: ['id']
-        },
-        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-      };
+      console.log(`[${serviceName}] Проверка существующих API ключей для пользователя ${userId} с использованием DirectusCrud`);
       
-      const existingKeys = await directusApiManager.request(requestConfig, userId);
-      const items = existingKeys.data?.data || [];
+      const existingKeys = await directusCrud.list('user_api_keys', {
+        userId: userId,
+        authToken: authToken,
+        filter: {
+          user_id: { _eq: userId },
+          service_name: { _eq: serviceName }
+        },
+        fields: ['id']
+      });
       
       let result;
       
-      if (items.length > 0) {
+      if (existingKeys.length > 0) {
         // Обновляем существующий ключ
-        const keyId = items[0].id;
+        const keyId = existingKeys[0].id;
+        console.log(`[${serviceName}] Обновление существующего API ключа с ID ${keyId}`);
         
-        const updateConfig = {
-          url: `/items/user_api_keys/${keyId}`,
-          method: 'patch' as const,
-          data: {
-            api_key: apiKey,
-            updated_at: new Date().toISOString()
-          },
-          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-        };
+        result = await directusCrud.update('user_api_keys', keyId, {
+          api_key: apiKey,
+          updated_at: new Date().toISOString()
+        }, {
+          userId: userId,
+          authToken: authToken
+        });
         
-        result = await directusApiManager.request(updateConfig, userId);
         log(`Updated ${serviceName} API key for user ${userId}`, 'api-keys');
       } else {
         // Создаем новый ключ
-        const createConfig = {
-          url: '/items/user_api_keys',
-          method: 'post' as const,
-          data: {
-            user_id: userId,
-            service_name: serviceName,
-            api_key: apiKey,
-            created_at: new Date().toISOString()
-          },
-          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-        };
+        console.log(`[${serviceName}] Создание нового API ключа для пользователя ${userId}`);
         
-        result = await directusApiManager.request(createConfig, userId);
+        result = await directusCrud.create('user_api_keys', {
+          user_id: userId,
+          service_name: serviceName,
+          api_key: apiKey,
+          created_at: new Date().toISOString()
+        }, {
+          userId: userId,
+          authToken: authToken
+        });
+        
         log(`Created new ${serviceName} API key for user ${userId}`, 'api-keys');
       }
       

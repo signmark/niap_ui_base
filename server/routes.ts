@@ -3586,7 +3586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   
   // Интеллектуальный поиск ключевых слов (XMLRiver с Perplexity fallback)
-  app.get("/api/wordstat/:keyword", async (req, res) => {
+  app.get("/api/wordstat/:keyword", authenticateUser, async (req, res) => {
     try {
       const requestId = crypto.randomUUID();
       console.log(`[${requestId}] Searching for keywords with context: ${req.params.keyword}`);
