@@ -657,10 +657,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Campaigns
-  async getCampaigns(userId: string): Promise<Campaign[]> {
+  async getCampaigns(userId: string, webToken?: string): Promise<Campaign[]> {
     console.log('Sending request to Directus with filter user_id =', userId);
     try {
-      const authToken = await this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId, webToken);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
