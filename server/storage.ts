@@ -940,29 +940,35 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent> {
+  async updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>, authToken?: string): Promise<CampaignContent> {
     try {
-      // Получаем данные текущего контента для доступа к userId
-      const currentContent = await this.getCampaignContentById(id);
-      if (!currentContent) {
-        console.error(`Ошибка: Контент с ID ${id} не найден в БД при попытке обновить промт`);
-        throw new Error('Content not found');
-      }
-      
-      // Получаем токен авторизации
-      console.log(`Получение токена авторизации для пользователя: ${currentContent.userId}`);
-      const authToken = await this.getAuthToken(currentContent.userId);
-      
       // Подготовка заголовков для запроса
       const headers: Record<string, string> = {};
       
+      // Если передан токен напрямую, используем его
       if (authToken) {
-        console.log(`Успешно получен токен для обновления, длина: ${authToken.length}`);
+        console.log(`Используем переданный токен авторизации для обновления контента ${id}`);
         headers['Authorization'] = `Bearer ${authToken}`;
       } else {
-        console.warn(`⚠️ Не найден токен авторизации для пользователя ${currentContent.userId}.`);
-        console.error(`Ошибка: Пользовательский токен не найден`);
-        throw new Error('No auth token found for user');
+        // Получаем данные текущего контента для доступа к userId
+        const currentContent = await this.getCampaignContentById(id);
+        if (!currentContent) {
+          console.error(`Ошибка: Контент с ID ${id} не найден в БД при попытке обновить промт`);
+          throw new Error('Content not found');
+        }
+        
+        // Получаем токен авторизации
+        console.log(`Получение токена авторизации для пользователя: ${currentContent.userId}`);
+        const userToken = await this.getAuthToken(currentContent.userId);
+        
+        if (userToken) {
+          console.log(`Успешно получен токен для обновления, длина: ${userToken.length}`);
+          headers['Authorization'] = `Bearer ${userToken}`;
+        } else {
+          console.warn(`⚠️ Не найден токен авторизации для пользователя ${currentContent.userId}.`);
+          console.error(`Ошибка: Пользовательский токен не найден`);
+          throw new Error('No auth token found for user');
+        }
       }
       
       // Преобразуем данные из нашей схемы в формат Directus
