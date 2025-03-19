@@ -152,6 +152,7 @@ export function registerPublishingRoutes(app: Express): void {
     try {
       const { contentId } = req.params;
       const authHeader = req.headers.authorization;
+      const userId = req.query.userId as string || req.body.userId;
       
       // Проверяем параметры
       if (!contentId) {
@@ -163,22 +164,63 @@ export function registerPublishingRoutes(app: Express): void {
         log('No authorization header provided for cancel publication', 'api');
         return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
       }
-      
-      // Получаем контент
-      const content = await storage.getCampaignContentById(contentId);
-      if (!content) {
-        return res.status(404).json({ error: 'Контент не найден' });
-      }
-      
+
       // Получаем токен авторизации
       let authToken = null;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         authToken = authHeader.substring(7);
-        
-        // Настраиваем временно токен для пользователя, если есть userId в контенте
-        if (content.userId) {
-          directusApiManager.cacheAuthToken(content.userId, authToken);
+      }
+      
+      // Логируем попытку получения контента
+      log(`Запрос контента по ID: ${contentId}`, 'api');
+      
+      // Получаем контент с явной передачей токена
+      let content = authToken ? 
+                    await storage.getCampaignContentById(contentId, authToken) : 
+                    await storage.getCampaignContentById(contentId);
+      
+      // Если не удалось найти контент, попробуем получить напрямую через Directus API
+      if (!content && authToken) {
+        log(`Пробуем получить контент напрямую через Directus API`, 'api');
+        try {
+          const response = await directusApiManager.request({
+            url: `/items/campaign_content/${contentId}`,
+            method: 'get',
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          if (response && response.data) {
+            // Преобразуем ответ от Directus в формат, ожидаемый нашим кодом
+            content = {
+              id: response.data.id,
+              title: response.data.title,
+              content: response.data.content,
+              campaignId: response.data.campaign_id,
+              status: response.data.status,
+              contentType: response.data.content_type,
+              createdAt: new Date(response.data.created_at),
+              userId: response.data.user_id || userId,
+              scheduledAt: response.data.scheduled_at ? new Date(response.data.scheduled_at) : null,
+              socialPlatforms: response.data.social_platforms
+            };
+            log(`Контент успешно получен напрямую через API`, 'api');
+          }
+        } catch (error) {
+          log(`Ошибка при прямом получении контента через API: ${error.message}`, 'api');
         }
+      }
+      
+      // Если контент всё ещё не найден, возвращаем ошибку
+      if (!content) {
+        log(`Контент с ID ${contentId} не найден ни одним из способов`, 'api');
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Настраиваем временно токен для пользователя, если есть userId в контенте
+      if (authToken && content.userId) {
+        directusApiManager.cacheAuthToken(content.userId, authToken);
       }
       
       // Проверяем, что контент запланирован
