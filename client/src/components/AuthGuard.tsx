@@ -1,85 +1,101 @@
-import { useEffect, useState } from 'react';
+import { useEffect, ReactNode, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore } from '@/lib/store';
-import { refreshAccessToken } from '@/lib/auth';
+import { useQuery } from '@tanstack/react-query';
 
-interface Props {
-  children: React.ReactNode;
+interface AuthGuardProps {
+  children: ReactNode;
 }
 
-export function AuthGuard({ children }: Props) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const [, navigate] = useLocation();
   const [location] = useLocation();
-  const [isSessionChecked, setIsSessionChecked] = useState(false);
-  const token = useAuthStore((state) => state.token);
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const { token, setAuth, clearAuth } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Получаем токен и ID из localStorage
+  const hasStoredToken = !!localStorage.getItem('auth_token');
+  const hasToken = !!token;
+  const isLoginPage = location === '/login' || location === '/auth/login';
+  
+  console.log('AuthGuard: Checking auth state', { hasToken, hasStoredToken, isLoginPage });
 
-  // Эффект при загрузке компонента для проверки авторизации
+  // Проверяем валидность токена
+  const { isSuccess, data } = useQuery({
+    queryKey: ['/api/auth/me'],
+    enabled: hasToken || hasStoredToken, // выполняем запрос только если есть токен
+    retry: false,
+    staleTime: 1000 * 60 * 5, // 5 минут
+  });
+
   useEffect(() => {
-    // Проверяем, есть ли токен в хранилище
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUserId = localStorage.getItem('user_id');
-    const storedRefreshToken = localStorage.getItem('refresh_token');
+    // Если нет токена и не на странице логина - перенаправляем
+    if (!hasToken && !hasStoredToken && !isLoginPage) {
+      console.log('AuthGuard: No token found, redirecting to login');
+      navigate('/login');
+      setIsLoading(false);
+      return;
+    }
     
-    const isLoginPage = location === '/auth/login' || location === '/login';
+    // Если на странице логина и есть валидный токен - перенаправляем на главную
+    if (isLoginPage && hasToken) {
+      console.log('AuthGuard: Token already in state, redirecting to home');
+      navigate('/campaigns');
+      setIsLoading(false);
+      return;
+    }
     
-    console.log('AuthGuard: Checking auth state', { 
-      hasToken: !!token, 
-      hasStoredToken: !!storedToken, 
-      isLoginPage 
-    });
-
-    const checkSession = async () => {
-      // Если нет сохраненного токена, но есть refresh токен, пробуем обновить сессию
-      if (!storedToken && storedRefreshToken) {
-        try {
-          console.log('AuthGuard: Attempting to refresh token');
-          await refreshAccessToken();
-          setIsSessionChecked(true);
-          return;
-        } catch (error) {
-          console.error('AuthGuard: Token refresh failed:', error);
-          // Если обновление не удалось, перенаправляем на страницу входа
-          if (!isLoginPage) {
-            navigate('/auth/login');
-          }
-          setIsSessionChecked(true);
-          return;
+    // Если есть сохраненный токен, но нет в состоянии - восстанавливаем из localStorage
+    if (!hasToken && hasStoredToken) {
+      const storedToken = localStorage.getItem('auth_token') || '';
+      const storedUserId = localStorage.getItem('user_id') || '';
+      
+      console.log('AuthGuard: Restored token from localStorage', {
+        tokenLength: storedToken.length,
+        hasUserId: !!storedUserId,
+      });
+      
+      setAuth(storedToken, storedUserId);
+    }
+    
+    // Если проверка токена прошла и получен результат
+    if (isSuccess) {
+      if (data?.authenticated) {
+        console.log('AuthGuard: Token is valid');
+        
+        // Если на странице логина, перенаправляем на главную
+        if (isLoginPage) {
+          navigate('/campaigns');
+        }
+      } else {
+        console.log('AuthGuard: Token is invalid, clearing auth data');
+        // Если токен невалидный, очищаем авторизацию
+        clearAuth();
+        
+        // Если не на странице логина, перенаправляем
+        if (!isLoginPage) {
+          navigate('/login');
         }
       }
-      
-      // Если уже есть токен в store, считаем что авторизация в порядке
-      if (token) {
-        console.log('AuthGuard: Token already in store');
-        setIsSessionChecked(true);
-        return;
-      }
-      
-      // Если есть сохраненный токен, но он не в store, добавляем его
-      if (storedToken && storedUserId) {
-        console.log('AuthGuard: Restoring token from localStorage');
-        setAuth(storedToken, storedUserId);
-        setIsSessionChecked(true);
-        return;
-      }
-      
-      // Если нет ни токена, ни storedToken, перенаправляем на логин
-      if (!token && !storedToken && !isLoginPage) {
-        console.log('AuthGuard: No token found, redirecting to login');
-        navigate('/auth/login');
-      }
-      
-      setIsSessionChecked(true);
-    };
+    }
+    
+    setIsLoading(false);
+  }, [hasToken, hasStoredToken, isLoginPage, isSuccess, data, navigate, setAuth, clearAuth]);
 
-    checkSession();
-  }, [token, location, navigate, setAuth]);
-
-  // Показываем загрузку пока не проверили сессию
-  if (!isSessionChecked) {
-    return <div className="flex h-screen items-center justify-center">Проверка сессии...</div>;
+  // Если идёт загрузка или проверка, показываем спиннер
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  // Если проверка прошла, возвращаем дочерние компоненты
+  // Если не на странице логина и нет токена, не рендерим содержимое (будет редирект)
+  if (!isLoginPage && !hasToken && !hasStoredToken) {
+    return null;
+  }
+
+  // В остальных случаях рендерим содержимое
   return <>{children}</>;
 }
