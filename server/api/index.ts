@@ -1,19 +1,18 @@
 import { Router } from 'express';
-import publishedRoutes from './published-routes';
-import { registerPublishingRoutes } from './publishing-routes';
+import { registerCampaignRoutes } from './campaign-routes';
+import { registerContentRoutes } from './content-routes';
+import { registerWordStatRoutes } from './wordstat-routes';
+import { registerPublishedRoutes } from './published-routes';
+import { log } from '../utils/logger';
 
-/**
- * Создает и регистрирует все API маршруты
- * @returns Экземпляр роутера Express с зарегистрированными маршрутами
- */
-export function createApiRouter(): Router {
-  const router = Router();
+export function registerAPIRoutes(app: Router) {
+  log('Starting route registration...', 'api');
   
-  // Регистрируем маршруты для публикации контента
-  registerPublishingRoutes(router);
+  // Регистрируем все API маршруты
+  registerCampaignRoutes(app);
+  registerContentRoutes(app);
+  registerWordStatRoutes(app);
+  registerPublishedRoutes(app);
   
-  // Регистрируем маршруты для работы с опубликованным контентом
-  router.use(publishedRoutes);
-  
-  return router;
+  log('Route registration completed', 'api');
 }

@@ -1,28 +1,36 @@
 import React from 'react';
 import { PageHeader } from '@/components/ui/page-header';
 import { PublicationCalendar } from '@/components/publication/PublicationCalendar';
-import { CampaignContent } from '@shared/schema';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Link } from 'wouter';
+import { Calendar, Share2 } from 'lucide-react';
 
-export function PublicationCalendarPage() {
-  const { toast } = useToast();
-  
-  // Обработчик выбора даты и контента
-  const handleDateSelect = (date: Date, contents: CampaignContent[]) => {
-    // Можно добавить дополнительную логику при выборе даты
-    console.log(`Выбрана дата: ${date.toLocaleDateString()}, контента: ${contents.length}`);
-  };
-  
+/**
+ * Страница календаря публикаций
+ */
+export default function PublishCalendarPage() {
   return (
-    <div className="container py-6 space-y-6">
-      <PageHeader 
-        title="Календарь публикаций" 
-        description="Просмотр опубликованного контента в календарном представлении"
+    <div className="container py-6 space-y-8">
+      <PageHeader
+        title="Календарь публикаций"
+        description="Просмотр и управление вашими публикациями в календарном представлении"
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/publish/scheduled">
+                <Calendar className="h-4 w-4 mr-2" />
+                Запланированные
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm">
+              <Share2 className="h-4 w-4 mr-2" />
+              Экспорт
+            </Button>
+          </div>
+        }
       />
       
-      <PublicationCalendar onDateSelect={handleDateSelect} />
+      <PublicationCalendar />
     </div>
   );
 }
-
-export default PublicationCalendarPage;
