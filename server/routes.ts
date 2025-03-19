@@ -4054,24 +4054,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
           let xmlRiverUserId = "16797"; // Значение по умолчанию
-          let xmlRiverApiKey = xmlRiverConfig;
+          let xmlRiverApiKey = "";
           
           try {
             // Проверяем, является ли значение JSON-строкой
-            if (xmlRiverConfig.startsWith('{') && xmlRiverConfig.endsWith('}')) {
-              const configObj = JSON.parse(xmlRiverConfig);
+            const configObj = JSON.parse(xmlRiverConfig);
+            
+            // Проверяем, содержит ли объект необходимые поля
+            if (configObj && typeof configObj === 'object') {
               if (configObj.user) xmlRiverUserId = configObj.user;
               if (configObj.key) xmlRiverApiKey = configObj.key;
               console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
-            } else if (xmlRiverConfig.includes(':')) {
-              // Для обратной совместимости обрабатываем формат user:key
-              const [user, key] = xmlRiverConfig.split(':');
-              xmlRiverUserId = user.trim();
-              xmlRiverApiKey = key.trim();
-              console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
+            } else {
+              throw new Error('Некорректный формат JSON для XMLRiver конфигурации');
             }
           } catch (e) {
-            console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
+            console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver:`, e);
+            
+            // Проверяем, является ли исходная строка простым форматом user:key
+            if (xmlRiverConfig.includes(':')) {
+              try {
+                const [user, key] = xmlRiverConfig.split(':');
+                xmlRiverUserId = user.trim();
+                xmlRiverApiKey = key.trim();
+                console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
+              } catch (splitError) {
+                console.error(`[${requestId}] Не удалось разделить строку конфигурации:`, splitError);
+                return res.status(400).json({
+                  error: "Некорректный формат API ключа",
+                  message: "XMLRiver API ключ имеет некорректный формат. Пожалуйста, проверьте настройки."
+                });
+              }
+            } else {
+              // Если не удалось распарсить JSON и не найден разделитель ':', предполагаем, что это просто ключ
+              xmlRiverApiKey = xmlRiverConfig;
+              console.log(`[${requestId}] Используем XMLRiver конфигурацию как есть, с user_id по умолчанию: ${xmlRiverUserId}`);
+            }
+          }
+          
+          // Проверка на пустой ключ API
+          if (!xmlRiverApiKey) {
+            console.warn(`[${requestId}] XMLRiver API ключ пустой после парсинга конфигурации`);
+            return res.status(400).json({
+              error: "Некорректный API ключ",
+              message: "XMLRiver API ключ не может быть пустым. Пожалуйста, проверьте настройки."
+            });
           }
           
           const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
