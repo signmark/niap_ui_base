@@ -104,8 +104,8 @@ export default function ScheduledPublications() {
         const matchesSearch = (
           (content.title && content.title.toLowerCase().includes(query)) ||
           (content.content && content.content.toLowerCase().includes(query)) ||
-          (content.keywords && content.keywords.some(keyword => 
-            keyword.toLowerCase().includes(query)
+          (Array.isArray(content.keywords) && content.keywords.some(keyword => 
+            typeof keyword === 'string' && keyword.toLowerCase().includes(query)
           ))
         );
         
