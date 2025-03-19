@@ -51,6 +51,7 @@ export interface IStorage {
   updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
   deleteCampaignContent(id: string): Promise<void>;
   getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
+  getPublishedContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
   
   // Business Questionnaire
   getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
