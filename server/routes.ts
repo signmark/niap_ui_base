@@ -3383,15 +3383,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Если нашли ключевые слова, попытаемся проверить их через XMLRiver для получения точных метрик
         if (deepseekKeywords && deepseekKeywords.length > 0) {
           try {
+            console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
+            
             // Получаем конфигурацию XMLRiver из централизованного хранилища
             const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
             
-            if (xmlRiverConfig) {
-              console.log(`[${requestId}] Получен ключ XMLRiver, обогащаем метрики ключевых слов`);
-              
-              // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
-              let xmlRiverUserId = "16797"; // Значение по умолчанию
-              let xmlRiverApiKey = xmlRiverConfig;
+            if (!xmlRiverConfig) {
+              console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
+              return res.status(400).json({
+                key_missing: true,
+                service: 'xmlriver',
+                message: 'Для использования Yandex.Wordstat необходимо добавить API ключ XMLRiver в настройках'
+              });
+            }
+            
+            console.log(`[${requestId}] Получен ключ XMLRiver, обогащаем метрики ключевых слов`);
+            
+            // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
+            let xmlRiverUserId = "16797"; // Значение по умолчанию
+            let xmlRiverApiKey = xmlRiverConfig;
               
               try {
                 // Проверяем, является ли значение JSON-строкой
@@ -4063,11 +4073,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Если перплексити не вернул результатов или это не URL, используем XMLRiver
       if (finalKeywords.length === 0) {
-        console.log('Falling back to XMLRiver for keyword search');
+        console.log(`[${requestId}] Falling back to XMLRiver for keyword search`);
         try {
           // Получаем userId из запроса, установленный authenticateUser middleware
           // Если пользователь не авторизован, используем временный ID
           const userId = req.user?.id || 'guest';
+          const token = req.user?.token || null;
+          
+          console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
+          
+          // Получаем API ключ XMLRiver из сервиса API ключей
+          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
+          
+          if (!xmlRiverConfig) {
+            console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
+            return res.status(400).json({
+              key_missing: true,
+              service: 'xmlriver',
+              message: 'Для использования Yandex.Wordstat необходимо добавить API ключ XMLRiver в настройках'
+            });
+          }
           
           console.log(`[${requestId}] Searching for XMLRiver API key for user: ${userId}`);
           
@@ -4148,17 +4173,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
-            params: {
-              user: xmlRiverUserId,
-              key: xmlRiverApiKey,
-              query: isUrl ? "контент для сайта" : req.params.keyword
+          // Для XMLRiver требуется POST запрос с JSON в теле
+          console.log(`[${requestId}] Отправляем запрос в XMLRiver API: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
+            
+          // Формируем данные согласно документации XMLRiver API
+          const xmlriverResponse = await axios.post(`https://xmlriver.com/exec/wordstat.php`, {
+            user: xmlRiverUserId,
+            key: xmlRiverApiKey,
+            query: [isUrl ? "контент для сайта" : req.params.keyword]
+          }, {
+            headers: {
+              'Content-Type': 'application/json'
             }
           });
           
+          console.log(`[${requestId}] XMLRiver API response:`, JSON.stringify(xmlriverResponse.data).substring(0, 200));
+          
+          // Проверяем структуру ответа от сервера
           if (xmlriverResponse.data?.content?.includingPhrases?.items) {
             // Сначала собираем данные для расчета конкуренции
             const items = xmlriverResponse.data.content.includingPhrases.items;
+            console.log(`[${requestId}] Найдено ${items.length} ключевых слов от XMLRiver`);
             
             // Находим максимальную и минимальную частоту (number) для нормализации
             let maxNumber = 0;
