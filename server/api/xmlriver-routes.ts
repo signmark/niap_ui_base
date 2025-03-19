@@ -24,20 +24,25 @@ const authenticateXmlRiverRequest = async (req: Request, res: Response, next: Ne
   const token = authHeader.substring(7);
   
   try {
-    // Получаем информацию о пользователе из Directus API
-    const response = await axios.get('https://directus.nplanner.ru/users/me', {
+    // Используем наш собственный API для проверки токена
+    // Получаем хост из запроса для правильного формирования URL
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const meUrl = `${protocol}://${host}/api/auth/me`;
+    
+    const response = await axios.get(meUrl, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
 
-    if (!response.data?.data?.id) {
+    if (!response.data?.user?.id) {
       log('Invalid token: cannot get user info', 'xmlriver-auth');
       return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
     }
 
     // Устанавливаем информацию о пользователе в объект запроса
-    const userId = response.data.data.id;
+    const userId = response.data.user.id;
     
     log(`User authenticated: ${userId}`, 'xmlriver-auth');
     
@@ -60,6 +65,74 @@ const authenticateXmlRiverRequest = async (req: Request, res: Response, next: Ne
  * @param app Express приложение
  */
 export function registerXmlRiverRoutes(app: Express): void {
+  // Маршрут для сохранения XML River API ключа
+  app.post('/api/xmlriver/save-key', authenticateXmlRiverRequest, async (req: Request, res: Response) => {
+    try {
+      const { apiKey, userId } = req.body;
+      const userIdFromToken = (req as any).userId;
+      const token = (req as any).token;
+      
+      if (userIdFromToken !== userId) {
+        return res.status(403).json({
+          error: 'Отказано в доступе',
+          message: 'Вы можете сохранять API ключи только для своего аккаунта'
+        });
+      }
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          error: 'Отсутствует API ключ',
+          message: 'Необходимо указать API ключ'
+        });
+      }
+      
+      // Попытка форматировать API ключ, если он не является JSON
+      let formattedApiKey = apiKey;
+      
+      try {
+        // Проверяем, является ли ключ валидным JSON
+        JSON.parse(apiKey);
+      } catch (e) {
+        // Если ключ не является JSON, преобразуем его
+        if (apiKey.includes(':')) {
+          // Формат user:key
+          const [user, key] = apiKey.split(':');
+          formattedApiKey = JSON.stringify({ user: user.trim(), key: key.trim() });
+        } else {
+          // Просто ключ без user_id
+          formattedApiKey = JSON.stringify({ user: "16797", key: apiKey.trim() });
+        }
+      }
+      
+      // Сохраняем API ключ в сервисе
+      const success = await apiKeyService.saveApiKey(
+        userId,
+        'xmlriver' as ApiServiceName,
+        formattedApiKey,
+        token
+      );
+      
+      if (success) {
+        return res.status(200).json({
+          success: true,
+          message: 'API ключ XMLRiver успешно сохранен'
+        });
+      } else {
+        return res.status(500).json({
+          error: 'Ошибка сохранения',
+          message: 'Не удалось сохранить API ключ'
+        });
+      }
+    } catch (error) {
+      log(`Ошибка при сохранении API ключа: ${error instanceof Error ? error.message : 'Unknown error'}`, 'xmlriver-api');
+      
+      return res.status(500).json({
+        error: 'Внутренняя ошибка сервера',
+        message: 'Произошла ошибка при обработке запроса'
+      });
+    }
+  });
+  
   // Маршрут для получения ключевых слов напрямую из XMLRiver API
   app.get('/api/xmlriver/keywords/:query', authenticateXmlRiverRequest, async (req: Request, res: Response) => {
     try {
