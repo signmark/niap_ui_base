@@ -45,8 +45,8 @@ export interface IStorage {
   bookmarkCampaignTrendTopic(id: string, isBookmarked: boolean): Promise<CampaignTrendTopic>;
   
   // Campaign Content
-  getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
-  getCampaignContentById(id: string): Promise<CampaignContent | undefined>;
+  getCampaignContent(userId: string, campaignId?: string, webToken?: string): Promise<CampaignContent[]>;
+  getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined>;
   createCampaignContent(content: InsertCampaignContent): Promise<CampaignContent>;
   updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
   deleteCampaignContent(id: string): Promise<void>;
@@ -831,10 +831,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Campaign Content
-  async getCampaignContent(userId: string, campaignId?: string): Promise<CampaignContent[]> {
+  async getCampaignContent(userId: string, campaignId?: string, webToken?: string): Promise<CampaignContent[]> {
     console.log('Fetching content for campaign ID:', campaignId);
     try {
-      const authToken = await this.getAuthToken(userId);
+      const authToken = await this.getAuthToken(userId, webToken);
       if (!authToken) {
         console.error('No auth token found for user', userId);
         return [];
