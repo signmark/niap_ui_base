@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
+import { authenticateApiRequest } from './middleware/auth';
 
 /**
  * Регистрирует маршруты для работы с опубликованным контентом
@@ -18,8 +19,11 @@ export function registerPublishedRoutes(router: Router) {
    */
   router.get('/published', async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId;
+      // В реальном приложении здесь будет получение userId из сессии
+      // В данном случае используем userId из запроса или заголовка Authorization
+      const userId = (req as any).userId;
       
+      // Проверка авторизации
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -35,6 +39,9 @@ export function registerPublishedRoutes(router: Router) {
       const startDate = startDateStr ? new Date(startDateStr) : undefined;
       const endDate = endDateStr ? new Date(endDateStr) : undefined;
       
+      console.log(`Получение опубликованного контента для пользователя ${userId}, кампания: ${campaignId || 'все'}`);
+      console.log(`Фильтр по дате: ${startDateStr || 'с начала'} - ${endDateStr || 'до конца'}`);
+      
       // Получаем опубликованный контент
       const publishedContent = await storage.getPublishedContent(userId, campaignId);
       
@@ -49,6 +56,8 @@ export function registerPublishedRoutes(router: Router) {
         
         return true;
       });
+      
+      console.log(`Найдено ${filteredContent.length} опубликованных элементов контента`);
       
       return res.json({
         success: true,
@@ -69,8 +78,11 @@ export function registerPublishedRoutes(router: Router) {
    */
   router.get('/published/:id', async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId;
+      // В реальном приложении здесь будет получение userId из сессии
+      // В данном случае используем userId из запроса или заголовка Authorization
+      const userId = (req as any).userId;
       
+      // Проверка авторизации
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -79,6 +91,8 @@ export function registerPublishedRoutes(router: Router) {
       }
       
       const contentId = req.params.id;
+      
+      console.log(`Получение детальной информации о публикации ${contentId} для пользователя ${userId}`);
       
       const content = await storage.getCampaignContentById(contentId);
       
