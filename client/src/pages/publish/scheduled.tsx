@@ -95,8 +95,17 @@ export default function ScheduledPublications() {
       return (
         (content.title && content.title.toLowerCase().includes(query)) ||
         (content.content && content.content.toLowerCase().includes(query)) ||
-        (content.keywords && content.keywords.some(keyword => 
-          keyword.toLowerCase().includes(query)
+        (content.keywords && (
+          // Проверяем, является ли keywords массивом
+          Array.isArray(content.keywords) 
+            ? content.keywords.some(keyword => 
+                typeof keyword === 'string' && keyword.toLowerCase().includes(query)
+              )
+            // Если это строка, разбиваем ее на массив и выполняем поиск
+            : typeof content.keywords === 'string'
+              ? content.keywords.toLowerCase().includes(query) || 
+                content.keywords.split(',').some(k => k.trim().toLowerCase().includes(query))
+              : false
         ))
       );
     });
@@ -327,15 +336,28 @@ export default function ScheduledPublications() {
                       </span>
                     </div>
                     
-                    {content.keywords && content.keywords.length > 0 && (
+                    {content.keywords && (
                       <div className="mt-3">
                         <div className="flex flex-wrap gap-2">
-                          {content.keywords.slice(0, 3).map((keyword, idx) => (
-                            <Badge key={idx} variant="secondary">{keyword}</Badge>
-                          ))}
-                          {content.keywords.length > 3 && (
-                            <Badge variant="outline">+{content.keywords.length - 3}</Badge>
-                          )}
+                          {Array.isArray(content.keywords) ? (
+                            <>
+                              {content.keywords.slice(0, 3).map((keyword, idx) => (
+                                <Badge key={idx} variant="secondary">{keyword}</Badge>
+                              ))}
+                              {content.keywords.length > 3 && (
+                                <Badge variant="outline">+{content.keywords.length - 3}</Badge>
+                              )}
+                            </>
+                          ) : typeof content.keywords === 'string' ? (
+                            <>
+                              {content.keywords.split(',').slice(0, 3).map((keyword, idx) => (
+                                <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
+                              ))}
+                              {content.keywords.split(',').length > 3 && (
+                                <Badge variant="outline">+{content.keywords.split(',').length - 3}</Badge>
+                              )}
+                            </>
+                          ) : null}
                         </div>
                       </div>
                     )}
@@ -404,13 +426,20 @@ export default function ScheduledPublications() {
               </div>
             )}
             
-            {previewContent?.keywords && previewContent.keywords.length > 0 && (
+            {previewContent?.keywords && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {previewContent.keywords.map((keyword, idx) => (
-                    <Badge key={idx} variant="secondary">{keyword}</Badge>
-                  ))}
+                  {Array.isArray(previewContent.keywords) 
+                    ? previewContent.keywords.map((keyword, idx) => (
+                        <Badge key={idx} variant="secondary">{keyword}</Badge>
+                      ))
+                    : typeof previewContent.keywords === 'string'
+                      ? previewContent.keywords.split(',').map((keyword, idx) => (
+                          <Badge key={idx} variant="secondary">{keyword.trim()}</Badge>
+                        ))
+                      : null
+                  }
                 </div>
               </div>
             )}
