@@ -43,6 +43,8 @@ export function KeywordSelector({
     }
   }, [selectedKeywords]);
 
+  const { getAuthToken } = useAuthStore();
+
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
     
@@ -51,9 +53,16 @@ export function KeywordSelector({
     setKeywords([]);
     
     try {
+      // Получаем токен авторизации
+      const authToken = getAuthToken();
+      
       // Добавляем случайный параметр для предотвращения кеширования
       const nocache = Date.now();
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`);
+      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`, {
+        headers: {
+          'Authorization': authToken ? `Bearer ${authToken}` : ''
+        }
+      });
       
       if (!response.ok) {
         if (response.status === 401) {
@@ -209,11 +218,16 @@ export function KeywordSelector({
       <AlertDialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Требуется API ключ XMLRiver</AlertDialogTitle>
+            <AlertDialogTitle>Требуется авторизация и API ключ XMLRiver</AlertDialogTitle>
             <AlertDialogDescription>
-              Для поиска ключевых слов необходимо добавить API ключ XMLRiver в настройках профиля.
-              <br /><br />
-              Вы можете получить API ключ на сайте <a href="https://xmlriver.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">XMLRiver</a>.
+              Для поиска ключевых слов необходимо:
+              <ol className="list-decimal pl-5 mt-2 space-y-1">
+                <li>Войти в аккаунт системы (авторизоваться)</li>
+                <li>Добавить API ключ XMLRiver в настройках профиля</li>
+              </ol>
+              <div className="mt-4">
+                Вы можете получить API ключ на сайте <a href="https://xmlriver.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">XMLRiver</a>.
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
