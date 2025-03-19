@@ -3402,81 +3402,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
             let xmlRiverUserId = "16797"; // Значение по умолчанию
             let xmlRiverApiKey = xmlRiverConfig;
-              
-              try {
-                // Проверяем, является ли значение JSON-строкой
-                if (xmlRiverConfig.startsWith('{') && xmlRiverConfig.endsWith('}')) {
-                  const configObj = JSON.parse(xmlRiverConfig);
-                  if (configObj.user) xmlRiverUserId = configObj.user;
-                  if (configObj.key) xmlRiverApiKey = configObj.key;
-                  console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
-                } else if (xmlRiverConfig.includes(':')) {
-                  // Для обратной совместимости обрабатываем формат user:key
-                  const [user, key] = xmlRiverConfig.split(':');
-                  xmlRiverUserId = user.trim();
-                  xmlRiverApiKey = key.trim();
-                  console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
-                }
-              } catch (e) {
-                console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
+            
+            try {
+              // Проверяем, является ли значение JSON-строкой
+              if (xmlRiverConfig.startsWith('{') && xmlRiverConfig.endsWith('}')) {
+                const configObj = JSON.parse(xmlRiverConfig);
+                if (configObj.user) xmlRiverUserId = configObj.user;
+                if (configObj.key) xmlRiverApiKey = configObj.key;
+                console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
+              } else if (xmlRiverConfig.includes(':')) {
+                // Для обратной совместимости обрабатываем формат user:key
+                const [user, key] = xmlRiverConfig.split(':');
+                xmlRiverUserId = user.trim();
+                xmlRiverApiKey = key.trim();
+                console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
               }
-              
-              // Выбираем первые 5 ключевых слов для проверки через XMLRiver (чтобы не превышать лимиты API)
-              const topKeywords = deepseekKeywords.slice(0, 5).map(kw => kw.keyword);
-              
-              // Проверяем каждое ключевое слово через XMLRiver
-              const xmlRiverResults = await Promise.all(
-                topKeywords.map(async (keyword) => {
-                  try {
-                    // Запрос к XMLRiver API для получения статистики из Яндекс.Вордстат
-                    const response = await axios.get('https://xmlriver.com/search/yandex/wordstat', {
-                      params: {
-                        user: xmlRiverUserId,
-                        key: xmlRiverApiKey,
-                        query: keyword
-                      }
-                    });
-                    
-                    // Проверяем наличие данных в ответе
-                    if (response.data && response.data.report && response.data.report.shows) {
-                      const showsValue = parseInt(response.data.report.shows) || 0;
-                      
-                      console.log(`[${requestId}] XMLRiver данные для "${keyword}": ${showsValue} показов`);
-                      
-                      return {
-                        keyword,
-                        shows: showsValue
-                      };
-                    }
-                    return null;
-                  } catch (error) {
-                    console.error(`[${requestId}] Ошибка при запросе к XMLRiver для "${keyword}":`, error);
-                    return null;
-                  }
-                })
-              );
-              
-              // Фильтруем успешные результаты
-              const validResults = xmlRiverResults.filter(Boolean);
-              
-              // Создаем Map для быстрого поиска по ключевому слову
-              const xmlRiverDataMap = new Map();
-              validResults.forEach(result => {
-                if (result) xmlRiverDataMap.set(result.keyword.toLowerCase(), result);
-              });
-              
-              // Обновляем метрики в deepseekKeywords
-              deepseekKeywords.forEach(keyword => {
-                const xmlRiverData = xmlRiverDataMap.get(keyword.keyword.toLowerCase());
-                if (xmlRiverData) {
-                  console.log(`[${requestId}] Обновляем метрики для "${keyword.keyword}": DeepSeek (${keyword.trend}) -> XMLRiver (${xmlRiverData.shows})`);
-                  // Обновляем значение популярности на реальное от XMLRiver
-                  keyword.trend = xmlRiverData.shows;
-                  // Добавляем источник метрик
-                  keyword.source = 'xmlriver+deepseek';
-                }
-              });
+            } catch (e) {
+              console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver, будет использован ключ как есть:`, e);
             }
+            
+            // Выбираем первые 5 ключевых слов для проверки через XMLRiver (чтобы не превышать лимиты API)
+            const topKeywords = deepseekKeywords.slice(0, 5).map(kw => kw.keyword);
+            
+            // Проверяем каждое ключевое слово через XMLRiver
+            const xmlRiverResults = await Promise.all(
+              topKeywords.map(async (keyword) => {
+                try {
+                  // Для XMLRiver требуется POST запрос с JSON в теле
+                  console.log(`[${requestId}] Отправляем запрос в XMLRiver API: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
+                  
+                  // Формируем данные согласно документации XMLRiver API
+                  const xmlriverResponse = await axios.post(`https://xmlriver.com/exec/wordstat.php`, {
+                    user: xmlRiverUserId,
+                    key: xmlRiverApiKey,
+                    query: [keyword]
+                  }, {
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  
+                  console.log(`[${requestId}] XMLRiver API response:`, JSON.stringify(xmlriverResponse.data).substring(0, 200));
+                  
+                  // Проверяем наличие данных в ответе
+                  if (xmlriverResponse.data && xmlriverResponse.data.report && xmlriverResponse.data.report.shows) {
+                    const showsValue = parseInt(xmlriverResponse.data.report.shows) || 0;
+                    
+                    console.log(`[${requestId}] XMLRiver данные для "${keyword}": ${showsValue} показов`);
+                    
+                    return {
+                      keyword,
+                      shows: showsValue
+                    };
+                  }
+                  return null;
+                } catch (error) {
+                  console.error(`[${requestId}] Ошибка при запросе к XMLRiver для "${keyword}":`, error);
+                  return null;
+                }
+              })
+            );
+            
+            // Фильтруем успешные результаты
+            const validResults = xmlRiverResults.filter(Boolean);
+            
+            // Создаем Map для быстрого поиска по ключевому слову
+            const xmlRiverDataMap = new Map();
+            validResults.forEach(result => {
+              if (result) xmlRiverDataMap.set(result.keyword.toLowerCase(), result);
+            });
+            
+            // Обновляем метрики в deepseekKeywords
+            deepseekKeywords.forEach(keyword => {
+              const xmlRiverData = xmlRiverDataMap.get(keyword.keyword.toLowerCase());
+              if (xmlRiverData) {
+                console.log(`[${requestId}] Обновляем метрики для "${keyword.keyword}": DeepSeek (${keyword.trend}) -> XMLRiver (${xmlRiverData.shows})`);
+                // Обновляем значение популярности на реальное от XMLRiver
+                keyword.trend = xmlRiverData.shows;
+                // Добавляем источник метрик
+                keyword.source = 'xmlriver+deepseek';
+              }
+            });
           } catch (xmlRiverError) {
             console.error(`[${requestId}] Ошибка при использовании XMLRiver:`, xmlRiverError);
             // Продолжаем с данными DeepSeek при ошибке XMLRiver
@@ -4094,35 +4100,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          console.log(`[${requestId}] Searching for XMLRiver API key for user: ${userId}`);
-          
-          // Извлекаем токен из заголовка Authorization или из req.user.token
-          let authToken = null;
-          if (req.user?.token) {
-            authToken = req.user.token;
-            console.log(`[${requestId}] Using token from authenticated user`);
-          } else {
-            const authHeader = req.headers.authorization;
-            if (authHeader && authHeader.startsWith('Bearer ')) {
-              authToken = authHeader.substring(7);
-              console.log(`[${requestId}] Found authorization token in request headers`);
-            } else {
-              console.log(`[${requestId}] No authorization token in request headers`);
-            }
-          }
-          
-          // Получаем ключ XMLRiver из центрального хранилища API ключей с передачей authToken
-          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', authToken);
-          
-          if (!xmlRiverConfig) {
-            console.warn(`[${requestId}] XMLRiver API ключ не найден в настройках пользователя. Запрос не может быть выполнен.`);
-            return res.status(400).json({
-              error: "API ключ не настроен",
-              message: "Пожалуйста, добавьте API ключ XMLRiver в настройках профиля. Формат ключа: user_id:api_key (например, 16797:your_api_key)",
-              key_missing: true,
-              service: "xmlriver"
-            });
-          }
+          // Token был получен ранее из req.user.token
+          // xmlRiverConfig уже получен выше, используем его напрямую
           
           // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
           let xmlRiverUserId = "16797"; // Значение по умолчанию
