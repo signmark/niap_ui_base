@@ -3,6 +3,7 @@ import { registerCampaignRoutes } from './campaign-routes';
 import { registerContentRoutes } from './content-routes';
 import { registerWordStatRoutes } from './wordstat-routes';
 import { registerPublishedRoutes } from './published-routes';
+import { registerAuthRoutes } from './auth-routes';
 import { log } from '../utils/logger';
 import { authenticateApiRequest } from './middleware/auth';
 
@@ -13,7 +14,14 @@ import { authenticateApiRequest } from './middleware/auth';
 const globalAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Для определенных маршрутов пропускаем проверку
-    const openPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/me'];
+    const openPaths = [
+      '/api/auth/login', 
+      '/api/auth/register', 
+      '/api/auth/refresh', 
+      '/api/auth/me',
+      '/api/auth/check',
+      '/api/auth/logout'
+    ];
     
     if (openPaths.some(path => req.path.startsWith(path))) {
       return next();
@@ -108,6 +116,7 @@ export function registerAPIRoutes(app: Router) {
   app.use('/api', globalAuthMiddleware);
   
   // Регистрируем все API маршруты
+  registerAuthRoutes(app); // Важно зарегистрировать маршруты аутентификации
   registerCampaignRoutes(app);
   registerContentRoutes(app);
   registerWordStatRoutes(app);
