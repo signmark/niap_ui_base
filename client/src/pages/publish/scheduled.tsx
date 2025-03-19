@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CampaignContent, Campaign, SocialPlatform } from '@/types';
+import { CampaignContent, Campaign, SocialPlatform, PlatformPublishInfo } from '@/types';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
-import { safeSocialPlatforms, platformNames } from '@/lib/social-platforms';
+import { safeSocialPlatforms, platformNames, SocialPlatforms } from '@/lib/social-platforms';
 
 import {
   Card,

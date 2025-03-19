@@ -1,4 +1,4 @@
-import { SocialPlatform } from "@/types";
+import { SocialPlatform, PlatformPublishInfo } from "@/types";
 
 // Массив доступных социальных платформ для безопасного использования в коде
 export const safeSocialPlatforms: SocialPlatform[] = [
@@ -7,6 +7,12 @@ export const safeSocialPlatforms: SocialPlatform[] = [
   'telegram',
   'vk'
 ];
+
+// Тип для более безопасной работы с платформами
+export type SafeSocialPlatform = typeof safeSocialPlatforms[number];
+
+// Упакованный тип для всех платформ
+export type SocialPlatforms = Record<SafeSocialPlatform, PlatformPublishInfo>;
 
 // Словарь с переводами названий платформ для отображения в UI
 export const platformNames: Record<SocialPlatform, string> = {
