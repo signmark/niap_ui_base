@@ -21,7 +21,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   console.log('AuthGuard: Checking auth state', { hasToken, hasStoredToken, isLoginPage });
 
   // Проверяем валидность токена
-  const { isSuccess, data } = useQuery({
+  const { isSuccess, data } = useQuery<{ authenticated: boolean; userId: string | null }>({
     queryKey: ['/api/auth/me'],
     enabled: hasToken || hasStoredToken, // выполняем запрос только если есть токен
     retry: false,

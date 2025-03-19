@@ -3,6 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
+import { registerAuthRoutes } from './api/auth-routes';
+import { authenticateApiRequest } from './api/middleware';
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
@@ -42,6 +44,12 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Регистрируем маршруты авторизации
+registerAuthRoutes(app);
+
+// Подключаем middleware для аутентификации API-запросов
+app.use(authenticateApiRequest);
 
 (async () => {
   try {
