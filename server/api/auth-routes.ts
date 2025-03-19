@@ -163,7 +163,7 @@ export function registerAuthRoutes(app: Express): void {
   });
 
   // Маршрут для получения информации о текущем пользователе
-  app.get('/auth/me', async (req: Request, res: Response) => {
+  app.get('/api/auth/me', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

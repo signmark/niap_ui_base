@@ -42,7 +42,7 @@ type RegisterData = {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { add: toast } = useToast();
+  const { toast } = useToast();
 
   // Пробуем обновить токен при загрузке приложения
   useEffect(() => {
@@ -86,8 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user_id', data.user.id);
       setupTokenRefresh(data.expires);
-      queryClient.setQueryData(["/auth/me"], data.user);
+      queryClient.setQueryData(["/api/auth/me"], data.user);
     },
     onError: (error: Error) => {
       toast({
@@ -118,8 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: LoginResponse) => {
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user_id', data.user.id);
       setupTokenRefresh(data.expires);
-      queryClient.setQueryData(["/auth/me"], data.user);
+      queryClient.setQueryData(["/api/auth/me"], data.user);
     },
     onError: (error: Error) => {
       toast({
@@ -150,7 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Всегда очищаем локальное хранилище и состояние, даже если запрос logout не удался
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
-        queryClient.setQueryData(["/auth/me"], null);
+        localStorage.removeItem('user_id');
+        queryClient.setQueryData(["/api/auth/me"], null);
         // Очищаем все кеши запросов
         queryClient.clear();
       }
