@@ -4041,7 +4041,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Получаем userId из запроса или используем временный ID для неавторизованных запросов
           const userId = req.userId || 'guest';
           
-          // Получаем ключ XMLRiver из центрального хранилища API ключей
+          console.log(`[${requestId}] Searching for XMLRiver API key for user: ${userId}`);
+          
+          // Извлекаем токен из заголовка Authorization
+          const authHeader = req.headers.authorization;
+          let authToken = null;
+          
+          if (authHeader && authHeader.startsWith('Bearer ')) {
+            authToken = authHeader.substring(7);
+            console.log(`[${requestId}] Found authorization token in request headers`);
+          } else {
+            console.log(`[${requestId}] No authorization token in request headers`);
+          }
+          
+          // Получаем ключ XMLRiver из центрального хранилища API ключей с передачей authToken
           const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver');
           
           if (!xmlRiverConfig) {
