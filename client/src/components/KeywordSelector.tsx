@@ -72,12 +72,15 @@ export function KeywordSelector({ campaignId }: KeywordSelectorProps) {
     try {
       // Добавляем случайный параметр для предотвращения кеширования
       const nocache = Date.now();
+      console.log('Отправляем запрос с токеном:', authToken.substring(0, 10) + '...');
+      const headers = new Headers();
+      headers.append('Authorization', `Bearer ${authToken}`);
+      
       const response = await fetch(
         `/api/wordstat/${encodeURIComponent(searchQuery.trim())}?nocache=${nocache}`,
         {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
+          headers: headers,
+          credentials: 'same-origin'
         }
       );
       
