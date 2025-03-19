@@ -568,10 +568,28 @@ export function registerPublishingRoutes(app: Express): void {
         
         // Добавляем дату публикации в каждой платформе
         if (socialPlatforms && typeof socialPlatforms === 'object') {
+          // Проверяем наличие запланированных платформ
+          let hasScheduledPlatforms = false;
+          
           for (const platform in socialPlatforms) {
             if (socialPlatforms[platform] && typeof socialPlatforms[platform] === 'object') {
-              socialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+              // Используем указанную дату платформы или общую дату, если не указана
+              if (!socialPlatforms[platform].scheduledAt && scheduledAtDate) {
+                socialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+              }
+              
+              // Проверка статуса платформы
+              if (socialPlatforms[platform].status === 'scheduled' || 
+                  socialPlatforms[platform].status === 'pending') {
+                hasScheduledPlatforms = true;
+              }
             }
+          }
+          
+          // Если нет запланированных платформ, меняем общий статус на черновик
+          if (!hasScheduledPlatforms) {
+            updates.status = 'draft';
+            log(`Нет запланированных платформ, статус изменен на 'draft'`, 'api');
           }
         }
         
@@ -597,8 +615,8 @@ export function registerPublishingRoutes(app: Express): void {
             url: `/items/campaign_content/${contentId}`,
             method: 'patch',
             data: {
-              status: 'scheduled',
-              scheduled_at: scheduledAtDate.toISOString(),
+              status: updates.status, // Используем динамический статус
+              scheduled_at: updates.status === 'scheduled' ? scheduledAtDate.toISOString() : null,
               social_platforms: socialPlatforms
             },
             headers: {
