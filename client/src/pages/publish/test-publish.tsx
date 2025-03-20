@@ -87,7 +87,7 @@ export default function TestPublish() {
       };
       
       // Создаем временный контент
-      const result = await apiRequest('/api/campaign/content', {
+      const result = await apiRequest('/api/campaign-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,14 +142,14 @@ export default function TestPublish() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAuthToken()}`
         },
-        body: JSON.stringify({ platforms })
+        data: { platforms }
       });
       
       setPublishResult(result);
       setIsResultOpen(true);
       
       // Обновляем данные в кэше
-      queryClient.invalidateQueries({ queryKey: ['/api/campaign/content'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
       
       toast({
         title: "Публикация отправлена",
