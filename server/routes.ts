@@ -9012,7 +9012,7 @@ ${datesText}
     }
   });
   
-  // ОТЛАДОЧНЫЙ ЭНДПОИНТ: Показывает сведения о всех API ключах
+  // ОТЛАДОЧНЫЙ ЭНДПОИНТ: Показывает сведения о всех API ключах и может исправлять их форматирование
   app.get("/api/debug/api-keys", authenticateUser, async (req: Request, res: Response) => {
     try {
       if (!req.user) {

@@ -18,6 +18,7 @@ import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
 import AuthBypass from "@/pages/test/auth-bypass";
 import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
+import ApiKeysTest from "@/pages/test/api-keys";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/test/auth-bypass" component={AuthBypass} />
       <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
+      <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
