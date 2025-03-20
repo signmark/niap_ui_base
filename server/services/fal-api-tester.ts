@@ -50,29 +50,84 @@ export async function testFalApiConnection(apiKey: string): Promise<any> {
     try {
       log(`Testing FAL.AI API with key format: "${variant.description}"`, 'fal-tester');
       
-      const response = await axios.post(
-        'https://queue.fal.run/fal-ai/fast-sdxl',
-        requestData,
-        {
-          headers: {
-            'Authorization': variant.key,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          timeout: 10000 // 10 секунд таймаут для тестов
+      try {
+        // Сначала пробуем модель flux/schnell
+        log(`Testing with flux/schnell endpoint...`, 'fal-tester');
+        const response = await axios.post(
+          'https://queue.fal.run/fal-ai/flux/schnell',
+          requestData,
+          {
+            headers: {
+              'Authorization': variant.key,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 10000 // 10 секунд таймаут для тестов
+          }
+        );
+      
+        results.push({
+          format: variant.description,
+          success: true,
+          status: response.status,
+          endpoint: 'flux/schnell',
+          data: typeof response.data === 'object' ? 
+            Object.keys(response.data) : 
+            'Non-object response'
+        });
+      
+        log(`✅ Successful test for format: "${variant.description}" with flux/schnell`, 'fal-tester');
+      } catch (schnellError) {
+        // При ошибке с первым эндпоинтом пробуем второй (fast-sdxl)
+        log(`flux/schnell test failed, trying fast-sdxl endpoint...`, 'fal-tester');
+        try {
+          const sdxlResponse = await axios.post(
+            'https://queue.fal.run/fal-ai/fast-sdxl',
+            requestData,
+            {
+              headers: {
+                'Authorization': variant.key,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              timeout: 10000 // 10 секунд таймаут для тестов
+            }
+          );
+          
+          results.push({
+            format: variant.description,
+            success: true,
+            status: sdxlResponse.status,
+            endpoint: 'fast-sdxl',
+            data: typeof sdxlResponse.data === 'object' ? 
+              Object.keys(sdxlResponse.data) : 
+              'Non-object response'
+          });
+          
+          log(`✅ Successful test for format: "${variant.description}" with fast-sdxl`, 'fal-tester');
+        } catch (sdxlError) {
+          // Если оба эндпоинта не работают, логируем ошибку
+          log(`❌ Both endpoints failed for format: "${variant.description}"`, 'fal-tester');
+          
+          // Используем ошибку от второго эндпоинта для отчета, так как это более свежий результат
+          const errorDetails = (sdxlError as any).response ? {
+            status: (sdxlError as any).response.status,
+            data: (sdxlError as any).response.data,
+            endpoints: 'both failed'
+          } : {
+            message: (sdxlError as any).message,
+            endpoints: 'both failed'
+          };
+          
+          results.push({
+            format: variant.description,
+            success: false,
+            error: errorDetails
+          });
+          
+          // Мы не выбрасываем ошибку дальше, так как уже обработали её здесь
         }
-      );
-      
-      results.push({
-        format: variant.description,
-        success: true,
-        status: response.status,
-        data: typeof response.data === 'object' ? 
-          Object.keys(response.data) : 
-          'Non-object response'
-      });
-      
-      log(`✅ Successful test for format: "${variant.description}"`, 'fal-tester');
+      }
     } catch (error: any) {
       // Логирование ошибки без вывода чувствительных данных
       const errorDetails = error.response ? {
