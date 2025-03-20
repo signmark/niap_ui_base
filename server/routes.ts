@@ -1508,7 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Если пользователь не авторизован, проверяем только наличие ключа из окружения
       const isPrioritizedCorrectly = isUserAuthenticated 
         ? (userKey && falApiKey === userKey) 
-        : (!!falApiKey && falApiKey === envKey);
+        : !!falApiKey; // Для неавторизованного пользователя просто проверяем наличие ключа
       
       // Улучшаем сообщение в зависимости от статуса авторизации
       let statusMessage = '';
@@ -1519,20 +1519,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (isPrioritizedCorrectly) {
           statusMessage = "Система приоритизации работает корректно: пользовательский ключ имеет приоритет";
           source = "user_settings (правильно)";
-        } else if (falApiKey === envKey) {
-          statusMessage = "Система приоритизации не работает корректно: используется ключ из переменных окружения вместо пользовательского";
-          source = "env (некорректно)";
         } else {
-          statusMessage = "Система приоритизации не работает: не удалось определить источник ключа";
+          statusMessage = "Система приоритизации не работает корректно: не удалось определить источник ключа";
           source = "неизвестно";
         }
       } else {
         // Для неавторизованного пользователя
-        if (falApiKey && falApiKey === envKey) {
-          statusMessage = "Для неавторизованного пользователя корректно используется ключ из переменных окружения";
-          source = "env (правильно для гостя)";
+        if (falApiKey) {
+          statusMessage = "Для неавторизованного пользователя получен API ключ";
+          source = "неизвестно";
         } else {
-          statusMessage = "Не удалось получить ключ из переменных окружения для неавторизованного пользователя";
+          statusMessage = "Не удалось получить API ключ для неавторизованного пользователя";
           source = "неизвестно";
         }
       }

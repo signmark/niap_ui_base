@@ -312,7 +312,9 @@ export class ApiKeyService {
       
       if (existingKeys.length > 0) {
         // Обновляем существующий ключ
-        const keyId = existingKeys[0].id;
+        // Явное приведение типа для устранения ошибки типизации
+        const existingKey = existingKeys[0] as { id: string };
+        const keyId = existingKey.id;
         console.log(`[${serviceName}] Обновление существующего API ключа с ID ${keyId}`);
         
         result = await directusCrud.update('user_api_keys', keyId, {
@@ -446,12 +448,15 @@ export class ApiKeyService {
       });
       
       // Ищем ключ FAL.AI, либо по service_name, либо по порядку
-      let falKeyItem = keys.find((key: any) => 
+      // Явное приведение типа для устранения ошибки типизации
+      const typedKeys = keys as Array<{ id: string; service_name?: string; api_key?: string }>;
+      
+      let falKeyItem = typedKeys.find(key => 
         key.service_name && key.service_name.toLowerCase() === 'fal_ai');
       
       // Если нет ключа с service_name, но у нас есть массив с ключами, пробуем использовать индекс
-      if (!falKeyItem && keys.length > 4 && keys[4] && keys[4].api_key) {
-        falKeyItem = keys[4]; // FAL.AI - пятый ключ в интерфейсе (индекс 4)
+      if (!falKeyItem && typedKeys.length > 4 && typedKeys[4] && typedKeys[4].api_key) {
+        falKeyItem = typedKeys[4]; // FAL.AI - пятый ключ в интерфейсе (индекс 4)
         console.log(`[fal_ai] Используем ключ по индексу 4 (FAL.AI - 5-й в UI)`);
       }
       
