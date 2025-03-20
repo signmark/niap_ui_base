@@ -106,7 +106,7 @@ export function SettingsDialog() {
       // Для FAL.AI есть специальный эндпоинт тестирования
       if (keyType === 'fal_ai') {
         try {
-          const response = await api.get('/test-fal-ai-formats?format=with-prefix');
+          const response = await api.get('/api/test-fal-ai-formats?format=with-prefix');
           if (response.data.success) {
             setTestingState({ 
               status: 'success', 
@@ -147,10 +147,11 @@ export function SettingsDialog() {
         perplexity: 'Perplexity',
         apify: 'Apify',
         deepseek: 'DeepSeek',
-        xmlriver: 'XMLRiver'
+        xmlriver: 'XMLRiver',
+        fal_ai: 'FAL.AI'
       };
       
-      const serviceName = keyType === 'fal_ai' ? 'FAL.AI' : serviceNames[keyType as keyof typeof serviceNames] || keyType;
+      const serviceName = serviceNames[keyType as keyof typeof serviceNames] || keyType;
       
       toast({
         title: "Проверка API ключа",
@@ -166,7 +167,7 @@ export function SettingsDialog() {
       toast({
         variant: "destructive",
         title: "Ошибка сохранения",
-        description: error.message || `Не удалось сохранить API ключ ${keyType === 'fal_ai' ? 'FAL.AI' : keyType}`
+        description: error.message || `Не удалось сохранить API ключ ${serviceNames[keyType as keyof typeof serviceNames] || keyType}`
       });
     }
   };
