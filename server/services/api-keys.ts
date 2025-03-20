@@ -108,10 +108,16 @@ export class ApiKeyService {
         console.log(`[${serviceName}] Найден ключ с точным совпадением service_name=${dbServiceName}`);
         let apiKey = apiKeyData.api_key;
         
-        // Обработка специальных форматов ключей
-        if (serviceName === 'fal_ai' && !apiKey.startsWith('Key ') && apiKey.includes(':')) {
-          console.log(`[${serviceName}] Форматирование ключа FAL.AI: добавляем префикс 'Key '`);
-          apiKey = `Key ${apiKey}`;
+        // Специальная обработка для FAL.AI, но мы НЕ модифицируем ключ здесь.
+        // Ключ для FAL.AI хранится в БД без префикса "Key ".
+        // Добавление префикса "Key " делается непосредственно при вызове API в сервисе falai.ts
+        if (serviceName === 'fal_ai') {
+          console.log(`[${serviceName}] Найден ключ FAL.AI (длина: ${apiKey.length}, содержит двоеточие: ${apiKey.includes(':')})`);
+          
+          // Для отладки запоминаем формат ключа но НЕ модифицируем его
+          if (apiKey.startsWith('Key ')) {
+            console.log(`[${serviceName}] ВНИМАНИЕ: Ключ FAL.AI в БД уже содержит префикс 'Key ', что может привести к двойному префиксу.`);
+          }
         }
         
         if (serviceName === 'xmlriver') {
@@ -236,16 +242,20 @@ export class ApiKeyService {
       
       // Для FAL.AI - проверка и форматирование ключа при сохранении
       if (serviceName === 'fal_ai') {
-        // Автоматически форматируем ключи FAL.AI при сохранении
+        // Если ключ начинается с "Key ", удаляем префикс для хранения в БД
         if (apiKey.startsWith('Key ')) {
-          console.log(`[${serviceName}] Сохраняем ключ с префиксом "Key" - правильный формат`);
-        } else if (apiKey.includes(':')) {
-          console.log(`[${serviceName}] Сохраняем ключ без префикса "Key", автоматически форматируем`);
-          apiKey = `Key ${apiKey}`;
-          console.log(`[${serviceName}] Форматированный ключ: ${apiKey.substring(0, 12)}...`);
+          const originalKey = apiKey;
+          apiKey = apiKey.substring(4);
+          console.log(`[${serviceName}] Удаляем префикс "Key " у ключа для сохранения в БД`);
+          console.log(`[${serviceName}] Исходный ключ: ${originalKey.substring(0, 8)}... => Сохраняемый: ${apiKey.substring(0, 4)}...`);
+        }
+        
+        // Проверка формата ключа (должен содержать ":")
+        if (!apiKey.includes(':')) {
+          console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Правильный формат должен содержать разделитель ":"`);
+          log(`[${serviceName}] API ключ для пользователя ${userId} сохраняется, но может не работать с FAL.AI API`, 'api-keys');
         } else {
-          console.warn(`[${serviceName}] API ключ может быть в неправильном формате. Правильный формат: "Key <key_id>:<key_secret>"`);
-          log(`[${serviceName}] API ключ для пользователя ${userId} сохраняется, но может не работать`, 'api-keys');
+          console.log(`[${serviceName}] Ключ в правильном формате (содержит ":")"`);
         }
       }
       
@@ -407,9 +417,10 @@ export class ApiKeyService {
     } else if (serviceName === 'fal_ai') {
       const falKey = process.env.FAL_AI_API_KEY || null;
       console.log(`[${serviceName}] Запрошен ключ из переменных окружения:`, falKey ? 'Найден' : 'Не найден');
-      if (falKey && !falKey.startsWith('Key ') && falKey.includes(':')) {
-        console.log(`[${serviceName}] Форматируем ключ из переменных окружения, добавляя префикс Key`);
-        return `Key ${falKey}`;
+      
+      // Возвращаем ключ БЕЗ модификации - префикс "Key " будет добавлен в сервисе falai.ts при запросе к API
+      if (falKey && falKey.startsWith('Key ')) {
+        console.log(`[${serviceName}] ВНИМАНИЕ: Ключ из переменных окружения содержит префикс "Key ", что может привести к проблемам`);
       }
       return falKey;
     } else if (serviceName === 'xmlriver') {
@@ -472,18 +483,30 @@ export class ApiKeyService {
       if (falKeyItem && falKeyItem.api_key) {
         const apiKey = falKeyItem.api_key;
         
-        // Проверяем формат ключа
+        // Проверяем формат ключа - теперь мы храним ключи БЕЗ префикса "Key "
         if (apiKey.startsWith('Key ')) {
-          console.log(`[fal_ai] Ключ уже в правильном формате (с префиксом Key)`);
-          return true;
-        } else if (apiKey.includes(':')) {
-          console.log(`[fal_ai] Ключ без префикса "Key", добавляем и обновляем в БД`);
-          const formattedKey = `Key ${apiKey}`;
+          console.log(`[fal_ai] Ключ содержит префикс "Key ", который нужно удалить для хранения в БД`);
+          // Убираем префикс для хранения в БД
+          const cleanKey = apiKey.substring(4);
           
           // Обновляем ключ в БД
           await directusCrud.update('user_api_keys', falKeyItem.id, {
-            api_key: formattedKey,
+            api_key: cleanKey,
             service_name: 'fal_ai', // Устанавливаем service_name, если его не было
+            updated_at: new Date().toISOString()
+          }, {
+            userId: userId,
+            authToken: authToken
+          });
+          
+          console.log(`[fal_ai] Префикс "Key " удален из ключа в БД`);
+          return true;
+        } else if (apiKey.includes(':')) {
+          console.log(`[fal_ai] Ключ уже в правильном формате для хранения (без префикса "Key"), обновляем service_name`);
+          
+          // Обновляем service_name в БД
+          await directusCrud.update('user_api_keys', falKeyItem.id, {
+            service_name: 'fal_ai',
             updated_at: new Date().toISOString()
           }, {
             userId: userId,
