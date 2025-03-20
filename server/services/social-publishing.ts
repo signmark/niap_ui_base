@@ -2,126 +2,15 @@ import axios from 'axios';
 import { log } from '../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { storage } from '../storage';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import FormData from 'form-data';
 
 /**
  * Сервис для публикации контента в социальные сети
  */
 export class SocialPublishingService {
-  /**
-   * Получает URL для загрузки фото в ВК
-   * @param token Токен доступа к API VK
-   * @param groupId ID группы (без знака минус)
-   * @returns URL для загрузки или null в случае ошибки
-   */
-  async getVkPhotoUploadUrl(token: string, groupId: string): Promise<string | null> {
-    try {
-      const url = `https://api.vk.com/method/photos.getWallUploadServer?group_id=${groupId}&access_token=${token}&v=5.131`;
-      
-      const response = await axios.get(url);
-      log(`Получен ответ на запрос URL для загрузки: ${JSON.stringify(response.data)}`, 'social-publishing');
-      
-      if (response.data.response && response.data.response.upload_url) {
-        const uploadUrl = response.data.response.upload_url;
-        log(`Получен URL для загрузки фото: ${uploadUrl}`, 'social-publishing');
-        return uploadUrl;
-      } else {
-        log(`Ошибка при получении URL для загрузки: ${JSON.stringify(response.data)}`, 'social-publishing');
-        return null;
-      }
-    } catch (error: any) {
-      log(`Ошибка при получении URL для загрузки фото: ${error.message}`, 'social-publishing');
-      return null;
-    }
-  }
-  
-  /**
-   * Загружает фото на сервер VK
-   * @param uploadUrl URL для загрузки
-   * @param imageUrl URL изображения для загрузки
-   * @returns Объект с результатом загрузки или null в случае ошибки
-   */
-  async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
-    try {
-      log(`Начинаем загрузку фото на сервер VK. URL изображения: ${imageUrl}`, 'social-publishing');
-      
-      // Получаем изображение
-      const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      log(`Изображение успешно получено, размер: ${imageResponse.data.byteLength} байт`, 'social-publishing');
-      
-      // Создаем форму для загрузки
-      const formData = new FormData();
-      
-      // Создаем Blob из arraybuffer и добавляем в FormData
-      const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] || 'image/jpeg' });
-      formData.append('photo', blob, 'image.jpg');
-      
-      // Отправляем на сервер VK
-      const uploadResponse = await axios.post(uploadUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      log(`Ответ сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
-      
-      if (uploadResponse.data && uploadResponse.data.server) {
-        return {
-          server: uploadResponse.data.server,
-          photo: uploadResponse.data.photo,
-          hash: uploadResponse.data.hash
-        };
-      } else {
-        log(`Некорректный ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
-        return null;
-      }
-    } catch (error: any) {
-      log(`Ошибка при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
-      return null;
-    }
-  }
-  
-  /**
-   * Сохраняет загруженное фото в альбом группы
-   * @param token Токен доступа к API VK
-   * @param groupId ID группы (без знака минус)
-   * @param server Сервер из ответа на загрузку
-   * @param photo Строка photo из ответа на загрузку
-   * @param hash Хеш из ответа на загрузку
-   * @returns Объект с информацией о сохраненном фото или null в случае ошибки
-   */
-  async savePhotoToVk(token: string, groupId: string, server: number, photo: string, hash: string): Promise<any | null> {
-    try {
-      // Формируем запрос для сохранения фото
-      const urlParams = new URLSearchParams();
-      urlParams.append('group_id', groupId);
-      urlParams.append('server', server.toString());
-      urlParams.append('photo', photo);
-      urlParams.append('hash', hash);
-      urlParams.append('access_token', token);
-      urlParams.append('v', '5.131');
-      
-      // Отправляем запрос на сохранение
-      const saveResponse = await axios.post('https://api.vk.com/method/photos.saveWallPhoto', urlParams, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
-      
-      log(`Ответ на запрос сохранения фото: ${JSON.stringify(saveResponse.data)}`, 'social-publishing');
-      
-      if (saveResponse.data.response && saveResponse.data.response.length > 0) {
-        const photoObj = saveResponse.data.response[0];
-        log(`Фото успешно сохранено, ID: ${photoObj.id}, owner_id: ${photoObj.owner_id}`, 'social-publishing');
-        return photoObj;
-      } else {
-        log(`Ошибка при сохранении фото: ${JSON.stringify(saveResponse.data)}`, 'social-publishing');
-        return null;
-      }
-    } catch (error: any) {
-      log(`Ошибка при сохранении фото в VK: ${error.message}`, 'social-publishing');
-      return null;
-    }
-  }
 
   /**
    * Публикует контент в Telegram
@@ -341,31 +230,28 @@ export class SocialPublishingService {
         responseType: 'arraybuffer'
       });
 
-      // Создаем объект Blob из полученных данных
-      const blob = new Blob([imageResponse.data], { 
-        type: imageResponse.headers['content-type'] || 'image/jpeg' 
+      // Создаем временный файл на сервере
+      const tempFilePath = path.join(os.tmpdir(), `vk_upload_${Date.now()}.jpg`);
+      log(`Создаем временный файл: ${tempFilePath}`, 'social-publishing');
+      
+      // Сохраняем изображение во временный файл
+      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+      
+      // Создаем форму для загрузки файла
+      const formData = new FormData();
+      formData.append('photo', fs.createReadStream(tempFilePath));
+      
+      // Выполняем запрос на загрузку на сервер ВК
+      log(`Загрузка файла на сервер ВК по URL: ${uploadUrl}`, 'social-publishing');
+      
+      const uploadResponse = await axios.post(uploadUrl, formData, {
+        headers: formData.getHeaders()
       });
       
-      // Создаем объект FormData для отправки файла
-      const formData = new URLSearchParams();
+      // Удаляем временный файл после загрузки
+      fs.unlinkSync(tempFilePath);
+      log(`Временный файл удален: ${tempFilePath}`, 'social-publishing');
       
-      // В VK API требуется отправить фото как multipart form
-      // Используем вспомогательную функцию для преобразования Blob в base64
-      const base64Image = await this.blobToBase64(blob);
-      
-      // Дополнительное логирование для отладки
-      log(`Изображение преобразовано в base64, размер: ${base64Image.length} символов`, 'social-publishing');
-      
-      // Вместо загрузки как multipart/form-data, используем упрощенный подход с data URI
-      // Отправляем URL изображения в виде параметра запроса
-      const uploadResponse = await axios.post(uploadUrl, {
-        photo: base64Image
-      }, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
-
       log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
       return uploadResponse.data;
     } catch (error: any) {
@@ -375,26 +261,6 @@ export class SocialPublishingService {
       }
       return null;
     }
-  }
-  
-  /**
-   * Преобразует Blob в строку base64
-   * @param blob Объект Blob
-   * @returns Promise с base64 строкой
-   */
-  private blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // reader.result содержит data URL вида "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMC..."
-        // Нам нужна только часть после "base64,"
-        const base64String = reader.result as string;
-        // Возвращаем только данные base64 без префикса "data:image/jpeg;base64,"
-        resolve(base64String.split(',')[1]);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   }
 
   /**
