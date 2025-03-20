@@ -375,12 +375,40 @@ export class SocialPublishingService {
         log(`Контент содержит изображение: ${content.imageUrl}`, 'social-publishing');
         
         try {
-          // Для VK просто добавляем URL изображения напрямую - упрощенный подход
-          log(`Используем упрощенный подход для изображения в VK`, 'social-publishing');
+          // Используем правильный подход для загрузки изображения в VK
+          log(`Загружаем изображение на сервер VK`, 'social-publishing');
           
-          // Добавляем внешнюю ссылку на картинку
-          requestData.attachment = content.imageUrl;
-          log(`Добавлена прямая ссылка на изображение: ${content.imageUrl}`, 'social-publishing');
+          // Шаг 1: Получаем URL сервера для загрузки изображения
+          const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
+          
+          if (!uploadUrl) {
+            log(`Не удалось получить URL для загрузки фото, публикуем без изображения`, 'social-publishing');
+          } else {
+            // Шаг 2: Загружаем фото на сервер VK
+            const uploadResult = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
+            
+            if (!uploadResult) {
+              log(`Ошибка при загрузке фото на сервер VK, публикуем без изображения`, 'social-publishing');
+            } else {
+              // Шаг 3: Сохраняем фото в альбом группы
+              const photo = await this.savePhotoToVk(
+                token, 
+                cleanGroupId, 
+                uploadResult.server, 
+                uploadResult.photo, 
+                uploadResult.hash
+              );
+              
+              if (photo) {
+                // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
+                const attachment = `photo${photo.owner_id}_${photo.id}`;
+                requestData.attachment = attachment;
+                log(`Фото успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
+              } else {
+                log(`Не удалось сохранить фото в альбом VK, публикуем без изображения`, 'social-publishing');
+              }
+            }
+          }
         } catch (error: any) {
           log(`Ошибка при подготовке изображения для VK: ${error.message}`, 'social-publishing');
           log(`Публикуем пост без изображения`, 'social-publishing');
