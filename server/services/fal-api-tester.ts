@@ -25,7 +25,8 @@ export async function testFalApiConnection(apiKey: string): Promise<any> {
     length: apiKey.length,
     hasPrefix: apiKey.startsWith('Key '),
     hasColon: apiKey.includes(':'),
-    format: apiKey.startsWith('Key ') ? 'Key prefix' : 'No Key prefix'
+    format: apiKey.startsWith('Key ') ? 'Key prefix' : 'No Key prefix',
+    isCorrectFormat: apiKey.startsWith('Key ') && apiKey.includes(':')
   };
   
   log(`Testing FAL.AI API connection with key format: ${keyInfo.format}`, 'fal-tester');
@@ -182,6 +183,18 @@ function prepareKeyVariants(originalKey: string): Array<{key: string, descriptio
       key: originalKey.substring(4), // Удаляем "Key "
       description: "Without 'Key ' prefix"
     });
+  }
+  
+  // Дополнительная проверка: если ключ не имеет ":", но имеет формат UUID,
+  // пробуем добавить образец формата как показал пользователь (с разделителем ":")
+  if (!originalKey.includes(':') && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(originalKey)) {
+    // Специальное предупреждение - это просто шаблон, а не настоящий ключ
+    variants.push({
+      key: `Key ${originalKey}:example_secret_part_should_be_provided`,
+      description: "Template format (missing secret part)"
+    });
+    
+    log('⚠️ Warning: Your API key appears to be missing the secret part after colon (:). Example format: Key uuid:secret', 'fal-tester');
   }
   
   return variants;

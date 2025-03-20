@@ -331,21 +331,21 @@ Return only the translated text, no explanations or comments.`;
       // Полное тело запроса
       console.log(`REQUEST BODY: ${JSON.stringify(requestData, null, 2)}`);
       
-      // Полные заголовки запроса (уже без отображения полного ключа для безопасности)
-      // ВАЖНО: Не модифицируем API ключ. Предполагаем, что ключ уже в правильном формате
-      // Пользователь сам вводит ключ в формате "Key {apiKey}" через интерфейс
-      const authHeaderValue = this.apiKey;
+      // Полные заголовки запроса (маскированное отображение ключа для безопасности)
+      // ВАЖНО: Модифицируем API ключ при необходимости, добавляя префикс "Key "
+      // Пользователь сохраняет ключ в формате "id:secret" без префикса в настройках
       
       // Подробное логирование заголовка для отладки
       console.log(`[FAL.AI] ПОЛНЫЙ ЗАПРОС К API:`);
       console.log(`[FAL.AI] URL: ${apiUrl}`);
-      console.log(`[FAL.AI] ЗАГОЛОВОК Authorization: "${authHeaderValue}"`);
+      // Безопасное логирование - маскируем большую часть ключа
+      console.log(`[FAL.AI] ЗАГОЛОВОК Authorization: "${authHeader.substring(0, authHeader.startsWith('Key ') ? 8 : 4)}..."`);
       console.log(`[FAL.AI] Content-Type: application/json`);
       console.log(`[FAL.AI] Accept: application/json`);
       console.log(`[FAL.AI] ТЕЛО ЗАПРОСА: ${JSON.stringify(requestData, null, 2)}`);
       
-      // ИСПРАВЛЕНИЕ: Используем модифицированный authHeader вместо authHeaderValue (оригинальный ключ)
-      // Это критически важно для правильной авторизации
+      // КРИТИЧЕСКИ ВАЖНО: Используем authHeader с добавленным префиксом "Key " для авторизации
+      // Это требование API FAL.AI
       const headers = {
         'Authorization': authHeader, // Используем authHeader, который уже содержит префикс "Key " если нужно
         'Content-Type': 'application/json',
