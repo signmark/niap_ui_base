@@ -168,36 +168,24 @@ export class PerplexityService {
     try {
       console.log('Попытка инициализации Perplexity сервиса для пользователя', userId);
       
-      // ВРЕМЕННОЕ РЕШЕНИЕ: Используем известные ключи из БД напрямую
-      // Ключи взяты из скриншота базы данных
-      const knownApiKeys = {
-        // ID 4 из БД (2048e263-f562-4e3f-a235-e597f6c2d49b)
-        'pplx-9yf5W61H3LxYVQoHFvMDyyYBJNDKadS7A2JCyiE98GuSK': true,
-        // ID 6 из БД (53921f16-f51d-4591-80b9-8caa4fde4d13)
-        'pplx-9yf5W61H3LxYVQoHFvMDyyYBJNDKadS7A2JCyiE98GuSK': true
-      };
-      
-      // Сначала пробуем получить ключ через стандартный механизм
+      // Используем только централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'perplexity', authToken);
       
       if (apiKey) {
+        console.log(`Perplexity API ключ получен из БД (длина: ${apiKey.length})`);
         this.updateApiKey(apiKey);
         log('Perplexity API ключ успешно получен через API Key Service', 'perplexity');
         console.log('Perplexity API ключ успешно получен через API Key Service');
         return true;
       } else {
-        // Если через стандартный механизм не получилось, используем известный ключ
-        console.log('Используем известный ключ Perplexity из БД для быстрого решения проблемы');
-        this.updateApiKey('pplx-9yf5W61H3LxYVQoHFvMDyyYBJNDKadS7A2JCyiE98GuSK');
-        return true;
+        console.log('API ключ Perplexity не найден в БД для пользователя', userId);
+        log('Perplexity API ключ не найден в настройках пользователя', 'perplexity');
+        return false;
       }
     } catch (error) {
       console.error('Ошибка при инициализации Perplexity сервиса:', error);
-      
-      // В случае ошибки, используем известный ключ
-      console.log('Из-за ошибки используем известный ключ Perplexity из БД');
-      this.updateApiKey('pplx-9yf5W61H3LxYVQoHFvMDyyYBJNDKadS7A2JCyiE98GuSK');
-      return true;
+      log(`Ошибка при инициализации Perplexity сервиса: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, 'perplexity');
+      return false;
     }
   }
 }
