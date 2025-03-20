@@ -6,12 +6,14 @@ import { directusCrud } from './directus-crud';
 export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
 
 // Маппинг имен сервисов как они записаны в БД
+// Маппинг имен сервисов как они записаны в БД
+// Если в БД имена записаны по-другому, обновите этот маппинг соответственно
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   'perplexity': 'perplexity',
   'social_searcher': 'social_searcher',
   'apify': 'apify',
-  'deepseek': 'deepseek',
-  'fal_ai': 'fal_ai',
+  'deepseek': 'deepseek', 
+  'fal_ai': 'fal.ai', // Возможно, в БД с точкой вместо подчеркивания
   'xmlriver': 'xmlriver'
 };
 
