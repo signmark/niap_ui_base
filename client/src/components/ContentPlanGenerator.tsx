@@ -757,11 +757,17 @@ export function ContentPlanGenerator({
                         <div className="text-xs text-muted-foreground mt-2">
                           <span className="block font-medium">Ключевые слова:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {item.keywords.map((kw: string, kwIndex: number) => (
-                              <span key={kwIndex} className="bg-muted px-2 py-0.5 rounded-md">
-                                {kw}
-                              </span>
-                            ))}
+                            {item.keywords.map((kw: any, kwIndex: number) => {
+                              // Проверяем, является ли ключевое слово объектом или строкой
+                              const keywordText = typeof kw === 'string' ? kw : (kw.keyword || kw);
+                              const trendScore = typeof kw === 'object' ? (kw.trendScore || kw.trend_score || 0) : 0;
+                              
+                              return (
+                                <span key={kwIndex} className="bg-muted px-2 py-0.5 rounded-md">
+                                  {keywordText}{trendScore > 0 ? ` (${trendScore})` : ''}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
