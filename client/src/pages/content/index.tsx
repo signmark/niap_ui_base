@@ -495,7 +495,8 @@ export default function ContentPage() {
       return await apiRequest(`/api/content/${id}/publish-social`, { 
         method: 'POST',
         data: {
-          platforms: socialPlatformsData
+          // Передаем массив ключей платформ, а не объект
+          platforms: Object.keys(socialPlatformsData)
         }
       });
     },
