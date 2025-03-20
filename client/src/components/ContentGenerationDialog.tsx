@@ -285,16 +285,19 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                       Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
                     </p>
                   ) : (
-                    keywords.map((kw) => (
-                      <Button
-                        key={kw.id}
-                        variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleKeywordToggle(kw.keyword)}
-                      >
-                        {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
-                      </Button>
-                    ))
+                    // Отфильтруем ключевые слова, оставив только с положительным трендом
+                    keywords
+                      .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
+                      .map((kw) => (
+                        <Button
+                          key={kw.id}
+                          variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleKeywordToggle(kw.keyword)}
+                        >
+                          {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
+                        </Button>
+                      ))
                   )}
                 </div>
               </div>

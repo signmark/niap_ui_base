@@ -393,10 +393,14 @@ export function ContentPlanGenerator({
         customInstructions: customInstructions || null
       },
       selectedTrendTopics: Array.from(selectedTopicIds),
-      keywords: keywords.map((kw: any) => ({ 
-        keyword: kw.keyword, 
-        trendScore: kw.trend_score || kw.trendScore || 0 
-      })),
+      // Отфильтруем ключевые слова с нулевым трендом и пустыми значениями
+      keywords: keywords
+        .filter((kw: any) => kw.keyword && kw.keyword.trim() !== '' 
+          && ((kw.trend_score && kw.trend_score > 0) || (kw.trendScore && kw.trendScore > 0)))
+        .map((kw: any) => ({ 
+          keyword: kw.keyword, 
+          trendScore: kw.trend_score || kw.trendScore || 0 
+        })),
       businessData: includeBusiness && businessData ? {
         companyName: businessData.companyName,
         businessDescription: businessData.businessDescription,
@@ -761,6 +765,8 @@ export function ContentPlanGenerator({
                               // Проверяем, является ли ключевое слово объектом или строкой
                               const keywordText = typeof kw === 'string' ? kw : (kw.keyword || kw);
                               const trendScore = typeof kw === 'object' ? (kw.trendScore || kw.trend_score || 0) : 0;
+                              
+                              // Если тренд отрицательный или нулевой, не отображаем его значение
                               
                               return (
                                 <span key={kwIndex} className="bg-muted px-2 py-0.5 rounded-md">
