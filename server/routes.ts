@@ -9279,7 +9279,7 @@ ${datesText}
   });
   
   // Эндпоинт для вывода текущего API ключа и заголовка Authorization
-  app.get("/debug-fal-ai-header", async (req, res) => {
+  app.get("/api/debug-fal-ai-header", async (req, res) => {
     try {
       // Получаем API ключ из переменных окружения
       const envKey = process.env.FAL_AI_API_KEY || '';
