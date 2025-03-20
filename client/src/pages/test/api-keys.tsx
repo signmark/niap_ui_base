@@ -51,7 +51,7 @@ export default function ApiKeysTest() {
     setFalApiError(null);
     
     try {
-      const response = await api.get(`/test-fal-ai-formats?format=${format}`);
+      const response = await api.get(`/api/test-fal-ai-formats?format=${format}`);
       setFalApiResults(response.data);
       toast({
         title: 'Успешно!',
