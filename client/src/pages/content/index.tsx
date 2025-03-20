@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, createRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { 
@@ -1742,19 +1742,30 @@ export default function ContentPage() {
       <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Планирование публикации</DialogTitle>
+            <DialogTitle>Публикация в социальные сети</DialogTitle>
+            <DialogDescription>
+              Выберите платформы для публикации и укажите время или опубликуйте сразу
+            </DialogDescription>
           </DialogHeader>
           {currentContent && (
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="scheduleDate">Дата и время публикации</Label>
-                <Input
-                  id="scheduleDate"
-                  type="datetime-local"
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                />
-              </div>
+              <Tabs defaultValue="now" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="now">Опубликовать сейчас</TabsTrigger>
+                  <TabsTrigger value="schedule">Запланировать</TabsTrigger>
+                </TabsList>
+                <TabsContent value="schedule" className="space-y-4 mt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduleDate">Дата и время публикации</Label>
+                    <Input
+                      id="scheduleDate"
+                      type="datetime-local"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <div className="space-y-3">
                 <Label>Платформы для публикации</Label>
@@ -1793,7 +1804,7 @@ export default function ContentPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2 flex-col sm:flex-row sm:justify-between">
             <Button
               type="button"
               variant="outline"
@@ -1801,18 +1812,54 @@ export default function ContentPage() {
             >
               Отмена
             </Button>
-            <Button 
-              type="button" 
-              onClick={handleScheduleContent}
-              disabled={
-                scheduleContentMutation.isPending || 
-                !scheduleDate || 
-                !Object.values(selectedPlatforms).some(Boolean)
-              }
-            >
-              {scheduleContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Запланировать
-            </Button>
+            <div className="space-x-2">
+              <Button 
+                type="button" 
+                variant="default" 
+                onClick={() => {
+                  // Проверка на выбор хотя бы одной платформы
+                  if (!Object.values(selectedPlatforms).some(Boolean)) {
+                    toast({
+                      description: "Выберите хотя бы одну платформу для публикации",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  // Фильтруем выбранные платформы
+                  const platformsToPublish = Object.entries(selectedPlatforms)
+                    .filter(([_, isSelected]) => isSelected)
+                    .map(([platform]) => platform);
+                    
+                  // Публикуем немедленно
+                  publishContentMutation.mutate({
+                    id: currentContent?.id || '',
+                    platforms: selectedPlatforms // передаем объект платформ, не массив
+                  });
+                  setIsScheduleDialogOpen(false);
+                }}
+                disabled={
+                  publishContentMutation.isPending || 
+                  !Object.values(selectedPlatforms).some(Boolean)
+                }
+              >
+                {publishContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Опубликовать сейчас
+              </Button>
+              <Button 
+                type="button" 
+                variant="secondary"
+                onClick={handleScheduleContent}
+                disabled={
+                  scheduleContentMutation.isPending || 
+                  !scheduleDate || 
+                  !Object.values(selectedPlatforms).some(Boolean)
+                }
+              >
+                {scheduleContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Запланировать
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
