@@ -94,9 +94,22 @@ export class ApiKeyService {
       })));
 
       // Теперь ищем конкретный ключ, используя более гибкую логику с учетом правильного отображения имени сервиса
-      // Проверяем наличие поля service_name перед использованием
+      // Проблема: в БД могут храниться ключи без указания service_name
+      
+      // СНАЧАЛА пробуем найти по service_name (если оно указано)
       let items = allUserKeys.filter((key: any) => 
         key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
+      
+      // Если не нашли ключ по service_name, но у нас есть ключ API в записи,
+      // берем первый доступный ключ с непустым api_key (игнорируя service_name)
+      if (items.length === 0) {
+        console.log(`[${serviceName}] Не найдены ключи с service_name='${dbServiceName}', ищем любой ключ с api_key`);
+        items = allUserKeys.filter((key: any) => !!key.api_key);
+        
+        if (items.length > 0) {
+          console.log(`[${serviceName}] Найден ключ с api_key без точного совпадения service_name (используем первый доступный)`);
+        }
+      }
       
       console.log(`[${serviceName}] After filtering by DB service name '${dbServiceName}': found ${items.length} matching keys`);
       
