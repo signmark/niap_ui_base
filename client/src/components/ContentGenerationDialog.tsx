@@ -292,7 +292,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                         size="sm"
                         onClick={() => handleKeywordToggle(kw.keyword)}
                       >
-                        {kw.keyword}
+                        {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
                       </Button>
                     ))
                   )}
