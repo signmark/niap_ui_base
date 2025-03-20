@@ -1195,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Тестовый маршрут для проверки разных форматов API ключа
-  app.get('/api/test-fal-ai-formats', async (req, res) => {
+  app.get('/api/test-fal-ai-formats-v2', async (req, res) => {
     try {
       // Получаем userId из запроса
       const authHeader = req.headers['authorization'];
@@ -1231,19 +1231,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${authHeader1.substring(0, 15)}...`);
       
       try {
-        // Пробуем сделать запрос с этим форматом к корневому URL API
-        await axios.get('https://queue.fal.run/', {
-          headers: {
-            Authorization: authHeader1
+        // Сначала попробуем модель flux/schnell
+        try {
+          await axios.post('https://queue.fal.run/fal-ai/flux/schnell', {
+            prompt: "Test image",
+            negative_prompt: "",
+            width: 512,
+            height: 512,
+            num_images: 1
+          }, {
+            headers: {
+              Authorization: authHeader1,
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000
+          });
+          console.log('🧪 [FAL.AI TEST] Модель flux/schnell работает!');
+          return res.json({
+            success: true,
+            message: "API ключ FAL.AI работает корректно с префиксом Key!",
+            api_key_format: "Правильный формат",
+            auth_header: `${authHeader1.substring(0, 15)}...`,
+            tested_model: "flux/schnell"
+          });
+        } catch (schnellError) {
+          console.log(`🧪 [FAL.AI TEST] Ошибка с моделью flux/schnell: ${schnellError.message}`);
+          
+          // Если ошибка с первой моделью, пробуем вторую модель (fast-sdxl)
+          try {
+            await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
+              prompt: "Test image",
+              negative_prompt: "",
+              width: 512,
+              height: 512,
+              num_images: 1
+            }, {
+              headers: {
+                Authorization: authHeader1,
+                'Content-Type': 'application/json'
+              },
+              timeout: 15000
+            });
+            console.log('🧪 [FAL.AI TEST] Модель fast-sdxl работает!');
+            return res.json({
+              success: true,
+              message: "API ключ FAL.AI работает корректно с префиксом Key!",
+              api_key_format: "Правильный формат",
+              auth_header: `${authHeader1.substring(0, 15)}...`,
+              tested_model: "fast-sdxl"
+            });
+          } catch (sdxlError) {
+            // Если обе модели вызвали ошибку, логируем и продолжаем нормальный поток
+            console.log(`🧪 [FAL.AI TEST] Ошибка с моделью fast-sdxl: ${sdxlError.message}`);
+            throw sdxlError; // Перебрасываем вторую ошибку для обработки в блоке catch
           }
-        });
-        
-        return res.json({
-          success: true,
-          message: "API ключ FAL.AI работает корректно с префиксом Key!",
-          api_key_format: "Правильный формат",
-          auth_header: `${authHeader1.substring(0, 15)}...`
-        });
+        }
       } catch (error: any) {
         console.log(`🧪 [FAL.AI TEST] Ошибка API с форматом "with Key prefix added": ${error.message}`);
         
