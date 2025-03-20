@@ -453,6 +453,73 @@ export default function ContentPage() {
       });
     }
   });
+  
+  // Мутация для немедленной публикации контента
+  const publishContentMutation = useMutation({
+    mutationFn: async ({ id, platforms }: { id: string, platforms?: {[key: string]: boolean} }) => {
+      // Подготовка данных о платформах
+      const socialPlatformsData: Record<string, any> = {};
+      
+      // Если есть выбранные платформы, настраиваем их в JSON-структуру
+      if (platforms) {
+        Object.entries(platforms).forEach(([platform, isEnabled]) => {
+          if (isEnabled) {
+            socialPlatformsData[platform] = {
+              status: 'pending',
+              publishedAt: null,
+              postId: null,
+              postUrl: null,
+              error: null
+            };
+          }
+        });
+      } else {
+        // Если платформы не выбраны, используем все доступные
+        ['telegram', 'vk'].forEach(platform => {
+          socialPlatformsData[platform] = {
+            status: 'pending',
+            publishedAt: null,
+            postId: null,
+            postUrl: null,
+            error: null
+          };
+        });
+      }
+
+      console.log("🚀 Подготовленные данные для прямой публикации:");
+      console.log("ID контента:", id);
+      console.log("Выбранные платформы:", platforms || "Все доступные");
+      console.log("Данные socialPlatforms для сохранения:", JSON.stringify(socialPlatformsData, null, 2));
+
+      // Отправляем запрос на публикацию в социальные сети
+      return await apiRequest(`/api/content/${id}/publish-social`, { 
+        method: 'POST',
+        data: {
+          platforms: socialPlatformsData
+        }
+      });
+    },
+    onSuccess: (data) => {
+      console.log("Результат публикации:", data);
+      
+      // Обновляем данные в интерфейсе
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          toast({
+            title: "Контент опубликован",
+            description: "Контент успешно отправлен в социальные сети",
+          });
+        });
+    },
+    onError: (error: Error) => {
+      console.error("Ошибка публикации:", error);
+      toast({
+        title: "Ошибка при публикации",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
 
   // Обработчик создания контента
   const handleCreateContent = () => {
