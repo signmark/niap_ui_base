@@ -17,7 +17,10 @@ export class SocialPublishingService {
     content: CampaignContent,
     telegramSettings: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
+    log(`Начинаем публикацию в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+    
     if (!telegramSettings?.token || !telegramSettings?.chatId) {
+      log(`Ошибка публикации в Telegram: отсутствуют настройки (токен или ID чата)`, 'social-publishing');
       return {
         platform: 'telegram',
         status: 'failed',
@@ -28,6 +31,7 @@ export class SocialPublishingService {
 
     try {
       const { token, chatId } = telegramSettings;
+      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
       // Подготовка сообщения
       let text = content.title ? `*${content.title}*\n\n` : '';
@@ -37,6 +41,8 @@ export class SocialPublishingService {
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
         text += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
+      
+      log(`Подготовлено сообщение для Telegram: ${text.substring(0, 50)}...`, 'social-publishing');
 
       // Разные методы API в зависимости от типа контента
       let response;
@@ -44,13 +50,15 @@ export class SocialPublishingService {
 
       if (content.contentType === 'text') {
         // Отправка текстового сообщения
+        log(`Отправка текстового сообщения в Telegram`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendMessage`, {
           chat_id: chatId,
           text,
           parse_mode: 'Markdown'
         });
-      } else if (content.contentType === 'text-image' && content.imageUrl) {
+      } else if ((content.contentType === 'text-image' || content.imageUrl) && content.imageUrl) {
         // Отправка изображения с подписью
+        log(`Отправка изображения в Telegram с URL: ${content.imageUrl}`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendPhoto`, {
           chat_id: chatId, 
           photo: content.imageUrl,
@@ -59,6 +67,7 @@ export class SocialPublishingService {
         });
       } else if ((content.contentType === 'video' || content.contentType === 'video-text') && content.videoUrl) {
         // Отправка видео с подписью
+        log(`Отправка видео в Telegram с URL: ${content.videoUrl}`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendVideo`, {
           chat_id: chatId,
           video: content.videoUrl,
@@ -67,6 +76,7 @@ export class SocialPublishingService {
         });
       } else {
         // Неподдерживаемый тип контента
+        log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
         return {
           platform: 'telegram',
           status: 'failed',
@@ -75,9 +85,12 @@ export class SocialPublishingService {
         };
       }
 
+      log(`Получен ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
+
       // Обработка успешного ответа
       if (response.data.ok) {
         const message = response.data.result;
+        log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
         return {
           platform: 'telegram',
           status: 'published',
@@ -87,6 +100,7 @@ export class SocialPublishingService {
           userId: content.userId // Добавляем userId из контента
         };
       } else {
+        log(`Ошибка в ответе Telegram API: ${response.data.description}`, 'social-publishing');
         return {
           platform: 'telegram',
           status: 'failed',
@@ -97,6 +111,9 @@ export class SocialPublishingService {
       }
     } catch (error: any) {
       log(`Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
         platform: 'telegram',
         status: 'failed',
