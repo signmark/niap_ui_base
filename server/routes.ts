@@ -9012,6 +9012,80 @@ ${datesText}
     }
   });
   
+  // ОТЛАДОЧНЫЙ ЭНДПОИНТ: Показывает сведения о всех API ключах
+  app.get("/api/debug/api-keys", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован'
+        });
+      }
+      
+      const userId = req.user.id;
+      console.log(`[DEBUG API Keys] Тестирование API ключей для пользователя ${userId}`);
+      
+      // Загружаем все API ключи из БД
+      const apiKeys = await directusCrud.list('user_api_keys', {
+        userId: userId,
+        fields: ['id', 'user_id', 'service_name', 'api_key', 'created_at', 'updated_at']
+      });
+      
+      console.log(`[DEBUG API Keys] Загружено ${apiKeys.length} ключей из базы данных:`);
+      apiKeys.forEach((key: any) => {
+        console.log(`[DEBUG API Keys] - ID ${key.id}, пользователь: ${key.user_id}, сервис: ${key.service_name || "(не указан)"}, ключ: ${key.api_key ? "имеется" : "отсутствует"}`);
+      });
+      
+      // Получаем ключи через API Key Service для каждого сервиса
+      const serviceNames: Array<'perplexity'|'deepseek'|'fal_ai'|'xmlriver'|'apify'|'social_searcher'> = [
+        'perplexity', 'deepseek', 'fal_ai', 'xmlriver', 'apify', 'social_searcher'
+      ];
+      
+      const results = await Promise.all(
+        serviceNames.map(async (serviceName) => {
+          try {
+            console.log(`[DEBUG API Keys] Получаем ключ для сервиса: ${serviceName}`);
+            const key = await apiKeyService.getApiKey(userId, serviceName);
+            return {
+              service: serviceName,
+              keyExists: !!key,
+              keyLength: key ? key.length : 0,
+              keyPrefix: key ? key.substring(0, 10) + '...' : null
+            };
+          } catch (error) {
+            console.error(`[DEBUG API Keys] Ошибка получения ключа для ${serviceName}:`, error);
+            return {
+              service: serviceName,
+              keyExists: false,
+              error: error instanceof Error ? error.message : String(error)
+            };
+          }
+        })
+      );
+      
+      return res.json({
+        success: true,
+        data: {
+          userId,
+          rawApiKeys: apiKeys.map((k: any) => ({
+            id: k.id,
+            userId: k.user_id,
+            service: k.service_name,
+            hasKey: !!k.api_key,
+            keyLength: k.api_key ? k.api_key.length : 0
+          })),
+          serviceResults: results
+        }
+      });
+    } catch (error) {
+      console.error('[DEBUG API Keys] Ошибка при тестировании API ключей:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка сервера при тестировании API ключей'
+      });
+    }
+  });
+
   // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
   app.get("/test-fal-ai", async (req, res) => {
     try {

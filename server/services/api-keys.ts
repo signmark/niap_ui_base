@@ -49,6 +49,8 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
+    console.log(`[DEBUG] Запрашивается ключ для сервиса: ${serviceName}, пользователя: ${userId}`);
+    
     // ВАЖНОЕ ПРАВИЛО: Все API ключи должны браться ТОЛЬКО из Directus (через user_api_keys)
     // Если нет userId, не можем получить ключ из Directus
     if (!userId) {
