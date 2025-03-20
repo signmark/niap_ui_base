@@ -3,6 +3,7 @@ import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { testFalApiConnection } from './services/fal-api-tester';
+import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
