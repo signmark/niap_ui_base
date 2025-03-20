@@ -339,35 +339,16 @@ export class SocialPublishingService {
       if (content.imageUrl) {
         log(`Контент содержит изображение: ${content.imageUrl}`, 'social-publishing');
         
-        // Получаем URL для загрузки фото
-        const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
-        if (uploadUrl) {
-          // Загружаем фото на сервер VK
-          const uploadedPhoto = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
+        try {
+          // Для VK просто добавляем URL изображения напрямую - упрощенный подход
+          log(`Используем упрощенный подход для изображения в VK`, 'social-publishing');
           
-          if (uploadedPhoto && uploadedPhoto.server && uploadedPhoto.photo && uploadedPhoto.hash) {
-            // Сохраняем фото в альбоме группы
-            const savedPhoto = await this.savePhotoToVk(
-              token, 
-              cleanGroupId, 
-              uploadedPhoto.server, 
-              uploadedPhoto.photo, 
-              uploadedPhoto.hash
-            );
-            
-            if (savedPhoto) {
-              // Формируем строку вложений для публикации
-              attachments = `photo${savedPhoto.owner_id}_${savedPhoto.id}`;
-              log(`Подготовлено вложение: ${attachments}`, 'social-publishing');
-              requestData.attachments = attachments;
-            } else {
-              log(`Не удалось сохранить фото. Публикуем без изображения.`, 'social-publishing');
-            }
-          } else {
-            log(`Не удалось загрузить фото. Публикуем без изображения.`, 'social-publishing');
-          }
-        } else {
-          log(`Не удалось получить URL для загрузки фото. Публикуем без изображения.`, 'social-publishing');
+          // Добавляем внешнюю ссылку на картинку
+          requestData.attachment = content.imageUrl;
+          log(`Добавлена прямая ссылка на изображение: ${content.imageUrl}`, 'social-publishing');
+        } catch (error: any) {
+          log(`Ошибка при подготовке изображения для VK: ${error.message}`, 'social-publishing');
+          log(`Публикуем пост без изображения`, 'social-publishing');
         }
       }
 
