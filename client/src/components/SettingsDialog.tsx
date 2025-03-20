@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface ApiKey {
   id: string;
@@ -75,93 +76,117 @@ export function SettingsDialog() {
     enabled: !!userId
   });
 
-  // Функции тестирования API ключей
-  const testFalAiKey = async () => {
-    if (!falAiKey.trim()) {
+  // Обобщенная функция для тестирования API ключей
+  const testApiKey = async (
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
+    keyValue: string,
+    setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
+    additionalValidation?: () => boolean
+  ) => {
+    if (!keyValue.trim()) {
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Необходимо указать API ключ FAL.AI"
+        description: `Необходимо указать API ключ ${keyType === 'fal_ai' ? 'FAL.AI' : keyType === 'xmlriver' ? 'XMLRiver' : keyType}`
       });
       return;
     }
 
-    setFalAiTesting({ status: 'testing' });
+    // Дополнительная валидация если есть
+    if (additionalValidation && !additionalValidation()) {
+      return;
+    }
+
+    setTestingState({ status: 'testing' });
     
     try {
       // Сначала сохраняем ключ
       await saveSettings();
       
-      // Затем тестируем ключ через API
-      const response = await api.get('/test-fal-ai-formats?format=with-prefix');
-      
-      if (response.data.success) {
-        setFalAiTesting({ 
-          status: 'success', 
-          message: 'API ключ FAL.AI работает' 
-        });
-        toast({
-          title: "Успешно",
-          description: "API ключ FAL.AI работает корректно"
-        });
-      } else {
-        setFalAiTesting({ 
-          status: 'error', 
-          message: response.data.error || 'Ошибка при проверке API ключа'
-        });
-        toast({
-          variant: "destructive",
-          title: "Ошибка API ключа",
-          description: response.data.error || 'API ключ FAL.AI не работает'
-        });
+      // Для FAL.AI есть специальный эндпоинт тестирования
+      if (keyType === 'fal_ai') {
+        try {
+          const response = await api.get('/test-fal-ai-formats?format=with-prefix');
+          if (response.data.success) {
+            setTestingState({ 
+              status: 'success', 
+              message: 'API ключ FAL.AI работает' 
+            });
+            toast({
+              title: "Успешно",
+              description: "API ключ FAL.AI работает корректно"
+            });
+          } else {
+            setTestingState({ 
+              status: 'error', 
+              message: response.data.error || 'Ошибка при проверке API ключа'
+            });
+            toast({
+              variant: "destructive",
+              title: "Ошибка API ключа",
+              description: response.data.error || 'API ключ FAL.AI не работает'
+            });
+          }
+          return;
+        } catch (err: any) {
+          setTestingState({ 
+            status: 'error', 
+            message: err.message || 'Ошибка при проверке API ключа'
+          });
+          toast({
+            variant: "destructive",
+            title: "Ошибка проверки",
+            description: err.message || 'Не удалось проверить API ключ FAL.AI'
+          });
+          return;
+        }
       }
-    } catch (error: any) {
-      setFalAiTesting({ 
-        status: 'error', 
-        message: error.message || 'Ошибка при проверке API ключа'
-      });
-      toast({
-        variant: "destructive",
-        title: "Ошибка проверки",
-        description: error.message || 'Не удалось проверить API ключ FAL.AI'
-      });
-    }
-  };
-
-  const testDeepseekKey = async () => {
-    if (!deepseekKey.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Необходимо указать API ключ DeepSeek"
-      });
-      return;
-    }
-
-    setDeepseekTesting({ status: 'testing' });
-    
-    try {
-      // Сначала сохраняем ключ
-      await saveSettings();
       
-      // Тут нужен соответствующий эндпоинт на сервере
+      // Для остальных ключей просто сообщаем об успешном сохранении
+      const serviceNames = {
+        perplexity: 'Perplexity',
+        apify: 'Apify',
+        deepseek: 'DeepSeek',
+        xmlriver: 'XMLRiver'
+      };
+      
+      const serviceName = keyType === 'fal_ai' ? 'FAL.AI' : serviceNames[keyType as keyof typeof serviceNames] || keyType;
+      
       toast({
         title: "Проверка API ключа",
-        description: "Ключ DeepSeek сохранен. Проверьте ключ через генерацию контента."
+        description: `Ключ ${serviceName} сохранен. Проверьте работу через соответствующий функционал.`
       });
-      setDeepseekTesting({ status: 'success', message: 'API ключ сохранен' });
+      
+      setTestingState({ status: 'success', message: 'API ключ сохранен' });
     } catch (error: any) {
-      setDeepseekTesting({ 
+      setTestingState({ 
         status: 'error', 
         message: error.message || 'Ошибка при сохранении API ключа'
       });
       toast({
         variant: "destructive",
         title: "Ошибка сохранения",
-        description: error.message || 'Не удалось сохранить API ключ DeepSeek'
+        description: error.message || `Не удалось сохранить API ключ ${keyType === 'fal_ai' ? 'FAL.AI' : keyType}`
       });
     }
   };
+
+  // Вызовы обобщенной функции для каждого типа ключа
+  const testFalAiKey = () => testApiKey('fal_ai', falAiKey, setFalAiTesting);
+  const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
+  const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
+  const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
+    if (!xmlRiverUserId.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Необходимо указать User ID для XMLRiver"
+      });
+      return false;
+    }
+    return true;
+  });
   
   useEffect(() => {
     if (apiKeys) {
@@ -283,56 +308,142 @@ export function SettingsDialog() {
       <div className="space-y-4 py-4">
         <div className="space-y-2">
           <Label>API Ключ Perplexity</Label>
-          <Input
-            type="password"
-            value={perplexityKey}
-            onChange={(e) => setPerplexityKey(e.target.value)}
-            placeholder="Введите API ключ"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={perplexityKey}
+              onChange={(e) => setPerplexityKey(e.target.value)}
+              placeholder="Введите API ключ"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testPerplexityKey}
+              disabled={!perplexityKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {perplexityTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : perplexityTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : perplexityTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Ключ используется для поиска источников и генерации контента через Perplexity
           </p>
+          {perplexityTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{perplexityTesting.message}</p>
+          )}
         </div>
-
-
 
         <div className="space-y-2">
           <Label>API Ключ Apify</Label>
-          <Input
-            type="password"
-            value={apifyKey}
-            onChange={(e) => setApifyKey(e.target.value)}
-            placeholder="Введите API ключ"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={apifyKey}
+              onChange={(e) => setApifyKey(e.target.value)}
+              placeholder="Введите API ключ"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testApifyKey}
+              disabled={!apifyKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {apifyTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : apifyTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : apifyTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Ключ используется для парсинга социальных сетей
           </p>
+          {apifyTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{apifyTesting.message}</p>
+          )}
         </div>
         
         <div className="space-y-2">
           <Label>API Ключ DeepSeek</Label>
-          <Input
-            type="password"
-            value={deepseekKey}
-            onChange={(e) => setDeepseekKey(e.target.value)}
-            placeholder="Введите API ключ"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={deepseekKey}
+              onChange={(e) => setDeepseekKey(e.target.value)}
+              placeholder="Введите API ключ"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testDeepseekKey}
+              disabled={!deepseekKey.trim() || isPending || deepseekTesting.status === 'testing'}
+              className="shrink-0"
+            >
+              {deepseekTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : deepseekTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : deepseekTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Ключ используется для анализа веб-сайтов и генерации контента
           </p>
+          {deepseekTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{deepseekTesting.message}</p>
+          )}
         </div>
         
         <div className="space-y-2">
           <Label>API Ключ FAL.AI</Label>
-          <Input
-            type="password"
-            value={falAiKey}
-            onChange={(e) => setFalAiKey(e.target.value)}
-            placeholder="Введите API ключ"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={falAiKey}
+              onChange={(e) => setFalAiKey(e.target.value)}
+              placeholder="Введите API ключ"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testFalAiKey}
+              disabled={!falAiKey.trim() || isPending || falAiTesting.status === 'testing'}
+              className="shrink-0"
+            >
+              {falAiTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : falAiTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : falAiTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Ключ используется для генерации изображений и медиа-контента
           </p>
+          {falAiTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{falAiTesting.message}</p>
+          )}
         </div>
         
         <Separator className="my-4" />
@@ -371,15 +482,37 @@ export function SettingsDialog() {
             
             <div className="space-y-2">
               <Label>API Ключ XMLRiver</Label>
-              <Input
-                type="password"
-                value={xmlRiverApiKey}
-                onChange={(e) => setXmlRiverApiKey(e.target.value)}
-                placeholder="Введите API ключ XMLRiver"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  value={xmlRiverApiKey}
+                  onChange={(e) => setXmlRiverApiKey(e.target.value)}
+                  placeholder="Введите API ключ XMLRiver"
+                  className="flex-1"
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={testXmlRiverKey}
+                  disabled={!xmlRiverApiKey.trim() || !xmlRiverUserId.trim() || isPending || xmlRiverTesting.status === 'testing'}
+                  className="shrink-0"
+                >
+                  {xmlRiverTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : xmlRiverTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+                  ) : xmlRiverTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1 text-red-500" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Ключ для доступа к API XMLRiver
               </p>
+              {xmlRiverTesting.status === 'error' && (
+                <p className="text-sm text-red-500">{xmlRiverTesting.message}</p>
+              )}
             </div>
           </div>
         </div>
