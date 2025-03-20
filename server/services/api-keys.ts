@@ -69,6 +69,10 @@ export class ApiKeyService {
       console.log(`[${serviceName}] Fetching API key for user ${userId} using DirectusCrud`);
       console.log(`[${serviceName}] Search parameters: user_id=${userId}, service_name=${serviceName}`);
       
+      // Получаем название сервиса в БД из маппинга
+      const dbServiceName = SERVICE_NAME_DB_MAPPING[serviceName];
+      console.log(`[${serviceName}] DB service name mapping: '${serviceName}' -> '${dbServiceName}'`);
+      
       // Получаем все ключи для пользователя для отладки
       const allUserKeys = await directusCrud.list('user_api_keys', {
         userId: userId,
@@ -89,12 +93,12 @@ export class ApiKeyService {
         hasApiKey: !!k.api_key
       })));
 
-      // Теперь ищем конкретный ключ, используя более гибкую логику
+      // Теперь ищем конкретный ключ, используя более гибкую логику с учетом правильного отображения имени сервиса
       // Проверяем наличие поля service_name перед использованием
       let items = allUserKeys.filter((key: any) => 
-        key.service_name && key.service_name.toLowerCase() === serviceName.toLowerCase());
+        key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
       
-      console.log(`[${serviceName}] After filtering: found ${items.length} matching keys`);
+      console.log(`[${serviceName}] After filtering by DB service name '${dbServiceName}': found ${items.length} matching keys`);
       
       // Если не нашли ключ для конкретного пользователя, ищем для любого пользователя
       if (!items || items.length === 0) {
@@ -125,11 +129,11 @@ export class ApiKeyService {
           hasApiKey: !!k.api_key
         })));
         
-        // Фильтруем с учетом независимости от регистра, с проверкой на undefined/null
+        // Фильтруем с учетом независимости от регистра и маппинга имен, с проверкой на undefined/null
         items = allKeys.filter((key: any) => 
-          key.service_name && key.service_name.toLowerCase() === serviceName.toLowerCase());
+          key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
           
-        console.log(`[${serviceName}] After filtering all keys: found ${items.length} matching keys`);
+        console.log(`[${serviceName}] After filtering all keys with DB service name '${dbServiceName}': found ${items.length} matching keys`);
       }
       
       if (items.length && items[0].api_key) {
@@ -281,12 +285,16 @@ export class ApiKeyService {
       // Сначала проверяем, существует ли уже ключ для этого сервиса/пользователя
       console.log(`[${serviceName}] Проверка существующих API ключей для пользователя ${userId} с использованием DirectusCrud`);
       
+      // Получаем название сервиса в БД из маппинга
+      const dbServiceName = SERVICE_NAME_DB_MAPPING[serviceName];
+      console.log(`[${serviceName}] DB service name mapping: '${serviceName}' -> '${dbServiceName}'`);
+      
       const existingKeys = await directusCrud.list('user_api_keys', {
         userId: userId,
         authToken: authToken,
         filter: {
           user_id: { _eq: userId },
-          service_name: { _eq: serviceName }
+          service_name: { _eq: dbServiceName }
         },
         fields: ['id']
       });
@@ -313,7 +321,7 @@ export class ApiKeyService {
         
         result = await directusCrud.create('user_api_keys', {
           user_id: userId,
-          service_name: serviceName,
+          service_name: dbServiceName,
           api_key: apiKey,
           created_at: new Date().toISOString()
         }, {
