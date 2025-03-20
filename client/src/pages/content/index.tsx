@@ -1053,7 +1053,7 @@ export default function ContentPage() {
                                 {/* Content title */}
                                 {content.title && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{String(content.title)}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">{typeof content.title === 'string' ? content.title : String(content.title)}</h3>
                                   </div>
                                 )}
                                 
