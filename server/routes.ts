@@ -9129,7 +9129,7 @@ ${datesText}
   });
 
   // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
-  app.get("/test-fal-ai", async (req, res) => {
+  app.get("/api/test-fal-ai", async (req, res) => {
     try {
       // Получаем API ключ из переменных окружения или системных настроек
       const envKey = process.env.FAL_AI_API_KEY || '';
@@ -9347,7 +9347,7 @@ ${datesText}
   });
 
   // Эндпоинт для тестирования конкретного формата ключа FAL.AI
-  app.get("/test-fal-ai-formats", async (req, res) => {
+  app.get("/api/test-fal-ai-formats", async (req, res) => {
     try {
       const { format } = req.query;
       
