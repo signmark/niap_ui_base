@@ -8,6 +8,122 @@ import { storage } from '../storage';
  */
 export class SocialPublishingService {
   /**
+   * Получает URL для загрузки фото в ВК
+   * @param token Токен доступа к API VK
+   * @param groupId ID группы (без знака минус)
+   * @returns URL для загрузки или null в случае ошибки
+   */
+  async getVkPhotoUploadUrl(token: string, groupId: string): Promise<string | null> {
+    try {
+      const url = `https://api.vk.com/method/photos.getWallUploadServer?group_id=${groupId}&access_token=${token}&v=5.131`;
+      
+      const response = await axios.get(url);
+      log(`Получен ответ на запрос URL для загрузки: ${JSON.stringify(response.data)}`, 'social-publishing');
+      
+      if (response.data.response && response.data.response.upload_url) {
+        const uploadUrl = response.data.response.upload_url;
+        log(`Получен URL для загрузки фото: ${uploadUrl}`, 'social-publishing');
+        return uploadUrl;
+      } else {
+        log(`Ошибка при получении URL для загрузки: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return null;
+      }
+    } catch (error: any) {
+      log(`Ошибка при получении URL для загрузки фото: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+  
+  /**
+   * Загружает фото на сервер VK
+   * @param uploadUrl URL для загрузки
+   * @param imageUrl URL изображения для загрузки
+   * @returns Объект с результатом загрузки или null в случае ошибки
+   */
+  async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
+    try {
+      log(`Начинаем загрузку фото на сервер VK. URL изображения: ${imageUrl}`, 'social-publishing');
+      
+      // Получаем изображение
+      const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      log(`Изображение успешно получено, размер: ${imageResponse.data.byteLength} байт`, 'social-publishing');
+      
+      // Создаем форму для загрузки
+      const formData = new FormData();
+      
+      // Создаем Blob из arraybuffer и добавляем в FormData
+      const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] || 'image/jpeg' });
+      formData.append('photo', blob, 'image.jpg');
+      
+      // Отправляем на сервер VK
+      const uploadResponse = await axios.post(uploadUrl, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      log(`Ответ сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+      
+      if (uploadResponse.data && uploadResponse.data.server) {
+        return {
+          server: uploadResponse.data.server,
+          photo: uploadResponse.data.photo,
+          hash: uploadResponse.data.hash
+        };
+      } else {
+        log(`Некорректный ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+        return null;
+      }
+    } catch (error: any) {
+      log(`Ошибка при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+  
+  /**
+   * Сохраняет загруженное фото в альбом группы
+   * @param token Токен доступа к API VK
+   * @param groupId ID группы (без знака минус)
+   * @param server Сервер из ответа на загрузку
+   * @param photo Строка photo из ответа на загрузку
+   * @param hash Хеш из ответа на загрузку
+   * @returns Объект с информацией о сохраненном фото или null в случае ошибки
+   */
+  async savePhotoToVk(token: string, groupId: string, server: number, photo: string, hash: string): Promise<any | null> {
+    try {
+      // Формируем запрос для сохранения фото
+      const urlParams = new URLSearchParams();
+      urlParams.append('group_id', groupId);
+      urlParams.append('server', server.toString());
+      urlParams.append('photo', photo);
+      urlParams.append('hash', hash);
+      urlParams.append('access_token', token);
+      urlParams.append('v', '5.131');
+      
+      // Отправляем запрос на сохранение
+      const saveResponse = await axios.post('https://api.vk.com/method/photos.saveWallPhoto', urlParams, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      log(`Ответ на запрос сохранения фото: ${JSON.stringify(saveResponse.data)}`, 'social-publishing');
+      
+      if (saveResponse.data.response && saveResponse.data.response.length > 0) {
+        const photoObj = saveResponse.data.response[0];
+        log(`Фото успешно сохранено, ID: ${photoObj.id}, owner_id: ${photoObj.owner_id}`, 'social-publishing');
+        return photoObj;
+      } else {
+        log(`Ошибка при сохранении фото: ${JSON.stringify(saveResponse.data)}`, 'social-publishing');
+        return null;
+      }
+    } catch (error: any) {
+      log(`Ошибка при сохранении фото в VK: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+
+  /**
    * Публикует контент в Telegram
    * @param content Контент для публикации
    * @param telegramSettings Настройки Telegram API
@@ -331,18 +447,14 @@ export class SocialPublishingService {
       let message = content.title ? `${content.title}\n\n` : '';
       
       // Преобразовываем HTML-теги в VK-разметку
-      // VK поддерживает разметку вида [b]жирный[/b], [i]курсив[/i] и т.д.
+      // VK использует разные API для форматирования. Мы можем только переносы строк и эмодзи сохранить
       let contentText = content.content
-        .replace(/<b>(.*?)<\/b>/g, '[b]$1[/b]')
-        .replace(/<strong>(.*?)<\/strong>/g, '[b]$1[/b]')
-        .replace(/<i>(.*?)<\/i>/g, '[i]$1[/i]')
-        .replace(/<em>(.*?)<\/em>/g, '[i]$1[/i]')
-        .replace(/<u>(.*?)<\/u>/g, '[u]$1[/u]')
-        .replace(/<s>(.*?)<\/s>/g, '[s]$1[/s]')
-        .replace(/<strike>(.*?)<\/strike>/g, '[s]$1[/s]')
-        .replace(/<br\s*\/?>/g, '\n');
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n');
       
-      // Удаляем оставшиеся HTML-теги
+      // Убираем все HTML-теги, но сохраняем их содержимое
       contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
       message += contentText;
 
