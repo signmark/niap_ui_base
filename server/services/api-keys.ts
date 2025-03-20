@@ -129,10 +129,22 @@ export class ApiKeyService {
           hasApiKey: !!k.api_key
         })));
         
-        // Фильтруем с учетом независимости от регистра и маппинга имен, с проверкой на undefined/null
-        items = allKeys.filter((key: any) => 
-          key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
+        // Поиск с учетом возможного отсутствия service_name
+        if (allKeys.length > 0 && allKeys.every(key => !key.service_name)) {
+          console.log(`[${serviceName}] Внимание: все ключи в системе не имеют service_name. Пробуем найти ключ для использования.`);
           
+          // Если ни у одного ключа нет service_name, возьмем первый доступный ключ
+          items = allKeys.filter(key => key.api_key && key.api_key.length > 0);
+          
+          if (items.length > 0) {
+            console.log(`[${serviceName}] Найден ключ без service_name, но с api_key. Используем его временно.`);
+          }
+        } else {
+          // Стандартная фильтрация
+          items = allKeys.filter((key: any) => 
+            key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
+        }
+        
         console.log(`[${serviceName}] After filtering all keys with DB service name '${dbServiceName}': found ${items.length} matching keys`);
       }
       
