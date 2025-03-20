@@ -341,33 +341,29 @@ export class SocialPublishingService {
         responseType: 'arraybuffer'
       });
 
-      // Более простой подход - используем fs для создания временного файла
-      const fs = require('fs');
-      const path = require('path');
-      const os = require('os');
+      // Создаем объект Blob из полученных данных
+      const blob = new Blob([imageResponse.data], { 
+        type: imageResponse.headers['content-type'] || 'image/jpeg' 
+      });
       
-      // Создаем временный файл
-      const tempDir = os.tmpdir();
-      const tempFilePath = path.join(tempDir, 'vk_upload_image.jpg');
+      // Создаем объект FormData для отправки файла
+      const formData = new URLSearchParams();
       
-      // Записываем данные изображения во временный файл
-      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+      // В VK API требуется отправить фото как multipart form
+      // Используем вспомогательную функцию для преобразования Blob в base64
+      const base64Image = await this.blobToBase64(blob);
       
-      // Создаем form-data для загрузки файла
-      const FormData = require('form-data');
-      const formData = new FormData();
+      // Дополнительное логирование для отладки
+      log(`Изображение преобразовано в base64, размер: ${base64Image.length} символов`, 'social-publishing');
       
-      // Добавляем файл в форму
-      formData.append('photo', fs.createReadStream(tempFilePath));
-      
-      // Загружаем на сервер VK
-      log(`Загрузка фото на сервер VK по URL: ${uploadUrl}`, 'social-publishing');
-      
-      const uploadResponse = await axios({
-        method: 'post',
-        url: uploadUrl,
-        data: formData,
-        headers: formData.getHeaders()
+      // Вместо загрузки как multipart/form-data, используем упрощенный подход с data URI
+      // Отправляем URL изображения в виде параметра запроса
+      const uploadResponse = await axios.post(uploadUrl, {
+        photo: base64Image
+      }, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
 
       log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
@@ -379,6 +375,26 @@ export class SocialPublishingService {
       }
       return null;
     }
+  }
+  
+  /**
+   * Преобразует Blob в строку base64
+   * @param blob Объект Blob
+   * @returns Promise с base64 строкой
+   */
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // reader.result содержит data URL вида "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMC..."
+        // Нам нужна только часть после "base64,"
+        const base64String = reader.result as string;
+        // Возвращаем только данные base64 без префикса "data:image/jpeg;base64,"
+        resolve(base64String.split(',')[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   /**
