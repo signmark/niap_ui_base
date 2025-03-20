@@ -2,6 +2,9 @@ import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 import { directusCrud } from './directus-crud';
 
+// Получаем инстанс Axios для Directus API
+const directusApi = directusApiManager.instance;
+
 // Типы API сервисов, используемых в приложении
 export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
 
@@ -78,173 +81,55 @@ export class ApiKeyService {
     
     // 2. Если ключа нет в кэше или он устарел, пытаемся получить из Directus
     try {
-      // Добавляем расширенное логирование для отладки запроса
-      console.log(`[${serviceName}] Fetching API key for user ${userId} using DirectusCrud`);
-      console.log(`[${serviceName}] Search parameters: user_id=${userId}, service_name=${serviceName}`);
-      
       // Получаем название сервиса в БД из маппинга
       const dbServiceName = SERVICE_NAME_DB_MAPPING[serviceName];
-      console.log(`[${serviceName}] DB service name mapping: '${serviceName}' -> '${dbServiceName}'`);
+      console.log(`[${serviceName}] Получаем ключ для пользователя ${userId}, сервис в БД: ${dbServiceName}`);
       
-      // Получаем все ключи для пользователя для отладки
-      const allUserKeys = await directusCrud.list('user_api_keys', {
-        userId: userId,
-        authToken: authToken,
-        filter: {
-          user_id: { _eq: userId }
+      // Делаем прямой запрос к Directus через API как в SettingsDialog
+      // Это гарантирует одинаковое поведение на фронтенде и бэкенде
+      const response = await directusApi.get('/items/user_api_keys', {
+        params: {
+          filter: {
+            user_id: { _eq: userId }
+          },
+          fields: ['id', 'service_name', 'api_key']
         },
-        fields: ['id', 'service_name', 'api_key']
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined
       });
       
-      console.log(`[${serviceName}] Found ${allUserKeys.length} total API keys for user ${userId}`);
-      console.log(`[${serviceName}] Available services:`, allUserKeys.map((k: any) => k.service_name).join(', '));
+      const apiKeys = response.data?.data || [];
+      console.log(`[${serviceName}] Получено ${apiKeys.length} ключей для пользователя ${userId}`);
       
-      // Диагностика: Выведем все ключи более подробно для отладки
-      console.log(`[${serviceName}] Keys details:`, allUserKeys.map((k: any) => ({
-        id: k.id,
-        service: k.service_name || 'undefined',
-        hasApiKey: !!k.api_key
-      })));
-
-      // Теперь ищем конкретный ключ, используя более гибкую логику с учетом правильного отображения имени сервиса
-      // Проблема: в БД могут храниться ключи без указания service_name
+      // Аналогично SettingsDialog.tsx, ищем ключ по service_name
+      const apiKeyData = apiKeys.find((key: any) => 
+        key.service_name === dbServiceName);
       
-      // СНАЧАЛА пробуем найти по service_name (если оно указано)
-      let items = allUserKeys.filter((key: any) => 
-        key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
-      
-      console.log(`[${serviceName}] Первичный поиск по service_name='${dbServiceName}' - найдено ${items.length} ключей`);
-      
-      // Если не нашли ключ по service_name, но у нас есть ключи API,
-      // пробуем использовать сопоставление по позиции в UI
-      if (items.length === 0 && allUserKeys.length > 0) {
-        console.log(`[${serviceName}] Не найдены ключи с service_name='${dbServiceName}', ищем по позиции в списке`);
+      if (apiKeyData && apiKeyData.api_key) {
+        console.log(`[${serviceName}] Найден ключ с точным совпадением service_name=${dbServiceName}`);
+        let apiKey = apiKeyData.api_key;
         
-        // Найдем соответствующий индекс для текущего сервиса
-        const serviceIndex = Object.entries(SERVICE_INDEX_MAPPING).find(
-          ([_, mappedService]) => mappedService === serviceName
-        );
-        
-        if (serviceIndex) {
-          const index = parseInt(serviceIndex[0], 10);
-          console.log(`[${serviceName}] Сервис соответствует индексу ${index} в UI`);
-          
-          // Если у нас достаточно ключей в списке, берем тот, который соответствует позиции
-          if (allUserKeys.length > index) {
-            const keyByPosition = allUserKeys[index];
-            if (keyByPosition && keyByPosition.api_key) {
-              console.log(`[${serviceName}] Найден ключ по позиции ${index} с api_key`);
-              items = [keyByPosition];
-            }
-          }
+        // Обработка специальных форматов ключей
+        if (serviceName === 'fal_ai' && !apiKey.startsWith('Key ') && apiKey.includes(':')) {
+          console.log(`[${serviceName}] Форматирование ключа FAL.AI: добавляем префикс 'Key '`);
+          apiKey = `Key ${apiKey}`;
         }
         
-        // Если не нашли по позиции, берем первый доступный ключ с api_key (запасной вариант)
-        if (items.length === 0) {
-          console.log(`[${serviceName}] Не найден ключ по позиции, ищем первый доступный ключ с api_key`);
-          items = allUserKeys.filter((key: any) => !!key.api_key);
-          
-          if (items.length > 0) {
-            console.log(`[${serviceName}] Найден ключ с api_key без точного совпадения service_name (используем первый доступный)`);
-          }
-        }
-      }
-      
-      console.log(`[${serviceName}] After filtering by DB service name '${dbServiceName}': found ${items.length} matching keys`);
-      
-      // Если не нашли ключ для конкретного пользователя, ищем для любого пользователя
-      if (!items || items.length === 0) {
-        console.log(`Не найден ключ ${serviceName} для пользователя ${userId}, пробуем найти для любого пользователя`);
-        
-        // Получим все ключи в системе для диагностики
-        const allKeys = await directusCrud.list('user_api_keys', {
-          userId: userId,
-          authToken: authToken,
-          fields: ['id', 'user_id', 'service_name', 'api_key']
-        });
-        
-        console.log(`[${serviceName}] Found ${allKeys.length} total API keys in the system`);
-        
-        // Более безопасная обработка с проверкой на undefined/null
-        const availableServices = allKeys
-          .map((k: any) => k.service_name)
-          .filter((name: any) => name !== undefined && name !== null);
-          
-        console.log(`[${serviceName}] Available services in system:`, 
-                    [...new Set(availableServices)].join(', '));
-        
-        // Диагностика: выведем подробности о всех ключах
-        console.log(`[${serviceName}] All keys details:`, allKeys.map((k: any) => ({
-          id: k.id,
-          user: k.user_id || 'undefined',
-          service: k.service_name || 'undefined',
-          hasApiKey: !!k.api_key
-        })));
-        
-        // Поиск с учетом возможного отсутствия service_name
-        if (allKeys.length > 0 && allKeys.every(key => !key.service_name)) {
-          console.log(`[${serviceName}] Внимание: все ключи в системе не имеют service_name. Пробуем найти ключ для использования.`);
-          
-          // Если ни у одного ключа нет service_name, возьмем первый доступный ключ
-          items = allKeys.filter(key => key.api_key && key.api_key.length > 0);
-          
-          if (items.length > 0) {
-            console.log(`[${serviceName}] Найден ключ без service_name, но с api_key. Используем его временно.`);
-          }
-        } else {
-          // Стандартная фильтрация
-          items = allKeys.filter((key: any) => 
-            key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
-        }
-        
-        console.log(`[${serviceName}] After filtering all keys with DB service name '${dbServiceName}': found ${items.length} matching keys`);
-      }
-      
-      if (items.length && items[0].api_key) {
-        // Получаем ключ из ответа и форматируем если необходимо
-        let apiKey = items[0].api_key;
-        
-        // Специальная обработка для XMLRiver - проверяем, что ключ в правильном формате JSON
         if (serviceName === 'xmlriver') {
           try {
-            // Проверяем, является ли ключ JSON строкой с необходимыми полями
-            const parsed = JSON.parse(apiKey);
-            if (typeof parsed === 'object' && parsed !== null && 'user' in parsed && 'key' in parsed) {
-              console.log(`[${serviceName}] Успешно получен и распознан ключ XMLRiver в формате JSON`);
-              // Используем API ключ как есть, так как он уже в нужном формате
-            } else {
-              console.warn(`[${serviceName}] API ключ в формате JSON, но не содержит обязательные поля user и key`);
-            }
+            JSON.parse(apiKey);
+            console.log(`[${serviceName}] Ключ уже в JSON формате`);
           } catch (e) {
-            console.warn(`[${serviceName}] API ключ не в формате JSON, пробуем преобразовать`);
-            // Если не удалось распарсить JSON, пробуем преобразовать в нужный формат
+            console.log(`[${serviceName}] Форматирование ключа XMLRiver в JSON`);
             if (apiKey.includes(':')) {
               const [user, key] = apiKey.split(':');
               apiKey = JSON.stringify({ user: user.trim(), key: key.trim() });
-              console.log(`[${serviceName}] Преобразовали ключ в формат JSON с пользовательскими данными`);
             } else {
-              // Если разделитель не найден, предполагаем, что это только API ключ без user ID
               apiKey = JSON.stringify({ user: "16797", key: apiKey.trim() });
-              console.log(`[${serviceName}] Преобразовали ключ в формат JSON с user_id по умолчанию (16797)`);
             }
           }
         }
         
-        // Специальная обработка для FAL.AI - проверяем и добавляем префикс "Key " если необходимо
-        if (serviceName === 'fal_ai') {
-          // Проверяем формат ключа
-          if (apiKey.startsWith('Key ')) {
-            console.log(`[${serviceName}] Получен ключ с префиксом "Key" - правильный формат`);
-          } else if (apiKey.includes(':')) {
-            console.log(`[${serviceName}] Получен ключ без префикса "Key", автоматически добавляем`);
-            apiKey = `Key ${apiKey}`;
-            console.log(`[${serviceName}] Форматированный ключ: ${apiKey.substring(0, 12)}...`);
-          } else {
-            console.log(`[${serviceName}] Получен ключ в неизвестном формате, не содержит ':'`);
-          }
-        }
-        
-        // Сохраняем ключ в кэше
+        // Сохраняем в кэш
         if (!this.keyCache[userId]) {
           this.keyCache[userId] = {};
         }
@@ -256,11 +141,61 @@ export class ApiKeyService {
         
         log(`Successfully fetched ${serviceName} API key from Directus for user ${userId}`, 'api-keys');
         return apiKey;
-      } else {
-        log(`${serviceName} API key not found in user settings for user ${userId}`, 'api-keys');
-        console.warn(`⚠️ [${serviceName}] API ключ не найден в настройках пользователя. Необходимо добавить ключ в Directus.`);
-        return null;
       }
+      
+      // Если ключ не найден по service_name, проверяем дополнительные варианты
+      console.log(`[${serviceName}] Не найден ключ с service_name=${dbServiceName}, пробуем альтернативные методы`);
+      
+      // Пробуем найти по индексу (как в SettingsDialog.tsx)
+      const serviceIndex = Object.entries(SERVICE_INDEX_MAPPING).find(
+        ([_, mappedService]) => mappedService === serviceName
+      );
+      
+      if (serviceIndex && apiKeys.length > 0) {
+        const index = parseInt(serviceIndex[0], 10);
+        console.log(`[${serviceName}] Индекс сервиса в UI: ${index}`);
+        
+        if (apiKeys.length > index) {
+          const keyByPosition = apiKeys[index];
+          if (keyByPosition && keyByPosition.api_key) {
+            console.log(`[${serviceName}] Найден ключ по позиции ${index} в списке`);
+            let apiKey = keyByPosition.api_key;
+            
+            // Обработка специальных форматов
+            if (serviceName === 'fal_ai' && !apiKey.startsWith('Key ') && apiKey.includes(':')) {
+              apiKey = `Key ${apiKey}`;
+            }
+            
+            // Сохраняем в кэш
+            if (!this.keyCache[userId]) {
+              this.keyCache[userId] = {};
+            }
+            
+            this.keyCache[userId][serviceName] = {
+              key: apiKey,
+              expiresAt: Date.now() + this.cacheDuration
+            };
+            
+            // Также обновляем service_name в БД для будущих запросов
+            try {
+              await directusCrud.update('user_api_keys', keyByPosition.id, {
+                service_name: dbServiceName
+              }, {
+                userId, authToken
+              });
+              console.log(`[${serviceName}] Обновлен service_name для ключа по ID: ${keyByPosition.id}`);
+            } catch (e) {
+              console.error(`[${serviceName}] Ошибка при обновлении service_name:`, e);
+            }
+            
+            return apiKey;
+          }
+        }
+      }
+      
+      log(`${serviceName} API key not found in user settings for user ${userId}`, 'api-keys');
+      console.warn(`⚠️ [${serviceName}] API ключ не найден в настройках пользователя. Необходимо добавить ключ в Directus.`);
+      return null;
     } catch (error) {
       console.error(`Error fetching ${serviceName} API key:`, error);
       
