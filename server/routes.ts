@@ -1231,8 +1231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${authHeader1.substring(0, 15)}...`);
       
       try {
-        // Пробуем сделать запрос с этим форматом
-        await axios.get('https://queue.fal.run/ping', {
+        // Пробуем сделать запрос с этим форматом к корневому URL API
+        await axios.get('https://queue.fal.run/', {
           headers: {
             Authorization: authHeader1
           }
