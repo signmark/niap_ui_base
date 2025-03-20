@@ -28,17 +28,40 @@ export class SocialPublishingService {
         error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
       };
     }
+    
+    // Проверяем, что ID чата в правильном формате
+    let formattedChatId = telegramSettings.chatId;
+    
+    // Если ID чата не начинается с '-', добавляем префикс для группового чата
+    if (!formattedChatId.startsWith('-')) {
+      formattedChatId = `-${formattedChatId}`;
+      log(`ID чата отформатирован с префиксом: ${formattedChatId}`, 'social-publishing');
+    }
 
     try {
-      const { token, chatId } = telegramSettings;
-      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+      const { token } = telegramSettings;
+      log(`Публикация в Telegram. Чат: ${formattedChatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
       // Подготовка сообщения с сохранением HTML-форматирования
       let text = content.title ? `<b>${content.title}</b>\n\n` : '';
       
-      // Telegram поддерживает HTML-форматирование, используем контент как есть
-      // Не удаляем HTML-теги, так как в Telegram нужно отображать форматированный текст
-      text += content.content;
+      // Telegram поддерживает только ограниченный набор HTML-тегов
+      // Нужно преобразовать HTML-теги к поддерживаемому Telegram формату
+      let contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+      
+      // Удаляем все оставшиеся неподдерживаемые HTML-теги
+      contentText = contentText.replace(/<(?!\/?(b|i|code|pre|s|u|a)(?=>|\s.*>))[^>]*>/g, '');
+      
+      text += contentText;
 
       // Добавление хэштегов
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
@@ -55,7 +78,7 @@ export class SocialPublishingService {
         // Отправка текстового сообщения
         log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendMessage`, {
-          chat_id: chatId,
+          chat_id: formattedChatId,
           text,
           parse_mode: 'HTML'
         });
@@ -78,7 +101,7 @@ export class SocialPublishingService {
           text;
 
         response = await axios.post(`${baseUrl}/sendPhoto`, {
-          chat_id: chatId, 
+          chat_id: formattedChatId, 
           photo: photoUrl,
           caption: truncatedCaption,
           parse_mode: 'HTML'
@@ -87,7 +110,7 @@ export class SocialPublishingService {
         // Отправка видео с подписью
         log(`Отправка видео в Telegram с URL: ${content.videoUrl}`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendVideo`, {
-          chat_id: chatId,
+          chat_id: formattedChatId,
           video: content.videoUrl,
           caption: text,
           parse_mode: 'HTML'
@@ -114,7 +137,7 @@ export class SocialPublishingService {
           status: 'published',
           publishedAt: new Date(),
           postId: message.message_id.toString(),
-          postUrl: `https://t.me/c/${chatId.replace('-100', '')}/${message.message_id}`,
+          postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
           userId: content.userId // Добавляем userId из контента
         };
       } else {
