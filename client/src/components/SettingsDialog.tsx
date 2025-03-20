@@ -106,7 +106,7 @@ export function SettingsDialog() {
       // Для FAL.AI есть специальный эндпоинт тестирования
       if (keyType === 'fal_ai') {
         try {
-          const response = await api.get('/test-fal-ai-formats?format=with-prefix');
+          const response = await api.get('/api/test-fal-ai-formats?format=with-prefix');
           if (response.data.success) {
             setTestingState({ 
               status: 'success', 
