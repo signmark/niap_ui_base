@@ -33,12 +33,12 @@ export class SocialPublishingService {
       const { token, chatId } = telegramSettings;
       log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
-      // Подготовка сообщения - удаляем HTML-теги для Telegram
-      let text = content.title ? `*${content.title}*\n\n` : '';
+      // Подготовка сообщения с сохранением HTML-форматирования
+      let text = content.title ? `<b>${content.title}</b>\n\n` : '';
       
-      // Удаляем HTML-теги из текста контента, так как Telegram поддерживает только свой формат HTML
-      const contentText = content.content.replace(/<\/?[^>]+(>|$)/g, '');
-      text += contentText;
+      // Telegram поддерживает HTML-форматирование, используем контент как есть
+      // Не удаляем HTML-теги, так как в Telegram нужно отображать форматированный текст
+      text += content.content;
 
       // Добавление хэштегов
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
@@ -53,11 +53,11 @@ export class SocialPublishingService {
 
       if (content.contentType === 'text') {
         // Отправка текстового сообщения
-        log(`Отправка текстового сообщения в Telegram`, 'social-publishing');
+        log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendMessage`, {
           chat_id: chatId,
           text,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'
         });
       } else if ((content.contentType === 'text-image' || content.imageUrl) && content.imageUrl) {
         // Отправка изображения с подписью
@@ -81,7 +81,7 @@ export class SocialPublishingService {
           chat_id: chatId, 
           photo: photoUrl,
           caption: truncatedCaption,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'
         });
       } else if ((content.contentType === 'video' || content.contentType === 'video-text') && content.videoUrl) {
         // Отправка видео с подписью
@@ -90,7 +90,7 @@ export class SocialPublishingService {
           chat_id: chatId,
           video: content.videoUrl,
           caption: text,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'
         });
       } else {
         // Неподдерживаемый тип контента
@@ -304,11 +304,23 @@ export class SocialPublishingService {
       const { token, groupId } = vkSettings;
       log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
-      // Подготовка сообщения - удаляем HTML-теги для VK
+      // Подготовка сообщения
       let message = content.title ? `${content.title}\n\n` : '';
       
-      // Удаляем HTML-теги из текста контента
-      const contentText = content.content.replace(/<\/?[^>]+(>|$)/g, '');
+      // Преобразовываем HTML-теги в VK-разметку
+      // VK поддерживает разметку вида [b]жирный[/b], [i]курсив[/i] и т.д.
+      let contentText = content.content
+        .replace(/<b>(.*?)<\/b>/g, '[b]$1[/b]')
+        .replace(/<strong>(.*?)<\/strong>/g, '[b]$1[/b]')
+        .replace(/<i>(.*?)<\/i>/g, '[i]$1[/i]')
+        .replace(/<em>(.*?)<\/em>/g, '[i]$1[/i]')
+        .replace(/<u>(.*?)<\/u>/g, '[u]$1[/u]')
+        .replace(/<s>(.*?)<\/s>/g, '[s]$1[/s]')
+        .replace(/<strike>(.*?)<\/strike>/g, '[s]$1[/s]')
+        .replace(/<br\s*\/?>/g, '\n');
+      
+      // Удаляем оставшиеся HTML-теги
+      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
       message += contentText;
 
       // Добавление хэштегов
