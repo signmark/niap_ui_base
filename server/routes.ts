@@ -1478,8 +1478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем ключ через новую систему приоритизации (сначала пользовательский, потом системный)
       const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
       
-      // Проверяем источники ключей для отладки
-      const envKey = process.env.FAL_AI_API_KEY || null;
+      // Проверяем источники ключей (только из базы данных)
       let userKey = null;
       let userKeySource = "не найден";
       
@@ -1545,7 +1544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_authenticated: isUserAuthenticated,
           selected_api_key: falApiKey ? falApiKey.substring(0, 5) + '...' + falApiKey.substring(falApiKey.length - 5) : 'null',
           sources: {
-            env_key_present: !!envKey,
+            env_key_present: false, // API ключи из переменных окружения больше не используются
             user_key: userKey ? userKey.substring(0, 5) + '...' + userKey.substring(userKey.length - 5) : 'null',
             user_key_status: userKeySource
           },
@@ -9203,14 +9202,9 @@ ${datesText}
         format: 'id:secret format'
       };
       
-      // Информация о ключе из переменных окружения
-      const envKeyFormat = envKey ? {
-        length: envKey.length,
-        hasPrefix: envKey.startsWith('Key '),
-        hasColon: envKey.includes(':'),
-        format: envKey.startsWith('Key ') ? 'With Key prefix' : 'No Key prefix'
-      } : {
-        message: 'Ключ в переменных окружения не установлен'
+      // Информация о ключе из переменных окружения (больше не используется, оставлено для совместимости)
+      const envKeyFormat = {
+        message: 'Ключи из переменных окружения больше не используются. Используются только ключи из базы данных.'
       };
       
       // Запускаем тестирование API с правильным форматом ключа (с префиксом Key)
