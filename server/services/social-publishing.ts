@@ -59,10 +59,25 @@ export class SocialPublishingService {
       } else if ((content.contentType === 'text-image' || content.imageUrl) && content.imageUrl) {
         // Отправка изображения с подписью
         log(`Отправка изображения в Telegram с URL: ${content.imageUrl}`, 'social-publishing');
+        // Проверяем формат URL изображения для Telegram
+        let photoUrl = content.imageUrl;
+        // Если URL не начинается с http, добавляем базовый URL сервера
+        if (photoUrl && !photoUrl.startsWith('http')) {
+          const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+          photoUrl = `${baseAppUrl}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
+          log(`Изменен URL изображения для Telegram: ${photoUrl}`, 'social-publishing');
+        }
+        
+        // Ограничиваем длину подписи, так как Telegram имеет ограничение
+        const maxCaptionLength = 1024;
+        const truncatedCaption = text.length > maxCaptionLength ? 
+          text.substring(0, maxCaptionLength - 3) + '...' : 
+          text;
+
         response = await axios.post(`${baseUrl}/sendPhoto`, {
           chat_id: chatId, 
-          photo: content.imageUrl,
-          caption: text,
+          photo: photoUrl,
+          caption: truncatedCaption,
           parse_mode: 'Markdown'
         });
       } else if ((content.contentType === 'video' || content.contentType === 'video-text') && content.videoUrl) {
@@ -335,19 +350,26 @@ export class SocialPublishingService {
         }
       }
 
-      // Прямой запрос к VK API с параметрами в URL
+      // Прямой запрос к VK API через form data для избежания ошибки 414 (URI Too Large)
       const apiUrl = 'https://api.vk.com/method/wall.post';
       log(`Отправка запроса к VK API: ${apiUrl}`, 'social-publishing');
       log(`Параметры запроса: ${JSON.stringify(requestData)}`, 'social-publishing');
 
-      // Отправка запроса
+      // Преобразуем объект в форму для отправки
+      const FormData = require('form-data');
+      const form = new FormData();
+      
+      // Добавляем все поля в форму
+      Object.keys(requestData).forEach(key => {
+        form.append(key, requestData[key]);
+      });
+      
+      // Отправка запроса как form data вместо params в URL
       const response = await axios({
         method: 'post',
         url: apiUrl,
-        params: requestData,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        data: form,
+        headers: form.getHeaders()
       });
 
       log(`Получен ответ от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
