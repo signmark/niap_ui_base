@@ -55,30 +55,50 @@ export class ApiKeyService {
     
     // 2. Если ключа нет в кэше или он устарел, пытаемся получить из Directus
     try {
-      // Используем DirectusCrud для запроса с правильной авторизацией
+      // Добавляем расширенное логирование для отладки запроса
       console.log(`[${serviceName}] Fetching API key for user ${userId} using DirectusCrud`);
+      console.log(`[${serviceName}] Search parameters: user_id=${userId}, service_name=${serviceName}`);
       
-      let items = await directusCrud.list('user_api_keys', {
+      // Получаем все ключи для пользователя для отладки
+      const allUserKeys = await directusCrud.list('user_api_keys', {
         userId: userId,
         authToken: authToken,
         filter: {
-          user_id: { _eq: userId },
-          service_name: { _eq: serviceName }
+          user_id: { _eq: userId }
         },
-        fields: ['id', 'api_key']
+        fields: ['id', 'service_name', 'api_key']
       });
+      
+      console.log(`[${serviceName}] Found ${allUserKeys.length} total API keys for user ${userId}`);
+      console.log(`[${serviceName}] Available services:`, allUserKeys.map((k: any) => k.service_name).join(', '));
+      
+      // Теперь ищем конкретный ключ, используя более гибкую логику
+      // Искать с учетом независимости от регистра и разных форматов названий сервисов
+      let items = allUserKeys.filter((key: any) => 
+        key.service_name.toLowerCase() === serviceName.toLowerCase());
+      
+      console.log(`[${serviceName}] After filtering: found ${items.length} matching keys`);
       
       // Если не нашли ключ для конкретного пользователя, ищем для любого пользователя
       if (!items || items.length === 0) {
         console.log(`Не найден ключ ${serviceName} для пользователя ${userId}, пробуем найти для любого пользователя`);
-        items = await directusCrud.list('user_api_keys', {
+        
+        // Получим все ключи в системе для диагностики
+        const allKeys = await directusCrud.list('user_api_keys', {
           userId: userId,
           authToken: authToken,
-          filter: {
-            service_name: { _eq: serviceName }
-          },
-          fields: ['id', 'api_key']
+          fields: ['id', 'user_id', 'service_name', 'api_key']
         });
+        
+        console.log(`[${serviceName}] Found ${allKeys.length} total API keys in the system`);
+        console.log(`[${serviceName}] Available services in system:`, 
+                    [...new Set(allKeys.map((k: any) => k.service_name))].join(', '));
+        
+        // Фильтруем с учетом независимости от регистра
+        items = allKeys.filter((key: any) => 
+          key.service_name.toLowerCase() === serviceName.toLowerCase());
+          
+        console.log(`[${serviceName}] After filtering all keys: found ${items.length} matching keys`);
       }
       
       if (items.length && items[0].api_key) {
