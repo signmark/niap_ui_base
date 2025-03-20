@@ -403,39 +403,14 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   private getKeyFromEnvironment(serviceName: ApiServiceName): string | null {
-    // Для упрощения разработки и тестирования разрешаем использовать переменные окружения
-    // как запасной вариант, если ключ не найден в Directus
-    if (serviceName === 'perplexity') {
-      console.log(`[${serviceName}] Запрошен ключ из переменных окружения`);
-      return process.env.PERPLEXITY_API_KEY || null;
-    } else if (serviceName === 'social_searcher') {
-      return process.env.SOCIAL_SEARCHER_API_KEY || null;
-    } else if (serviceName === 'apify') {
-      return process.env.APIFY_API_KEY || null;
-    } else if (serviceName === 'deepseek') {
-      return process.env.DEEPSEEK_API_KEY || null;
-    } else if (serviceName === 'fal_ai') {
-      const falKey = process.env.FAL_AI_API_KEY || null;
-      console.log(`[${serviceName}] Запрошен ключ из переменных окружения:`, falKey ? 'Найден' : 'Не найден');
-      
-      // Возвращаем ключ БЕЗ модификации - префикс "Key " будет добавлен в сервисе falai.ts при запросе к API
-      if (falKey && falKey.startsWith('Key ')) {
-        console.log(`[${serviceName}] ВНИМАНИЕ: Ключ из переменных окружения содержит префикс "Key ", что может привести к проблемам`);
-      }
-      return falKey;
-    } else if (serviceName === 'xmlriver') {
-      // XMLRiver требует особый формат с user и key
-      const userId = process.env.XMLRIVER_USER_ID || "16797"; // ID пользователя по умолчанию
-      const apiKey = process.env.XMLRIVER_API_KEY || null;
-      
-      if (!apiKey) return null;
-      
-      return JSON.stringify({
-        user: userId,
-        key: apiKey
-      });
-    }
+    // ВАЖНО: API ключи должны храниться ТОЛЬКО в базе данных Directus
+    // Этот метод теперь всегда возвращает null, чтобы исключить использование переменных окружения
     
+    console.warn(`[${serviceName}] ⚠️ ВНИМАНИЕ: Запрошен ключ из переменных окружения!`);
+    console.warn(`[${serviceName}] ⚠️ API ключи хранятся ТОЛЬКО в базе данных Directus!`);
+    console.warn(`[${serviceName}] ⚠️ Пользователь должен добавить ключ через интерфейс настроек.`);
+    
+    // Всегда возвращаем null, чтобы приложение не использовало ключи из .env
     return null;
   }
   

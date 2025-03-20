@@ -9131,13 +9131,7 @@ ${datesText}
   // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
   app.get("/api/test-fal-ai", async (req, res) => {
     try {
-      // Получаем правильный API ключ из базы данных
-      const correctKey = "685ac509-3d57-4a53-89c8-563b2d91fda5-43b38d07f75392189799f4ffb725801b";
-      
-      // Получаем API ключ из переменных окружения для сравнения
-      const envKey = process.env.FAL_AI_API_KEY || '';
-      console.log(`[DEBUG TEST-FAL] Ключ в env: ${envKey ? 'определен' : 'не определен'}`);
-      
+      // Получаем правильный API ключ из реальной БД Directus
       // Получаем userId из токена авторизации, если пользователь авторизован
       const authHeader = req.headers['authorization'];
       let userId = null;
@@ -9156,9 +9150,22 @@ ${datesText}
         }
       }
       
-      // Используем корректный ключ из базы данных для тестирования
-      let apiKey = correctKey;
-      let keySource = 'hardcoded_from_database';
+      // Получаем реальный ключ пользователя из базы данных
+      let apiKey = null;
+      let keySource = 'database';
+      
+      if (userId) {
+        try {
+          apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+          if (apiKey) {
+            console.log(`Получен ключ FAL.AI из базы данных для пользователя: ${userId.substring(0, 8)}...`);
+          } else {
+            console.log(`Не найден ключ FAL.AI в базе данных для пользователя: ${userId.substring(0, 8)}...`);
+          }
+        } catch (error) {
+          console.error("Ошибка при получении ключа из базы данных:", error);
+        }
+      }
       
       // Если пользователь авторизован, добавляем информацию
       if (userId) {
@@ -9277,18 +9284,45 @@ ${datesText}
   // Эндпоинт для вывода текущего API ключа и заголовка Authorization
   app.get("/api/debug-fal-ai-header", async (req, res) => {
     try {
-      // Получаем API ключ из переменных окружения
-      const envKey = process.env.FAL_AI_API_KEY || '';
+      // Получаем API ключ из базы данных
       
-      if (!envKey) {
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+          console.log(`Получен пользователь: ${userId}`);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      if (!userId) {
         return res.status(400).json({
           success: false,
-          message: "API ключ FAL.AI не настроен в переменных окружения"
+          message: "Необходимо авторизоваться для использования этого эндпоинта"
+        });
+      }
+      
+      // Получаем ключ из базы данных через сервис API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          message: "API ключ FAL.AI не настроен в Directus"
         });
       }
       
       // Нормализуем ключ - убираем префикс Key, если он есть
-      let baseKey = envKey;
+      let baseKey = apiKey;
       if (baseKey.startsWith('Key ')) {
         baseKey = baseKey.substring(4);
       }
@@ -9298,33 +9332,38 @@ ${datesText}
         withKeyPrefix: `Key ${baseKey}`,
         withoutPrefix: baseKey,
         withBearerPrefix: `Bearer ${baseKey}`,
-        original: envKey
+        original: apiKey
       };
       
       // Выводим полные заголовки для отладки
       // ВАЖНО: в реальном проекте не выводите полные API ключи в ответе API!
       // Делаем это только для отладки в контролируемой среде
       console.log('Тестовые заголовки для FAL.AI API:');
-      console.log('1. Оригинальный ключ:', envKey);
-      console.log('2. С префиксом Key:', `Key ${baseKey}`);
-      console.log('3. Без префикса:', baseKey);
+      console.log('1. Оригинальный ключ из БД:', (apiKey || '').substring(0, 8) + '...');
+      console.log('2. С префиксом Key:', `Key ${baseKey.substring(0, 8)}...`);
+      console.log('3. Без префикса:', baseKey.substring(0, 8) + '...');
       
       // Создаем объект с анализом формата ключа
       const keyAnalysis = {
         originalFormat: {
-          raw: envKey,
-          length: envKey.length,
-          hasPrefix: envKey.startsWith('Key '),
-          hasColon: envKey.includes(':'),
-          containsWhitespace: /\s/.test(envKey)
+          // Маскируем ключ для безопасности
+          rawMasked: apiKey ? apiKey.substring(0, 8) + '...' : 'null',
+          length: apiKey?.length || 0,
+          hasPrefix: apiKey?.startsWith('Key ') || false,
+          hasColon: apiKey?.includes(':') || false,
+          containsWhitespace: apiKey ? /\s/.test(apiKey) : false
         },
         normalizedFormat: {
-          raw: baseKey,
+          rawMasked: baseKey.substring(0, 8) + '...',
           length: baseKey.length,
           hasColon: baseKey.includes(':'),
           containsWhitespace: /\s/.test(baseKey)
         },
-        allHeaders: headers
+        headerFormats: {
+          withKeyPrefix: 'Key ' + baseKey.substring(0, 8) + '...',
+          withoutPrefix: baseKey.substring(0, 8) + '...',
+          withBearerPrefix: 'Bearer ' + baseKey.substring(0, 8) + '...'
+        }
       };
       
       return res.json({
@@ -9347,19 +9386,44 @@ ${datesText}
     try {
       const { format } = req.query;
       
-      // Получаем API ключ из переменных окружения
-      const envKey = process.env.FAL_AI_API_KEY || '';
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
       
-      if (!envKey) {
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse?.data?.data?.id;
+          console.log(`Получен пользователь: ${userId}`);
+        } catch (error) {
+          console.error("Ошибка при получении информации о пользователе:", error);
+        }
+      }
+      
+      if (!userId) {
         return res.status(400).json({
           success: false,
-          error: "API ключ FAL.AI не настроен в переменных окружения",
-          details: "Добавьте ключ FAL.AI в переменные окружения"
+          message: "Необходимо авторизоваться для использования этого эндпоинта"
+        });
+      }
+      
+      // Получаем ключ из базы данных через сервис API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          message: "API ключ FAL.AI не настроен в Directus",
+          details: "Добавьте ключ через интерфейс настроек"
         });
       }
       
       // Нормализуем ключ - убираем префикс Key, если он есть
-      let baseKey = envKey;
+      let baseKey = apiKey;
       if (baseKey.startsWith('Key ')) {
         baseKey = baseKey.substring(4);
       }
@@ -9390,9 +9454,9 @@ ${datesText}
         formattedKey = `Bearer ${baseKey}`;
         formatDescription = 'With Bearer prefix';
       } else {
-        // Оригинальный формат (как в .env или пользовательских настройках)
-        formattedKey = envKey;
-        formatDescription = 'Original format';
+        // Оригинальный формат (как в БД)
+        formattedKey = apiKey;
+        formatDescription = 'Original format from database';
       }
       
       // Логируем итоговый формат (для отладки, скрывая приватную часть)
