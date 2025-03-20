@@ -476,34 +476,25 @@ ${originalContent}
    */
   async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
-      // Используем централизованный сервис API ключей
+      console.log('Попытка инициализации DeepSeek сервиса для пользователя', userId);
+      
+      // Используем только централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
       if (apiKey) {
+        console.log(`DeepSeek API ключ получен из БД (длина: ${apiKey.length})`);
         this.updateApiKey(apiKey);
         log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
         console.log('DeepSeek API ключ успешно получен через API Key Service');
         return true;
       } else {
-        // Проверяем, не установлен ли уже ключ в сервисе
-        if (this.hasApiKey()) {
-          console.log('Используем существующий DeepSeek API ключ');
-          return true;
-        }
-        
-        log('DeepSeek API ключ не найден', 'deepseek');
-        console.log('DeepSeek API ключ не найден');
+        console.log('API ключ DeepSeek не найден в БД для пользователя', userId);
+        log('DeepSeek API ключ не найден в настройках пользователя', 'deepseek');
         return false;
       }
     } catch (error) {
       console.error('Ошибка при инициализации DeepSeek сервиса:', error);
-      
-      // Если у нас все равно есть валидный ключ - можно использовать
-      if (this.hasApiKey()) {
-        console.log('Несмотря на ошибку, используем существующий DeepSeek API ключ');
-        return true;
-      }
-      
+      log(`Ошибка при инициализации DeepSeek сервиса: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, 'deepseek');
       return false;
     }
   }
