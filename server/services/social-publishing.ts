@@ -128,7 +128,7 @@ export class SocialPublishingService {
 
     try {
       const { token, groupId } = vkSettings;
-      let attachments = '';
+      log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
       // Подготовка сообщения
       let message = content.title ? `${content.title}\n\n` : '';
@@ -139,20 +139,35 @@ export class SocialPublishingService {
         message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
 
-      // Здесь должна быть логика загрузки изображений/видео на сервера ВК
-      // В этой реализации мы просто указываем, что требуется дополнительная работа
+      log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
 
-      const params = new URLSearchParams({
+      // Создаем прямые параметры запроса для VK API
+      const requestData = {
+        owner_id: `-${groupId}`, // Отрицательный ID для групп/сообществ
+        from_group: 1, // Публикация от имени группы
+        message: message,
         access_token: token,
-        owner_id: `-${groupId}`, // минус для сообществ
-        message,
-        attachments,
         v: '5.131' // версия API
+      };
+
+      // Прямой запрос к VK API с параметрами в URL
+      const apiUrl = 'https://api.vk.com/method/wall.post';
+      log(`Отправка запроса к VK API: ${apiUrl}`, 'social-publishing');
+
+      // Отправка запроса
+      const response = await axios({
+        method: 'post',
+        url: apiUrl,
+        params: requestData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
 
-      const response = await axios.post('https://api.vk.com/method/wall.post', params);
+      log(`Получен ответ от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
 
       if (response.data.response && response.data.response.post_id) {
+        log(`Успешная публикация в VK. Post ID: ${response.data.response.post_id}`, 'social-publishing');
         return {
           platform: 'vk',
           status: 'published',
@@ -160,16 +175,28 @@ export class SocialPublishingService {
           postId: response.data.response.post_id.toString(),
           postUrl: `https://vk.com/wall-${groupId}_${response.data.response.post_id}`
         };
-      } else {
+      } else if (response.data.error) {
+        log(`Ошибка VK API: ${JSON.stringify(response.data.error)}`, 'social-publishing');
         return {
           platform: 'vk',
           status: 'failed',
           publishedAt: null,
-          error: `VK API вернул ошибку: ${JSON.stringify(response.data.error)}`
+          error: `VK API вернул ошибку: Код ${response.data.error.error_code} - ${response.data.error.error_msg}`
+        };
+      } else {
+        log(`Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return {
+          platform: 'vk',
+          status: 'failed',
+          publishedAt: null,
+          error: `Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`
         };
       }
     } catch (error: any) {
       log(`Ошибка при публикации в VK: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
         platform: 'vk',
         status: 'failed',
