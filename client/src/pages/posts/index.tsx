@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { PenLine, Send, Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -16,6 +17,7 @@ import { SocialPlatform, PlatformPublishInfo, CampaignContent } from "@/types";
 export default function Posts() {
   const { selectedCampaign } = useCampaignStore();
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
+  const [_, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [platformCounts, setPlatformCounts] = useState<Record<SocialPlatform, number>>({
     instagram: 0,
@@ -170,14 +172,23 @@ export default function Posts() {
                   </div>
                 </div>
                 
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
                   <Button 
-                    onClick={() => {}} 
+                    onClick={() => setLocation('/content')} 
                     className="w-full"
                     variant="default"
                   >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Создать пост
+                    <PenLine className="mr-2 h-4 w-4" />
+                    Управление контентом
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setLocation('/publish/test')} 
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Быстрая публикация
                   </Button>
                 </div>
               </div>
