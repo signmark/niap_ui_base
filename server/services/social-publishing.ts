@@ -142,8 +142,15 @@ export class SocialPublishingService {
       log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
 
       // Создаем прямые параметры запроса для VK API
+      // Обработка ID группы - удаляем префикс "club" если он есть
+      let cleanGroupId = groupId;
+      if (cleanGroupId.startsWith('club')) {
+        cleanGroupId = cleanGroupId.replace('club', '');
+        log(`Очищен ID группы от префикса 'club': ${cleanGroupId}`, 'social-publishing');
+      }
+      
       const requestData = {
-        owner_id: `-${groupId}`, // Отрицательный ID для групп/сообществ
+        owner_id: `-${cleanGroupId}`, // Отрицательный ID для групп/сообществ
         from_group: 1, // Публикация от имени группы
         message: message,
         access_token: token,
@@ -168,12 +175,13 @@ export class SocialPublishingService {
 
       if (response.data.response && response.data.response.post_id) {
         log(`Успешная публикация в VK. Post ID: ${response.data.response.post_id}`, 'social-publishing');
+        // Используем тот же очищенный ID группы для формирования URL поста
         return {
           platform: 'vk',
           status: 'published',
           publishedAt: new Date(),
           postId: response.data.response.post_id.toString(),
-          postUrl: `https://vk.com/wall-${groupId}_${response.data.response.post_id}`
+          postUrl: `https://vk.com/wall-${cleanGroupId}_${response.data.response.post_id}`
         };
       } else if (response.data.error) {
         log(`Ошибка VK API: ${JSON.stringify(response.data.error)}`, 'social-publishing');
