@@ -33,9 +33,12 @@ export class SocialPublishingService {
       const { token, chatId } = telegramSettings;
       log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
-      // Подготовка сообщения
+      // Подготовка сообщения - удаляем HTML-теги для Telegram
       let text = content.title ? `*${content.title}*\n\n` : '';
-      text += content.content;
+      
+      // Удаляем HTML-теги из текста контента, так как Telegram поддерживает только свой формат HTML
+      const contentText = content.content.replace(/<\/?[^>]+(>|$)/g, '');
+      text += contentText;
 
       // Добавление хэштегов
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
@@ -199,18 +202,34 @@ export class SocialPublishingService {
         responseType: 'arraybuffer'
       });
 
-      // Создаем FormData для отправки файла
-      const FormData = require('form-data');
+      // Используем FormData из глобального контекста вместо require
+      // В Node.js FormData доступен через глобальный объект или отдельный пакет
+      const FormData = globalThis.FormData || require('form-data');
       const formData = new FormData();
-      formData.append('photo', Buffer.from(imageResponse.data), 'image.jpg');
+      
+      // Проверяем, возможно мы в браузерном окружении
+      if (typeof window !== 'undefined') {
+        // Браузерное окружение
+        const blob = new Blob([imageResponse.data], { type: 'image/jpeg' });
+        formData.append('photo', blob, 'image.jpg');
+      } else {
+        // Node.js окружение
+        formData.append('photo', Buffer.from(imageResponse.data), 'image.jpg');
+      }
       
       // Загружаем на сервер VK
       log(`Загрузка фото на сервер VK по URL: ${uploadUrl}`, 'social-publishing');
+      
+      // Определяем заголовки в зависимости от окружения
+      const headers = typeof formData.getHeaders === 'function' 
+        ? formData.getHeaders() 
+        : { 'Content-Type': 'multipart/form-data' };
+      
       const uploadResponse = await axios({
         method: 'post',
         url: uploadUrl,
         data: formData,
-        headers: formData.getHeaders()
+        headers
       });
 
       log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
@@ -286,9 +305,12 @@ export class SocialPublishingService {
       const { token, groupId } = vkSettings;
       log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
-      // Подготовка сообщения
+      // Подготовка сообщения - удаляем HTML-теги для VK
       let message = content.title ? `${content.title}\n\n` : '';
-      message += content.content;
+      
+      // Удаляем HTML-теги из текста контента
+      const contentText = content.content.replace(/<\/?[^>]+(>|$)/g, '');
+      message += contentText;
 
       // Добавление хэштегов
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
@@ -355,21 +377,23 @@ export class SocialPublishingService {
       log(`Отправка запроса к VK API: ${apiUrl}`, 'social-publishing');
       log(`Параметры запроса: ${JSON.stringify(requestData)}`, 'social-publishing');
 
-      // Преобразуем объект в форму для отправки
-      const FormData = require('form-data');
-      const form = new FormData();
+      // Вместо формы данных отправляем обычный запрос с URL-кодированными данными
+      // Новый подход без FormData, который вызывал ошибку require
+      const urlEncodedData = new URLSearchParams();
       
-      // Добавляем все поля в форму
+      // Добавляем все поля в запрос
       Object.keys(requestData).forEach(key => {
-        form.append(key, requestData[key]);
+        urlEncodedData.append(key, requestData[key]);
       });
       
-      // Отправка запроса как form data вместо params в URL
+      // Отправка запроса как обычная форма
       const response = await axios({
         method: 'post',
         url: apiUrl,
-        data: form,
-        headers: form.getHeaders()
+        data: urlEncodedData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
 
       log(`Получен ответ от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
