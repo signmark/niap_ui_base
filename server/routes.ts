@@ -2790,7 +2790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 // Маршрут для генерации контента через DeepSeek API
-  app.post("/api/content/generate-deepseek", authenticateUser, async (req, res) => {
+  app.post("/api/content/generate-deepseek", authenticateUser, async (req: any, res) => {
     try {
       const { prompt, keywords, tone, platform, campaignId } = req.body;
       
@@ -2799,10 +2799,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Получаем userId, установленный в authenticateUser middleware
-      const userId = (req as any).userId;
+      const userId = req.user?.id;
       // Получаем токен из заголовка авторизации
       const authHeader = req.headers['authorization'] as string;
-      const token = authHeader.replace('Bearer ', '');
+      const token = authHeader?.replace('Bearer ', '') || '';
       
       console.log(`Инициализация DeepSeek сервиса для пользователя: ${userId}`);
       
@@ -2817,6 +2817,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const initialized = await deepseekService.initialize(userId, token);
         if (!initialized) {
           console.log('Предупреждение: DeepSeek API сервис не был полностью инициализирован');
+          
+          // Проверяем, получили ли мы ключ из переменных окружения
+          if (!deepseekService.hasApiKey()) {
+            console.error('Ошибка: Не удалось получить API ключ DeepSeek');
+            return res.status(400).json({ 
+              error: 'Не удалось получить API ключ DeepSeek. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+            });
+          }
         }
 
         // Конвертируем тон в формат, понятный DeepSeek
