@@ -202,34 +202,33 @@ export class SocialPublishingService {
         responseType: 'arraybuffer'
       });
 
-      // Используем FormData из глобального контекста вместо require
-      // В Node.js FormData доступен через глобальный объект или отдельный пакет
-      const FormData = globalThis.FormData || require('form-data');
+      // Более простой подход - используем fs для создания временного файла
+      const fs = require('fs');
+      const path = require('path');
+      const os = require('os');
+      
+      // Создаем временный файл
+      const tempDir = os.tmpdir();
+      const tempFilePath = path.join(tempDir, 'vk_upload_image.jpg');
+      
+      // Записываем данные изображения во временный файл
+      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+      
+      // Создаем form-data для загрузки файла
+      const FormData = require('form-data');
       const formData = new FormData();
       
-      // Проверяем, возможно мы в браузерном окружении
-      if (typeof window !== 'undefined') {
-        // Браузерное окружение
-        const blob = new Blob([imageResponse.data], { type: 'image/jpeg' });
-        formData.append('photo', blob, 'image.jpg');
-      } else {
-        // Node.js окружение
-        formData.append('photo', Buffer.from(imageResponse.data), 'image.jpg');
-      }
+      // Добавляем файл в форму
+      formData.append('photo', fs.createReadStream(tempFilePath));
       
       // Загружаем на сервер VK
       log(`Загрузка фото на сервер VK по URL: ${uploadUrl}`, 'social-publishing');
-      
-      // Определяем заголовки в зависимости от окружения
-      const headers = typeof formData.getHeaders === 'function' 
-        ? formData.getHeaders() 
-        : { 'Content-Type': 'multipart/form-data' };
       
       const uploadResponse = await axios({
         method: 'post',
         url: uploadUrl,
         data: formData,
-        headers
+        headers: formData.getHeaders()
       });
 
       log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
