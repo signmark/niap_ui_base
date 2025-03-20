@@ -15,6 +15,17 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   'xmlriver': 'xmlriver'
 };
 
+// Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
+// Этот маппинг соответствует порядку полей в интерфейсе "Настройки API ключей"
+const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
+  0: 'perplexity',       // Первое поле в UI - API Ключ Perplexity
+  1: 'social_searcher',  // Второе поле в UI - API Ключ Social Searcher
+  2: 'apify',            // Третье поле в UI - API Ключ Apify
+  3: 'deepseek',         // Четвертое поле в UI - API Ключ DeepSeek
+  4: 'fal_ai',           // Пятое поле в UI - API Ключ FAL.AI
+  5: 'xmlriver'          // Шестое поле в UI - API Ключ XMLRiver
+};
+
 // Интерфейс для хранения API ключей и метаданных
 interface ApiKeyCache {
   [userId: string]: {
