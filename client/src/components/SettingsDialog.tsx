@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { Loader2, HelpCircle } from "lucide-react";
+import { Loader2, HelpCircle, CheckCircle2, XCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api";
 
 interface ApiKey {
   id: string;
@@ -23,15 +25,29 @@ interface XMLRiverCredentials {
   key: string;
 }
 
+// Типы состояния тестирования ключа API
+type TestingStatus = 'idle' | 'testing' | 'success' | 'error';
+
+interface TestingState {
+  status: TestingStatus;
+  message?: string;
+}
+
 export function SettingsDialog() {
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
-  const [socialSearcherKey, setSocialSearcherKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
+  
+  // Состояния тестирования ключей
+  const [perplexityTesting, setPerplexityTesting] = useState<TestingState>({ status: 'idle' });
+  const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
+  const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
+  const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
+  const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
@@ -59,11 +75,98 @@ export function SettingsDialog() {
     enabled: !!userId
   });
 
+  // Функции тестирования API ключей
+  const testFalAiKey = async () => {
+    if (!falAiKey.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Необходимо указать API ключ FAL.AI"
+      });
+      return;
+    }
+
+    setFalAiTesting({ status: 'testing' });
+    
+    try {
+      // Сначала сохраняем ключ
+      await saveSettings();
+      
+      // Затем тестируем ключ через API
+      const response = await api.get('/test-fal-ai-formats?format=with-prefix');
+      
+      if (response.data.success) {
+        setFalAiTesting({ 
+          status: 'success', 
+          message: 'API ключ FAL.AI работает' 
+        });
+        toast({
+          title: "Успешно",
+          description: "API ключ FAL.AI работает корректно"
+        });
+      } else {
+        setFalAiTesting({ 
+          status: 'error', 
+          message: response.data.error || 'Ошибка при проверке API ключа'
+        });
+        toast({
+          variant: "destructive",
+          title: "Ошибка API ключа",
+          description: response.data.error || 'API ключ FAL.AI не работает'
+        });
+      }
+    } catch (error: any) {
+      setFalAiTesting({ 
+        status: 'error', 
+        message: error.message || 'Ошибка при проверке API ключа'
+      });
+      toast({
+        variant: "destructive",
+        title: "Ошибка проверки",
+        description: error.message || 'Не удалось проверить API ключ FAL.AI'
+      });
+    }
+  };
+
+  const testDeepseekKey = async () => {
+    if (!deepseekKey.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Необходимо указать API ключ DeepSeek"
+      });
+      return;
+    }
+
+    setDeepseekTesting({ status: 'testing' });
+    
+    try {
+      // Сначала сохраняем ключ
+      await saveSettings();
+      
+      // Тут нужен соответствующий эндпоинт на сервере
+      toast({
+        title: "Проверка API ключа",
+        description: "Ключ DeepSeek сохранен. Проверьте ключ через генерацию контента."
+      });
+      setDeepseekTesting({ status: 'success', message: 'API ключ сохранен' });
+    } catch (error: any) {
+      setDeepseekTesting({ 
+        status: 'error', 
+        message: error.message || 'Ошибка при сохранении API ключа'
+      });
+      toast({
+        variant: "destructive",
+        title: "Ошибка сохранения",
+        description: error.message || 'Не удалось сохранить API ключ DeepSeek'
+      });
+    }
+  };
+  
   useEffect(() => {
     if (apiKeys) {
       const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
       const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
-      const socialSearcherKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'social_searcher');
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
@@ -73,9 +176,6 @@ export function SettingsDialog() {
       }
       if (apifyKeyData) {
         setApifyKey(apifyKeyData.api_key);
-      }
-      if (socialSearcherKeyData) {
-        setSocialSearcherKey(socialSearcherKeyData.api_key);
       }
       if (deepseekKeyData) {
         setDeepseekKey(deepseekKeyData.api_key);
@@ -123,7 +223,6 @@ export function SettingsDialog() {
       const services = [
         { name: 'perplexity', key: perplexityKey },
         { name: 'apify', key: apifyKey },
-        { name: 'social_searcher', key: socialSearcherKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
         { name: 'xmlriver', key: xmlRiverCombinedKey }
@@ -195,18 +294,7 @@ export function SettingsDialog() {
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label>API Ключ Social Searcher</Label>
-          <Input
-            type="password"
-            value={socialSearcherKey}
-            onChange={(e) => setSocialSearcherKey(e.target.value)}
-            placeholder="Введите API ключ"
-          />
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для поиска источников и анализа социальных сетей через Social Searcher
-          </p>
-        </div>
+
 
         <div className="space-y-2">
           <Label>API Ключ Apify</Label>
