@@ -131,13 +131,30 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map(k => typeof k === 'string' ? k : String(k));
+          processedKeywords = content.keywords.map(k => {
+            // Проверяем, является ли k объектом с полем keyword
+            if (k && typeof k === 'object' && 'keyword' in k) {
+              return k.keyword;
+            }
+            // Если это простой объект без специфической структуры
+            if (k && typeof k === 'object') {
+              console.log('Обнаружен объект ключевого слова без поля keyword:', k);
+              return JSON.stringify(k);
+            }
+            // Если это строка - используем как есть
+            return typeof k === 'string' ? k : String(k);
+          });
         } else if (typeof content.keywords === 'string') {
           try {
             // Пытаемся разобрать JSON строку
             const parsed = JSON.parse(content.keywords);
             if (Array.isArray(parsed)) {
-              processedKeywords = parsed.map(k => typeof k === 'string' ? k : String(k));
+              processedKeywords = parsed.map(k => {
+                if (k && typeof k === 'object' && 'keyword' in k) {
+                  return k.keyword;
+                }
+                return typeof k === 'string' ? k : String(k);
+              });
             } else {
               processedKeywords = [content.keywords];
             }
@@ -147,7 +164,20 @@ export default function ContentPage() {
           }
         } else if (content.keywords !== null) {
           // Для всех других случаев
-          processedKeywords = [String(content.keywords)];
+          console.log('Нестандартный формат ключевых слов:', content.keywords);
+          if (typeof content.keywords === 'object') {
+            // Пытаемся извлечь информацию из объекта
+            const extractedKeywords = Object.values(content.keywords)
+              .filter(v => typeof v === 'string')
+              .map(v => String(v));
+            if (extractedKeywords.length > 0) {
+              processedKeywords = extractedKeywords;
+            } else {
+              processedKeywords = [JSON.stringify(content.keywords)];
+            }
+          } else {
+            processedKeywords = [String(content.keywords)];
+          }
         }
       }
       
