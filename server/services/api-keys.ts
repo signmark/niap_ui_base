@@ -113,14 +113,40 @@ export class ApiKeyService {
       let items = allUserKeys.filter((key: any) => 
         key.service_name && key.service_name.toLowerCase() === dbServiceName.toLowerCase());
       
-      // Если не нашли ключ по service_name, но у нас есть ключ API в записи,
-      // берем первый доступный ключ с непустым api_key (игнорируя service_name)
-      if (items.length === 0) {
-        console.log(`[${serviceName}] Не найдены ключи с service_name='${dbServiceName}', ищем любой ключ с api_key`);
-        items = allUserKeys.filter((key: any) => !!key.api_key);
+      console.log(`[${serviceName}] Первичный поиск по service_name='${dbServiceName}' - найдено ${items.length} ключей`);
+      
+      // Если не нашли ключ по service_name, но у нас есть ключи API,
+      // пробуем использовать сопоставление по позиции в UI
+      if (items.length === 0 && allUserKeys.length > 0) {
+        console.log(`[${serviceName}] Не найдены ключи с service_name='${dbServiceName}', ищем по позиции в списке`);
         
-        if (items.length > 0) {
-          console.log(`[${serviceName}] Найден ключ с api_key без точного совпадения service_name (используем первый доступный)`);
+        // Найдем соответствующий индекс для текущего сервиса
+        const serviceIndex = Object.entries(SERVICE_INDEX_MAPPING).find(
+          ([_, mappedService]) => mappedService === serviceName
+        );
+        
+        if (serviceIndex) {
+          const index = parseInt(serviceIndex[0], 10);
+          console.log(`[${serviceName}] Сервис соответствует индексу ${index} в UI`);
+          
+          // Если у нас достаточно ключей в списке, берем тот, который соответствует позиции
+          if (allUserKeys.length > index) {
+            const keyByPosition = allUserKeys[index];
+            if (keyByPosition && keyByPosition.api_key) {
+              console.log(`[${serviceName}] Найден ключ по позиции ${index} с api_key`);
+              items = [keyByPosition];
+            }
+          }
+        }
+        
+        // Если не нашли по позиции, берем первый доступный ключ с api_key (запасной вариант)
+        if (items.length === 0) {
+          console.log(`[${serviceName}] Не найден ключ по позиции, ищем первый доступный ключ с api_key`);
+          items = allUserKeys.filter((key: any) => !!key.api_key);
+          
+          if (items.length > 0) {
+            console.log(`[${serviceName}] Найден ключ с api_key без точного совпадения service_name (используем первый доступный)`);
+          }
         }
       }
       
@@ -444,7 +470,13 @@ export class ApiKeyService {
     } else if (serviceName === 'deepseek') {
       return process.env.DEEPSEEK_API_KEY || null;
     } else if (serviceName === 'fal_ai') {
-      return process.env.FAL_AI_API_KEY || null;
+      const falKey = process.env.FAL_AI_API_KEY || null;
+      console.log(`[${serviceName}] Запрошен ключ из переменных окружения:`, falKey ? 'Найден' : 'Не найден');
+      if (falKey && !falKey.startsWith('Key ') && falKey.includes(':')) {
+        console.log(`[${serviceName}] Форматируем ключ из переменных окружения, добавляя префикс Key`);
+        return `Key ${falKey}`;
+      }
+      return falKey;
     } else if (serviceName === 'xmlriver') {
       // XMLRiver требует особый формат с user и key
       const userId = process.env.XMLRIVER_USER_ID || "16797"; // ID пользователя по умолчанию
@@ -470,6 +502,75 @@ export class ApiKeyService {
     if (this.keyCache[userId]?.[serviceName]) {
       delete this.keyCache[userId][serviceName];
       log(`Invalidated cached ${serviceName} API key for user ${userId}`, 'api-keys');
+    }
+  }
+  
+  /**
+   * Исправляет/обновляет формат ключа FAL.AI для пользователя
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации (опционально)
+   * @returns true, если ключ был успешно обновлен
+   */
+  async fixFalAiKeyFormat(userId: string, authToken?: string): Promise<boolean> {
+    try {
+      // Получаем текущий ключ FAL.AI для пользователя
+      console.log(`[fal_ai] Получаем ключ для проверки формата`);
+      const keys = await directusCrud.list('user_api_keys', {
+        userId: userId,
+        authToken: authToken,
+        filter: {
+          user_id: { _eq: userId }
+        },
+        fields: ['id', 'service_name', 'api_key']
+      });
+      
+      // Ищем ключ FAL.AI, либо по service_name, либо по порядку
+      let falKeyItem = keys.find((key: any) => 
+        key.service_name && key.service_name.toLowerCase() === 'fal_ai');
+      
+      // Если нет ключа с service_name, но у нас есть массив с ключами, пробуем использовать индекс
+      if (!falKeyItem && keys.length > 4 && keys[4] && keys[4].api_key) {
+        falKeyItem = keys[4]; // FAL.AI - пятый ключ в интерфейсе (индекс 4)
+        console.log(`[fal_ai] Используем ключ по индексу 4 (FAL.AI - 5-й в UI)`);
+      }
+      
+      if (falKeyItem && falKeyItem.api_key) {
+        const apiKey = falKeyItem.api_key;
+        
+        // Проверяем формат ключа
+        if (apiKey.startsWith('Key ')) {
+          console.log(`[fal_ai] Ключ уже в правильном формате (с префиксом Key)`);
+          return true;
+        } else if (apiKey.includes(':')) {
+          console.log(`[fal_ai] Ключ без префикса "Key", добавляем и обновляем в БД`);
+          const formattedKey = `Key ${apiKey}`;
+          
+          // Обновляем ключ в БД
+          await directusCrud.update('user_api_keys', falKeyItem.id, {
+            api_key: formattedKey,
+            service_name: 'fal_ai', // Устанавливаем service_name, если его не было
+            updated_at: new Date().toISOString()
+          }, {
+            userId: userId,
+            authToken: authToken
+          });
+          
+          // Инвалидируем кэш
+          this.invalidateCache(userId, 'fal_ai');
+          
+          console.log(`[fal_ai] Ключ успешно обновлен в БД с правильным форматом`);
+          return true;
+        } else {
+          console.log(`[fal_ai] Ключ в неизвестном формате, не содержит ":"`, apiKey);
+          return false;
+        }
+      } else {
+        console.log(`[fal_ai] Ключ не найден в БД для пользователя ${userId}`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`[fal_ai] Ошибка при обновлении формата ключа:`, error);
+      return false;
     }
   }
 }
