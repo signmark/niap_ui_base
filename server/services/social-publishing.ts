@@ -113,6 +113,130 @@ export class SocialPublishingService {
    * @param vkSettings Настройки VK API
    * @returns Результат публикации
    */
+  /**
+   * Получает URL для загрузки фотографии в VK
+   * @param token Токен доступа VK
+   * @param groupId ID группы
+   * @returns URL для загрузки фото или null в случае ошибки
+   */
+  private async getVkPhotoUploadUrl(token: string, groupId: string): Promise<string | null> {
+    try {
+      const params = {
+        group_id: groupId, // ID группы без минуса
+        access_token: token,
+        v: '5.131'
+      };
+
+      // API метод для получения адреса сервера
+      const response = await axios({
+        method: 'get',
+        url: 'https://api.vk.com/method/photos.getWallUploadServer',
+        params
+      });
+
+      log(`Получен ответ для загрузки фото: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data.response && response.data.response.upload_url) {
+        log(`Получен URL для загрузки фото: ${response.data.response.upload_url}`, 'social-publishing');
+        return response.data.response.upload_url;
+      } else if (response.data.error) {
+        log(`Ошибка при получении URL для загрузки: ${JSON.stringify(response.data.error)}`, 'social-publishing');
+        return null;
+      }
+      
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении URL для загрузки фото в VK: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+
+  /**
+   * Загружает фото на сервер VK
+   * @param uploadUrl URL для загрузки
+   * @param imageUrl URL изображения
+   * @returns Данные о загруженном фото или null в случае ошибки
+   */
+  private async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
+    try {
+      // Скачиваем изображение
+      log(`Скачивание изображения с URL: ${imageUrl}`, 'social-publishing');
+      const imageResponse = await axios({
+        method: 'get',
+        url: imageUrl,
+        responseType: 'arraybuffer'
+      });
+
+      // Создаем FormData для отправки файла
+      const FormData = require('form-data');
+      const formData = new FormData();
+      formData.append('photo', Buffer.from(imageResponse.data), 'image.jpg');
+      
+      // Загружаем на сервер VK
+      log(`Загрузка фото на сервер VK по URL: ${uploadUrl}`, 'social-publishing');
+      const uploadResponse = await axios({
+        method: 'post',
+        url: uploadUrl,
+        data: formData,
+        headers: formData.getHeaders()
+      });
+
+      log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+      return uploadResponse.data;
+    } catch (error: any) {
+      log(`Ошибка при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке загрузки: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Сохраняет загруженное фото в альбоме группы VK
+   * @param token Токен доступа VK
+   * @param groupId ID группы
+   * @param server ID сервера
+   * @param photoData Данные фотографии
+   * @param hash Хеш фотографии
+   * @returns Данные о сохраненном фото или null в случае ошибки
+   */
+  private async savePhotoToVk(token: string, groupId: string, server: number, photoData: string, hash: string): Promise<any | null> {
+    try {
+      const params = {
+        group_id: groupId, // ID группы без минуса
+        server,
+        photo: photoData,
+        hash,
+        access_token: token,
+        v: '5.131'
+      };
+
+      // API метод для сохранения фото
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.vk.com/method/photos.saveWallPhoto',
+        params
+      });
+
+      log(`Ответ от VK API при сохранении фото: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data.response && response.data.response.length > 0) {
+        const photo = response.data.response[0];
+        log(`Фото успешно сохранено в VK, ID: ${photo.id}`, 'social-publishing');
+        return photo;
+      } else if (response.data.error) {
+        log(`Ошибка при сохранении фото: ${JSON.stringify(response.data.error)}`, 'social-publishing');
+        return null;
+      }
+      
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при сохранении фото в VK: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+
   async publishToVk(
     content: CampaignContent,
     vkSettings: SocialMediaSettings['vk']
@@ -141,7 +265,6 @@ export class SocialPublishingService {
 
       log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
 
-      // Создаем прямые параметры запроса для VK API
       // Обработка ID группы - удаляем префикс "club" если он есть
       let cleanGroupId = groupId;
       if (cleanGroupId.startsWith('club')) {
@@ -149,7 +272,8 @@ export class SocialPublishingService {
         log(`Очищен ID группы от префикса 'club': ${cleanGroupId}`, 'social-publishing');
       }
       
-      const requestData = {
+      // Параметры для запроса публикации
+      const requestData: any = {
         owner_id: `-${cleanGroupId}`, // Отрицательный ID для групп/сообществ
         from_group: 1, // Публикация от имени группы
         message: message,
@@ -157,9 +281,47 @@ export class SocialPublishingService {
         v: '5.131' // версия API
       };
 
+      // Обработка прикрепленного изображения, если оно есть
+      let attachments = '';
+      if (content.imageUrl) {
+        log(`Контент содержит изображение: ${content.imageUrl}`, 'social-publishing');
+        
+        // Получаем URL для загрузки фото
+        const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
+        if (uploadUrl) {
+          // Загружаем фото на сервер VK
+          const uploadedPhoto = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
+          
+          if (uploadedPhoto && uploadedPhoto.server && uploadedPhoto.photo && uploadedPhoto.hash) {
+            // Сохраняем фото в альбоме группы
+            const savedPhoto = await this.savePhotoToVk(
+              token, 
+              cleanGroupId, 
+              uploadedPhoto.server, 
+              uploadedPhoto.photo, 
+              uploadedPhoto.hash
+            );
+            
+            if (savedPhoto) {
+              // Формируем строку вложений для публикации
+              attachments = `photo${savedPhoto.owner_id}_${savedPhoto.id}`;
+              log(`Подготовлено вложение: ${attachments}`, 'social-publishing');
+              requestData.attachments = attachments;
+            } else {
+              log(`Не удалось сохранить фото. Публикуем без изображения.`, 'social-publishing');
+            }
+          } else {
+            log(`Не удалось загрузить фото. Публикуем без изображения.`, 'social-publishing');
+          }
+        } else {
+          log(`Не удалось получить URL для загрузки фото. Публикуем без изображения.`, 'social-publishing');
+        }
+      }
+
       // Прямой запрос к VK API с параметрами в URL
       const apiUrl = 'https://api.vk.com/method/wall.post';
       log(`Отправка запроса к VK API: ${apiUrl}`, 'social-publishing');
+      log(`Параметры запроса: ${JSON.stringify(requestData)}`, 'social-publishing');
 
       // Отправка запроса
       const response = await axios({
@@ -181,7 +343,8 @@ export class SocialPublishingService {
           status: 'published',
           publishedAt: new Date(),
           postId: response.data.response.post_id.toString(),
-          postUrl: `https://vk.com/wall-${cleanGroupId}_${response.data.response.post_id}`
+          postUrl: `https://vk.com/wall-${cleanGroupId}_${response.data.response.post_id}`,
+          userId: content.userId // Добавляем userId из контента
         };
       } else if (response.data.error) {
         log(`Ошибка VK API: ${JSON.stringify(response.data.error)}`, 'social-publishing');
@@ -189,7 +352,8 @@ export class SocialPublishingService {
           platform: 'vk',
           status: 'failed',
           publishedAt: null,
-          error: `VK API вернул ошибку: Код ${response.data.error.error_code} - ${response.data.error.error_msg}`
+          error: `VK API вернул ошибку: Код ${response.data.error.error_code} - ${response.data.error.error_msg}`,
+          userId: content.userId // Добавляем userId из контента
         };
       } else {
         log(`Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -197,7 +361,8 @@ export class SocialPublishingService {
           platform: 'vk',
           status: 'failed',
           publishedAt: null,
-          error: `Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`
+          error: `Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`,
+          userId: content.userId // Добавляем userId из контента
         };
       }
     } catch (error: any) {
@@ -209,7 +374,8 @@ export class SocialPublishingService {
         platform: 'vk',
         status: 'failed',
         publishedAt: null,
-        error: `Ошибка при публикации в VK: ${error.message}`
+        error: `Ошибка при публикации в VK: ${error.message}`,
+        userId: content.userId // Добавляем userId из контента
       };
     }
   }
