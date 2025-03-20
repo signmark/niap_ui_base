@@ -6753,66 +6753,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
-        // Отправляем данные в n8n webhook для публикации
-        const n8nApiKey = process.env.N8N_API_KEY;
-        
-        if (!n8nApiKey) {
-          console.warn('N8N_API_KEY not found in environment variables');
-          return res.status(500).json({ error: "API ключ n8n не настроен" });
+        // Получаем настройки социальных сетей пользователя
+        let userSettings;
+        try {
+          // Получаем настройки пользователя из Directus
+          const userResponse = await directusApi.get(`/users/${content.user_id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (userResponse.data?.data?.social_media_settings) {
+            userSettings = userResponse.data.data.social_media_settings;
+            log(`Получены настройки социальных сетей пользователя`, 'social-publish');
+          } else {
+            // Пытаемся получить настройки из кампании
+            const campaignResponse = await directusApi.get(`/items/user_campaigns/${content.campaign_id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+            
+            if (campaignResponse.data?.data?.social_media_settings) {
+              userSettings = campaignResponse.data.data.social_media_settings;
+              log(`Получены настройки социальных сетей из кампании`, 'social-publish');
+            } else {
+              log('Настройки социальных сетей не найдены ни у пользователя, ни у кампании', 'social-publish');
+            }
+          }
+        } catch (settingsError) {
+          console.error('Ошибка при получении настроек социальных сетей:', settingsError);
         }
         
-        try {
-          // Подготавливаем данные для n8n webhook
-          const webhookPayload = {
-            contentId,
-            campaignId: content.campaign_id,
-            userId: content.user_id,
-            platforms: platformsToPublish,
-            content: {
-              title: content.title,
-              originalContent: content.content,
-              imageUrl: content.image_url,
-              videoUrl: content.video_url,
-              socialPlatforms: updatedSocialPlatforms
-            },
-            scheduledAt: content.scheduled_at,
-            metadata: {
-              keywords: content.keywords,
-              type: content.content_type
-            }
-          };
-          
-          // Отправляем запрос на n8n webhook для публикации
-          const webhookResponse = await axios.post(
-            'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c',
-            webhookPayload,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'X-N8N-Authorization': n8nApiKey
-              },
-              timeout: 10000 // 10 секунд таймаут
-            }
-          );
-          
-          if (webhookResponse.status === 200) {
-            console.log(`Successfully sent content ${contentId} to n8n for publishing`);
-          } else {
-            console.warn(`Unexpected response from n8n webhook: ${webhookResponse.status}`);
-          }
-        } catch (webhookError) {
-          console.error('Error sending data to n8n webhook:', webhookError);
-          return res.status(500).json({ 
-            error: "Ошибка при отправке данных в n8n",
-            details: webhookError.message
+        // Проверяем, есть ли настройки
+        if (!userSettings) {
+          return res.status(400).json({ 
+            error: "Настройки социальных сетей не найдены", 
+            message: "Пожалуйста, настройте токены для социальных сетей в разделе 'Настройки'"
           });
         }
         
-        res.json({ 
-          success: true, 
-          message: "Началась публикация контента в социальные сети",
-          platforms: platformsToPublish
+        // Готовим данные контента для публикации в формате нашего приложения
+        const campaignContent = {
+          id: content.id,
+          title: content.title || '',
+          content: content.content || '',
+          imageUrl: content.image_url || null,
+          videoUrl: content.video_url || null,
+          contentType: content.content_type || 'text',
+          hashtags: content.hashtags || [],
+          keywords: content.keywords || [],
+          status: content.status || 'draft',
+          userId: content.user_id,
+          campaignId: content.campaign_id
+        };
+        
+        // Результаты публикации
+        const publishResults = [];
+        
+        // Публикуем контент напрямую через наш сервис публикации
+        for (const platform of platformsToPublish) {
+          try {
+            log(`Публикация контента в ${platform}`, 'social-publish');
+            
+            let result;
+            if (platform === 'telegram' && userSettings.telegram) {
+              // Публикация в Telegram
+              result = await socialPublishingService.publishToTelegram(campaignContent, userSettings.telegram);
+            } else if (platform === 'vk' && userSettings.vk) {
+              // Публикация в VK
+              result = await socialPublishingService.publishToVk(campaignContent, userSettings.vk);
+            } else if (platform === 'facebook' && userSettings.facebook) {
+              // Публикация в Facebook (не реализована)
+              result = await socialPublishingService.publishToFacebook(campaignContent, userSettings.facebook);
+            } else if (platform === 'instagram' && userSettings.instagram) {
+              // Публикация в Instagram (не реализована)
+              result = await socialPublishingService.publishToInstagram(campaignContent, userSettings.instagram);
+            } else {
+              result = {
+                platform: platform as any,
+                status: 'failed',
+                publishedAt: null,
+                error: `Настройки для платформы ${platform} не найдены`
+              };
+            }
+            
+            // Обновляем статус публикации
+            updatedSocialPlatforms[platform] = result;
+            publishResults.push(result);
+            
+            // Логируем результат
+            log(`Результат публикации в ${platform}: ${result.status}`, 'social-publish');
+          } catch (platformError) {
+            console.error(`Ошибка при публикации в ${platform}:`, platformError);
+            publishResults.push({
+              platform: platform as any,
+              status: 'failed',
+              publishedAt: null,
+              error: `Внутренняя ошибка при публикации: ${platformError.message}`
+            });
+          }
+        }
+        
+        // Обновляем статусы в базе данных
+        await directusApi.patch(`/items/campaign_content/${contentId}`, {
+          social_platforms: updatedSocialPlatforms,
+          // Если хотя бы одна платформа опубликована успешно, меняем статус на published
+          status: publishResults.some(r => r.status === 'published') ? 'published' : content.status
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
+        
+        // Проверяем, есть ли успешные публикации
+        const hasSuccessfulPublish = publishResults.some(r => r.status === 'published');
+        
+        // Формируем ответ
+        res.json({ 
+          success: hasSuccessfulPublish, 
+          message: hasSuccessfulPublish 
+            ? "Контент успешно опубликован в социальных сетях" 
+            : "Возникли ошибки при публикации в социальных сетях",
+          results: publishResults
+        });
+        
       } catch (error: any) {
         console.error('Error publishing to social media:', error);
         if (error.response) {
