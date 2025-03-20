@@ -3081,7 +3081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/generate-content", authenticateUser, async (req, res) => {
+  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     try {
       const { prompt, keywords, tone, campaignId } = req.body;
       
@@ -3089,11 +3089,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required parameters" });
       }
       
-      // Получаем userId, установленный в authenticateUser middleware
-      const userId = (req as any).userId;
+      // Получаем userId из объекта пользователя, добавленного authenticateUser middleware
+      const userId = req.user?.id;
       // Получаем токен из заголовка авторизации
       const authHeader = req.headers['authorization'] as string;
-      const token = authHeader.replace('Bearer ', '');
+      const token = authHeader?.replace('Bearer ', '') || '';
       
       console.log(`Инициализация Perplexity сервиса для пользователя: ${userId}`);
       
@@ -3106,11 +3106,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Инициализируем сервис, передавая ID пользователя и токен для получения ключа
+        console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
         const initialized = await perplexityService.initialize(userId, token);
+        
         if (!initialized) {
-          return res.status(400).json({ 
-            error: "Не найден API ключ для Perplexity. Добавьте его в настройках." 
-          });
+          console.log('Предупреждение: Perplexity API сервис не был полностью инициализирован');
+          
+          // Проверяем, получили ли мы ключ из переменных окружения
+          if (!perplexityService.hasApiKey()) {
+            console.error('Ошибка: Не удалось получить API ключ Perplexity');
+            return res.status(400).json({ 
+              error: 'Не удалось получить API ключ Perplexity. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+            });
+          }
         }
         
         console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);

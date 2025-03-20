@@ -37,7 +37,9 @@ export class PerplexityService {
    * @returns true, если API ключ установлен, иначе false
    */
   hasApiKey(): boolean {
-    return !!(this.apiKey && this.apiKey.trim() !== '');
+    const hasKey = !!(this.apiKey && this.apiKey.trim() !== '');
+    console.log(`Проверка API ключа Perplexity: ${hasKey ? 'ключ установлен' : 'ключ отсутствует'}`);
+    return hasKey;
   }
 
   /**

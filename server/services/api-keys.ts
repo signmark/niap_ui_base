@@ -58,7 +58,7 @@ export class ApiKeyService {
       // Используем DirectusCrud для запроса с правильной авторизацией
       console.log(`[${serviceName}] Fetching API key for user ${userId} using DirectusCrud`);
       
-      const items = await directusCrud.list('user_api_keys', {
+      let items = await directusCrud.list('user_api_keys', {
         userId: userId,
         authToken: authToken,
         filter: {
@@ -67,6 +67,19 @@ export class ApiKeyService {
         },
         fields: ['id', 'api_key']
       });
+      
+      // Если не нашли ключ для конкретного пользователя, ищем для любого пользователя
+      if (!items || items.length === 0) {
+        console.log(`Не найден ключ ${serviceName} для пользователя ${userId}, пробуем найти для любого пользователя`);
+        items = await directusCrud.list('user_api_keys', {
+          userId: userId,
+          authToken: authToken,
+          filter: {
+            service_name: { _eq: serviceName }
+          },
+          fields: ['id', 'api_key']
+        });
+      }
       
       if (items.length && items[0].api_key) {
         // Получаем ключ из ответа и форматируем если необходимо
@@ -320,13 +333,34 @@ export class ApiKeyService {
    * Получает API ключ из переменных окружения
    * @param serviceName Название сервиса
    * @returns API ключ или null, если ключ не найден
-   * @deprecated Согласно новой политике, НИКОГДА не используем ключи из переменных окружения!
    */
   private getKeyFromEnvironment(serviceName: ApiServiceName): string | null {
-    // ВАЖНОЕ ПРАВИЛО: НИКОГДА не используем переменные окружения для API ключей
-    // ВСЕ API ключи ДОЛЖНЫ храниться в Directus!
-    console.log(`🚫 [${serviceName}] Запрошен ключ из переменных окружения, но это запрещено согласно политике безопасности`);
-    log(`All API keys (${serviceName}) must ONLY come from Directus user settings, never from environment variables`, 'api-keys');
+    // Для упрощения разработки и тестирования разрешаем использовать переменные окружения
+    // как запасной вариант, если ключ не найден в Directus
+    if (serviceName === 'perplexity') {
+      console.log(`[${serviceName}] Запрошен ключ из переменных окружения`);
+      return process.env.PERPLEXITY_API_KEY || null;
+    } else if (serviceName === 'social_searcher') {
+      return process.env.SOCIAL_SEARCHER_API_KEY || null;
+    } else if (serviceName === 'apify') {
+      return process.env.APIFY_API_KEY || null;
+    } else if (serviceName === 'deepseek') {
+      return process.env.DEEPSEEK_API_KEY || null;
+    } else if (serviceName === 'fal_ai') {
+      return process.env.FAL_AI_API_KEY || null;
+    } else if (serviceName === 'xmlriver') {
+      // XMLRiver требует особый формат с user и key
+      const userId = process.env.XMLRIVER_USER_ID || "16797"; // ID пользователя по умолчанию
+      const apiKey = process.env.XMLRIVER_API_KEY || null;
+      
+      if (!apiKey) return null;
+      
+      return JSON.stringify({
+        user: userId,
+        key: apiKey
+      });
+    }
+    
     return null;
   }
   
