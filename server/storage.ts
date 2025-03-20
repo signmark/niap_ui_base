@@ -862,14 +862,16 @@ export class DatabaseStorage implements IStorage {
         userId: item.user_id,
         campaignId: item.campaign_id,
         status: item.status,
-        postType: item.post_type,
+        contentType: item.content_type || "text",
+        title: item.title || null,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
         prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
-        publishedPlatforms: item.published_platforms || []
+        publishedPlatforms: item.published_platforms || [],
+        keywords: item.keywords || [] // Добавляем ключевые слова
       };
     } catch (error: any) {
       console.error(`Ошибка при получении контента с ID ${id}:`, error);
@@ -909,7 +911,8 @@ export class DatabaseStorage implements IStorage {
         scheduled_at: content.scheduledAt?.toISOString() || null,
         social_platforms: content.socialPlatforms,
         title: content.title || "",
-        content_type: content.contentType || "text"
+        content_type: content.contentType || "text",
+        keywords: Array.isArray(content.keywords) ? content.keywords : [] // Добавляем ключевые слова при создании
       };
       
       const response = await directusApi.post('/items/campaign_content', directusContent, {
@@ -932,7 +935,8 @@ export class DatabaseStorage implements IStorage {
         prompt: item.prompt || "",  // Добавляем поле промта при возвращении результата
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms
+        socialPlatforms: item.social_platforms,
+        keywords: item.keywords || [] // Добавляем ключевые слова при возвращении результата
       };
     } catch (error) {
       console.error('Error creating campaign content in Directus:', error);
@@ -987,6 +991,12 @@ export class DatabaseStorage implements IStorage {
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
       
+      // Обработка ключевых слов (keywords)
+      if (updates.keywords !== undefined) {
+        console.log(`Обновляем ключевые слова контента ${id}:`, updates.keywords);
+        directusUpdates.keywords = Array.isArray(updates.keywords) ? updates.keywords : [];
+      }
+      
       // Выводим данные, которые будем отправлять
       console.log(`Отправляем обновление в Directus для контента ${id}:`, JSON.stringify(directusUpdates));
       
@@ -1006,7 +1016,8 @@ export class DatabaseStorage implements IStorage {
         prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms
+        socialPlatforms: item.social_platforms,
+        keywords: item.keywords || [] // Добавляем возврат ключевых слов
       };
     } catch (error) {
       console.error('Error updating campaign content in Directus:', error);
@@ -1105,7 +1116,8 @@ export class DatabaseStorage implements IStorage {
         videoUrl: item.video_url,
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms
+        socialPlatforms: item.social_platforms,
+        keywords: item.keywords || [] // Добавляем ключевые слова
       }));
       
       return content;
