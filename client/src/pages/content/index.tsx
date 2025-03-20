@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { 
-  Loader2, Plus, Pencil, Calendar, Send, Trash2, FileText, 
+  Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
   CalendarIcon, XCircle, Filter, Play, Ban
@@ -1013,6 +1013,26 @@ export default function ContentPage() {
                                           }}
                                         >
                                           <Share className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-7 w-7 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                                          title="Опубликовать сейчас"
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Предотвращаем открытие превью
+                                            
+                                            // Покажем модальное окно для подтверждения
+                                            if (confirm("Опубликовать контент сейчас в социальные сети?")) {
+                                              // Запускаем прямую публикацию контента
+                                              publishContentMutation.mutate({
+                                                id: content.id,
+                                                // Оставим выбор платформ по умолчанию (все доступные)
+                                              });
+                                            }
+                                          }}
+                                        >
+                                          <SendHorizontal className="h-3.5 w-3.5" />
                                         </Button>
                                       </>
                                     )}
