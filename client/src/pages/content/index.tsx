@@ -1023,14 +1023,16 @@ export default function ContentPage() {
                                           onClick={(e) => {
                                             e.stopPropagation(); // Предотвращаем открытие превью
                                             
-                                            // Покажем модальное окно для подтверждения
-                                            if (confirm("Опубликовать контент сейчас в социальные сети?")) {
-                                              // Запускаем прямую публикацию контента
-                                              publishContentMutation.mutate({
-                                                id: content.id,
-                                                // Оставим выбор платформ по умолчанию (все доступные)
-                                              });
-                                            }
+                                            // Устанавливаем текущий контент и открываем диалог выбора платформ
+                                            setCurrentContentSafe(content);
+                                            // Сбрасываем выбранные платформы на дефолтные значения
+                                            setSelectedPlatforms({
+                                              instagram: false,
+                                              telegram: true, // По умолчанию включаем Telegram
+                                              vk: true,      // По умолчанию включаем VK
+                                              facebook: false
+                                            });
+                                            setIsScheduleDialogOpen(true);
                                           }}
                                         >
                                           <SendHorizontal className="h-3.5 w-3.5" />
