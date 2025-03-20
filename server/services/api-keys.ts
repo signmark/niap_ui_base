@@ -72,10 +72,17 @@ export class ApiKeyService {
       console.log(`[${serviceName}] Found ${allUserKeys.length} total API keys for user ${userId}`);
       console.log(`[${serviceName}] Available services:`, allUserKeys.map((k: any) => k.service_name).join(', '));
       
+      // Диагностика: Выведем все ключи более подробно для отладки
+      console.log(`[${serviceName}] Keys details:`, allUserKeys.map((k: any) => ({
+        id: k.id,
+        service: k.service_name || 'undefined',
+        hasApiKey: !!k.api_key
+      })));
+
       // Теперь ищем конкретный ключ, используя более гибкую логику
-      // Искать с учетом независимости от регистра и разных форматов названий сервисов
+      // Проверяем наличие поля service_name перед использованием
       let items = allUserKeys.filter((key: any) => 
-        key.service_name.toLowerCase() === serviceName.toLowerCase());
+        key.service_name && key.service_name.toLowerCase() === serviceName.toLowerCase());
       
       console.log(`[${serviceName}] After filtering: found ${items.length} matching keys`);
       
@@ -91,12 +98,26 @@ export class ApiKeyService {
         });
         
         console.log(`[${serviceName}] Found ${allKeys.length} total API keys in the system`);
-        console.log(`[${serviceName}] Available services in system:`, 
-                    [...new Set(allKeys.map((k: any) => k.service_name))].join(', '));
         
-        // Фильтруем с учетом независимости от регистра
+        // Более безопасная обработка с проверкой на undefined/null
+        const availableServices = allKeys
+          .map((k: any) => k.service_name)
+          .filter((name: any) => name !== undefined && name !== null);
+          
+        console.log(`[${serviceName}] Available services in system:`, 
+                    [...new Set(availableServices)].join(', '));
+        
+        // Диагностика: выведем подробности о всех ключах
+        console.log(`[${serviceName}] All keys details:`, allKeys.map((k: any) => ({
+          id: k.id,
+          user: k.user_id || 'undefined',
+          service: k.service_name || 'undefined',
+          hasApiKey: !!k.api_key
+        })));
+        
+        // Фильтруем с учетом независимости от регистра, с проверкой на undefined/null
         items = allKeys.filter((key: any) => 
-          key.service_name.toLowerCase() === serviceName.toLowerCase());
+          key.service_name && key.service_name.toLowerCase() === serviceName.toLowerCase());
           
         console.log(`[${serviceName}] After filtering all keys: found ${items.length} matching keys`);
       }
