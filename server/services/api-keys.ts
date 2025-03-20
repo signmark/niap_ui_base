@@ -5,6 +5,16 @@ import { directusCrud } from './directus-crud';
 // Типы API сервисов, используемых в приложении
 export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
 
+// Маппинг имен сервисов как они записаны в БД
+const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
+  'perplexity': 'perplexity',
+  'social_searcher': 'social_searcher',
+  'apify': 'apify',
+  'deepseek': 'deepseek',
+  'fal_ai': 'fal_ai',
+  'xmlriver': 'xmlriver'
+};
+
 // Интерфейс для хранения API ключей и метаданных
 interface ApiKeyCache {
   [userId: string]: {
