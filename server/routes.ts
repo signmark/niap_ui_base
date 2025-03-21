@@ -5903,16 +5903,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: trendTopics 
         });
       } catch (directusError) {
-        console.error("Error fetching trend topics from Directus:", directusError);
+        console.error("[GET /api/campaign-trends] Error fetching trend topics from Directus:", directusError);
         
-        if (axios.isAxiosError(directusError) && directusError.response) {
-          console.error("Directus API error details:", directusError.response.data);
+        if (axios.isAxiosError(directusError)) {
+          console.error("[GET /api/campaign-trends] Directus API error status:", directusError.response?.status);
+          console.error("[GET /api/campaign-trends] Directus API error details:", directusError.response?.data);
+          console.error("[GET /api/campaign-trends] Request config:", {
+            url: directusError.config?.url,
+            method: directusError.config?.method,
+            params: directusError.config?.params
+          });
+          
+          // Проверяем, является ли это ошибкой коллекции (collection)
+          if (directusError.response?.status === 403) {
+            console.error("[GET /api/campaign-trends] Ошибка доступа: возможно, у пользователя нет прав на коллекцию campaign_trend_topics");
+            return res.status(403).json({
+              success: false,
+              error: "Нет прав доступа к коллекции трендов",
+              details: "Обратитесь к администратору для получения прав доступа"
+            });
+          }
+          
+          if (directusError.response?.status === 404) {
+            console.error("[GET /api/campaign-trends] Коллекция не найдена: возможно, отсутствует коллекция campaign_trend_topics");
+            return res.status(404).json({
+              success: false,
+              error: "Коллекция трендов не найдена в Directus",
+              details: "Необходимо создать коллекцию campaign_trend_topics"
+            });
+          }
         }
         
-        return res.status(500).json({ 
-          success: false,
-          error: "Не удалось получить тренды", 
-          message: directusError instanceof Error ? directusError.message : "Unknown error"
+        // Возвращаем пустой массив, чтобы интерфейс корректно отработал
+        return res.json({ 
+          success: true,
+          data: [],
+          message: "Не удалось получить тренды из Directus, возвращаем пустой массив"
         });
       }
     } catch (error) {
