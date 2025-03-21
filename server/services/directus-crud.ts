@@ -1,12 +1,9 @@
-import { directusApiManager } from '../directus';
+/**
+ * Типы для работы с Directus API
+ */
 import { log } from '../utils/logger';
-import { 
-  DirectusRequestOptions, 
-  DirectusAuthResult, 
-  DirectusUser,
-  prepareDataForDirectus,
-  processDirectusData
-} from './directus-types';
+import { directusApiManager } from '../directus';
+import { DirectusRequestOptions } from './directus-types';
 
 /**
  * Типы операций для логирования
@@ -27,26 +24,15 @@ export class DirectusCrud {
    * @returns Созданная запись
    */
   async create<T>(collection: string, data: Record<string, any>, options: DirectusRequestOptions = {}): Promise<T> {
-    return this.executeOperation('create', collection, async () => {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
-      const processedData = prepareDataForDirectus(data);
-      
+    return this.executeOperation<T>('create', collection, async () => {
+      const { authToken, userId } = options;
       const response = await directusApiManager.request({
-        method: 'POST',
         url: `/items/${collection}`,
-        data: processedData,
-        headers,
-        params: this.buildParams(options)
-      }, options.userId);
+        method: 'post',
+        data
+      }, authToken || userId);
 
-      return processDirectusData(response.data.data) as T;
+      return response.data.data;
     });
   }
 
@@ -57,22 +43,23 @@ export class DirectusCrud {
    * @returns Список записей
    */
   async list<T>(collection: string, options: DirectusRequestOptions = {}): Promise<T[]> {
-    return this.executeOperation('list', collection, async () => {
-      const headers: Record<string, string> = {};
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
-      const response = await directusApiManager.request({
-        method: 'GET',
-        url: `/items/${collection}`,
-        headers,
-        params: this.buildParams(options)
-      }, options.userId);
+    return this.executeOperation<T[]>('list', collection, async () => {
+      const { authToken, userId, filter, sort = [], limit, page } = options;
       
-      const items = response.data.data || [];
-      return items.map((item: any) => processDirectusData(item)) as T[];
+      const params: Record<string, any> = {};
+      
+      if (filter) params.filter = filter;
+      if (sort && sort.length > 0) params.sort = sort;
+      if (limit) params.limit = limit;
+      if (page) params.page = page;
+      
+      const response = await directusApiManager.request({
+        url: `/items/${collection}`,
+        method: 'get',
+        params
+      }, authToken || userId);
+
+      return response.data.data;
     });
   }
 
@@ -84,26 +71,18 @@ export class DirectusCrud {
    * @returns Запись или null, если запись не найдена
    */
   async getById<T>(collection: string, id: string | number, options: DirectusRequestOptions = {}): Promise<T | null> {
-    return this.executeOperation('read', collection, async () => {
-      const headers: Record<string, string> = {};
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
+    return this.executeOperation<T | null>('read', collection, async () => {
+      const { authToken, userId } = options;
+      
       try {
         const response = await directusApiManager.request({
-          method: 'GET',
           url: `/items/${collection}/${id}`,
-          headers,
-          params: this.buildParams(options)
-        }, options.userId);
-        
-        if (!response.data.data) return null;
-        return processDirectusData(response.data.data) as T;
+          method: 'get'
+        }, authToken || userId);
+
+        return response.data.data;
       } catch (error: any) {
-        // 204 означает "нет содержимого", это нормальный ответ для отсутствующей записи
-        if (error.response && error.response.status === 204) {
+        if (error.response && error.response.status === 404) {
           return null;
         }
         throw error;
@@ -120,26 +99,16 @@ export class DirectusCrud {
    * @returns Обновленная запись
    */
   async update<T>(collection: string, id: string | number, data: Record<string, any>, options: DirectusRequestOptions = {}): Promise<T> {
-    return this.executeOperation('update', collection, async () => {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
+    return this.executeOperation<T>('update', collection, async () => {
+      const { authToken, userId } = options;
       
-      const processedData = prepareDataForDirectus(data);
-
       const response = await directusApiManager.request({
-        method: 'PATCH',
         url: `/items/${collection}/${id}`,
-        data: processedData,
-        headers,
-        params: this.buildParams(options)
-      }, options.userId);
+        method: 'patch',
+        data
+      }, authToken || userId);
 
-      return processDirectusData(response.data.data) as T;
+      return response.data.data;
     });
   }
 
@@ -150,18 +119,13 @@ export class DirectusCrud {
    * @param options Дополнительные опции запроса
    */
   async delete(collection: string, id: string | number, options: DirectusRequestOptions = {}): Promise<void> {
-    return this.executeOperation('delete', collection, async () => {
-      const headers: Record<string, string> = {};
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
+    return this.executeOperation<void>('delete', collection, async () => {
+      const { authToken, userId } = options;
+      
       await directusApiManager.request({
-        method: 'DELETE',
         url: `/items/${collection}/${id}`,
-        headers
-      }, options.userId);
+        method: 'delete'
+      }, authToken || userId);
     });
   }
 
@@ -174,28 +138,17 @@ export class DirectusCrud {
    * @returns Результат запроса
    */
   async custom<T>(method: string, path: string, data?: any, options: DirectusRequestOptions = {}): Promise<T> {
-    return this.executeOperation('custom', path, async () => {
-      const headers: Record<string, string> = {};
+    return this.executeOperation<T>('custom', path, async () => {
+      const { authToken, userId } = options;
       
-      if (data) {
-        headers['Content-Type'] = 'application/json';
-        data = prepareDataForDirectus(data);
-      }
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
       const response = await directusApiManager.request({
-        method,
         url: path,
-        data,
-        headers,
-        params: this.buildParams(options)
-      }, options.userId);
+        method: method.toLowerCase(),
+        data: method.toUpperCase() !== 'GET' ? data : undefined,
+        params: method.toUpperCase() === 'GET' ? data : undefined
+      }, authToken || userId);
 
-      // Для пользовательских запросов возвращаем данные как есть
-      return response.data;
+      return response.data.data;
     });
   }
 
@@ -206,39 +159,16 @@ export class DirectusCrud {
    */
   private buildParams(options: DirectusRequestOptions): Record<string, any> {
     const params: Record<string, any> = {};
-
-    if (options.fields && options.fields.length > 0) {
-      params.fields = options.fields.join(',');
-    }
-
-    if (options.sort && options.sort.length > 0) {
-      params.sort = options.sort.join(',');
-    }
-
-    if (options.limit) {
-      params.limit = options.limit;
-    }
-
-    if (options.page) {
-      params.page = options.page;
-    }
-
-    if (options.filter && Object.keys(options.filter).length > 0) {
-      params.filter = options.filter;
-    }
-
-    if (options.search) {
-      params.search = options.search;
-    }
-
-    if (options.meta && options.meta.length > 0) {
-      params.meta = options.meta.join(',');
-    }
-
-    if (options.deep && Object.keys(options.deep).length > 0) {
-      params.deep = options.deep;
-    }
-
+    
+    if (options.filter) params.filter = options.filter;
+    if (options.sort && options.sort.length > 0) params.sort = options.sort;
+    if (options.limit) params.limit = options.limit;
+    if (options.page) params.page = options.page;
+    if (options.fields && options.fields.length > 0) params.fields = options.fields;
+    if (options.search) params.search = options.search;
+    if (options.meta && options.meta.length > 0) params.meta = options.meta;
+    if (options.deep) params.deep = options.deep;
+    
     return params;
   }
 
@@ -251,89 +181,41 @@ export class DirectusCrud {
    */
   private async executeOperation<T>(operation: CrudOperation | 'custom', collection: string, executor: () => Promise<T>): Promise<T> {
     try {
-      log(`Executing ${operation} operation on collection "${collection}"`, this.logPrefix);
+      log(`Выполнение операции ${operation} для коллекции ${collection}`, this.logPrefix);
       const result = await executor();
-      log(`Successfully executed ${operation} operation on collection "${collection}"`, this.logPrefix);
+      log(`Операция ${operation} для коллекции ${collection} выполнена успешно`, this.logPrefix);
       return result;
     } catch (error: any) {
-      log(`Error executing ${operation} operation on collection "${collection}": ${error.message}`, this.logPrefix);
-      console.error(`DirectusCrud error (${operation} on ${collection}):`, error);
+      log(`Ошибка при выполнении операции ${operation} для коллекции ${collection}: ${error.message}`, this.logPrefix);
       
       if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
+        log(`Статус ошибки: ${error.response.status}`, this.logPrefix);
+        if (error.response.data && error.response.data.errors) {
+          log(`Детали ошибки: ${JSON.stringify(error.response.data.errors)}`, this.logPrefix);
+        }
       }
       
-      throw new Error(`Failed to ${operation} ${collection}: ${error.message}`);
+      throw error;
     }
   }
 
   /**
-   * Получает токен авторизации из Directus
-   * @param email Email пользователя
-   * @param password Пароль пользователя
-   * @returns Информация о токене
-   */
-  async login(email: string, password: string): Promise<DirectusAuthResult> {
-    return this.executeOperation('custom', 'auth/login', async () => {
-      const response = await directusApiManager.request({
-        method: 'POST',
-        url: '/auth/login',
-        data: { email, password },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const { access_token, refresh_token, expires } = response.data.data;
-      return { access_token, refresh_token, expires };
-    });
-  }
-
-  /**
-   * Обновляет токен авторизации с помощью refresh token
-   * @param refreshToken Refresh token
-   * @returns Новый access token и информация о нем
-   */
-  async refreshToken(refreshToken: string): Promise<DirectusAuthResult> {
-    return this.executeOperation('custom', 'auth/refresh', async () => {
-      const response = await directusApiManager.request({
-        method: 'POST',
-        url: '/auth/refresh',
-        data: { refresh_token: refreshToken },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const { access_token, refresh_token, expires } = response.data.data;
-      return { access_token, refresh_token, expires };
-    });
-  }
-
-  /**
-   * Получает информацию о текущем пользователе
-   * @param options Опции запроса с токеном
+   * Получает информацию о текущем пользователе из Directus
+   * @param options Опции запроса
    * @returns Информация о пользователе
    */
-  async getCurrentUser(options: DirectusRequestOptions): Promise<DirectusUser> {
-    return this.executeOperation('custom', 'users/me', async () => {
-      const headers: Record<string, string> = {};
-
-      if (options.authToken) {
-        headers['Authorization'] = `Bearer ${options.authToken}`;
-      }
-
+  async getCurrentUser(options: DirectusRequestOptions): Promise<any> {
+    return this.executeOperation<any>('read', 'users/me', async () => {
+      const { authToken, userId } = options;
+      
       const response = await directusApiManager.request({
-        method: 'GET',
         url: '/users/me',
-        headers
-      }, options.userId);
+        method: 'get'
+      }, authToken || userId);
 
-      return processDirectusData(response.data.data) as DirectusUser;
+      return response.data.data;
     });
   }
 }
 
-// Экспортируем экземпляр класса для использования в приложении
 export const directusCrud = new DirectusCrud();
