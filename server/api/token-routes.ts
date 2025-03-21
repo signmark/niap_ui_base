@@ -251,17 +251,50 @@ export function registerTokenRoutes(app: Express) {
         });
         
         if (response.data?.data?.id) {
-          return res.status(200).json({
-            success: true,
-            user: {
-              id: response.data.data.id,
-              email: response.data.data.email,
-              firstName: response.data.data.first_name,
-              lastName: response.data.data.last_name,
-              role: response.data.data.role?.name || response.data.data.role
-            },
-            message: 'Токен администратора работает корректно'
-          });
+          // Проверим, есть ли доступ к коллекции campaign_content
+          try {
+            const collectionTestResponse = await axios.get(`${DIRECTUS_URL}/items/campaign_content?limit=1`, {
+              headers: {
+                'Authorization': `Bearer ${adminToken}`
+              }
+            });
+            
+            const hasAccessToContent = collectionTestResponse.status === 200;
+            
+            return res.status(200).json({
+              success: true,
+              user: {
+                id: response.data.data.id,
+                email: response.data.data.email,
+                firstName: response.data.data.first_name,
+                lastName: response.data.data.last_name,
+                role: response.data.data.role?.name || response.data.data.role
+              },
+              permissions: {
+                campaignContent: hasAccessToContent,
+                message: hasAccessToContent ? 'Доступ к коллекции campaign_content есть' : 'Нет доступа к коллекции campaign_content'
+              },
+              message: 'Токен администратора работает корректно'
+            });
+          } catch (permissionError: any) {
+            return res.status(200).json({
+              success: true,
+              user: {
+                id: response.data.data.id,
+                email: response.data.data.email,
+                firstName: response.data.data.first_name,
+                lastName: response.data.data.last_name,
+                role: response.data.data.role?.name || response.data.data.role
+              },
+              permissions: {
+                campaignContent: false,
+                error: permissionError.message,
+                status: permissionError.response?.status,
+                message: 'Нет доступа к коллекции campaign_content'
+              },
+              message: 'Токен администратора работает, но есть проблемы с правами доступа'
+            });
+          }
         } else {
           return res.status(500).json({
             success: false,
@@ -286,6 +319,73 @@ export function registerTokenRoutes(app: Express) {
       return res.status(500).json({
         success: false,
         error: 'Ошибка при проверке токена',
+        details: error.message
+      });
+    }
+  });
+  
+  // Маршрут для проверки прав доступа к коллекциям с использованием кэшированного токена
+  app.get('/api/admin/permissions/check', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string || ADMIN_USER_ID;
+      
+      // Проверяем, есть ли у нас кэшированный токен для пользователя
+      const cachedToken = directusApiManager.getCachedToken(userId);
+      
+      if (!cachedToken || !cachedToken.token) {
+        return res.status(404).json({
+          success: false,
+          error: `Кэшированный токен для пользователя ${userId} не найден`,
+          message: 'Для проверки прав доступа необходимо сначала авторизоваться в системе'
+        });
+      }
+      
+      // Проверяем доступ к различным коллекциям
+      const collections = [
+        'campaign_content',
+        'user_campaigns',
+        'content_sources',
+        'trend_topics',
+        'campaign_trend_topics'
+      ];
+      
+      const results: Record<string, any> = {};
+      
+      for (const collection of collections) {
+        try {
+          const response = await axios.get(`${DIRECTUS_URL}/items/${collection}?limit=1`, {
+            headers: {
+              'Authorization': `Bearer ${cachedToken.token}`
+            }
+          });
+          
+          results[collection] = {
+            access: true,
+            status: response.status,
+            message: 'Доступ разрешен'
+          };
+        } catch (error: any) {
+          results[collection] = {
+            access: false,
+            status: error.response?.status,
+            message: error.message,
+            details: error.response?.data
+          };
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        userId,
+        tokenExpiresAt: new Date(cachedToken.expiresAt).toISOString(),
+        collections: results
+      });
+    } catch (error: any) {
+      log(`Ошибка при проверке прав доступа: ${error.message}`, 'token-routes');
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при проверке прав доступа',
         details: error.message
       });
     }

@@ -52,8 +52,8 @@ export class PublishScheduler {
   }
 
   /**
-   * Получает системный токен для доступа к API
-   * Пытается авторизоваться с системными учетными данными или использовать сохраненный токен
+   * Получает токен для доступа к API
+   * Ищет токены авторизованных пользователей в кэше
    */
   private async getSystemToken(): Promise<string | null> {
     try {
@@ -97,6 +97,17 @@ export class PublishScheduler {
         } catch (error: any) {
           log(`Ошибка при получении системного токена через логин: ${error.message}`, 'scheduler');
         }
+      }
+      
+      // Если не удалось получить системный токен, проверяем, есть ли токены авторизованных пользователей
+      const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      if (sessions.length > 0) {
+        // Используем токен первого активного пользователя
+        const firstSession = sessions[0];
+        log(`Использование токена пользователя ${firstSession.userId} для планировщика публикаций`, 'scheduler');
+        return firstSession.token;
       }
       
       // Если администратор указан, попробуем получить токен из кэша
