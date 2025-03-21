@@ -59,22 +59,34 @@ export interface DirectusUpdateOptions<T> extends DirectusRequestOptions {
  * @param obj Объект для преобразования
  */
 export function convertCamelToSnake(obj: Record<string, any>): Record<string, any> {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return obj;
+  }
+
   const result: Record<string, any> = {};
-  
+
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-      let value = obj[key];
-      
+      const value = obj[key];
+
       // Рекурсивно обрабатываем вложенные объекты
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        value = convertCamelToSnake(value);
+        result[snakeKey] = convertCamelToSnake(value);
+      } else if (Array.isArray(value)) {
+        // Обрабатываем массивы
+        result[snakeKey] = value.map(item => {
+          if (item !== null && typeof item === 'object') {
+            return convertCamelToSnake(item);
+          }
+          return item;
+        });
+      } else {
+        result[snakeKey] = value;
       }
-      
-      result[snakeKey] = value;
     }
   }
-  
+
   return result;
 }
 
@@ -83,22 +95,34 @@ export function convertCamelToSnake(obj: Record<string, any>): Record<string, an
  * @param obj Объект для преобразования
  */
 export function convertSnakeToCamel(obj: Record<string, any>): Record<string, any> {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return obj;
+  }
+
   const result: Record<string, any> = {};
-  
+
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-      let value = obj[key];
-      
+      const value = obj[key];
+
       // Рекурсивно обрабатываем вложенные объекты
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        value = convertSnakeToCamel(value);
+        result[camelKey] = convertSnakeToCamel(value);
+      } else if (Array.isArray(value)) {
+        // Обрабатываем массивы
+        result[camelKey] = value.map(item => {
+          if (item !== null && typeof item === 'object') {
+            return convertSnakeToCamel(item);
+          }
+          return item;
+        });
+      } else {
+        result[camelKey] = value;
       }
-      
-      result[camelKey] = value;
     }
   }
-  
+
   return result;
 }
 
@@ -107,25 +131,35 @@ export function convertSnakeToCamel(obj: Record<string, any>): Record<string, an
  * @param obj Объект для преобразования
  */
 export function prepareDatesForDirectus(obj: Record<string, any>): Record<string, any> {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return obj;
+  }
+
   const result: Record<string, any> = {};
-  
+
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      let value = obj[key];
-      
-      // Преобразуем Date в строку ISO
+      const value = obj[key];
+
       if (value instanceof Date) {
-        value = value.toISOString();
+        result[key] = value.toISOString();
+      } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        result[key] = prepareDatesForDirectus(value);
+      } else if (Array.isArray(value)) {
+        result[key] = value.map(item => {
+          if (item instanceof Date) {
+            return item.toISOString();
+          } else if (item !== null && typeof item === 'object') {
+            return prepareDatesForDirectus(item);
+          }
+          return item;
+        });
+      } else {
+        result[key] = value;
       }
-      // Рекурсивно обрабатываем вложенные объекты
-      else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        value = prepareDatesForDirectus(value);
-      }
-      
-      result[key] = value;
     }
   }
-  
+
   return result;
 }
 
@@ -134,25 +168,38 @@ export function prepareDatesForDirectus(obj: Record<string, any>): Record<string
  * @param obj Объект для преобразования
  */
 export function processDirectusDates(obj: Record<string, any>): Record<string, any> {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return obj;
+  }
+
   const result: Record<string, any> = {};
-  
+  const dateFields = ['created_at', 'updated_at', 'scheduled_at', 'published_at', 'date', 'expires_at'];
+
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      let value = obj[key];
-      
-      // Преобразуем строки с датами в объекты Date
-      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-        value = new Date(value);
+      const value = obj[key];
+
+      if (typeof value === 'string' && dateFields.includes(key)) {
+        try {
+          result[key] = new Date(value);
+        } catch (e) {
+          result[key] = value;
+        }
+      } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        result[key] = processDirectusDates(value);
+      } else if (Array.isArray(value)) {
+        result[key] = value.map(item => {
+          if (item !== null && typeof item === 'object') {
+            return processDirectusDates(item);
+          }
+          return item;
+        });
+      } else {
+        result[key] = value;
       }
-      // Рекурсивно обрабатываем вложенные объекты
-      else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        value = processDirectusDates(value);
-      }
-      
-      result[key] = value;
     }
   }
-  
+
   return result;
 }
 
@@ -162,8 +209,11 @@ export function processDirectusDates(obj: Record<string, any>): Record<string, a
  * @param data Объект данных
  */
 export function prepareDataForDirectus<T extends Record<string, any>>(data: T): Record<string, any> {
-  const withFormattedDates = prepareDatesForDirectus(data);
-  return convertCamelToSnake(withFormattedDates);
+  // Сначала конвертируем camelCase в snake_case
+  const snakeCaseData = convertCamelToSnake(data);
+  
+  // Затем форматируем даты
+  return prepareDatesForDirectus(snakeCaseData);
 }
 
 /**
@@ -172,6 +222,9 @@ export function prepareDataForDirectus<T extends Record<string, any>>(data: T): 
  * @param data Объект данных из Directus
  */
 export function processDirectusData<T extends Record<string, any>>(data: T): Record<string, any> {
-  const withCamelCase = convertSnakeToCamel(data);
-  return processDirectusDates(withCamelCase);
+  // Сначала обрабатываем даты
+  const processedDates = processDirectusDates(data);
+  
+  // Затем конвертируем snake_case в camelCase
+  return convertSnakeToCamel(processedDates);
 }
