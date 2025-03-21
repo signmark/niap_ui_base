@@ -5782,15 +5782,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const period = req.query.period as string || '7days';
       const authHeader = req.headers['authorization'];
       
+      console.log(`[GET /api/campaign-trends] Запрос трендов для кампании ${campaignId}, period=${period}`);
+      
       if (!campaignId) {
+        console.log('[GET /api/campaign-trends] Ошибка: ID кампании не указан');
         return res.status(400).json({ error: "Campaign ID is required" });
       }
       
       if (!authHeader) {
+        console.log('[GET /api/campaign-trends] Ошибка: отсутствует заголовок авторизации');
         return res.status(401).json({ error: "Unauthorized" });
       }
       
       const token = authHeader.replace('Bearer ', '');
+      console.log(`[GET /api/campaign-trends] Получен токен авторизации: ${token.substring(0, 10)}...`);
       
       let fromDate: Date | undefined;
       
@@ -5813,28 +5818,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        console.log(`Fetching trend topics for campaign: ${campaignId}, period: ${period}`);
+        console.log(`[GET /api/campaign-trends] Fetching trend topics for campaign: ${campaignId}, period: ${period}`);
         
         // Форматируем дату для фильтра в формате ISO
         const fromDateISO = fromDate.toISOString();
+        console.log(`[GET /api/campaign-trends] Using date filter: ${fromDateISO}`);
+        
+        // Создаем фильтр и логируем для отладки
+        const filter = {
+          campaign_id: {
+            _eq: campaignId
+          },
+          created_at: {
+            _gte: fromDateISO
+          }
+        };
+        
+        console.log(`[GET /api/campaign-trends] Directus API filter:`, JSON.stringify(filter));
+        
+        console.log(`[GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics`);
         
         // Получаем темы напрямую из Directus API
         const response = await directusApi.get('/items/campaign_trend_topics', {
           params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              },
-              created_at: {
-                _gte: fromDateISO
-              }
-            },
+            filter: filter,
             sort: ['-created_at']
           },
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
+        
+        console.log(`[GET /api/campaign-trends] Directus API response status: ${response.status}`);
+        console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
         
         // Преобразуем данные из формата Directus в наш формат
         const trendTopics = response.data.data.map((item: any) => {
