@@ -64,42 +64,7 @@ export class PublishScheduler {
         return adminToken;
       }
       
-      // Попытка использовать системные учетные данные из переменных окружения
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID;
-      
-      if (email && password) {
-        log('Попытка авторизации с системными учетными данными', 'scheduler');
-        
-        try {
-          const response = await directusApiManager.request({
-            url: '/auth/login',
-            method: 'post',
-            data: {
-              email,
-              password
-            }
-          });
-          
-          if (response?.data?.data?.access_token) {
-            const token = response.data.data.access_token;
-            log('Получен новый системный токен', 'scheduler');
-            
-            // Кэшируем токен для администратора, если его ID указан
-            if (adminUserId) {
-              directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
-              log(`Токен кэширован для администратора ${adminUserId}`, 'scheduler');
-            }
-            
-            return token;
-          }
-        } catch (error: any) {
-          log(`Ошибка при получении системного токена через логин: ${error.message}`, 'scheduler');
-        }
-      }
-      
-      // Если не удалось получить системный токен, проверяем, есть ли токены авторизованных пользователей
+      // Если нет токена в env-переменных, проверяем, есть ли токены авторизованных пользователей
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
       const sessions = directusAuthManager.getAllActiveSessions();
       
@@ -110,38 +75,55 @@ export class PublishScheduler {
         return firstSession.token;
       }
       
-      // Если администратор указан, попробуем получить токен из кэша
-      if (adminUserId) {
-        const cachedToken = directusApiManager.getCachedToken(adminUserId);
-        if (cachedToken) {
-          log(`Найден кэшированный токен для администратора ${adminUserId}`, 'scheduler');
-          return cachedToken.token;
+      // Попытка использовать системные учетные данные из переменных окружения
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      
+      if (email && password) {
+        log('Попытка авторизации с системными учетными данными', 'scheduler');
+        
+        try {
+          // Используем метод login из DirectusCrud вместо прямого запроса
+          const directusCrud = await import('./directus-crud').then(m => m.directusCrud);
+          const authResult = await directusCrud.login(email, password);
+          
+          if (authResult?.access_token) {
+            const token = authResult.access_token;
+            log('Получен новый системный токен', 'scheduler');
+            
+            // Кэшируем токен для администратора
+            directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+            log(`Токен кэширован для администратора ${adminUserId}`, 'scheduler');
+            
+            // Сохраняем токен в менеджере сессий
+            directusAuthManager.login(email, password)
+              .then(() => log('Сессия администратора добавлена в кэш сессий', 'scheduler'))
+              .catch(err => log(`Ошибка при добавлении сессии администратора: ${err.message}`, 'scheduler'));
+            
+            return token;
+          }
+        } catch (error: any) {
+          log(`Ошибка при получении системного токена через логин: ${error.message}`, 'scheduler');
         }
+      }
+      
+      // Если администратор указан, попробуем получить токен из кэша
+      const cachedToken = directusApiManager.getCachedToken(adminUserId);
+      if (cachedToken) {
+        log(`Найден кэшированный токен для администратора ${adminUserId}`, 'scheduler');
+        return cachedToken.token;
       }
       
       // Если всё еще нет токена, попробуем найти токен в хранилище
-      if (adminUserId) {
-        try {
-          const tokenInfo = await storage.getUserTokenInfo(adminUserId);
-          if (tokenInfo && tokenInfo.token) {
-            log(`Найден токен для администратора ${adminUserId} в хранилище`, 'scheduler');
-            return tokenInfo.token;
-          }
-        } catch (error: any) {
-          log(`Ошибка при получении токена администратора из хранилища: ${error.message}`, 'scheduler');
-        }
-      }
-      
-      // Если не нашли токен администратора, попробуем использовать токен пользователя
       try {
-        const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // ID текущего пользователя
-        const tokenInfo = await storage.getUserTokenInfo(userId);
+        const tokenInfo = await storage.getUserTokenInfo(adminUserId);
         if (tokenInfo && tokenInfo.token) {
-          log(`Используем токен пользователя ${userId} в качестве запасного варианта`, 'scheduler');
+          log(`Найден токен для администратора ${adminUserId} в хранилище`, 'scheduler');
           return tokenInfo.token;
         }
       } catch (error: any) {
-        log(`Ошибка при получении токена пользователя: ${error.message}`, 'scheduler');
+        log(`Ошибка при получении токена администратора из хранилища: ${error.message}`, 'scheduler');
       }
       
       return null;

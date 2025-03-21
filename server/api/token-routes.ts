@@ -458,5 +458,92 @@ export function registerTokenRoutes(app: Express) {
     }
   });
   
+  // Маршрут для проверки прав доступа ADMIN_TOKEN
+  app.get('/api/system/admin-token-permissions', async (req: Request, res: Response) => {
+    try {
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      
+      if (!adminToken) {
+        return res.status(404).json({
+          success: false,
+          message: 'DIRECTUS_ADMIN_TOKEN не найден в переменных окружения'
+        });
+      }
+      
+      // Проверяем доступ к различным коллекциям
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const collections = [
+        'campaign_content',
+        'user_campaigns',
+        'content_sources',
+        'trend_topics',
+        'campaign_trend_topics'
+      ];
+      
+      const results: Record<string, any> = {};
+      
+      // Пробуем тестовый запрос для проверки валидности токена
+      try {
+        const userResponse = await axios.get(`${directusUrl}/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
+        });
+        
+        results.user = {
+          valid: true,
+          id: userResponse.data?.data?.id,
+          email: userResponse.data?.data?.email,
+          firstName: userResponse.data?.data?.first_name,
+          lastName: userResponse.data?.data?.last_name,
+          role: userResponse.data?.data?.role
+        };
+      } catch (userError: any) {
+        results.user = {
+          valid: false,
+          error: userError.message,
+          status: userError.response?.status
+        };
+      }
+      
+      // Проверяем доступ к коллекциям
+      for (const collection of collections) {
+        try {
+          const response = await axios.get(`${directusUrl}/items/${collection}?limit=1`, {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`
+            }
+          });
+          
+          results[collection] = {
+            access: true,
+            status: response.status,
+            message: 'Доступ разрешен',
+            data: response.data?.data?.length > 0
+          };
+        } catch (error: any) {
+          results[collection] = {
+            access: false,
+            status: error.response?.status,
+            message: error.message,
+            details: error.response?.data?.errors
+          };
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        adminToken: "***" + adminToken.substring(adminToken.length - 4),
+        collections: results
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при проверке прав доступа административного токена',
+        error: error.message
+      });
+    }
+  });
+  
   log('Маршруты для работы с админским токеном зарегистрированы', 'token-routes');
 }
