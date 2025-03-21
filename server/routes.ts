@@ -28,6 +28,7 @@ import {
 import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
+import { registerTokenRoutes } from './api/token-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -2685,6 +2686,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты валидации API ключей социальных сетей
   registerValidationRoutes(app);
   registerPublishingRoutes(app);
+  
+  // Регистрируем маршруты для работы с админским токеном
+  registerTokenRoutes(app);
   
   // Запускаем планировщик публикаций
   publishScheduler.start();
