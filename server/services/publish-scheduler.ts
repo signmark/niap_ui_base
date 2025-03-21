@@ -144,6 +144,9 @@ export class PublishScheduler {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
       
+      // Проверяем запросы на извлечение токена
+      checkTokenExtractionRequest();
+      
       // Получаем системный токен для доступа ко всем публикациям
       const systemToken = await this.getSystemToken();
       
