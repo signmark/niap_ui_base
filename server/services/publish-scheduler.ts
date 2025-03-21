@@ -5,6 +5,7 @@ import { CampaignContent, SocialPlatform } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';
 import { directusCrud } from './directus-crud';
+import { checkTokenExtractionRequest } from './token-extractor';
 
 /**
  * Класс для планирования и выполнения автоматической публикации контента
