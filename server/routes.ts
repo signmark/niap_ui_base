@@ -5917,19 +5917,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Проверяем, является ли это ошибкой коллекции (collection)
           if (directusError.response?.status === 403) {
             console.error("[GET /api/campaign-trends] Ошибка доступа: возможно, у пользователя нет прав на коллекцию campaign_trend_topics");
-            return res.status(403).json({
-              success: false,
-              error: "Нет прав доступа к коллекции трендов",
-              details: "Обратитесь к администратору для получения прав доступа"
+            
+            // Не возвращаем ошибку, а пустой массив
+            return res.json({ 
+              success: true,
+              data: [],
+              message: "У вас нет прав доступа к коллекции трендов, возвращаем пустой массив"
             });
           }
           
-          if (directusError.response?.status === 404) {
-            console.error("[GET /api/campaign-trends] Коллекция не найдена: возможно, отсутствует коллекция campaign_trend_topics");
-            return res.status(404).json({
-              success: false,
-              error: "Коллекция трендов не найдена в Directus",
-              details: "Необходимо создать коллекцию campaign_trend_topics"
+          if (directusError.response?.status === 404 || 
+            directusError.message?.includes('collection "campaign_trend_topics" not found') ||
+            directusError.response?.data?.errors?.[0]?.extensions?.code === 'COLLECTION_NOT_FOUND') {
+            console.error("[GET /api/campaign-trends] Коллекция не найдена: отсутствует коллекция campaign_trend_topics в Directus");
+            
+            // Не возвращаем ошибку, а пустой массив
+            return res.json({ 
+              success: true,
+              data: [],
+              message: "Коллекция трендов не найдена в Directus, возвращаем пустой массив"
             });
           }
         }
