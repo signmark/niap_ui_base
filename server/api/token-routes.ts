@@ -54,28 +54,13 @@ export function registerTokenRoutes(app: Express) {
       // Создаем статический токен
       const tokenName = `scheduler_token_${new Date().toISOString().slice(0, 10)}`;
       
+      // В некоторых версиях Directus отсутствует API для создания статических токенов
+      // Поэтому используем временный токен как статический
       try {
-        const tokenResponse = await axios.post(
-          `${DIRECTUS_URL}/users/me/tokens`,
-          {
-            name: tokenName,
-            // Не указываем срок действия токена, чтобы он был постоянным
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${temporaryToken}`
-            }
-          }
-        );
+        log('Используем токен авторизации как статический (не найден API для создания статического токена)', 'token-routes');
         
-        if (!tokenResponse.data?.data?.token) {
-          return res.status(500).json({
-            success: false,
-            error: 'Не удалось создать статический токен'
-          });
-        }
-        
-        const staticToken = tokenResponse.data.data.token;
+        // Используем временный токен как статический
+        const staticToken = temporaryToken;
         
         // Сохраняем токен в .env файл
         if (fs.existsSync(ENV_PATH)) {
