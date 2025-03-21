@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Calendar, CheckCircle2, Clock, FileText, Image, Video, CheckSquare, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuthStore } from "@/lib/store";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -323,8 +324,7 @@ export function ContentPlanGenerator({
         
         // Перенаправляем на страницу входа
         setTimeout(() => {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userId');
+          useAuthStore.getState().clearAuth(); // Используем метод clearAuth из хранилища
           window.location.href = '/auth/login';
         }, 2000);
       } else {
@@ -339,10 +339,10 @@ export function ContentPlanGenerator({
 
   // Обработчик генерации контент-плана через n8n
   const handleGenerateContentPlan = async () => {
-    // Проверяем авторизацию используя правильный ключ из хранилища
-    const authToken = localStorage.getItem('authToken');
+    // Получаем токен авторизации из Zustand store
+    const authToken = useAuthStore.getState().token;
     if (!authToken) {
-      console.log("Ошибка авторизации: токен не найден");
+      console.log("Ошибка авторизации: токен не найден в store");
       toast({
         title: "Ошибка авторизации",
         description: "Вы не авторизованы в системе",
@@ -351,7 +351,7 @@ export function ContentPlanGenerator({
       return;
     }
     
-    console.log("Токен авторизации найден, продолжаем генерацию");
+    console.log("Токен авторизации найден в store, продолжаем генерацию");
 
     // Проверяем обязательные параметры
     if (selectedTopicIds.size === 0 && activeTab === "trends") {
