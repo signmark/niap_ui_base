@@ -244,6 +244,31 @@ export class DirectusAuthManager {
   }
 
   /**
+   * Получает все активные сессии пользователей
+   * @returns Массив информации об активных сессиях
+   */
+  getAllActiveSessions(): { userId: string; token: string; expiresAt: number }[] {
+    const now = Date.now();
+    const activeSessions: { userId: string; token: string; expiresAt: number }[] = [];
+    
+    for (const userId in this.sessionCache) {
+      const session = this.sessionCache[userId];
+      
+      // Проверяем, что сессия действительна
+      if (session.expiresAt > now) {
+        activeSessions.push({
+          userId: session.userId,
+          token: session.token,
+          expiresAt: session.expiresAt
+        });
+      }
+    }
+    
+    log(`Found ${activeSessions.length} active sessions`, this.logPrefix);
+    return activeSessions;
+  }
+
+  /**
    * Останавливает интервал обновления сессий
    */
   dispose(): void {

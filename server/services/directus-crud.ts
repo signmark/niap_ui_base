@@ -3,7 +3,8 @@
  */
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
-import { DirectusRequestOptions } from './directus-types';
+import { DirectusAuthResult, DirectusRequestOptions } from './directus-types';
+import axios from 'axios';
 
 /**
  * Типы операций для логирования
@@ -215,6 +216,83 @@ export class DirectusCrud {
 
       return response.data.data;
     });
+  }
+
+  /**
+   * Авторизует пользователя в Directus и возвращает информацию о токене
+   * @param email Email пользователя
+   * @param password Пароль пользователя
+   * @returns Результат авторизации
+   */
+  async login(email: string, password: string): Promise<DirectusAuthResult> {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    try {
+      log(`Попытка авторизации пользователя ${email}`, this.logPrefix);
+      
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
+      });
+      
+      if (!response.data || !response.data.data || !response.data.data.access_token) {
+        throw new Error('Неверный формат ответа от API при авторизации');
+      }
+      
+      log(`Пользователь ${email} успешно авторизован`, this.logPrefix);
+      
+      return {
+        access_token: response.data.data.access_token,
+        refresh_token: response.data.data.refresh_token,
+        expires: response.data.data.expires,
+        user: response.data.data.user
+      };
+    } catch (error: any) {
+      log(`Ошибка при авторизации пользователя ${email}: ${error.message}`, this.logPrefix);
+      
+      if (error.response && error.response.data) {
+        log(`Детали ошибки: ${JSON.stringify(error.response.data)}`, this.logPrefix);
+      }
+      
+      throw new Error(`Ошибка авторизации: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
+  }
+
+  /**
+   * Обновляет токен доступа с помощью refresh token
+   * @param refreshToken Токен обновления
+   * @returns Новый токен доступа и информация об истечении
+   */
+  async refreshToken(refreshToken: string): Promise<DirectusAuthResult> {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    try {
+      log('Обновление токена доступа', this.logPrefix);
+      
+      const response = await axios.post(`${directusUrl}/auth/refresh`, {
+        refresh_token: refreshToken
+      });
+      
+      if (!response.data || !response.data.data || !response.data.data.access_token) {
+        throw new Error('Неверный формат ответа от API при обновлении токена');
+      }
+      
+      log('Токен доступа успешно обновлен', this.logPrefix);
+      
+      return {
+        access_token: response.data.data.access_token,
+        refresh_token: response.data.data.refresh_token,
+        expires: response.data.data.expires
+      };
+    } catch (error: any) {
+      log(`Ошибка при обновлении токена: ${error.message}`, this.logPrefix);
+      
+      if (error.response && error.response.data) {
+        log(`Детали ошибки: ${JSON.stringify(error.response.data)}`, this.logPrefix);
+      }
+      
+      throw new Error(`Ошибка обновления токена: ${error.response?.data?.errors?.[0]?.message || error.message}`);
+    }
   }
 }
 

@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
+import { directusAuthManager } from '../services/directus-auth-manager';
 
 // URL Directus API
 const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -387,6 +388,72 @@ export function registerTokenRoutes(app: Express) {
         success: false,
         error: 'Ошибка при проверке прав доступа',
         details: error.message
+      });
+    }
+  });
+  
+  // Маршрут для авторизации и создания сессии пользователя 
+  // (отдельно от стандартной авторизации, используется для сохранения сессии в SystemCache)
+  app.post('/api/system/auth/login', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email и пароль обязательны'
+        });
+      }
+      
+      try {
+        // Авторизуем пользователя через DirectusAuthManager
+        const authResult = await directusAuthManager.login(email, password);
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Авторизация успешна, сессия сохранена в кэше системы',
+          userId: authResult.userId,
+          token: authResult.token,
+          user: {
+            id: authResult.user.id,
+            email: authResult.user.email,
+            firstName: authResult.user.first_name,
+            lastName: authResult.user.last_name
+          }
+        });
+      } catch (loginError: any) {
+        return res.status(401).json({
+          success: false,
+          message: 'Ошибка авторизации',
+          error: loginError.message
+        });
+      }
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: 'Внутренняя ошибка сервера',
+        error: error.message
+      });
+    }
+  });
+  
+  // Маршрут для получения списка активных сессий
+  app.get('/api/system/active-sessions', async (req: Request, res: Response) => {
+    try {
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      return res.status(200).json({
+        success: true,
+        sessions: sessions.map(session => ({
+          userId: session.userId,
+          expiresAt: new Date(session.expiresAt).toISOString()
+        }))
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при получении списка активных сессий',
+        error: error.message
       });
     }
   });
