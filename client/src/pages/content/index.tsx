@@ -270,6 +270,8 @@ export default function ContentPage() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
+      console.log('Загрузка контента для кампании:', selectedCampaignId);
+
       const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -281,9 +283,12 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
+      console.log('Загружено контента:', (data.data || []).length);
       return data.data || [];
     },
-    enabled: !!selectedCampaignId
+    enabled: !!selectedCampaignId,
+    refetchOnMount: true,
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
   });
   
   // Запрос ключевых слов кампании
@@ -291,6 +296,8 @@ export default function ContentPage() {
     queryKey: ["/api/keywords", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
+
+      console.log('Загрузка ключевых слов для кампании:', selectedCampaignId);
 
       const response = await fetch(`/api/keywords?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -303,9 +310,12 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
+      console.log('Загружено ключевых слов:', (data.data || []).length);
       return data.data || [];
     },
-    enabled: !!selectedCampaignId
+    enabled: !!selectedCampaignId,
+    refetchOnMount: true,
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
   });
 
   // Мутация для создания контента
