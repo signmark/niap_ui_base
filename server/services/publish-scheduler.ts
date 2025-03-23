@@ -1,7 +1,8 @@
+import axios from 'axios';
 import { log } from '../utils/logger';
 import { storage } from '../storage';
 import { socialPublishingService } from './social-publishing';
-import { CampaignContent, SocialPlatform } from '@shared/schema';
+import { CampaignContent, SocialPlatform, Campaign } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';
 import { directusCrud } from './directus-crud';
@@ -388,7 +389,7 @@ export class PublishScheduler {
       const systemToken = await this.getSystemToken();
       
       // Получаем данные кампании для настроек социальных сетей
-      let campaign;
+      let campaign: Campaign | undefined;
       
       // Пробуем с системным токеном через directusCrud
       if (systemToken) {
@@ -399,12 +400,16 @@ export class PublishScheduler {
           
           if (campaignData) {
             campaign = {
-              id: campaignData.id,
+              id: parseInt(campaignData.id),
               name: campaignData.name,
               userId: campaignData.user_id,
               socialMediaSettings: campaignData.social_media_settings || {},
-              createdAt: campaignData.created_at ? new Date(campaignData.created_at) : null
-            };
+              createdAt: campaignData.created_at ? new Date(campaignData.created_at) : null,
+              description: campaignData.description || null,
+              status: campaignData.status || 'active',
+              trendAnalysisSettings: campaignData.trend_analysis_settings || {},
+              updatedAt: campaignData.updated_at ? new Date(campaignData.updated_at) : null
+            } as Campaign;
           }
         } catch (error: any) {
           log(`Ошибка при получении кампании через CRUD: ${error.message}`, 'scheduler');
