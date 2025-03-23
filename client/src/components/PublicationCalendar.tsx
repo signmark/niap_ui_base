@@ -54,21 +54,46 @@ export default function PublicationCalendar({
   useEffect(() => {
     console.log('Выбранная дата:', format(selectedDate, 'yyyy-MM-dd'));
     console.log('Всего постов до фильтрации:', content.length);
+    
+    // Выводим 5 примеров scheduledAt дат для анализа
+    console.log('Примеры дат публикаций:');
+    content.slice(0, 5).forEach((post, index) => {
+      if (post.scheduledAt) {
+        const postDate = new Date(post.scheduledAt);
+        console.log(`Пост ${index + 1}: ${post.title}`);
+        console.log(`  - Исходная дата: ${post.scheduledAt}`);
+        console.log(`  - Объект Date: ${postDate}`);
+        console.log(`  - Год: ${postDate.getFullYear()}, Месяц: ${postDate.getMonth() + 1}, День: ${postDate.getDate()}`);
+        console.log(`  - Время: ${postDate.getHours()}:${postDate.getMinutes()}:${postDate.getSeconds()}`);
+        console.log(`  - ISO: ${postDate.toISOString()}`);
+      }
+    });
   }, [selectedDate, content]);
 
+  // Временная функция для выравнивания даты по локальному времени (без времени)
+  const normalizeToDateOnly = (dateObj: Date): Date => {
+    const normalized = new Date(dateObj);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+  
+  // Выбранная дата нормализованная к началу дня для сравнения 
+  // (устраняет проблемы с часовым поясом при сравнении)
+  const normalizedSelectedDate = normalizeToDateOnly(selectedDate);
+  const selectedDateStr = format(normalizedSelectedDate, 'yyyy-MM-dd');
+  
   const filteredContent = content
     .filter(post => {
-      // Фильтр по дате - строгая проверка совпадения дня, месяца и года
-      const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
+      // Фильтр по дате - используем строковое форматирование даты для сравнения
+      // Это надежнее чем сравнение компонентов даты при работе с часовыми поясами
+      if (!post.scheduledAt) return false;
       
-      if (!postDate) return false;
+      const postDate = new Date(post.scheduledAt);
+      const postDateStr = format(postDate, 'yyyy-MM-dd');
       
-      // Явно сравниваем год, месяц и день
-      const isSameDate = 
-        postDate.getFullYear() === selectedDate.getFullYear() &&
-        postDate.getMonth() === selectedDate.getMonth() &&
-        postDate.getDate() === selectedDate.getDate();
-        
+      // Сравниваем строковые представления дат (только год, месяц, день)
+      const isSameDate = postDateStr === selectedDateStr;
+      
       // Фильтр по платформам (если выбраны)
       let isPlatformMatch = true;
       if (filteredPlatforms.length > 0 && post.socialPlatforms) {
@@ -81,7 +106,8 @@ export default function PublicationCalendar({
       
       // Для отладки
       if (isSameDate) {
-        console.log('Пост совпадает с выбранной датой:', post.title, format(postDate, 'yyyy-MM-dd'));
+        console.log('Пост совпадает с выбранной датой:', post.title, postDateStr);
+        console.log(`  Сравнение: выбрано=${selectedDateStr}, постДата=${postDateStr}`);
       }
       
       return isSameDate && isPlatformMatch;
@@ -102,16 +128,17 @@ export default function PublicationCalendar({
 
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
+    // Используем тот же подход с форматированием даты, что и для фильтрации контента
+    const dayStr = format(normalizeToDateOnly(day), 'yyyy-MM-dd');
+    
     const postsForDay = content.filter(post => {
-      const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-      if (!postDate) return false;
+      if (!post.scheduledAt) return false;
       
-      // Явно сравниваем год, месяц и день
-      return (
-        postDate.getFullYear() === day.getFullYear() &&
-        postDate.getMonth() === day.getMonth() &&
-        postDate.getDate() === day.getDate()
-      );
+      const postDate = new Date(post.scheduledAt);
+      const postDateStr = format(postDate, 'yyyy-MM-dd');
+      
+      // Сравниваем строковые представления дат
+      return postDateStr === dayStr;
     });
 
     if (!postsForDay.length) return null;
