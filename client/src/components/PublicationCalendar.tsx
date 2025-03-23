@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, isSameDay, addDays, startOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -50,12 +50,25 @@ export default function PublicationCalendar({
   }, {} as Record<SocialPlatform, number>);
 
   // Фильтруем контент по дате и платформам и сортируем
+  // Для отладки добавляем лог выбранной даты
+  useEffect(() => {
+    console.log('Выбранная дата:', format(selectedDate, 'yyyy-MM-dd'));
+    console.log('Всего постов до фильтрации:', content.length);
+  }, [selectedDate, content]);
+
   const filteredContent = content
     .filter(post => {
-      // Фильтр по дате
+      // Фильтр по дате - строгая проверка совпадения дня, месяца и года
       const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-      const isDateMatch = postDate ? isSameDay(postDate, selectedDate) : false;
       
+      if (!postDate) return false;
+      
+      // Явно сравниваем год, месяц и день
+      const isSameDate = 
+        postDate.getFullYear() === selectedDate.getFullYear() &&
+        postDate.getMonth() === selectedDate.getMonth() &&
+        postDate.getDate() === selectedDate.getDate();
+        
       // Фильтр по платформам (если выбраны)
       let isPlatformMatch = true;
       if (filteredPlatforms.length > 0 && post.socialPlatforms) {
@@ -66,7 +79,12 @@ export default function PublicationCalendar({
         );
       }
       
-      return isDateMatch && isPlatformMatch;
+      // Для отладки
+      if (isSameDate) {
+        console.log('Пост совпадает с выбранной датой:', post.title, format(postDate, 'yyyy-MM-dd'));
+      }
+      
+      return isSameDate && isPlatformMatch;
     })
     .sort((a, b) => {
       // Сортировка по времени публикации
@@ -86,7 +104,14 @@ export default function PublicationCalendar({
   const getDayContent = (day: Date) => {
     const postsForDay = content.filter(post => {
       const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-      return postDate ? isSameDay(postDate, day) : false;
+      if (!postDate) return false;
+      
+      // Явно сравниваем год, месяц и день
+      return (
+        postDate.getFullYear() === day.getFullYear() &&
+        postDate.getMonth() === day.getMonth() &&
+        postDate.getDate() === day.getDate()
+      );
     });
 
     if (!postsForDay.length) return null;
