@@ -172,15 +172,13 @@ export default function EditScheduledPublication({
           const platformDate = new Date(scheduledAt);
           const time = platformTimes?.[platform] || { hour: '12', minute: '00' };
           
-          // Вычисляем смещение для учета часового пояса
-          const timezoneOffset = platformDate.getTimezoneOffset() * 60000; // в миллисекундах
-          
-          // Устанавливаем часы и минуты без изменения часового пояса
+          // Устанавливаем часы и минуты в локальном времени
           platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10), 0, 0);
           
-          // Создаем строку даты, которая корректно учитывает часовой пояс пользователя
-          // Используем локальный формат вместо UTC
-          const localISOString = new Date(platformDate.getTime()).toISOString();
+          // Создаем строку даты, используя UTC-совместимый формат для сервера
+          // Это сохранит именно то время, которое выбрал пользователь
+          // Сервер получит UTC-дату, но интерпретирует ее согласно своему часовому поясу (UTC+3)
+          const localISOString = platformDate.toISOString();
           
           socialPlatforms[platform] = {
             ...existingData,
