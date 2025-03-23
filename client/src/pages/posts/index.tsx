@@ -154,13 +154,13 @@ export default function Posts() {
       }
     };
 
-    // Отображаем маркеры для типов контента
+    // Отображаем маркеры для каждого поста
     return (
-      <div className="flex justify-center gap-0.5 mt-1">
-        {Object.keys(contentTypes).map((type, index) => (
+      <div className="flex justify-center flex-wrap gap-0.5 mt-1">
+        {postsForDay.map((post, index) => (
           <div 
-            key={index} 
-            className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)}`}
+            key={post.id || index} 
+            className={`h-1.5 w-1.5 rounded-full ${getColorForType(post.contentType || 'text')}`}
           ></div>
         ))}
       </div>
@@ -179,9 +179,9 @@ export default function Posts() {
       {selectedCampaign ? (
         <Card>
 
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
