@@ -178,12 +178,7 @@ export default function Posts() {
 
       {selectedCampaign ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Кампания "{selectedCampaign.name}"</CardTitle>
-            <CardDescription>
-              Выберите дату для просмотра запланированных публикаций
-            </CardDescription>
-          </CardHeader>
+
           <CardContent>
             <div className="grid gap-6 md:grid-cols-[300px_1fr]">
               <div className="space-y-4">
