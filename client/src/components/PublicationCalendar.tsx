@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { format, isSameDay, addDays, startOfMonth, startOfDay, isSameDate } from 'date-fns';
+import { format, isSameDay, addDays, startOfMonth, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -49,62 +49,17 @@ export default function PublicationCalendar({
     return counts;
   }, {} as Record<SocialPlatform, number>);
 
-  // Фильтруем контент по дате и платформам и сортируем
-  // Для отладки добавляем лог выбранной даты
-  useEffect(() => {
-    console.log('Выбранная дата:', format(selectedDate, 'yyyy-MM-dd'));
-    console.log('Всего постов до фильтрации:', content.length);
-    
-    // Выводим 5 примеров scheduledAt дат для анализа
-    console.log('Примеры дат публикаций:');
-    content.slice(0, 5).forEach((post, index) => {
-      if (post.scheduledAt) {
-        const postDate = new Date(post.scheduledAt);
-        console.log(`Пост ${index + 1}: ${post.title}`);
-        console.log(`  - Исходная дата: ${post.scheduledAt}`);
-        console.log(`  - Объект Date: ${postDate}`);
-        console.log(`  - Год: ${postDate.getFullYear()}, Месяц: ${postDate.getMonth() + 1}, День: ${postDate.getDate()}`);
-        console.log(`  - Время: ${postDate.getHours()}:${postDate.getMinutes()}:${postDate.getSeconds()}`);
-        console.log(`  - ISO: ${postDate.toISOString()}`);
-      }
-    });
-  }, [selectedDate, content]);
-
-  // ОТЛАДКА: добавляем лог исходной даты выбранного дня
-  console.log("ОТЛАДКА ТЕКУЩЕЙ ДАТЫ:");
-  console.log("Выбранная дата (оригинал):", selectedDate);
-  console.log("Выбранная дата (toString):", selectedDate.toString());
-  console.log("Выбранная дата (toISOString):", selectedDate.toISOString());
-  console.log("Выбранная дата (locale):", selectedDate.toLocaleString('ru-RU'));
-
-  // Временная функция для выравнивания даты по локальному времени (без времени)
-  const normalizeToDateOnly = (dateObj: Date): Date => {
-    const normalized = new Date(dateObj);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
-  };
-  
-  // Выбранная дата нормализованная к началу дня для сравнения 
-  // (устраняет проблемы с часовым поясом при сравнении)
-  const normalizedSelectedDate = normalizeToDateOnly(selectedDate);
-  const selectedDateStr = format(normalizedSelectedDate, 'yyyy-MM-dd');
-  
-  // ОТЛАДКА: добавляем лог нормализованной даты
-  console.log("Нормализованная дата:", normalizedSelectedDate);
-  console.log("Нормализованная дата (toString):", normalizedSelectedDate.toString());
-  console.log("Нормализованная дата (строка):", selectedDateStr);
+  // startOfDay из date-fns используется для корректного сравнения дат
+  // без учета времени (сбрасывает время до 00:00:00)
   
   const filteredContent = content
     .filter(post => {
-      // Фильтр по дате - используем строковое форматирование даты для сравнения
-      // Это надежнее чем сравнение компонентов даты при работе с часовыми поясами
+      // Фильтр по дате - используем функцию isSameDay из date-fns
       if (!post.scheduledAt) return false;
       
       const postDate = new Date(post.scheduledAt);
-      const postDateStr = format(postDate, 'yyyy-MM-dd');
-      
-      // Сравниваем строковые представления дат (только год, месяц, день)
-      const isSameDate = postDateStr === selectedDateStr;
+      // Используем startOfDay для сброса времени до 00:00:00
+      const isSameDayResult = isSameDay(startOfDay(selectedDate), startOfDay(postDate));
       
       // Фильтр по платформам (если выбраны)
       let isPlatformMatch = true;
@@ -116,13 +71,9 @@ export default function PublicationCalendar({
         );
       }
       
-      // Для отладки
-      if (isSameDate) {
-        console.log('Пост совпадает с выбранной датой:', post.title, postDateStr);
-        console.log(`  Сравнение: выбрано=${selectedDateStr}, постДата=${postDateStr}`);
-      }
+      // Совпадение дат проверено функцией isSameDay
       
-      return isSameDate && isPlatformMatch;
+      return isSameDayResult && isPlatformMatch;
     })
     .sort((a, b) => {
       // Сортировка по времени публикации
@@ -140,17 +91,13 @@ export default function PublicationCalendar({
 
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
-    // Используем тот же подход с форматированием даты, что и для фильтрации контента
-    const dayStr = format(normalizeToDateOnly(day), 'yyyy-MM-dd');
-    
+    // Используем функцию isSameDay из date-fns для сравнения дат
     const postsForDay = content.filter(post => {
       if (!post.scheduledAt) return false;
       
       const postDate = new Date(post.scheduledAt);
-      const postDateStr = format(postDate, 'yyyy-MM-dd');
-      
-      // Сравниваем строковые представления дат
-      return postDateStr === dayStr;
+      // Используем startOfDay для сброса времени до 00:00:00 и isSameDay для корректного сравнения
+      return isSameDay(startOfDay(day), startOfDay(postDate));
     });
 
     if (!postsForDay.length) return null;
