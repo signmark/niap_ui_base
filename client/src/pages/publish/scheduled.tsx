@@ -87,7 +87,9 @@ export default function ScheduledPublications() {
     },
     enabled: !!userId && !!selectedCampaign?.id,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд
+    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
   });
   
   // Обновляем данные при изменении выбранной кампании или пользователя
