@@ -146,7 +146,8 @@ export default function ScheduledPublications() {
       // Если нет глобальной даты, проверяем социальные платформы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
         for (const platform in content.socialPlatforms) {
-          const platformData = content.socialPlatforms[platform];
+          // Явное приведение типа, так как мы проверили что это объект
+          const platformData = content.socialPlatforms[platform as SocialPlatform];
           
           // Проверяем наличие даты публикации в платформе
           if (platformData && 
@@ -176,7 +177,7 @@ export default function ScheduledPublications() {
       // Проверяем социальные платформы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
         for (const platform in content.socialPlatforms) {
-          const platformData = content.socialPlatforms[platform];
+          const platformData = content.socialPlatforms[platform as SocialPlatform];
           if (platformData && platformData.scheduledAt) return true;
         }
       }
