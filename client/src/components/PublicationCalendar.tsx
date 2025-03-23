@@ -77,9 +77,33 @@ export default function PublicationCalendar({
 
     if (!postsForDay.length) return null;
 
+    // Подсчет разных типов контента на эту дату
+    const contentTypes = postsForDay.reduce((types, post) => {
+      const type = post.contentType || 'text';
+      types[type] = (types[type] || 0) + 1;
+      return types;
+    }, {} as Record<string, number>);
+
+    // Получаем цвета для разных типов контента
+    const getColorForType = (type: string): string => {
+      switch (type) {
+        case 'text': return 'bg-blue-500'; // Синий для текста
+        case 'text-image': return 'bg-yellow-500'; // Желтый для картинки с текстом
+        case 'video': 
+        case 'video-text': return 'bg-red-500'; // Красный для видео
+        default: return 'bg-gray-500';
+      }
+    };
+
+    // Отображаем маркеры для типов контента
     return (
-      <div className="flex justify-center mt-1">
-        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+      <div className="flex justify-center gap-0.5 mt-1">
+        {Object.keys(contentTypes).map((type, index) => (
+          <div 
+            key={index} 
+            className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)}`}
+          ></div>
+        ))}
       </div>
     );
   };
