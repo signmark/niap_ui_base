@@ -54,26 +54,62 @@ export default function PublicationCalendar({
   
   const filteredContent = content
     .filter(post => {
-      // Фильтр по дате - используем функцию isSameDay из date-fns
-      if (!post.scheduledAt) return false;
+      // Логика фильтрации по дате теперь учитывает scheduledAt и даты публикаций в платформах
       
-      const postDate = new Date(post.scheduledAt);
-      // Используем startOfDay для сброса времени до 00:00:00
-      const isSameDayResult = isSameDay(startOfDay(selectedDate), startOfDay(postDate));
-      
-      // Фильтр по платформам (если выбраны)
-      let isPlatformMatch = true;
-      if (filteredPlatforms.length > 0 && post.socialPlatforms) {
-        isPlatformMatch = Object.keys(post.socialPlatforms).some(platform => 
-          filteredPlatforms.includes(platform as SocialPlatform) &&
-          post.socialPlatforms &&
-          post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
-        );
+      // 1. Сначала проверяем scheduledAt
+      if (post.scheduledAt) {
+        try {
+          const postDate = new Date(post.scheduledAt);
+          if (isSameDay(startOfDay(selectedDate), startOfDay(postDate))) {
+            // Проверяем фильтрацию по платформам
+            if (filteredPlatforms.length === 0) {
+              return true; // Если фильтр не выбран, показываем пост
+            }
+            
+            if (post.socialPlatforms) {
+              // Если платформы фильтруются, проверяем, есть ли среди них выбранные
+              return Object.keys(post.socialPlatforms).some(platform => 
+                filteredPlatforms.includes(platform as SocialPlatform) &&
+                post.socialPlatforms &&
+                post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
+              );
+            }
+            
+            return false; // У поста нет платформ, но фильтр платформ активен
+          }
+        } catch (e) {
+          // Ошибка парсинга даты, продолжаем проверку
+        }
       }
       
-      // Совпадение дат проверено функцией isSameDay
+      // 2. Затем проверяем даты фактических публикаций в платформах
+      if (post.socialPlatforms) {
+        // Проверяем, есть ли платформы, опубликованные в выбранную дату
+        const hasPlatformPublishedOnSelectedDate = Object.entries(post.socialPlatforms).some(([platform, data]) => {
+          if (data.publishedAt) {
+            try {
+              const publishDate = typeof data.publishedAt === 'string' 
+                ? new Date(data.publishedAt) 
+                : data.publishedAt;
+              
+              // Проверяем совпадение даты и фильтрацию по платформам
+              if (isSameDay(startOfDay(selectedDate), startOfDay(publishDate))) {
+                return filteredPlatforms.length === 0 || filteredPlatforms.includes(platform as SocialPlatform);
+              }
+            } catch (e) {
+              // Ошибка парсинга даты
+            }
+          }
+          return false;
+        });
+        
+        if (hasPlatformPublishedOnSelectedDate) {
+          return true;
+        }
+      }
       
-      return isSameDayResult && isPlatformMatch;
+      // Ни один из критериев не подошел
+      return false;
     })
     .sort((a, b) => {
       // Сортировка по времени публикации
@@ -91,13 +127,38 @@ export default function PublicationCalendar({
 
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
-    // Используем функцию isSameDay из date-fns для сравнения дат
+    // Используем ту же логику фильтрации, что и в filteredContent
     const postsForDay = content.filter(post => {
-      if (!post.scheduledAt) return false;
+      // 1. Сначала проверяем scheduledAt
+      if (post.scheduledAt) {
+        try {
+          const postDate = new Date(post.scheduledAt);
+          if (isSameDay(startOfDay(day), startOfDay(postDate))) {
+            return true;
+          }
+        } catch (e) {
+          // Ошибка парсинга даты, продолжаем проверку
+        }
+      }
       
-      const postDate = new Date(post.scheduledAt);
-      // Используем startOfDay для сброса времени до 00:00:00 и isSameDay для корректного сравнения
-      return isSameDay(startOfDay(day), startOfDay(postDate));
+      // 2. Затем проверяем даты фактических публикаций в платформах
+      if (post.socialPlatforms) {
+        return Object.values(post.socialPlatforms).some(data => {
+          if (data.publishedAt) {
+            try {
+              const publishDate = typeof data.publishedAt === 'string' 
+                ? new Date(data.publishedAt) 
+                : data.publishedAt;
+              return isSameDay(startOfDay(day), startOfDay(publishDate));
+            } catch (e) {
+              // Ошибка парсинга даты
+            }
+          }
+          return false;
+        });
+      }
+      
+      return false;
     });
 
     if (!postsForDay.length) return null;
