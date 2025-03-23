@@ -66,7 +66,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                 <Badge variant="outline" className="flex items-center gap-1 px-2 py-0.5 h-5 bg-muted/40">
                   <Clock size={12} />
                   <span className="text-[10px]">
-                    {scheduledAt ? format(new Date(scheduledAt), 'dd MMMM HH:mm', { locale: ru }) : ''}
+                    {scheduledAt ? format(new Date(scheduledAt), 'dd MMMM yyyy, HH:mm', { locale: ru }) : ''}
                   </span>
                 </Badge>
               </TooltipTrigger>

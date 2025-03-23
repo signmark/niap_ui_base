@@ -268,7 +268,7 @@ export default function EditScheduledPublication({
                       )}
                     >
                       {field.value ? (
-                        format(field.value, "PPP", { locale: ru })
+                        format(field.value, "dd MMMM yyyy", { locale: ru })
                       ) : (
                         <span>Выберите дату</span>
                       )}

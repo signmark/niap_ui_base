@@ -95,12 +95,13 @@ export default function PublicationCalendar({
   };
 
   // Форматирование даты публикации
-  const formatScheduledTime = (date: string | Date | null) => {
+  const formatScheduledTime = (date: string | Date | null | undefined, showFullDate: boolean = false) => {
     if (!date) return "--:--";
     
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return format(dateObj, 'HH:mm', { locale: ru });
+      const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
+      if (!dateObj) return "--:--";
+      return format(dateObj, showFullDate ? 'dd MMMM yyyy, HH:mm' : 'HH:mm', { locale: ru });
     } catch (error) {
       return "--:--";
     }
@@ -208,7 +209,7 @@ export default function PublicationCalendar({
                         <h4 className="font-medium">{post.title || 'Без названия'}</h4>
                         <div className="flex items-center mt-1 text-sm text-muted-foreground">
                           <Clock className="h-3.5 w-3.5 mr-1" />
-                          <span>{formatScheduledTime(post.scheduledAt)}</span>
+                          <span>{formatScheduledTime(post.scheduledAt || null)}</span>
                         </div>
                       </div>
                       
