@@ -16,20 +16,24 @@ interface PublicationCalendarProps {
   isLoading?: boolean;
   onCreateClick?: () => void;
   onViewPost?: (post: CampaignContent) => void;
+  initialSortOrder?: 'asc' | 'desc';
+  onSortOrderChange?: (order: 'asc' | 'desc') => void;
 }
 
 export default function PublicationCalendar({
   content,
   isLoading = false,
   onCreateClick,
-  onViewPost
+  onViewPost,
+  initialSortOrder = 'desc',
+  onSortOrderChange
 }: PublicationCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredPlatforms, setFilteredPlatforms] = useState<SocialPlatform[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
 
   // Получаем количество постов для каждой платформы
   const platformCounts = content.reduce((counts, post) => {
@@ -226,7 +230,13 @@ export default function PublicationCalendar({
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                onClick={() => {
+                  const newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+                  setSortOrder(newSortOrder);
+                  if (onSortOrderChange) {
+                    onSortOrderChange(newSortOrder);
+                  }
+                }}
               >
                 {sortOrder === 'desc' ? (
                   <>

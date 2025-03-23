@@ -6,12 +6,13 @@ import { CampaignContent } from '@/types';
 import PublicationCalendar from '@/components/PublicationCalendar';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { PenLine, ArrowLeft } from 'lucide-react';
+import { PenLine, ArrowLeft, SortDesc, SortAsc } from 'lucide-react';
 
 export default function CalendarView() {
   const { selectedCampaign } = useCampaignStore();
   const userId = useAuthStore((state) => state.userId);
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent } = useQuery({
@@ -58,12 +59,30 @@ export default function CalendarView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Календарь публикаций</h1>
+          <h1 className="text-2xl font-bold">Календарь</h1>
           <p className="text-muted-foreground mt-1">
             Просмотр запланированных публикаций в календарном виде
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+          >
+            {sortOrder === 'desc' ? (
+              <>
+                <SortDesc size={16} />
+                <span>Сначала новые</span>
+              </>
+            ) : (
+              <>
+                <SortAsc size={16} />
+                <span>Сначала старые</span>
+              </>
+            )}
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/publish/scheduled">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -89,6 +108,8 @@ export default function CalendarView() {
               isLoading={isLoadingContent}
               onCreateClick={handleCreateClick}
               onViewPost={(post) => console.log('View post details:', post)}
+              initialSortOrder={sortOrder}
+              onSortOrderChange={setSortOrder}
             />
           )}
         </>
