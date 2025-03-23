@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { log } from '../utils/logger';
-import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
+import { CampaignContent, InsertCampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { storage } from '../storage';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -639,6 +639,19 @@ export class SocialPublishingService {
       // Определяем общий статус публикации на основе статусов всех платформ
       const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
       
+      // Определяем дату первой успешной публикации (если есть)
+      let firstPublishedAt: Date | null = null;
+      
+      // Проверяем все платформы для нахождения самой ранней даты публикации
+      Object.values(socialPlatforms).forEach((platformInfo: any) => {
+        if (platformInfo && platformInfo.status === 'published' && platformInfo.publishedAt) {
+          const publishedDate = new Date(platformInfo.publishedAt);
+          if (!firstPublishedAt || publishedDate < firstPublishedAt) {
+            firstPublishedAt = publishedDate;
+          }
+        }
+      });
+      
       // Получаем системный токен для обновления статуса
       if (!systemToken) {
         log(`Не удалось получить системный токен для обновления статуса контента`, 'social-publishing');
@@ -646,17 +659,25 @@ export class SocialPublishingService {
         // Пробуем прямой запрос к API для обновления статуса
         try {
           const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
-          await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+          const updateData: Record<string, any> = {
             socialPlatforms,
             status: allPublished ? 'published' : 'scheduled'
-          }, {
+          };
+          
+          // Добавляем дату публикации, если есть успешные публикации
+          if (allPublished && firstPublishedAt) {
+            updateData.published_at = firstPublishedAt.toISOString();
+            log(`Обновление поля published_at на ${firstPublishedAt.toISOString()}`, 'social-publishing');
+          }
+          
+          await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, updateData, {
             headers: {
               'Authorization': `Bearer ${systemToken}`
             }
           });
           
           log(`Статус контента ${contentId} успешно обновлен через API: ${allPublished ? 'published' : 'scheduled'}`, 'social-publishing');
-          return { ...content, socialPlatforms };
+          return { ...content, socialPlatforms, publishedAt: firstPublishedAt };
         } catch (error) {
           log(`Ошибка при обновлении статуса через API: ${(error as any).message}`, 'social-publishing');
           return null;
@@ -664,10 +685,18 @@ export class SocialPublishingService {
       }
       
       // Обновляем контент через хранилище
-      const updatedContent = await storage.updateCampaignContent(contentId, {
+      const updateData: Partial<InsertCampaignContent> = {
         socialPlatforms,
         status: allPublished ? 'published' : 'scheduled'
-      }, systemToken);
+      };
+      
+      // Добавляем дату публикации, если есть успешные публикации
+      if (allPublished && firstPublishedAt) {
+        (updateData as any).publishedAt = firstPublishedAt;
+        log(`Обновление поля publishedAt на ${firstPublishedAt.toISOString()}`, 'social-publishing');
+      }
+      
+      const updatedContent = await storage.updateCampaignContent(contentId, updateData, systemToken);
       
       log(`Статус контента ${contentId} успешно обновлен: ${allPublished ? 'published' : 'scheduled'}`, 'social-publishing');
       return updatedContent;
