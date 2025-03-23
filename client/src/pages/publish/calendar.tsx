@@ -50,23 +50,7 @@ export default function CalendarView() {
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
 
-  // Логирование для отладки дат публикаций
-  useEffect(() => {
-    if (campaignContent.length > 0) {
-      console.log('Анализ дат публикаций в календаре:');
-      campaignContent.forEach((post, index) => {
-        if (post.scheduledAt) {
-          const date = new Date(post.scheduledAt);
-          console.log(`Пост ${index}: ${post.title}`);
-          console.log(`  - ID: ${post.id}`);
-          console.log(`  - Дата публикации (исходная): ${post.scheduledAt}`);
-          console.log(`  - Дата публикации (объект): ${date.toString()}`);
-          console.log(`  - Форматированная дата: ${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
-          console.log(`  - Компоненты даты: Год=${date.getFullYear()}, Месяц=${date.getMonth() + 1}, День=${date.getDate()}`);
-        }
-      });
-    }
-  }, [campaignContent]);
+  // Логи для отладки дат публикаций удалены
 
   const handleCreateClick = () => {
     // Перенаправляем на страницу создания контента
