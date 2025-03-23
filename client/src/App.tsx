@@ -12,6 +12,7 @@ import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ScheduledPublications from "@/pages/publish/scheduled";
+import CalendarView from "@/pages/publish/calendar";
 import TestPublish from "@/pages/publish/test-publish";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
