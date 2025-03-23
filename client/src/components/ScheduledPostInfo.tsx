@@ -8,8 +8,15 @@ import { ru } from 'date-fns/locale';
 // Функция, которая обрабатывает даты в одном формате
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '';
+  
   // Используем parseISO для корректной обработки ISO строк
-  return format(parseISO(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
+  const date = parseISO(dateStr);
+  
+  // Корректируем часовой пояс для отображения
+  // Для России (UTC+3) добавляем 3 часа для корректного отображения
+  const correctedDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
+  
+  return format(correctedDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
 };
 
 interface SocialPublicationStatus {

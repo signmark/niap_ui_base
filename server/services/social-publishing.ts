@@ -20,12 +20,9 @@ export class SocialPublishingService {
    */
   async publishToTelegram(
     content: CampaignContent,
-    telegramSettings: SocialMediaSettings['telegram']
+    telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    log(`Начинаем публикацию в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-    
     if (!telegramSettings?.token || !telegramSettings?.chatId) {
-      log(`Ошибка публикации в Telegram: отсутствуют настройки (токен или ID чата)`, 'social-publishing');
       return {
         platform: 'telegram',
         status: 'failed',
@@ -33,19 +30,18 @@ export class SocialPublishingService {
         error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
       };
     }
-    
-    // Проверяем, что ID чата в правильном формате
-    let formattedChatId = telegramSettings.chatId;
-    
-    // Если ID чата не начинается с '-', добавляем префикс для группового чата
-    if (!formattedChatId.startsWith('-')) {
-      formattedChatId = `-${formattedChatId}`;
-      log(`ID чата отформатирован с префиксом: ${formattedChatId}`, 'social-publishing');
-    }
 
     try {
-      const { token } = telegramSettings;
-      log(`Публикация в Telegram. Чат: ${formattedChatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+      const { token, chatId } = telegramSettings;
+      log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+
+      // Правильное форматирование ID чата
+      let formattedChatId = chatId;
+      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+        formattedChatId = `-100${chatId}`;
+        log(`Переформатирован ID чата для Telegram: ${formattedChatId}`, 'social-publishing');
+      }
 
       // Подготовка сообщения с сохранением HTML-форматирования
       let text = content.title ? `<b>${content.title}</b>\n\n` : '';
@@ -79,19 +75,20 @@ export class SocialPublishingService {
       let response;
       const baseUrl = `https://api.telegram.org/bot${token}`;
 
-      if (content.contentType === 'text') {
-        // Отправка текстового сообщения
-        log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
-        response = await axios.post(`${baseUrl}/sendMessage`, {
-          chat_id: formattedChatId,
-          text,
-          parse_mode: 'HTML'
-        });
-      } else if ((content.contentType === 'text-image' || content.imageUrl) && content.imageUrl) {
+      // Проверяем доступность изображения
+      const hasImage = content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '';
+      
+      // Проверяем доступность видео
+      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+      
+      // Решение о методе публикации на основе доступности медиа и типа контента
+      if (hasImage) {
         // Отправка изображения с подписью
-        log(`Отправка изображения в Telegram с URL: ${content.imageUrl}`, 'social-publishing');
+        log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${content.imageUrl}`, 'social-publishing');
+        
         // Проверяем формат URL изображения для Telegram
         let photoUrl = content.imageUrl;
+        
         // Если URL не начинается с http, добавляем базовый URL сервера
         if (photoUrl && !photoUrl.startsWith('http')) {
           const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
@@ -111,24 +108,41 @@ export class SocialPublishingService {
           caption: truncatedCaption,
           parse_mode: 'HTML'
         });
-      } else if ((content.contentType === 'video' || content.contentType === 'video-text') && content.videoUrl) {
+      } else if (hasVideo) {
         // Отправка видео с подписью
-        log(`Отправка видео в Telegram с URL: ${content.videoUrl}`, 'social-publishing');
+        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${content.videoUrl}`, 'social-publishing');
         response = await axios.post(`${baseUrl}/sendVideo`, {
           chat_id: formattedChatId,
           video: content.videoUrl,
           caption: text,
           parse_mode: 'HTML'
         });
+      } else if (content.contentType === 'text' || !content.contentType) {
+        // Отправка текстового сообщения (по умолчанию)
+        log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
+        response = await axios.post(`${baseUrl}/sendMessage`, {
+          chat_id: formattedChatId,
+          text,
+          parse_mode: 'HTML'
+        });
       } else {
-        // Неподдерживаемый тип контента
-        log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
-        return {
-          platform: 'telegram',
-          status: 'failed',
-          publishedAt: null,
-          error: `Неподдерживаемый тип контента: ${content.contentType}`
-        };
+        // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
+        log(`Для типа контента ${content.contentType} не найдены медиа. Отправляем как текст`, 'social-publishing');
+        try {
+          response = await axios.post(`${baseUrl}/sendMessage`, {
+            chat_id: formattedChatId,
+            text,
+            parse_mode: 'HTML'
+          });
+        } catch (error) {
+          log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Неподдерживаемый тип контента: ${content.contentType}`
+          };
+        }
       }
 
       log(`Получен ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -170,12 +184,6 @@ export class SocialPublishingService {
     }
   }
 
-  /**
-   * Публикует контент в VK
-   * @param content Контент для публикации
-   * @param vkSettings Настройки VK API
-   * @returns Результат публикации
-   */
   /**
    * Получает URL для загрузки фотографии в VK
    * @param token Токен доступа VK
@@ -308,9 +316,15 @@ export class SocialPublishingService {
     }
   }
 
+  /**
+   * Публикует контент в VK
+   * @param content Контент для публикации
+   * @param vkSettings Настройки VK API
+   * @returns Результат публикации
+   */
   async publishToVk(
     content: CampaignContent,
-    vkSettings: SocialMediaSettings['vk']
+    vkSettings?: SocialMediaSettings['vk']
   ): Promise<SocialPublication> {
     if (!vkSettings?.token || !vkSettings?.groupId) {
       return {
@@ -488,7 +502,7 @@ export class SocialPublishingService {
    */
   async publishToInstagram(
     content: CampaignContent,
-    instagramSettings: SocialMediaSettings['instagram']
+    instagramSettings?: SocialMediaSettings['instagram']
   ): Promise<SocialPublication> {
     // Публикация в Instagram требует использования Facebook Graph API
     // Здесь упрощенная реализация для демонстрации
@@ -508,7 +522,7 @@ export class SocialPublishingService {
    */
   async publishToFacebook(
     content: CampaignContent,
-    facebookSettings: SocialMediaSettings['facebook']
+    facebookSettings?: SocialMediaSettings['facebook']
   ): Promise<SocialPublication> {
     // Публикация в Facebook требует использования Facebook Graph API
     // Здесь упрощенная реализация для демонстрации
@@ -556,180 +570,160 @@ export class SocialPublishingService {
   /**
    * Обновляет статус публикации контента в базе данных
    * @param contentId ID контента
-   * @param platform Платформа
+   * @param platform Социальная платформа
    * @param publicationResult Результат публикации
+   * @returns Обновленный контент или null в случае ошибки
    */
   async updatePublicationStatus(
     contentId: string,
     platform: SocialPlatform,
     publicationResult: SocialPublication
-  ): Promise<void> {
+  ): Promise<CampaignContent | null> {
     try {
-      // Получаем токен для доступа к API
+      // Получаем текущий контент из хранилища
       const systemToken = await this.getSystemToken();
       let content = null;
       
-      // Пробуем получить контент напрямую через API, если есть токен
       if (systemToken) {
+        content = await storage.getCampaignContentById(contentId, systemToken);
+      }
+      
+      if (!content) {
+        log(`Не удалось получить контент с ID ${contentId} для обновления статуса`, 'social-publishing');
+        log(`Прямой запрос для получения контента через API: ${contentId}`, 'social-publishing');
+        
+        // Прямой запрос к API для получения контента
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          log(`Получение контента по ID: ${contentId}`, 'social-publishing');
-          
+          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
           const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
             headers: {
-              'Authorization': `Bearer ${systemToken}`,
-              'Content-Type': 'application/json'
+              'Authorization': `Bearer ${systemToken}`
             }
           });
           
-          if (response?.data?.data) {
-            const item = response.data.data;
-            content = {
-              id: item.id,
-              userId: item.user_id,
-              socialPlatforms: item.social_platforms || {},
-              status: item.status
-            };
+          if (response.data && response.data.data) {
+            content = response.data.data;
             log(`Контент получен напрямую через API: ${contentId}`, 'social-publishing');
           }
-        } catch (apiError) {
-          log(`Ошибка при получении контента через API: ${apiError}`, 'social-publishing');
+        } catch (error) {
+          log(`Ошибка при получении контента через API: ${(error as any).message}`, 'social-publishing');
         }
       }
       
-      // Если не получилось через API, пробуем через стандартное хранилище
       if (!content) {
-        content = await storage.getCampaignContentById(contentId);
+        return null;
       }
       
-      // Если всё равно не нашли контент
-      if (!content) {
-        log(`Не удалось найти контент с ID ${contentId}`, 'social-publishing');
-        return;
-      }
-      
-      // Добавляем userId в publicationResult из content, если такой информации еще нет
-      if (!publicationResult.userId && content.userId) {
+      // Добавляем userId если его нет
+      if (publicationResult.userId) {
+        log(`Добавлен userId в publicationResult: ${publicationResult.userId}`, 'social-publishing');
+      } else if (content.userId) {
         publicationResult.userId = content.userId;
-        log(`Добавлен userId в publicationResult: ${content.userId}`, 'social-publishing');
       }
-
-      // Создаем или обновляем статус публикации
-      const socialPlatforms = content.socialPlatforms || {};
       
-      // Используем безопасное приведение типов для предотвращения ошибок TypeScript
-      const typedSocialPlatforms = socialPlatforms as Record<string, SocialPublication>;
-      typedSocialPlatforms[platform] = publicationResult;
-
-      // Проверяем все платформы, статус публикации
-      const newStatus = this.checkAllPlatformsPublished(typedSocialPlatforms) ? 'published' : content.status;
+      // Обновляем статус публикации для платформы
+      let socialPlatforms = content.socialPlatforms || {};
       
-      // Если есть токен, обновляем через прямой API запрос
-      if (systemToken) {
+      // Преобразуем из строки в объект, если это строка
+      if (typeof socialPlatforms === 'string') {
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          log(`Обновление статуса контента через API: ${contentId}`, 'social-publishing');
-          
-          // Готовим данные для обновления в snake_case формате для Directus
-          const updateData = {
-            social_platforms: typedSocialPlatforms,
-            status: newStatus
-          };
-          
-          const response = await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, updateData, {
+          socialPlatforms = JSON.parse(socialPlatforms);
+        } catch (e) {
+          socialPlatforms = {};
+        }
+      }
+      
+      // Обновляем информацию о платформе
+      socialPlatforms[platform] = publicationResult;
+      
+      // Определяем общий статус публикации на основе статусов всех платформ
+      const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
+      
+      // Получаем системный токен для обновления статуса
+      if (!systemToken) {
+        log(`Не удалось получить системный токен для обновления статуса контента`, 'social-publishing');
+        
+        // Пробуем прямой запрос к API для обновления статуса
+        try {
+          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+          await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+            socialPlatforms,
+            status: allPublished ? 'published' : 'scheduled'
+          }, {
             headers: {
-              'Authorization': `Bearer ${systemToken}`,
-              'Content-Type': 'application/json'
+              'Authorization': `Bearer ${systemToken}`
             }
           });
           
-          if (response.status >= 200 && response.status < 300) {
-            log(`Статус контента ${contentId} успешно обновлен через API: ${newStatus}`, 'social-publishing');
-            return;
-          }
-        } catch (apiError) {
-          log(`Ошибка при обновлении контента через API: ${apiError}`, 'social-publishing');
+          log(`Статус контента ${contentId} успешно обновлен через API: ${allPublished ? 'published' : 'scheduled'}`, 'social-publishing');
+          return { ...content, socialPlatforms };
+        } catch (error) {
+          log(`Ошибка при обновлении статуса через API: ${(error as any).message}`, 'social-publishing');
+          return null;
         }
       }
       
-      // Если не получилось через API, используем стандартное хранилище
-      const updateObject: any = {
-        socialPlatforms: typedSocialPlatforms,
-        status: newStatus
-      };
+      // Обновляем контент через хранилище
+      const updatedContent = await storage.updateCampaignContent(contentId, {
+        socialPlatforms,
+        status: allPublished ? 'published' : 'scheduled'
+      }, systemToken);
       
-      // Обновляем контент в базе данных
-      await storage.updateCampaignContent(contentId, updateObject);
-
-      log(
-        `Статус публикации в ${platform} обновлен: ${publicationResult.status}`,
-        'social-publishing'
-      );
+      log(`Статус контента ${contentId} успешно обновлен: ${allPublished ? 'published' : 'scheduled'}`, 'social-publishing');
+      return updatedContent;
     } catch (error: any) {
-      log(
-        `Ошибка при обновлении статуса публикации: ${error.message}`,
-        'social-publishing'
-      );
+      log(`Ошибка при обновлении статуса публикации: ${error.message}`, 'social-publishing');
+      return null;
     }
   }
 
   /**
-   * Проверяет, все ли платформы опубликованы
-   * @param socialPlatforms Статусы публикаций по платформам
-   * @returns true, если все платформы опубликованы
+   * Проверяет, опубликован ли контент на всех платформах
+   * @param socialPlatforms Информация о публикациях на платформах
+   * @returns true, если контент опубликован на всех платформах, иначе false
    */
   private checkAllPlatformsPublished(socialPlatforms: Record<string, SocialPublication>): boolean {
-    // Если платформ нет, то считаем, что все опубликовано
-    if (Object.keys(socialPlatforms).length === 0) {
-      return true;
+    // Если нет информации о платформах, считаем, что не опубликовано
+    if (!socialPlatforms || Object.keys(socialPlatforms).length === 0) {
+      return false;
     }
-
-    // Проверяем, что хотя бы одна платформа не опубликована
-    return Object.values(socialPlatforms).every(
-      platform => platform.status === 'published'
-    );
+    
+    // Проверяем, что на всех платформах статус 'published'
+    return Object.values(socialPlatforms).every(platform => platform.status === 'published');
   }
 
   /**
-   * Получает системный токен для доступа к API
-   * Приоритеты получения токена:
-   * 1. Авторизация через логин/пароль (admin)
-   * 2. Статический токен из переменных окружения
+   * Получает системный токен для авторизации в Directus
+   * @returns Токен авторизации или null, если не удалось получить токен
    */
   private async getSystemToken(): Promise<string | null> {
-    // 1. Пробуем авторизоваться с учетными данными администратора
-    const email = process.env.DIRECTUS_ADMIN_EMAIL;
-    const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-    
-    if (email && password) {
-      try {
-        log('Попытка авторизации администратора с учетными данными из env', 'social-publishing');
-        
-        // Прямой запрос авторизации через API
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-        const response = await axios.post(`${directusUrl}/auth/login`, {
-          email, 
-          password
-        });
-        
-        if (response?.data?.data?.access_token) {
-          log('Авторизация администратора успешна через прямой API запрос', 'social-publishing');
-          return response.data.data.access_token;
-        }
-      } catch (error: any) {
-        log(`Ошибка авторизации администратора: ${error.message}`, 'social-publishing');
+    try {
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        log(`Отсутствуют учетные данные администратора Directus в переменных окружения`, 'social-publishing');
+        return null;
       }
+      
+      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+      
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
+      });
+      
+      if (response.data && response.data.data && response.data.data.access_token) {
+        log(`Успешно получен токен администратора Directus`, 'social-publishing');
+        return response.data.data.access_token;
+      }
+      
+      log(`Не удалось получить токен администратора Directus: Неверный формат ответа`, 'social-publishing');
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении токена администратора Directus: ${error.message}`, 'social-publishing');
+      return null;
     }
-    
-    // 2. Проверяем статический токен
-    const staticToken = process.env.DIRECTUS_ADMIN_TOKEN;
-    if (staticToken) {
-      log('Использую статический токен из переменных окружения', 'social-publishing');
-      return staticToken;
-    }
-    
-    log('Не удалось получить системный токен', 'social-publishing');
-    return null;
   }
 }
 
