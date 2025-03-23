@@ -2132,17 +2132,24 @@ export default function ContentPage() {
                     <span>Опубликовано: {
                       (() => {
                         try {
-                          // Получение даты и преобразование к локальному времени
-                          const date = new Date(typeof previewContent.publishedAt === 'string' 
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.publishedAt === 'string' 
                             ? previewContent.publishedAt 
                             : (previewContent.publishedAt instanceof Date 
                                 ? previewContent.publishedAt.toISOString() 
-                                : String(previewContent.publishedAt)));
-                          
-                          // Форматирование с использованием локали ru
-                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                                : String(previewContent.publishedAt));
+                              
+                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
+                          if (dateStr.endsWith('Z')) {
+                            const utcDate = new Date(dateStr);
+                            // Создаем новую дату с учетом MSK (+3 часа)
+                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
+                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          } else {
+                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          }
                         } catch (error) {
-                          console.error("Ошибка форматирования даты публикации:", error);
+                          console.error("Ошибка форматирования даты публикации:", error, previewContent.publishedAt);
                           return "Некорректная дата";
                         }
                       })()
@@ -2155,17 +2162,24 @@ export default function ContentPage() {
                     <span>Запланировано: {
                       (() => {
                         try {
-                          // Получение даты и преобразование к локальному времени
-                          const date = new Date(typeof previewContent.scheduledAt === 'string' 
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.scheduledAt === 'string' 
                             ? previewContent.scheduledAt 
                             : (previewContent.scheduledAt instanceof Date 
                                 ? previewContent.scheduledAt.toISOString() 
-                                : String(previewContent.scheduledAt)));
-                          
-                          // Форматирование с использованием локали ru
-                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                                : String(previewContent.scheduledAt));
+                              
+                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
+                          if (dateStr.endsWith('Z')) {
+                            const utcDate = new Date(dateStr);
+                            // Создаем новую дату с учетом MSK (+3 часа)
+                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
+                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          } else {
+                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          }
                         } catch (error) {
-                          console.error("Ошибка форматирования даты публикации:", error);
+                          console.error("Ошибка форматирования даты публикации:", error, previewContent.scheduledAt);
                           return "Некорректная дата";
                         }
                       })()
@@ -2178,17 +2192,24 @@ export default function ContentPage() {
                     <span>Создано: {
                       (() => {
                         try {
-                          // Получение даты и преобразование к локальному времени
-                          const date = new Date(typeof previewContent.createdAt === 'string' 
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.createdAt === 'string' 
                             ? previewContent.createdAt 
                             : (previewContent.createdAt instanceof Date 
                                 ? previewContent.createdAt.toISOString() 
-                                : String(previewContent.createdAt)));
-                          
-                          // Форматирование с использованием локали ru
-                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                                : String(previewContent.createdAt));
+                              
+                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
+                          if (dateStr.endsWith('Z')) {
+                            const utcDate = new Date(dateStr);
+                            // Создаем новую дату с учетом MSK (+3 часа)
+                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
+                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          } else {
+                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
+                          }
                         } catch (error) {
-                          console.error("Ошибка форматирования даты создания:", error);
+                          console.error("Ошибка форматирования даты создания:", error, previewContent.createdAt);
                           return "Некорректная дата";
                         }
                       })()
