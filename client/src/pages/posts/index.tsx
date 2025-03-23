@@ -172,16 +172,16 @@ export default function Posts() {
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Календарь публикаций</h1>
         <p className="text-muted-foreground mt-2">
-          Управляйте публикациями для выбранной кампании
+          Просмотр и управление постами в календарном виде
         </p>
       </div>
 
       {selectedCampaign ? (
         <Card>
           <CardHeader>
-            <CardTitle>Календарь публикаций</CardTitle>
+            <CardTitle>Кампания "{selectedCampaign.name}"</CardTitle>
             <CardDescription>
-              Управляйте публикациями для выбранной кампании
+              Выберите дату для просмотра запланированных публикаций
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -306,50 +306,28 @@ export default function Posts() {
                       );
                     }).length > 0 ? (
                       <div className="space-y-4">
+                        {/* Фильтруем и отображаем посты на выбранную дату */}
                         {campaignContent.filter(post => {
-                          // Используем унифицированную логику фильтрации для всех календарей
-                          // Формируем массив дат, которые относятся к этому посту
+                          // Используем унифицированную логику фильтрации
                           let relevantDates: Date[] = [];
                           
-                          // 1. Проверяем publishedAt
-                          if (post.publishedAt) {
-                            try {
-                              relevantDates.push(new Date(post.publishedAt));
-                            } catch (e) {}
-                          }
+                          // Проверяем все возможные типы дат для поста
+                          if (post.publishedAt) try { relevantDates.push(new Date(post.publishedAt)); } catch (e) {}
+                          if (post.scheduledAt) try { relevantDates.push(new Date(post.scheduledAt)); } catch (e) {}
                           
-                          // 2. Проверяем scheduledAt
-                          if (post.scheduledAt) {
-                            try {
-                              relevantDates.push(new Date(post.scheduledAt));
-                            } catch (e) {}
-                          }
-                          
-                          // 3. Проверяем даты из платформ социальных сетей
+                          // Проверяем даты из платформ социальных сетей
                           if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
                             for (const platform in post.socialPlatforms) {
                               const platformData = post.socialPlatforms[platform as SocialPlatform];
                               
-                              // Проверяем дату публикации
-                              if (platformData && platformData.publishedAt) {
-                                try {
-                                  relevantDates.push(new Date(platformData.publishedAt));
-                                } catch (e) {}
-                              }
-                              
-                              // Проверяем запланированную дату для платформы
-                              if (platformData && platformData.scheduledAt) {
-                                try {
-                                  relevantDates.push(new Date(platformData.scheduledAt));
-                                } catch (e) {}
-                              }
+                              // Проверяем даты публикации и планирования для каждой платформы
+                              if (platformData?.publishedAt) try { relevantDates.push(new Date(platformData.publishedAt)); } catch (e) {}
+                              if (platformData?.scheduledAt) try { relevantDates.push(new Date(platformData.scheduledAt)); } catch (e) {}
                             }
                           }
                           
-                          // 4. Проверяем совпадение любой даты с указанным днем
-                          return relevantDates.some(date => 
-                            isSameDay(selectedDate, date)
-                          );
+                          // Проверяем, есть ли совпадение хотя бы с одной датой
+                          return relevantDates.some(date => isSameDay(selectedDate, date));
                         })
                           .map(content => (
                             <Card key={content.id} className="overflow-hidden">
