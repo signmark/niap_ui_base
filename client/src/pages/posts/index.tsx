@@ -89,7 +89,20 @@ export default function Posts() {
   // Получение точек для календаря (публикации на каждый день)
   const getDayContent = (day: Date) => {
     const postsForDay = campaignContent.filter((content) => {
-      // Проверяем наличие опубликованных постов на эту дату
+      // Проверяем наличие запланированных и опубликованных постов на эту дату
+      // Сначала проверим scheduledAt
+      if (content.scheduledAt) {
+        try {
+          const scheduleDate = new Date(content.scheduledAt);
+          if (isSameDay(scheduleDate, day)) {
+            return true;
+          }
+        } catch (e) {
+          // Ошибка парсинга даты
+        }
+      }
+      
+      // Затем проверяем даты фактической публикации в платформах
       if (content.socialPlatforms) {
         return Object.values(content.socialPlatforms).some(platform => {
           if (platform.publishedAt) {
@@ -235,7 +248,20 @@ export default function Posts() {
                 ) : (
                   <>
                     {campaignContent.filter(content => {
-                      // Фильтруем контент, опубликованный на выбранную дату
+                      // Проверяем наличие запланированных и опубликованных постов на эту дату
+                      // Сначала проверим scheduledAt
+                      if (content.scheduledAt) {
+                        try {
+                          const scheduleDate = new Date(content.scheduledAt);
+                          if (isSameDay(scheduleDate, selectedDate)) {
+                            return true;
+                          }
+                        } catch (e) {
+                          // Ошибка парсинга даты
+                        }
+                      }
+                      
+                      // Затем проверяем даты фактической публикации в платформах
                       if (content.socialPlatforms) {
                         return Object.values(content.socialPlatforms).some(platform => {
                           if (platform.publishedAt) {
@@ -256,7 +282,20 @@ export default function Posts() {
                       <div className="space-y-4">
                         {campaignContent
                           .filter(content => {
-                            // Фильтруем контент, опубликованный на выбранную дату
+                            // Проверяем наличие запланированных и опубликованных постов на эту дату
+                            // Сначала проверим scheduledAt
+                            if (content.scheduledAt) {
+                              try {
+                                const scheduleDate = new Date(content.scheduledAt);
+                                if (isSameDay(scheduleDate, selectedDate)) {
+                                  return true;
+                                }
+                              } catch (e) {
+                                // Ошибка парсинга даты
+                              }
+                            }
+                            
+                            // Затем проверяем даты фактической публикации в платформах
                             if (content.socialPlatforms) {
                               return Object.values(content.socialPlatforms).some(platform => {
                                 if (platform.publishedAt) {
