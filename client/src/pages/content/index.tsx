@@ -288,7 +288,8 @@ export default function ContentPage() {
     },
     enabled: !!selectedCampaignId,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000, // Автоматически обновлять данные каждые 10 секунд
   });
   
   // Запрос ключевых слов кампании
@@ -315,7 +316,8 @@ export default function ContentPage() {
     },
     enabled: !!selectedCampaignId,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000 // Автоматически обновлять данные каждые 10 секунд
   });
 
   // Мутация для создания контента
