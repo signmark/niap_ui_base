@@ -664,8 +664,8 @@ export class SocialPublishingService {
             status: allPublished ? 'published' : 'scheduled'
           };
           
-          // Добавляем дату публикации, если есть успешные публикации
-          if (allPublished && firstPublishedAt) {
+          // Добавляем дату публикации, если есть хотя бы одна успешная публикация
+          if (firstPublishedAt) {
             updateData.published_at = firstPublishedAt.toISOString();
             log(`Обновление поля published_at на ${firstPublishedAt.toISOString()}`, 'social-publishing');
           }
@@ -690,8 +690,8 @@ export class SocialPublishingService {
         status: allPublished ? 'published' : 'scheduled'
       };
       
-      // Добавляем дату публикации, если есть успешные публикации
-      if (allPublished && firstPublishedAt) {
+      // Добавляем дату публикации, если есть хотя бы одна успешная публикация
+      if (firstPublishedAt) {
         (updateData as any).publishedAt = firstPublishedAt;
         log(`Обновление поля publishedAt на ${firstPublishedAt.toISOString()}`, 'social-publishing');
       }
