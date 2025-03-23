@@ -33,6 +33,8 @@ export default function Posts() {
       if (!selectedCampaign?.id) return { data: [] };
 
       try {
+        console.log('Загрузка публикаций для кампании:', selectedCampaign.id);
+
         const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaign.id}`, {
           headers: {
             'Authorization': `Bearer ${getAuthToken()}`
@@ -44,13 +46,16 @@ export default function Posts() {
         }
         
         const responseData = await response.json();
+        console.log('Загружено публикаций:', (responseData.data || []).length);
         return responseData;
       } catch (error) {
         console.error('Ошибка при загрузке контента:', error);
         return { data: [] };
       }
     },
-    enabled: !!selectedCampaign?.id
+    enabled: !!selectedCampaign?.id,
+    refetchOnMount: true,
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
   });
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];

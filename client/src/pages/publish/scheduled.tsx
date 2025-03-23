@@ -74,16 +74,20 @@ export default function ScheduledPublications() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      console.log('Fetching scheduled content with token:', authToken ? 'Token available' : 'No token');
-      console.log('Using userId:', userId, 'campaignId:', selectedCampaign?.id);
+      console.log('Загрузка запланированных публикаций для кампании:', selectedCampaign?.id);
+      console.log('Используется userId:', userId);
       
       const result = await apiRequest(url, { 
         method: 'GET',
         headers 
       });
+      
+      console.log('Загружено запланированных публикаций:', (result.data || []).length);
       return result.data;
     },
     enabled: !!userId && !!selectedCampaign?.id,
+    refetchOnMount: true,
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
   });
   
   // Обновляем данные при изменении выбранной кампании или пользователя
