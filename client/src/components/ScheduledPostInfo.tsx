@@ -12,10 +12,12 @@ const formatDate = (dateStr: string | null) => {
   // Используем parseISO для корректной обработки ISO строк
   const date = parseISO(dateStr);
   
-  // Отображаем время из базы данных "как есть" без корректировок
-  // Поскольку время уже хранится в правильном часовом поясе
+  // Корректируем часовой пояс для отображения
+  // Для России (UTC+3) добавляем 3 часа для корректного отображения
+  // Время в БД хранится в UTC, а показать нужно в локальном времени
+  const correctedDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
   
-  return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  return format(correctedDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
 };
 
 interface SocialPublicationStatus {
