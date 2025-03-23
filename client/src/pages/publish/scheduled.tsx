@@ -8,6 +8,7 @@ import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { safeSocialPlatforms, platformNames, SocialPlatforms } from '@/lib/social-platforms';
+import { Link } from 'wouter';
 
 import {
   Card,
@@ -334,7 +335,13 @@ export default function ScheduledPublications() {
           </Select>
         </div>
         
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button asChild variant="outline">
+            <Link href="/publish/calendar">
+              <Calendar size={16} className="mr-2" />
+              <span>Календарь публикаций</span>
+            </Link>
+          </Button>
           <Button onClick={handleRefresh} variant="outline" className="gap-2">
             <RefreshCw size={16} />
             <span>Обновить</span>

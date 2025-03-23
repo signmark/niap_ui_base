@@ -39,6 +39,7 @@ function Router() {
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
+      <Route path="/publish/calendar" component={() => <Layout><CalendarView /></Layout>} />
       <Route path="/publish/test" component={() => <Layout><TestPublish /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
