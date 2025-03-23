@@ -997,7 +997,7 @@ export default function ContentPage() {
                       <AccordionTrigger className="py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <div className="flex items-center gap-2">
                           <CalendarIcon className="h-4 w-4 opacity-70" />
-                          <span className="font-medium">{dateStr}</span>
+                          <span className="font-medium">{formatDateForGrouping(dateStr)}</span>
                           <Badge className="ml-2">{contents.length}</Badge>
                         </div>
                       </AccordionTrigger>
