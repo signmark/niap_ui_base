@@ -54,62 +54,93 @@ export default function PublicationCalendar({
   
   const filteredContent = content
     .filter(post => {
-      // Логика фильтрации по дате теперь учитывает scheduledAt и даты публикаций в платформах
+      // Используем унифицированную логику фильтрации для всех календарей
       
-      // 1. Сначала проверяем scheduledAt
+      // 1. Формируем массив дат, которые относятся к этому посту
+      let relevantDates: Date[] = [];
+      let platformsWithDates: Set<SocialPlatform> = new Set();
+      
+      // Проверяем publishedAt
+      if (post.publishedAt) {
+        try {
+          relevantDates.push(new Date(post.publishedAt));
+        } catch (e) {}
+      }
+      
+      // Проверяем scheduledAt
       if (post.scheduledAt) {
         try {
-          const postDate = new Date(post.scheduledAt);
-          if (isSameDay(startOfDay(selectedDate), startOfDay(postDate))) {
-            // Проверяем фильтрацию по платформам
-            if (filteredPlatforms.length === 0) {
-              return true; // Если фильтр не выбран, показываем пост
-            }
-            
-            if (post.socialPlatforms) {
-              // Если платформы фильтруются, проверяем, есть ли среди них выбранные
-              return Object.keys(post.socialPlatforms).some(platform => 
-                filteredPlatforms.includes(platform as SocialPlatform) &&
-                post.socialPlatforms &&
-                post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
-              );
-            }
-            
-            return false; // У поста нет платформ, но фильтр платформ активен
-          }
-        } catch (e) {
-          // Ошибка парсинга даты, продолжаем проверку
-        }
+          relevantDates.push(new Date(post.scheduledAt));
+        } catch (e) {}
       }
       
-      // 2. Затем проверяем даты фактических публикаций в платформах
-      if (post.socialPlatforms) {
-        // Проверяем, есть ли платформы, опубликованные в выбранную дату
-        const hasPlatformPublishedOnSelectedDate = Object.entries(post.socialPlatforms).some(([platform, data]) => {
-          if (data.publishedAt) {
+      // Проверяем даты из платформ социальных сетей
+      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          let hasPlatformDate = false;
+          
+          // Проверяем дату публикации
+          if (platformData && platformData.publishedAt) {
             try {
-              const publishDate = typeof data.publishedAt === 'string' 
-                ? new Date(data.publishedAt) 
-                : data.publishedAt;
-              
-              // Проверяем совпадение даты и фильтрацию по платформам
+              const publishDate = new Date(platformData.publishedAt);
               if (isSameDay(startOfDay(selectedDate), startOfDay(publishDate))) {
-                return filteredPlatforms.length === 0 || filteredPlatforms.includes(platform as SocialPlatform);
+                hasPlatformDate = true;
+                platformsWithDates.add(platform as SocialPlatform);
               }
-            } catch (e) {
-              // Ошибка парсинга даты
-            }
+              relevantDates.push(publishDate);
+            } catch (e) {}
           }
-          return false;
-        });
-        
-        if (hasPlatformPublishedOnSelectedDate) {
-          return true;
+          
+          // Проверяем запланированную дату для платформы
+          if (platformData && platformData.scheduledAt) {
+            try {
+              const scheduledDate = new Date(platformData.scheduledAt);
+              if (isSameDay(startOfDay(selectedDate), startOfDay(scheduledDate))) {
+                hasPlatformDate = true;
+                platformsWithDates.add(platform as SocialPlatform);
+              }
+              relevantDates.push(scheduledDate);
+            } catch (e) {}
+          }
         }
       }
       
-      // Ни один из критериев не подошел
-      return false;
+      // 2. Проверяем совпадение любой даты с выбранной датой
+      const hasMatchingDate = relevantDates.some(date => 
+        isSameDay(startOfDay(selectedDate), startOfDay(date))
+      );
+      
+      // 3. Применяем фильтрацию по платформам, если необходимо
+      if (hasMatchingDate) {
+        if (filteredPlatforms.length === 0) {
+          return true; // Если фильтр не выбран, показываем пост
+        }
+        
+        // Проверяем, есть ли какая-либо из выбранных платформ у поста
+        if (post.socialPlatforms) {
+          // Если платформы фильтруются, проверяем, есть ли выбранные платформы среди тех, что имеют даты на выбранный день
+          const hasFilteredPlatform = Array.from(platformsWithDates).some(platform => 
+            filteredPlatforms.includes(platform)
+          );
+          
+          if (hasFilteredPlatform) {
+            return true;
+          }
+          
+          // Если нет совпадений по платформам, проверяем общую дату поста (scheduledAt/publishedAt)
+          // и показываем пост, только если платформы вообще не выбраны
+          const hasMatchingGeneralDate = 
+            (post.scheduledAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.scheduledAt)))) ||
+            (post.publishedAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.publishedAt))));
+          
+          return hasMatchingGeneralDate;
+        }
+        
+        return false; // У поста нет платформ, но фильтр платформ активен
+      }
+      
+      return false; // Дата не совпадает
     })
     .sort((a, b) => {
       // Сортировка по времени публикации
@@ -127,38 +158,50 @@ export default function PublicationCalendar({
 
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
-    // Используем ту же логику фильтрации, что и в filteredContent
+    // Используем унифицированную логику фильтрации для всех видов календарей
     const postsForDay = content.filter(post => {
-      // 1. Сначала проверяем scheduledAt
+      // Формируем массив дат, которые относятся к этому посту
+      let relevantDates: Date[] = [];
+      
+      // 1. Проверяем publishedAt
+      if (post.publishedAt) {
+        try {
+          relevantDates.push(new Date(post.publishedAt));
+        } catch (e) {}
+      }
+      
+      // 2. Проверяем scheduledAt
       if (post.scheduledAt) {
         try {
-          const postDate = new Date(post.scheduledAt);
-          if (isSameDay(startOfDay(day), startOfDay(postDate))) {
-            return true;
+          relevantDates.push(new Date(post.scheduledAt));
+        } catch (e) {}
+      }
+      
+      // 3. Проверяем даты из платформ социальных сетей
+      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          
+          // Проверяем дату публикации
+          if (platformData && platformData.publishedAt) {
+            try {
+              relevantDates.push(new Date(platformData.publishedAt));
+            } catch (e) {}
           }
-        } catch (e) {
-          // Ошибка парсинга даты, продолжаем проверку
+          
+          // Проверяем запланированную дату для платформы
+          if (platformData && platformData.scheduledAt) {
+            try {
+              relevantDates.push(new Date(platformData.scheduledAt));
+            } catch (e) {}
+          }
         }
       }
       
-      // 2. Затем проверяем даты фактических публикаций в платформах
-      if (post.socialPlatforms) {
-        return Object.values(post.socialPlatforms).some(data => {
-          if (data.publishedAt) {
-            try {
-              const publishDate = typeof data.publishedAt === 'string' 
-                ? new Date(data.publishedAt) 
-                : data.publishedAt;
-              return isSameDay(startOfDay(day), startOfDay(publishDate));
-            } catch (e) {
-              // Ошибка парсинга даты
-            }
-          }
-          return false;
-        });
-      }
-      
-      return false;
+      // 4. Проверяем совпадение любой даты с указанным днем
+      return relevantDates.some(date => 
+        isSameDay(startOfDay(day), startOfDay(date))
+      );
     });
 
     if (!postsForDay.length) return null;

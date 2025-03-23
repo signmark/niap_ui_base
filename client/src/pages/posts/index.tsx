@@ -247,72 +247,97 @@ export default function Posts() {
                   </div>
                 ) : (
                   <>
-                    {campaignContent.filter(content => {
-                      // Проверяем наличие запланированных и опубликованных постов на эту дату
-                      // Сначала проверим scheduledAt
-                      if (content.scheduledAt) {
+                    {campaignContent.filter(post => {
+                      // Используем унифицированную логику фильтрации для всех календарей
+                      // Формируем массив дат, которые относятся к этому посту
+                      let relevantDates: Date[] = [];
+                      
+                      // 1. Проверяем publishedAt
+                      if (post.publishedAt) {
                         try {
-                          const scheduleDate = new Date(content.scheduledAt);
-                          if (isSameDay(scheduleDate, selectedDate)) {
-                            return true;
+                          relevantDates.push(new Date(post.publishedAt));
+                        } catch (e) {}
+                      }
+                      
+                      // 2. Проверяем scheduledAt
+                      if (post.scheduledAt) {
+                        try {
+                          relevantDates.push(new Date(post.scheduledAt));
+                        } catch (e) {}
+                      }
+                      
+                      // 3. Проверяем даты из платформ социальных сетей
+                      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+                        for (const platform in post.socialPlatforms) {
+                          const platformData = post.socialPlatforms[platform as SocialPlatform];
+                          
+                          // Проверяем дату публикации
+                          if (platformData && platformData.publishedAt) {
+                            try {
+                              relevantDates.push(new Date(platformData.publishedAt));
+                            } catch (e) {}
                           }
-                        } catch (e) {
-                          // Ошибка парсинга даты
+                          
+                          // Проверяем запланированную дату для платформы
+                          if (platformData && platformData.scheduledAt) {
+                            try {
+                              relevantDates.push(new Date(platformData.scheduledAt));
+                            } catch (e) {}
+                          }
                         }
                       }
                       
-                      // Затем проверяем даты фактической публикации в платформах
-                      if (content.socialPlatforms) {
-                        return Object.values(content.socialPlatforms).some(platform => {
-                          if (platform.publishedAt) {
-                            try {
-                              const publishDate = typeof platform.publishedAt === 'string' 
-                                ? parseISO(platform.publishedAt) 
-                                : new Date(platform.publishedAt);
-                              return isSameDay(publishDate, selectedDate);
-                            } catch (e) {
-                              return false;
-                            }
-                          }
-                          return false;
-                        });
-                      }
-                      return false;
+                      // 4. Проверяем совпадение любой даты с указанным днем
+                      return relevantDates.some(date => 
+                        isSameDay(startOfDay(selectedDate), startOfDay(date))
+                      );
                     }).length > 0 ? (
                       <div className="space-y-4">
-                        {campaignContent
-                          .filter(content => {
-                            // Проверяем наличие запланированных и опубликованных постов на эту дату
-                            // Сначала проверим scheduledAt
-                            if (content.scheduledAt) {
-                              try {
-                                const scheduleDate = new Date(content.scheduledAt);
-                                if (isSameDay(scheduleDate, selectedDate)) {
-                                  return true;
-                                }
-                              } catch (e) {
-                                // Ошибка парсинга даты
+                        {campaignContent.filter(post => {
+                          // Используем унифицированную логику фильтрации для всех календарей
+                          // Формируем массив дат, которые относятся к этому посту
+                          let relevantDates: Date[] = [];
+                          
+                          // 1. Проверяем publishedAt
+                          if (post.publishedAt) {
+                            try {
+                              relevantDates.push(new Date(post.publishedAt));
+                            } catch (e) {}
+                          }
+                          
+                          // 2. Проверяем scheduledAt
+                          if (post.scheduledAt) {
+                            try {
+                              relevantDates.push(new Date(post.scheduledAt));
+                            } catch (e) {}
+                          }
+                          
+                          // 3. Проверяем даты из платформ социальных сетей
+                          if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+                            for (const platform in post.socialPlatforms) {
+                              const platformData = post.socialPlatforms[platform as SocialPlatform];
+                              
+                              // Проверяем дату публикации
+                              if (platformData && platformData.publishedAt) {
+                                try {
+                                  relevantDates.push(new Date(platformData.publishedAt));
+                                } catch (e) {}
+                              }
+                              
+                              // Проверяем запланированную дату для платформы
+                              if (platformData && platformData.scheduledAt) {
+                                try {
+                                  relevantDates.push(new Date(platformData.scheduledAt));
+                                } catch (e) {}
                               }
                             }
-                            
-                            // Затем проверяем даты фактической публикации в платформах
-                            if (content.socialPlatforms) {
-                              return Object.values(content.socialPlatforms).some(platform => {
-                                if (platform.publishedAt) {
-                                  try {
-                                    const publishDate = typeof platform.publishedAt === 'string' 
-                                      ? parseISO(platform.publishedAt) 
-                                      : new Date(platform.publishedAt);
-                                    return isSameDay(publishDate, selectedDate);
-                                  } catch (e) {
-                                    return false;
-                                  }
-                                }
-                                return false;
-                              });
-                            }
-                            return false;
-                          })
+                          }
+                          
+                          // 4. Проверяем совпадение любой даты с указанным днем
+                          return relevantDates.some(date => 
+                            isSameDay(startOfDay(selectedDate), startOfDay(date))
+                          );
+                        })
                           .map(content => (
                             <Card key={content.id} className="overflow-hidden">
                               <CardContent className="p-0">
