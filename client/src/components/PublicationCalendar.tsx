@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { format, isSameDay, addDays, startOfMonth } from 'date-fns';
+import { format, isSameDay, addDays, startOfMonth, startOfDay, isSameDate } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -70,6 +70,13 @@ export default function PublicationCalendar({
     });
   }, [selectedDate, content]);
 
+  // ОТЛАДКА: добавляем лог исходной даты выбранного дня
+  console.log("ОТЛАДКА ТЕКУЩЕЙ ДАТЫ:");
+  console.log("Выбранная дата (оригинал):", selectedDate);
+  console.log("Выбранная дата (toString):", selectedDate.toString());
+  console.log("Выбранная дата (toISOString):", selectedDate.toISOString());
+  console.log("Выбранная дата (locale):", selectedDate.toLocaleString('ru-RU'));
+
   // Временная функция для выравнивания даты по локальному времени (без времени)
   const normalizeToDateOnly = (dateObj: Date): Date => {
     const normalized = new Date(dateObj);
@@ -81,6 +88,11 @@ export default function PublicationCalendar({
   // (устраняет проблемы с часовым поясом при сравнении)
   const normalizedSelectedDate = normalizeToDateOnly(selectedDate);
   const selectedDateStr = format(normalizedSelectedDate, 'yyyy-MM-dd');
+  
+  // ОТЛАДКА: добавляем лог нормализованной даты
+  console.log("Нормализованная дата:", normalizedSelectedDate);
+  console.log("Нормализованная дата (toString):", normalizedSelectedDate.toString());
+  console.log("Нормализованная дата (строка):", selectedDateStr);
   
   const filteredContent = content
     .filter(post => {
