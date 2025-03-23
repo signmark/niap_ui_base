@@ -722,6 +722,8 @@ export default function ContentPage() {
       // Преобразуем в строку даты (только дата, без времени)
       // Используем локальный часовой пояс пользователя для группировки
       const localDate = new Date(date);
+      
+      // Форматируем дату для использования в качестве ключа группы в формате YYYY-MM-DD
       const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
       
       if (!groups[dateStr]) {
@@ -737,13 +739,26 @@ export default function ContentPage() {
   // Фильтрация контента по активной вкладке
   // Функция для форматирования даты для группировки (только день, месяц, год)
   const formatDateForGrouping = (date: Date | string): string => {
-    // Преобразуем дату в локальную дату пользователя
-    const localDate = new Date(date);
-    return localDate.toLocaleDateString('ru-RU', { 
-      day: 'numeric', 
-      month: 'long',
-      year: 'numeric' 
-    });
+    // Если дата передана в формате ISO string (YYYY-MM-DD)
+    if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // Создаем дату из строки ISO, используя localeDate для правильного часового пояса
+      const [year, month, day] = date.split('-').map(Number);
+      // Месяцы в JS начинаются с 0, поэтому вычитаем 1 из месяца
+      const localDate = new Date(year, month - 1, day);
+      return localDate.toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric' 
+      });
+    } else {
+      // Для других форматов дат
+      const localDate = new Date(date);
+      return localDate.toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric' 
+      });
+    }
   };
 
   // Функция для сброса фильтрации по датам
@@ -790,7 +805,11 @@ export default function ContentPage() {
   const contentByDate: Record<string, CampaignContent[]> = {};
   
   filteredContent.forEach((content: CampaignContent) => {
-    const dateStr = formatDateForGrouping(new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date()));
+    // Получаем дату в локальном часовом поясе пользователя
+    const localDate = new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date());
+    // Формируем строку даты в формате ISO YYYY-MM-DD для использования в качестве ключа
+    const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+    
     if (!contentByDate[dateStr]) {
       contentByDate[dateStr] = [];
     }
