@@ -87,52 +87,42 @@ export default function Posts() {
   }, [campaignContent]);
 
   // Получение точек для календаря (публикации на каждый день)
-  const getDayContent = (day: Date) => {
-    const postsForDay = campaignContent.filter((post) => {
-      // Используем унифицированную логику фильтрации для всех календарей
-      // Формируем массив дат, которые относятся к этому посту
-      let relevantDates: Date[] = [];
+  // Вспомогательная функция для определения уникальных постов на день
+  const getUniquePostsForDay = (day: Date) => {
+    // Создаем карту идентификаторов постов, чтобы избежать дублирования
+    const uniquePosts = new Map<string, CampaignContent>();
+    
+    // Проходим по всем постам и находим те, которые относятся к указанному дню
+    for (const post of campaignContent) {
+      // Массив всех дат, связанных с этим постом
+      const allDates: Date[] = [];
       
-      // 1. Проверяем publishedAt
-      if (post.publishedAt) {
-        try {
-          relevantDates.push(new Date(post.publishedAt));
-        } catch (e) {}
-      }
+      // Добавляем основные даты поста
+      if (post.publishedAt) try { allDates.push(new Date(post.publishedAt)); } catch (e) {}
+      if (post.scheduledAt) try { allDates.push(new Date(post.scheduledAt)); } catch (e) {}
       
-      // 2. Проверяем scheduledAt
-      if (post.scheduledAt) {
-        try {
-          relevantDates.push(new Date(post.scheduledAt));
-        } catch (e) {}
-      }
-      
-      // 3. Проверяем даты из платформ социальных сетей
+      // Добавляем даты из платформ
       if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
         for (const platform in post.socialPlatforms) {
           const platformData = post.socialPlatforms[platform as SocialPlatform];
-          
-          // Проверяем дату публикации
-          if (platformData && platformData.publishedAt) {
-            try {
-              relevantDates.push(new Date(platformData.publishedAt));
-            } catch (e) {}
-          }
-          
-          // Проверяем запланированную дату для платформы
-          if (platformData && platformData.scheduledAt) {
-            try {
-              relevantDates.push(new Date(platformData.scheduledAt));
-            } catch (e) {}
-          }
+          if (platformData?.publishedAt) try { allDates.push(new Date(platformData.publishedAt)); } catch (e) {}
+          if (platformData?.scheduledAt) try { allDates.push(new Date(platformData.scheduledAt)); } catch (e) {}
         }
       }
       
-      // 4. Проверяем совпадение любой даты с указанным днем
-      return relevantDates.some(date => 
-        isSameDay(day, date)
-      );
-    });
+      // Если хотя бы одна из дат совпадает с указанным днем, добавляем пост в карту
+      if (allDates.some(date => isSameDay(day, date))) {
+        uniquePosts.set(post.id, post);
+      }
+    }
+    
+    // Возвращаем массив уникальных постов
+    return Array.from(uniquePosts.values());
+  };
+
+  const getDayContent = (day: Date) => {
+    // Получаем уникальные посты для этого дня
+    const postsForDay = getUniquePostsForDay(day);
 
     if (!postsForDay.length) return null;
 
@@ -255,75 +245,10 @@ export default function Posts() {
                   </div>
                 ) : (
                   <>
-                    {campaignContent.filter(post => {
-                      // Используем унифицированную логику фильтрации для всех календарей
-                      // Формируем массив дат, которые относятся к этому посту
-                      let relevantDates: Date[] = [];
-                      
-                      // 1. Проверяем publishedAt
-                      if (post.publishedAt) {
-                        try {
-                          relevantDates.push(new Date(post.publishedAt));
-                        } catch (e) {}
-                      }
-                      
-                      // 2. Проверяем scheduledAt
-                      if (post.scheduledAt) {
-                        try {
-                          relevantDates.push(new Date(post.scheduledAt));
-                        } catch (e) {}
-                      }
-                      
-                      // 3. Проверяем даты из платформ социальных сетей
-                      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
-                        for (const platform in post.socialPlatforms) {
-                          const platformData = post.socialPlatforms[platform as SocialPlatform];
-                          
-                          // Проверяем дату публикации
-                          if (platformData && platformData.publishedAt) {
-                            try {
-                              relevantDates.push(new Date(platformData.publishedAt));
-                            } catch (e) {}
-                          }
-                          
-                          // Проверяем запланированную дату для платформы
-                          if (platformData && platformData.scheduledAt) {
-                            try {
-                              relevantDates.push(new Date(platformData.scheduledAt));
-                            } catch (e) {}
-                          }
-                        }
-                      }
-                      
-                      // 4. Проверяем совпадение любой даты с указанным днем
-                      return relevantDates.some(date => 
-                        isSameDay(selectedDate, date)
-                      );
-                    }).length > 0 ? (
+                    {getUniquePostsForDay(selectedDate).length > 0 ? (
                       <div className="space-y-4">
-                        {/* Фильтруем и отображаем посты на выбранную дату */}
-                        {campaignContent.filter(post => {
-                          // Используем унифицированную логику фильтрации
-                          let relevantDates: Date[] = [];
-                          
-                          // Проверяем все возможные типы дат для поста
-                          if (post.publishedAt) try { relevantDates.push(new Date(post.publishedAt)); } catch (e) {}
-                          if (post.scheduledAt) try { relevantDates.push(new Date(post.scheduledAt)); } catch (e) {}
-                          
-                          // Проверяем даты из платформ социальных сетей
-                          if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
-                            for (const platform in post.socialPlatforms) {
-                              const platformData = post.socialPlatforms[platform as SocialPlatform];
-                              
-                              // Проверяем даты публикации и планирования для каждой платформы
-                              if (platformData?.publishedAt) try { relevantDates.push(new Date(platformData.publishedAt)); } catch (e) {}
-                              if (platformData?.scheduledAt) try { relevantDates.push(new Date(platformData.scheduledAt)); } catch (e) {}
-                            }
-                          }
-                          
-                          // Проверяем, есть ли совпадение хотя бы с одной датой
-                          return relevantDates.some(date => isSameDay(selectedDate, date));
-                        })
+                        {/* Отображаем уникальные посты на выбранную дату */}
+                        {getUniquePostsForDay(selectedDate)
                           .map(content => (
                             <Card key={content.id} className="overflow-hidden">
                               <CardContent className="p-0">
