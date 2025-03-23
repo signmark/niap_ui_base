@@ -103,7 +103,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       <p className="font-medium">{platformNames[platform] || platform}</p>
                       <p className="text-xs">
                         {status.status === 'published' 
-                          ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}`
+                          ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru }) : ''}`
                           : status.status === 'failed'
                             ? `Не удалось опубликовать: ${status.error || 'Ошибка публикации'}`
                             : 'Ожидает публикации'
@@ -140,7 +140,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
       {isScheduled && (
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="text-muted-foreground" size={16} />
-          <span>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}</span>
+          <span>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd MMMM yyyy, HH:mm', { locale: ru }) : ''}</span>
         </div>
       )}
       
@@ -164,7 +164,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs">
                     {status.status === 'published' 
-                      ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}`
+                      ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru }) : ''}`
                       : status.status === 'failed'
                         ? 'Не удалось опубликовать'
                         : 'Ожидает публикации'
