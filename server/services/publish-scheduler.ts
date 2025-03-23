@@ -244,21 +244,19 @@ export class PublishScheduler {
         log('Поиск запланированных публикаций через API с системным токеном', 'scheduler');
         
         try {
-          const response = await directusApiManager.request({
-            url: '/items/campaign_content',
-            method: 'get',
-            params: {
-              filter: {
-                status: {
-                  _eq: 'scheduled'
-                },
-                scheduled_at: {
-                  _nnull: true
-                }
-              },
-              sort: ['scheduled_at']
-            }
-          }, systemToken);
+          // Прямой запрос без параметров, точно как в успешном тестовом скрипте
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Прямой запрос axios к ${directusUrl}/items/campaign_content без фильтров`, 'scheduler');
+          
+          const headers = {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
+          };
+          
+          // Простой запрос без параметров
+          const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+            headers
+          });
           
           if (response?.data?.data) {
             const items = response.data.data;
@@ -391,28 +389,48 @@ export class PublishScheduler {
       // Получаем данные кампании для настроек социальных сетей
       let campaign: Campaign | undefined;
       
-      // Пробуем с системным токеном через directusCrud
+      // Пробуем с системным токеном через прямой запрос
       if (systemToken) {
         try {
-          const campaignData = await directusCrud.getById('user_campaigns', content.campaignId, {
-            authToken: systemToken
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Прямой запрос для получения кампании: ${content.campaignId}`, 'scheduler');
+          
+          // Делаем прямой запрос без параметров
+          const response = await axios.get(`${directusUrl}/items/user_campaigns`, {
+            headers: {
+              'Authorization': `Bearer ${systemToken}`,
+              'Content-Type': 'application/json'
+            }
           });
           
-          if (campaignData) {
-            campaign = {
-              id: parseInt(campaignData.id),
-              name: campaignData.name,
-              userId: campaignData.user_id,
-              socialMediaSettings: campaignData.social_media_settings || {},
-              createdAt: campaignData.created_at ? new Date(campaignData.created_at) : null,
-              description: campaignData.description || null,
-              status: campaignData.status || 'active',
-              trendAnalysisSettings: campaignData.trend_analysis_settings || {},
-              updatedAt: campaignData.updated_at ? new Date(campaignData.updated_at) : null
-            } as Campaign;
+          if (response?.data?.data && Array.isArray(response.data.data)) {
+            // Ищем кампанию в списке
+            const campaignItem = response.data.data.find((item: any) => 
+              item.id === content.campaignId || 
+              item.id === parseInt(content.campaignId)
+            );
+            
+            if (campaignItem) {
+              log(`Кампания найдена в списке: ${campaignItem.name}`, 'scheduler');
+              
+              campaign = {
+                id: parseInt(campaignItem.id) || 0,
+                name: campaignItem.name || '',
+                userId: campaignItem.user_id || '',
+                socialMediaSettings: campaignItem.social_media_settings || {},
+                createdAt: campaignItem.created_at ? new Date(campaignItem.created_at) : null,
+                description: campaignItem.description || null,
+                status: campaignItem.status || 'active',
+                trendAnalysisSettings: campaignItem.trend_analysis_settings || {},
+                directusId: campaignItem.id,
+                link: null
+              } as Campaign;
+            } else {
+              log(`Кампания с ID ${content.campaignId} не найдена в списке из ${response.data.data.length} элементов`, 'scheduler');
+            }
           }
         } catch (error: any) {
-          log(`Ошибка при получении кампании через CRUD: ${error.message}`, 'scheduler');
+          log(`Ошибка при получении кампании через прямой запрос: ${error.message}`, 'scheduler');
         }
       }
       
