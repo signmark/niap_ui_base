@@ -720,7 +720,9 @@ export default function ContentPage() {
       if (!date) return;
       
       // Преобразуем в строку даты (только дата, без времени)
-      const dateStr = new Date(date).toISOString().split('T')[0];
+      // Используем локальный часовой пояс пользователя для группировки
+      const localDate = new Date(date);
+      const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
       
       if (!groups[dateStr]) {
         groups[dateStr] = [];
@@ -734,8 +736,10 @@ export default function ContentPage() {
   
   // Фильтрация контента по активной вкладке
   // Функция для форматирования даты для группировки (только день, месяц, год)
-  const formatDateForGrouping = (date: Date): string => {
-    return new Date(date).toLocaleDateString('ru-RU', { 
+  const formatDateForGrouping = (date: Date | string): string => {
+    // Преобразуем дату в локальную дату пользователя
+    const localDate = new Date(date);
+    return localDate.toLocaleDateString('ru-RU', { 
       day: 'numeric', 
       month: 'long',
       year: 'numeric' 
@@ -2139,15 +2143,9 @@ export default function ContentPage() {
                                 ? previewContent.publishedAt.toISOString() 
                                 : String(previewContent.publishedAt));
                               
-                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
-                          if (dateStr.endsWith('Z')) {
-                            const utcDate = new Date(dateStr);
-                            // Создаем новую дату с учетом MSK (+3 часа)
-                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
-                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          } else {
-                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          }
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
                         } catch (error) {
                           console.error("Ошибка форматирования даты публикации:", error, previewContent.publishedAt);
                           return "Некорректная дата";
@@ -2168,16 +2166,10 @@ export default function ContentPage() {
                             : (previewContent.scheduledAt instanceof Date 
                                 ? previewContent.scheduledAt.toISOString() 
                                 : String(previewContent.scheduledAt));
-                              
-                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
-                          if (dateStr.endsWith('Z')) {
-                            const utcDate = new Date(dateStr);
-                            // Создаем новую дату с учетом MSK (+3 часа)
-                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
-                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          } else {
-                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          }
+                                
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
                         } catch (error) {
                           console.error("Ошибка форматирования даты публикации:", error, previewContent.scheduledAt);
                           return "Некорректная дата";
@@ -2198,16 +2190,10 @@ export default function ContentPage() {
                             : (previewContent.createdAt instanceof Date 
                                 ? previewContent.createdAt.toISOString() 
                                 : String(previewContent.createdAt));
-                              
-                          // Добавляем "+03:00" к ISO строке только если в ней нет информации о временной зоне
-                          if (dateStr.endsWith('Z')) {
-                            const utcDate = new Date(dateStr);
-                            // Создаем новую дату с учетом MSK (+3 часа)
-                            const mskDate = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
-                            return format(mskDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          } else {
-                            return format(new Date(dateStr), 'dd MMMM yyyy, HH:mm', { locale: ru });
-                          }
+                                
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
                         } catch (error) {
                           console.error("Ошибка форматирования даты создания:", error, previewContent.createdAt);
                           return "Некорректная дата";
