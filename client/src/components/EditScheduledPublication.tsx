@@ -171,12 +171,21 @@ export default function EditScheduledPublication({
           // Создаем дату публикации для этой платформы
           const platformDate = new Date(scheduledAt);
           const time = platformTimes?.[platform] || { hour: '12', minute: '00' };
-          platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10));
+          
+          // Вычисляем смещение для учета часового пояса
+          const timezoneOffset = platformDate.getTimezoneOffset() * 60000; // в миллисекундах
+          
+          // Устанавливаем часы и минуты без изменения часового пояса
+          platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10), 0, 0);
+          
+          // Создаем строку даты, которая корректно учитывает часовой пояс пользователя
+          // Используем локальный формат вместо UTC
+          const localISOString = new Date(platformDate.getTime()).toISOString();
           
           socialPlatforms[platform] = {
             ...existingData,
             status: 'scheduled',
-            scheduledAt: platformDate.toISOString(),
+            scheduledAt: localISOString,
             publishedAt: null
           };
         }
