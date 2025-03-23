@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CampaignContent, SocialPlatform } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
 
@@ -29,6 +29,7 @@ export default function PublicationCalendar({
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
 
   // Получаем количество постов для каждой платформы
   const platformCounts = content.reduce((counts, post) => {
@@ -44,24 +45,33 @@ export default function PublicationCalendar({
     return counts;
   }, {} as Record<SocialPlatform, number>);
 
-  // Фильтруем контент по дате и платформам
-  const filteredContent = content.filter(post => {
-    // Фильтр по дате
-    const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-    const isDateMatch = postDate ? isSameDay(postDate, selectedDate) : false;
-    
-    // Фильтр по платформам (если выбраны)
-    let isPlatformMatch = true;
-    if (filteredPlatforms.length > 0 && post.socialPlatforms) {
-      isPlatformMatch = Object.keys(post.socialPlatforms).some(platform => 
-        filteredPlatforms.includes(platform as SocialPlatform) &&
-        post.socialPlatforms &&
-        post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
-      );
-    }
-    
-    return isDateMatch && isPlatformMatch;
-  });
+  // Фильтруем контент по дате и платформам и сортируем
+  const filteredContent = content
+    .filter(post => {
+      // Фильтр по дате
+      const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
+      const isDateMatch = postDate ? isSameDay(postDate, selectedDate) : false;
+      
+      // Фильтр по платформам (если выбраны)
+      let isPlatformMatch = true;
+      if (filteredPlatforms.length > 0 && post.socialPlatforms) {
+        isPlatformMatch = Object.keys(post.socialPlatforms).some(platform => 
+          filteredPlatforms.includes(platform as SocialPlatform) &&
+          post.socialPlatforms &&
+          post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
+        );
+      }
+      
+      return isDateMatch && isPlatformMatch;
+    })
+    .sort((a, b) => {
+      // Сортировка по времени публикации
+      const timeA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+      const timeB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+      
+      // В зависимости от выбранного порядка сортировки
+      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
 
   // Обработчик изменения фильтра платформ
   const handleFilterChange = (selected: SocialPlatform[]) => {
@@ -208,9 +218,29 @@ export default function PublicationCalendar({
           </div>
           
           <div className="space-y-4">
-            <h3 className="font-medium text-lg">
-              Посты на {format(selectedDate, 'dd MMMM yyyy', { locale: ru })}:
-            </h3>
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium text-lg">
+                Посты на {format(selectedDate, 'dd MMMM yyyy', { locale: ru })}:
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+              >
+                {sortOrder === 'desc' ? (
+                  <>
+                    <SortDesc size={16} />
+                    <span>Сначала новые</span>
+                  </>
+                ) : (
+                  <>
+                    <SortAsc size={16} />
+                    <span>Сначала старые</span>
+                  </>
+                )}
+              </Button>
+            </div>
             
             {isLoading ? (
               <div className="text-center py-6">
