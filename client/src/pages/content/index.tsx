@@ -2129,31 +2129,70 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <CheckCircle2 size={14} />
-                    <span>Опубликовано: {format(new Date(typeof previewContent.publishedAt === 'string' 
-                      ? previewContent.publishedAt 
-                      : (previewContent.publishedAt instanceof Date 
-                          ? previewContent.publishedAt.toISOString() 
-                          : String(previewContent.publishedAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Опубликовано: {
+                      (() => {
+                        try {
+                          // Получение даты и преобразование к локальному времени
+                          const date = new Date(typeof previewContent.publishedAt === 'string' 
+                            ? previewContent.publishedAt 
+                            : (previewContent.publishedAt instanceof Date 
+                                ? previewContent.publishedAt.toISOString() 
+                                : String(previewContent.publishedAt)));
+                          
+                          // Форматирование с использованием локали ru
+                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты публикации:", error);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
                 {previewContent?.scheduledAt && !previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    <span>Запланировано: {format(new Date(typeof previewContent.scheduledAt === 'string' 
-                      ? previewContent.scheduledAt 
-                      : (previewContent.scheduledAt instanceof Date 
-                          ? previewContent.scheduledAt.toISOString() 
-                          : String(previewContent.scheduledAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Запланировано: {
+                      (() => {
+                        try {
+                          // Получение даты и преобразование к локальному времени
+                          const date = new Date(typeof previewContent.scheduledAt === 'string' 
+                            ? previewContent.scheduledAt 
+                            : (previewContent.scheduledAt instanceof Date 
+                                ? previewContent.scheduledAt.toISOString() 
+                                : String(previewContent.scheduledAt)));
+                          
+                          // Форматирование с использованием локали ru
+                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты публикации:", error);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
                 {previewContent?.createdAt && (
                   <div className="flex items-center gap-1">
                     <CalendarDays size={14} />
-                    <span>Создано: {format(new Date(typeof previewContent.createdAt === 'string' 
-                      ? previewContent.createdAt 
-                      : (previewContent.createdAt instanceof Date 
-                          ? previewContent.createdAt.toISOString() 
-                          : String(previewContent.createdAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Создано: {
+                      (() => {
+                        try {
+                          // Получение даты и преобразование к локальному времени
+                          const date = new Date(typeof previewContent.createdAt === 'string' 
+                            ? previewContent.createdAt 
+                            : (previewContent.createdAt instanceof Date 
+                                ? previewContent.createdAt.toISOString() 
+                                : String(previewContent.createdAt)));
+                          
+                          // Форматирование с использованием локали ru
+                          return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты создания:", error);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
               </div>
