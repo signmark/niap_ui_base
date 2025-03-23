@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PenLine, Send, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
@@ -88,37 +88,50 @@ export default function Posts() {
 
   // Получение точек для календаря (публикации на каждый день)
   const getDayContent = (day: Date) => {
-    const postsForDay = campaignContent.filter((content) => {
-      // Проверяем наличие запланированных и опубликованных постов на эту дату
-      // Сначала проверим scheduledAt
-      if (content.scheduledAt) {
+    const postsForDay = campaignContent.filter((post) => {
+      // Используем унифицированную логику фильтрации для всех календарей
+      // Формируем массив дат, которые относятся к этому посту
+      let relevantDates: Date[] = [];
+      
+      // 1. Проверяем publishedAt
+      if (post.publishedAt) {
         try {
-          const scheduleDate = new Date(content.scheduledAt);
-          if (isSameDay(scheduleDate, day)) {
-            return true;
+          relevantDates.push(new Date(post.publishedAt));
+        } catch (e) {}
+      }
+      
+      // 2. Проверяем scheduledAt
+      if (post.scheduledAt) {
+        try {
+          relevantDates.push(new Date(post.scheduledAt));
+        } catch (e) {}
+      }
+      
+      // 3. Проверяем даты из платформ социальных сетей
+      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          
+          // Проверяем дату публикации
+          if (platformData && platformData.publishedAt) {
+            try {
+              relevantDates.push(new Date(platformData.publishedAt));
+            } catch (e) {}
           }
-        } catch (e) {
-          // Ошибка парсинга даты
+          
+          // Проверяем запланированную дату для платформы
+          if (platformData && platformData.scheduledAt) {
+            try {
+              relevantDates.push(new Date(platformData.scheduledAt));
+            } catch (e) {}
+          }
         }
       }
       
-      // Затем проверяем даты фактической публикации в платформах
-      if (content.socialPlatforms) {
-        return Object.values(content.socialPlatforms).some(platform => {
-          if (platform.publishedAt) {
-            try {
-              const publishDate = typeof platform.publishedAt === 'string' 
-                ? parseISO(platform.publishedAt) 
-                : new Date(platform.publishedAt);
-              return isSameDay(publishDate, day);
-            } catch (e) {
-              return false;
-            }
-          }
-          return false;
-        });
-      }
-      return false;
+      // 4. Проверяем совпадение любой даты с указанным днем
+      return relevantDates.some(date => 
+        isSameDay(day, date)
+      );
     });
 
     if (!postsForDay.length) return null;
@@ -289,7 +302,7 @@ export default function Posts() {
                       
                       // 4. Проверяем совпадение любой даты с указанным днем
                       return relevantDates.some(date => 
-                        isSameDay(startOfDay(selectedDate), startOfDay(date))
+                        isSameDay(selectedDate, date)
                       );
                     }).length > 0 ? (
                       <div className="space-y-4">
@@ -335,7 +348,7 @@ export default function Posts() {
                           
                           // 4. Проверяем совпадение любой даты с указанным днем
                           return relevantDates.some(date => 
-                            isSameDay(startOfDay(selectedDate), startOfDay(date))
+                            isSameDay(selectedDate, date)
                           );
                         })
                           .map(content => (
