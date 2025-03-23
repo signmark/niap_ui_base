@@ -933,9 +933,9 @@ export default function ContentPage() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange.from || dateRange.to ? (
                         <>
-                          {dateRange.from ? format(dateRange.from, "dd.MM.yyyy") : "..."}
+                          {dateRange.from ? format(dateRange.from, "dd MMMM yyyy", {locale: ru}) : "..."}
                           {" – "}
-                          {dateRange.to ? format(dateRange.to, "dd.MM.yyyy") : "..."}
+                          {dateRange.to ? format(dateRange.to, "dd MMMM yyyy", {locale: ru}) : "..."}
                         </>
                       ) : (
                         "Фильтр по дате"
