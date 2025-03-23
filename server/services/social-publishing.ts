@@ -565,8 +565,44 @@ export class SocialPublishingService {
     publicationResult: SocialPublication
   ): Promise<void> {
     try {
-      // Получаем текущие данные о контенте
-      const content = await storage.getCampaignContentById(contentId);
+      // Получаем токен для доступа к API
+      const systemToken = await this.getSystemToken();
+      let content = null;
+      
+      // Пробуем получить контент напрямую через API, если есть токен
+      if (systemToken) {
+        try {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Получение контента по ID: ${contentId}`, 'social-publishing');
+          
+          const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+            headers: {
+              'Authorization': `Bearer ${systemToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response?.data?.data) {
+            const item = response.data.data;
+            content = {
+              id: item.id,
+              userId: item.user_id,
+              socialPlatforms: item.social_platforms || {},
+              status: item.status
+            };
+            log(`Контент получен напрямую через API: ${contentId}`, 'social-publishing');
+          }
+        } catch (apiError) {
+          log(`Ошибка при получении контента через API: ${apiError}`, 'social-publishing');
+        }
+      }
+      
+      // Если не получилось через API, пробуем через стандартное хранилище
+      if (!content) {
+        content = await storage.getCampaignContentById(contentId);
+      }
+      
+      // Если всё равно не нашли контент
       if (!content) {
         log(`Не удалось найти контент с ID ${contentId}`, 'social-publishing');
         return;
@@ -585,12 +621,41 @@ export class SocialPublishingService {
       const typedSocialPlatforms = socialPlatforms as Record<string, SocialPublication>;
       typedSocialPlatforms[platform] = publicationResult;
 
-      // Обновляем статус в базе данных
-      // Строим объект обновления, включая только существующие поля
+      // Проверяем все платформы, статус публикации
+      const newStatus = this.checkAllPlatformsPublished(typedSocialPlatforms) ? 'published' : content.status;
+      
+      // Если есть токен, обновляем через прямой API запрос
+      if (systemToken) {
+        try {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Обновление статуса контента через API: ${contentId}`, 'social-publishing');
+          
+          // Готовим данные для обновления в snake_case формате для Directus
+          const updateData = {
+            social_platforms: typedSocialPlatforms,
+            status: newStatus
+          };
+          
+          const response = await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, updateData, {
+            headers: {
+              'Authorization': `Bearer ${systemToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.status >= 200 && response.status < 300) {
+            log(`Статус контента ${contentId} успешно обновлен через API: ${newStatus}`, 'social-publishing');
+            return;
+          }
+        } catch (apiError) {
+          log(`Ошибка при обновлении контента через API: ${apiError}`, 'social-publishing');
+        }
+      }
+      
+      // Если не получилось через API, используем стандартное хранилище
       const updateObject: any = {
         socialPlatforms: typedSocialPlatforms,
-        // Если все платформы опубликованы, обновляем статус контента
-        status: this.checkAllPlatformsPublished(typedSocialPlatforms) ? 'published' : content.status
+        status: newStatus
       };
       
       // Обновляем контент в базе данных
@@ -623,6 +688,48 @@ export class SocialPublishingService {
     return Object.values(socialPlatforms).every(
       platform => platform.status === 'published'
     );
+  }
+
+  /**
+   * Получает системный токен для доступа к API
+   * Приоритеты получения токена:
+   * 1. Авторизация через логин/пароль (admin)
+   * 2. Статический токен из переменных окружения
+   */
+  private async getSystemToken(): Promise<string | null> {
+    // 1. Пробуем авторизоваться с учетными данными администратора
+    const email = process.env.DIRECTUS_ADMIN_EMAIL;
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+    
+    if (email && password) {
+      try {
+        log('Попытка авторизации администратора с учетными данными из env', 'social-publishing');
+        
+        // Прямой запрос авторизации через API
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const response = await axios.post(`${directusUrl}/auth/login`, {
+          email, 
+          password
+        });
+        
+        if (response?.data?.data?.access_token) {
+          log('Авторизация администратора успешна через прямой API запрос', 'social-publishing');
+          return response.data.data.access_token;
+        }
+      } catch (error: any) {
+        log(`Ошибка авторизации администратора: ${error.message}`, 'social-publishing');
+      }
+    }
+    
+    // 2. Проверяем статический токен
+    const staticToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    if (staticToken) {
+      log('Использую статический токен из переменных окружения', 'social-publishing');
+      return staticToken;
+    }
+    
+    log('Не удалось получить системный токен', 'social-publishing');
+    return null;
   }
 }
 
