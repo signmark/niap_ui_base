@@ -26,6 +26,9 @@ export default function Posts() {
     facebook: 0
   });
   
+  // Состояние для хранения статуса фильтра (показывать только с socialPlatforms)
+  const [showOnlyWithSocialPlatforms, setShowOnlyWithSocialPlatforms] = useState<boolean>(false);
+  
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent } = useQuery({
     queryKey: ['/api/campaign-content', selectedCampaign?.id],
@@ -87,13 +90,30 @@ export default function Posts() {
   }, [campaignContent]);
 
   // Получение точек для календаря (публикации на каждый день)
+  // Функция для фильтрации контента на основе настроек
+  const getFilteredContent = () => {
+    if (!showOnlyWithSocialPlatforms) {
+      return campaignContent;
+    }
+    
+    // Фильтруем только те посты, которые имеют поле socialPlatforms
+    return campaignContent.filter(post => {
+      return post.socialPlatforms && 
+             typeof post.socialPlatforms === 'object' && 
+             Object.keys(post.socialPlatforms).length > 0;
+    });
+  };
+
   // Вспомогательная функция для определения уникальных постов на день
   const getUniquePostsForDay = (day: Date) => {
     // Создаем карту идентификаторов постов, чтобы избежать дублирования
     const uniquePosts = new Map<string, CampaignContent>();
     
-    // Проходим по всем постам и находим те, которые относятся к указанному дню
-    for (const post of campaignContent) {
+    // Получаем отфильтрованный контент
+    const filteredContent = getFilteredContent();
+    
+    // Проходим по отфильтрованным постам и находим те, которые относятся к указанному дню
+    for (const post of filteredContent) {
       // Массив всех дат, связанных с этим постом
       const allDates: Date[] = [];
       
@@ -188,27 +208,47 @@ export default function Posts() {
                   initialFocus
                 />
                 
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Фильтр по платформам
-                  </p>
-                  <div className="space-y-1">
-                    {[
-                      { platform: 'instagram' as SocialPlatform, name: 'Instagram', icon: SiInstagram, color: 'text-pink-600' },
-                      { platform: 'telegram' as SocialPlatform, name: 'Telegram', icon: SiTelegram, color: 'text-blue-500' },
-                      { platform: 'vk' as SocialPlatform, name: 'ВКонтакте', icon: SiVk, color: 'text-blue-600' },
-                      { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' }
-                    ].map(item => (
-                      <div key={item.platform} className="flex items-center gap-2">
-                        <div className="w-4 h-4">
-                          <item.icon className={`h-4 w-4 ${item.color}`} />
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Фильтр по платформам
+                    </p>
+                    <div className="space-y-1">
+                      {[
+                        { platform: 'instagram' as SocialPlatform, name: 'Instagram', icon: SiInstagram, color: 'text-pink-600' },
+                        { platform: 'telegram' as SocialPlatform, name: 'Telegram', icon: SiTelegram, color: 'text-blue-500' },
+                        { platform: 'vk' as SocialPlatform, name: 'ВКонтакте', icon: SiVk, color: 'text-blue-600' },
+                        { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' }
+                      ].map(item => (
+                        <div key={item.platform} className="flex items-center gap-2">
+                          <div className="w-4 h-4">
+                            <item.icon className={`h-4 w-4 ${item.color}`} />
+                          </div>
+                          <span>{item.name}</span>
+                          <span className="ml-auto bg-muted text-xs px-2 py-0.5 rounded-md text-muted-foreground">
+                            {platformCounts[item.platform] || 0}
+                          </span>
                         </div>
-                        <span>{item.name}</span>
-                        <span className="ml-auto bg-muted text-xs px-2 py-0.5 rounded-md text-muted-foreground">
-                          {platformCounts[item.platform] || 0}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <label htmlFor="showOnlyWithSocialPlatforms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Только публикации в соцсетях
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="showOnlyWithSocialPlatforms"
+                        checked={showOnlyWithSocialPlatforms}
+                        onChange={(e) => setShowOnlyWithSocialPlatforms(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Показывать только посты, опубликованные в социальных сетях
+                    </p>
                   </div>
                 </div>
                 
