@@ -196,6 +196,39 @@ CREATE TABLE IF NOT EXISTS business_questionnaire (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Создание таблицы API ключей кампаний (вместо ключей пользователей)
+CREATE TABLE IF NOT EXISTS campaign_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL REFERENCES user_campaigns(id) ON DELETE CASCADE,
+  service_name VARCHAR(50) NOT NULL,
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE,
+  CONSTRAINT unique_campaign_service UNIQUE (campaign_id, service_name)
+);
+
+-- Миграция данных из старой таблицы пользовательских API ключей (если она существует)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_api_keys') THEN
+        INSERT INTO campaign_api_keys (campaign_id, service_name, api_key, created_at, updated_at, is_active)
+        SELECT 
+            c.id AS campaign_id,
+            k.service_name,
+            k.api_key,
+            k.created_at,
+            k.updated_at,
+            k.is_active
+        FROM user_api_keys k
+        JOIN user_campaigns c ON k.user_id = c.user_id
+        ON CONFLICT (campaign_id, service_name) DO NOTHING;
+        
+        -- Удаление старой таблицы после миграции
+        -- DROP TABLE user_api_keys;
+    END IF;
+END $$;
+
 -- =======================================
 -- 6. ИНДЕКСЫ ДЛЯ ОПТИМИЗАЦИИ ЗАПРОСОВ
 -- =======================================
@@ -219,3 +252,11 @@ ON campaign_trend_topics(campaign_id);
 -- Индекс для эффективного поиска закладок
 CREATE INDEX IF NOT EXISTS idx_campaign_trend_topics_is_bookmarked 
 ON campaign_trend_topics(is_bookmarked);
+
+-- Индекс для быстрого поиска API ключей по кампании
+CREATE INDEX IF NOT EXISTS idx_campaign_api_keys_campaign_id
+ON campaign_api_keys(campaign_id);
+
+-- Индекс для поиска API ключей по сервису
+CREATE INDEX IF NOT EXISTS idx_campaign_api_keys_service_name
+ON campaign_api_keys(service_name);
