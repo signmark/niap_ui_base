@@ -5429,7 +5429,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const token = authHeader.split(' ')[1];
-      const userId = req.userId;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован: Не удалось определить пользователя'
+        });
+      }
       
       // Получаем API ключ Perplexity
       const perplexityApiKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
@@ -5455,7 +5462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Собираем результаты для всех ключевых слов
       const allResults = [];
-      const keywordResults = {};
+      const keywordResults: Record<string, number> = {};
       
       for (const keyword of keywords) {
         try {
