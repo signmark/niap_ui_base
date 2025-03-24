@@ -3253,19 +3253,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           
-          console.log(`Generating content with Perplexity for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
-          
-          // Используем сервис для генерации контента
-          generatedContent = await perplexityService.generateSocialContent(
-            keywords,
-            prompt,
-            tone as any,
-            {
-              model: "llama-3.1-sonar-small-128k-online",
-              temperature: 0.7,
-              max_tokens: 4000
-            }
-          );
+          try {
+            console.log(`Generating content with Perplexity for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+            
+            // Переключаем режим API на openai перед вызовом
+            console.log("Switching Perplexity API mode to openai for content generation");
+            perplexityService.setApiMode('openai');
+            
+            // Используем сервис для генерации контента
+            generatedContent = await perplexityService.generateSocialContent(
+              keywords,
+              prompt,
+              tone as any,
+              {
+                model: "llama-3-sonar-small-online", // Упрощенное название модели
+                temperature: 0.7,
+                max_tokens: 2000 // Уменьшаем размер для надежности
+              }
+            );
+          } catch (perplexityError) {
+            console.error("Perplexity API generation error:", perplexityError);
+            // Пробуем другую модель при ошибке
+            console.log("Trying fallback to standard API mode");
+            perplexityService.setApiMode('standard');
+            
+            generatedContent = await perplexityService.generateSocialContent(
+              keywords,
+              prompt,
+              tone as any,
+              {
+                model: "mistral-7b-instruct",
+                temperature: 0.7,
+                max_tokens: 1500
+              }
+            );
+          }
           
           usedService = 'perplexity';
         }

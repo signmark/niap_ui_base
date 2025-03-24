@@ -28,6 +28,15 @@ export class PerplexityService {
   // Указываем активную конфигурацию API
   private apiMode: 'standard' | 'v1' | 'openai' = 'standard';
   
+  /**
+   * Устанавливает режим API
+   * @param mode Режим API: 'standard', 'v1', 'openai'
+   */
+  setApiMode(mode: 'standard' | 'v1' | 'openai'): void {
+    this.apiMode = mode;
+    log(`Perplexity API mode set to: ${mode}`, 'perplexity');
+  }
+  
   constructor(config: PerplexityConfig) {
     this.apiKey = config.apiKey;
   }
