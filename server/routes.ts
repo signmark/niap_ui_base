@@ -1,7 +1,8 @@
-import { deepseekService, DeepSeekMessage, DeepSeekService } from './services/deepseek';
+import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
+import { qwenService } from './services/qwen';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -29,8 +30,6 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
-import { registerFalAiTestRoutes } from './routes-fal-ai-test';
-import { registerDeepSeekTestRoutes } from './routes-deepseek-test';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -1153,9 +1152,6 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Регистрируем маршруты для тестирования API
-  registerFalAiTestRoutes(app);
-  registerDeepSeekTestRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
@@ -3074,92 +3070,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
-  // Тестовый маршрут для отладки DeepSeek API ключей
-  app.get("/api/test-deepseek-api", authenticateUser, async (req, res) => {
-    try {
-      // Получаем userId из authenticateUser middleware
-      const userId = (req as any).userId;
-      
-      // Получаем токен авторизации
-      const authHeader = req.headers['authorization'] as string;
-      const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
-      
-      console.log("Тестирование DeepSeek API для пользователя:", userId);
-      
-      // Получаем API ключ через сервис API ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
-      
-      if (!apiKey) {
-        return res.status(404).json({
-          success: false,
-          error: "DeepSeek API ключ не найден для пользователя",
-          user_id: userId
-        });
-      }
-      
-      console.log(`Получен DeepSeek API ключ длиной ${apiKey.length} символов`);
-      console.log(`Первые 6 символов ключа: ${apiKey.substring(0, 6)}...`);
-      
-      // Подготавливаем разные форматы ключа для тестирования
-      const keyFormats = [
-        { description: "Исходный ключ", key: apiKey },
-        { description: "Ключ без Bearer префикса", key: apiKey.replace(/^Bearer\s+/i, '') },
-      ];
-      
-      // Проверка каждого формата ключа
-      const results = [];
-      
-      for (const format of keyFormats) {
-        try {
-          console.log(`Тестирование формата: ${format.description}`);
-          
-          // Настраиваем временный экземпляр DeepSeek с текущим форматом ключа
-          const testService = new DeepSeekService({ apiKey: format.key });
-          
-          // Простой тестовый запрос
-          const testPrompt = await testService.generateText(
-            [
-              { role: "system", content: "You are a helpful assistant." },
-              { role: "user", content: "Say hello in one word." }
-            ],
-            { max_tokens: 10 }
-          );
-          
-          results.push({
-            format: format.description,
-            success: true,
-            response: testPrompt
-          });
-        } catch (error: any) {
-          console.error(`Ошибка для формата "${format.description}":`, error.message);
-          
-          results.push({
-            format: format.description,
-            success: false,
-            error: error.message,
-            errorCode: error.response?.status
-          });
-        }
-      }
-      
-      // Возвращаем результаты тестирования
-      return res.json({
-        success: true,
-        user_id: userId,
-        key_found: true,
-        key_length: apiKey.length,
-        key_first_chars: apiKey.substring(0, 6) + "...",
-        test_results: results
-      });
-    } catch (error: any) {
-      console.error("Ошибка при тестировании DeepSeek API:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  });
-
   app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
@@ -3176,7 +3086,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       // Инициализируем DeepSeek сервис с ключом пользователя
-      console.log("Инициализация DeepSeek сервиса для генерации промта...");
       const initialized = await deepseekService.initialize(userId, token);
       
       if (!initialized) {
@@ -3186,10 +3095,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Получаем API ключ для отладки проблем
-      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
-      console.log(`DEBUG: DeepSeek API ключ для отладки: ${apiKey?.substring(0, 6)}... (длина: ${apiKey?.length || 0})`);
-      
       // Генерируем промт для изображения на основе текста
       console.log(`Generating image prompt with DeepSeek. Content length: ${content.length} chars`);
       
@@ -3197,38 +3102,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
-      try {
-        const prompt = await deepseekService.generateImagePrompt(
-          cleanContent,
-          keywords || []
-        );
-        
-        console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
-        
-        // Возвращаем сгенерированный промт
-        return res.json({
-          success: true,
-          prompt,
-          service: 'deepseek'
-        });
-      } catch (promptError: any) {
-        console.error("Ошибка при генерации промта с DeepSeek:", promptError);
-        
-        // Формируем более информативное сообщение об ошибке с деталями для отладки
-        let errorDetails = promptError.message;
-        
-        if (promptError.response) {
-          errorDetails += ` (Статус: ${promptError.response.status})`;
-          if (promptError.response.data) {
-            errorDetails += ` Ответ API: ${JSON.stringify(promptError.response.data)}`;
-          }
-        }
-        
-        return res.status(400).json({ 
-          error: "Ошибка при генерации промта", 
-          details: errorDetails
-        });
-      }
+      const prompt = await deepseekService.generateImagePrompt(
+        cleanContent,
+        keywords || []
+      );
+      
+      console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
+      
+      // Возвращаем сгенерированный промт
+      return res.json({
+        success: true,
+        prompt,
+        service: 'deepseek'
+      });
     } catch (error: any) {
       console.error("Error generating prompt with DeepSeek:", error);
       return res.status(400).json({ 
@@ -3240,7 +3126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     try {
-      const { prompt, keywords, tone, campaignId } = req.body;
+      const { prompt, keywords, tone, campaignId, service, aiService } = req.body;
       
       if (!prompt || !keywords || !tone || !campaignId) {
         return res.status(400).json({ error: "Missing required parameters" });
@@ -3252,64 +3138,196 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '') || '';
       
-      console.log(`Инициализация Perplexity сервиса для пользователя: ${userId}`);
+      // Определяем сервис для генерации - по умолчанию Perplexity
+      // Приоритет параметров: aiService, service
+      const selectedAiService = aiService || service || 'perplexity';
+      // Проверяем, что это один из поддерживаемых сервисов
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek
+      const useService = 
+        selectedAiService === 'qwen' ? 'qwen' : 
+        selectedAiService === 'deepseek' ? 'deepseek' : 
+        'perplexity';
+      
+      console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
       
       try {
-        // Инициализируем Perplexity API сервис с централизованным управлением ключами
+        // Проверяем ID пользователя
         if (!userId) {
           return res.status(401).json({ 
             error: 'Не авторизован: Отсутствует ID пользователя' 
           });
         }
         
-        // Инициализируем сервис, передавая ID пользователя и токен для получения ключа
-        console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
-        const initialized = await perplexityService.initialize(userId, token);
+        let generatedContent = '';
+        let usedService = '';
         
-        if (!initialized) {
-          console.log('Предупреждение: Perplexity API сервис не был полностью инициализирован');
+        // В зависимости от выбранного сервиса инициализируем нужный API
+        if (useService === 'qwen') {
+          // Инициализируем Qwen API
+          console.log(`Попытка инициализации Qwen сервиса для пользователя ${userId}`);
+          const initialized = await qwenService.initialize(userId, token);
           
-          // Проверяем, получили ли мы ключ из переменных окружения
-          if (!perplexityService.hasApiKey()) {
-            console.error('Ошибка: Не удалось получить API ключ Perplexity');
-            return res.status(400).json({ 
-              error: 'Не удалось получить API ключ Perplexity. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
-            });
+          if (!initialized) {
+            console.log('Предупреждение: Qwen API сервис не был полностью инициализирован');
+            
+            if (!qwenService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Qwen');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Qwen. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
           }
+          
+          console.log(`Generating content with Qwen for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из tone (используя его как платформу)
+          // Поскольку формат разный, преобразуем tone в platform
+          const platform = tone === 'professional' ? 'facebook' :
+                         tone === 'casual' ? 'telegram' :
+                         tone === 'friendly' ? 'instagram' : 'general';
+          
+          // Используем Qwen для генерации контента
+          generatedContent = await qwenService.generateSocialContent(
+            keywords,
+            [prompt],  // Qwen ожидает массив тем
+            platform,
+            {
+              tone: 'professional',
+              length: 'medium',
+              language: 'ru'
+            }
+          );
+          
+          usedService = 'qwen';
+          
+        } else if (useService === 'deepseek') {
+          // Инициализируем DeepSeek API
+          console.log(`Попытка инициализации DeepSeek сервиса для пользователя ${userId}`);
+          const initialized = await deepseekService.initialize(userId, token);
+          
+          if (!initialized) {
+            console.log('Предупреждение: DeepSeek API сервис не был полностью инициализирован');
+            
+            if (!deepseekService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ DeepSeek');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ DeepSeek. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
+          }
+          
+          console.log(`Generating content with DeepSeek for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из tone (используя его как платформу)
+          const platform = tone === 'professional' ? 'facebook' :
+                         tone === 'casual' ? 'telegram' :
+                         tone === 'friendly' ? 'instagram' : 'general';
+          
+          // Используем DeepSeek для генерации контента
+          generatedContent = await deepseekService.generateSocialContent(
+            keywords,
+            prompt,
+            platform,
+            {
+              tone: tone as any,
+              length: 'medium',
+              language: 'ru'
+            }
+          );
+          
+          usedService = 'deepseek';
+          
+        } else {
+          // По умолчанию используем Perplexity API
+          console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
+          const initialized = await perplexityService.initialize(userId, token);
+          
+          if (!initialized) {
+            console.log('Предупреждение: Perplexity API сервис не был полностью инициализирован');
+            
+            if (!perplexityService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Perplexity');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Perplexity. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
+          }
+          
+          try {
+            console.log(`Generating content with Perplexity for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+            
+            // Переключаем режим API на openai перед вызовом
+            console.log("Switching Perplexity API mode to openai for content generation");
+            perplexityService.setApiMode('openai');
+            
+            // Используем сервис для генерации контента
+            generatedContent = await perplexityService.generateSocialContent(
+              keywords,
+              prompt,
+              tone as any,
+              {
+                model: "llama-3-sonar-small-online", // Упрощенное название модели
+                temperature: 0.7,
+                max_tokens: 2000 // Уменьшаем размер для надежности
+              }
+            );
+          } catch (perplexityError) {
+            console.error("Perplexity API generation error:", perplexityError);
+            // Пробуем другую модель при ошибке
+            console.log("Trying fallback to standard API mode");
+            perplexityService.setApiMode('standard');
+            
+            generatedContent = await perplexityService.generateSocialContent(
+              keywords,
+              prompt,
+              tone as any,
+              {
+                model: "mistral-7b-instruct",
+                temperature: 0.7,
+                max_tokens: 1500
+              }
+            );
+          }
+          
+          usedService = 'perplexity';
         }
         
-        console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
-        
-        // Используем сервис для генерации контента
-        const generatedContent = await perplexityService.generateSocialContent(
-          keywords,
-          prompt,
-          tone as any,
-          {
-            model: "llama-3.1-sonar-small-128k-online",
-            temperature: 0.7,
-            max_tokens: 4000
-          }
-        );
-        
-        console.log(`Generated content with Perplexity, length: ${generatedContent.length} characters`);
+        console.log(`Generated content with ${usedService}, length: ${generatedContent.length} characters`);
         
         // Возвращаем сгенерированный контент
         return res.json({ 
           success: true, 
           content: generatedContent,
-          service: 'perplexity'
+          service: usedService
         });
         
-      } catch (error) {
-        console.error('Error generating content with Perplexity:', error);
+      } catch (error: any) {
+        console.error(`Error generating content with ${useService}:`, error);
+        
+        // Подробное логирование ошибки для отладки
         if (axios.isAxiosError(error)) {
-          console.error('Perplexity API error details:', {
+          console.error(`${useService} API error details:`, {
             status: error.response?.status,
-            data: error.response?.data
+            data: error.response?.data,
+            message: error.message,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              headers: error.config?.headers
+            }
           });
+        } else {
+          console.error(`Non-Axios error in ${useService}:`, error.message || 'Unknown error');
         }
-        return res.status(500).json({ error: "Failed to generate content with AI" });
+        
+        // Преобразуем сообщение об ошибке для более понятного представления
+        const errorMessage = error.message || `Ошибка при генерации контента через ${useService}`;
+        const userFriendlyMessage = errorMessage.includes('API ключ') 
+          ? `Проблема с API ключом ${useService}. Пожалуйста, проверьте настройки API ключа в профиле.`
+          : errorMessage;
+          
+        // Отправляем более подробное сообщение об ошибке клиенту вместо общего сообщения
+        return res.status(400).json({ error: userFriendlyMessage });
       }
     } catch (error) {
       console.error("Error in content generation:", error);
@@ -9287,6 +9305,104 @@ ${datesText}
       return res.status(500).json({
         success: false,
         error: 'Ошибка сервера при тестировании API ключей'
+      });
+    }
+  });
+
+  // Эндпоинт для тестирования Qwen API
+  app.get('/api/test-qwen', async (req, res) => {
+    try {
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем данные пользователя из токена
+          const decodedToken = await directusApi.get('/users/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (decodedToken.data && decodedToken.data.data) {
+            userId = decodedToken.data.data.id;
+          }
+        } catch (error) {
+          console.error('Ошибка при декодировании токена:', error);
+        }
+      }
+      
+      if (!userId) {
+        // Если пользователь не авторизован, используем параметр userId из запроса
+        userId = req.query.userId as string;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не удалось определить пользователя. Пожалуйста, авторизуйтесь или укажите userId в параметрах запроса.'
+        });
+      }
+      
+      // Получаем API ключ Qwen из сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Qwen не найден. Пожалуйста, добавьте ключ в настройках.'
+        });
+      }
+      
+      // Инициализируем сервис Qwen с полученным ключом
+      const initialized = await qwenService.initialize(userId, token);
+      
+      if (!initialized) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не удалось инициализировать Qwen API. Проверьте ключ в настройках.'
+        });
+      }
+      
+      // Тестовый запрос к Qwen API - простая генерация текста
+      try {
+        const testResult = await qwenService.generateText(
+          [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: 'Reply with a single word: "Working"' }
+          ],
+          { max_tokens: 10 }
+        );
+        
+        // Проверяем, содержит ли ответ ожидаемое слово
+        const isWorking = testResult.toLowerCase().includes('working');
+        
+        if (isWorking) {
+          return res.json({
+            success: true,
+            message: 'Qwen API работает корректно'
+          });
+        } else {
+          return res.json({
+            success: true, // API работает, но ответ не соответствует ожиданиям
+            message: 'Qwen API подключен, но ответ не соответствует ожиданиям',
+            result: testResult
+          });
+        }
+      } catch (error: any) {
+        return res.status(400).json({
+          success: false,
+          error: error.message || 'Ошибка при тестировании Qwen API'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error testing Qwen API:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Внутренняя ошибка сервера при тестировании Qwen API'
       });
     }
   });
