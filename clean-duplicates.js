@@ -23,7 +23,7 @@ async function authenticate() {
       url: 'https://api.nplanner.ru/auth/login',
       data: {
         email: 'lbrspb@gmail.com',
-        password: 'qtpZ3dh7'
+        password: 'QtpZ3dh7'
       }
     });
 
