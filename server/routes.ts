@@ -9176,6 +9176,104 @@ ${datesText}
     }
   });
 
+  // Эндпоинт для тестирования Qwen API
+  app.get('/api/test-qwen', async (req, res) => {
+    try {
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем данные пользователя из токена
+          const decodedToken = await directusApi.get('/users/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (decodedToken.data && decodedToken.data.data) {
+            userId = decodedToken.data.data.id;
+          }
+        } catch (error) {
+          console.error('Ошибка при декодировании токена:', error);
+        }
+      }
+      
+      if (!userId) {
+        // Если пользователь не авторизован, используем параметр userId из запроса
+        userId = req.query.userId as string;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не удалось определить пользователя. Пожалуйста, авторизуйтесь или укажите userId в параметрах запроса.'
+        });
+      }
+      
+      // Получаем API ключ Qwen из сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Qwen не найден. Пожалуйста, добавьте ключ в настройках.'
+        });
+      }
+      
+      // Инициализируем сервис Qwen с полученным ключом
+      const initialized = await qwenService.initialize(userId, token);
+      
+      if (!initialized) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не удалось инициализировать Qwen API. Проверьте ключ в настройках.'
+        });
+      }
+      
+      // Тестовый запрос к Qwen API - простая генерация текста
+      try {
+        const testResult = await qwenService.generateText(
+          [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: 'Reply with a single word: "Working"' }
+          ],
+          { max_tokens: 10 }
+        );
+        
+        // Проверяем, содержит ли ответ ожидаемое слово
+        const isWorking = testResult.toLowerCase().includes('working');
+        
+        if (isWorking) {
+          return res.json({
+            success: true,
+            message: 'Qwen API работает корректно'
+          });
+        } else {
+          return res.json({
+            success: true, // API работает, но ответ не соответствует ожиданиям
+            message: 'Qwen API подключен, но ответ не соответствует ожиданиям',
+            result: testResult
+          });
+        }
+      } catch (error: any) {
+        return res.status(400).json({
+          success: false,
+          error: error.message || 'Ошибка при тестировании Qwen API'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error testing Qwen API:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Внутренняя ошибка сервера при тестировании Qwen API'
+      });
+    }
+  });
+
   // Эндпоинт для тестирования FAL.AI API с различными форматами ключей
   app.get("/api/test-fal-ai", async (req, res) => {
     try {
