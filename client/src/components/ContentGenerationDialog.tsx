@@ -28,7 +28,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'perplexity' | 'deepseek';
+type ApiService = 'perplexity' | 'deepseek' | 'qwen';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -64,11 +64,13 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       // Выбираем API в зависимости от выбранного сервиса
-      const apiEndpoint = selectedService === 'perplexity' 
-        ? '/api/generate-content' 
-        : '/api/content/generate-deepseek';
+      let apiEndpoint = '/api/generate-content'; // По умолчанию Perplexity API
       
-      console.log(`Генерация контента через ${selectedService} API`);
+      if (selectedService === 'deepseek') {
+        apiEndpoint = '/api/content/generate-deepseek';
+      }
+      
+      console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -81,7 +83,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           keywords: selectedKeywords,
           tone,
           campaignId,
-          platform: platform // Используется только для DeepSeek
+          platform: platform, // Используется для некоторых сервисов
+          aiService: selectedService // Добавляем параметр aiService для Perplexity/Qwen
         })
       });
 
@@ -210,9 +213,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     onValueChange={(value) => setSelectedService(value as ApiService)}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="perplexity">Perplexity</TabsTrigger>
                       <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
+                      <TabsTrigger value="qwen">Qwen</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
