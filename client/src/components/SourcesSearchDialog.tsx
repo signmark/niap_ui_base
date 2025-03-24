@@ -140,7 +140,7 @@ export function SourcesSearchDialog({
         }
       });
 
-      if (response.success && response.data?.sources) {
+      if (response.data?.sources) {
         onSearch(response.data.sources);
       } else {
         toast({
