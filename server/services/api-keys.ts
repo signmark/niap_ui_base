@@ -65,7 +65,7 @@ export class ApiKeyService {
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
     console.log(`[DEBUG] Запрашивается ключ для сервиса: ${serviceName}, пользователя: ${userId}`);
     
-    // ВАЖНОЕ ПРАВИЛО: Все API ключи должны браться ТОЛЬКО из Directus (через user_api_keys)
+    // ВАЖНОЕ ПРАВИЛО: Все API ключи должны браться ТОЛЬКО из Directus (через campaign_api_keys)
     // Если нет userId, не можем получить ключ из Directus
     if (!userId) {
       log(`Cannot fetch ${serviceName} API key: missing userId. API keys must come only from Directus user settings.`, 'api-keys');
@@ -87,10 +87,36 @@ export class ApiKeyService {
       
       // Делаем прямой запрос к Directus через API как в SettingsDialog
       // Это гарантирует одинаковое поведение на фронтенде и бэкенде
-      const response = await directusApi.get('/items/user_api_keys', {
+      // Получаем активную кампанию пользователя
+      console.log(`[${serviceName}] Получение активной кампании для пользователя ${userId}`);
+      const campaignsResponse = await directusApi.get('/items/user_campaigns', {
         params: {
           filter: {
             user_id: { _eq: userId }
+          },
+          limit: 1,
+          sort: ['-created_at'],
+          fields: ['id']
+        },
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined
+      });
+      
+      const campaigns = campaignsResponse.data?.data || [];
+      
+      if (!campaigns || campaigns.length === 0) {
+        console.log(`[${serviceName}] Кампании не найдены для пользователя ${userId}`);
+        log(`No campaigns found for user ${userId}`, 'api-keys');
+        return null;
+      }
+      
+      const campaignId = campaigns[0].id;
+      console.log(`[${serviceName}] Используем кампанию ${campaignId} для пользователя ${userId}`);
+      
+      // Получаем API ключи кампании
+      const response = await directusApi.get('/items/campaign_api_keys', {
+        params: {
+          filter: {
+            campaign_id: { _eq: campaignId }
           },
           fields: ['id', 'service_name', 'api_key']
         },
@@ -184,7 +210,7 @@ export class ApiKeyService {
             
             // Также обновляем service_name в БД для будущих запросов
             try {
-              await directusCrud.update('user_api_keys', keyByPosition.id, {
+              await directusCrud.update('campaign_api_keys', keyByPosition.id, {
                 service_name: dbServiceName
               }, {
                 userId, authToken
@@ -298,11 +324,31 @@ export class ApiKeyService {
       const dbServiceName = SERVICE_NAME_DB_MAPPING[serviceName];
       console.log(`[${serviceName}] DB service name mapping: '${serviceName}' -> '${dbServiceName}'`);
       
-      const existingKeys = await directusCrud.list('user_api_keys', {
+      // Получаем активную кампанию пользователя
+      const campaigns = await directusCrud.list('user_campaigns', {
+        filter: {
+          user_id: { _eq: userId }
+        },
+        limit: 1,
+        sort: ['-created_at'],
+        authToken: authToken
+      });
+      
+      if (!campaigns || campaigns.length === 0) {
+        console.log(`[${serviceName}] Кампании не найдены для пользователя ${userId}`);
+        log(`No campaigns found for user ${userId}`, 'api-keys');
+        return false;
+      }
+      
+      const campaignId = campaigns[0].id;
+      console.log(`[${serviceName}] Используем кампанию ${campaignId} для пользователя ${userId}`);
+      
+      // Проверяем существующие ключи для этой кампании
+      const existingKeys = await directusCrud.list('campaign_api_keys', {
         userId: userId,
         authToken: authToken,
         filter: {
-          user_id: { _eq: userId },
+          campaign_id: { _eq: campaignId },
           service_name: { _eq: dbServiceName }
         },
         fields: ['id']
@@ -317,7 +363,7 @@ export class ApiKeyService {
         const keyId = existingKey.id;
         console.log(`[${serviceName}] Обновление существующего API ключа с ID ${keyId}`);
         
-        result = await directusCrud.update('user_api_keys', keyId, {
+        result = await directusCrud.update('campaign_api_keys', keyId, {
           api_key: apiKey,
           updated_at: new Date().toISOString()
         }, {
@@ -457,11 +503,30 @@ export class ApiKeyService {
     try {
       // Получаем текущий ключ FAL.AI для пользователя
       console.log(`[fal_ai] Получаем ключ для проверки формата`);
-      const keys = await directusCrud.list('user_api_keys', {
+      // Получаем активную кампанию пользователя
+      const campaigns = await directusCrud.list('user_campaigns', {
+        filter: {
+          user_id: { _eq: userId }
+        },
+        limit: 1,
+        sort: ['-created_at'],
+        authToken: authToken
+      });
+      
+      if (!campaigns || campaigns.length === 0) {
+        console.log(`[fal_ai] Кампании не найдены для пользователя ${userId}`);
+        return false;
+      }
+      
+      const campaignId = campaigns[0].id;
+      console.log(`[fal_ai] Используем кампанию ${campaignId} для пользователя ${userId}`);
+      
+      // Получаем ключи для этой кампании
+      const keys = await directusCrud.list('campaign_api_keys', {
         userId: userId,
         authToken: authToken,
         filter: {
-          user_id: { _eq: userId }
+          campaign_id: { _eq: campaignId }
         },
         fields: ['id', 'service_name', 'api_key']
       });
@@ -489,7 +554,7 @@ export class ApiKeyService {
           const cleanKey = apiKey.substring(4);
           
           // Обновляем ключ в БД
-          await directusCrud.update('user_api_keys', falKeyItem.id, {
+          await directusCrud.update('campaign_api_keys', falKeyItem.id, {
             api_key: cleanKey,
             service_name: 'fal_ai', // Устанавливаем service_name, если его не было
             updated_at: new Date().toISOString()
@@ -504,7 +569,7 @@ export class ApiKeyService {
           console.log(`[fal_ai] Ключ уже в правильном формате для хранения (без префикса "Key"), обновляем service_name`);
           
           // Обновляем service_name в БД
-          await directusCrud.update('user_api_keys', falKeyItem.id, {
+          await directusCrud.update('campaign_api_keys', falKeyItem.id, {
             service_name: 'fal_ai',
             updated_at: new Date().toISOString()
           }, {
