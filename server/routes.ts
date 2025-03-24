@@ -3096,12 +3096,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Генерируем промт для изображения на основе текста
-      console.log(`Generating image prompt with DeepSeek. Content length: ${content.length} chars`);
+      console.log(`Generating image prompt with DeepSeek (optimized method). Content length: ${content.length} chars`);
       
       // Очищаем HTML теги из контента
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
+      // Отправляем контент напрямую в DeepSeek для генерации промта без предварительного перевода
+      // DeepSeek сам переведет контент и сгенерирует промт в одном запросе
       const prompt = await deepseekService.generateImagePrompt(
         cleanContent,
         keywords || []
