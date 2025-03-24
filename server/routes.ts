@@ -3279,15 +3279,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           service: usedService
         });
         
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error generating content with ${useService}:`, error);
+        
+        // Подробное логирование ошибки для отладки
         if (axios.isAxiosError(error)) {
           console.error(`${useService} API error details:`, {
             status: error.response?.status,
-            data: error.response?.data
+            data: error.response?.data,
+            message: error.message,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              headers: error.config?.headers
+            }
           });
+        } else {
+          console.error(`Non-Axios error in ${useService}:`, error.message || 'Unknown error');
         }
-        return res.status(500).json({ error: `Failed to generate content with ${useService}` });
+        
+        // Преобразуем сообщение об ошибке для более понятного представления
+        const errorMessage = error.message || `Ошибка при генерации контента через ${useService}`;
+        const userFriendlyMessage = errorMessage.includes('API ключ') 
+          ? `Проблема с API ключом ${useService}. Пожалуйста, проверьте настройки API ключа в профиле.`
+          : errorMessage;
+          
+        // Отправляем более подробное сообщение об ошибке клиенту вместо общего сообщения
+        return res.status(400).json({ error: userFriendlyMessage });
       }
     } catch (error) {
       console.error("Error in content generation:", error);
