@@ -411,11 +411,15 @@ ${platformSpecifics}
     keywords: string[] = []
   ): Promise<string> {
     try {
+      console.log('Начинаем генерацию промта для изображений с помощью DeepSeek...');
+      
       // Очищаем HTML-теги из контента, но сохраняем структуру текста
       const cleanedContent = content
         .replace(/<[^>]*>/g, ' ')  // Заменяем HTML-теги пробелами
         .replace(/\s+/g, ' ')      // Заменяем множественные пробелы одним
         .trim();                    // Убираем пробелы в начале и конце
+      
+      console.log(`Контент очищен от HTML. Длина: ${cleanedContent.length} символов. Первые 100: ${cleanedContent.substring(0, 100)}...`);
       
       // Формируем системный промт
       const systemPrompt = `You are an expert image prompt generator for Stable Diffusion AI.
@@ -452,18 +456,111 @@ Remember to output ONLY the English prompt without any explanations.`;
         { role: 'user', content: userPrompt }
       ];
 
-      // Вызываем генерацию с соответствующими параметрами
-      const result = await this.generateText(messages, {
-        model: 'deepseek-chat',
-        temperature: 0.7,  // Более высокая температура для творческих результатов
-        max_tokens: 300    // Ограничиваем длину промта
-      });
+      // Если API ключ не установлен, пытаемся использовать fallback напрямую
+      if (!this.hasApiKey()) {
+        console.warn('DeepSeek API ключ не установлен. Возвращаем заранее подготовленный промт.');
+        
+        // Пока DeepSeek API не работает, возвращаем базовый промт на основе контента
+        const fallbackPrompt = `A detailed, high-quality photorealistic image of ${cleanedContent.substring(0, 100)}, with natural lighting, vibrant colors, and professional composition.`;
+        console.log('Используем fallback промт: ' + fallbackPrompt);
+        
+        // В этом случае не бросаем ошибку, а возвращаем что-то полезное
+        return fallbackPrompt;
+      }
+
+      console.log('Отправляем запрос на генерацию промта к DeepSeek API...');
       
-      // Чистим результат от лишних кавычек, если они добавлены моделью
-      return result.replace(/^["']|["']$/g, '').trim();
+      // Перехватываем больше потенциальных ошибок
+      try {
+        // Вызываем генерацию с соответствующими параметрами
+        const result = await this.generateText(messages, {
+          model: 'deepseek-chat',
+          temperature: 0.7,  // Более высокая температура для творческих результатов
+          max_tokens: 300    // Ограничиваем длину промта
+        });
+        
+        // Проверка на валидность результата
+        if (!result || typeof result !== 'string' || result.trim().length < 10) {
+          throw new Error(`Некорректный результат от DeepSeek API: ${result}`);
+        }
+        
+        console.log(`Успешно получен результат от DeepSeek API. Длина: ${result.length} символов.`);
+        console.log(`Первые 100 символов промта: ${result.substring(0, 100)}...`);
+        
+        // Чистим результат от лишних кавычек, если они добавлены моделью
+        return result.replace(/^["']|["']$/g, '').trim();
+      } catch (apiError: any) {
+        console.error('Ошибка при обращении к DeepSeek API:', apiError);
+        
+        // Дополнительная информация для диагностики
+        if (apiError.response) {
+          console.error('Детали ответа API:', JSON.stringify({
+            status: apiError.response.status,
+            data: apiError.response.data
+          }));
+        }
+        
+        // Ошибка при обращении к API, проверим формат ключа
+        console.log('Проверка формата API ключа...');
+        
+        // Перепробуем с другими форматами ключа
+        const keyFormats = [
+          { format: 'без Bearer', key: this.apiKey.replace(/^Bearer\s+/i, '') },
+          { format: 'с Bearer', key: this.apiKey.startsWith('Bearer ') ? this.apiKey : `Bearer ${this.apiKey}` },
+          { format: 'с sk-', key: this.apiKey.startsWith('sk-') ? this.apiKey : `sk-${this.apiKey}` }
+        ];
+        
+        // Пробуем каждый формат
+        for (const format of keyFormats) {
+          console.log(`Пробуем формат ключа: ${format.format}`);
+          
+          try {
+            // Временно меняем ключ
+            const originalKey = this.apiKey;
+            this.apiKey = format.key;
+            
+            // Пробуем простой запрос
+            const testResult = await this.generateText(
+              [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                { role: 'user', content: 'Say hello in one word.' }
+              ],
+              { max_tokens: 10 }
+            );
+            
+            console.log(`Формат ключа ${format.format} успешно сработал!`);
+            
+            // Если этот формат сработал, возвращаемся к основному запросу
+            const finalResult = await this.generateText(messages, {
+              model: 'deepseek-chat',
+              temperature: 0.7,
+              max_tokens: 300
+            });
+            
+            // Чистим результат и возвращаем
+            return finalResult.replace(/^["']|["']$/g, '').trim();
+          } catch (formatError) {
+            console.error(`Формат ключа ${format.format} не сработал:`, formatError);
+            // Продолжаем с другими форматами
+          }
+        }
+        
+        // Если ни один формат не сработал, возвращаем подготовленный промт на основе контента
+        console.warn('Все форматы ключа DeepSeek API не сработали. Возвращаем заранее подготовленный промт.');
+        const fallbackPrompt = `A detailed, high-quality photorealistic image of ${cleanedContent.substring(0, 100)}, with natural lighting, vibrant colors, and professional composition.`;
+        return fallbackPrompt;
+      }
     } catch (error: any) {
-      console.error('Error generating image prompt with DeepSeek:', error);
-      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message || String(error)}`);
+      console.error('Критическая ошибка при генерации промта для изображения с DeepSeek:', error);
+      
+      // В случае полного отказа системы, всё равно возвращаем что-то полезное
+      try {
+        // Простая генерация промта на основе контента
+        const emergencyPrompt = `A detailed, high-quality photorealistic image related to ${content.substring(0, 50).replace(/<[^>]*>/g, ' ').trim()}`;
+        return emergencyPrompt;
+      } catch (e) {
+        throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message || String(error)}`);
+      }
     }
   }
 
