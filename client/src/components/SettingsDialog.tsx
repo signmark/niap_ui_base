@@ -54,14 +54,39 @@ export function SettingsDialog() {
   const userId = useAuthStore((state) => state.userId);
 
   const { data: apiKeys, isLoading, refetch } = useQuery({
-    queryKey: ["user_api_keys"],
+    queryKey: ["campaign_api_keys"],
     queryFn: async () => {
       try {
-        const response = await directusApi.get('/items/user_api_keys', {
+        // Сначала получаем активную кампанию пользователя
+        const campaignsResponse = await directusApi.get('/items/user_campaigns', {
           params: {
             filter: {
               user_id: {
                 _eq: userId
+              }
+            },
+            limit: 1,
+            sort: ['-created_at'],
+            fields: ['id']
+          }
+        });
+        
+        const campaigns = campaignsResponse.data?.data || [];
+        if (!campaigns || campaigns.length === 0) {
+          // Если кампаний нет, возвращаем пустой массив ключей
+          console.warn("No campaigns found for user", userId);
+          return [];
+        }
+        
+        const campaignId = campaigns[0].id;
+        console.log(`Using campaign ID: ${campaignId} for API keys`);
+        
+        // Получаем API ключи для кампании
+        const response = await directusApi.get('/items/campaign_api_keys', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
               }
             },
             fields: ['id', 'service_name', 'api_key']
@@ -160,6 +185,14 @@ export function SettingsDialog() {
       
       setTestingState({ status: 'success', message: 'API ключ сохранен' });
     } catch (error: any) {
+      const serviceNames = {
+        perplexity: 'Perplexity',
+        apify: 'Apify',
+        deepseek: 'DeepSeek',
+        xmlriver: 'XMLRiver',
+        fal_ai: 'FAL.AI'
+      };
+      
       setTestingState({ 
         status: 'error', 
         message: error.message || 'Ошибка при сохранении API ключа'
@@ -239,6 +272,28 @@ export function SettingsDialog() {
       if (!userId) {
         throw new Error("Пользователь не авторизован");
       }
+      
+      // Сначала получаем активную кампанию пользователя
+      const campaignsResponse = await directusApi.get('/items/user_campaigns', {
+        params: {
+          filter: {
+            user_id: {
+              _eq: userId
+            }
+          },
+          limit: 1,
+          sort: ['-created_at'],
+          fields: ['id']
+        }
+      });
+      
+      const campaigns = campaignsResponse.data?.data || [];
+      if (!campaigns || campaigns.length === 0) {
+        throw new Error("Нет активной кампании. Создайте кампанию, прежде чем сохранять API ключи.");
+      }
+      
+      const campaignId = campaigns[0].id;
+      console.log(`Saving API keys for campaign ID: ${campaignId}`);
 
       // Формируем ключ для XMLRiver, объединяя user_id и api_key в JSON
       const xmlRiverCombinedKey = JSON.stringify({
@@ -262,12 +317,12 @@ export function SettingsDialog() {
         const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
         if (existingKey) {
-          await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
+          await directusApi.patch(`/items/campaign_api_keys/${existingKey.id}`, {
             api_key: service.key
           });
         } else {
-          await directusApi.post('/items/user_api_keys', {
-            user_id: userId,
+          await directusApi.post('/items/campaign_api_keys', {
+            campaign_id: campaignId,
             service_name: service.name,
             api_key: service.key
           });
