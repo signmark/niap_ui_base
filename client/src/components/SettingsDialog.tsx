@@ -455,6 +455,41 @@ export function SettingsDialog() {
             <p className="text-sm text-red-500">{falAiTesting.message}</p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <Label>API Ключ Qwen</Label>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={qwenKey}
+              onChange={(e) => setQwenKey(e.target.value)}
+              placeholder="Введите API ключ"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testQwenKey}
+              disabled={!qwenKey.trim() || isPending || qwenTesting.status === 'testing'}
+              className="shrink-0"
+            >
+              {qwenTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : qwenTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : qwenTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для генерации контента через Alibaba Qwen AI
+          </p>
+          {qwenTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{qwenTesting.message}</p>
+          )}
+        </div>
         
         <Separator className="my-4" />
         
