@@ -39,6 +39,7 @@ export function SettingsDialog() {
   const [apifyKey, setApifyKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
+  const [qwenKey, setQwenKey] = useState("");
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
@@ -49,6 +50,7 @@ export function SettingsDialog() {
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
+  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' });
   
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
@@ -148,7 +150,8 @@ export function SettingsDialog() {
         apify: 'Apify',
         deepseek: 'DeepSeek',
         xmlriver: 'XMLRiver',
-        fal_ai: 'FAL.AI'
+        fal_ai: 'FAL.AI',
+        qwen: 'Qwen'
       };
       
       const serviceName = serviceNames[keyType as keyof typeof serviceNames] || keyType;
