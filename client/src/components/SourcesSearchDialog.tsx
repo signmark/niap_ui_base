@@ -141,28 +141,24 @@ export function SourcesSearchDialog({
         const keysStatus = await apiRequest('/api/debug/api-keys');
         console.log("📊 Статус API ключей:", keysStatus);
         
-        // Проверяем есть ли ключ Perplexity
-        if (keysStatus?.data?.serviceResults) {
-          // Проверка наличия ключа в массиве результатов
-          const perplexityKey = keysStatus.data.serviceResults.find(
-            (service: any) => service.service === 'perplexity'
-          );
-          
-          console.log("🔑 Информация о ключе Perplexity:", perplexityKey);
-          
-          if (!perplexityKey || !perplexityKey.keyExists) {
-            console.log("❌ Отсутствует API ключ Perplexity");
-            toast({
-              title: "Требуется API ключ",
-              description: "Для поиска источников необходимо настроить API ключ Perplexity в настройках учетной записи",
-              variant: "destructive"
-            });
-            setIsLoading(false);
-            return;
-          }
-        } else {
-          console.log("⚠️ Неожиданный формат ответа API ключей:", keysStatus?.data);
+        // Проверяем есть ли ключ Perplexity - ОБНОВЛЕНО: пропускаем эту проверку,
+      // так как ключи есть в Directus, и мы полагаемся на серверную проверку
+      if (keysStatus?.data?.serviceResults) {
+        // Проверка наличия ключа в массиве результатов
+        const perplexityKey = keysStatus.data.serviceResults.find(
+          (service: any) => service.service === 'perplexity'
+        );
+        
+        console.log("🔑 Информация о ключе Perplexity:", perplexityKey);
+        
+        // Отключаем блокирующую проверку, пусть запрос пройдёт на сервер 
+        // который сам найдет ключ в БД
+        if (perplexityKey && !perplexityKey.keyExists) {
+          console.log("⚠️ API ключ Perplexity может отсутствовать, но продолжаем поиск");
         }
+      } else {
+        console.log("⚠️ Неожиданный формат ответа API ключей:", keysStatus?.data);
+      }
       } catch (keyError) {
         console.log("❌ Ошибка при проверке API ключей:", keyError);
         // Продолжаем выполнение даже при ошибке проверки ключей
