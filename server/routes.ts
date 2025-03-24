@@ -5370,6 +5370,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Новый эндпоинт для поиска источников с кастомизируемыми параметрами
+  // Helper function to get campaign keywords from Directus
+  async function getCampaignKeywords(campaignId: string, token: string): Promise<string[]> {
+    try {
+      // Запрашиваем ключевые слова кампании из таблицы campaign_keywords
+      const response = await directusApi.get('/items/campaign_keywords', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          filter: {
+            campaign_id: { _eq: campaignId }
+          },
+          fields: ['id', 'keyword']
+        }
+      });
+
+      // Проверяем наличие данных в ответе
+      if (!response.data?.data || !Array.isArray(response.data.data)) {
+        console.log(`Ключевые слова для кампании ${campaignId} не найдены`);
+        return [];
+      }
+
+      // Извлекаем ключевые слова из ответа
+      const keywords = response.data.data.map((item: any) => item.keyword).filter(Boolean);
+      console.log(`Найдено ${keywords.length} ключевых слов для кампании ${campaignId}: ${keywords.join(', ')}`);
+      
+      return keywords;
+    } catch (error) {
+      console.error(`Ошибка при получении ключевых слов для кампании ${campaignId}:`, error);
+      return [];
+    }
+  }
+  
+  app.post("/api/sources/search-by-campaign", authenticateUser, async (req, res) => {
+    // Устанавливаем заголовок Content-Type явно, чтобы клиент всегда получал JSON
+    res.setHeader('Content-Type', 'application/json');
+    
+    console.log('📣 ПОЛУЧЕН ЗАПРОС на /api/sources/search-by-campaign:', JSON.stringify(req.body, null, 2));
+    
+    try {
+      const { campaignId, platform = 'instagram', maxResults = 20 } = req.body;
+    
+      if (!campaignId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Требуется ID кампании для поиска' 
+        });
+      }
+
+      // Получаем токен авторизации из заголовка запроса
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Не авторизован: Отсутствует токен авторизации' 
+        });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      const userId = req.userId;
+      
+      // Получаем API ключ Perplexity
+      const perplexityApiKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
+      
+      if (!perplexityApiKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'API ключ Perplexity не найден. Добавьте его в настройках.' 
+        });
+      }
+
+      // Получаем ключевые слова кампании
+      const keywords = await getCampaignKeywords(campaignId, token);
+      
+      if (keywords.length === 0) {
+        return res.json({
+          success: true,
+          data: [],
+          message: 'Для данной кампании не найдено ключевых слов',
+          keywords: []
+        });
+      }
+
+      // Собираем результаты для всех ключевых слов
+      const allResults = [];
+      const keywordResults = {};
+      
+      for (const keyword of keywords) {
+        try {
+          console.log(`Поиск источников для ключевого слова "${keyword}" на платформе ${platform}...`);
+          
+          // Определяем prompts для запроса в зависимости от платформы
+          let systemPrompt, userPrompt;
+
+          if (platform === 'instagram') {
+            systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts.
+Focus only on Instagram accounts with >50K followers that post content in Russian.
+For each account provide:
+1. Username with @ symbol 
+2. Full name in Russian
+3. Follower count with K or M
+4. Brief description in Russian
+
+Format each account exactly as:
+**@username** - Name (500K followers) - Description
+
+Also include direct Instagram URLs in the response like:
+https://www.instagram.com/username/ - description
+
+NOTE: Format is CRITICAL. Each account MUST start with **@username** with two asterisks.`;
+            userPrompt = `Find TOP-3 most authoritative Russian Instagram accounts for the keyword: ${keyword}`;
+          } else if (platform === 'telegram') {
+            systemPrompt = `You are an expert at finding high-quality Russian Telegram channels and chats.
+Focus only on Telegram channels with >10K subscribers that post content in Russian.
+For each channel or chat provide:
+1. Channel name with @ symbol 
+2. Title in Russian
+3. Subscriber count with K or M
+4. Brief description of channel content in Russian
+
+Format each channel exactly as:
+**@channelname** - Title (500K subscribers) - Description
+
+Also include direct Telegram URLs in the response like:
+https://t.me/channelname - description
+
+NOTE: Format is CRITICAL. Each channel MUST start with **@channelname** with two asterisks.`;
+            userPrompt = `Find TOP-3 most popular and authoritative Russian Telegram channels for the keyword: ${keyword}`;
+          } else {
+            console.error(`Неподдерживаемая платформа: ${platform}. Поддерживаются: instagram, telegram`);
+            continue;
+          }
+
+          // Удаляем префикс "Bearer", если он уже есть в ключе
+          const cleanKey = perplexityApiKey.startsWith('Bearer ') 
+            ? perplexityApiKey.substring(7)
+            : perplexityApiKey;
+
+          // Выполняем запрос к Perplexity API
+          const response = await axios.post(
+            'https://api.perplexity.ai/chat/completions',
+            {
+              model: "llama-3.1-sonar-small-128k-online",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
+              ],
+              max_tokens: 1000,
+              temperature: 0.7
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${cleanKey}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 30000 // 30 секунд таймаут
+            }
+          );
+
+          // Проверяем структуру ответа
+          if (!response.data?.choices?.[0]?.message?.content) {
+            console.error('Некорректный формат ответа API для ключевого слова:', keyword);
+            continue;
+          }
+
+          // Получаем текст ответа
+          const content = response.data.choices[0].message.content;
+          console.log(`Raw API response for keyword ${keyword}:`, content.substring(0, 200) + '...');
+
+          // Извлекаем источники из текста с учетом платформы
+          const sources = extractSourcesFromText(content, [platform]);
+          console.log(`Found ${sources.length} sources for keyword ${keyword}`);
+
+          // Добавляем к каждому источнику информацию о ключевом слове, по которому он был найден
+          const sourcesWithKeyword = sources.map(source => ({
+            ...source,
+            matchedKeyword: keyword
+          }));
+          
+          allResults.push(...sourcesWithKeyword);
+          keywordResults[keyword] = sources.length;
+          
+          // Небольшая пауза между запросами, чтобы не перегружать API
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (keywordError) {
+          console.error(`Ошибка при поиске для ключевого слова "${keyword}":`, keywordError);
+          keywordResults[keyword] = 0;
+          // Продолжаем с другими ключевыми словами
+        }
+      }
+      
+      // Объединяем результаты и удаляем дубликаты
+      const mergedResults = mergeSources(allResults);
+      console.log(`Total sources after merging: ${mergedResults.length}`);
+      
+      // Лимитируем количество результатов
+      const limitedSources = mergedResults.slice(0, maxResults);
+      
+      return res.json({
+        success: true,
+        data: limitedSources,
+        keywords: keywords,
+        keywordResults: keywordResults,
+        totalFound: mergedResults.length,
+        returned: limitedSources.length,
+        message: `Найдено ${mergedResults.length} уникальных источников для ${keywords.length} ключевых слов`
+      });
+    } catch (error) {
+      console.error('Error in /api/sources/search-by-campaign:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка при поиске источников по кампании', 
+        message: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      });
+    }
+  });
+
   app.post("/api/sources/search", async (req, res) => {
     // Устанавливаем заголовок Content-Type явно, чтобы клиент всегда получал JSON
     res.setHeader('Content-Type', 'application/json');
