@@ -3072,6 +3072,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
+  // Тестовый маршрут для отладки DeepSeek API ключей
+  app.get("/api/test-deepseek-api", authenticateUser, async (req, res) => {
+    try {
+      // Получаем userId из authenticateUser middleware
+      const userId = (req as any).userId;
+      
+      // Получаем токен авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
+      
+      console.log("Тестирование DeepSeek API для пользователя:", userId);
+      
+      // Получаем API ключ через сервис API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+      
+      if (!apiKey) {
+        return res.status(404).json({
+          success: false,
+          error: "DeepSeek API ключ не найден для пользователя",
+          user_id: userId
+        });
+      }
+      
+      console.log(`Получен DeepSeek API ключ длиной ${apiKey.length} символов`);
+      console.log(`Первые 6 символов ключа: ${apiKey.substring(0, 6)}...`);
+      
+      // Подготавливаем разные форматы ключа для тестирования
+      const keyFormats = [
+        { description: "Исходный ключ", key: apiKey },
+        { description: "Ключ без Bearer префикса", key: apiKey.replace(/^Bearer\s+/i, '') },
+      ];
+      
+      // Проверка каждого формата ключа
+      const results = [];
+      
+      for (const format of keyFormats) {
+        try {
+          console.log(`Тестирование формата: ${format.description}`);
+          
+          // Настраиваем временный экземпляр DeepSeek с текущим форматом ключа
+          const testService = new DeepSeekService({ apiKey: format.key });
+          
+          // Простой тестовый запрос
+          const testPrompt = await testService.generateText(
+            [
+              { role: "system", content: "You are a helpful assistant." },
+              { role: "user", content: "Say hello in one word." }
+            ],
+            { max_tokens: 10 }
+          );
+          
+          results.push({
+            format: format.description,
+            success: true,
+            response: testPrompt
+          });
+        } catch (error: any) {
+          console.error(`Ошибка для формата "${format.description}":`, error.message);
+          
+          results.push({
+            format: format.description,
+            success: false,
+            error: error.message,
+            errorCode: error.response?.status
+          });
+        }
+      }
+      
+      // Возвращаем результаты тестирования
+      return res.json({
+        success: true,
+        user_id: userId,
+        key_found: true,
+        key_length: apiKey.length,
+        key_first_chars: apiKey.substring(0, 6) + "...",
+        test_results: results
+      });
+    } catch (error: any) {
+      console.error("Ошибка при тестировании DeepSeek API:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
   app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
@@ -3088,6 +3174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       // Инициализируем DeepSeek сервис с ключом пользователя
+      console.log("Инициализация DeepSeek сервиса для генерации промта...");
       const initialized = await deepseekService.initialize(userId, token);
       
       if (!initialized) {
@@ -3097,6 +3184,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Получаем API ключ для отладки проблем
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+      console.log(`DEBUG: DeepSeek API ключ для отладки: ${apiKey?.substring(0, 6)}... (длина: ${apiKey?.length || 0})`);
+      
       // Генерируем промт для изображения на основе текста
       console.log(`Generating image prompt with DeepSeek. Content length: ${content.length} chars`);
       
@@ -3104,19 +3195,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
-      const prompt = await deepseekService.generateImagePrompt(
-        cleanContent,
-        keywords || []
-      );
-      
-      console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
-      
-      // Возвращаем сгенерированный промт
-      return res.json({
-        success: true,
-        prompt,
-        service: 'deepseek'
-      });
+      try {
+        const prompt = await deepseekService.generateImagePrompt(
+          cleanContent,
+          keywords || []
+        );
+        
+        console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
+        
+        // Возвращаем сгенерированный промт
+        return res.json({
+          success: true,
+          prompt,
+          service: 'deepseek'
+        });
+      } catch (promptError: any) {
+        console.error("Ошибка при генерации промта с DeepSeek:", promptError);
+        
+        // Формируем более информативное сообщение об ошибке с деталями для отладки
+        let errorDetails = promptError.message;
+        
+        if (promptError.response) {
+          errorDetails += ` (Статус: ${promptError.response.status})`;
+          if (promptError.response.data) {
+            errorDetails += ` Ответ API: ${JSON.stringify(promptError.response.data)}`;
+          }
+        }
+        
+        return res.status(400).json({ 
+          error: "Ошибка при генерации промта", 
+          details: errorDetails
+        });
+      }
     } catch (error: any) {
       console.error("Error generating prompt with DeepSeek:", error);
       return res.status(400).json({ 
