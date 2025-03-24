@@ -29,13 +29,16 @@ export class DeepSeekService {
    */
   updateApiKey(newApiKey: string): void {
     if (newApiKey && newApiKey.trim() !== '') {
+      // Сначала очистим ключ от лишних пробелов в начале и конце
+      const trimmedKey = newApiKey.trim();
+      
       // Убедимся, что ключ имеет префикс "Bearer " для API вызовов
-      if (!newApiKey.startsWith('Bearer ')) {
+      if (!trimmedKey.startsWith('Bearer ')) {
         console.log("DeepSeek: добавляем префикс 'Bearer ' к API ключу для корректных запросов");
-        this.apiKey = `Bearer ${newApiKey}`;
+        this.apiKey = `Bearer ${trimmedKey}`;
       } else {
         // Ключ уже с префиксом, используем как есть
-        this.apiKey = newApiKey;
+        this.apiKey = trimmedKey;
       }
       console.log(`DeepSeek API key updated from user settings (длина: ${this.apiKey.length})`);
     }
