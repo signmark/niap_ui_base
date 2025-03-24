@@ -57,11 +57,11 @@ PERPLEXITY_API_KEY=your-perplexity-api-key
 DEEPSEEK_API_KEY=your-deepseek-api-key
 FAL_AI_API_KEY=your-fal-ai-api-key
 
-# Настройки социальных сетей
-VK_TOKEN=your-vk-token
-VK_GROUP_ID=your-vk-group-id
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_CHAT_ID=your-telegram-chat-id
+# Настройки Directus
+DIRECTUS_URL=https://your-directus-url.com
+DIRECTUS_ADMIN_EMAIL=admin@example.com
+DIRECTUS_ADMIN_PASSWORD=your-admin-password
+DIRECTUS_ADMIN_TOKEN=your-admin-token
 ```
 
 ### 4. Запуск приложения
@@ -173,6 +173,18 @@ CREATE TABLE IF NOT EXISTS business_questionnaire (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Создание таблицы API ключей кампаний
+CREATE TABLE IF NOT EXISTS campaign_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL REFERENCES user_campaigns(id) ON DELETE CASCADE,
+  service_name VARCHAR(50) NOT NULL,
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE,
+  CONSTRAINT unique_campaign_service UNIQUE (campaign_id, service_name)
+);
+
 -- Создание индексов для оптимизации запросов
 CREATE INDEX IF NOT EXISTS idx_campaign_content_scheduled_at 
 ON campaign_content(scheduled_at);
@@ -188,6 +200,12 @@ ON campaign_trend_topics(campaign_id);
 
 CREATE INDEX IF NOT EXISTS idx_campaign_trend_topics_is_bookmarked 
 ON campaign_trend_topics(is_bookmarked);
+
+CREATE INDEX IF NOT EXISTS idx_campaign_api_keys_campaign_id
+ON campaign_api_keys(campaign_id);
+
+CREATE INDEX IF NOT EXISTS idx_campaign_api_keys_service_name
+ON campaign_api_keys(service_name);
 ```
 
 ### 3. Настройка Directus для работы с таблицами
@@ -236,7 +254,11 @@ VALUES
   ((SELECT id FROM editor_role), 'campaign_trend_topics', 'update', '*'),
   ((SELECT id FROM editor_role), 'business_questionnaire', 'create', '*'),
   ((SELECT id FROM editor_role), 'business_questionnaire', 'read', '*'),
-  ((SELECT id FROM editor_role), 'business_questionnaire', 'update', '*');
+  ((SELECT id FROM editor_role), 'business_questionnaire', 'update', '*'),
+  ((SELECT id FROM editor_role), 'campaign_api_keys', 'create', '*'),
+  ((SELECT id FROM editor_role), 'campaign_api_keys', 'read', '*'),
+  ((SELECT id FROM editor_role), 'campaign_api_keys', 'update', '*'),
+  ((SELECT id FROM editor_role), 'campaign_api_keys', 'delete', '*');
 ```
 
 ### 5. Обслуживание и очистка базы данных
