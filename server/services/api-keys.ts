@@ -330,8 +330,27 @@ export class ApiKeyService {
         // Создаем новый ключ
         console.log(`[${serviceName}] Создание нового API ключа для пользователя ${userId}`);
         
-        result = await directusCrud.create('user_api_keys', {
-          user_id: userId,
+        // Находим активную кампанию пользователя
+        const campaigns = await directusCrud.list('user_campaigns', {
+          filter: {
+            user_id: {
+              _eq: userId
+            }
+          },
+          limit: 1,
+          sort: ['-created_at'],
+          authToken: authToken
+        });
+        
+        const campaignId = campaigns && campaigns.length > 0 ? campaigns[0].id : null;
+        
+        if (!campaignId) {
+          log(`Cannot save API key: No campaign found for user ${userId}`, 'api-keys');
+          return false;
+        }
+        
+        result = await directusCrud.create('campaign_api_keys', {
+          campaign_id: campaignId,
           service_name: dbServiceName,
           api_key: apiKey,
           created_at: new Date().toISOString()
