@@ -209,12 +209,47 @@ export class DirectusCrud {
     return this.executeOperation<any>('read', 'users/me', async () => {
       const { authToken, userId } = options;
       
-      const response = await directusApiManager.request({
-        url: '/users/me',
-        method: 'get'
-      }, authToken || userId);
-
-      return response.data.data;
+      if (!authToken && !userId) {
+        throw new Error("Нет токена авторизации или ID пользователя для получения информации");
+      }
+      
+      try {
+        // Используем прямой запрос через axios, минуя directusApiManager
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const response = await axios.get(`${directusUrl}/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (!response.data || !response.data.data) {
+          throw new Error('Неверный формат ответа при получении информации о пользователе');
+        }
+        
+        return response.data.data;
+      } catch (error: any) {
+        // Только при наличии authToken логируем подробности, иначе возможна потеря приватных данных
+        if (authToken) {
+          console.error('Ошибка при получении информации о пользователе', {
+            status: error.response?.status,
+            error: error.message,
+            details: error.response?.data
+          });
+        }
+        
+        // Пробуем запрос через directusApiManager как запасной вариант
+        try {
+          const response = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, authToken || userId);
+          
+          return response.data.data;
+        } catch (secondError) {
+          // Если и второй запрос не удался, выбрасываем оригинальную ошибку
+          throw error;
+        }
+      }
     });
   }
 

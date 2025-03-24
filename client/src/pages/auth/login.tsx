@@ -33,8 +33,28 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       console.log('Attempting login with:', values.email);
-      const { data: authData } = await directusApi.post('/auth/login', values);
 
+      // Прямой запрос к Directus API вместо использования клиента
+      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          mode: 'json'
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Login response error:', errorText);
+        throw new Error("Ошибка при входе: " + response.statusText);
+      }
+
+      const authData = await response.json();
+      
       if (!authData?.data?.access_token) {
         throw new Error("Неверный формат ответа от сервера");
       }
@@ -43,14 +63,22 @@ export default function Login() {
       console.log('Received auth tokens, access token length:', access_token.length);
 
       // Получаем информацию о пользователе
-      const { data: userData } = await directusApi.get('/users/me', {
+      const userResponse = await fetch('https://directus.nplanner.ru/users/me', {
         headers: {
           'Authorization': `Bearer ${access_token}`
         }
       });
 
-      if (!userData?.data?.id) {
+      if (!userResponse.ok) {
+        const errorText = await userResponse.text();
+        console.error('User data fetch error:', errorText);
         throw new Error("Не удалось получить информацию о пользователе");
+      }
+
+      const userData = await userResponse.json();
+
+      if (!userData?.data?.id) {
+        throw new Error("Не удалось получить ID пользователя");
       }
 
       const userId = userData.data.id;
@@ -66,7 +94,11 @@ export default function Login() {
 
       // Устанавливаем автоматическое обновление токена
       setupTokenRefresh(expires);
+      
+      // Добавляем задержку в 100мс, чтобы дать другим компонентам времени обновиться
+      await new Promise(resolve => setTimeout(resolve, 100));
 
+      // Редирект на главную
       navigate("/campaigns");
 
       toast({
