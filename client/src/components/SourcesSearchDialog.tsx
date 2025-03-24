@@ -136,6 +136,27 @@ export function SourcesSearchDialog({
 
     setIsLoading(true);
     try {
+      // Проверка статуса API ключей для отладки
+      try {
+        const keysStatus = await apiRequest('/api/debug/api-keys');
+        console.log("📊 Статус API ключей:", keysStatus);
+        
+        // Проверяем есть ли ключ Perplexity
+        if (!keysStatus?.data?.keys?.perplexity) {
+          console.log("❌ Отсутствует API ключ Perplexity");
+          toast({
+            title: "Требуется API ключ",
+            description: "Для поиска источников необходимо настроить API ключ Perplexity в настройках учетной записи",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+      } catch (keyError) {
+        console.log("❌ Ошибка при проверке API ключей:", keyError);
+        // Продолжаем выполнение даже при ошибке проверки ключей
+      }
+
       console.log("📝 Запрос к API:");
       console.log({
         endpoint: "/api/sources/search",
@@ -165,17 +186,35 @@ export function SourcesSearchDialog({
         onSearch(response.data.sources);
       } else {
         console.log("❌ Ошибка: нет источников в ответе", response);
+        
+        // Информативное сообщение об ошибке в зависимости от конкретной причины
+        let errorMessage = response.error || "Не удалось найти источники, попробуйте другие ключевые слова";
+        if (response.error?.includes("API ключ Perplexity")) {
+          errorMessage = "Для поиска источников необходимо настроить API ключ Perplexity в настройках учетной записи";
+        }
+        
         toast({
           title: "Ошибка поиска",
-          description: response.error || "Не удалось найти источники, попробуйте другие ключевые слова",
+          description: errorMessage,
           variant: "destructive"
         });
       }
     } catch (error) {
       console.error("❌ Ошибка поиска источников:", error);
+      
+      // Информативное сообщение об ошибке
+      let errorMessage = "Произошла ошибка при поиске источников. Пожалуйста, попробуйте позже.";
+      if (error instanceof Error) {
+        if (error.message.includes("401")) {
+          errorMessage = "Ошибка авторизации. Пожалуйста, войдите в систему снова.";
+        } else if (error.message.includes("API ключ") || error.message.includes("Perplexity")) {
+          errorMessage = "Для поиска источников необходим API ключ Perplexity. Проверьте настройки учетной записи.";
+        }
+      }
+      
       toast({
         title: "Ошибка",
-        description: "Произошла ошибка при поиске источников. Пожалуйста, попробуйте позже.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
