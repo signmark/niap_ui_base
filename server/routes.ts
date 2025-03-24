@@ -894,10 +894,11 @@ function extractSourcesFromText(content: string, platforms: string[] = ['instagr
 }
 
 // Helper function for Perplexity search
-async function existingPerplexitySearch(keyword: string, token: string): Promise<any[]> {
-  const cached = getCachedResults(keyword);
+async function existingPerplexitySearch(keyword: string, token: string, platform: string = 'instagram'): Promise<any[]> {
+  const cacheKey = `${keyword}_${platform}`;
+  const cached = getCachedResults(cacheKey);
   if (cached) {
-    console.log(`Using ${cached.length} cached results for keyword: ${keyword}`);
+    console.log(`Using ${cached.length} cached results for keyword: ${keyword} (platform: ${platform})`);
     return cached;
   }
 
@@ -928,15 +929,11 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
     
     console.log(`Using Perplexity API key format: ${perplexityKey.substring(0, 6)}...`);
 
-    try {
-      const response = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
-        {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: `You are an expert at finding high-quality Russian Instagram accounts.
+    let systemPrompt = '';
+    let userPrompt = '';
+    
+    if (platform === 'instagram') {
+      systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts.
 Focus only on Instagram accounts with >50K followers that post in Russian.
 For each account provide:
 1. Username with @ symbol 
@@ -945,14 +942,41 @@ For each account provide:
 4. Brief description in Russian
 
 Format each account as:
-1. **@username** - Name (500K followers) - Description
+**@username** - Name (500K followers) - Description
 
 Also include direct Instagram URLs in the response like:
-https://www.instagram.com/username/ - description`
+https://www.instagram.com/username/ - description`;
+      userPrompt = `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`;
+    } else if (platform === 'telegram') {
+      systemPrompt = `You are an expert at finding high-quality Russian Telegram channels.
+Focus only on Telegram channels with >10K subscribers that post in Russian.
+For each channel provide:
+1. Channel name with @ symbol 
+2. Full name in Russian
+3. Subscriber count with K or M
+4. Brief description in Russian
+
+Format each channel as:
+**@channelname** - Name (500K subscribers) - Description
+
+Also include direct Telegram URLs in the response like:
+https://t.me/channelname - description`;
+      userPrompt = `Find TOP-5 most authoritative Russian Telegram channels for: ${keyword}`;
+    }
+
+    try {
+      const response = await axios.post(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
             },
             {
               role: "user",
-              content: `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`
+              content: userPrompt
             }
           ],
           max_tokens: 1000,
