@@ -35,11 +35,13 @@ export function registerDeepSeekTestRoutes(app: Express) {
       
       console.log(`Получен API ключ DeepSeek для тестирования (длина: ${apiKey.length})`);
       
-      // Список форматов ключей для тестирования
+      // Расширенный список форматов ключей для тестирования
       const keyFormats = [
         { description: 'Оригинальный', key: apiKey },
         { description: 'Без префикса Bearer', key: apiKey.replace(/^Bearer\s+/i, '') },
         { description: 'С префиксом Bearer', key: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}` },
+        { description: 'С префиксом sk-', key: apiKey.startsWith('sk-') ? apiKey : `sk-${apiKey.replace(/^Bearer\s+/i, '')}` },
+        { description: 'Без префикса sk-', key: apiKey.replace(/^Bearer\s+/i, '').replace(/^sk-/i, '') }
       ];
       
       // Проверка каждого формата ключа
@@ -71,10 +73,26 @@ export function registerDeepSeekTestRoutes(app: Express) {
         } catch (error: any) {
           console.error(`Ошибка для формата ${format.description}:`, error);
           
+          // Формируем более информативное сообщение об ошибке
+          let errorMessage = error.message || String(error);
+          if (error.response?.status) {
+            errorMessage += ` (Статус: ${error.response.status})`;
+            if (error.response.data) {
+              try {
+                const errorDetails = typeof error.response.data === 'string' 
+                  ? error.response.data 
+                  : JSON.stringify(error.response.data).substring(0, 200);
+                errorMessage += ` Ответ API: ${errorDetails}`;
+              } catch (e) {
+                errorMessage += ' [Не удалось извлечь детали ошибки]';
+              }
+            }
+          }
+          
           results.push({
             format: format.description,
             success: false,
-            error: error.message || String(error)
+            error: errorMessage
           });
         }
       }
@@ -149,6 +167,150 @@ export function registerDeepSeekTestRoutes(app: Express) {
       res.status(500).json({ 
         success: false, 
         error: error.message || 'Непредвиденная ошибка при сохранении API ключа DeepSeek'
+      });
+    }
+  });
+  
+  // Тестовый эндпоинт для генерации текста через DeepSeek API
+  app.post('/api/test-deepseek-generate', async (req: Request, res: Response) => {
+    try {
+      console.log('Тестирование генерации текста с DeepSeek API');
+      
+      // Проверяем, что пользователь авторизован
+      if (!req.user?.id) {
+        return res.status(401).json({ success: false, error: 'Требуется авторизация' });
+      }
+      
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ success: false, error: 'Не указан текст запроса (prompt)' });
+      }
+      
+      // Инициализируем DeepSeek сервис с API ключом пользователя
+      const initialized = await deepseekService.initialize(req.user.id);
+      
+      if (!initialized) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Не удалось инициализировать DeepSeek API. Проверьте настройки API ключа.' 
+        });
+      }
+      
+      // Формируем сообщения для запроса
+      const messages: DeepSeekMessage[] = [
+        { role: 'system', content: 'Ты полезный ассистент, который отвечает на вопросы пользователя кратко и информативно.' },
+        { role: 'user', content: prompt }
+      ];
+      
+      console.log(`Отправка запроса в DeepSeek: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
+      
+      // Отправляем запрос к API
+      const generatedText = await deepseekService.generateText(
+        messages,
+        { 
+          model: 'deepseek-chat',
+          temperature: 0.7,
+          max_tokens: 500
+        }
+      );
+      
+      console.log(`Успешно получен ответ от DeepSeek API длиной ${generatedText.length} символов`);
+      
+      // Возвращаем результат
+      return res.json({
+        success: true,
+        data: generatedText,
+        message: 'Текст успешно сгенерирован'
+      });
+      
+    } catch (error: any) {
+      console.error('Ошибка при генерации текста с DeepSeek API:', error);
+      
+      // Формируем подробное сообщение об ошибке для фронтенда
+      let errorMessage = error.message || 'Непредвиденная ошибка при генерации текста';
+      
+      if (error.response?.data) {
+        try {
+          const errorDetails = typeof error.response.data === 'string' 
+            ? error.response.data 
+            : JSON.stringify(error.response.data).substring(0, 300);
+          errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
+        } catch (e) {
+          errorMessage += ` (Статус: ${error.response.status}) [Не удалось извлечь детали ошибки]`;
+        }
+      }
+      
+      res.status(500).json({ 
+        success: false, 
+        error: errorMessage
+      });
+    }
+  });
+  
+  // Тестовый эндпоинт для генерации промта для изображения
+  app.post('/api/test-deepseek-image-prompt', async (req: Request, res: Response) => {
+    try {
+      console.log('Тестирование генерации промта для изображения с DeepSeek API');
+      
+      // Проверяем, что пользователь авторизован
+      if (!req.user?.id) {
+        return res.status(401).json({ success: false, error: 'Требуется авторизация' });
+      }
+      
+      const { content, keywords = [] } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ success: false, error: 'Не указан текст для генерации промта' });
+      }
+      
+      // Инициализируем DeepSeek сервис с API ключом пользователя
+      const initialized = await deepseekService.initialize(req.user.id);
+      
+      if (!initialized) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Не удалось инициализировать DeepSeek API. Проверьте настройки API ключа.' 
+        });
+      }
+      
+      console.log(`Отправка запроса для генерации промта изображения: "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`);
+      
+      // Генерируем промт для изображения
+      const imagePrompt = await deepseekService.generateImagePrompt(
+        content,
+        keywords
+      );
+      
+      console.log(`Успешно получен промт для изображения: "${imagePrompt.substring(0, 100)}${imagePrompt.length > 100 ? '...' : ''}"`);
+      
+      // Возвращаем результат
+      return res.json({
+        success: true,
+        data: imagePrompt,
+        message: 'Промт для изображения успешно сгенерирован'
+      });
+      
+    } catch (error: any) {
+      console.error('Ошибка при генерации промта для изображения с DeepSeek API:', error);
+      
+      // Формируем подробное сообщение об ошибке для фронтенда
+      let errorMessage = error.message || 'Непредвиденная ошибка при генерации промта для изображения';
+      
+      if (error.response?.data) {
+        try {
+          const errorDetails = typeof error.response.data === 'string' 
+            ? error.response.data 
+            : JSON.stringify(error.response.data).substring(0, 300);
+          errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
+        } catch (e) {
+          errorMessage += ` (Статус: ${error.response.status}) [Не удалось извлечь детали ошибки]`;
+        }
+      }
+      
+      res.status(500).json({ 
+        success: false, 
+        error: errorMessage
       });
     }
   });
