@@ -3126,7 +3126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     try {
-      const { prompt, keywords, tone, campaignId, service } = req.body;
+      const { prompt, keywords, tone, campaignId, service, aiService } = req.body;
       
       if (!prompt || !keywords || !tone || !campaignId) {
         return res.status(400).json({ error: "Missing required parameters" });
@@ -3138,10 +3138,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '') || '';
       
-      // Определяем сервис для генерации - по умолчанию Perplexity, но можно выбрать Qwen
-      const aiService = service === 'qwen' ? 'qwen' : 'perplexity';
+      // Определяем сервис для генерации - по умолчанию Perplexity
+      // Приоритет параметров: aiService, service
+      const selectedAiService = aiService || service || 'perplexity';
+      // Проверяем, что это один из поддерживаемых сервисов
+      const useService = (selectedAiService === 'qwen') ? 'qwen' : 'perplexity';
       
-      console.log(`Инициализация ${aiService} сервиса для пользователя: ${userId}`);
+      console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
       
       try {
         // Проверяем ID пользователя
@@ -3155,7 +3158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let usedService = '';
         
         // В зависимости от выбранного сервиса инициализируем нужный API
-        if (aiService === 'qwen') {
+        if (useService === 'qwen') {
           // Инициализируем Qwen API
           console.log(`Попытка инициализации Qwen сервиса для пользователя ${userId}`);
           const initialized = await qwenService.initialize(userId, token);
@@ -3236,14 +3239,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
       } catch (error) {
-        console.error(`Error generating content with ${aiService}:`, error);
+        console.error(`Error generating content with ${useService}:`, error);
         if (axios.isAxiosError(error)) {
-          console.error(`${aiService} API error details:`, {
+          console.error(`${useService} API error details:`, {
             status: error.response?.status,
             data: error.response?.data
           });
         }
-        return res.status(500).json({ error: `Failed to generate content with ${aiService}` });
+        return res.status(500).json({ error: `Failed to generate content with ${useService}` });
       }
     } catch (error) {
       console.error("Error in content generation:", error);
