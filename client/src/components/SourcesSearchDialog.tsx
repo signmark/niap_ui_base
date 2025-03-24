@@ -126,8 +126,7 @@ export function SourcesSearchDialog({
 
     setIsLoading(true);
     try {
-      const response = await apiRequest({
-        url: `/api/sources/search`,
+      const response = await apiRequest(`/api/sources/search`, {
         method: "POST",
         data: {
           keyword,
@@ -137,8 +136,8 @@ export function SourcesSearchDialog({
         }
       });
 
-      if (response.success && response.data) {
-        onSearch(response.data);
+      if (response.success && response.data?.sources) {
+        onSearch(response.data.sources);
       } else {
         toast({
           title: "Ошибка поиска",
