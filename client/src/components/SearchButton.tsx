@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, ListChecks } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
+import { CampaignSourcesSearchDialog } from "@/components/CampaignSourcesSearchDialog";
 
 /**
  * Кнопка поиска источников для кампании.
@@ -29,6 +30,7 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   // Управление видимостью диалогов
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Диалог с результатами
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false); // Диалог выбора соцсетей
+  const [isCampaignSearchDialogOpen, setIsCampaignSearchDialogOpen] = useState(false); // Диалог поиска по всей кампании
   // Выбранное ключевое слово для поиска
   const [selectedKeyword, setSelectedKeyword] = useState("");
   // Данные полученных источников от API
@@ -62,47 +64,75 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
     setIsDialogOpen(true);
   };
 
+  // Открывает диалог поиска источников по всем ключевым словам кампании
+  const openCampaignSearchDialog = () => {
+    if (!keywords.length) {
+      toast({
+        title: "Ошибка",
+        description: "Добавьте ключевые слова для поиска",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsCampaignSearchDialogOpen(true);
+  };
+
   return (
     <>
-      <Button onClick={openSearchDialog} disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <div className="flex items-center">
-              <svg 
-                className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24"
-              >
-                <circle 
-                  className="opacity-25" 
-                  cx="12" 
-                  cy="12" 
-                  r="10" 
-                  stroke="currentColor" 
-                  strokeWidth="4"
-                />
-                <path 
-                  className="opacity-75" 
-                  fill="currentColor" 
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span>Поиск источников...</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-1">
-              <Search className="mr-1 h-4 w-4" />
-              <span>Искать упоминания</span>
-              <span className="ml-1 text-xs bg-gray-200 dark:bg-gray-700 rounded px-1.5 py-0.5" title="Использует Perplexity API">
-                API
-              </span>
-            </div>
-          </>
-        )}
-      </Button>
+      <div className="flex space-x-2">
+        <Button onClick={openSearchDialog} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <div className="flex items-center">
+                <svg 
+                  className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24"
+                >
+                  <circle 
+                    className="opacity-25" 
+                    cx="12" 
+                    cy="12" 
+                    r="10" 
+                    stroke="currentColor" 
+                    strokeWidth="4"
+                  />
+                  <path 
+                    className="opacity-75" 
+                    fill="currentColor" 
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <span>Поиск источников...</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1">
+                <Search className="mr-1 h-4 w-4" />
+                <span>Искать упоминания</span>
+                <span className="ml-1 text-xs bg-gray-200 dark:bg-gray-700 rounded px-1.5 py-0.5" title="Использует Perplexity API">
+                  API
+                </span>
+              </div>
+            </>
+          )}
+        </Button>
+
+        <Button 
+          onClick={openCampaignSearchDialog} 
+          disabled={isLoading} 
+          variant="outline"
+          title="Поиск источников по всем ключевым словам кампании"
+        >
+          <div className="flex items-center gap-1">
+            <ListChecks className="mr-1 h-4 w-4" />
+            <span>Поиск по всем словам</span>
+          </div>
+        </Button>
+      </div>
 
       {/* Диалог для выбора социальных сетей и настройки промпта */}
       <SourcesSearchDialog
@@ -112,6 +142,15 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
         onSearch={handleSearchResults}
         open={isSearchDialogOpen}
         onOpenChange={setIsSearchDialogOpen}
+      />
+
+      {/* Диалог для поиска по всем ключевым словам кампании */}
+      <CampaignSourcesSearchDialog
+        campaignId={campaignId}
+        onClose={() => setIsCampaignSearchDialogOpen(false)}
+        onSearch={handleSearchResults}
+        open={isCampaignSearchDialogOpen}
+        onOpenChange={setIsCampaignSearchDialogOpen}
       />
 
       {/* Диалог для отображения результатов */}
