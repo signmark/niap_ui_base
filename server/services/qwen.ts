@@ -82,34 +82,25 @@ export class QwenService {
         stop: options.stop || null
       }, null, 2)}`);
       
-      try {
-        const response = await axios.post(
-          `${this.baseUrl}/chat/completions`,
-          {
-            model,
-            messages,
-            temperature,
-            max_tokens,
-            top_p,
-            stop: options.stop || null
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json'
-            }
+      const response = await axios.post(
+        `${this.baseUrl}/chat/completions`,
+        {
+          model,
+          messages,
+          temperature,
+          max_tokens,
+          top_p,
+          stop: options.stop || null
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
           }
-        );
-        
-        console.log(`Successful response from Qwen API, status ${response.status}`);
-        return response;
-      } catch (error: any) {
-        console.error('Qwen API error details:', { 
-          status: error.response?.status, 
-          data: error.response?.data 
-        });
-        throw error;
-      }
+        }
+      );
+      
+      console.log(`Successful response from Qwen API, status ${response.status}`);
       
       if (!response.data?.choices?.[0]?.message?.content) {
         console.error('Invalid response format from Qwen API:', response.data);
@@ -132,7 +123,12 @@ export class QwenService {
         }
       }
       
-      throw error;
+      // Если проблема с доступом к API
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw new Error(`Не удалось подключиться к Qwen API (${this.baseUrl}). Пожалуйста, проверьте подключение к интернету и доступность сервиса.`);
+      }
+      
+      throw new Error(`Ошибка при обращении к Qwen API: ${error.message || 'Неизвестная ошибка'}`);
     }
   }
   
