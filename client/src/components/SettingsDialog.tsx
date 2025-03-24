@@ -80,7 +80,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -180,6 +180,7 @@ export function SettingsDialog() {
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  const testQwenKey = () => testApiKey('qwen', qwenKey, setQwenTesting);
   const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
     if (!xmlRiverUserId.trim()) {
       toast({
@@ -199,6 +200,7 @@ export function SettingsDialog() {
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
+      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -211,6 +213,9 @@ export function SettingsDialog() {
       }
       if (falAiKeyData) {
         setFalAiKey(falAiKeyData.api_key);
+      }
+      if (qwenKeyData) {
+        setQwenKey(qwenKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -254,7 +259,8 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey }
+        { name: 'xmlriver', key: xmlRiverCombinedKey },
+        { name: 'qwen', key: qwenKey }
       ];
 
       for (const service of services) {
