@@ -38,10 +38,45 @@ export function registerFalAiTestRoutes(app: Express) {
       
       log(`Тестирование API ключа FAL.AI: ${apiKey.substring(0, 10)}...`);
       
-      // Правильно форматируем ключ - добавляем префикс "Key " если его нет
-      const formattedKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
+      // Правильно форматируем ключ - сначала удаляем префикс "Key " если он есть
+      // И очищаем от возможных пробелов, переносов строк и других лишних символов
+      let rawKey = apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey;
+      rawKey = rawKey.trim(); // Удаляем лишние пробелы в начале и конце
       
-      // Делаем тестовый запрос к FAL.AI API
+      // Затем проверяем форматирование самого ключа
+      log(`Проверка формата ключа: длина=${rawKey.length}, содержит двоеточие=${rawKey.includes(':')}`);
+      
+      // Попробуем сначала без префикса "Key "
+      try {
+        log(`Пробуем запрос без префикса "Key "`);
+        const response = await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
+          prompt: "Test image", // Минимальный запрос
+          width: 512,
+          height: 512
+        }, {
+          headers: {
+            Authorization: rawKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Если запрос успешен, возвращаем положительный результат
+        if (response.data) {
+          return res.json({
+            success: true,
+            message: "API ключ FAL.AI работает корректно (без префикса 'Key')",
+            key_format: "raw",
+            status: "active"
+          });
+        }
+      } catch (error) {
+        log(`Запрос без префикса "Key " не сработал, пробуем с префиксом`);
+      }
+      
+      // Если первый способ не сработал, пробуем с префиксом "Key "
+      const formattedKey = `Key ${rawKey}`;
+      
+      // Делаем тестовый запрос к FAL.AI API с префиксом Key
       const response = await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
         prompt: "Test image", // Минимальный запрос
         width: 512,
