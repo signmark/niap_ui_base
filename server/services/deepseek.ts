@@ -25,22 +25,11 @@ export class DeepSeekService {
   
   /**
    * Обновляет API ключ сервиса
-   * @param newApiKey Новый API ключ (может быть с префиксом "Bearer " или без)
    */
   updateApiKey(newApiKey: string): void {
     if (newApiKey && newApiKey.trim() !== '') {
-      // Сначала очистим ключ от лишних пробелов в начале и конце
-      const trimmedKey = newApiKey.trim();
-      
-      // Убедимся, что ключ имеет префикс "Bearer " для API вызовов
-      if (!trimmedKey.startsWith('Bearer ')) {
-        console.log("DeepSeek: добавляем префикс 'Bearer ' к API ключу для корректных запросов");
-        this.apiKey = `Bearer ${trimmedKey}`;
-      } else {
-        // Ключ уже с префиксом, используем как есть
-        this.apiKey = trimmedKey;
-      }
-      console.log(`DeepSeek API key updated from user settings (длина: ${this.apiKey.length})`);
+      this.apiKey = newApiKey;
+      console.log("DeepSeek API key updated from user settings");
     }
   }
   
@@ -76,13 +65,6 @@ export class DeepSeekService {
       
       console.log(`Sending request to DeepSeek API (model: ${model}, temp: ${temperature})`);
       
-      // Проверяем, что ключ в правильном формате (с префиксом Bearer)
-      const authHeader = this.apiKey.startsWith('Bearer ') 
-        ? this.apiKey // Используем ключ как есть, если он уже с префиксом
-        : `Bearer ${this.apiKey}`; // Добавляем префикс, если его нет
-      
-      console.log(`DeepSeek: Отправка запроса с авторизацией длиной ${authHeader.length} символов`);
-      
       const response = await axios.post(
         `${this.baseUrl}/chat/completions`,
         {
@@ -95,7 +77,7 @@ export class DeepSeekService {
         },
         {
           headers: {
-            'Authorization': authHeader,
+            'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json'
           }
         }
@@ -496,21 +478,12 @@ ${originalContent}
     try {
       console.log('Попытка инициализации DeepSeek сервиса для пользователя', userId);
       
-      // Сначала пробуем исправить формат ключа, чтобы удалить префикс "Bearer " если он есть
-      await apiKeyService.fixDeepSeekKeyFormat(userId, authToken);
-      
       // Используем только централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
       if (apiKey) {
         console.log(`DeepSeek API ключ получен из БД (длина: ${apiKey.length})`);
-        
-        // Форматируем ключ для запросов: добавляем префикс "Bearer " если его нет
-        // Ключи DeepSeek должны храниться в БД без префикса, но использоваться с префиксом
-        const formattedKey = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
-        console.log(`DeepSeek: финальный ключ для использования в API (длина: ${formattedKey.length})`);
-        
-        this.updateApiKey(formattedKey);
+        this.updateApiKey(apiKey);
         log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
         console.log('DeepSeek API ключ успешно получен через API Key Service');
         return true;

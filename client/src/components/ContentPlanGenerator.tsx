@@ -546,7 +546,7 @@ export function ContentPlanGenerator({
                         {topic.createdAt && (
                           <span className="inline-flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            {format(new Date(topic.createdAt), 'dd MMMM yyyy', {locale: ru})}
+                            {format(new Date(topic.createdAt), 'dd MMM yyyy', {locale: ru})}
                           </span>
                         )}
                       </CardDescription>
@@ -736,7 +736,7 @@ export function ContentPlanGenerator({
                       <CardDescription className="flex items-center gap-2 text-xs">
                         <span className="inline-flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {item.scheduledAt ? format(new Date(item.scheduledAt), 'dd MMMM yyyy, HH:mm', {locale: ru}) : 'Не запланировано'}
+                          {item.scheduledAt ? format(new Date(item.scheduledAt), 'dd MMM yyyy', {locale: ru}) : 'Не запланировано'}
                         </span>
                         <span className="inline-flex items-center">
                           {item.contentType === 'text' && <FileText className="h-3 w-3 mr-1" />}

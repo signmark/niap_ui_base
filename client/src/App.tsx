@@ -12,7 +12,6 @@ import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ScheduledPublications from "@/pages/publish/scheduled";
-import CalendarView from "@/pages/publish/calendar";
 import TestPublish from "@/pages/publish/test-publish";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
@@ -39,7 +38,6 @@ function Router() {
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
-      <Route path="/publish/calendar" component={() => <Layout><CalendarView /></Layout>} />
       <Route path="/publish/test" component={() => <Layout><TestPublish /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />

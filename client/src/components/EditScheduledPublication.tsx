@@ -171,19 +171,12 @@ export default function EditScheduledPublication({
           // Создаем дату публикации для этой платформы
           const platformDate = new Date(scheduledAt);
           const time = platformTimes?.[platform] || { hour: '12', minute: '00' };
-          
-          // Устанавливаем часы и минуты в локальном времени
-          platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10), 0, 0);
-          
-          // Создаем строку даты, используя UTC-совместимый формат для сервера
-          // Это сохранит именно то время, которое выбрал пользователь
-          // Сервер получит UTC-дату, но интерпретирует ее согласно своему часовому поясу (UTC+3)
-          const localISOString = platformDate.toISOString();
+          platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10));
           
           socialPlatforms[platform] = {
             ...existingData,
             status: 'scheduled',
-            scheduledAt: localISOString,
+            scheduledAt: platformDate.toISOString(),
             publishedAt: null
           };
         }
@@ -275,7 +268,7 @@ export default function EditScheduledPublication({
                       )}
                     >
                       {field.value ? (
-                        format(field.value, "dd MMMM yyyy", { locale: ru })
+                        format(field.value, "PPP", { locale: ru })
                       ) : (
                         <span>Выберите дату</span>
                       )}

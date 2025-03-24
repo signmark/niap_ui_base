@@ -8,7 +8,6 @@ import { ru } from 'date-fns/locale';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { safeSocialPlatforms, platformNames, SocialPlatforms } from '@/lib/social-platforms';
-import { Link } from 'wouter';
 
 import {
   Card,
@@ -23,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScheduledPublicationDetails from '@/components/ScheduledPublicationDetails';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Search, RefreshCw, Filter, SortDesc, SortAsc } from 'lucide-react';
+import { Calendar, Clock, Search, RefreshCw, Filter } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -42,7 +41,6 @@ export default function ScheduledPublications() {
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
   const [viewTab, setViewTab] = useState<string>('upcoming');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
   
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -89,9 +87,7 @@ export default function ScheduledPublications() {
     },
     enabled: !!userId && !!selectedCampaign?.id,
     refetchOnMount: true,
-    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд
-    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
   });
   
   // Обновляем данные при изменении выбранной кампании или пользователя
@@ -138,8 +134,7 @@ export default function ScheduledPublications() {
   const upcomingContent = React.useMemo(() => {
     if (!filteredContent) return [];
     
-    // Фильтруем и получаем предстоящие публикации
-    const upcoming = filteredContent.filter((content: CampaignContent) => {
+    return filteredContent.filter((content: CampaignContent) => {
       // Проверяем глобальную дату запланированной публикации
       if (content.scheduledAt) {
         const scheduledDate = new Date(content.scheduledAt);
@@ -149,8 +144,7 @@ export default function ScheduledPublications() {
       // Если нет глобальной даты, проверяем социальные платформы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
         for (const platform in content.socialPlatforms) {
-          // Явное приведение типа, так как мы проверили что это объект
-          const platformData = content.socialPlatforms[platform as SocialPlatform];
+          const platformData = content.socialPlatforms[platform];
           
           // Проверяем наличие даты публикации в платформе
           if (platformData && 
@@ -164,24 +158,12 @@ export default function ScheduledPublications() {
       
       return false;
     });
-    
-    // Сортируем по дате (в зависимости от выбранного порядка сортировки)
-    return upcoming.sort((a, b) => {
-      const dateA = a.scheduledAt ? new Date(a.scheduledAt) : new Date(0);
-      const dateB = b.scheduledAt ? new Date(b.scheduledAt) : new Date(0);
-      
-      // Сортировка от новых к старым или от старых к новым
-      return sortOrder === 'desc' 
-        ? dateB.getTime() - dateA.getTime() 
-        : dateA.getTime() - dateB.getTime();
-    });
-  }, [filteredContent, sortOrder]);
+  }, [filteredContent]);
   
   const pastContent = React.useMemo(() => {
     if (!filteredContent) return [];
     
-    // Фильтруем и получаем прошедшие публикации
-    const past = filteredContent.filter((content: CampaignContent) => {
+    return filteredContent.filter((content: CampaignContent) => {
       // Исключаем контент, который находится в upcoming
       const isUpcoming = upcomingContent.some(c => c.id === content.id);
       if (isUpcoming) return false;
@@ -192,25 +174,14 @@ export default function ScheduledPublications() {
       // Проверяем социальные платформы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
         for (const platform in content.socialPlatforms) {
-          const platformData = content.socialPlatforms[platform as SocialPlatform];
+          const platformData = content.socialPlatforms[platform];
           if (platformData && platformData.scheduledAt) return true;
         }
       }
       
       return false;
     });
-    
-    // Сортируем по дате (в зависимости от выбранного порядка сортировки)
-    return past.sort((a, b) => {
-      const dateA = a.scheduledAt ? new Date(a.scheduledAt) : (a.publishedAt ? new Date(a.publishedAt) : new Date(0));
-      const dateB = b.scheduledAt ? new Date(b.scheduledAt) : (b.publishedAt ? new Date(b.publishedAt) : new Date(0));
-      
-      // Сортировка от новых к старым или от старых к новым
-      return sortOrder === 'desc' 
-        ? dateB.getTime() - dateA.getTime() 
-        : dateA.getTime() - dateB.getTime();
-    });
-  }, [filteredContent, upcomingContent, sortOrder]);
+  }, [filteredContent, upcomingContent]);
   
   // Обработчики событий
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,13 +306,7 @@ export default function ScheduledPublications() {
           </Select>
         </div>
         
-        <div className="flex justify-end gap-2">
-          <Button asChild variant="outline">
-            <Link href="/publish/calendar">
-              <Calendar size={16} className="mr-2" />
-              <span>Календарь публикаций</span>
-            </Link>
-          </Button>
+        <div className="flex justify-end">
           <Button onClick={handleRefresh} variant="outline" className="gap-2">
             <RefreshCw size={16} />
             <span>Обновить</span>
@@ -349,42 +314,17 @@ export default function ScheduledPublications() {
         </div>
       </div>
       
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex-1">
-          <Tabs value={viewTab} onValueChange={setViewTab}>
-            <TabsList>
-              <TabsTrigger value="upcoming">
-                Предстоящие <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="past">
-                Прошедшие <Badge variant="outline" className="ml-2">{pastContent.length}</Badge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      <Tabs value={viewTab} onValueChange={setViewTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="upcoming">
+            Предстоящие <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="past">
+            Прошедшие <Badge variant="outline" className="ml-2">{pastContent.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
         
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 ml-4"
-          onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-        >
-          {sortOrder === 'desc' ? (
-            <>
-              <SortDesc size={16} />
-              <span>Сначала новые</span>
-            </>
-          ) : (
-            <>
-              <SortAsc size={16} />
-              <span>Сначала старые</span>
-            </>
-          )}
-        </Button>
-      </div>
-
-      {viewTab === 'upcoming' ? (
-        <div>
+        <TabsContent value="upcoming">
           {scheduledLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => (
@@ -423,9 +363,9 @@ export default function ScheduledPublications() {
               ))}
             </div>
           )}
-        </div>
-      ) : (
-        <div>
+        </TabsContent>
+        
+        <TabsContent value="past">
           {scheduledLoading ? (
             <div className="space-y-4">
               {[1, 2].map(i => (
@@ -501,8 +441,8 @@ export default function ScheduledPublications() {
               ))}
             </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
       
       {/* Диалог для просмотра деталей публикации */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
@@ -531,7 +471,7 @@ export default function ScheduledPublications() {
             {previewContent?.imageUrl && (
               <div className="mt-4">
                 <img 
-                  src={previewContent.imageUrl || ''} 
+                  src={previewContent.imageUrl} 
                   alt={previewContent.title || 'Content image'} 
                   className="rounded-md max-h-[400px] w-auto mx-auto"
                   onError={(e) => {
@@ -544,7 +484,7 @@ export default function ScheduledPublications() {
             {previewContent?.videoUrl && (
               <div className="mt-4">
                 <video 
-                  src={previewContent.videoUrl || ''}
+                  src={previewContent.videoUrl}
                   controls
                   className="rounded-md max-h-[400px] w-auto mx-auto"
                 />

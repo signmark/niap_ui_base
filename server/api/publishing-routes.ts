@@ -573,10 +573,7 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Контент найден: ${contentId}, userId: ${content.userId || 'не указан'}`, 'api');
         
         // Подготавливаем обновления для контента
-        // Важно: при чтении ISO строки new Date() уже учитывает часовой пояс
         const scheduledAtDate = new Date(scheduledAt);
-        log(`Исходная дата из клиента: ${scheduledAt}, преобразована в: ${scheduledAtDate.toISOString()}`, 'api');
-        
         const updates: any = {
           status: 'scheduled',
           scheduledAt: scheduledAtDate,
