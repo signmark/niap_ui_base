@@ -461,9 +461,9 @@ Remember to output ONLY the English prompt without any explanations.`;
       
       // Чистим результат от лишних кавычек, если они добавлены моделью
       return result.replace(/^["']|["']$/g, '').trim();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating image prompt with DeepSeek:', error);
-      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message}`);
+      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message || String(error)}`);
     }
   }
 
@@ -517,9 +517,9 @@ ${originalContent}
           max_tokens: 1000
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error adapting content for ${platform}:`, error);
-      throw error;
+      throw new Error(`Ошибка адаптации контента для ${platform}: ${error.message || String(error)}`);
     }
   }
   
@@ -547,9 +547,9 @@ ${originalContent}
         log('DeepSeek API ключ не найден в настройках пользователя', 'deepseek');
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка при инициализации DeepSeek сервиса:', error);
-      log(`Ошибка при инициализации DeepSeek сервиса: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, 'deepseek');
+      log(`Ошибка при инициализации DeepSeek сервиса: ${error.message || String(error)}`, 'deepseek');
       return false;
     }
   }
