@@ -50,10 +50,13 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       }
 
       const data = await response.json();
+      console.log('Sources API response:', data);
       if (data?.success && data?.data?.sources) {
+        console.log('Source data available, sources count:', data.data.sources.length);
         setSourcesData(data);
         setIsDialogOpen(true);
       } else {
+        console.error('Invalid data format from server:', data);
         throw new Error('Некорректный формат данных от сервера');
       }
 
