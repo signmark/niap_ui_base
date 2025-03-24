@@ -122,7 +122,12 @@ export function SocialNetworkSelectorDialog({
                 Сбор трендов...
               </>
             ) : (
-              "Собрать тренды"
+              <div className="flex items-center gap-1">
+                <span>Собрать тренды</span>
+                <span className="ml-1 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded px-1.5 py-0.5" title="Использует n8n webhook">
+                  webhook
+                </span>
+              </div>
             )}
           </Button>
         </DialogFooter>

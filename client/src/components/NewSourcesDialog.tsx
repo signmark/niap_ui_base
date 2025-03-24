@@ -164,7 +164,23 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       <div className="space-y-4">
         {!filteredSources || filteredSources.length === 0 ? (
           <p className="text-center text-muted-foreground">
-            Поиск источников... Если долго нет результатов, попробуйте еще раз
+            {allSources.length > 0 && existingSourceUrls.length > 0 ? (
+              <>
+                Все найденные источники ({allSources.length}) уже добавлены в вашу кампанию.
+                <br />
+                Попробуйте поискать с другими ключевыми словами или проверьте другие платформы.
+              </>
+            ) : allSources.length === 0 ? (
+              <>
+                Поиск не дал результатов по вашим ключевым словам.
+                <br />
+                Попробуйте использовать другие ключевые слова или проверьте соединение с Perplexity API.
+              </>
+            ) : (
+              <>
+                Поиск источников... Если долго нет результатов, попробуйте еще раз
+              </>
+            )}
           </p>
         ) : (
           <>
