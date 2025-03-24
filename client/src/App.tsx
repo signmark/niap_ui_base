@@ -47,6 +47,7 @@ function Router() {
       <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
+      <Route path="/test" component={() => <Layout><ApiKeysTest /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}
