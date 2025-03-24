@@ -168,6 +168,21 @@ export function SourcesSearchDialog({
         // Продолжаем выполнение даже при ошибке проверки ключей
       }
 
+      // Получаем текущий токен авторизации
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        console.error("❌ Ошибка авторизации: отсутствует токен в localStorage");
+        toast({
+          title: "Ошибка авторизации",
+          description: "Необходимо войти в систему. Пожалуйста, обновите страницу и авторизуйтесь снова.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("🔑 Токен авторизации (первые 10 символов):", authToken.substring(0, 10) + "...");
+      
       console.log("📝 Запрос к API:");
       console.log({
         endpoint: "/api/sources/search",
@@ -187,6 +202,9 @@ export function SourcesSearchDialog({
           campaignId,
           platforms: selectedPlatforms,
           customPrompt: isPromptOpen ? prompt : undefined
+        },
+        headers: {
+          "Authorization": `Bearer ${authToken}`
         }
       });
 
