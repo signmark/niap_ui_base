@@ -64,11 +64,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       // Выбираем API в зависимости от выбранного сервиса
-      let apiEndpoint = '/api/generate-content'; // По умолчанию Perplexity API
-      
-      if (selectedService === 'deepseek') {
-        apiEndpoint = '/api/content/generate-deepseek';
-      }
+      let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
       console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 

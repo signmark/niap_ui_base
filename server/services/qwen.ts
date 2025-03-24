@@ -205,9 +205,19 @@ ${platformSpecifics}
           max_tokens: length === 'short' ? 300 : length === 'medium' ? 500 : 800
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating social content with Qwen:', error);
-      throw error;
+      const errorMessage = error.message || 'Неизвестная ошибка при генерации контента';
+      log(`Qwen генерация контента не удалась: ${errorMessage}`, 'qwen');
+      
+      // Форматируем сообщение об ошибке для более понятного отображения пользователю
+      if (errorMessage.includes('API ключ')) {
+        throw new Error(`Проблема с API ключом Qwen: ${errorMessage}`);
+      } else if (errorMessage.includes('подключиться')) {
+        throw new Error('Не удалось подключиться к Qwen API. Проверьте соединение или доступность сервиса.');
+      } else {
+        throw new Error(`Ошибка при генерации контента через Qwen: ${errorMessage}`);
+      }
     }
   }
   
