@@ -913,20 +913,34 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
       }
     });
 
-    const perplexityKey = settings.data?.data?.[0]?.api_key;
+    let perplexityKey = settings.data?.data?.[0]?.api_key;
     if (!perplexityKey) {
       console.error('Perplexity API key not found');
       return [];
     }
+    
+    // Форматируем ключ API правильно (добавляем префикс 'plx-' если его нет)
+    if (perplexityKey && !perplexityKey.startsWith('plx-') && !perplexityKey.startsWith('Bearer ')) {
+      console.log('Adding "plx-" prefix to Perplexity API key');
+      perplexityKey = `plx-${perplexityKey}`;
+    } else if (perplexityKey && perplexityKey.startsWith('Bearer ')) {
+      // Если ключ начинается с "Bearer ", удаляем этот префикс и проверяем наличие "plx-"
+      const keyWithoutBearer = perplexityKey.replace('Bearer ', '');
+      perplexityKey = keyWithoutBearer.startsWith('plx-') ? keyWithoutBearer : `plx-${keyWithoutBearer}`;
+      console.log('Reformatted Perplexity API key from "Bearer" format');
+    }
+    
+    console.log(`Using Perplexity API key format: ${perplexityKey.substring(0, 6)}...`);
 
-    const response = await axios.post(
-      'https://api.perplexity.ai/chat/completions',
-      {
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert at finding high-quality Russian Instagram accounts.
+    try {
+      const response = await axios.post(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert at finding high-quality Russian Instagram accounts.
 Focus only on Instagram accounts with >50K followers that post in Russian.
 For each account provide:
 1. Username with @ symbol 
@@ -939,44 +953,49 @@ Format each account as:
 
 Also include direct Instagram URLs in the response like:
 https://www.instagram.com/username/ - description`
+            },
+            {
+              role: "user",
+              content: `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${perplexityKey}`,
+            'Content-Type': 'application/json'
           },
-          {
-            role: "user",
-            content: `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${perplexityKey}`,
-          'Content-Type': 'application/json'
+          timeout: 30000 // Увеличиваем таймаут до 30 секунд для стабильности
         }
+      );
+
+      if (!response.data?.choices?.[0]?.message?.content) {
+        throw new Error('Invalid API response structure');
       }
-    );
 
-    if (!response.data?.choices?.[0]?.message?.content) {
-      throw new Error('Invalid API response structure');
+      const content = response.data.choices[0].message.content;
+      console.log(`Raw API response for keyword ${keyword}:`, content);
+
+      // Извлекаем источники из текста
+      const sources = extractSourcesFromText(content);
+      console.log(`Found ${sources.length} sources for keyword ${keyword}`);
+
+      // Кешируем результаты
+      if (sources.length > 0) {
+        console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
+        searchCache.set(keyword, {
+          timestamp: Date.now(),
+          results: sources
+        });
+      }
+
+      return sources;
+    } catch (innerError) {
+      console.error('Error in Perplexity API request:', innerError);
+      throw innerError; // Пробрасываем ошибку в основной блок try-catch
     }
-
-    const content = response.data.choices[0].message.content;
-    console.log(`Raw API response for keyword ${keyword}:`, content);
-
-    // Извлекаем источники из текста
-    const sources = extractSourcesFromText(content);
-    console.log(`Found ${sources.length} sources for keyword ${keyword}`);
-
-    // Кешируем результаты
-    if (sources.length > 0) {
-      console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
-      searchCache.set(keyword, {
-        timestamp: Date.now(),
-        results: sources
-      });
-    }
-
-    return sources;
 
   } catch (error) {
     console.error('Error in Perplexity search:', error);
