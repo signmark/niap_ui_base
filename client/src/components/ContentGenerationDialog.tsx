@@ -28,7 +28,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'perplexity' | 'deepseek';
+type ApiService = 'deepseek' | 'qwen';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('perplexity');
+  const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -64,9 +64,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       // Выбираем API в зависимости от выбранного сервиса
-      const apiEndpoint = selectedService === 'perplexity' 
-        ? '/api/generate-content' 
-        : '/api/content/generate-deepseek';
+      let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
       console.log(`Генерация контента через ${selectedService} API`);
 
@@ -81,7 +79,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           keywords: selectedKeywords,
           tone,
           campaignId,
-          platform: platform // Используется только для DeepSeek
+          platform: platform, // Используется для всех сервисов
+          service: selectedService // Указываем выбранный сервис
         })
       });
 
@@ -211,8 +210,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     className="w-full"
                   >
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="perplexity">Perplexity</TabsTrigger>
                       <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
+                      <TabsTrigger value="qwen">Qwen</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
