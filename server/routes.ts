@@ -5469,31 +5469,44 @@ https://t.me/channelname/ - description`;
           });
         }
         
-        // Делаем запрос к Perplexity API
+        // Подготавливаем данные для запроса к Perplexity API
+        console.log(`📝 Подготовка запроса к Perplexity API с ключом: ${perplexityKey?.substring(0, 5)}...`);
+        
+        const requestData = {
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: `Find TOP-5 most authoritative Russian ${platforms.join(' and ')} ${platforms.length > 1 ? 'sources' : platforms[0] === 'instagram' ? 'accounts' : 'channels'} for: ${keyword}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        };
+        
+        console.log('📝 Отправляем запрос к Perplexity API:', JSON.stringify(requestData, null, 2));
+        
+        console.log(`🚀 Отправка запроса к Perplexity API...`);
+        
+        // Делаем запрос к Perplexity API напрямую
         const response = await axios.post(
           'https://api.perplexity.ai/chat/completions',
-          {
-            model: "llama-3.1-sonar-small-128k-online",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt
-              },
-              {
-                role: "user",
-                content: `Find TOP-5 most authoritative Russian ${platforms.join(' and ')} ${platforms.length > 1 ? 'sources' : platforms[0] === 'instagram' ? 'accounts' : 'channels'} for: ${keyword}`
-              }
-            ],
-            max_tokens: 1000,
-            temperature: 0.7
-          },
+          requestData,
           {
             headers: {
               'Authorization': `Bearer ${perplexityKey}`,
               'Content-Type': 'application/json'
-            }
+            },
+            timeout: 30000 // Увеличиваем таймаут до 30 секунд для надежности
           }
         );
+        
+        console.log(`✅ Успешный ответ от Perplexity API. Статус: ${response.status}`);
+        
 
         if (!response.data?.choices?.[0]?.message?.content) {
           throw new Error('Invalid API response structure');
