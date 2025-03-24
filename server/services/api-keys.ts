@@ -87,10 +87,6 @@ export class ApiKeyService {
       
       // Делаем прямой запрос к Directus через API как в SettingsDialog
       // Это гарантирует одинаковое поведение на фронтенде и бэкенде
-      // Прямой запрос API ключей пользователя
-      console.log(`[${serviceName}] Получение API ключей для пользователя ${userId}`);
-      
-      // Получаем API ключи пользователя
       const response = await directusApi.get('/items/user_api_keys', {
         params: {
           filter: {
@@ -108,9 +104,9 @@ export class ApiKeyService {
       const apiKeyData = apiKeys.find((key: any) => 
         key.service_name === dbServiceName);
       
-      if (apiKeyData) {
+      if (apiKeyData && apiKeyData.api_key) {
         console.log(`[${serviceName}] Найден ключ с точным совпадением service_name=${dbServiceName}`);
-        let apiKey = apiKeyData.api_key || ""; // Обработка пустого ключа
+        let apiKey = apiKeyData.api_key;
         
         // Специальная обработка для FAL.AI, но мы НЕ модифицируем ключ здесь.
         // Ключ для FAL.AI хранится в БД без префикса "Key ".
@@ -302,10 +298,6 @@ export class ApiKeyService {
       const dbServiceName = SERVICE_NAME_DB_MAPPING[serviceName];
       console.log(`[${serviceName}] DB service name mapping: '${serviceName}' -> '${dbServiceName}'`);
       
-      // Работаем напрямую с API ключами пользователя, без привязки к кампании
-      console.log(`[${serviceName}] Проверка API ключей для пользователя ${userId}`);
-      
-      // Проверяем существующие ключи для этого пользователя
       const existingKeys = await directusCrud.list('user_api_keys', {
         userId: userId,
         authToken: authToken,
@@ -337,8 +329,6 @@ export class ApiKeyService {
       } else {
         // Создаем новый ключ
         console.log(`[${serviceName}] Создание нового API ключа для пользователя ${userId}`);
-        
-        // Работаем напрямую с пользователем, без кампании
         
         result = await directusCrud.create('user_api_keys', {
           user_id: userId,
@@ -448,8 +438,6 @@ export class ApiKeyService {
     try {
       // Получаем текущий ключ FAL.AI для пользователя
       console.log(`[fal_ai] Получаем ключ для проверки формата`);
-      
-      // Получаем ключи для этого пользователя
       const keys = await directusCrud.list('user_api_keys', {
         userId: userId,
         authToken: authToken,
