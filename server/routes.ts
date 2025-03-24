@@ -3142,7 +3142,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Приоритет параметров: aiService, service
       const selectedAiService = aiService || service || 'perplexity';
       // Проверяем, что это один из поддерживаемых сервисов
-      const useService = (selectedAiService === 'qwen') ? 'qwen' : 'perplexity';
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek
+      const useService = 
+        selectedAiService === 'qwen' ? 'qwen' : 
+        selectedAiService === 'deepseek' ? 'deepseek' : 
+        'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
       
@@ -3196,8 +3200,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           usedService = 'qwen';
           
+        } else if (useService === 'deepseek') {
+          // Инициализируем DeepSeek API
+          console.log(`Попытка инициализации DeepSeek сервиса для пользователя ${userId}`);
+          const initialized = await deepseekService.initialize(userId, token);
+          
+          if (!initialized) {
+            console.log('Предупреждение: DeepSeek API сервис не был полностью инициализирован');
+            
+            if (!deepseekService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ DeepSeek');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ DeepSeek. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
+          }
+          
+          console.log(`Generating content with DeepSeek for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из tone (используя его как платформу)
+          const platform = tone === 'professional' ? 'facebook' :
+                         tone === 'casual' ? 'telegram' :
+                         tone === 'friendly' ? 'instagram' : 'general';
+          
+          // Используем DeepSeek для генерации контента
+          generatedContent = await deepseekService.generateSocialContent(
+            keywords,
+            prompt,
+            platform,
+            {
+              tone: tone as any,
+              length: 'medium',
+              language: 'ru'
+            }
+          );
+          
+          usedService = 'deepseek';
+          
         } else {
-          // Используем Perplexity API
+          // По умолчанию используем Perplexity API
           console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
           const initialized = await perplexityService.initialize(userId, token);
           
