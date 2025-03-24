@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,8 +28,47 @@ interface NewSourcesDialogProps {
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
   console.log('NewSourcesDialog received data:', sourcesData);
-  const sources = sourcesData?.data?.sources || [];
-  console.log('Sources extracted from data:', sources);
+  
+  // Получаем список источников из ответа API
+  const allSources = sourcesData?.data?.sources || [];
+  console.log('All sources extracted from data:', allSources);
+  
+  // Загружаем существующие источники для этой кампании
+  const [existingSources, setExistingSources] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Функция для загрузки существующих источников
+    const fetchExistingSources = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        
+        const response = await fetch(`/api/sources?campaignId=${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && Array.isArray(data.data)) {
+            // Извлекаем URL из существующих источников
+            const urls = data.data.map((source: any) => source.url);
+            console.log('Existing source URLs:', urls);
+            setExistingSources(urls);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching existing sources:', error);
+      }
+    };
+    
+    fetchExistingSources();
+  }, [campaignId]);
+  
+  // Фильтруем источники, исключая те, которые уже добавлены в кампанию
+  const sources = allSources.filter(source => !existingSources.includes(source.url));
+  console.log('Filtered sources (excluding existing):', sources);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
