@@ -393,7 +393,38 @@ export function DeepSeekTester() {
 
                 {result && (
                   <div className="space-y-2">
-                    <div className="text-sm font-medium">Результат:</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Результат:</div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(result);
+                          toast({
+                            title: "Скопировано",
+                            description: "Текст скопирован в буфер обмена",
+                            duration: 2000,
+                          });
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1.5 h-4 w-4"
+                        >
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Копировать
+                      </Button>
+                    </div>
                     <div className="rounded-md border p-4 whitespace-pre-wrap text-sm">{result}</div>
                   </div>
                 )}
@@ -458,7 +489,38 @@ export function DeepSeekTester() {
 
                 {imagePromptResult && (
                   <div className="space-y-3">
-                    <div className="text-sm font-medium">Сгенерированный промт:</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Сгенерированный промт:</div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(imagePromptResult);
+                          toast({
+                            title: "Скопировано",
+                            description: "Промт скопирован в буфер обмена",
+                            duration: 2000,
+                          });
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1.5 h-4 w-4"
+                        >
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Копировать
+                      </Button>
+                    </div>
                     <div className="rounded-md border p-4 whitespace-pre-wrap text-sm bg-slate-50">
                       {imagePromptResult}
                     </div>
