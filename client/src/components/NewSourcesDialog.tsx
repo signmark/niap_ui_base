@@ -33,54 +33,31 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
   const allSources = sourcesData?.data?.sources || [];
   console.log('All sources extracted from data:', allSources);
   
-  // Загружаем существующие источники для этой кампании
-  const [existingSources, setExistingSources] = useState<string[]>([]);
+  // Используем React Query для получения существующих источников
+  const queryClient = useQueryClient();
   
-  useEffect(() => {
-    // Функция для загрузки существующих источников
-    const fetchExistingSources = async () => {
-      try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        
-        const response = await fetch(`/api/sources?campaignId=${campaignId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && Array.isArray(data.data)) {
-            // Извлекаем URL из существующих источников
-            const urls = data.data.map((source: any) => source.url);
-            console.log('Existing source URLs:', urls);
-            setExistingSources(urls);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching existing sources:', error);
-      }
-    };
-    
-    fetchExistingSources();
-  }, [campaignId]);
+  // Получаем существующие источники из кеша React Query
+  const cachedSources = queryClient.getQueryData<any[]>(["campaign_content_sources", campaignId]) || [];
+  console.log('Cached sources from React Query:', cachedSources);
+  
+  // Извлекаем URL-адреса из кешированных источников
+  const existingSourceUrls = cachedSources.map((source: any) => source.url);
+  console.log('Existing source URLs from cache:', existingSourceUrls);
   
   // Фильтруем источники, исключая те, которые уже добавлены в кампанию
-  const sources = allSources.filter(source => !existingSources.includes(source.url));
-  console.log('Filtered sources (excluding existing):', sources);
+  const filteredSources = allSources.filter(source => !existingSourceUrls.includes(source.url));
+  console.log('Filtered sources (excluding existing):', filteredSources);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const sourcesPerPage = 10;
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Вычисляем пагинацию
-  const totalPages = Math.ceil(sources.length / sourcesPerPage);
+  const totalPages = Math.ceil(filteredSources.length / sourcesPerPage);
   const startIndex = (currentPage - 1) * sourcesPerPage;
   const endIndex = startIndex + sourcesPerPage;
-  const currentSources = sources.slice(startIndex, endIndex);
+  const currentSources = filteredSources.slice(startIndex, endIndex);
 
   const handleAddSources = async () => {
     if (selectedSources.length === 0) {
@@ -100,7 +77,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         throw new Error("Требуется авторизация");
       }
 
-      const sourcesToAdd = sources.filter(source => 
+      const sourcesToAdd = filteredSources.filter(source => 
         selectedSources.includes(source.url)
       );
 
@@ -171,7 +148,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       </DialogHeader>
 
       <div className="space-y-4">
-        {!sources || sources.length === 0 ? (
+        {!filteredSources || filteredSources.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Поиск источников... Если долго нет результатов, попробуйте еще раз
           </p>
@@ -190,7 +167,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
                 </label>
               </div>
               <div className="text-sm text-muted-foreground">
-                {sources.length} источников
+                {filteredSources.length} источников
               </div>
             </div>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
