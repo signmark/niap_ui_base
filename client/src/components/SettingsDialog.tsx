@@ -205,39 +205,37 @@ export function SettingsDialog() {
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
 
-      if (perplexityKeyData) {
-        setPerplexityKey(perplexityKeyData.api_key);
-      }
-      if (apifyKeyData) {
-        setApifyKey(apifyKeyData.api_key);
-      }
-      if (deepseekKeyData) {
-        setDeepseekKey(deepseekKeyData.api_key);
-      }
-      if (falAiKeyData) {
-        setFalAiKey(falAiKeyData.api_key);
-      }
+      // Всегда устанавливаем значение, даже если оно пустое
+      // Это позволяет корректно отображать поля если значение есть в базе, но пустое
+      setPerplexityKey(perplexityKeyData?.api_key || "");
+      setApifyKey(apifyKeyData?.api_key || "");
+      setDeepseekKey(deepseekKeyData?.api_key || "");
+      setFalAiKey(falAiKeyData?.api_key || "");
       
       // Обработка XMLRiver ключа
-      if (xmlRiverKeyData) {
+      if (xmlRiverKeyData && xmlRiverKeyData.api_key) {
         try {
           // Пытаемся распарсить JSON с user и key
           const credentials = JSON.parse(xmlRiverKeyData.api_key) as XMLRiverCredentials;
-          setXmlRiverUserId(credentials.user);
-          setXmlRiverApiKey(credentials.key);
+          setXmlRiverUserId(credentials.user || "16797"); // Если user пустой, используем дефолтное значение
+          setXmlRiverApiKey(credentials.key || "");
         } catch (e) {
           // Если не получилось распарсить, значит ключ в старом формате
           // Пробуем разделить на user_id:api_key
           const apiKey = xmlRiverKeyData.api_key;
           if (apiKey.includes(':')) {
             const [user, key] = apiKey.split(':');
-            setXmlRiverUserId(user.trim());
-            setXmlRiverApiKey(key.trim());
+            setXmlRiverUserId(user.trim() || "16797");
+            setXmlRiverApiKey(key.trim() || "");
           } else {
             // Если разделителя нет, считаем что это просто ключ
-            setXmlRiverApiKey(apiKey.trim());
+            setXmlRiverApiKey(apiKey.trim() || "");
           }
         }
+      } else {
+        // Значение в базе отсутствует или пустое, устанавливаем дефолтное значение для userId
+        setXmlRiverUserId("16797");
+        setXmlRiverApiKey("");
       }
     }
   }, [apiKeys]);
@@ -263,10 +261,9 @@ export function SettingsDialog() {
       ];
 
       for (const service of services) {
-        // Пропускаем пустые ключи, кроме XMLRiver, которому нужно сохранить user_id даже если ключ пуст
-        if (!service.key && service.name !== 'xmlriver') continue;
-        if (service.name === 'xmlriver' && !xmlRiverApiKey.trim()) continue;
-
+        // Для XMLRiver всегда сохраняем значение, даже если API ключ пустой
+        // Для других сервисов также всегда сохраняем, даже пустые
+        // Это решает проблему с отображением пустых значений в UI
         const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
 
         if (existingKey) {

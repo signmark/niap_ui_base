@@ -108,9 +108,9 @@ export class ApiKeyService {
       const apiKeyData = apiKeys.find((key: any) => 
         key.service_name === dbServiceName);
       
-      if (apiKeyData && apiKeyData.api_key) {
+      if (apiKeyData) {
         console.log(`[${serviceName}] Найден ключ с точным совпадением service_name=${dbServiceName}`);
-        let apiKey = apiKeyData.api_key;
+        let apiKey = apiKeyData.api_key || ""; // Обработка пустого ключа
         
         // Специальная обработка для FAL.AI, но мы НЕ модифицируем ключ здесь.
         // Ключ для FAL.AI хранится в БД без префикса "Key ".
