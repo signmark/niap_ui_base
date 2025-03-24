@@ -1,11 +1,6 @@
 {
-  "variant": "professional",
+  "variant": "tint",
   "primary": "hsl(222.2 47.4% 11.2%)",
   "appearance": "light",
-  "radius": 0.5,
-  "input": {
-    "border": "hsl(214.3 31.8% 91.4%)",
-    "focus": "hsl(215.4 16.3% 46.9%)",
-    "ring": "hsl(222.2 47.4% 11.2%)"
-  }
+  "radius": 0.5
 }
