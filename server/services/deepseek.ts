@@ -691,6 +691,17 @@ ${originalContent}
     try {
       console.log('Попытка инициализации DeepSeek сервиса для пользователя', userId);
       
+      // Сначала вызываем функцию проверки и исправления формата ключа
+      // Это обеспечит правильное хранение ключа в БД (без префикса "Bearer ")
+      try {
+        const keyFormatFixed = await apiKeyService.fixDeepSeekKeyFormat(userId, authToken);
+        if (keyFormatFixed) {
+          console.log('Формат ключа DeepSeek был проверен и исправлен при необходимости');
+        }
+      } catch (formatError) {
+        console.warn('Ошибка при проверке формата ключа DeepSeek:', formatError);
+      }
+      
       // Используем только централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
@@ -699,6 +710,12 @@ ${originalContent}
         this.updateApiKey(apiKey);
         log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
         console.log('DeepSeek API ключ успешно получен через API Key Service');
+        
+        // Для отладки - выводим первые 5 символов ключа и ... и последние 5 символов
+        if (apiKey.length > 10) {
+          console.log(`DEBUG: DeepSeek API ключ для отладки: ${apiKey.substring(0, 5)}... (длина: ${apiKey.length})`);
+        }
+        
         return true;
       } else {
         console.log('API ключ DeepSeek не найден в БД для пользователя', userId);
