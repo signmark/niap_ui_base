@@ -37,7 +37,7 @@ export function PerplexityKeyAlert() {
         setIsKeyMissing(!perplexityKey || !perplexityKey.keyExists);
       }
     }
-  }, [data]);
+  }, [data as any]);
 
   // Если ключ настроен или данные загружаются, не показываем алерт
   if (isLoading || !isKeyMissing) {
