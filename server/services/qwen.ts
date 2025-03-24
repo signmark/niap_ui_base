@@ -17,7 +17,13 @@ export interface QwenMessage {
 
 export class QwenService {
   private apiKey: string;
-  private readonly baseUrl = 'https://api.qwen.ai/v1';
+  // Поддерживаемые базовые URL для Qwen API
+  private readonly baseUrl = 'https://dashscope.aliyuncs.com/api/v1';
+  private readonly compatModes = {
+    dashscope: 'https://dashscope.aliyuncs.com/api/v1',
+    qwen: 'https://api.qwen.ai/v1',
+    openai: 'https://api.openai.com/v1'
+  };
   
   constructor(config: QwenConfig) {
     this.apiKey = config.apiKey;
