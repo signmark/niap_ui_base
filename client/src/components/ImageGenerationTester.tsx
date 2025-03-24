@@ -1,214 +1,177 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { apiRequest } from "@/lib/queryClient";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useMutation } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Sparkles } from 'lucide-react';
+import { api } from '@/lib/api';
 
 /**
- * Компонент для тестирования FAL.AI API для генерации изображений
+ * Компонент для тестирования генерации изображений через FAL.AI API
  */
 export function ImageGenerationTester() {
-  const [apiKey, setApiKey] = useState("");
-  const [prompt, setPrompt] = useState("Здоровый завтрак на деревянном столе, яркие свежие фрукты и овощи, утренний свет");
-  const [negativePrompt, setNegativePrompt] = useState("низкое качество, размытие, искажения");
-  const [result, setResult] = useState<string[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("sdxl");
+  const [prompt, setPrompt] = useState<string>('');
+  const [negativePrompt, setNegativePrompt] = useState<string>('');
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Функция для сохранения ключа API
-  async function saveApiKey() {
-    if (!apiKey) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Введите ключ API FAL.AI",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await apiRequest("/api/save-fal-ai-key", {
-        method: "POST",
-        data: { apiKey },
-      });
-
-      if (response.success) {
-        toast({
-          title: "Успешно",
-          description: "Ключ API FAL.AI сохранен",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Ошибка",
-          description: response.message || "Не удалось сохранить ключ API",
-        });
-      }
-    } catch (err) {
-      console.error("Ошибка при сохранении ключа API:", err);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось сохранить ключ API FAL.AI",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Функция для тестирования API
-  async function testImageGeneration() {
-    if (!prompt) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Введите промпт для генерации изображения",
-      });
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setResult([]);
-
-    try {
-      const endpoint = activeTab === "sdxl" ? "/api/test-fal-ai/sdxl" : "/api/test-fal-ai/schnell";
-      
-      const response = await apiRequest(endpoint, {
-        method: "POST",
-        data: { 
-          prompt,
-          negativePrompt
+  const { mutate: generateImage, isPending } = useMutation({
+    mutationFn: async () => {
+      // Используем API ключ напрямую из переменных окружения на стороне сервера
+      // Прямой запрос к серверному API, который проксирует запрос к FAL.AI
+      const response = await fetch('/api/v1/image-gen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          prompt: prompt,
+          negativePrompt: negativePrompt || "",
+          width: 1024,
+          height: 1024,
+          numImages: 1
+        })
       });
-
-      if (response.success && response.images) {
-        setResult(Array.isArray(response.images) ? response.images : [response.images]);
-      } else {
-        setError(response.message || "Не удалось сгенерировать изображение");
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || error.message || 'Ошибка при генерации изображения');
       }
-    } catch (err) {
-      console.error("Ошибка при генерации изображения:", err);
-      setError("Произошла ошибка при выполнении запроса к API FAL.AI");
-    } finally {
-      setLoading(false);
+      
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Ответ от FAL.AI API:', data);
+      
+      // Проверяем, есть ли URL изображения в ответе
+      if (data && data.status === "IN_QUEUE") {
+        toast({
+          title: 'Запрос в очереди',
+          description: 'Запрос на генерацию изображения поставлен в очередь. Подождите немного.',
+        });
+        
+        return;
+      }
+      
+      // Получаем URL изображений из ответа
+      const imageUrls: string[] = [];
+      
+      if (data.resources && Array.isArray(data.resources)) {
+        // Формат через resources
+        imageUrls.push(...data.resources.map((r: any) => r.url).filter(Boolean));
+      } else if (data.output && Array.isArray(data.output)) {
+        // Формат через output - массив
+        imageUrls.push(...data.output.filter(Boolean));
+      } else if (data.output) {
+        // Формат через output - строка
+        imageUrls.push(data.output);
+      } else if (data.images && Array.isArray(data.images)) {
+        // Формат через images
+        imageUrls.push(...data.images.map((img: any) => {
+          if (typeof img === 'string') return img;
+          return img.url || img.image || '';
+        }).filter(Boolean));
+      }
+      
+      if (imageUrls.length > 0) {
+        setGeneratedImages(imageUrls);
+        
+        toast({
+          title: 'Генерация успешна',
+          description: `Успешно сгенерировано изображений: ${imageUrls.length}`,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка формата',
+          description: 'Не удалось получить URL изображений из ответа API',
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Ошибка при генерации изображения:', error);
+      
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка генерации',
+        description: error.message || 'Ошибка при генерации изображения',
+      });
     }
-  }
+  });
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Настройка FAL.AI API</CardTitle>
-          <CardDescription>
-            Введите ключ API FAL.AI для генерации изображений
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Input
-              placeholder="Введите ключ API FAL.AI (формат: fal_key_xxxx или xxxx:xxxx)"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              type="password"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ключ API будет безопасно сохранен в базе данных и доступен только администратору проекта.
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={saveApiKey} disabled={loading || !apiKey}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Сохранить ключ API
-          </Button>
-        </CardFooter>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Тестирование генерации изображений</CardTitle>
-          <CardDescription>
-            Протестируйте возможности FAL.AI для генерации изображений
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="sdxl">Fast SDXL</TabsTrigger>
-                <TabsTrigger value="schnell">Schnell</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <div>
-              <label className="text-sm font-medium" htmlFor="prompt">
-                Промпт:
-              </label>
-              <Textarea
-                id="prompt"
-                placeholder="Опишите изображение, которое хотите сгенерировать"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={3}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium" htmlFor="negative-prompt">
-                Негативный промпт:
-              </label>
-              <Textarea
-                id="negative-prompt"
-                placeholder="Опишите, что не должно быть на изображении"
-                value={negativePrompt}
-                onChange={(e) => setNegativePrompt(e.target.value)}
-                rows={2}
-                className="mt-1"
-              />
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertTitle>Ошибка</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {result.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Результат:</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {result.map((imageUrl, index) => (
-                    <div key={index} className="border rounded-md overflow-hidden">
-                      <img 
-                        src={imageUrl} 
-                        alt={`Сгенерированное изображение ${index + 1}`} 
-                        className="w-full h-auto object-contain"
-                      />
-                    </div>
-                  ))}
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardHeader>
+        <CardTitle>Тестирование генерации изображений</CardTitle>
+        <CardDescription>
+          Используйте эту форму для проверки работы API генерации изображений через FAL.AI
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="prompt">Промпт для генерации</Label>
+          <Textarea
+            id="prompt"
+            placeholder="Опишите изображение, которое хотите сгенерировать..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="negative-prompt">Негативный промпт (необязательно)</Label>
+          <Input
+            id="negative-prompt"
+            placeholder="То, что не должно быть на изображении..."
+            value={negativePrompt}
+            onChange={(e) => setNegativePrompt(e.target.value)}
+          />
+        </div>
+        
+        {generatedImages.length > 0 && (
+          <div className="space-y-4 mt-6">
+            <h3 className="text-lg font-medium">Сгенерированные изображения:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {generatedImages.map((imageUrl, index) => (
+                <div key={index} className="relative rounded-md overflow-hidden border">
+                  <img 
+                    src={imageUrl} 
+                    alt={`Сгенерированное изображение ${index + 1}`} 
+                    className="w-full h-auto"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder-image.jpg';
+                      console.error(`Ошибка загрузки изображения: ${imageUrl}`);
+                    }}
+                  />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={testImageGeneration} disabled={loading || !prompt}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Сгенерировать изображение
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button 
+          onClick={() => generateImage()} 
+          disabled={isPending || !prompt}
+          className="w-full"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Генерация...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Сгенерировать изображение
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

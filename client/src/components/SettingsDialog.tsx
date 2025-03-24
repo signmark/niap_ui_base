@@ -106,8 +106,7 @@ export function SettingsDialog() {
       // Для FAL.AI есть специальный эндпоинт тестирования
       if (keyType === 'fal_ai') {
         try {
-          // Используем новый тестовый эндпоинт
-          const response = await api.get('/test-fal-ai');
+          const response = await api.get('/test-fal-ai-formats?format=with-prefix');
           if (response.data.success) {
             setTestingState({ 
               status: 'success', 
@@ -130,24 +129,14 @@ export function SettingsDialog() {
           }
           return;
         } catch (err: any) {
-          console.error('Ошибка при тестировании FAL.AI ключа:', err);
-          
-          let errorMessage = 'Ошибка при проверке API ключа';
-          if (err.response && err.response.data && err.response.data.error) {
-            errorMessage = err.response.data.error;
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-          
           setTestingState({ 
             status: 'error', 
-            message: errorMessage
+            message: err.message || 'Ошибка при проверке API ключа'
           });
-          
           toast({
             variant: "destructive",
             title: "Ошибка проверки",
-            description: errorMessage
+            description: err.message || 'Не удалось проверить API ключ FAL.AI'
           });
           return;
         }
