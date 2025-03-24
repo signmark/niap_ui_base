@@ -29,6 +29,7 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
+import { registerFalAiTestRoutes } from './routes-fal-ai-test';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -1151,6 +1152,8 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Регистрируем маршруты для тестирования FAL.AI
+  registerFalAiTestRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
