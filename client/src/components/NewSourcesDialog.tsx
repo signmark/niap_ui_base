@@ -132,7 +132,7 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
       <div className="space-y-4">
         {!sources || sources.length === 0 ? (
           <p className="text-center text-muted-foreground">
-            Нет подходящих источников
+            Поиск источников... Если долго нет результатов, попробуйте еще раз
           </p>
         ) : (
           <>
