@@ -366,18 +366,21 @@ ${platformSpecifics}
         .replace(/\s+/g, ' ')      // Заменяем множественные пробелы одним
         .trim();                    // Убираем пробелы в начале и конце
       
-      // Формируем системный промт
+      console.log('Генерация промта на основе текста через DeepSeek (одноэтапный метод)');
+      console.log(`Очищенный текст перед отправкой: ${cleanedContent.substring(0, 150)}...`);
+      
+      // Формируем системный промт с улучшенными инструкциями для работы с русским текстом
       const systemPrompt = `You are an expert image prompt generator for Stable Diffusion AI.
-Your task is to create detailed, vivid, and highly specific prompts for generating images based on Russian text content.
+Your task is to translate Russian text into detailed English image generation prompts.
 
 INSTRUCTIONS:
 1. Read the provided Russian text content carefully
-2. Create a SINGLE, detailed image generation prompt in ENGLISH
+2. Translate and transform the content directly into a detailed, vivid image prompt in ENGLISH
 3. Focus on the main subject, scene, mood, and style from the content
 4. Include visual details like lighting, color scheme, and composition
 5. DO NOT mention text, captions, or writing in the image
 6. Output ONLY the image prompt text in English - nothing else
-7. Format the prompt to be optimized for Stable Diffusion AI
+7. Format the prompt to be optimized for Stable Diffusion or Midjourney
 8. DO NOT put quotation marks around the prompt
 9. DO NOT include any explanations or comments
 10. Length should be 1-3 sentences maximum
@@ -390,11 +393,12 @@ The ideal prompt should create a visually appealing, professional image that cap
         ? `\n\nReference keywords (use if relevant): ${keywords.join(', ')}` 
         : '';
       
-      const userPrompt = `Create a professional image generation prompt based on this Russian text:
+      const userPrompt = `Create a professional image generation prompt directly from this Russian text:
 
 ${cleanedContent}${keywordsText}
 
-Remember to output ONLY the English prompt without any explanations.`;
+Translate the content and create a compelling image prompt in English. 
+Output ONLY the English prompt with no explanations or preamble.`;
 
       const messages: DeepSeekMessage[] = [
         { role: 'system', content: systemPrompt },
@@ -407,6 +411,8 @@ Remember to output ONLY the English prompt without any explanations.`;
         temperature: 0.7,  // Более высокая температура для творческих результатов
         max_tokens: 300    // Ограничиваем длину промта
       });
+      
+      console.log(`Промт успешно сгенерирован: ${result}`);
       
       // Чистим результат от лишних кавычек, если они добавлены моделью
       return result.replace(/^["']|["']$/g, '').trim();

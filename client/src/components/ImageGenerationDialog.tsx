@@ -168,24 +168,28 @@ export function ImageGenerationDialog({
         throw new Error("Необходимо ввести текст для генерации промта");
       }
       
-      console.log("Генерация промта на основе текста через DeepSeek");
+      console.log("Генерация промта на основе текста через DeepSeek (оптимизированный метод)");
       
       try {
-        // Очищаем и переводим текст перед отправкой на генерацию промта
-        // Очистка от HTML-тегов произойдёт через stripHtml, а затем текст будет переведен на английский
+        // Очищаем текст перед отправкой на генерацию промта
+        // Очистка от HTML-тегов произойдёт через stripHtml
         const cleanedText = stripHtml(content);
         console.log("Очищенный текст перед отправкой:", cleanedText);
         
-        // Переводим текст на английский для улучшения качества генерации
-        const translatedText = await translateToEnglish(cleanedText);
-        console.log("Переведенный текст для генерации промта:", translatedText);
+        // Пытаемся извлечь ключевые слова из очищенного текста, если функция доступна
+        let keywords: string[] = [];
+        if (typeof extractKeywordsFromText === 'function') {
+          try {
+            keywords = await extractKeywordsFromText(cleanedText) || [];
+          } catch (e) {
+            console.log("Автоматическое извлечение ключевых слов отключено");
+          }
+        }
         
-        // Пытаемся извлечь ключевые слова из очищенного и переведенного текста
-        const keywords = await extractKeywordsFromText(translatedText);
-        
-        // Генерируем промт через DeepSeek на основе переведенного контента
+        // Генерируем промт через DeepSeek напрямую из русского текста
+        // DeepSeek сам переведет и преобразует текст в промт для изображения
         const response = await api.post("/generate-image-prompt", {
-          content: translatedText,
+          content: cleanedText, // Отправляем оригинальный русский текст
           keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
         });
         
@@ -434,18 +438,22 @@ export function ImageGenerationDialog({
           try {
             // Очищаем текст от HTML-тегов перед генерацией промта
             const cleanedText = stripHtml(content);
-            console.log("Очищенный текст перед отправкой в DeepSeek:", cleanedText);
-            
-            // Переводим текст на английский для улучшения качества генерации
-            const translatedText = await translateToEnglish(cleanedText);
-            console.log("Переведенный текст для DeepSeek:", translatedText);
+            console.log("Очищенный текст перед отправкой в DeepSeek (оптимизированный метод):", cleanedText);
             
             // Пытаемся извлечь ключевые слова из очищенного текста
-            const keywords = await extractKeywordsFromText(translatedText);
+            let keywords: string[] = [];
+            if (typeof extractKeywordsFromText === 'function') {
+              try {
+                keywords = await extractKeywordsFromText(cleanedText) || [];
+              } catch (e) {
+                console.log("Автоматическое извлечение ключевых слов отключено");
+              }
+            }
             
-            // Сначала генерируем промт через DeepSeek на основе переведенного контента
+            // Генерируем промт через DeepSeek напрямую из русского текста
+            // DeepSeek сам переведет и преобразует текст в промт для изображения
             const response = await api.post("/generate-image-prompt", {
-              content: translatedText,
+              content: cleanedText, // Отправляем оригинальный русский текст
               keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
             });
             
