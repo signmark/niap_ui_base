@@ -26,7 +26,6 @@ interface NewSourcesDialogProps {
   campaignId: string;  // ID кампании, в которую добавляются источники
   onClose: () => void;  // Функция закрытия диалога
   sourcesData: {  // Данные, полученные от API поиска источников
-    success: boolean;
     data: {
       sources: Array<{
         url: string;        // URL источника

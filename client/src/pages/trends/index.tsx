@@ -606,6 +606,12 @@ export default function Trends() {
       return;
     }
     
+    // Выбираем случайное ключевое слово из списка
+    const randomIndex = Math.floor(Math.random() * keywords.length);
+    const keyword = keywords[randomIndex]?.keyword || "";
+    setSelectedKeyword(keyword);
+    
+    // Открываем диалог выбора платформ
     setIsSourceSearchDialogOpen(true);
   };
 
@@ -1362,6 +1368,22 @@ export default function Trends() {
           />
         )}
       </Dialog>
+
+      {/* Диалог поиска источников */}
+      {selectedKeyword && (
+        <SourcesSearchDialog
+          open={isSourceSearchDialogOpen}
+          onOpenChange={setIsSourceSearchDialogOpen}
+          campaignId={selectedCampaignId}
+          keyword={selectedKeyword}
+          onClose={() => setIsSourceSearchDialogOpen(false)}
+          onSearch={(sources) => {
+            setFoundSourcesData({ success: true, data: { sources } });
+            setIsSearchingNewSources(true);
+            setIsSourceSearchDialogOpen(false);
+          }}
+        />
+      )}
 
       {/* Диалог выбора социальных сетей для сбора трендов */}
       <SocialNetworkSelectorDialog
