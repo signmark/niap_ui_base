@@ -48,6 +48,7 @@ import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
+import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
 
 // Определение интерфейсов для типизации
@@ -156,9 +157,11 @@ export default function Trends() {
   const statusCheckInterval = useRef<NodeJS.Timeout>();
   const [activeTab, setActiveTab] = useState('trends');
   const [isSocialNetworkDialogOpen, setIsSocialNetworkDialogOpen] = useState(false);
+  const [isSourceSearchDialogOpen, setIsSourceSearchDialogOpen] = useState(false);
   const [selectedTrendTopic, setSelectedTrendTopic] = useState<TrendTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedKeyword, setSelectedKeyword] = useState<string>("");
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
   useEffect(() => {
@@ -524,72 +527,45 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
-  const { mutate: searchNewSources, isPending: isSearching } = useMutation({
-    mutationFn: async () => {
+  const { mutate: searchNewSourcesExecute, isPending: isSearching } = useMutation({
+    mutationFn: async (params: { keyword: string; platforms: string[]; customPrompt?: string }) => {
       if (!selectedCampaignId) {
         throw new Error("Выберите кампанию");
       }
 
-      if (!keywords?.length) {
-        throw new Error("Добавьте ключевые слова в кампанию");
-      }
-
-      const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
-      console.log('Keywords for search:', keywordsList);
       const authToken = localStorage.getItem('auth_token');
-
       if (!authToken) {
         throw new Error("Требуется авторизация. Пожалуйста, войдите в систему снова.");
       }
 
-      // Поиск источников для каждого ключевого слова отдельно
-      const searchPromises = keywordsList.map(async (keyword: string) => {
-        try {
-          const res = await fetch('/api/sources/collect', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({ keywords: [keyword] })
-          });
-          
-          // Проверяем тип контента
-          const contentType = res.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return res.json();
-          } else {
-            console.error(`Неверный тип контента для ключевого слова ${keyword}:`, contentType);
-            const text = await res.text();
-            console.error('Полученный ответ:', text.substring(0, 200) + '...');
-            throw new Error(`Получен неверный формат ответа для ключевого слова "${keyword}"`);
-          }
-        } catch (error) {
-          console.error(`Ошибка при поиске источников для ключевого слова "${keyword}":`, error);
-          return { success: false, error: error instanceof Error ? error.message : String(error) };
+      try {
+        const res = await fetch('/api/sources/collect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ 
+            keywords: [params.keyword],
+            platforms: params.platforms,
+            customPrompt: params.customPrompt
+          })
+        });
+        
+        // Проверяем тип контента
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return res.json();
+        } else {
+          console.error(`Неверный тип контента для ключевого слова ${params.keyword}:`, contentType);
+          const text = await res.text();
+          console.error('Полученный ответ:', text.substring(0, 200) + '...');
+          throw new Error(`Получен неверный формат ответа для ключевого слова "${params.keyword}"`);
         }
-      });
-
-      const results = await Promise.all(searchPromises);
-
-      // Объединяем все результаты
-      const allSources = results.reduce((acc: { url: string; rank: number }[], result: any) => {
-        if (result?.success && result?.data?.sources) {
-          result.data.sources.forEach((source: { url: string; rank: number }) => {
-            if (!acc.some(s => s.url === source.url)) {
-              acc.push(source);
-            }
-          });
-        }
-        return acc;
-      }, []);
-
-      return {
-        success: true,
-        data: {
-          sources: allSources
-        }
-      };
+      } catch (error) {
+        console.error(`Ошибка при поиске источников для ключевого слова "${params.keyword}":`, error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('Success Data:', data);
@@ -609,6 +585,29 @@ export default function Trends() {
       });
     }
   });
+  
+  // Функция, открывающая диалог выбора платформ для поиска
+  const searchNewSources = () => {
+    if (!selectedCampaignId) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите кампанию"
+      });
+      return;
+    }
+
+    if (!keywords?.length) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Добавьте ключевые слова в кампанию"
+      });
+      return;
+    }
+    
+    setIsSourceSearchDialogOpen(true);
+  };
 
   // Интервалы для обновления данных
   const trendsRefreshInterval = useRef<NodeJS.Timeout>();
