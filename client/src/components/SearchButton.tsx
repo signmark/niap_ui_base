@@ -32,7 +32,7 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   // Выбранное ключевое слово для поиска
   const [selectedKeyword, setSelectedKeyword] = useState("");
   // Данные полученных источников от API
-  const [sourcesData, setSourcesData] = useState(null);
+  const [sourcesData, setSourcesData] = useState<{data: {sources: any[]}} | null>(null);
   const { toast } = useToast();
 
   // Открытие диалога для выбора социальных сетей и настройки промпта
@@ -54,7 +54,6 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   // Обработчик результатов поиска
   const handleSearchResults = (sources: any[]) => {
     setSourcesData({
-      success: true,
       data: {
         sources: sources
       }
@@ -106,14 +105,14 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       </Button>
 
       {/* Диалог для выбора социальных сетей и настройки промпта */}
-      <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
-        <SourcesSearchDialog
-          campaignId={campaignId}
-          keyword={selectedKeyword}
-          onClose={() => setIsSearchDialogOpen(false)}
-          onSearch={handleSearchResults}
-        />
-      </Dialog>
+      <SourcesSearchDialog
+        campaignId={campaignId}
+        keyword={selectedKeyword}
+        onClose={() => setIsSearchDialogOpen(false)}
+        onSearch={handleSearchResults}
+        open={isSearchDialogOpen}
+        onOpenChange={setIsSearchDialogOpen}
+      />
 
       {/* Диалог для отображения результатов */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

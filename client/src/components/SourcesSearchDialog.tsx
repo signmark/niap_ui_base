@@ -56,12 +56,16 @@ export function SourcesSearchDialog({
   campaignId,
   keyword,
   onClose,
-  onSearch
+  onSearch,
+  open,
+  onOpenChange
 }: {
   campaignId: string;
   keyword: string;
   onClose: () => void;
   onSearch: (sources: any[]) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -158,88 +162,90 @@ export function SourcesSearchDialog({
   };
 
   return (
-    <DialogContent className="max-w-lg">
-      <DialogHeader>
-        <DialogTitle>Выберите социальные сети для поиска источников</DialogTitle>
-        <DialogDescription>
-          Выберите платформы, на которых будем искать источники по запросу: <strong>{keyword}</strong>
-        </DialogDescription>
-      </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Выберите социальные сети для поиска источников</DialogTitle>
+          <DialogDescription>
+            Выберите платформы, на которых будем искать источники по запросу: <strong>{keyword}</strong>
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="space-y-4 py-4">
-        {platforms.map((platform) => (
-          <div key={platform.id} className="flex items-center space-x-2">
-            <Checkbox 
-              id={platform.id} 
-              checked={platform.checked} 
-              onCheckedChange={() => handleCheckboxChange(platform.id)}
-            />
-            <Label htmlFor={platform.id} className="flex items-center cursor-pointer">
-              {platform.icon} {platform.name}
-            </Label>
-          </div>
-        ))}
+        <div className="space-y-4 py-4">
+          {platforms.map((platform) => (
+            <div key={platform.id} className="flex items-center space-x-2">
+              <Checkbox 
+                id={platform.id} 
+                checked={platform.checked} 
+                onCheckedChange={() => handleCheckboxChange(platform.id)}
+              />
+              <Label htmlFor={platform.id} className="flex items-center cursor-pointer">
+                {platform.icon} {platform.name}
+              </Label>
+            </div>
+          ))}
 
-        <div className="mt-6">
-          <Popover open={isPromptOpen} onOpenChange={setIsPromptOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={isPromptOpen}
-                className="w-full justify-between"
-              >
-                Настроить промпт
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[550px] p-0">
-              <div className="p-4 space-y-4">
-                <Label htmlFor="prompt">Промпт для Perplexity API</Label>
-                <Textarea
-                  id="prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={12}
-                  className="w-full"
-                  placeholder="Введите промпт для поиска источников"
-                />
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setPrompt(DEFAULT_PROMPT.replace('{keyword}', keyword))}
-                    size="sm"
-                  >
-                    Сбросить
-                  </Button>
-                  <Button onClick={() => setIsPromptOpen(false)} size="sm">
-                    Применить
-                  </Button>
+          <div className="mt-6">
+            <Popover open={isPromptOpen} onOpenChange={setIsPromptOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isPromptOpen}
+                  className="w-full justify-between"
+                >
+                  Настроить промпт
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[550px] p-0">
+                <div className="p-4 space-y-4">
+                  <Label htmlFor="prompt">Промпт для Perplexity API</Label>
+                  <Textarea
+                    id="prompt"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    rows={12}
+                    className="w-full"
+                    placeholder="Введите промпт для поиска источников"
+                  />
+                  <div className="flex justify-between">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPrompt(DEFAULT_PROMPT.replace('{keyword}', keyword))}
+                      size="sm"
+                    >
+                      Сбросить
+                    </Button>
+                    <Button onClick={() => setIsPromptOpen(false)} size="sm">
+                      Применить
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
-      </div>
 
-      <DialogFooter className="gap-2">
-        <Button variant="outline" onClick={onClose} disabled={isLoading}>
-          Отмена
-        </Button>
-        <Button onClick={handleSearch} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Поиск источников...
-            </>
-          ) : (
-            <>
-              <Search className="mr-2 h-4 w-4" />
-              Искать источники
-            </>
-          )}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Отмена
+          </Button>
+          <Button onClick={handleSearch} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Поиск источников...
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Искать источники
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
