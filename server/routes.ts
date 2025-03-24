@@ -790,7 +790,8 @@ function extractSourcesFromText(content: string, platforms: string[] = ['instagr
           url,
           name: username,
           followers: 100000, // Default value
-          platform: 'instagram.com',
+          platform: 'instagram',
+          type: 'instagram',
           description: 'Instagram аккаунт',
           rank: 5
         });
@@ -810,8 +811,10 @@ function extractSourcesFromText(content: string, platforms: string[] = ['instagr
         sources.push({
           url,
           name: name.trim(),
+          username,
           followers: followersCount,
-          platform: 'instagram.com',
+          platform: 'instagram',
+          type: 'instagram',
           description: description.trim(),
           rank: 5
         });
@@ -821,71 +824,79 @@ function extractSourcesFromText(content: string, platforms: string[] = ['instagr
     // 3. Simple @ mentions for Instagram
     // Example: "@username (500K followers)"
     const instagramSimplePattern = /@([a-zA-Z0-9._-]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
-
-    while ((match = instagramSimplePattern.exec(content)) !== null) {
-      const [_, username, followers] = match;
-      const followersCount = parseFollowerCount(followers);
-      const url = normalizeInstagramUrl(`instagram.com/${username}`);
-
-      if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
-        sources.push({
-          url,
-          name: username,
-          followers: followersCount,
-          platform: 'instagram.com',
-          description: 'Instagram аккаунт',
-          rank: 5
-        });
-      }
-    }
   }
-
+  
   // Извлечение источников Telegram
   if (platforms.includes('telegram')) {
     // 1. Direct Telegram URLs
-    // Example: https://t.me/channel_name - хороший канал
+    // Example: https://t.me/channelname - описание канала
     const telegramUrlPattern = /https?:\/\/(?:www\.)?t\.me\/([a-zA-Z0-9._-]+)\/?/g;
     
     while ((match = telegramUrlPattern.exec(content)) !== null) {
       const username = match[1];
-      const url = `t.me/${username}`;
+      const url = `https://t.me/${username}`;
       if (!sources.some(s => s.url === url)) {
         sources.push({
           url,
+          username,
           name: username,
-          followers: 100000, // Default value
+          type: 'telegram',
           platform: 'telegram',
+          followers: parseFollowerCount(match.input.substring(match.index, match.index + 200)) || 10000, // Default value
+          rank: sources.length + 1,
+          description: 'Telegram канал'
+        });
+      }
+    }
+    
+    // 2. Telegram channel usernames with @ symbol
+    // Example: **@channelname** - Название (100K subscribers) - Description
+    const telegramFormattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
+    
+    while ((match = telegramFormattedPattern.exec(content)) !== null) {
+      const [_, username, name, subscribers, description] = match;
+      const followersCount = parseFollowerCount(subscribers);
+      const url = `https://t.me/${username}`;
+      
+      if (followersCount >= 10000 && !sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          username,
+          name: name.trim(),
+          type: 'telegram',
+          platform: 'telegram',
+          followers: followersCount,
+          rank: sources.length + 1,
+          description: description.trim()
+        });
+      }
+    }
+    
+    // 3. Simple @ mentions for Telegram
+    // Example: "@channelname (100K subscribers)"
+    const telegramSimplePattern = /@([a-zA-Z0-9._-]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
+
+    while ((match = telegramSimplePattern.exec(content)) !== null) {
+      const [_, username, followers] = match;
+      const followersCount = parseFollowerCount(followers);
+      const url = `https://t.me/${username}`;
+
+      if (followersCount >= 10000 && !sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          username,
+          name: username,
+          followers: followersCount,
+          platform: 'telegram',
+          type: 'telegram',
           description: 'Telegram канал',
           rank: 5
         });
       }
     }
-
-    // 2. Formatted lists with stars for Telegram
-    // Supports same format as Instagram but maps to Telegram
-    const telegramFormattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
-
-    while ((match = telegramFormattedPattern.exec(content)) !== null) {
-      // Skip if this URL was already processed as Instagram
-      // We need additional context to determine if it's Telegram
-      if (content.includes(`t.me/${match[1]}`) || content.toLowerCase().includes('telegram')) {
-        const [_, username, name, followers, description] = match;
-        const followersCount = parseFollowerCount(followers);
-        const url = `t.me/${username}`;
-
-        if (followersCount >= 5000 && !sources.some(s => s.url === url)) {
-          sources.push({
-            url,
-            name: name.trim(),
-            followers: followersCount,
-            platform: 'telegram',
-            description: description.trim(),
-            rank: 5
-          });
-        }
-      }
-    }
   }
+
+
 
   // Дополнительную поддержку для VK, Facebook и других платформ можно добавить здесь
 
@@ -996,16 +1007,16 @@ https://t.me/channelname - description`;
       }
 
       const content = response.data.choices[0].message.content;
-      console.log(`Raw API response for keyword ${keyword}:`, content);
+      console.log(`Raw API response for keyword ${keyword} (platform: ${platform}):`, content);
 
-      // Извлекаем источники из текста
-      const sources = extractSourcesFromText(content);
-      console.log(`Found ${sources.length} sources for keyword ${keyword}`);
+      // Извлекаем источники из текста с учетом платформы
+      const sources = extractSourcesFromText(content, [platform]);
+      console.log(`Found ${sources.length} sources for keyword ${keyword} (platform: ${platform})`);
 
-      // Кешируем результаты
+      // Кешируем результаты с учетом платформы
       if (sources.length > 0) {
-        console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
-        searchCache.set(keyword, {
+        console.log(`Caching ${sources.length} results for keyword: ${keyword} (platform: ${platform})`);
+        searchCache.set(cacheKey, {
           timestamp: Date.now(),
           results: sources
         });
