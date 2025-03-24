@@ -126,8 +126,13 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
           </>
         ) : (
           <>
-            <Search className="mr-2 h-4 w-4" />
-            Искать упоминания
+            <div className="flex items-center gap-1">
+              <Search className="mr-1 h-4 w-4" />
+              <span>Искать упоминания</span>
+              <span className="ml-1 text-xs bg-gray-200 dark:bg-gray-700 rounded px-1.5 py-0.5" title="Использует Perplexity API">
+                API
+              </span>
+            </div>
           </>
         )}
       </Button>
