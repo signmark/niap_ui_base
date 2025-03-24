@@ -919,14 +919,25 @@ async function existingPerplexitySearch(keyword: string, token: string): Promise
       return [];
     }
     
-    // Форматируем ключ API правильно (добавляем префикс 'plx-' если его нет)
-    if (perplexityKey && !perplexityKey.startsWith('plx-') && !perplexityKey.startsWith('Bearer ')) {
-      console.log('Adding "plx-" prefix to Perplexity API key');
-      perplexityKey = `plx-${perplexityKey}`;
+    // Форматируем ключ API правильно (добавляем префикс 'pplx-' если его нет)
+    if (perplexityKey && !perplexityKey.startsWith('pplx-') && !perplexityKey.startsWith('plx-') && !perplexityKey.startsWith('Bearer ')) {
+      console.log('Adding "pplx-" prefix to Perplexity API key');
+      perplexityKey = `pplx-${perplexityKey}`;
+    } else if (perplexityKey && perplexityKey.startsWith('plx-') && !perplexityKey.startsWith('pplx-')) {
+      // Если ключ начинается с устаревшего префикса "plx-", заменяем на "pplx-"
+      perplexityKey = `pplx-${perplexityKey.substring(4)}`;
+      console.log('Changing "plx-" prefix to "pplx-" in Perplexity API key');
     } else if (perplexityKey && perplexityKey.startsWith('Bearer ')) {
-      // Если ключ начинается с "Bearer ", удаляем этот префикс и проверяем наличие "plx-"
+      // Если ключ начинается с "Bearer ", удаляем этот префикс и добавляем правильный префикс
       const keyWithoutBearer = perplexityKey.replace('Bearer ', '');
-      perplexityKey = keyWithoutBearer.startsWith('plx-') ? keyWithoutBearer : `plx-${keyWithoutBearer}`;
+      
+      if (keyWithoutBearer.startsWith('pplx-')) {
+        perplexityKey = keyWithoutBearer;
+      } else if (keyWithoutBearer.startsWith('plx-')) {
+        perplexityKey = `pplx-${keyWithoutBearer.substring(4)}`;
+      } else {
+        perplexityKey = `pplx-${keyWithoutBearer}`;
+      }
       console.log('Reformatted Perplexity API key from "Bearer" format');
     }
     
