@@ -14,6 +14,19 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+// Функция для получения читаемого названия сервиса по его внутреннему идентификатору
+function getServiceDisplayName(serviceName: string): string {
+  const serviceNames: Record<string, string> = {
+    'perplexity': 'Perplexity',
+    'apify': 'Apify',
+    'deepseek': 'DeepSeek',
+    'fal_ai': 'FAL.AI',
+    'xmlriver': 'XMLRiver'
+  };
+  
+  return serviceNames[serviceName] || serviceName;
+}
+
 interface ApiKey {
   id: string;
   service_name: string;
@@ -178,7 +191,7 @@ export function SettingsDialog() {
       toast({
         variant: "destructive",
         title: "Ошибка сохранения",
-        description: error.message || `Не удалось сохранить API ключ ${serviceNames[keyType as keyof typeof serviceNames] || keyType}`
+        description: error.message || `Не удалось сохранить API ключ ${getServiceDisplayName(keyType)}`
       });
     }
   };

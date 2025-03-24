@@ -26,18 +26,22 @@ export function PerplexityKeyAlert() {
 
   useEffect(() => {
     // Проверяем наличие ключа Perplexity в данных
-    if (data && data.data) {
-      const { serviceResults } = data.data;
+    if (data && typeof data === 'object' && 'data' in data) {
+      const apiData = data.data;
       
-      if (Array.isArray(serviceResults)) {
-        const perplexityKey = serviceResults.find(
-          (service: any) => service.service === 'perplexity'
-        );
+      if (apiData && typeof apiData === 'object' && 'serviceResults' in apiData) {
+        const serviceResults = apiData.serviceResults;
         
-        setIsKeyMissing(!perplexityKey || !perplexityKey.keyExists);
+        if (Array.isArray(serviceResults)) {
+          const perplexityKey = serviceResults.find(
+            (service: any) => service.service === 'perplexity'
+          );
+          
+          setIsKeyMissing(!perplexityKey || !perplexityKey.keyExists);
+        }
       }
     }
-  }, [data as any]);
+  }, [data]);
 
   // Если ключ настроен или данные загружаются, не показываем алерт
   if (isLoading || !isKeyMissing) {
