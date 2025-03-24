@@ -45,6 +45,8 @@ export const setupTokenRefresh = (expires: number) => {
 
 export const refreshAccessToken = async () => {
   const refreshToken = localStorage.getItem('refresh_token');
+  const userId = localStorage.getItem('user_id');
+  
   if (!refreshToken) {
     console.error('Невозможно обновить токен: отсутствует refresh_token');
     throw new Error('No refresh token available');
@@ -60,7 +62,10 @@ export const refreshAccessToken = async () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ refresh_token: refreshToken })
+        body: JSON.stringify({ 
+          refresh_token: refreshToken,
+          user_id: userId 
+        })
       });
       
       if (apiResponse.ok) {
@@ -68,14 +73,18 @@ export const refreshAccessToken = async () => {
         if (data.token) {
           console.log('API endpoint refresh successful');
           localStorage.setItem('auth_token', data.token);
-          localStorage.setItem('refresh_token', data.refresh_token);
+          if (data.refresh_token) {
+            localStorage.setItem('refresh_token', data.refresh_token);
+          }
           
           // Update auth store
           const auth = useAuthStore.getState();
-          auth.setAuth(data.token, data.user_id);
+          auth.setAuth(data.token, data.user_id || userId);
           
           // Setup next refresh
-          setupTokenRefresh(data.expires);
+          if (data.expires) {
+            setupTokenRefresh(data.expires);
+          }
           
           return data.token;
         }
@@ -87,31 +96,46 @@ export const refreshAccessToken = async () => {
     }
     
     // Fall back to direct Directus API
-    const response = await directusApi.post<AuthResponse>('/auth/refresh', {
-      refresh_token: refreshToken,
-      mode: 'json'
+    // Предварительно проверяем, что база URL верная
+    const baseUrl = directusApi.defaults.baseURL;
+    const directusAuthUrl = baseUrl ? `${baseUrl}/auth/refresh` : 'https://directus.nplanner.ru/auth/refresh';
+    
+    const response = await fetch(directusAuthUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+        mode: 'json'
+      })
     });
-
-    if (!response.data?.data?.access_token) {
-      console.error('Неверный формат ответа при обновлении токена:', response.data);
+    
+    if (!response.ok) {
+      console.error(`Directus auth refresh failed with status: ${response.status}`);
+      throw new Error(`Token refresh failed: ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    
+    if (!responseData?.data?.access_token) {
+      console.error('Неверный формат ответа при обновлении токена:', responseData);
       throw new Error('Invalid response format during token refresh');
     }
 
-    const { access_token, refresh_token, expires } = response.data.data;
+    const { access_token, refresh_token: new_refresh_token, expires } = responseData.data;
     console.log('Token refresh successful, new token length:', access_token.length);
 
     // Update tokens
     localStorage.setItem('auth_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
+    localStorage.setItem('refresh_token', new_refresh_token);
 
     // Update auth store
     const auth = useAuthStore.getState();
-    auth.setAuth(access_token, auth.userId);
+    auth.setAuth(access_token, userId || auth.userId);
 
-    // Setup next refresh - schedule it for 1 minute before expiration
-    const refreshIn = Math.max(expires - 60000, 1000); // At least 1 second
-    console.log(`Setting up next token refresh in ${refreshIn / 1000} seconds`);
-    setupTokenRefresh(refreshIn);
+    // Setup next refresh - schedule it for 80% of token lifetime
+    setupTokenRefresh(expires);
 
     return access_token;
   } catch (error) {
