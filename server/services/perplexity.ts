@@ -33,28 +33,22 @@ export class PerplexityService {
   }
   
   /**
-   * Обновляет API ключ сервиса и приводит его к правильному формату
+   * Обновляет API ключ сервиса
+   * Сохраняет ключ как есть, без дополнительных префиксов
    */
   updateApiKey(newApiKey: string): void {
     if (newApiKey && newApiKey.trim() !== '') {
       // Убираем лишние пробелы
       const trimmedKey = newApiKey.trim();
       
-      // Проверяем, имеет ли ключ префикс "Bearer " или "plx-"
-      if (!trimmedKey.startsWith('Bearer ') && !trimmedKey.startsWith('plx-')) {
-        // Если ключ не начинается с "plx-", добавляем этот префикс
-        this.apiKey = trimmedKey.startsWith('plx-') ? trimmedKey : `plx-${trimmedKey}`;
+      // Если ключ начинается с "Bearer ", удаляем этот префикс
+      if (trimmedKey.startsWith('Bearer ')) {
+        this.apiKey = trimmedKey.replace('Bearer ', '');
       } else {
-        // Если ключ уже имеет префикс "Bearer ", удаляем его и проверяем/добавляем "plx-"
-        if (trimmedKey.startsWith('Bearer ')) {
-          const keyWithoutBearer = trimmedKey.replace('Bearer ', '');
-          this.apiKey = keyWithoutBearer.startsWith('plx-') ? keyWithoutBearer : `plx-${keyWithoutBearer}`;
-        } else {
-          this.apiKey = trimmedKey;
-        }
+        this.apiKey = trimmedKey;
       }
       
-      console.log(`Perplexity API key updated from user settings (format: ${this.apiKey.substring(0, 6)}...)`);
+      console.log(`Perplexity API key updated from user settings`);
     }
   }
   
@@ -87,17 +81,11 @@ export class PerplexityService {
         throw new Error('Perplexity API ключ не установлен. Пожалуйста, добавьте API ключ в настройках пользователя.');
       }
       
-      // Формируем правильный заголовок Authorization, учитывая режим API и формат ключа
+      // Используем ключ с добавлением префикса "Bearer" без изменения самого ключа
       let authKey = this.apiKey;
       
-      // Если ключ не начинается с "plx-" и это не режим openai, добавляем префикс
-      if (!authKey.startsWith('plx-') && this.apiMode !== 'openai') {
-        authKey = `plx-${authKey}`;
-        console.log('Добавлен префикс "plx-" к ключу Perplexity API');
-      }
-      
       // Логируем информацию о запросе (без полного ключа API)
-      console.log(`Sending request to Perplexity API (mode: ${this.apiMode}, model: ${model}, temp: ${temperature}, key format: ${authKey.substring(0, 6)}...)`);
+      console.log(`Sending request to Perplexity API (model: ${model}, temp: ${temperature})`);
       
       const response = await axios.post(
         this.baseUrl,
@@ -148,13 +136,13 @@ export class PerplexityService {
            (errorMessage.includes('API key') || errorMessage.includes('authentication') || 
             errorMessage.includes('auth') || errorMessage.includes('token') || 
             error.response.status === 401 || error.response.status === 403)) {
-          throw new Error('Недействительный API ключ Perplexity. Пожалуйста, проверьте формат ключа в настройках пользователя. Ключ должен начинаться с "plx-".');
+          throw new Error('Недействительный API ключ Perplexity. Пожалуйста, проверьте правильность ключа в настройках пользователя.');
         }
       }
       
-      // Если получили ошибку 401 или 403 без детальной информации, предполагаем проблему с форматом ключа
+      // Если получили ошибку 401 или 403 без детальной информации, предполагаем проблему с ключом
       if (error.response?.status === 401 || error.response?.status === 403) {
-        throw new Error('Ошибка авторизации Perplexity API. Возможно, неверный формат ключа. Убедитесь, что ключ начинается с "plx-" или обновите ключ в настройках пользователя.');
+        throw new Error('Ошибка авторизации Perplexity API. Возможно, неверный ключ. Пожалуйста, проверьте ключ в настройках пользователя.');
       }
       
       throw error;
