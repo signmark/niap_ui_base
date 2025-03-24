@@ -5,14 +5,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 
+/**
+ * Кнопка поиска источников для кампании.
+ * 
+ * ВАЖНО: Эта кнопка отвечает за поиск новых источников (аккаунтов/каналов) 
+ * через Perplexity API. Не путать с функцией "Собрать тренды", которая
+ * использует n8n webhook для получения трендовых постов.
+ * 
+ * Процесс работы:
+ * 1. Отправляет ключевые слова кампании на сервер (/api/sources/collect)
+ * 2. Сервер запрашивает источники через Perplexity API
+ * 3. Результаты отображаются в диалоговом окне NewSourcesDialog
+ */
 interface SearchButtonProps {
-  campaignId: string;
-  keywords: Array<{ keyword: string }>;
+  campaignId: string;  // ID кампании, для которой выполняется поиск
+  keywords: Array<{ keyword: string }>;  // Ключевые слова для поиска источников
 }
 
 export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
+  // Состояние загрузки для показа спиннера и блокировки кнопки
   const [isLoading, setIsLoading] = useState(false);
+  // Управление видимостью диалога с результатами
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Данные полученных источников от API
   const [sourcesData, setSourcesData] = useState(null);
   const { toast } = useToast();
 
