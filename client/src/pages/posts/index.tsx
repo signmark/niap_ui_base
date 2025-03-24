@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PenLine, Send, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ export default function Posts() {
     vk: 0,
     facebook: 0
   });
+  
+  // Состояние для хранения статуса фильтра (показывать только с socialPlatforms)
+  const [showOnlyWithSocialPlatforms, setShowOnlyWithSocialPlatforms] = useState<boolean>(false);
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent } = useQuery({
@@ -55,7 +58,9 @@ export default function Posts() {
     },
     enabled: !!selectedCampaign?.id,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд
+    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
   });
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
@@ -85,34 +90,89 @@ export default function Posts() {
   }, [campaignContent]);
 
   // Получение точек для календаря (публикации на каждый день)
-  const getDayContent = (day: Date) => {
-    const postsForDay = campaignContent.filter((content) => {
-      // Проверяем наличие опубликованных постов на эту дату
-      if (content.socialPlatforms) {
-        return Object.values(content.socialPlatforms).some(platform => {
-          if (platform.publishedAt) {
-            try {
-              const publishDate = typeof platform.publishedAt === 'string' 
-                ? parseISO(platform.publishedAt) 
-                : new Date(platform.publishedAt);
-              return isSameDay(publishDate, day);
-            } catch (e) {
-              return false;
-            }
-          }
-          return false;
-        });
-      }
-      return false;
+  // Функция для фильтрации контента на основе настроек
+  const getFilteredContent = () => {
+    if (!showOnlyWithSocialPlatforms) {
+      return campaignContent;
+    }
+    
+    // Фильтруем только те посты, которые имеют поле socialPlatforms
+    return campaignContent.filter(post => {
+      return post.socialPlatforms && 
+             typeof post.socialPlatforms === 'object' && 
+             Object.keys(post.socialPlatforms).length > 0;
     });
+  };
+
+  // Вспомогательная функция для определения уникальных постов на день
+  const getUniquePostsForDay = (day: Date) => {
+    // Создаем карту идентификаторов постов, чтобы избежать дублирования
+    const uniquePosts = new Map<string, CampaignContent>();
+    
+    // Получаем отфильтрованный контент
+    const filteredContent = getFilteredContent();
+    
+    // Проходим по отфильтрованным постам и находим те, которые относятся к указанному дню
+    for (const post of filteredContent) {
+      // Массив всех дат, связанных с этим постом
+      const allDates: Date[] = [];
+      
+      // Добавляем основные даты поста
+      if (post.publishedAt) try { allDates.push(new Date(post.publishedAt)); } catch (e) {}
+      if (post.scheduledAt) try { allDates.push(new Date(post.scheduledAt)); } catch (e) {}
+      
+      // Добавляем даты из платформ
+      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          if (platformData?.publishedAt) try { allDates.push(new Date(platformData.publishedAt)); } catch (e) {}
+          if (platformData?.scheduledAt) try { allDates.push(new Date(platformData.scheduledAt)); } catch (e) {}
+        }
+      }
+      
+      // Если хотя бы одна из дат совпадает с указанным днем, добавляем пост в карту
+      if (allDates.some(date => isSameDay(day, date))) {
+        uniquePosts.set(post.id, post);
+      }
+    }
+    
+    // Возвращаем массив уникальных постов
+    return Array.from(uniquePosts.values());
+  };
+
+  const getDayContent = (day: Date) => {
+    // Получаем уникальные посты для этого дня
+    const postsForDay = getUniquePostsForDay(day);
 
     if (!postsForDay.length) return null;
 
+    // Подсчет разных типов контента на эту дату
+    const contentTypes = postsForDay.reduce((types, post) => {
+      const type = post.contentType || 'text';
+      types[type] = (types[type] || 0) + 1;
+      return types;
+    }, {} as Record<string, number>);
+
+    // Получаем цвета для разных типов контента
+    const getColorForType = (type: string): string => {
+      switch (type) {
+        case 'text': return 'bg-blue-500'; // Синий для текста
+        case 'text-image': return 'bg-yellow-500'; // Желтый для картинки с текстом
+        case 'video': 
+        case 'video-text': return 'bg-red-500'; // Красный для видео
+        default: return 'bg-gray-500';
+      }
+    };
+
+    // Отображаем маркеры для каждого поста
     return (
-      <div className="flex justify-center mt-1">
-        {postsForDay.length > 0 && (
-          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-        )}
+      <div className="flex justify-center flex-wrap gap-0.5 mt-1">
+        {postsForDay.map((post, index) => (
+          <div 
+            key={post.id || index} 
+            className={`h-1.5 w-1.5 rounded-full ${getColorForType(post.contentType || 'text')}`}
+          ></div>
+        ))}
       </div>
     );
   };
@@ -122,21 +182,16 @@ export default function Posts() {
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Календарь публикаций</h1>
         <p className="text-muted-foreground mt-2">
-          Управляйте публикациями для выбранной кампании
+          Просмотр и управление постами в календарном виде
         </p>
       </div>
 
       {selectedCampaign ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Календарь публикаций</CardTitle>
-            <CardDescription>
-              Управляйте публикациями для выбранной кампании
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+
+          <CardContent className="pt-6">
             <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -153,27 +208,47 @@ export default function Posts() {
                   initialFocus
                 />
                 
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Фильтр по платформам
-                  </p>
-                  <div className="space-y-1">
-                    {[
-                      { platform: 'instagram' as SocialPlatform, name: 'Instagram', icon: SiInstagram, color: 'text-pink-600' },
-                      { platform: 'telegram' as SocialPlatform, name: 'Telegram', icon: SiTelegram, color: 'text-blue-500' },
-                      { platform: 'vk' as SocialPlatform, name: 'ВКонтакте', icon: SiVk, color: 'text-blue-600' },
-                      { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' }
-                    ].map(item => (
-                      <div key={item.platform} className="flex items-center gap-2">
-                        <div className="w-4 h-4">
-                          <item.icon className={`h-4 w-4 ${item.color}`} />
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Фильтр по платформам
+                    </p>
+                    <div className="space-y-1">
+                      {[
+                        { platform: 'instagram' as SocialPlatform, name: 'Instagram', icon: SiInstagram, color: 'text-pink-600' },
+                        { platform: 'telegram' as SocialPlatform, name: 'Telegram', icon: SiTelegram, color: 'text-blue-500' },
+                        { platform: 'vk' as SocialPlatform, name: 'ВКонтакте', icon: SiVk, color: 'text-blue-600' },
+                        { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' }
+                      ].map(item => (
+                        <div key={item.platform} className="flex items-center gap-2">
+                          <div className="w-4 h-4">
+                            <item.icon className={`h-4 w-4 ${item.color}`} />
+                          </div>
+                          <span>{item.name}</span>
+                          <span className="ml-auto bg-muted text-xs px-2 py-0.5 rounded-md text-muted-foreground">
+                            {platformCounts[item.platform] || 0}
+                          </span>
                         </div>
-                        <span>{item.name}</span>
-                        <span className="ml-auto bg-muted text-xs px-2 py-0.5 rounded-md text-muted-foreground">
-                          {platformCounts[item.platform] || 0}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <label htmlFor="showOnlyWithSocialPlatforms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Только публикации в соцсетях
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="showOnlyWithSocialPlatforms"
+                        checked={showOnlyWithSocialPlatforms}
+                        onChange={(e) => setShowOnlyWithSocialPlatforms(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Показывать только посты, опубликованные в социальных сетях
+                    </p>
                   </div>
                 </div>
                 
@@ -210,46 +285,10 @@ export default function Posts() {
                   </div>
                 ) : (
                   <>
-                    {campaignContent.filter(content => {
-                      // Фильтруем контент, опубликованный на выбранную дату
-                      if (content.socialPlatforms) {
-                        return Object.values(content.socialPlatforms).some(platform => {
-                          if (platform.publishedAt) {
-                            try {
-                              const publishDate = typeof platform.publishedAt === 'string' 
-                                ? parseISO(platform.publishedAt) 
-                                : new Date(platform.publishedAt);
-                              return isSameDay(publishDate, selectedDate);
-                            } catch (e) {
-                              return false;
-                            }
-                          }
-                          return false;
-                        });
-                      }
-                      return false;
-                    }).length > 0 ? (
+                    {getUniquePostsForDay(selectedDate).length > 0 ? (
                       <div className="space-y-4">
-                        {campaignContent
-                          .filter(content => {
-                            // Фильтруем контент, опубликованный на выбранную дату
-                            if (content.socialPlatforms) {
-                              return Object.values(content.socialPlatforms).some(platform => {
-                                if (platform.publishedAt) {
-                                  try {
-                                    const publishDate = typeof platform.publishedAt === 'string' 
-                                      ? parseISO(platform.publishedAt) 
-                                      : new Date(platform.publishedAt);
-                                    return isSameDay(publishDate, selectedDate);
-                                  } catch (e) {
-                                    return false;
-                                  }
-                                }
-                                return false;
-                              });
-                            }
-                            return false;
-                          })
+                        {/* Отображаем уникальные посты на выбранную дату */}
+                        {getUniquePostsForDay(selectedDate)
                           .map(content => (
                             <Card key={content.id} className="overflow-hidden">
                               <CardContent className="p-0">

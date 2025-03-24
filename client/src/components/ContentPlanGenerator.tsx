@@ -62,7 +62,6 @@ export function ContentPlanGenerator({
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [contentCount, setContentCount] = useState(5);
   const [selectedType, setSelectedType] = useState<string>("mixed");
-  const [selectedAiService, setSelectedAiService] = useState<string>("perplexity"); // По умолчанию Perplexity
   const [includeBusiness, setIncludeBusiness] = useState(true);
   const [includeGeneratedImage, setIncludeGeneratedImage] = useState(true);
   const [customInstructions, setCustomInstructions] = useState("");
@@ -391,8 +390,7 @@ export function ContentPlanGenerator({
         period: 14, // 2 недели по умолчанию
         includeImages: includeGeneratedImage && selectedType !== "text",
         includeVideos: selectedType === "video" || selectedType === "mixed",
-        customInstructions: customInstructions || null,
-        aiService: selectedAiService // Добавляем выбранный AI-сервис
+        customInstructions: customInstructions || null
       },
       selectedTrendTopics: Array.from(selectedTopicIds),
       // Отфильтруем ключевые слова с нулевым трендом и пустыми значениями
@@ -548,7 +546,7 @@ export function ContentPlanGenerator({
                         {topic.createdAt && (
                           <span className="inline-flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            {format(new Date(topic.createdAt), 'dd MMM yyyy', {locale: ru})}
+                            {format(new Date(topic.createdAt), 'dd MMMM yyyy', {locale: ru})}
                           </span>
                         )}
                       </CardDescription>
@@ -595,19 +593,6 @@ export function ContentPlanGenerator({
                   <SelectItem value="text">Только текст</SelectItem>
                   <SelectItem value="text-image">Текст с изображениями</SelectItem>
                   <SelectItem value="video">С видео</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="ai-service">AI-сервис для генерации</Label>
-              <Select value={selectedAiService} onValueChange={setSelectedAiService}>
-                <SelectTrigger id="ai-service">
-                  <SelectValue placeholder="Выберите AI-сервис" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="perplexity">Perplexity (по умолчанию)</SelectItem>
-                  <SelectItem value="qwen">Qwen (экспериментально)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -751,7 +736,7 @@ export function ContentPlanGenerator({
                       <CardDescription className="flex items-center gap-2 text-xs">
                         <span className="inline-flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {item.scheduledAt ? format(new Date(item.scheduledAt), 'dd MMM yyyy', {locale: ru}) : 'Не запланировано'}
+                          {item.scheduledAt ? format(new Date(item.scheduledAt), 'dd MMMM yyyy, HH:mm', {locale: ru}) : 'Не запланировано'}
                         </span>
                         <span className="inline-flex items-center">
                           {item.contentType === 'text' && <FileText className="h-3 w-3 mr-1" />}

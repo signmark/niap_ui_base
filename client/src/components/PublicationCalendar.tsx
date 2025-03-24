@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { format, isSameDay, addDays, startOfMonth } from 'date-fns';
+import { format, isSameDay, addDays, startOfMonth, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CampaignContent, SocialPlatform } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
 
@@ -16,19 +16,24 @@ interface PublicationCalendarProps {
   isLoading?: boolean;
   onCreateClick?: () => void;
   onViewPost?: (post: CampaignContent) => void;
+  initialSortOrder?: 'asc' | 'desc';
+  onSortOrderChange?: (order: 'asc' | 'desc') => void;
 }
 
 export default function PublicationCalendar({
   content,
   isLoading = false,
   onCreateClick,
-  onViewPost
+  onViewPost,
+  initialSortOrder = 'desc',
+  onSortOrderChange
 }: PublicationCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredPlatforms, setFilteredPlatforms] = useState<SocialPlatform[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
 
   // Получаем количество постов для каждой платформы
   const platformCounts = content.reduce((counts, post) => {
@@ -44,24 +49,117 @@ export default function PublicationCalendar({
     return counts;
   }, {} as Record<SocialPlatform, number>);
 
-  // Фильтруем контент по дате и платформам
-  const filteredContent = content.filter(post => {
-    // Фильтр по дате
-    const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-    const isDateMatch = postDate ? isSameDay(postDate, selectedDate) : false;
-    
-    // Фильтр по платформам (если выбраны)
-    let isPlatformMatch = true;
-    if (filteredPlatforms.length > 0 && post.socialPlatforms) {
-      isPlatformMatch = Object.keys(post.socialPlatforms).some(platform => 
-        filteredPlatforms.includes(platform as SocialPlatform) &&
-        post.socialPlatforms &&
-        post.socialPlatforms[platform as SocialPlatform].status !== 'cancelled'
-      );
+  // startOfDay из date-fns используется для корректного сравнения дат
+  // без учета времени (сбрасывает время до 00:00:00)
+  
+  // Сначала создаем Map для отфильтрованного контента, чтобы избежать дублирования
+  const filteredContentMap = new Map<string, CampaignContent>();
+  
+  // Фильтруем содержимое
+  content.forEach(post => {
+    // Пропускаем посты без social_platforms
+    if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
+      return; // Пропускаем посты без social_platforms
     }
     
-    return isDateMatch && isPlatformMatch;
+    // 1. Формируем массив дат, которые относятся к этому посту
+    let relevantDates: Date[] = [];
+    let platformsWithDates: Set<SocialPlatform> = new Set();
+    
+    // Проверяем publishedAt
+    if (post.publishedAt) {
+      try {
+        relevantDates.push(new Date(post.publishedAt));
+      } catch (e) {}
+    }
+    
+    // Проверяем scheduledAt
+    if (post.scheduledAt) {
+      try {
+        relevantDates.push(new Date(post.scheduledAt));
+      } catch (e) {}
+    }
+    
+    // Проверяем даты из платформ социальных сетей
+    if (post.socialPlatforms) {
+      for (const platform in post.socialPlatforms) {
+        const platformData = post.socialPlatforms[platform as SocialPlatform];
+        let hasPlatformDate = false;
+        
+        // Проверяем дату публикации
+        if (platformData && platformData.publishedAt) {
+          try {
+            const publishDate = new Date(platformData.publishedAt);
+            if (isSameDay(startOfDay(selectedDate), startOfDay(publishDate))) {
+              hasPlatformDate = true;
+              platformsWithDates.add(platform as SocialPlatform);
+            }
+            relevantDates.push(publishDate);
+          } catch (e) {}
+        }
+        
+        // Проверяем запланированную дату для платформы
+        if (platformData && platformData.scheduledAt) {
+          try {
+            const scheduledDate = new Date(platformData.scheduledAt);
+            if (isSameDay(startOfDay(selectedDate), startOfDay(scheduledDate))) {
+              hasPlatformDate = true;
+              platformsWithDates.add(platform as SocialPlatform);
+            }
+            relevantDates.push(scheduledDate);
+          } catch (e) {}
+        }
+      }
+    }
+    
+    // 2. Проверяем совпадение любой даты с выбранной датой
+    const hasMatchingDate = relevantDates.some(date => 
+      isSameDay(startOfDay(selectedDate), startOfDay(date))
+    );
+    
+    // 3. Применяем фильтрацию по платформам, если необходимо
+    if (hasMatchingDate) {
+      if (filteredPlatforms.length === 0) {
+        // Если фильтр не выбран, показываем пост
+        filteredContentMap.set(post.id, post);
+        return;
+      }
+      
+      // Проверяем, есть ли какая-либо из выбранных платформ у поста
+      if (post.socialPlatforms) {
+        // Если платформы фильтруются, проверяем, есть ли выбранные платформы среди тех, что имеют даты на выбранный день
+        const hasFilteredPlatform = Array.from(platformsWithDates).some(platform => 
+          filteredPlatforms.includes(platform)
+        );
+        
+        if (hasFilteredPlatform) {
+          filteredContentMap.set(post.id, post);
+          return;
+        }
+        
+        // Если нет совпадений по платформам, проверяем общую дату поста (scheduledAt/publishedAt)
+        // и показываем пост, только если платформы вообще не выбраны
+        const hasMatchingGeneralDate = 
+          (post.scheduledAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.scheduledAt)))) ||
+          (post.publishedAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.publishedAt))));
+        
+        if (hasMatchingGeneralDate && filteredPlatforms.length === 0) {
+          filteredContentMap.set(post.id, post);
+        }
+      }
+    }
   });
+  
+  // Преобразуем Map в массив и сортируем
+  const filteredContent = Array.from(filteredContentMap.values())
+    .sort((a, b) => {
+      // Сортировка по времени публикации
+      const timeA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+      const timeB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+      
+      // В зависимости от выбранного порядка сортировки
+      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
 
   // Обработчик изменения фильтра платформ
   const handleFilterChange = (selected: SocialPlatform[]) => {
@@ -70,16 +168,97 @@ export default function PublicationCalendar({
 
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
-    const postsForDay = content.filter(post => {
-      const postDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
-      return postDate ? isSameDay(postDate, day) : false;
+    // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
+    const uniquePostsMap = new Map<string, CampaignContent>();
+    
+    // Проходим по всем постам и собираем только уникальные на эту дату
+    content.forEach(post => {
+      // Проверяем наличие socialPlatforms - если его нет, пост не отображаем в календаре
+      if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
+        return; // Пропускаем посты без social_platforms
+      }
+      
+      // Формируем массив дат, которые относятся к этому посту
+      let relevantDates: Date[] = [];
+      
+      // 1. Проверяем publishedAt
+      if (post.publishedAt) {
+        try {
+          relevantDates.push(new Date(post.publishedAt));
+        } catch (e) {}
+      }
+      
+      // 2. Проверяем scheduledAt
+      if (post.scheduledAt) {
+        try {
+          relevantDates.push(new Date(post.scheduledAt));
+        } catch (e) {}
+      }
+      
+      // 3. Проверяем даты из платформ социальных сетей
+      if (post.socialPlatforms) {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          
+          // Проверяем дату публикации
+          if (platformData && platformData.publishedAt) {
+            try {
+              relevantDates.push(new Date(platformData.publishedAt));
+            } catch (e) {}
+          }
+          
+          // Проверяем запланированную дату для платформы
+          if (platformData && platformData.scheduledAt) {
+            try {
+              relevantDates.push(new Date(platformData.scheduledAt));
+            } catch (e) {}
+          }
+        }
+      }
+      
+      // 4. Проверяем совпадение любой даты с указанным днем
+      const isRelevantForDay = relevantDates.some(date => 
+        isSameDay(startOfDay(day), startOfDay(date))
+      );
+      
+      // Если пост относится к этому дню, добавляем его в Map
+      if (isRelevantForDay) {
+        uniquePostsMap.set(post.id, post);
+      }
     });
+    
+    // Преобразуем Map в массив уникальных постов
+    const postsForDay = Array.from(uniquePostsMap.values());
 
     if (!postsForDay.length) return null;
 
+    // Подсчет разных типов контента на эту дату
+    const contentTypes = postsForDay.reduce((types, post) => {
+      const type = post.contentType || 'text';
+      types[type] = (types[type] || 0) + 1;
+      return types;
+    }, {} as Record<string, number>);
+
+    // Получаем цвета для разных типов контента
+    const getColorForType = (type: string): string => {
+      switch (type) {
+        case 'text': return 'bg-blue-500'; // Синий для текста
+        case 'text-image': return 'bg-yellow-500'; // Желтый для картинки с текстом
+        case 'video': 
+        case 'video-text': return 'bg-red-500'; // Красный для видео
+        default: return 'bg-gray-500';
+      }
+    };
+
+    // Отображаем маркеры для типов контента
     return (
-      <div className="flex justify-center mt-1">
-        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+      <div className="flex justify-center gap-0.5 mt-1">
+        {Object.keys(contentTypes).map((type, index) => (
+          <div 
+            key={index} 
+            className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)}`}
+          ></div>
+        ))}
       </div>
     );
   };
@@ -95,12 +274,13 @@ export default function PublicationCalendar({
   };
 
   // Форматирование даты публикации
-  const formatScheduledTime = (date: string | Date | null) => {
+  const formatScheduledTime = (date: string | Date | null | undefined, showFullDate: boolean = false) => {
     if (!date) return "--:--";
     
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return format(dateObj, 'HH:mm', { locale: ru });
+      const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
+      if (!dateObj) return "--:--";
+      return format(dateObj, showFullDate ? 'dd MMMM yyyy, HH:mm' : 'HH:mm', { locale: ru });
     } catch (error) {
       return "--:--";
     }
@@ -183,21 +363,47 @@ export default function PublicationCalendar({
           </div>
           
           <div className="space-y-4">
-            <h3 className="font-medium text-lg">
-              Посты на {format(selectedDate, 'dd MMMM yyyy', { locale: ru })}:
-            </h3>
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium text-lg">
+                Посты на {format(selectedDate, 'dd MMMM yyyy', { locale: ru })}:
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  const newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+                  setSortOrder(newSortOrder);
+                  if (onSortOrderChange) {
+                    onSortOrderChange(newSortOrder);
+                  }
+                }}
+              >
+                {sortOrder === 'desc' ? (
+                  <>
+                    <SortDesc size={16} />
+                    <span>Сначала новые</span>
+                  </>
+                ) : (
+                  <>
+                    <SortAsc size={16} />
+                    <span>Сначала старые</span>
+                  </>
+                )}
+              </Button>
+            </div>
             
             {isLoading ? (
               <div className="text-center py-6">
                 <p className="text-muted-foreground">Загрузка публикаций...</p>
               </div>
-            ) : filteredContent.length === 0 ? (
+            ) : Array.from(filteredContentMap.values()).length === 0 ? (
               <div className="text-center py-12 border rounded-lg">
                 <p className="text-muted-foreground">Нет публикаций на выбранную дату</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredContent.map(post => (
+                {Array.from(filteredContentMap.values()).map(post => (
                   <div 
                     key={post.id}
                     className="p-4 border rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
@@ -208,7 +414,7 @@ export default function PublicationCalendar({
                         <h4 className="font-medium">{post.title || 'Без названия'}</h4>
                         <div className="flex items-center mt-1 text-sm text-muted-foreground">
                           <Clock className="h-3.5 w-3.5 mr-1" />
-                          <span>{formatScheduledTime(post.scheduledAt)}</span>
+                          <span>{formatScheduledTime(post.scheduledAt || null)}</span>
                         </div>
                       </div>
                       

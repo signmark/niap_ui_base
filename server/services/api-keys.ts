@@ -6,7 +6,7 @@ import { directusCrud } from './directus-crud';
 const directusApi = directusApiManager.instance;
 
 // Типы API сервисов, используемых в приложении
-export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen';
+export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver';
 
 // Маппинг имен сервисов как они записаны в БД
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
@@ -15,8 +15,7 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   'apify': 'apify',
   'deepseek': 'deepseek',
   'fal_ai': 'fal_ai',
-  'xmlriver': 'xmlriver',
-  'qwen': 'qwen'
+  'xmlriver': 'xmlriver'
 };
 
 // Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
@@ -27,8 +26,7 @@ const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
   2: 'apify',            // Третье поле в UI - API Ключ Apify
   3: 'deepseek',         // Четвертое поле в UI - API Ключ DeepSeek
   4: 'fal_ai',           // Пятое поле в UI - API Ключ FAL.AI
-  5: 'xmlriver',         // Шестое поле в UI - API Ключ XMLRiver
-  6: 'qwen'              // Седьмое поле в UI - API Ключ Qwen
+  5: 'xmlriver'          // Шестое поле в UI - API Ключ XMLRiver
 };
 
 // Интерфейс для хранения API ключей и метаданных
@@ -427,6 +425,91 @@ export class ApiKeyService {
     if (this.keyCache[userId]?.[serviceName]) {
       delete this.keyCache[userId][serviceName];
       log(`Invalidated cached ${serviceName} API key for user ${userId}`, 'api-keys');
+    }
+  }
+  
+  /**
+   * Исправляет/обновляет формат ключа DeepSeek для пользователя
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации (опционально)
+   * @returns true, если ключ был успешно обновлен
+   */
+  async fixDeepSeekKeyFormat(userId: string, authToken?: string): Promise<boolean> {
+    try {
+      // Получаем текущий ключ DeepSeek для пользователя
+      console.log(`[deepseek] Получаем ключ для проверки формата`);
+      const keys = await directusCrud.list('user_api_keys', {
+        userId: userId,
+        authToken: authToken,
+        filter: {
+          user_id: { _eq: userId }
+        },
+        fields: ['id', 'service_name', 'api_key']
+      });
+      
+      // Ищем ключ DeepSeek, либо по service_name, либо по порядку
+      const typedKeys = keys as Array<{ id: string; service_name?: string; api_key?: string }>;
+      
+      let deepseekKeyItem = typedKeys.find(key => 
+        key.service_name && key.service_name.toLowerCase() === 'deepseek');
+      
+      // Если нет ключа с service_name, но у нас есть массив с ключами, пробуем использовать индекс
+      if (!deepseekKeyItem && typedKeys.length > 3 && typedKeys[3] && typedKeys[3].api_key) {
+        deepseekKeyItem = typedKeys[3]; // DeepSeek - четвертый ключ в интерфейсе (индекс 3)
+        console.log(`[deepseek] Используем ключ по индексу 3 (DeepSeek - 4-й в UI)`);
+      }
+      
+      if (deepseekKeyItem && deepseekKeyItem.api_key) {
+        const apiKey = deepseekKeyItem.api_key;
+        
+        // Проверяем формат ключа - мы храним ключи БЕЗ префикса "Bearer "
+        if (apiKey.startsWith('Bearer ')) {
+          console.log(`[deepseek] Ключ содержит префикс "Bearer ", который нужно удалить для хранения в БД`);
+          // Убираем префикс для хранения в БД
+          const cleanKey = apiKey.substring(7);
+          
+          // Обновляем ключ в БД
+          await directusCrud.update('user_api_keys', deepseekKeyItem.id, {
+            api_key: cleanKey,
+            service_name: 'deepseek', // Устанавливаем service_name, если его не было
+            updated_at: new Date().toISOString()
+          }, {
+            userId: userId,
+            authToken: authToken
+          });
+          
+          console.log(`[deepseek] Префикс "Bearer " удален из ключа в БД`);
+          
+          // Инвалидируем кэш
+          this.invalidateCache(userId, 'deepseek');
+          
+          return true;
+        } else if (apiKey.startsWith('sk-')) {
+          console.log(`[deepseek] Ключ уже в правильном формате для хранения (без префикса "Bearer"), обновляем service_name`);
+          
+          // Обновляем service_name в БД
+          await directusCrud.update('user_api_keys', deepseekKeyItem.id, {
+            service_name: 'deepseek',
+            updated_at: new Date().toISOString()
+          }, {
+            userId: userId,
+            authToken: authToken
+          });
+          
+          // Инвалидируем кэш
+          this.invalidateCache(userId, 'deepseek');
+          
+          console.log(`[deepseek] Ключ успешно обновлен в БД с правильным форматом`);
+          return true;
+        }
+      }
+      
+      log(`DeepSeek API key not found or already in correct format for user ${userId}`, 'api-keys');
+      return false;
+    } catch (error) {
+      console.error(`Error fixing DeepSeek API key format:`, error);
+      log(`Error fixing DeepSeek API key format: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
+      return false;
     }
   }
   

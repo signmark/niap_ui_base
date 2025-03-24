@@ -57,44 +57,159 @@ export class DeepSeekService {
       const max_tokens = options.max_tokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
+      // Генерируем уникальный идентификатор для этого запроса (для логирования)
+      const requestId = Math.random().toString(36).substring(2, 10);
+      console.log(`[${requestId}] Начинаем запрос к DeepSeek API (model: ${model}, temp: ${temperature})`);
+      
+      // Логируем первые 100 символов первого сообщения пользователя (для диагностики)
+      const userMessage = messages.find(m => m.role === 'user')?.content || '';
+      console.log(`[${requestId}] Содержимое запроса (первые 100 символов): ${userMessage.substring(0, 100)}...`);
+      
       // Проверяем, что API ключ установлен
       if (!this.apiKey || this.apiKey.trim() === '') {
-        console.error('DeepSeek API key is not set');
+        console.error(`[${requestId}] DeepSeek API key is not set`);
         throw new Error('DeepSeek API ключ не установлен. Пожалуйста, добавьте API ключ в настройках пользователя.');
       }
       
-      console.log(`Sending request to DeepSeek API (model: ${model}, temp: ${temperature})`);
+      console.log(`[${requestId}] Текущий API ключ DeepSeek (первые/последние 5 символов): ${this.apiKey.substring(0, 5)}...${this.apiKey.substring(this.apiKey.length - 5)}`);
       
-      const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model,
-          messages,
-          temperature,
-          max_tokens,
-          top_p,
-          stop: options.stop || null
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
+      // Пробуем разные форматы ключей, так как они могут иметь разную структуру
+      const keyFormats = [
+        { format: 'original', key: this.apiKey },
+        { format: 'without_bearer', key: this.apiKey.replace(/^Bearer\s+/i, '') },
+        { format: 'with_bearer', key: this.apiKey.startsWith('Bearer ') ? this.apiKey : `Bearer ${this.apiKey}` },
+        { format: 'with_sk', key: this.apiKey.startsWith('sk-') ? this.apiKey : `sk-${this.apiKey.replace(/^Bearer\s+/i, '')}` },
+        { format: 'clean_sk', key: this.apiKey.replace(/^Bearer\s+/i, '').replace(/^sk-/i, '') }
+      ];
+      
+      // Перебираем форматы ключей и пытаемся отправить запрос
+      let lastError = null;
+      
+      for (const format of keyFormats) {
+        try {
+          console.log(`[${requestId}] Пробуем формат ключа: ${format.format}`);
+          
+          // Логируем первые/последние символы текущего ключа для диагностики
+          const keyPreview = `${format.key.substring(0, 5)}...${format.key.substring(format.key.length - 5)}`;
+          console.log(`[${requestId}] Ключ в формате ${format.format}: ${keyPreview}`);
+          
+          // Пробуем отправить запрос с текущим форматом ключа
+          const startTime = Date.now();
+          const response = await axios.post(
+            `${this.baseUrl}/chat/completions`,
+            {
+              model,
+              messages,
+              temperature,
+              max_tokens,
+              top_p,
+              stop: options.stop || null
+            },
+            {
+              headers: {
+                'Authorization': format.format === 'original' || format.format === 'with_bearer' 
+                  ? format.key  // Используем ключ как есть, если он уже начинается с Bearer
+                  : `Bearer ${format.key}`, // Иначе добавляем префикс Bearer
+                'Content-Type': 'application/json'
+              },
+              timeout: 30000 // 30 секунд таймаут
+            }
+          );
+          
+          const responseTime = Date.now() - startTime;
+          console.log(`[${requestId}] Запрос выполнен за ${responseTime}ms`);
+          
+          // Проверяем, что структура ответа соответствует ожидаемой
+          if (!response.data?.choices?.[0]?.message?.content) {
+            console.error(`[${requestId}] Некорректная структура ответа:`, JSON.stringify(response.data).substring(0, 500));
+            throw new Error('Некорректный формат ответа от DeepSeek API.');
+          }
+          
+          const content = response.data.choices[0].message.content;
+          
+          console.log(`[${requestId}] DeepSeek API запрос успешен с форматом ключа: ${format.format}`);
+          console.log(`[${requestId}] Получен ответ длиной ${content.length} символов. Первые 100: ${content.substring(0, 100)}...`);
+          
+          // Если запрос успешен, сохраняем рабочий формат ключа для использования в будущем
+          if (format.format !== 'original') {
+            console.log(`[${requestId}] Обновляем формат API ключа на ${format.format}`);
+            this.apiKey = format.key;
+          }
+          
+          return content;
+        } catch (formatError: any) {
+          // Если этот формат ключа не сработал, сохраняем ошибку и пробуем следующий формат
+          console.error(`[${requestId}] Ошибка с форматом ключа ${format.format}:`, formatError.message);
+          lastError = formatError;
+          
+          // Выводим детали ошибки для отладки
+          if (formatError.response) {
+            console.error(`[${requestId}] Детали ошибки DeepSeek API (${format.format}):`, 
+              `Статус: ${formatError.response.status}`, 
+              `Данные: ${JSON.stringify(formatError.response.data || {}).substring(0, 500)}`
+            );
+            
+            // Если это явно ошибка ключа API, пробуем следующий формат
+            const errorStatus = formatError.response.status;
+            const errorData = formatError.response.data;
+            
+            if (errorStatus === 401 || errorStatus === 403 || 
+                (errorData && (
+                  (errorData.error && typeof errorData.error === 'string' && 
+                   (errorData.error.includes('API key') || errorData.error.includes('auth'))) ||
+                  (errorData.message && typeof errorData.message === 'string' && 
+                   (errorData.message.includes('API key') || errorData.message.includes('auth')))
+                ))) {
+              console.log(`[${requestId}] Ошибка ключа API, пробуем другой формат`);
+              continue;
+            }
+          } else if (formatError.request) {
+            // Сетевая ошибка - запрос был отправлен, но ответа не получено
+            console.error(`[${requestId}] Ошибка сети при запросе (${format.format}):`, formatError.message);
+          } else {
+            // Ошибка при настройке запроса
+            console.error(`[${requestId}] Ошибка настройки запроса (${format.format}):`, formatError.message);
           }
         }
-      );
-      
-      if (!response.data?.choices?.[0]?.message?.content) {
-        console.error('Invalid response format from DeepSeek API:', response.data);
-        throw new Error('Некорректный ответ от DeepSeek API. Пожалуйста, проверьте настройки или попробуйте позже.');
       }
       
-      return response.data.choices[0].message.content;
+      // Если все форматы ключей не сработали, выбрасываем последнюю ошибку
+      if (lastError) {
+        console.error(`[${requestId}] Все форматы API ключей DeepSeek не сработали:`, lastError.message);
+        
+        // Проверяем, содержит ли сообщение об ошибке информацию об недействительном ключе API
+        if (lastError.response?.data?.error) {
+          const errorMessage = typeof lastError.response.data.error === 'string' 
+            ? lastError.response.data.error
+            : (lastError.response.data.error.message || JSON.stringify(lastError.response.data.error));
+          
+          if (typeof errorMessage === 'string' && 
+             (errorMessage.includes('API key') || errorMessage.includes('authentication') || 
+              errorMessage.includes('auth') || errorMessage.includes('token') || 
+              lastError.response.status === 401 || lastError.response.status === 403)) {
+            throw new Error('Недействительный API ключ DeepSeek. Пожалуйста, проверьте и обновите ключ в настройках пользователя.');
+          }
+        }
+        
+        // Проверяем, не является ли ошибка сетевой
+        if (lastError.code === 'ECONNREFUSED' || lastError.code === 'ECONNABORTED' || 
+            lastError.code === 'ETIMEDOUT' || lastError.message.includes('timeout')) {
+          throw new Error('Ошибка подключения к серверу DeepSeek API. Пожалуйста, проверьте соединение или попробуйте позже.');
+        }
+        
+        throw new Error(`Ошибка при запросе к DeepSeek API: ${lastError.message}`);
+      }
+      
+      // Этот код никогда не должен выполняться, но добавлен для типизации
+      throw new Error('Непредвиденная ошибка при отправке запроса к DeepSeek API');
     } catch (error: any) {
-      console.error('Error calling DeepSeek API:', error);
+      console.error('Критическая ошибка при вызове DeepSeek API:', error);
       
       // Проверяем, содержит ли сообщение об ошибке "Invalid API key"
       if (error.response?.data?.error) {
-        const errorMessage = error.response.data.error.message || error.response.data.error;
+        const errorMessage = typeof error.response.data.error === 'string' 
+          ? error.response.data.error
+          : (error.response.data.error.message || JSON.stringify(error.response.data.error));
         
         if (typeof errorMessage === 'string' && 
            (errorMessage.includes('API key') || errorMessage.includes('authentication') || 
@@ -104,6 +219,7 @@ export class DeepSeekService {
         }
       }
       
+      // Перебрасываем ошибку, чтобы вызывающий код мог ее обработать
       throw error;
     }
   }
@@ -323,12 +439,8 @@ ${platformSpecifics}
 - Делай текст живым, с естественными переходами между мыслями
 - Используй активный залог вместо пассивного`;
 
-    // Обработка различных типов данных
-    let keywordsStr = Array.isArray(keywords) ? keywords.join(', ') : typeof keywords === 'string' ? keywords : String(keywords || '');
-    let topicsStr = Array.isArray(topics) ? topics.join(', ') : typeof topics === 'string' ? topics : String(topics || '');
-    
-    const userContent = `Ключевые слова: ${keywordsStr}
-Темы для раскрытия: ${topicsStr}
+    const userContent = `Ключевые слова: ${keywords.join(', ')}
+Темы для раскрытия: ${topics.join(', ')}
 
 Создай привлекательный пост для ${platform} ${language === 'ru' ? 'на русском языке' : 'на английском языке'}.`;
 
@@ -360,11 +472,15 @@ ${platformSpecifics}
     keywords: string[] = []
   ): Promise<string> {
     try {
+      console.log('Начинаем генерацию промта для изображений с помощью DeepSeek...');
+      
       // Очищаем HTML-теги из контента, но сохраняем структуру текста
       const cleanedContent = content
         .replace(/<[^>]*>/g, ' ')  // Заменяем HTML-теги пробелами
         .replace(/\s+/g, ' ')      // Заменяем множественные пробелы одним
         .trim();                    // Убираем пробелы в начале и конце
+      
+      console.log(`Контент очищен от HTML. Длина: ${cleanedContent.length} символов. Первые 100: ${cleanedContent.substring(0, 100)}...`);
       
       // Формируем системный промт
       const systemPrompt = `You are an expert image prompt generator for Stable Diffusion AI.
@@ -401,18 +517,111 @@ Remember to output ONLY the English prompt without any explanations.`;
         { role: 'user', content: userPrompt }
       ];
 
-      // Вызываем генерацию с соответствующими параметрами
-      const result = await this.generateText(messages, {
-        model: 'deepseek-chat',
-        temperature: 0.7,  // Более высокая температура для творческих результатов
-        max_tokens: 300    // Ограничиваем длину промта
-      });
+      // Если API ключ не установлен, пытаемся использовать fallback напрямую
+      if (!this.hasApiKey()) {
+        console.warn('DeepSeek API ключ не установлен. Возвращаем заранее подготовленный промт.');
+        
+        // Пока DeepSeek API не работает, возвращаем базовый промт на основе контента
+        const fallbackPrompt = `A detailed, high-quality photorealistic image of ${cleanedContent.substring(0, 100)}, with natural lighting, vibrant colors, and professional composition.`;
+        console.log('Используем fallback промт: ' + fallbackPrompt);
+        
+        // В этом случае не бросаем ошибку, а возвращаем что-то полезное
+        return fallbackPrompt;
+      }
+
+      console.log('Отправляем запрос на генерацию промта к DeepSeek API...');
       
-      // Чистим результат от лишних кавычек, если они добавлены моделью
-      return result.replace(/^["']|["']$/g, '').trim();
-    } catch (error) {
-      console.error('Error generating image prompt with DeepSeek:', error);
-      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message}`);
+      // Перехватываем больше потенциальных ошибок
+      try {
+        // Вызываем генерацию с соответствующими параметрами
+        const result = await this.generateText(messages, {
+          model: 'deepseek-chat',
+          temperature: 0.7,  // Более высокая температура для творческих результатов
+          max_tokens: 300    // Ограничиваем длину промта
+        });
+        
+        // Проверка на валидность результата
+        if (!result || typeof result !== 'string' || result.trim().length < 10) {
+          throw new Error(`Некорректный результат от DeepSeek API: ${result}`);
+        }
+        
+        console.log(`Успешно получен результат от DeepSeek API. Длина: ${result.length} символов.`);
+        console.log(`Первые 100 символов промта: ${result.substring(0, 100)}...`);
+        
+        // Чистим результат от лишних кавычек, если они добавлены моделью
+        return result.replace(/^["']|["']$/g, '').trim();
+      } catch (apiError: any) {
+        console.error('Ошибка при обращении к DeepSeek API:', apiError);
+        
+        // Дополнительная информация для диагностики
+        if (apiError.response) {
+          console.error('Детали ответа API:', JSON.stringify({
+            status: apiError.response.status,
+            data: apiError.response.data
+          }));
+        }
+        
+        // Ошибка при обращении к API, проверим формат ключа
+        console.log('Проверка формата API ключа...');
+        
+        // Перепробуем с другими форматами ключа
+        const keyFormats = [
+          { format: 'без Bearer', key: this.apiKey.replace(/^Bearer\s+/i, '') },
+          { format: 'с Bearer', key: this.apiKey.startsWith('Bearer ') ? this.apiKey : `Bearer ${this.apiKey}` },
+          { format: 'с sk-', key: this.apiKey.startsWith('sk-') ? this.apiKey : `sk-${this.apiKey}` }
+        ];
+        
+        // Пробуем каждый формат
+        for (const format of keyFormats) {
+          console.log(`Пробуем формат ключа: ${format.format}`);
+          
+          try {
+            // Временно меняем ключ
+            const originalKey = this.apiKey;
+            this.apiKey = format.key;
+            
+            // Пробуем простой запрос
+            const testResult = await this.generateText(
+              [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                { role: 'user', content: 'Say hello in one word.' }
+              ],
+              { max_tokens: 10 }
+            );
+            
+            console.log(`Формат ключа ${format.format} успешно сработал!`);
+            
+            // Если этот формат сработал, возвращаемся к основному запросу
+            const finalResult = await this.generateText(messages, {
+              model: 'deepseek-chat',
+              temperature: 0.7,
+              max_tokens: 300
+            });
+            
+            // Чистим результат и возвращаем
+            return finalResult.replace(/^["']|["']$/g, '').trim();
+          } catch (formatError) {
+            console.error(`Формат ключа ${format.format} не сработал:`, formatError);
+            // Продолжаем с другими форматами
+          }
+        }
+        
+        // Если ни один формат не сработал, возвращаем подготовленный промт на основе контента
+        console.warn('Все форматы ключа DeepSeek API не сработали. Возвращаем заранее подготовленный промт.');
+        const fallbackPrompt = `A detailed, high-quality photorealistic image of ${cleanedContent.substring(0, 100)}, with natural lighting, vibrant colors, and professional composition.`;
+        return fallbackPrompt;
+      }
+    } catch (error: any) {
+      console.error('Критическая ошибка при генерации промта для изображения с DeepSeek:', error);
+      
+      // В случае полного отказа системы, всё равно возвращаем что-то полезное
+      try {
+        // Простая генерация промта на основе контента
+        const emergencyPrompt = `A detailed, high-quality photorealistic image related to ${content.substring(0, 50).replace(/<[^>]*>/g, ' ').trim()}`;
+        return emergencyPrompt;
+      } catch (e) {
+        throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message || String(error)}`);
+      }
     }
   }
 
@@ -466,9 +675,9 @@ ${originalContent}
           max_tokens: 1000
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error adapting content for ${platform}:`, error);
-      throw error;
+      throw new Error(`Ошибка адаптации контента для ${platform}: ${error.message || String(error)}`);
     }
   }
   
@@ -482,6 +691,17 @@ ${originalContent}
     try {
       console.log('Попытка инициализации DeepSeek сервиса для пользователя', userId);
       
+      // Сначала вызываем функцию проверки и исправления формата ключа
+      // Это обеспечит правильное хранение ключа в БД (без префикса "Bearer ")
+      try {
+        const keyFormatFixed = await apiKeyService.fixDeepSeekKeyFormat(userId, authToken);
+        if (keyFormatFixed) {
+          console.log('Формат ключа DeepSeek был проверен и исправлен при необходимости');
+        }
+      } catch (formatError) {
+        console.warn('Ошибка при проверке формата ключа DeepSeek:', formatError);
+      }
+      
       // Используем только централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
@@ -490,15 +710,21 @@ ${originalContent}
         this.updateApiKey(apiKey);
         log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
         console.log('DeepSeek API ключ успешно получен через API Key Service');
+        
+        // Для отладки - выводим первые 5 символов ключа и ... и последние 5 символов
+        if (apiKey.length > 10) {
+          console.log(`DEBUG: DeepSeek API ключ для отладки: ${apiKey.substring(0, 5)}... (длина: ${apiKey.length})`);
+        }
+        
         return true;
       } else {
         console.log('API ключ DeepSeek не найден в БД для пользователя', userId);
         log('DeepSeek API ключ не найден в настройках пользователя', 'deepseek');
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка при инициализации DeepSeek сервиса:', error);
-      log(`Ошибка при инициализации DeepSeek сервиса: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`, 'deepseek');
+      log(`Ошибка при инициализации DeepSeek сервиса: ${error.message || String(error)}`, 'deepseek');
       return false;
     }
   }

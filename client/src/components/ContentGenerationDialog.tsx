@@ -66,7 +66,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       // Выбираем API в зависимости от выбранного сервиса
       let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
-      console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
+      console.log(`Генерация контента через ${selectedService} API`);
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -79,8 +79,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           keywords: selectedKeywords,
           tone,
           campaignId,
-          platform: platform, // Используется для некоторых сервисов
-          aiService: selectedService // Добавляем параметр aiService для Perplexity/Qwen
+          platform: platform, // Используется для всех сервисов
+          service: selectedService // Указываем выбранный сервис
         })
       });
 

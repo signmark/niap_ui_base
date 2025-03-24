@@ -288,7 +288,8 @@ export default function ContentPage() {
     },
     enabled: !!selectedCampaignId,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000, // Автоматически обновлять данные каждые 10 секунд
   });
   
   // Запрос ключевых слов кампании
@@ -315,7 +316,8 @@ export default function ContentPage() {
     },
     enabled: !!selectedCampaignId,
     refetchOnMount: true,
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
+    refetchInterval: 10000 // Автоматически обновлять данные каждые 10 секунд
   });
 
   // Мутация для создания контента
@@ -718,7 +720,11 @@ export default function ContentPage() {
       if (!date) return;
       
       // Преобразуем в строку даты (только дата, без времени)
-      const dateStr = new Date(date).toISOString().split('T')[0];
+      // Используем локальный часовой пояс пользователя для группировки
+      const localDate = new Date(date);
+      
+      // Форматируем дату для использования в качестве ключа группы в формате YYYY-MM-DD
+      const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
       
       if (!groups[dateStr]) {
         groups[dateStr] = [];
@@ -732,12 +738,27 @@ export default function ContentPage() {
   
   // Фильтрация контента по активной вкладке
   // Функция для форматирования даты для группировки (только день, месяц, год)
-  const formatDateForGrouping = (date: Date): string => {
-    return new Date(date).toLocaleDateString('ru-RU', { 
-      day: 'numeric', 
-      month: 'long',
-      year: 'numeric' 
-    });
+  const formatDateForGrouping = (date: Date | string): string => {
+    // Если дата передана в формате ISO string (YYYY-MM-DD)
+    if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // Создаем дату из строки ISO, используя localeDate для правильного часового пояса
+      const [year, month, day] = date.split('-').map(Number);
+      // Месяцы в JS начинаются с 0, поэтому вычитаем 1 из месяца
+      const localDate = new Date(year, month - 1, day);
+      return localDate.toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric' 
+      });
+    } else {
+      // Для других форматов дат
+      const localDate = new Date(date);
+      return localDate.toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric' 
+      });
+    }
   };
 
   // Функция для сброса фильтрации по датам
@@ -784,7 +805,11 @@ export default function ContentPage() {
   const contentByDate: Record<string, CampaignContent[]> = {};
   
   filteredContent.forEach((content: CampaignContent) => {
-    const dateStr = formatDateForGrouping(new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date()));
+    // Получаем дату в локальном часовом поясе пользователя
+    const localDate = new Date(content.publishedAt || content.scheduledAt || content.createdAt || new Date());
+    // Формируем строку даты в формате ISO YYYY-MM-DD для использования в качестве ключа
+    const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+    
     if (!contentByDate[dateStr]) {
       contentByDate[dateStr] = [];
     }
@@ -908,9 +933,9 @@ export default function ContentPage() {
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange.from || dateRange.to ? (
                         <>
-                          {dateRange.from ? format(dateRange.from, "dd.MM.yyyy") : "..."}
+                          {dateRange.from ? format(dateRange.from, "dd MMMM yyyy", {locale: ru}) : "..."}
                           {" – "}
-                          {dateRange.to ? format(dateRange.to, "dd.MM.yyyy") : "..."}
+                          {dateRange.to ? format(dateRange.to, "dd MMMM yyyy", {locale: ru}) : "..."}
                         </>
                       ) : (
                         "Фильтр по дате"
@@ -991,7 +1016,7 @@ export default function ContentPage() {
                       <AccordionTrigger className="py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <div className="flex items-center gap-2">
                           <CalendarIcon className="h-4 w-4 opacity-70" />
-                          <span className="font-medium">{dateStr}</span>
+                          <span className="font-medium">{formatDateForGrouping(dateStr)}</span>
                           <Badge className="ml-2">{contents.length}</Badge>
                         </div>
                       </AccordionTrigger>
@@ -2127,31 +2152,73 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <CheckCircle2 size={14} />
-                    <span>Опубликовано: {format(new Date(typeof previewContent.publishedAt === 'string' 
-                      ? previewContent.publishedAt 
-                      : (previewContent.publishedAt instanceof Date 
-                          ? previewContent.publishedAt.toISOString() 
-                          : String(previewContent.publishedAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Опубликовано: {
+                      (() => {
+                        try {
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.publishedAt === 'string' 
+                            ? previewContent.publishedAt 
+                            : (previewContent.publishedAt instanceof Date 
+                                ? previewContent.publishedAt.toISOString() 
+                                : String(previewContent.publishedAt));
+                              
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты публикации:", error, previewContent.publishedAt);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
                 {previewContent?.scheduledAt && !previewContent?.publishedAt && (
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    <span>Запланировано: {format(new Date(typeof previewContent.scheduledAt === 'string' 
-                      ? previewContent.scheduledAt 
-                      : (previewContent.scheduledAt instanceof Date 
-                          ? previewContent.scheduledAt.toISOString() 
-                          : String(previewContent.scheduledAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Запланировано: {
+                      (() => {
+                        try {
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.scheduledAt === 'string' 
+                            ? previewContent.scheduledAt 
+                            : (previewContent.scheduledAt instanceof Date 
+                                ? previewContent.scheduledAt.toISOString() 
+                                : String(previewContent.scheduledAt));
+                                
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты публикации:", error, previewContent.scheduledAt);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
                 {previewContent?.createdAt && (
                   <div className="flex items-center gap-1">
                     <CalendarDays size={14} />
-                    <span>Создано: {format(new Date(typeof previewContent.createdAt === 'string' 
-                      ? previewContent.createdAt 
-                      : (previewContent.createdAt instanceof Date 
-                          ? previewContent.createdAt.toISOString() 
-                          : String(previewContent.createdAt))), 'dd.MM.yyyy HH:mm', { locale: ru })}</span>
+                    <span>Создано: {
+                      (() => {
+                        try {
+                          // Получение даты из UTC и преобразование к локальному времени
+                          let dateStr = typeof previewContent.createdAt === 'string' 
+                            ? previewContent.createdAt 
+                            : (previewContent.createdAt instanceof Date 
+                                ? previewContent.createdAt.toISOString() 
+                                : String(previewContent.createdAt));
+                                
+                          // JavaScript автоматически преобразует UTC в локальное время пользователя
+                          const localDate = new Date(dateStr);
+                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+                        } catch (error) {
+                          console.error("Ошибка форматирования даты создания:", error, previewContent.createdAt);
+                          return "Некорректная дата";
+                        }
+                      })()
+                    }</span>
                   </div>
                 )}
               </div>

@@ -12,6 +12,7 @@ import Trends from "@/pages/trends";
 import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ScheduledPublications from "@/pages/publish/scheduled";
+import CalendarView from "@/pages/publish/calendar";
 import TestPublish from "@/pages/publish/test-publish";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
@@ -19,6 +20,7 @@ import AuthBypass from "@/pages/test/auth-bypass";
 import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
+import TestPage from "@/pages/test/index";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -38,6 +40,7 @@ function Router() {
       <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
       <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
+      <Route path="/publish/calendar" component={() => <Layout><CalendarView /></Layout>} />
       <Route path="/publish/test" component={() => <Layout><TestPublish /></Layout>} />
       <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
       <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
@@ -45,6 +48,7 @@ function Router() {
       <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
+      <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}

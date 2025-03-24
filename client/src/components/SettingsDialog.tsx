@@ -39,7 +39,6 @@ export function SettingsDialog() {
   const [apifyKey, setApifyKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
-  const [qwenKey, setQwenKey] = useState("");
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
@@ -50,7 +49,6 @@ export function SettingsDialog() {
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
-  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' });
   
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
@@ -80,7 +78,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -108,7 +106,8 @@ export function SettingsDialog() {
       // Для FAL.AI есть специальный эндпоинт тестирования
       if (keyType === 'fal_ai') {
         try {
-          const response = await api.get('/test-fal-ai-formats?format=with-prefix');
+          // Используем новый тестовый эндпоинт
+          const response = await api.get('/test-fal-ai');
           if (response.data.success) {
             setTestingState({ 
               status: 'success', 
@@ -131,14 +130,24 @@ export function SettingsDialog() {
           }
           return;
         } catch (err: any) {
+          console.error('Ошибка при тестировании FAL.AI ключа:', err);
+          
+          let errorMessage = 'Ошибка при проверке API ключа';
+          if (err.response && err.response.data && err.response.data.error) {
+            errorMessage = err.response.data.error;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
           setTestingState({ 
             status: 'error', 
-            message: err.message || 'Ошибка при проверке API ключа'
+            message: errorMessage
           });
+          
           toast({
             variant: "destructive",
             title: "Ошибка проверки",
-            description: err.message || 'Не удалось проверить API ключ FAL.AI'
+            description: errorMessage
           });
           return;
         }
@@ -150,8 +159,7 @@ export function SettingsDialog() {
         apify: 'Apify',
         deepseek: 'DeepSeek',
         xmlriver: 'XMLRiver',
-        fal_ai: 'FAL.AI',
-        qwen: 'Qwen'
+        fal_ai: 'FAL.AI'
       };
       
       const serviceName = serviceNames[keyType as keyof typeof serviceNames] || keyType;
@@ -180,7 +188,6 @@ export function SettingsDialog() {
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
-  const testQwenKey = () => testApiKey('qwen', qwenKey, setQwenTesting);
   const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
     if (!xmlRiverUserId.trim()) {
       toast({
@@ -200,7 +207,6 @@ export function SettingsDialog() {
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
-      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -213,9 +219,6 @@ export function SettingsDialog() {
       }
       if (falAiKeyData) {
         setFalAiKey(falAiKeyData.api_key);
-      }
-      if (qwenKeyData) {
-        setQwenKey(qwenKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -259,8 +262,7 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey },
-        { name: 'qwen', key: qwenKey }
+        { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
 
       for (const service of services) {
@@ -453,41 +455,6 @@ export function SettingsDialog() {
           </p>
           {falAiTesting.status === 'error' && (
             <p className="text-sm text-red-500">{falAiTesting.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label>API Ключ Qwen</Label>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={qwenKey}
-              onChange={(e) => setQwenKey(e.target.value)}
-              placeholder="Введите API ключ"
-              className="flex-1"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testQwenKey}
-              disabled={!qwenKey.trim() || isPending || qwenTesting.status === 'testing'}
-              className="shrink-0"
-            >
-              {qwenTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : qwenTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : qwenTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для генерации контента через Alibaba Qwen AI
-          </p>
-          {qwenTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{qwenTesting.message}</p>
           )}
         </div>
         

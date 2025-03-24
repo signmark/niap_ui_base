@@ -31,19 +31,33 @@ export class FalAiService {
    */
   async initializeFromApiKeyService(userId: string, authToken?: string): Promise<boolean> {
     try {
+      // Сначала вызываем функцию проверки и исправления формата ключа
+      // Это обеспечит правильное хранение ключа в БД (без префикса "Key ")
+      try {
+        const keyFormatFixed = await apiKeyService.fixFalAiKeyFormat(userId, authToken);
+        if (keyFormatFixed) {
+          console.log('[fal_ai] Формат ключа FAL.AI был проверен и исправлен при необходимости');
+        }
+      } catch (formatError) {
+        console.warn('[fal_ai] Ошибка при проверке формата ключа FAL.AI:', formatError);
+      }
+    
       // Получаем API ключ из сервиса ключей (импорт в начале файла)
       const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
       
       if (!apiKey) {
-        console.log('FAL.AI API ключ не найден');
+        console.log('[fal_ai] API ключ не найден');
         return false;
       }
+      
+      // Для отладки - выводим часть ключа
+      console.log(`[fal_ai] API ключ получен (длина: ${apiKey.length}, содержит двоеточие: ${apiKey.includes(':')})`);
       
       // Инициализируем сервис с полученным ключом
       this.initialize(apiKey);
       return true;
     } catch (error) {
-      console.error('Ошибка при инициализации FAL.AI сервиса из API Key Service:', error);
+      console.error('[fal_ai] Ошибка при инициализации сервиса из API Key Service:', error);
       return false;
     }
   }

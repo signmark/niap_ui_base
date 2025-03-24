@@ -2,8 +2,23 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Clock, Instagram, AlertTriangle, CheckCircle2, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+
+// Функция, которая обрабатывает даты в одном формате
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return '';
+  
+  // Используем parseISO для корректной обработки ISO строк
+  const date = parseISO(dateStr);
+  
+  // Корректируем часовой пояс для отображения
+  // Для России (UTC+3) добавляем 3 часа для корректного отображения
+  // Время в БД хранится в UTC, а показать нужно в локальном времени
+  const correctedDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
+  
+  return format(correctedDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+};
 
 interface SocialPublicationStatus {
   platform: string;
@@ -66,12 +81,12 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                 <Badge variant="outline" className="flex items-center gap-1 px-2 py-0.5 h-5 bg-muted/40">
                   <Clock size={12} />
                   <span className="text-[10px]">
-                    {scheduledAt ? format(new Date(scheduledAt), 'dd.MM HH:mm') : ''}
+                    {formatDate(scheduledAt)}
                   </span>
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}</p>
+                <p>Запланировано на {formatDate(scheduledAt)}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -103,7 +118,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       <p className="font-medium">{platformNames[platform] || platform}</p>
                       <p className="text-xs">
                         {status.status === 'published' 
-                          ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}`
+                          ? `Опубликовано ${formatDate(status.publishedAt)}`
                           : status.status === 'failed'
                             ? `Не удалось опубликовать: ${status.error || 'Ошибка публикации'}`
                             : 'Ожидает публикации'
@@ -140,7 +155,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
       {isScheduled && (
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="text-muted-foreground" size={16} />
-          <span>Запланировано на {scheduledAt ? format(new Date(scheduledAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}</span>
+          <span>Запланировано на {formatDate(scheduledAt)}</span>
         </div>
       )}
       
@@ -164,7 +179,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs">
                     {status.status === 'published' 
-                      ? `Опубликовано ${status.publishedAt ? format(new Date(status.publishedAt), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}`
+                      ? `Опубликовано ${formatDate(status.publishedAt)}`
                       : status.status === 'failed'
                         ? 'Не удалось опубликовать'
                         : 'Ожидает публикации'
