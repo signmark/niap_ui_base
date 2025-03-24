@@ -1,216 +1,175 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useMutation } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Check, AlertCircle } from 'lucide-react';
-import { api } from '@/lib/api';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/queryClient";
 
 /**
  * Компонент для тестирования DeepSeek API
  */
 export function DeepSeekTester() {
-  // Стейт для ввода текста и отображения результатов
-  const [userPrompt, setUserPrompt] = useState<string>('');
-  const [result, setResult] = useState<string>('');
-  const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
+  const [apiKey, setApiKey] = useState("");
+  const [prompt, setPrompt] = useState("Напиши небольшой текст на тему здорового питания для публикации в социальных сетях");
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [savedKey, setSavedKey] = useState(false);
   const { toast } = useToast();
 
-  // Мутация для тестирования API
-  const { mutate: testDeepSeek, isPending } = useMutation({
-    mutationFn: async () => {
-      const response = await api.get('/test-deepseek', {
-        params: {
-          apiKey: '' // API ключ берется из настроек пользователя на сервере
-        }
-      });
-      
-      if (!response?.data?.success && response?.data?.error) {
-        throw new Error(response.data.error);
-      }
-      
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // Проверяем, есть ли успешный результат в хотя бы одном формате ключа
-      const anySuccess = data.results && data.results.some((r: any) => r.success);
-      
-      if (anySuccess) {
-        // Находим первый успешный результат
-        const successResult = data.results.find((r: any) => r.success);
-        
-        setResult(successResult?.result || data.message || 'API работает корректно');
-        setApiStatus('success');
-        
-        toast({
-          title: 'API работает корректно',
-          description: data.recommendation 
-            ? `Рекомендуем сохранить работающий формат ключа: ${data.recommendation.message}`
-            : 'DeepSeek API успешно проверен',
-        });
-      } else {
-        // Если нет ни одного успешного результата
-        setApiStatus('error');
-        setErrorMessage(data.message || 'Все форматы ключа не работают');
-        
-        toast({
-          variant: 'destructive',
-          title: 'Ошибка API',
-          description: data.message || 'Ни один из форматов API ключа не работает',
-        });
-      }
-    },
-    onError: (error: any) => {
-      setApiStatus('error');
-      setErrorMessage(error.message || 'Непредвиденная ошибка при тестировании API');
-      
+  // Функция для сохранения ключа API
+  async function saveApiKey() {
+    if (!apiKey) {
       toast({
-        variant: 'destructive',
-        title: 'Ошибка API',
-        description: error.message || 'Ошибка при тестировании DeepSeek API',
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Введите ключ API DeepSeek",
       });
+      return;
     }
-  });
 
-  // Мутация для отправки сообщения
-  const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
-    mutationFn: async () => {
-      // Здесь будет запрос к API для отправки сообщения
-      // Сейчас мы не реализуем эту функциональность полностью
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Имитация задержки запроса
-      
-      // Заглушка для демонстрации
-      return { 
-        success: true, 
-        result: `Ответ DeepSeek на запрос: "${userPrompt}"\n\nПривет! Я помощник на базе DeepSeek. Ваш API ключ работает корректно, и я могу отвечать на ваши запросы. Если у вас есть конкретные задачи или вопросы, я готов помочь.`
-      };
-    },
-    onSuccess: (data) => {
-      setResult(data.result);
-      setApiStatus('success');
-      
-      toast({
-        title: 'Сообщение отправлено',
-        description: 'Получен ответ от DeepSeek API',
+    setLoading(true);
+    try {
+      const response = await apiRequest("/api/save-deepseek-key", {
+        method: "POST",
+        data: { apiKey },
       });
-    },
-    onError: (error: any) => {
-      setApiStatus('error');
-      setErrorMessage(error.message || 'Ошибка при отправке сообщения');
-      
+
+      if (response.success) {
+        toast({
+          title: "Успешно",
+          description: "Ключ API DeepSeek сохранен",
+        });
+        setSavedKey(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: response.message || "Не удалось сохранить ключ API",
+        });
+      }
+    } catch (err) {
+      console.error("Ошибка при сохранении ключа API:", err);
       toast({
-        variant: 'destructive',
-        title: 'Ошибка отправки',
-        description: error.message || 'Не удалось отправить сообщение',
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось сохранить ключ API DeepSeek",
       });
+    } finally {
+      setLoading(false);
     }
-  });
+  }
+
+  // Функция для тестирования API
+  async function testDeepSeekApi() {
+    if (!prompt) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Введите запрос для тестирования",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest("/api/test-deepseek", {
+        method: "GET",
+        params: { prompt },
+      });
+
+      if (response.success) {
+        setResult(response.data);
+      } else {
+        setError(response.message || "Не удалось получить ответ от API");
+      }
+    } catch (err) {
+      console.error("Ошибка при тестировании API:", err);
+      setError("Произошла ошибка при выполнении запроса к API DeepSeek");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>Тестирование DeepSeek API</CardTitle>
-        <CardDescription>
-          Проверьте настройку и работоспособность DeepSeek API для вашего аккаунта
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Кнопка для проверки API */}
-        <div className="space-y-4">
-          <div className="flex justify-between">
-            <Button 
-              onClick={() => testDeepSeek()} 
-              disabled={isPending}
-              variant="outline"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Проверка...
-                </>
-              ) : (
-                <>
-                  {apiStatus === 'success' ? (
-                    <Check className="mr-2 h-4 w-4 text-green-500" />
-                  ) : apiStatus === 'error' ? (
-                    <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                  ) : (
-                    <Sparkles className="mr-2 h-4 w-4" />
-                  )}
-                  Проверить API ключ
-                </>
-              )}
-            </Button>
-            
-            {apiStatus === 'success' && (
-              <Alert className="max-w-lg bg-green-50 border-green-200">
-                <Check className="h-4 w-4 text-green-500" />
-                <AlertTitle>API работает корректно</AlertTitle>
-                <AlertDescription>
-                  DeepSeek API успешно настроен в вашем аккаунте
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {apiStatus === 'error' && (
-              <Alert className="max-w-lg bg-red-50 border-red-200" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Ошибка API</AlertTitle>
-                <AlertDescription>
-                  {errorMessage || 'Произошла ошибка при проверке API'}
-                </AlertDescription>
-              </Alert>
-            )}
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Настройка DeepSeek API</CardTitle>
+          <CardDescription>
+            Введите ключ API DeepSeek для использования в приложении
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Input
+              placeholder="Введите ключ API DeepSeek"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              type="password"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ключ API будет безопасно сохранен в базе данных и доступен только администратору проекта.
+            </p>
           </div>
-        </div>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={saveApiKey} disabled={loading || !apiKey}>
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Сохранить ключ API
+          </Button>
+        </CardFooter>
+      </Card>
 
-        {/* Форма для отправки тестового сообщения */}
-        <div className="space-y-2 mt-4">
-          <Label htmlFor="user-prompt">Тестовый запрос (опционально)</Label>
-          <Textarea
-            id="user-prompt"
-            placeholder="Напишите текст для отправки в DeepSeek API..."
-            value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            className="min-h-[100px]"
-          />
-        </div>
-        
-        {/* Результат запроса */}
-        {result && (
-          <div className="space-y-2 mt-4">
-            <Label>Результат</Label>
-            <div className="p-4 bg-muted rounded-md whitespace-pre-wrap">
-              {result}
+      <Card>
+        <CardHeader>
+          <CardTitle>Тестирование DeepSeek API</CardTitle>
+          <CardDescription>
+            Протестируйте возможности DeepSeek API
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium" htmlFor="prompt">
+                Запрос:
+              </label>
+              <Textarea
+                id="prompt"
+                placeholder="Введите запрос для DeepSeek API"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={3}
+                className="mt-1"
+              />
             </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertTitle>Ошибка</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {result && (
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Результат:</div>
+                <div className="rounded-md border p-4 whitespace-pre-wrap text-sm">{result}</div>
+              </div>
+            )}
           </div>
-        )}
-      </CardContent>
-      
-      <CardFooter>
-        <Button 
-          onClick={() => sendMessage()} 
-          disabled={isSendingMessage || !userPrompt.trim()}
-          className="w-full"
-        >
-          {isSendingMessage ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Отправка...
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Отправить тестовое сообщение
-            </>
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={testDeepSeekApi} disabled={loading || !prompt}>
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Протестировать API
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }
