@@ -43,66 +43,82 @@ export function registerFalAiTestRoutes(app: Express) {
       let rawKey = apiKey.startsWith('Key ') ? apiKey.substring(4) : apiKey;
       rawKey = rawKey.trim(); // Удаляем лишние пробелы в начале и конце
       
+      // Разбиваем ключ на части для проверки
+      const keyParts = rawKey.split(':');
+      
       // Затем проверяем форматирование самого ключа
       log(`Проверка формата ключа: длина=${rawKey.length}, содержит двоеточие=${rawKey.includes(':')}`);
+      log(`Части ключа: ID(${keyParts[0].length} символов), SECRET(${keyParts.length > 1 ? keyParts[1].length : 0} символов)`);
       
-      // Попробуем сначала без префикса "Key "
-      try {
-        log(`Пробуем запрос без префикса "Key "`);
-        const response = await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
-          prompt: "Test image", // Минимальный запрос
-          width: 512,
-          height: 512
-        }, {
-          headers: {
-            Authorization: rawKey,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        // Если запрос успешен, возвращаем положительный результат
-        if (response.data) {
-          return res.json({
-            success: true,
-            message: "API ключ FAL.AI работает корректно (без префикса 'Key')",
-            key_format: "raw",
-            status: "active"
+      // Для всех вариантов форматирования ключа, которые мы хотим проверить
+      const keyFormats = [
+        { format: rawKey, description: "Без префикса 'Key'" },
+        { format: `Key ${rawKey}`, description: "С префиксом 'Key'" },
+        // Новый формат: Только UUID часть (FAL.AI может использовать только ID для авторизации)
+        { format: keyParts[0], description: "Только UUID часть" },
+        // Формат с Basic Auth
+        { format: `Basic ${Buffer.from(rawKey).toString('base64')}`, description: "Basic Auth" },
+        // Формат с Bearer
+        { format: `Bearer ${rawKey}`, description: "Bearer" }
+      ];
+      
+      // Проверяем каждый формат
+      for (const { format, description } of keyFormats) {
+        try {
+          log(`Пробуем запрос с форматом ключа: ${description}`);
+          const response = await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
+            prompt: "Test image", // Минимальный запрос
+            width: 512,
+            height: 512
+          }, {
+            headers: {
+              Authorization: format,
+              'Content-Type': 'application/json'
+            }
           });
+          
+          // Если запрос успешен, возвращаем положительный результат
+          if (response.data) {
+            log(`Успешно! Формат "${description}" работает корректно`);
+            return res.json({
+              success: true,
+              message: `API ключ FAL.AI работает корректно (${description})`,
+              key_format: description,
+              status: "active"
+            });
+          }
+        } catch (error) {
+          log(`Формат "${description}" не сработал: ${error.message}`);
+          // Добавляем больше деталей для диагностики
+          const errorDetails = error.response 
+            ? {
+                status: error.response.status,
+                data: error.response.data
+              } 
+            : {
+                message: error.message
+              };
+          log(`Детали ошибки: ${JSON.stringify(errorDetails)}`);
         }
-      } catch (error) {
-        log(`Запрос без префикса "Key " не сработал, пробуем с префиксом`);
       }
       
-      // Если первый способ не сработал, пробуем с префиксом "Key "
-      const formattedKey = `Key ${rawKey}`;
-      
-      // Делаем тестовый запрос к FAL.AI API с префиксом Key
-      const response = await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
-        prompt: "Test image", // Минимальный запрос
-        width: 512,
-        height: 512
-      }, {
-        headers: {
-          Authorization: formattedKey,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      // Если запрос успешен, возвращаем положительный результат
-      if (response.data) {
-        return res.json({
-          success: true,
-          message: "API ключ FAL.AI работает корректно",
-          key_format: "valid",
-          status: "active"
-        });
-      }
-      
-      return res.status(500).json({
+      // Если ни один из форматов не сработал, возвращаем ошибку
+      return res.status(400).json({
         success: false,
-        error: "Неожиданная ошибка при запросе к FAL.AI API",
-        details: "Успешный запрос, но неверный формат ответа"
+        error: "Не удалось авторизоваться с текущим ключом FAL.AI",
+        details: {
+          tested_formats: keyFormats.map(f => f.description),
+          key_info: {
+            length: rawKey.length,
+            has_colon: rawKey.includes(':'),
+            id_length: keyParts[0].length,
+            secret_length: keyParts.length > 1 ? keyParts[1].length : 0
+          }
+        },
+        message: "Рекомендуется получить новый ключ API в панели управления FAL.AI"
       });
+      
+      // Этот код не должен выполниться, так как ранее уже должен быть возвращен ответ
       
     } catch (error: any) {
       console.error("Ошибка при тестировании API ключа FAL.AI:", error.message);
