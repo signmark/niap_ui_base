@@ -385,6 +385,7 @@ INSTRUCTIONS:
 9. DO NOT include any explanations or comments
 10. Length should be 1-3 sentences maximum
 11. Include adjectives like "detailed", "high quality", "photorealistic" or art styles
+12. Always add quality boosters like "4k", "masterpiece", "intricate detail"
 
 The ideal prompt should create a visually appealing, professional image that captures the essence of the source content.`;
 
@@ -416,9 +417,9 @@ Output ONLY the English prompt with no explanations or preamble.`;
       
       // Чистим результат от лишних кавычек, если они добавлены моделью
       return result.replace(/^["']|["']$/g, '').trim();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating image prompt with DeepSeek:', error);
-      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message}`);
+      throw new Error(`Не удалось сгенерировать промт для изображения: ${error.message || 'Неизвестная ошибка'}`);
     }
   }
 
