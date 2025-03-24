@@ -5324,9 +5324,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Устанавливаем заголовок Content-Type явно, чтобы клиент всегда получал JSON
     res.setHeader('Content-Type', 'application/json');
     
+    console.log('📣 ПОЛУЧЕН ЗАПРОС на /api/sources/search:', JSON.stringify(req.body, null, 2));
+    console.log('📣 ЗАГОЛОВКИ:', JSON.stringify(req.headers, null, 2));
+    
     try {
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
+        console.log('❌ Ошибка авторизации: отсутствует заголовок Authorization');
         return res.status(401).json({ message: "Unauthorized" });
       }
 
@@ -5334,6 +5338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { keyword, campaignId, platforms = ['instagram'], customPrompt } = req.body;
       
       if (!keyword || typeof keyword !== 'string' || keyword.trim() === '') {
+        console.log('❌ Ошибка: отсутствует ключевое слово или оно пустое');
         return res.status(400).json({ 
           success: false, 
           error: "Требуется указать ключевое слово для поиска",
@@ -5341,7 +5346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Starting source search for keyword: ${keyword}, platforms: ${platforms.join(', ')}`);
+      console.log(`📣 Starting source search for keyword: ${keyword}, platforms: ${platforms.join(', ')}`);
       
       // Получаем информацию о пользователе из токена
       let userId;
