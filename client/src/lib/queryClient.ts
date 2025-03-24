@@ -21,14 +21,29 @@ export async function apiRequest(
 ): Promise<any> {
   const { method = 'GET', data, params } = config;
   const token = useAuthStore.getState().token;
+  const userId = useAuthStore.getState().userId;
+
+  // Логирование для отладки
+  console.log(`📤 API Запрос: ${method} ${url}`);
+  console.log(`🔐 Статус авторизации:`, { 
+    hasToken: !!token, 
+    userId,
+    tokenPrefix: token ? token.substring(0, 10) + '...' : null
+  });
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 
   const headers: Record<string, string> = {
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    "x-user-id": useAuthStore.getState().userId || ''
+    "x-user-id": userId || ''
   };
+
+  console.log(`📤 Заголовки запроса:`, { 
+    hasAuthHeader: !!headers["Authorization"],
+    contentType: headers["Content-Type"],
+    userIdHeader: headers["x-user-id"]
+  });
 
   const res = await fetch(url + queryString, {
     method,
