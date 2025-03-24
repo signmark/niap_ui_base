@@ -323,8 +323,12 @@ ${platformSpecifics}
 - Делай текст живым, с естественными переходами между мыслями
 - Используй активный залог вместо пассивного`;
 
-    const userContent = `Ключевые слова: ${keywords.join(', ')}
-Темы для раскрытия: ${topics.join(', ')}
+    // Обработка различных типов данных
+    let keywordsStr = Array.isArray(keywords) ? keywords.join(', ') : typeof keywords === 'string' ? keywords : String(keywords || '');
+    let topicsStr = Array.isArray(topics) ? topics.join(', ') : typeof topics === 'string' ? topics : String(topics || '');
+    
+    const userContent = `Ключевые слова: ${keywordsStr}
+Темы для раскрытия: ${topicsStr}
 
 Создай привлекательный пост для ${platform} ${language === 'ru' ? 'на русском языке' : 'на английском языке'}.`;
 
