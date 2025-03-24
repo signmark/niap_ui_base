@@ -18,9 +18,9 @@ export interface QwenMessage {
 export class QwenService {
   private apiKey: string;
   // Поддерживаемые базовые URL для Qwen API
-  private readonly baseUrl = 'https://dashscope.aliyuncs.com/api/v1';
+  private readonly baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
   private readonly compatModes = {
-    dashscope: 'https://dashscope.aliyuncs.com/api/v1',
+    dashscope: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
     qwen: 'https://api.qwen.ai/v1',
     openai: 'https://api.openai.com/v1'
   };
@@ -58,7 +58,7 @@ export class QwenService {
     stop?: string[];
   } = {}): Promise<string> {
     try {
-      const model = options.model || 'qwen-max';
+      const model = options.model || 'qwen-plus';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
       const max_tokens = options.max_tokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
@@ -71,23 +71,45 @@ export class QwenService {
       
       console.log(`Sending request to Qwen API (model: ${model}, temp: ${temperature})`);
       
-      const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model,
-          messages,
-          temperature,
-          max_tokens,
-          top_p,
-          stop: options.stop || null
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
+      // Добавляем подробное логирование
+      console.log(`Using Qwen API URL: ${this.baseUrl}/chat/completions`);
+      console.log(`Request payload: ${JSON.stringify({
+        model,
+        messages,
+        temperature,
+        max_tokens,
+        top_p,
+        stop: options.stop || null
+      }, null, 2)}`);
+      
+      try {
+        const response = await axios.post(
+          `${this.baseUrl}/chat/completions`,
+          {
+            model,
+            messages,
+            temperature,
+            max_tokens,
+            top_p,
+            stop: options.stop || null
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
+        );
+        
+        console.log(`Successful response from Qwen API, status ${response.status}`);
+        return response;
+      } catch (error: any) {
+        console.error('Qwen API error details:', { 
+          status: error.response?.status, 
+          data: error.response?.data 
+        });
+        throw error;
+      }
       
       if (!response.data?.choices?.[0]?.message?.content) {
         console.error('Invalid response format from Qwen API:', response.data);
