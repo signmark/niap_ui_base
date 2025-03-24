@@ -1,4 +1,4 @@
-import { deepseekService, DeepSeekMessage } from './services/deepseek';
+import { deepseekService, DeepSeekMessage, DeepSeekService } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
