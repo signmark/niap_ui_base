@@ -2,6 +2,7 @@ import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
+import { qwenService } from './services/qwen';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -3125,7 +3126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     try {
-      const { prompt, keywords, tone, campaignId } = req.body;
+      const { prompt, keywords, tone, campaignId, service } = req.body;
       
       if (!prompt || !keywords || !tone || !campaignId) {
         return res.status(400).json({ error: "Missing required parameters" });
@@ -3137,64 +3138,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '') || '';
       
-      console.log(`Инициализация Perplexity сервиса для пользователя: ${userId}`);
+      // Определяем сервис для генерации - по умолчанию Perplexity, но можно выбрать Qwen
+      const aiService = service === 'qwen' ? 'qwen' : 'perplexity';
+      
+      console.log(`Инициализация ${aiService} сервиса для пользователя: ${userId}`);
       
       try {
-        // Инициализируем Perplexity API сервис с централизованным управлением ключами
+        // Проверяем ID пользователя
         if (!userId) {
           return res.status(401).json({ 
             error: 'Не авторизован: Отсутствует ID пользователя' 
           });
         }
         
-        // Инициализируем сервис, передавая ID пользователя и токен для получения ключа
-        console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
-        const initialized = await perplexityService.initialize(userId, token);
+        let generatedContent = '';
+        let usedService = '';
         
-        if (!initialized) {
-          console.log('Предупреждение: Perplexity API сервис не был полностью инициализирован');
+        // В зависимости от выбранного сервиса инициализируем нужный API
+        if (aiService === 'qwen') {
+          // Инициализируем Qwen API
+          console.log(`Попытка инициализации Qwen сервиса для пользователя ${userId}`);
+          const initialized = await qwenService.initialize(userId, token);
           
-          // Проверяем, получили ли мы ключ из переменных окружения
-          if (!perplexityService.hasApiKey()) {
-            console.error('Ошибка: Не удалось получить API ключ Perplexity');
-            return res.status(400).json({ 
-              error: 'Не удалось получить API ключ Perplexity. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
-            });
+          if (!initialized) {
+            console.log('Предупреждение: Qwen API сервис не был полностью инициализирован');
+            
+            if (!qwenService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Qwen');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Qwen. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
           }
+          
+          console.log(`Generating content with Qwen for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из tone (используя его как платформу)
+          // Поскольку формат разный, преобразуем tone в platform
+          const platform = tone === 'professional' ? 'facebook' :
+                         tone === 'casual' ? 'telegram' :
+                         tone === 'friendly' ? 'instagram' : 'general';
+          
+          // Используем Qwen для генерации контента
+          generatedContent = await qwenService.generateSocialContent(
+            keywords,
+            [prompt],  // Qwen ожидает массив тем
+            platform,
+            {
+              tone: 'professional',
+              length: 'medium',
+              language: 'ru'
+            }
+          );
+          
+          usedService = 'qwen';
+          
+        } else {
+          // Используем Perplexity API
+          console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
+          const initialized = await perplexityService.initialize(userId, token);
+          
+          if (!initialized) {
+            console.log('Предупреждение: Perplexity API сервис не был полностью инициализирован');
+            
+            if (!perplexityService.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Perplexity');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Perplexity. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+              });
+            }
+          }
+          
+          console.log(`Generating content with Perplexity for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Используем сервис для генерации контента
+          generatedContent = await perplexityService.generateSocialContent(
+            keywords,
+            prompt,
+            tone as any,
+            {
+              model: "llama-3.1-sonar-small-128k-online",
+              temperature: 0.7,
+              max_tokens: 4000
+            }
+          );
+          
+          usedService = 'perplexity';
         }
         
-        console.log(`Generating content for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
-        
-        // Используем сервис для генерации контента
-        const generatedContent = await perplexityService.generateSocialContent(
-          keywords,
-          prompt,
-          tone as any,
-          {
-            model: "llama-3.1-sonar-small-128k-online",
-            temperature: 0.7,
-            max_tokens: 4000
-          }
-        );
-        
-        console.log(`Generated content with Perplexity, length: ${generatedContent.length} characters`);
+        console.log(`Generated content with ${usedService}, length: ${generatedContent.length} characters`);
         
         // Возвращаем сгенерированный контент
         return res.json({ 
           success: true, 
           content: generatedContent,
-          service: 'perplexity'
+          service: usedService
         });
         
       } catch (error) {
-        console.error('Error generating content with Perplexity:', error);
+        console.error(`Error generating content with ${aiService}:`, error);
         if (axios.isAxiosError(error)) {
-          console.error('Perplexity API error details:', {
+          console.error(`${aiService} API error details:`, {
             status: error.response?.status,
             data: error.response?.data
           });
         }
-        return res.status(500).json({ error: "Failed to generate content with AI" });
+        return res.status(500).json({ error: `Failed to generate content with ${aiService}` });
       }
     } catch (error) {
       console.error("Error in content generation:", error);
