@@ -119,7 +119,13 @@ export function SourcesSearchDialog({
   const handleSearch = async () => {
     const selectedPlatforms = platforms.filter(p => p.checked).map(p => p.value);
     
+    console.log("🔍 Начинаем поиск источников:");
+    console.log("🔑 Ключевое слово:", keyword);
+    console.log("📂 ID кампании:", campaignId);
+    console.log("📱 Выбранные платформы:", selectedPlatforms);
+    
     if (selectedPlatforms.length === 0) {
+      console.log("❌ Ошибка: не выбраны платформы");
       toast({
         title: "Выберите платформы",
         description: "Пожалуйста, выберите хотя бы одну платформу для поиска",
@@ -130,6 +136,18 @@ export function SourcesSearchDialog({
 
     setIsLoading(true);
     try {
+      console.log("📝 Запрос к API:");
+      console.log({
+        endpoint: "/api/sources/search",
+        method: "POST",
+        data: {
+          keyword,
+          campaignId,
+          platforms: selectedPlatforms,
+          customPrompt: isPromptOpen ? prompt : undefined
+        }
+      });
+      
       const response = await apiRequest(`/api/sources/search`, {
         method: "POST",
         data: {
@@ -140,9 +158,13 @@ export function SourcesSearchDialog({
         }
       });
 
+      console.log("✅ Ответ от API:", response);
+
       if (response.data?.sources) {
+        console.log(`🎯 Найдено ${response.data.sources.length} источников`);
         onSearch(response.data.sources);
       } else {
+        console.log("❌ Ошибка: нет источников в ответе", response);
         toast({
           title: "Ошибка поиска",
           description: response.error || "Не удалось найти источники, попробуйте другие ключевые слова",
@@ -150,7 +172,7 @@ export function SourcesSearchDialog({
         });
       }
     } catch (error) {
-      console.error("Error searching sources:", error);
+      console.error("❌ Ошибка поиска источников:", error);
       toast({
         title: "Ошибка",
         description: "Произошла ошибка при поиске источников. Пожалуйста, попробуйте позже.",
