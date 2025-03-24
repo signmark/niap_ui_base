@@ -209,8 +209,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     onValueChange={(value) => setSelectedService(value as ApiService)}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="perplexity">Perplexity</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
                       <TabsTrigger value="qwen">Qwen</TabsTrigger>
                     </TabsList>
