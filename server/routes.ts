@@ -5194,141 +5194,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Отправка запроса на webhook n8n для поиска источников
-      console.log('Sending webhook request to n8n for source search');
+      // Поиск источников напрямую через Perplexity API
+      console.log('Searching sources using Perplexity API directly');
       
       try {
-        // Создаем идентификатор запроса для безопасного отслеживания
+        // Создаем идентификатор запроса для логирования
         const requestId = crypto.randomUUID();
         
-        const webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/767bbaf6-e9ca-4f1d-aeb6-66598ff7e291', {
-          keywords: keywords,
-          userId: userId,
-          requestId: requestId,
-          // Не передаем токен пользователя в webhook
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            // Используем только API ключ для авторизации в N8N
-            'X-N8N-Authorization': process.env.N8N_API_KEY || ''
-          },
-          timeout: 30000 // 30 секунд таймаут
-        });
-        
-        console.log('Webhook source search response status:', webhookResponse.status);
-
-        // Если n8n вернул результаты, используем их
-        if (webhookResponse.data && webhookResponse.data.sources) {
-          console.log(`Received ${webhookResponse.data.sources.length} sources from n8n webhook`);
-          
-          // Кешируем результаты поиска
-          keywords.forEach((keyword: string) => {
-            const sourcesForKeyword = webhookResponse.data.sourcesMap && 
-                                     webhookResponse.data.sourcesMap[keyword] ? 
-                                     webhookResponse.data.sourcesMap[keyword] : 
-                                     webhookResponse.data.sources;
-            
-            if (sourcesForKeyword && sourcesForKeyword.length > 0) {
-              console.log(`Caching ${sourcesForKeyword.length} results for keyword: ${keyword}`);
-              searchCache.set(keyword, {
-                timestamp: Date.now(),
-                results: sourcesForKeyword
-              });
-            }
-          });
-          
-          return res.json({
-            success: true,
-            data: {
-              sources: webhookResponse.data.sources
-            }
-          });
-        } else {
-          // Если n8n не вернул результаты, возвращаемся к обычному поиску
-          console.log('No sources in webhook response, falling back to regular search');
-          
-          // Собираем источники из нескольких сервисов для ключевых слов без кеша
-          const fallbackResults = await Promise.all(
-            keywords.map(async (keyword: string, index: number) => {
-              if (cachedResults[index]) {
-                return cachedResults[index];
-              }
-
-              // В случае если Social Searcher недоступен, используем только Perplexity
-              const [socialResults, perplexityResults] = await Promise.all([
-                searchSocialSourcesByKeyword(keyword, token),
-                existingPerplexitySearch(keyword, token)
-              ]);
-
-              const results = [...socialResults, ...perplexityResults];
-
-              // Cache the results
-              if (results.length > 0) {
-                console.log(`Caching ${results.length} results for keyword: ${keyword}`);
-                searchCache.set(keyword, {
-                  timestamp: Date.now(),
-                  results
-                });
-              }
-
-              return results;
-            })
-          );
-          
-          // Объединяем результаты и удаляем дубликаты
-          const uniqueSourcesFallback = fallbackResults.flat().reduce((acc: any[], source) => {
-            const exists = acc.some(s => s.url === source.url);
-            if (!exists) {
-              acc.push(source);
-            }
-            return acc;
-          }, []);
-          
-          console.log(`Found ${uniqueSourcesFallback.length} unique sources from fallback search`);
-          
-          return res.json({
-            success: true,
-            data: {
-              sources: uniqueSourcesFallback
-            }
-          });
-        }
-      } catch (webhookError) {
-        console.error('Error calling n8n webhook for source search:', webhookError);
-        
-        // В случае ошибки webhook, возвращаемся к обычному поиску
-        console.log('Webhook error, falling back to regular search');
-        
-        // Собираем источники из нескольких сервисов для ключевых слов без кеша
-        const fallbackResults = await Promise.all(
+        // Получаем результаты из Perplexity для каждого ключевого слова
+        const perplexityResults = await Promise.all(
           keywords.map(async (keyword: string, index: number) => {
             if (cachedResults[index]) {
               return cachedResults[index];
             }
-
-            // В случае если Social Searcher недоступен, используем только Perplexity
-            const [socialResults, perplexityResults] = await Promise.all([
-              searchSocialSourcesByKeyword(keyword, token),
-              existingPerplexitySearch(keyword, token)
-            ]);
-
-            const results = [...socialResults, ...perplexityResults];
-
-            // Cache the results
-            if (results.length > 0) {
+            
+            // Используем только Perplexity API для поиска источников
+            const results = await existingPerplexitySearch(keyword, token);
+            
+            // Кешируем результаты
+            if (results && results.length > 0) {
               console.log(`Caching ${results.length} results for keyword: ${keyword}`);
               searchCache.set(keyword, {
                 timestamp: Date.now(),
                 results
               });
             }
-
+            
             return results;
           })
         );
         
         // Объединяем результаты и удаляем дубликаты
-        const uniqueSourcesFallback = fallbackResults.flat().reduce((acc: any[], source) => {
+        const uniqueSourcesPerplexity = perplexityResults.flat().reduce((acc: any[], source) => {
           const exists = acc.some(s => s.url === source.url);
           if (!exists) {
             acc.push(source);
@@ -5336,21 +5233,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return acc;
         }, []);
         
-        console.log(`Found ${uniqueSourcesFallback.length} unique sources from fallback search after webhook error`);
+        console.log(`Found ${uniqueSourcesPerplexity.length} unique sources from Perplexity search`);
         
         return res.json({
           success: true,
           data: {
-            sources: uniqueSourcesFallback
+            sources: uniqueSourcesPerplexity
+          }
+        });
+      } catch (error) {
+        console.error('Error during Perplexity search:', error);
+        
+        // В случае ошибки возвращаем пустой список и сообщение об ошибке
+        return res.json({
+          success: false,
+          error: "Ошибка при поиске источников через Perplexity API",
+          details: error instanceof Error ? error.message : "Неизвестная ошибка",
+          data: {
+            sources: []
           }
         });
       }
 
-      // Этот код никогда не должен выполняться из-за возвращаемых значений в блоках выше
-      return res.status(500).json({
-        error: "Unexpected error in /api/sources/collect",
-        message: "Please check server logs"
-      });
+      // (Этот блок кода недостижим)
 
     } catch (error) {
       console.error('Error in /api/sources/collect:', error);
