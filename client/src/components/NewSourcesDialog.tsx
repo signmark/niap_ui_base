@@ -8,19 +8,33 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+/**
+ * Диалог отображения и выбора найденных источников для добавления в кампанию.
+ * 
+ * Компонент работает в паре с SearchButton, который использует Perplexity API
+ * для поиска источников по ключевым словам. В этом диалоге пользователь
+ * выбирает, какие из найденных источников следует добавить в кампанию.
+ * 
+ * Функциональность:
+ * - Отображение списка найденных источников
+ * - Фильтрация источников, которые уже добавлены в кампанию
+ * - Пагинация при большом количестве результатов
+ * - Выбор источников для добавления в кампанию
+ * - Сохранение выбранных источников в базу данных
+ */
 interface NewSourcesDialogProps {
-  campaignId: string;
-  onClose: () => void;
-  sourcesData: {
+  campaignId: string;  // ID кампании, в которую добавляются источники
+  onClose: () => void;  // Функция закрытия диалога
+  sourcesData: {  // Данные, полученные от API поиска источников
     success: boolean;
     data: {
       sources: Array<{
-        url: string;
-        name: string;
-        followers: number;
-        platform: string;
-        description: string;
-        rank: number;
+        url: string;        // URL источника
+        name: string;       // Название источника
+        followers: number;  // Количество подписчиков
+        platform: string;   // Платформа (instagram, telegram, vk, facebook, youtube)
+        description: string; // Описание источника
+        rank: number;       // Ранг/рейтинг источника
       }>;
     };
   };

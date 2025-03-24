@@ -7,11 +7,23 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from "react-icons/si";
 import { Loader2 } from "lucide-react";
 
+/**
+ * Диалог для выбора социальных сетей при сборе трендов.
+ * 
+ * ВАЖНО: Эта функция отвечает за сбор трендовых постов из социальных сетей
+ * через n8n webhook. Не путать с функцией "Искать упоминания" (SearchButton),
+ * которая ищет новые источники через Perplexity API.
+ * 
+ * Процесс работы:
+ * 1. Пользователь выбирает социальные сети для сбора постов
+ * 2. При нажатии на кнопку "Собрать тренды" запрос направляется на n8n webhook
+ * 3. Собранные тренды сохраняются в базе данных и отображаются в интерфейсе
+ */
 interface SocialNetworkSelectorDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (selectedPlatforms: string[]) => void;
-  isLoading?: boolean;
+  isOpen: boolean;  // Открыт ли диалог
+  onClose: () => void;  // Функция закрытия диалога
+  onConfirm: (selectedPlatforms: string[]) => void;  // Функция подтверждения выбора
+  isLoading?: boolean;  // Состояние загрузки
 }
 
 export function SocialNetworkSelectorDialog({
