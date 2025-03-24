@@ -319,15 +319,37 @@ export function SettingsDialog() {
       </DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2">
-          <Label>API Ключ Perplexity</Label>
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Perplexity</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
           <div className="flex gap-2">
             <Input
               type="password"
               value={perplexityKey}
               onChange={(e) => setPerplexityKey(e.target.value)}
-              placeholder="Введите API ключ"
-              className="flex-1"
+              placeholder="Введите API ключ Perplexity (начинается с prx-)"
+              className={cn("flex-1", !perplexityKey && "border-amber-400 focus-visible:ring-amber-400")}
             />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://perplexity.ai/settings', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ на сайте Perplexity</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button 
               variant="outline" 
               size="sm"
@@ -345,9 +367,16 @@ export function SettingsDialog() {
               Проверить
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для поиска источников и генерации контента через Perplexity
-          </p>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для поиска источников и генерации контента через Perplexity
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функции "Искать источники" на странице Источники</li>
+              <li>Формат ключа: начинается с "prx-", например "prx-y9t5v@8HL..."</li>
+              <li>Ключ можно получить в <a href="https://perplexity.ai/settings" target="_blank" className="text-blue-500 hover:underline">настройках аккаунта Perplexity</a></li>
+            </ul>
+          </div>
           {perplexityTesting.status === 'error' && (
             <p className="text-sm text-red-500">{perplexityTesting.message}</p>
           )}
