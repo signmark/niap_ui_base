@@ -28,7 +28,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'perplexity' | 'deepseek' | 'qwen';
+type ApiService = 'deepseek' | 'qwen';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('perplexity');
+  const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
