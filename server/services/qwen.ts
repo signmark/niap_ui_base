@@ -21,9 +21,12 @@ export class QwenService {
   private readonly baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
   private readonly compatModes = {
     dashscope: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-    qwen: 'https://api.qwen.ai/v1',
+    qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
     openai: 'https://api.openai.com/v1'
   };
+  
+  // Указываем активную конфигурацию API
+  private apiMode: 'dashscope' | 'qwen' | 'openai' = 'dashscope';
   
   constructor(config: QwenConfig) {
     this.apiKey = config.apiKey;
@@ -71,8 +74,11 @@ export class QwenService {
       
       console.log(`Sending request to Qwen API (model: ${model}, temp: ${temperature})`);
       
+      // Получаем активный URL API на основе режима
+      const activeBaseUrl = this.compatModes[this.apiMode];
+      
       // Добавляем подробное логирование
-      console.log(`Using Qwen API URL: ${this.baseUrl}/chat/completions`);
+      console.log(`Using Qwen API URL: ${activeBaseUrl}/chat/completions (mode: ${this.apiMode})`);
       console.log(`Request payload: ${JSON.stringify({
         model,
         messages,
@@ -83,7 +89,7 @@ export class QwenService {
       }, null, 2)}`);
       
       const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
+        `${activeBaseUrl}/chat/completions`,
         {
           model,
           messages,
