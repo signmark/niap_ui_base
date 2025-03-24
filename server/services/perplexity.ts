@@ -18,6 +18,15 @@ export class PerplexityService {
   private apiKey: string;
   private readonly baseUrl = 'https://api.perplexity.ai/chat/completions';
   
+  // Альтернативные URL для API Perplexity
+  private readonly compatModes = {
+    standard: 'https://api.perplexity.ai/chat/completions',
+    legacy: 'https://api.perplexity.ai/v1/chat/completions'
+  };
+  
+  // Указываем активную конфигурацию API
+  private apiMode: 'standard' | 'legacy' = 'legacy';
+  
   constructor(config: PerplexityConfig) {
     this.apiKey = config.apiKey;
   }
@@ -61,10 +70,20 @@ export class PerplexityService {
         throw new Error('Perplexity API ключ не установлен. Пожалуйста, добавьте API ключ в настройках пользователя.');
       }
       
+      // Получаем активный URL API на основе режима
+      const activeBaseUrl = this.compatModes[this.apiMode];
+      
       console.log(`Sending request to Perplexity API (model: ${model}, temp: ${temperature})`);
+      console.log(`Using Perplexity API URL: ${activeBaseUrl} (mode: ${this.apiMode})`);
+      console.log(`Request payload: ${JSON.stringify({
+        model,
+        messages,
+        temperature,
+        max_tokens
+      }, null, 2)}`);
       
       const response = await axios.post(
-        this.baseUrl,
+        activeBaseUrl,
         {
           model,
           messages,
