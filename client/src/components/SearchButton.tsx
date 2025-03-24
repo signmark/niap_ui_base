@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
+import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 
 /**
  * Кнопка поиска источников для кампании.
@@ -13,8 +14,8 @@ import { NewSourcesDialog } from "@/components/NewSourcesDialog";
  * использует n8n webhook для получения трендовых постов.
  * 
  * Процесс работы:
- * 1. Отправляет ключевые слова кампании на сервер (/api/sources/collect)
- * 2. Сервер запрашивает источники через Perplexity API
+ * 1. Открывает диалог выбора социальных сетей и настройки промптов
+ * 2. Отправляет запрос на сервер (/api/sources/search)
  * 3. Результаты отображаются в диалоговом окне NewSourcesDialog
  */
 interface SearchButtonProps {
@@ -25,13 +26,17 @@ interface SearchButtonProps {
 export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
   // Состояние загрузки для показа спиннера и блокировки кнопки
   const [isLoading, setIsLoading] = useState(false);
-  // Управление видимостью диалога с результатами
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Управление видимостью диалогов
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Диалог с результатами
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false); // Диалог выбора соцсетей
+  // Выбранное ключевое слово для поиска
+  const [selectedKeyword, setSelectedKeyword] = useState("");
   // Данные полученных источников от API
   const [sourcesData, setSourcesData] = useState(null);
   const { toast } = useToast();
 
-  const handleSearch = async () => {
+  // Открытие диалога для выбора социальных сетей и настройки промпта
+  const openSearchDialog = () => {
     if (!keywords.length) {
       toast({
         title: "Ошибка",
@@ -40,64 +45,27 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
       });
       return;
     }
+    
+    // Используем первое ключевое слово как стартовое
+    setSelectedKeyword(keywords[0].keyword);
+    setIsSearchDialogOpen(true);
+  };
 
-    setIsLoading(true);
-
-    try {
-      const token = localStorage.getItem('auth_token');
-
-      if (!token) {
-        throw new Error('Не найден токен авторизации');
+  // Обработчик результатов поиска
+  const handleSearchResults = (sources: any[]) => {
+    setSourcesData({
+      success: true,
+      data: {
+        sources: sources
       }
-
-      const response = await fetch('/api/sources/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ keywords: keywords.map(k => k.keyword) }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to start source collection');
-      }
-
-      const data = await response.json();
-      console.log('Sources API response:', data);
-      if (data?.success && data?.data?.sources) {
-        console.log('Source data available, sources count:', data.data.sources.length);
-        setSourcesData(data);
-        setIsDialogOpen(true);
-      } else {
-        console.error('Invalid data format from server:', data);
-        throw new Error('Некорректный формат данных от сервера');
-      }
-
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          title: "Ошибка",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Ошибка",
-          description: "Не удалось запустить поиск",
-          variant: "destructive"
-        });
-      }
-      console.error("Search error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    });
+    setIsSearchDialogOpen(false);
+    setIsDialogOpen(true);
   };
 
   return (
     <>
-      <Button onClick={handleSearch} disabled={isLoading}>
+      <Button onClick={openSearchDialog} disabled={isLoading}>
         {isLoading ? (
           <>
             <div className="flex items-center">
@@ -137,6 +105,17 @@ export function SearchButton({ campaignId, keywords }: SearchButtonProps) {
         )}
       </Button>
 
+      {/* Диалог для выбора социальных сетей и настройки промпта */}
+      <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+        <SourcesSearchDialog
+          campaignId={campaignId}
+          keyword={selectedKeyword}
+          onClose={() => setIsSearchDialogOpen(false)}
+          onSearch={handleSearchResults}
+        />
+      </Dialog>
+
+      {/* Диалог для отображения результатов */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {sourcesData && (
           <NewSourcesDialog
