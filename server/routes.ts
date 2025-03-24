@@ -772,72 +772,124 @@ function parseFollowerCount(text: string): number {
 }
 
 // Helper function to extract sources from text content
-function extractSourcesFromText(content: string): any[] {
+function extractSourcesFromText(content: string, platforms: string[] = ['instagram']): any[] {
   const sources: any[] = [];
-
-  // 1. Direct Instagram URLs
-  // Example: https://www.instagram.com/pp_mari_food/ - хороший аккаунт
-  const urlPattern = /https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._-]+)\/?/g;
   let match;
 
-  while ((match = urlPattern.exec(content)) !== null) {
-    const username = match[1];
-    const url = normalizeInstagramUrl(`instagram.com/${username}`);
-    if (!sources.some(s => s.url === url)) {
-      sources.push({
-        url,
-        name: username,
-        followers: 100000, // Default value
-        platform: 'instagram.com',
-        description: 'Instagram аккаунт о правильном питании',
-        rank: 5
-      });
+  // Извлечение источников Instagram
+  if (platforms.includes('instagram')) {
+    // 1. Direct Instagram URLs
+    // Example: https://www.instagram.com/pp_mari_food/ - хороший аккаунт
+    const instagramUrlPattern = /https?:\/\/(?:www\.)?instagram\.com\/([a-zA-Z0-9._-]+)\/?/g;
+    
+    while ((match = instagramUrlPattern.exec(content)) !== null) {
+      const username = match[1];
+      const url = normalizeInstagramUrl(`instagram.com/${username}`);
+      if (!sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          name: username,
+          followers: 100000, // Default value
+          platform: 'instagram.com',
+          description: 'Instagram аккаунт',
+          rank: 5
+        });
+      }
+    }
+
+    // 2. Formatted lists with stars
+    // Example: "1. **@username** - Name (500K followers) - Description
+    const instagramFormattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
+
+    while ((match = instagramFormattedPattern.exec(content)) !== null) {
+      const [_, username, name, followers, description] = match;
+      const followersCount = parseFollowerCount(followers);
+      const url = normalizeInstagramUrl(`instagram.com/${username}`);
+
+      if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          name: name.trim(),
+          followers: followersCount,
+          platform: 'instagram.com',
+          description: description.trim(),
+          rank: 5
+        });
+      }
+    }
+
+    // 3. Simple @ mentions for Instagram
+    // Example: "@username (500K followers)"
+    const instagramSimplePattern = /@([a-zA-Z0-9._-]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
+
+    while ((match = instagramSimplePattern.exec(content)) !== null) {
+      const [_, username, followers] = match;
+      const followersCount = parseFollowerCount(followers);
+      const url = normalizeInstagramUrl(`instagram.com/${username}`);
+
+      if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          name: username,
+          followers: followersCount,
+          platform: 'instagram.com',
+          description: 'Instagram аккаунт',
+          rank: 5
+        });
+      }
     }
   }
 
-  // 2. Formatted lists with stars
-  // Example: "1. **@raychelpaul** - Рейчел Паул (500K followers) - Публикует рецепты..."
-  const formattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
+  // Извлечение источников Telegram
+  if (platforms.includes('telegram')) {
+    // 1. Direct Telegram URLs
+    // Example: https://t.me/channel_name - хороший канал
+    const telegramUrlPattern = /https?:\/\/(?:www\.)?t\.me\/([a-zA-Z0-9._-]+)\/?/g;
+    
+    while ((match = telegramUrlPattern.exec(content)) !== null) {
+      const username = match[1];
+      const url = `t.me/${username}`;
+      if (!sources.some(s => s.url === url)) {
+        sources.push({
+          url,
+          name: username,
+          followers: 100000, // Default value
+          platform: 'telegram',
+          description: 'Telegram канал',
+          rank: 5
+        });
+      }
+    }
 
-  while ((match = formattedPattern.exec(content)) !== null) {
-    const [_, username, name, followers, description] = match;
-    const followersCount = parseFollowerCount(followers);
-    const url = normalizeInstagramUrl(`instagram.com/${username}`);
+    // 2. Formatted lists with stars for Telegram
+    // Supports same format as Instagram but maps to Telegram
+    const telegramFormattedPattern = /\*\*@([a-zA-Z0-9._-]+)\*\*\s*-\s*([^(]+)\s*\(([0-9.]+[KkMm][^)]*)\)[^-]*-\s*([^.\n]+)/g;
 
-    if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
-      sources.push({
-        url,
-        name: name.trim(),
-        followers: followersCount,
-        platform: 'instagram.com',
-        description: description.trim(),
-        rank: 5
-      });
+    while ((match = telegramFormattedPattern.exec(content)) !== null) {
+      // Skip if this URL was already processed as Instagram
+      // We need additional context to determine if it's Telegram
+      if (content.includes(`t.me/${match[1]}`) || content.toLowerCase().includes('telegram')) {
+        const [_, username, name, followers, description] = match;
+        const followersCount = parseFollowerCount(followers);
+        const url = `t.me/${username}`;
+
+        if (followersCount >= 5000 && !sources.some(s => s.url === url)) {
+          sources.push({
+            url,
+            name: name.trim(),
+            followers: followersCount,
+            platform: 'telegram',
+            description: description.trim(),
+            rank: 5
+          });
+        }
+      }
     }
   }
 
-  // 3. Simple @ mentions
-  // Example: "@username (500K followers)"
-  const simplePattern = /@([a-zA-Z0-9._-]+)\s*\(([0-9.]+[KkMm][^)]*)\)/g;
+  // Дополнительную поддержку для VK, Facebook и других платформ можно добавить здесь
 
-  while ((match = simplePattern.exec(content)) !== null) {
-    const [_, username, followers] = match;
-    const followersCount = parseFollowerCount(followers);
-    const url = normalizeInstagramUrl(`instagram.com/${username}`);
-
-    if (followersCount >= 50000 && !sources.some(s => s.url === url)) {
-      sources.push({
-        url,
-        name: username,
-        followers: followersCount,
-        platform: 'instagram.com',
-        description: 'Instagram аккаунт о правильном питании',
-        rank: 5
-      });
-    }
-  }
-
-  console.log(`Extracted ${sources.length} Instagram sources:`, sources);
+  console.log(`Extracted ${sources.length} sources (platforms: ${platforms.join(', ')}):`, sources);
   return sources;
 }
 
