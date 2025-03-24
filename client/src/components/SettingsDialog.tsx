@@ -57,6 +57,7 @@ export function SettingsDialog() {
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
+        console.log('Запрос API ключей для пользователя:', userId);
         const response = await directusApi.get('/items/user_api_keys', {
           params: {
             filter: {
@@ -67,6 +68,7 @@ export function SettingsDialog() {
             fields: ['id', 'service_name', 'api_key']
           }
         });
+        console.log('Полученные API ключи:', response.data?.data);
         return response.data?.data || [];
       } catch (error) {
         console.error('Error fetching API keys:', error);
