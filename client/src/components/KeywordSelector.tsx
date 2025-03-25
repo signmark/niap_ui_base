@@ -219,6 +219,9 @@ export function KeywordSelector({
         // Очищаем результаты после сохранения
         setKeywords([]);
         setSearchTerm('');
+        
+        // Инвалидируем оба ключа кеша, если у нас есть доступ к queryClient
+        // Код инвалидации обычно находится в родительском компоненте (onSelect обработчике)
       } else {
         // Все выбранные ключевые слова уже существуют
         toast({
@@ -242,6 +245,9 @@ export function KeywordSelector({
       return;
     }
     
+    // Логируем действие для отладки
+    console.log(`Удаление ключевого слова "${keyword}" через KeywordSelector`);
+    
     // Оптимистично удаляем ключевое слово из нашего локального состояния
     setSelectedItems(prev => prev.filter(item => item !== keyword));
     
@@ -254,8 +260,12 @@ export function KeywordSelector({
     setExistingKeywords(prev => prev.filter(k => k !== keyword));
     
     // Отправляем ключевое слово для удаления в родительский компонент
-    // Родительский компонент [id].tsx будет обрабатывать это удаление через removeKeyword
+    // Родительский компонент [id].tsx будет обрабатывать это удаление через removeKeyword,
+    // который затем инвалидирует оба ключа кеша: ["/api/keywords", campaignId] и ["campaign_keywords", campaignId]
     onSelect([keyword]);
+    
+    // Инвалидации кеша происходит в родительском компоненте, потому что там есть доступ к queryClient,
+    // и там известен campaignId. Здесь мы полагаемся на этот механизм.
   };
 
   const formatNumber = (num: number): string => {

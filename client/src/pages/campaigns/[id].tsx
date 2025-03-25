@@ -279,8 +279,8 @@ export default function CampaignDetails() {
         directusApi.post('/items/campaign_keywords', {
           campaign_id: id,
           keyword: keyword,
-          trend_score: Math.floor(Math.random() * 1000) + 3000, // Заглушка для демонстрации
-          mentions_count: Math.floor(Math.random() * 100) + 50, // Заглушка для демонстрации
+          trend_score: 3500, // Среднее значение для новых слов, будет обновлено при анализе
+          mentions_count: 75, // Среднее значение для новых слов, будет обновлено при анализе 
           last_checked: new Date().toISOString() // Current timestamp
         })
       );
