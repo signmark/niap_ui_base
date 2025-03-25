@@ -63,9 +63,8 @@ export function KeywordSelector({
       setExistingKeywords(keywords);
       setSelectedItems(keywords);
       
-      if (onSelect) {
-        onSelect(keywords);
-      }
+      // Удаляем автоматический вызов onSelect при загрузке
+      // Теперь пользователь должен явно нажать кнопку "Сохранить ключевые слова"
     } catch (error) {
       console.error('Error loading keywords:', error);
     } finally {
@@ -178,6 +177,18 @@ export function KeywordSelector({
   const formatNumber = (num: number): string => {
     return new Intl.NumberFormat('ru-RU').format(num);
   };
+  
+  // Функция для сравнения двух массивов строк (без учета порядка)
+  const areArraysEqual = (array1: string[], array2: string[]): boolean => {
+    if (array1.length !== array2.length) return false;
+    
+    // Создаем копии массивов для сортировки, чтобы не изменять оригиналы
+    const sorted1 = [...array1].sort();
+    const sorted2 = [...array2].sort();
+    
+    // Сравниваем каждый элемент
+    return sorted1.every((item, index) => item === sorted2[index]);
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -221,14 +232,18 @@ export function KeywordSelector({
               </Badge>
             ))}
           </div>
-          <div className="flex justify-end mt-4">
-            <Button 
-              onClick={() => onSelect(selectedItems)}
-              size="sm"
-            >
-              Сохранить ключевые слова
-            </Button>
-          </div>
+          
+          {/* Показываем кнопку сохранения только если есть изменения по сравнению с исходными ключевыми словами */}
+          {!areArraysEqual(selectedItems, existingKeywords) && (
+            <div className="flex justify-end mt-4">
+              <Button 
+                onClick={() => onSelect(selectedItems)}
+                size="sm"
+              >
+                Сохранить ключевые слова
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
