@@ -309,18 +309,12 @@ export default function CampaignDetails() {
       </div>
 
       <Accordion type="single" defaultValue="keywords" className="space-y-4">
-        <AccordionItem value="social-media" className="border rounded-lg px-6">
+        <AccordionItem value="keywords" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Настройки публикации
+            Ключевые слова
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <SocialMediaSettings 
-              campaignId={id} 
-              initialSettings={campaign.social_media_settings}
-              onSettingsUpdated={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
-              }}
-            />
+            <KeywordSelector campaignId={id} />
           </AccordionContent>
         </AccordionItem>
 
@@ -339,21 +333,26 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="keywords" className="border rounded-lg px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Ключевые слова
-          </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
-            <KeywordSelector campaignId={id} />
-          </AccordionContent>
-        </AccordionItem>
-
         <AccordionItem value="trends" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Тренды
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
             <TrendsList campaignId={id} />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Бизнес-анкета
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <BusinessQuestionnaireForm 
+              campaignId={id}
+              onQuestionnaireUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: [`/api/campaigns/${id}/questionnaire`] });
+              }}
+            />
           </AccordionContent>
         </AccordionItem>
 
@@ -371,15 +370,16 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+        <AccordionItem value="social-media" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Бизнес-анкета
+            Настройки публикации
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <BusinessQuestionnaireForm 
-              campaignId={id}
-              onQuestionnaireUpdated={() => {
-                queryClient.invalidateQueries({ queryKey: [`/api/campaigns/${id}/questionnaire`] });
+            <SocialMediaSettings 
+              campaignId={id} 
+              initialSettings={campaign.social_media_settings}
+              onSettingsUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
               }}
             />
           </AccordionContent>
