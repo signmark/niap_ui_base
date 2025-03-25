@@ -116,7 +116,7 @@
 
   button[data-variant="default"],
   .btn-primary {
-    @apply bg-black text-white hover:bg-gray-800;
+    @apply bg-black text-white hover:bg-gray-700;
   }
 }
 
