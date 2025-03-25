@@ -293,12 +293,18 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
     return selectedTrends.some(t => t.id === trendId);
   };
   
-  // Эффект для передачи выбранных трендов в родительский компонент
-  useEffect(() => {
+  // Эффект для передачи выбранных трендов в родительский компонент при их изменении
+  // Используем useEffect с пустыми зависимостями + функцию обратного вызова
+  const handleSelectTrendsChange = () => {
     if (onSelectTrends) {
       onSelectTrends(selectedTrends);
     }
-  }, [selectedTrends]); // Убираем onSelectTrends из зависимостей, чтобы избежать бесконечного цикла
+  };
+  
+  // Вызываем callback только при изменении selectedTrends
+  useEffect(() => {
+    handleSelectTrendsChange();
+  }, [selectedTrends]);
 
   return (
     <div className="space-y-4">
