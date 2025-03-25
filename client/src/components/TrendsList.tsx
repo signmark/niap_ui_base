@@ -65,29 +65,37 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     queryFn: async () => {
       try {
         // Получаем токен авторизации из localStorage
-        const token = localStorage.getItem('auth_token');
-        console.log("Authorization token from localStorage:", token ? `${token.substring(0, 10)}...` : 'not found');
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          throw new Error("Требуется авторизация");
+        }
+        
+        console.log("Authorization token from localStorage:", authToken ? `${authToken.substring(0, 10)}...` : 'not found');
 
-        const response = await api.get('/api/campaign-trends', {
-          params: {
-            campaignId,
-            period: selectedPeriod
-          },
-          // Явно указываем заголовок авторизации
+        // Используем fetch вместо axios/api для обеспечения одинакового поведения с страницей трендов
+        const response = await fetch(`/api/campaign-trends?campaignId=${campaignId}&period=${selectedPeriod}`, {
           headers: {
-            'Authorization': token ? `Bearer ${token}` : ''
+            'Authorization': `Bearer ${authToken}`
           }
         });
         
+        if (!response.ok) {
+          console.error("Error fetching trends:", response.status, response.statusText);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to fetch trends");
+        }
+        
+        const data = await response.json();
+        
         // Отладочный вывод для первого элемента
-        if (response.data?.data && response.data.data.length > 0) {
-          console.log("Sample trend data from server:", response.data.data[0]);
+        if (data && data.data && data.data.length > 0) {
+          console.log("Sample trend data from server:", data.data[0]);
         }
         
         // Преобразуем полученные данные в правильный формат
-        const trendTopics = (response.data?.data || []).map((trend: any) => {
+        const trendTopics = (data?.data || []).map((trend: any) => {
           // Выводим значение created_at для отладки
-          if (trend.id === response.data.data[0].id) {
+          if (trend.id === data.data[0].id) {
             console.log("Raw created_at value:", trend.created_at);
             console.log("Raw date type:", typeof trend.created_at);
             console.log("Is valid date:", !isNaN(new Date(trend.created_at).getTime()));
@@ -119,7 +127,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           };
           
           // Отладочный вывод для поля даты и trendScore
-          if (trend.id === response.data.data[0].id) {
+          if (data && data.data && data.data.length > 0 && trend.id === data.data[0].id) {
             console.log("Date fields for first trend:", {
               createdAtFromServer: trend.createdAt,
               created_atFromServer: trend.created_at,
@@ -155,18 +163,29 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   const bookmarkMutation = useMutation({
     mutationFn: async ({ id, isBookmarked }: { id: string; isBookmarked: boolean }) => {
       // Получаем токен авторизации из localStorage
-      const token = localStorage.getItem('auth_token');
-      console.log("Bookmark mutation using token:", token ? `${token.substring(0, 10)}...` : 'not found');
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+      
+      console.log("Bookmark mutation using token:", authToken ? `${authToken.substring(0, 10)}...` : 'not found');
 
-      const response = await api.patch(`/api/campaign-trends/${id}/bookmark`, {
-        isBookmarked
-      }, {
-        // Явно указываем заголовок авторизации
+      // Используем fetch вместо axios/api для обеспечения одинакового поведения с страницей трендов
+      return await fetch(`/api/campaign-trends/${id}/bookmark`, {
+        method: 'PATCH',
         headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ isBookmarked })
+      }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Ошибка при обновлении закладки');
+          });
         }
+        return response.json();
       });
-      return response.data;
     },
     onSuccess: () => {
       // Инвалидируем кеш после успешного изменения закладки
