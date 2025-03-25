@@ -33,6 +33,21 @@ import { registerTokenRoutes } from './api/token-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
+/**
+ * Подготавливает токен авторизации для запросов к Directus API
+ * Исправляет дублирование префикса "Bearer" в токене
+ * @param token Токен авторизации
+ * @returns Корректно отформатированный токен авторизации
+ */
+function formatAuthToken(token: string): string {
+  // Если токен уже начинается с "Bearer ", используем его как есть
+  if (token.startsWith('Bearer ')) {
+    return token;
+  }
+  // Иначе добавляем префикс "Bearer "
+  return `Bearer ${token}`;
+}
+
 // Расширяем типы Express.Request для поддержки пользовательских полей в middleware
 declare global {
   namespace Express {
@@ -6673,7 +6688,7 @@ https://t.me/channelname/ - description`;
         // Получаем ключевые слова для кампании из Directus из таблицы campaign_keywords
         const response = await directusApi.get(`/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
           headers: {
-            'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
+            'Authorization': formatAuthToken(token)
           }
         });
         
