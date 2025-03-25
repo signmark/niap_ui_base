@@ -317,6 +317,20 @@ export default function CampaignDetails() {
             <KeywordSelector campaignId={id} />
           </AccordionContent>
         </AccordionItem>
+        
+        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Бизнес-анкета
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <BusinessQuestionnaireForm 
+              campaignId={id}
+              onQuestionnaireUpdated={() => {
+                queryClient.invalidateQueries({ queryKey: [`/api/campaigns/${id}/questionnaire`] });
+              }}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
         <AccordionItem value="trend-analysis" className="border rounded-lg px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
@@ -339,20 +353,6 @@ export default function CampaignDetails() {
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
             <TrendsList campaignId={id} />
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Бизнес-анкета
-          </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
-            <BusinessQuestionnaireForm 
-              campaignId={id}
-              onQuestionnaireUpdated={() => {
-                queryClient.invalidateQueries({ queryKey: [`/api/campaigns/${id}/questionnaire`] });
-              }}
-            />
           </AccordionContent>
         </AccordionItem>
 
