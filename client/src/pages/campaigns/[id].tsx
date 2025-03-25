@@ -314,7 +314,17 @@ export default function CampaignDetails() {
             Ключевые слова
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <KeywordSelector campaignId={id} />
+            <div>
+              {/* Запрос на получение ключевых слов */}
+              <KeywordSelector 
+                campaignId={id} 
+                onSelect={(keywords) => {
+                  if (keywords.length > 0) {
+                    addKeywords(keywords);
+                  }
+                }}
+              />
+            </div>
           </AccordionContent>
         </AccordionItem>
         
