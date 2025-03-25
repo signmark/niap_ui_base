@@ -6673,7 +6673,7 @@ https://t.me/channelname/ - description`;
         // Получаем ключевые слова для кампании из Directus из таблицы campaign_keywords
         const response = await directusApi.get(`/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
           }
         });
         
