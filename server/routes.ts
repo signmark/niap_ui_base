@@ -5373,8 +5373,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to get campaign keywords from Directus
   async function getCampaignKeywords(campaignId: string, token: string): Promise<string[]> {
     try {
-      // Запрашиваем ключевые слова кампании из таблицы campaign_keywords
-      const response = await directusApi.get('/items/campaign_keywords', {
+      // Запрашиваем ключевые слова кампании из таблицы user_keywords
+      const response = await directusApi.get('/items/user_keywords', {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -6666,8 +6666,9 @@ https://t.me/channelname/ - description`;
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получаем ключевые слова для кампании из Directus
-        const response = await directusApi.get(`/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
+        // Получаем ключевые слова для кампании из Directus из таблицы user_keywords
+        // (в будущем будет переименовано в campaign_keywords)
+        const response = await directusApi.get(`/items/user_keywords?filter[campaign_id][_eq]=${campaignId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
