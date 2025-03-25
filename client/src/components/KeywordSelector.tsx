@@ -204,13 +204,16 @@ export function KeywordSelector({
   // Функция для удаления ключевого слова при клике на бейдж (для уже выбранных слов)
   // с мгновенным сохранением на сервере путем отправки только удаляемого ключевого слова
   const handleRemoveKeyword = (keyword: string) => {
-    const newSelected = selectedItems.filter(item => item !== keyword);
-    setSelectedItems(newSelected);
+    // Оптимистично удаляем ключевое слово из нашего локального состояния
+    setSelectedItems(prev => prev.filter(item => item !== keyword));
     
     // Сразу показываем уведомление пользователю
     toast({
       description: `Ключевое слово "${keyword}" удалено`
     });
+    
+    // Также обновляем существующие ключевые слова (оптимистичное обновление UI)
+    setExistingKeywords(prev => prev.filter(k => k !== keyword));
     
     // Отправляем ключевое слово для удаления в родительский компонент
     // Родительский компонент [id].tsx будет обрабатывать это удаление через removeKeyword
