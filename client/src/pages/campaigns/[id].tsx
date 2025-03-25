@@ -528,13 +528,28 @@ export default function CampaignDetails() {
             Настройки анализа трендов
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <TrendAnalysisSettings 
-              campaignId={id} 
-              initialSettings={campaign.trend_analysis_settings}
-              onSettingsUpdated={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
-              }}
-            />
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <h3 className="text-xl font-semibold">Параметры сбора трендов</h3>
+                <p className="text-muted-foreground mt-1 mb-3">
+                  Настройте параметры для сбора трендовых тем из социальных сетей. Эти параметры влияют на то, 
+                  какие аккаунты будут анализироваться и какие тренды будут учитываться.
+                </p>
+              </div>
+              <TrendAnalysisSettings 
+                campaignId={id} 
+                initialSettings={campaign.trend_analysis_settings}
+                onSettingsUpdated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+                }}
+              />
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  После настройки параметров, перейдите в раздел «Тренды» для сбора актуальных трендовых тем, 
+                  которые затем будут отображаться в блоке «Тренды» ниже.
+                </p>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -543,7 +558,16 @@ export default function CampaignDetails() {
             Тренды
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <TrendsList campaignId={id} />
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <h3 className="text-xl font-semibold">Мониторинг актуальных трендов</h3>
+                <p className="text-muted-foreground mt-1 mb-3">
+                  Здесь отображаются актуальные тренды в вашей тематике из различных источников. 
+                  Тренды обновляются автоматически при их сборе на странице «Тренды».
+                </p>
+              </div>
+              <TrendsList campaignId={id} />
+            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -552,12 +576,21 @@ export default function CampaignDetails() {
             Генерация контента
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <ContentGenerationPanel 
-              selectedTopics={[]} 
-              onGenerated={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
-              }}
-            />
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <h3 className="text-xl font-semibold">Создание контента на основе трендов</h3>
+                <p className="text-muted-foreground mt-1 mb-3">
+                  Используйте собранные тренды для генерации контента. Система будет учитывать ключевые слова кампании и позволяет 
+                  создавать тексты, изображения и комбинированный контент для разных социальных платформ.
+                </p>
+              </div>
+              <ContentGenerationPanel 
+                selectedTopics={[]} 
+                onGenerated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
+                }}
+              />
+            </div>
           </AccordionContent>
         </AccordionItem>
 
