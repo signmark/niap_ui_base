@@ -43,7 +43,7 @@ export default function Keywords() {
     queryKey: ["campaign_keywords", campaignId],
     queryFn: async () => {
       if (!campaignId) return [];
-      const response = await directusApi.get('/items/user_keywords', {
+      const response = await directusApi.get('/items/campaign_keywords', {
         params: {
           filter: {
             campaign_id: {

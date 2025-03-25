@@ -6717,8 +6717,8 @@ https://t.me/channelname/ - description`;
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получаем ключевые слова из Directus через таблицу user_keywords
-        const response = await directusApi.get('/items/user_keywords', {
+        // Получаем ключевые слова из Directus через таблицу campaign_keywords
+        const response = await directusApi.get('/items/campaign_keywords', {
           params: {
             filter: {
               campaign_id: {

@@ -205,7 +205,7 @@ export default function CampaignDetails() {
   const { mutate: addKeywords } = useMutation({
     mutationFn: async (keywords: string[]) => {
       const promises = keywords.map(keyword => 
-        directusApi.post('/items/user_keywords', {
+        directusApi.post('/items/campaign_keywords', {
           campaign_id: id,
           keyword: keyword,
           trend_score: 0, // Default trend score
