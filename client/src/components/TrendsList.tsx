@@ -88,16 +88,17 @@ export function TrendsList({ campaignId }: TrendsListProps) {
           const result = {
             id: trend.id,
             title: trend.title,
-            sourceId: trend.sourceId,
+            sourceId: trend.source_id || trend.sourceId, // Поддержка обоих форматов
             sourceName: trend.sourceName || 'Источник',
             sourceUrl: trend.sourceUrl,
             url: trend.url, // URL оригинальной публикации
             reactions: trend.reactions || 0,
             comments: trend.comments || 0,
             views: trend.views || 0,
-            // Напрямую копируем created_at для сохранения snake_case формата
-            created_at: trend.created_at,
-            isBookmarked: trend.isBookmarked || false,
+            // Поддерживаем оба формата даты (snake_case и camelCase)
+            createdAt: trend.created_at || trend.createdAt, 
+            created_at: trend.created_at, // Сохраняем для обратной совместимости
+            isBookmarked: trend.is_bookmarked || trend.isBookmarked || false,
             campaignId: trend.campaignId,
             mediaLinks: trend.mediaLinks,
             media_links: trend.media_links,
@@ -393,9 +394,9 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       WebkitBoxOrient: 'vertical',
                       textOverflow: 'ellipsis'
                     }}>
-                      {trend.created_at && (
+                      {(trend.created_at || trend.createdAt) && (
                         <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">
-                          {new Date(trend.created_at).toLocaleDateString('ru-RU', { 
+                          {new Date(trend.created_at || trend.createdAt).toLocaleDateString('ru-RU', { 
                             day: 'numeric', 
                             month: 'long'
                           }).toUpperCase()}
@@ -438,7 +439,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
                       
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>{trend.created_at ? formatDistanceToNow(new Date(trend.created_at), { locale: ru, addSuffix: true }) : 'неизвестно'}</span>
+                        <span>{(trend.created_at || trend.createdAt) ? formatDistanceToNow(new Date(trend.created_at || trend.createdAt), { locale: ru, addSuffix: true }) : 'неизвестно'}</span>
                       </div>
                       
                       <Button
