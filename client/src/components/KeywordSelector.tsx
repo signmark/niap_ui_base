@@ -174,15 +174,24 @@ export function KeywordSelector({
     }
     
     setSelectedItems(newSelected);
-    // Не вызываем onSelect здесь, чтобы избежать автоматического добавления
-    // при клике на бейдже. onSelect будет вызываться только при явных действиях
-    // пользователя (например, нажатие кнопки "Добавить")
+    
+    // Для новых ключевых слов из поиска мы не сохраняем автоматически,
+    // а для существующих ключевых слов моментально удаляем при клике на бейдж
+    // в handleRemoveKeyword
   };
   
   // Функция для удаления ключевого слова при клике на бейдж (для уже выбранных слов)
+  // с мгновенным сохранением на сервере
   const handleRemoveKeyword = (keyword: string) => {
     const newSelected = selectedItems.filter(item => item !== keyword);
     setSelectedItems(newSelected);
+    
+    // Сразу сохраняем изменения на сервере
+    onSelect(newSelected);
+    
+    toast({
+      description: `Ключевое слово "${keyword}" удалено`
+    });
   };
 
   const formatNumber = (num: number): string => {
@@ -250,8 +259,13 @@ export function KeywordSelector({
               <Button 
                 onClick={() => onSelect(selectedItems)}
                 size="sm"
+                className={selectedItems.length < existingKeywords.length ? "bg-amber-600 hover:bg-amber-700" : ""}
               >
-                Сохранить ключевые слова
+                {selectedItems.length < existingKeywords.length 
+                  ? `Сохранить изменения (${existingKeywords.length - selectedItems.length} удал.)` 
+                  : selectedItems.length > existingKeywords.length
+                    ? `Сохранить изменения (+${selectedItems.length - existingKeywords.length} нов.)`
+                    : 'Сохранить ключевые слова'}
               </Button>
             </div>
           )}
