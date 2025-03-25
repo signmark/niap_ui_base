@@ -46,6 +46,21 @@ export default function CampaignDetails() {
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
 
+  // Запрос для получения списка ключевых слов
+  const { data: keywordList } = useQuery({
+    queryKey: ["/api/keywords", id],
+    queryFn: async () => {
+      const response = await directusApi.get('/items/campaign_keywords', {
+        params: {
+          filter: {
+            campaign_id: { _eq: id }
+          }
+        }
+      });
+      return response.data?.data || [];
+    }
+  });
+
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
