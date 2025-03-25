@@ -7,6 +7,8 @@ import { DIRECTUS_URL } from "@/lib/directus";
 import { Dialog } from "@/components/ui/dialog";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { CampaignSelector } from "@/components/CampaignSelector";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
@@ -93,109 +95,132 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
 
-  const renderNavItems = () => (
-    <div className="space-y-1">
-      {navItems.map(({ path, label, icon: Icon }) => (
-        <Button
-          key={path}
-          variant={location === path ? "secondary" : "ghost"}
-          className="w-full justify-start"
-          onClick={() => handleNavigation(path)}
-        >
-          <Icon className="mr-2 h-4 w-4" />
-          {label}
-        </Button>
-      ))}
-      <Button
-        variant="ghost"
-        className="w-full justify-start"
-        onClick={() => setIsSettingsOpen(true)}
-      >
-        <Settings className="mr-2 h-4 w-4" />
-        Настройки
-      </Button>
-    </div>
-  );
-
   return (
-    <div className="flex h-screen">
-      {/* Мобильное меню */}
-      <div
-        className={`lg:hidden fixed inset-y-0 left-0 z-[100] w-64 transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300`}
-      >
-        <div className="h-full bg-background border-r">
-          <div className="px-3 py-4">
-            <h2 className="mb-6 px-4 text-lg font-semibold">SMM Manager</h2>
-            {renderNavItems()}
-          </div>
-          <div className="mt-auto p-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Выход
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Десктопное меню */}
-      <div className="hidden lg:block w-64">
-        <div className="h-full bg-background border-r">
-          <div className="px-3 py-4">
-            <h2 className="mb-6 px-4 text-lg font-semibold">SMM Manager</h2>
-            {renderNavItems()}
-          </div>
-          <div className="mt-auto p-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Выход
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        <div className="h-16 border-b flex items-center justify-between px-4 lg:px-8">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden mr-2"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-            {/* Отображаем название кампании в верхней панели, кроме страницы списка кампаний */}
-            {location === '/campaigns' ? (
-              <span className="text-lg font-medium">Список кампаний</span>
-            ) : (
-              <CampaignSelector persistSelection={true} />
-            )}
-          </div>
-        </div>
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
-      </div>
-
-      {/* Оверлей для мобильного меню */}
-      {isSidebarOpen && (
+    <ThemeProvider>
+      <div className="flex h-screen">
+        {/* Мобильное меню */}
         <div
-          className="fixed inset-0 bg-black/50 lg:hidden z-40"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+          className={`lg:hidden fixed inset-y-0 left-0 z-[100] w-64 transform ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } transition-transform duration-300`}
+        >
+          <div className="h-full sidebar border-r">
+            <div className="px-3 py-4">
+              <h2 className="mb-6 px-4 text-lg font-semibold sidebar-title">SMM Manager</h2>
+              <div className="space-y-1">
+                {navItems.map(({ path, label, icon: Icon }) => (
+                  <Button
+                    key={path}
+                    variant="ghost"
+                    className={`w-full justify-start sidebar-item ${location === path ? 'active' : ''}`}
+                    onClick={() => handleNavigation(path)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    {label}
+                  </Button>
+                ))}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start sidebar-item"
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Настройки
+                </Button>
+              </div>
+            </div>
+            <div className="mt-auto p-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start sidebar-item"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Выход
+              </Button>
+            </div>
+          </div>
+        </div>
 
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SettingsDialog />
-      </Dialog>
-    </div>
+        {/* Десктопное меню */}
+        <div className="hidden lg:block w-64">
+          <div className="h-full sidebar border-r">
+            <div className="px-3 py-4">
+              <h2 className="mb-6 px-4 text-lg font-semibold sidebar-title">SMM Manager</h2>
+              <div className="space-y-1">
+                {navItems.map(({ path, label, icon: Icon }) => (
+                  <Button
+                    key={path}
+                    variant="ghost"
+                    className={`w-full justify-start sidebar-item ${location === path ? 'active' : ''}`}
+                    onClick={() => handleNavigation(path)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    {label}
+                  </Button>
+                ))}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start sidebar-item"
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Настройки
+                </Button>
+              </div>
+            </div>
+            <div className="mt-auto p-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start sidebar-item"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Выход
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col">
+          <div className="h-16 border-b flex items-center justify-between px-4 lg:px-8 topbar">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden mr-2"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              {/* Отображаем название кампании в верхней панели, кроме страницы списка кампаний */}
+              {location === '/campaigns' ? (
+                <span className="text-lg font-medium topbar-title">Список кампаний</span>
+              ) : (
+                <CampaignSelector persistSelection={true} />
+              )}
+            </div>
+            
+            {/* Добавляем переключатель темы в правую часть топ-бара */}
+            <div className="flex items-center">
+              <ThemeSwitcher />
+            </div>
+          </div>
+          <main className="flex-1 p-4 lg:p-8">{children}</main>
+        </div>
+
+        {/* Оверлей для мобильного меню */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 lg:hidden z-40"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <SettingsDialog />
+        </Dialog>
+      </div>
+    </ThemeProvider>
   );
 }
