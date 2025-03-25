@@ -6772,6 +6772,9 @@ https://t.me/channelname/ - description`;
   });
   
   // DELETE endpoint для удаления ключевых слов
+  // Используется в KeywordTable и KeywordSelector
+  // Важно: после удаления клиенты должны инвалидировать кэши двух API ключей:
+  // ["/api/keywords", campaignId] и ["campaign_keywords", campaignId]
   app.delete("/api/keywords/:keywordId", async (req, res) => {
     try {
       const keywordId = req.params.keywordId;
