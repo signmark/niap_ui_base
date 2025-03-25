@@ -191,7 +191,7 @@ export function KeywordSelector({
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ключевое слово</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Частота</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Добавить</th>
+                  <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">Выбрать</th>
                 </tr>
               </thead>
               <tbody className="bg-background divide-y divide-border">
@@ -200,13 +200,13 @@ export function KeywordSelector({
                     <td className="px-4 py-2 whitespace-nowrap text-sm">{item.keyword}</td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.trend || 0)}</td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm">
-                      <Button
-                        variant={selectedItems.includes(item.keyword) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleSelect(item.keyword)}
-                      >
-                        {selectedItems.includes(item.keyword) ? 'Убрать' : 'Добавить'}
-                      </Button>
+                      <div className="flex items-center justify-center">
+                        <Checkbox 
+                          checked={selectedItems.includes(item.keyword)}
+                          onCheckedChange={() => handleSelect(item.keyword)}
+                          id={`keyword-${index}`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
