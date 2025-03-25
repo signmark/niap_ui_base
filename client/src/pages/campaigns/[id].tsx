@@ -297,6 +297,8 @@ export default function CampaignDetails() {
 
     if (selectedKeywords.length > 0) {
       addKeywords(selectedKeywords);
+      setIsSearchingKeywords(false); // Закрываем диалог с результатами
+      setSuggestedKeywords([]); // Очищаем результаты
     }
   };
 
