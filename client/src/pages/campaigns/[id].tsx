@@ -599,13 +599,28 @@ export default function CampaignDetails() {
             Настройки публикации
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <SocialMediaSettings 
-              campaignId={id} 
-              initialSettings={campaign.social_media_settings}
-              onSettingsUpdated={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
-              }}
-            />
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <h3 className="text-xl font-semibold">Подключение социальных сетей</h3>
+                <p className="text-muted-foreground mt-1 mb-3">
+                  Настройте доступ к вашим социальным сетям для автоматической публикации контента. 
+                  Вам потребуются API-ключи и идентификаторы ваших аккаунтов или сообществ для каждой платформы.
+                </p>
+              </div>
+              <SocialMediaSettings 
+                campaignId={id} 
+                initialSettings={campaign.social_media_settings}
+                onSettingsUpdated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/campaigns', id] });
+                }}
+              />
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  После настройки доступа, вы сможете публиковать контент напрямую из системы в выбранные 
+                  социальные сети согласно установленному расписанию в разделе «Календарь публикаций».
+                </p>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
             
@@ -614,7 +629,22 @@ export default function CampaignDetails() {
             Календарь публикаций
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
-            <PostCalendar campaignId={id} />
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <h3 className="text-xl font-semibold">Планирование и отслеживание публикаций</h3>
+                <p className="text-muted-foreground mt-1 mb-3">
+                  Здесь вы можете запланировать публикации вашего контента в разные социальные сети, 
+                  а также отслеживать статус опубликованного контента на календаре.
+                </p>
+              </div>
+              <PostCalendar campaignId={id} />
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Система автоматически опубликует контент в указанное время в настроенных в предыдущем разделе социальных сетях. 
+                  Вы можете перетаскивать элементы в календаре для изменения даты и времени публикации.
+                </p>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
