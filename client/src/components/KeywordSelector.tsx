@@ -158,6 +158,7 @@ export function KeywordSelector({
     }
   };
 
+  // Функция для выбора/отмены выбора ключевого слова (используется в таблице результатов поиска)
   const handleSelect = (keyword: string) => {
     const newSelected = [...selectedItems];
     
@@ -172,6 +173,12 @@ export function KeywordSelector({
     // Не вызываем onSelect здесь, чтобы избежать автоматического добавления
     // при клике на бейдже. onSelect будет вызываться только при явных действиях
     // пользователя (например, нажатие кнопки "Добавить")
+  };
+  
+  // Функция для удаления ключевого слова при клике на бейдж (для уже выбранных слов)
+  const handleRemoveKeyword = (keyword: string) => {
+    const newSelected = selectedItems.filter(item => item !== keyword);
+    setSelectedItems(newSelected);
   };
 
   const formatNumber = (num: number): string => {
@@ -225,10 +232,10 @@ export function KeywordSelector({
             {selectedItems.map((keyword) => (
               <Badge 
                 key={keyword} 
-                className="cursor-pointer hover:bg-primary/80"
-                onClick={() => handleSelect(keyword)}
+                className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => handleRemoveKeyword(keyword)}
               >
-                {keyword}
+                {keyword} ×
               </Badge>
             ))}
           </div>
