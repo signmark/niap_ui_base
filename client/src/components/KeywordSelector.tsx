@@ -27,6 +27,7 @@ interface KeywordSelectorProps {
 export function KeywordSelector({
   onSelect,
   selectedKeywords = [],
+  campaignId,
   label = 'Ключевые слова',
   placeholder = 'Введите ключевое слово или фразу',
 }: KeywordSelectorProps) {
@@ -37,14 +38,50 @@ export function KeywordSelector({
   const [selectedItems, setSelectedItems] = useState<string[]>(selectedKeywords || []);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const { toast } = useToast();
+  const [existingKeywords, setExistingKeywords] = useState<string[]>([]);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const { getAuthToken } = useAuthStore();
+
+  const loadExistingKeywords = async () => {
+    if (!campaignId) return;
+    
+    setIsLoadingExisting(true);
+    try {
+      const authToken = getAuthToken();
+      const response = await fetch(`/api/keywords/${campaignId}`, {
+        headers: {
+          'Authorization': authToken ? `Bearer ${authToken}` : ''
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка при загрузке ключевых слов: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const keywords = data.map((item: any) => item.keyword);
+      setExistingKeywords(keywords);
+      setSelectedItems(keywords);
+      
+      if (onSelect) {
+        onSelect(keywords);
+      }
+    } catch (error) {
+      console.error('Error loading keywords:', error);
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  };
 
   useEffect(() => {
-    if (selectedKeywords) {
+    loadExistingKeywords();
+  }, [campaignId]);
+
+  useEffect(() => {
+    if (selectedKeywords && selectedKeywords.length > 0) {
       setSelectedItems(selectedKeywords);
     }
   }, [selectedKeywords]);
-
-  const { getAuthToken } = useAuthStore();
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
