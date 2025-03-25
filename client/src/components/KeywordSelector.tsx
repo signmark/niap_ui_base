@@ -79,11 +79,15 @@ export function KeywordSelector({
     }
   }, [campaignId]);
 
+  // Инициализируем выбранные элементы только при первоначальной загрузке компонента
+  // или при изменении другой кампании, но не при каждом изменении selectedKeywords
   useEffect(() => {
     if (selectedKeywords && selectedKeywords.length > 0) {
+      // Проверяем, действительно ли это новый массив, а не тот же самый
+      setExistingKeywords(selectedKeywords);
       setSelectedItems(selectedKeywords);
     }
-  }, [selectedKeywords]);
+  }, []);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
