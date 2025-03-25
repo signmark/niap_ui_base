@@ -6681,11 +6681,15 @@ https://t.me/channelname/ - description`;
           return res.json([]);
         }
         
-        // Трансформируем данные
+        // Трансформируем данные и включаем все необходимые поля из БД
         const keywords = response.data.data.map((item: any) => ({
           id: item.id,
           keyword: item.keyword,
-          campaignId: item.campaign_id
+          campaignId: item.campaign_id,
+          trend_score: item.trend_score,
+          mentions_count: item.mentions_count,
+          last_checked: item.last_checked,
+          date_created: item.date_created
         }));
         
         return res.json(keywords);
