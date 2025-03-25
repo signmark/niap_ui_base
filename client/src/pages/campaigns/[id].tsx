@@ -487,31 +487,38 @@ export default function CampaignDetails() {
     <div className="space-y-6 p-6">
       <div className="sticky top-0 bg-background z-10 pb-6">
         <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
-        <div className="flex gap-4 items-center">
-          <Input
-            placeholder="Введите URL сайта"
-            defaultValue={campaign.link || ""}
-            onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
-            className="max-w-md"
-          />
-          <Button
-            variant="secondary"
-            onClick={() => campaign.link && searchKeywords(campaign.link)}
-            disabled={isSearching || !campaign.link}
-          >
-            {isSearching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Поиск ключевых слов...
-              </>
-            ) : (
-              <>
-                <Search className="mr-2 h-4 w-4" />
-                Найти ключевые слова
-              </>
-            )}
-          </Button>
-        </div>
+        <Accordion type="single" collapsible className="mb-4">
+          <AccordionItem value="site">
+            <AccordionTrigger>Сайт</AccordionTrigger>
+            <AccordionContent>
+              <div className="flex gap-4 items-center pt-2">
+                <Input
+                  placeholder="Введите URL сайта"
+                  defaultValue={campaign.link || ""}
+                  onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
+                  className="max-w-md"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => campaign.link && searchKeywords(campaign.link)}
+                  disabled={isSearching || !campaign.link}
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Поиск ключевых слов...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Найти ключевые слова
+                    </>
+                  )}
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       <Accordion type="single" defaultValue="keywords" className="space-y-4">
