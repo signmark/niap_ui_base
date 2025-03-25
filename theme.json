@@ -1,7 +1,7 @@
 
 {
-  "variant": "default",
+  "variant": "tint",
   "primary": "hsl(0 0% 0%)",
   "appearance": "light",
-  "radius": 0.375
+  "radius": 0.5
 }
