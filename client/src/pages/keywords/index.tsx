@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Search } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
-import { useCampaignStore } from "@/lib/campaignStore";
+import { useCampaignStore } from "@/lib/store"; // Используем общее хранилище
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WebsiteKeywordAnalyzer } from "@/components/WebsiteKeywordAnalyzer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,8 +19,8 @@ export default function Keywords() {
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedCampaign } = useCampaignStore();
-  // Используем глобальное состояние кампании
+  // Используем глобальное состояние кампании из общего хранилища
+  const { selectedCampaignId, selectedCampaignName } = useCampaignStore();
   const { data: campaigns, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
@@ -30,14 +30,14 @@ export default function Keywords() {
   });
 
   // Получаем ID выбранной кампании из глобального хранилища
-  const campaignId = selectedCampaign?.id || "";
+  const campaignId = selectedCampaignId || "";
 
   // Используем useEffect для обработки изменений глобальной кампании
   useEffect(() => {
-    if (selectedCampaign) {
-      console.log("Используем глобально выбранную кампанию:", selectedCampaign.name);
+    if (selectedCampaignId && selectedCampaignName) {
+      console.log("Используем глобально выбранную кампанию:", selectedCampaignName);
     }
-  }, [selectedCampaign]);
+  }, [selectedCampaignId, selectedCampaignName]);
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["campaign_keywords", campaignId],
@@ -134,7 +134,7 @@ export default function Keywords() {
   };
 
   const handleSaveSelected = async () => {
-    if (!selectedCampaign || !campaignId) {
+    if (!selectedCampaignId || !campaignId) {
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -198,7 +198,7 @@ export default function Keywords() {
 
   // Функция для обработки выбранных ключевых слов из анализатора сайта
   const handleWebsiteKeywordsSelected = async (selectedKeywords: any[]) => {
-    if (!selectedCampaign || !campaignId) {
+    if (!selectedCampaignId || !campaignId) {
       toast({
         variant: "destructive",
         title: "Ошибка",
