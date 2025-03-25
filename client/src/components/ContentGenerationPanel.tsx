@@ -67,7 +67,7 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     mutationFn: async (values: GenerateContentForm) => {
       return await directusApi.post('/items/content_generations', {
         ...values,
-        campaign_id: selectedTopics[0]?.campaign_id,
+        campaign_id: selectedTopics[0]?.campaign_id || selectedTopics[0]?.campaignId,
         status: 'pending'
       });
     },
