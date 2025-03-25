@@ -201,6 +201,8 @@ export function KeywordSelector({
         // Фильтруем, чтобы не добавлять повторно существующие ключевые слова
         .filter(keyword => !existingKeywords.includes(keyword));
       
+      console.log("Выбранные ключевые слова для сохранения:", selectedKeywords);
+      
       if (selectedKeywords.length > 0) {
         // Оптимистично обновляем локальные состояния
         setExistingKeywords(prev => [...prev, ...selectedKeywords]);
@@ -211,6 +213,7 @@ export function KeywordSelector({
         });
         
         // Отправляем данные родительскому компоненту
+        // Важно: даже если выбрано только одно ключевое слово, мы передаем его в массиве
         onSelect(selectedKeywords);
         
         // Очищаем результаты после сохранения
