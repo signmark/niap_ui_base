@@ -310,6 +310,9 @@ export default function CampaignDetails() {
       // Обновляем данные с сервера, чтобы получить правильные ID и другие поля
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
       
+      // Также инвалидируем кэш для страницы ключевых слов
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", id] });
+      
       // Очищаем диалог поиска ключевых слов
       setIsSearchingKeywords(false);
       setSuggestedKeywords([]);
@@ -380,6 +383,10 @@ export default function CampaignDetails() {
     onSuccess: (result, keyword) => {
       // Запрашиваем новые данные, чтобы убедиться, что интерфейс синхронизирован с сервером
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
+      
+      // Также инвалидируем кэш для страницы ключевых слов
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", id] });
+      
       console.log(`Ключевое слово "${keyword}" успешно удалено`);
       // Удаляем дубликат уведомления, так как оно уже показывается в KeywordSelector
     },
@@ -397,6 +404,8 @@ export default function CampaignDetails() {
     // Всегда запрашиваем новые данные после мутации, независимо от результата
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
+      // Обновляем кэш для страницы ключевых слов
+      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", id] });
     }
   });
 
