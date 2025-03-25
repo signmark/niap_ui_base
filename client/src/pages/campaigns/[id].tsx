@@ -14,7 +14,7 @@ import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { BusinessQuestionnaireForm } from "@/components/BusinessQuestionnaireForm";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
