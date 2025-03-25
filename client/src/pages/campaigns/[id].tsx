@@ -202,6 +202,7 @@ export default function CampaignDetails() {
     }
   });
 
+  // Мутация для добавления ключевых слов
   const { mutate: addKeywords } = useMutation({
     mutationFn: async (keywords: string[]) => {
       const promises = keywords.map(keyword => 
@@ -229,6 +230,41 @@ export default function CampaignDetails() {
         variant: "destructive",
         title: "Ошибка",
         description: "Не удалось добавить ключевые слова"
+      });
+    }
+  });
+  
+  // Мутация для удаления ключевого слова при клике на него
+  const { mutate: removeKeyword } = useMutation({
+    mutationFn: async (keyword: string) => {
+      // Сначала получаем ID ключевого слова по его значению
+      const response = await directusApi.get('/items/campaign_keywords', {
+        params: {
+          filter: {
+            campaign_id: { _eq: id },
+            keyword: { _eq: keyword }
+          }
+        }
+      });
+      
+      // Проверяем, что нашли запись
+      if (response.data && response.data.data && response.data.data.length > 0) {
+        const keywordId = response.data.data[0].id;
+        // Удаляем ключевое слово по ID
+        await directusApi.delete(`/items/campaign_keywords/${keywordId}`);
+      } else {
+        throw new Error(`Ключевое слово "${keyword}" не найдено`);
+      }
+    },
+    onSuccess: (_, keyword) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
+      // Удаляем дубликат уведомления, так как оно уже показывается в KeywordSelector
+    },
+    onError: (error, keyword) => {
+      console.error("Ошибка при удалении ключевого слова:", error);
+      toast({
+        variant: "destructive",
+        description: `Не удалось удалить ключевое слово "${keyword}"`
       });
     }
   });
@@ -319,7 +355,18 @@ export default function CampaignDetails() {
               <KeywordSelector 
                 campaignId={id} 
                 onSelect={(keywords) => {
-                  if (keywords.length > 0) {
+                  if (keywords.length === 1) {
+                    // Проверяем контекст: если это с бейджа (удаление), вызываем removeKeyword
+                    const existingKeywords = keywordList?.map(k => k.keyword) || [];
+                    if (existingKeywords.includes(keywords[0])) {
+                      // Это существующее ключевое слово, значит его нужно удалить
+                      removeKeyword(keywords[0]);
+                    } else {
+                      // Это новое ключевое слово, его нужно добавить
+                      addKeywords(keywords);
+                    }
+                  } else if (keywords.length > 1) {
+                    // Пакетное добавление нескольких ключевых слов
                     addKeywords(keywords);
                   }
                 }}
