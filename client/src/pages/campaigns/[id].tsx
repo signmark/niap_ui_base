@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
@@ -16,7 +16,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCampaignStore } from "@/lib/store";
 
 interface SuggestedKeyword {
   keyword: string;
@@ -41,10 +42,14 @@ const normalizeUrl = (url: string): string => {
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
+  
+  // Получаем доступ к глобальному хранилищу кампаний
+  const { setSelectedCampaign } = useCampaignStore();
   
   // Для хранения выбранных трендов - изменяем тип на конкретный с правильными полями для улучшения типизации
   const [selectedTrends, setSelectedTrends] = useState<Array<{
@@ -127,6 +132,13 @@ export default function CampaignDetails() {
     refetchOnMount: true, // Обновляем данные при монтировании компонента
     refetchOnWindowFocus: true, // Обновляем данные при фокусе на окне
     retry: false,
+    onSuccess: (data) => {
+      // Устанавливаем загруженную кампанию как активную в глобальном хранилище
+      if (data && data.id && data.name) {
+        console.log(`Устанавливаем кампанию из страницы детализации: ${data.name} (${data.id})`);
+        setSelectedCampaign(data.id, data.name);
+      }
+    },
     onError: (err: Error) => {
       toast({
         title: "Ошибка доступа к кампании",
