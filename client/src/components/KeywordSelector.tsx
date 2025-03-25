@@ -162,39 +162,70 @@ export function KeywordSelector({
     }
   };
 
-  // Функция для выбора ключевого слова из результатов поиска (теперь только отмечает, но не очищает)
+  // Функция для выбора ключевого слова из результатов поиска и добавления в таблицу
   const handleSelect = (keyword: string) => {
-    // Проверяем, что ключевое слово еще не выбрано
-    if (!selectedItems.includes(keyword)) {
-      const newSelected = [...selectedItems, keyword];
-      setSelectedItems(newSelected);
+    // Проверяем, существует ли уже это ключевое слово
+    if (existingKeywords.includes(keyword)) {
+      // Если ключевое слово уже существует в кампании, показываем сообщение
+      toast({
+        variant: "destructive",
+        description: `Ключевое слово "${keyword}" уже добавлено в кампанию`
+      });
+      return;
+    }
+    
+    // Проверяем, выбрано ли уже это ключевое слово
+    if (selectedItems.includes(keyword)) {
+      // Если уже выбрано, убираем его из списка выбранных (снимаем чекбокс)
+      setSelectedItems(prev => prev.filter(item => item !== keyword));
       
-      // Показываем сообщение о добавлении
+      toast({
+        description: `Ключевое слово "${keyword}" удалено из списка выбора`
+      });
+    } else {
+      // Если не выбрано, добавляем в список выбранных (отмечаем чекбокс)
+      setSelectedItems(prev => [...prev, keyword]);
+      
+      // Показываем сообщение о добавлении в список выбора (НЕ в кампанию)
       toast({
         description: `Ключевое слово "${keyword}" добавлено в список выбора`
       });
-      
-      // Сохраняем изменения (только добавленные слова)
-      onSelect([keyword]); // Отправляем только новое слово для добавления
     }
   };
   
   // Функция для сохранения всех выбранных ключевых слов
   const handleSaveSelected = () => {
     if (keywords.length > 0) {
-      // Отправляем все выбранные ключевые слова
+      // Отправляем только те ключевые слова, которые ещё не существуют в существующих ключевых словах
       const selectedKeywords = keywords
         .filter(item => selectedItems.includes(item.keyword))
-        .map(item => item.keyword);
+        .map(item => item.keyword)
+        // Фильтруем, чтобы не добавлять повторно существующие ключевые слова
+        .filter(keyword => !existingKeywords.includes(keyword));
       
       if (selectedKeywords.length > 0) {
-        onSelect(selectedKeywords);
+        // Оптимистично обновляем локальные состояния
+        setExistingKeywords(prev => [...prev, ...selectedKeywords]);
         
+        // Уведомление для пользователя
         toast({
-          description: `Сохранено ${selectedKeywords.length} ключевых слов`
+          description: `Сохранено ${selectedKeywords.length} новых ключевых слов`
         });
         
+        // Отправляем данные родительскому компоненту
+        onSelect(selectedKeywords);
+        
         // Очищаем результаты после сохранения
+        setKeywords([]);
+        setSearchTerm('');
+      } else {
+        // Все выбранные ключевые слова уже существуют
+        toast({
+          description: "Выбранные ключевые слова уже добавлены",
+          variant: "default"
+        });
+        
+        // Очищаем результаты
         setKeywords([]);
         setSearchTerm('');
       }

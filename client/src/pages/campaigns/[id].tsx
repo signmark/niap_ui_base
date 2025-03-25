@@ -50,6 +50,7 @@ export default function CampaignDetails() {
   const { data: keywordList } = useQuery({
     queryKey: ["/api/keywords", id],
     queryFn: async () => {
+      console.log("Loading keywords for campaign:", id);
       const response = await directusApi.get('/items/campaign_keywords', {
         params: {
           filter: {
@@ -58,7 +59,11 @@ export default function CampaignDetails() {
         }
       });
       return response.data?.data || [];
-    }
+    },
+    // Отключаем кеширование, чтобы всегда получать свежие данные при переходе на страницу
+    staleTime: 0, // Запрос сразу считается устаревшим
+    refetchOnMount: true, // Обновляем данные при монтировании компонента
+    refetchOnWindowFocus: true // Обновляем данные при фокусе на окне
   });
 
   const { data: campaign, isLoading } = useQuery({
