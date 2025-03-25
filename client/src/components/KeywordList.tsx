@@ -39,7 +39,9 @@ export function KeywordList({ campaignId }: KeywordListProps) {
       });
     },
     onSuccess: () => {
+      // Инвалидируем оба ключа кеша, чтобы гарантировать обновление всех компонентов
       queryClient.invalidateQueries({ queryKey: ['/api/keywords', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign_keywords', campaignId] });
       toast({
         description: "Ключевое слово удалено"
       });
@@ -49,6 +51,11 @@ export function KeywordList({ campaignId }: KeywordListProps) {
         description: "Не удалось удалить ключевое слово",
         variant: "destructive"
       });
+    },
+    // Всегда инвалидируем кеш после завершения операции
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/keywords', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['campaign_keywords', campaignId] });
     }
   });
 

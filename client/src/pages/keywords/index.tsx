@@ -316,17 +316,24 @@ export default function Keywords() {
             onDelete={async (id) => {
               try {
                 await directusApi.delete(`items/campaign_keywords/${id}`);
+                // Инвалидируем оба кеша для согласования данных между компонентами
                 queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+                queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
                 toast({ 
                   title: "Успешно",
                   description: "Ключевое слово удалено" 
                 });
-              } catch {
+              } catch (error) {
+                console.error("Ошибка при удалении ключевого слова:", error);
                 toast({
                   variant: "destructive",
                   title: "Ошибка",
                   description: "Не удалось удалить ключевое слово"
                 });
+              } finally {
+                // Гарантируем обновление всех компонентов, использующих ключевые слова
+                queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+                queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
               }
             }}
             onKeywordToggle={handleKeywordToggle}
