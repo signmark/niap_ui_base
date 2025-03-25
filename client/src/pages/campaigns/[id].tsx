@@ -487,10 +487,12 @@ export default function CampaignDetails() {
     <div className="space-y-6 p-6">
       <div className="sticky top-0 bg-background z-10 pb-6">
         <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
-        <Accordion type="single" collapsible className="mb-4">
-          <AccordionItem value="site">
-            <AccordionTrigger>Сайт</AccordionTrigger>
-            <AccordionContent>
+        <Accordion type="single" defaultValue="site" collapsible className="mb-4 space-y-4">
+          <AccordionItem value="site" className="border rounded-lg px-6">
+            <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+              Сайт
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-4">
               <div className="flex gap-4 items-center pt-2">
                 <Input
                   placeholder="Введите URL сайта"
