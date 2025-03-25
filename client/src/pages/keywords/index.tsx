@@ -54,7 +54,11 @@ export default function Keywords() {
       });
       return response.data?.data || [];
     },
-    enabled: !!campaignId
+    enabled: !!campaignId,
+    // Добавляем параметр refetchOnMount, чтобы обновлять данные при переходе на страницу
+    refetchOnMount: true,
+    // Также добавляем небольшой интервал обновления данных
+    staleTime: 10000 // 10 секунд
   });
 
   const handleSearch = async () => {
