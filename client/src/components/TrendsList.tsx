@@ -185,7 +185,7 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   if (!trends?.length) {
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <Select
             value={selectedPeriod}
             onValueChange={(value: Period) => setSelectedPeriod(value)}
@@ -201,9 +201,26 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-center p-8 text-muted-foreground">
-          Нет актуальных трендов для этой кампании
-        </div>
+        <Card className="shadow-sm">
+          <CardContent className="text-center p-8">
+            <div className="flex flex-col items-center gap-2">
+              <Flame className="h-10 w-10 text-muted-foreground mb-2" />
+              <h3 className="text-lg font-semibold">Нет актуальных трендов</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Чтобы найти тренды, перейдите на страницу "Тренды" и нажмите на кнопку "Собрать тренды". 
+                Найденные тренды автоматически появятся здесь.
+              </p>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => window.location.href = '/trends'}
+              >
+                Перейти к трендам
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
