@@ -162,48 +162,37 @@ export function KeywordSelector({
     }
   };
 
-  // Функция для выбора/отмены выбора ключевого слова из результатов поиска
+  // Функция для выбора ключевого слова из результатов поиска (только для добавления)
   const handleSelect = (keyword: string) => {
-    const newSelected = [...selectedItems];
-    
-    if (newSelected.includes(keyword)) {
-      const index = newSelected.indexOf(keyword);
-      newSelected.splice(index, 1);
+    // Проверяем, что ключевое слово еще не выбрано
+    if (!selectedItems.includes(keyword)) {
+      const newSelected = [...selectedItems, keyword];
+      setSelectedItems(newSelected);
       
-      // Показываем сообщение об удалении
+      // Показываем сообщение о добавлении
       toast({
-        description: `Ключевое слово "${keyword}" удалено`
+        description: `Ключевое слово "${keyword}" добавлено`
       });
-    } else {
-      // Проверяем, что ключевое слово уникально для этой кампании
-      if (!newSelected.includes(keyword)) {
-        newSelected.push(keyword);
-        
-        // Показываем сообщение о добавлении
-        toast({
-          description: `Ключевое слово "${keyword}" добавлено`
-        });
-      }
+      
+      // Сохраняем изменения (только добавленные слова)
+      onSelect([keyword]); // Отправляем только новое слово для добавления
     }
-    
-    setSelectedItems(newSelected);
-    
-    // Сразу сохраняем при выборе/отмене выбора из поиска
-    onSelect(newSelected);
   };
   
   // Функция для удаления ключевого слова при клике на бейдж (для уже выбранных слов)
-  // с мгновенным сохранением на сервере
+  // с мгновенным сохранением на сервере путем отправки только удаляемого ключевого слова
   const handleRemoveKeyword = (keyword: string) => {
     const newSelected = selectedItems.filter(item => item !== keyword);
     setSelectedItems(newSelected);
     
-    // Сразу сохраняем изменения на сервере
-    onSelect(newSelected);
-    
+    // Сразу показываем уведомление пользователю
     toast({
       description: `Ключевое слово "${keyword}" удалено`
     });
+    
+    // Отправляем ключевое слово для удаления в родительский компонент
+    // Родительский компонент [id].tsx будет обрабатывать это удаление через removeKeyword
+    onSelect([keyword]);
   };
 
   const formatNumber = (num: number): string => {
