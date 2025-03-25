@@ -6733,7 +6733,7 @@ https://t.me/channelname/ - description`;
                 _eq: campaignId
               }
             },
-            fields: ['id', 'keyword', 'trend_score', 'campaign_id']
+            fields: ['id', 'keyword', 'trend_score', 'mentions_count', 'campaign_id', 'last_checked', 'date_created']
           },
           headers: {
             'Authorization': `Bearer ${token}`
@@ -6750,7 +6750,11 @@ https://t.me/channelname/ - description`;
         const keywords = (response.data?.data || []).map((item: any) => ({
           id: item.id,
           keyword: item.keyword,
-          trendScore: item.trend_score
+          trend_score: item.trend_score,
+          mentions_count: item.mentions_count,
+          campaign_id: item.campaign_id,
+          last_checked: item.last_checked,
+          date_created: item.date_created
         }));
         
         res.json({ data: keywords });

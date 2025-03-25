@@ -9,8 +9,9 @@ import { apiRequest } from '@/lib/queryClient';
 interface Keyword {
   id: number;
   keyword: string;
-  trendScore: number;
-  campaign_id: string;
+  trend_score: number;    // Используем поле trend_score из БД
+  mentions_count: number; // Добавляем поле mentions_count из БД
+  campaignId: string;     // Используем camelCase для соответствия остальному коду
 }
 
 interface KeywordListProps {
@@ -83,9 +84,10 @@ export function KeywordList({ campaignId }: KeywordListProps) {
       />
 
       <div className="border rounded-lg">
-        <div className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 font-medium border-b">
+        <div className="grid grid-cols-[1fr,auto,auto,auto] gap-4 p-4 font-medium border-b">
           <div>Ключевое слово</div>
           <div>Тренд</div>
+          <div>Конкуренция</div>
           <div></div>
         </div>
 
@@ -95,9 +97,10 @@ export function KeywordList({ campaignId }: KeywordListProps) {
           </div>
         ) : (
           filteredKeywords.map((keyword: Keyword) => (
-            <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 items-center hover:bg-muted/50">
+            <div key={keyword.id} className="grid grid-cols-[1fr,auto,auto,auto] gap-4 p-4 items-center hover:bg-muted/50">
               <div>{keyword.keyword}</div>
-              <div>{keyword.trendScore}</div>
+              <div>{keyword.trend_score}</div>
+              <div>{keyword.mentions_count}</div>
               <Button
                 variant="ghost"
                 size="icon"
