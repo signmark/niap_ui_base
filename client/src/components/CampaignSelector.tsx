@@ -7,18 +7,19 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useCampaignStore } from "@/lib/campaignStore";
+import { useCampaignStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/store";
 import { Loader2 } from "lucide-react";
 
-interface Campaign {
+// Интерфейс для кампании
+export interface Campaign {
   id: string;
   name: string;
   description?: string;
 }
 
 export function CampaignSelector() {
-  const { selectedCampaign, setSelectedCampaign } = useCampaignStore();
+  const { selectedCampaignId, selectedCampaignName, setSelectedCampaign } = useCampaignStore();
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   const userId = useAuthStore((state) => state.userId);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -48,7 +49,7 @@ export function CampaignSelector() {
         }
 
         const data = await response.json();
-        console.log("Loaded campaigns:", data.data ? data.data.length : 0, "items");
+        console.log("Campaigns loaded:", data.data ? data.data.length : 0);
         return data;
       } catch (error) {
         console.error("Error loading campaigns:", error);
@@ -60,20 +61,31 @@ export function CampaignSelector() {
     retry: 1
   });
 
-  // При первой загрузке, если кампания не выбрана, выбираем первую из списка
+  // При первой загрузке, проверяем:
+  // 1. Если есть сохранённая кампания в сторе, пропускаем авто-выбор
+  // 2. Если нет, выбираем первую из списка
   useEffect(() => {
-    if (campaignsResponse?.data?.length > 0 && !selectedCampaign && isFirstLoad) {
-      setSelectedCampaign(campaignsResponse.data[0]);
+    if (campaignsResponse?.data?.length > 0 && isFirstLoad) {
+      // Если кампания уже выбрана в сторе, просто завершаем первичную загрузку
+      if (selectedCampaignId) {
+        console.log(`Используем глобально выбранную кампанию: "${selectedCampaignName}"`);
+        setIsFirstLoad(false);
+        return;
+      }
+      
+      // Если нет, выбираем первую из списка
+      const firstCampaign = campaignsResponse.data[0];
+      console.log(`Auto-selected campaign: "${firstCampaign.name}"`);
+      setSelectedCampaign(firstCampaign.id, firstCampaign.name);
       setIsFirstLoad(false);
-      console.log("Auto-selected campaign:", campaignsResponse.data[0].name);
     }
-  }, [campaignsResponse, selectedCampaign, setSelectedCampaign, isFirstLoad]);
+  }, [campaignsResponse, selectedCampaignId, selectedCampaignName, setSelectedCampaign, isFirstLoad]);
 
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
-      console.log("Manually selected campaign:", campaign.name);
-      setSelectedCampaign(campaign);
+      console.log(`Manually selected campaign: "${campaign.name}"`);
+      setSelectedCampaign(campaign.id, campaign.name);
     }
   };
 
@@ -96,7 +108,7 @@ export function CampaignSelector() {
           </div>
         ) : (
           <Select
-            value={selectedCampaign?.id || undefined}
+            value={selectedCampaignId || undefined}
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger>
