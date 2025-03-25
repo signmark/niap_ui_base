@@ -170,7 +170,9 @@ export function KeywordSelector({
     }
     
     setSelectedItems(newSelected);
-    onSelect(newSelected);
+    // Не вызываем onSelect здесь, чтобы избежать автоматического добавления
+    // при клике на бейдже. onSelect будет вызываться только при явных действиях
+    // пользователя (например, нажатие кнопки "Добавить")
   };
 
   const formatNumber = (num: number): string => {
@@ -218,6 +220,14 @@ export function KeywordSelector({
                 {keyword}
               </Badge>
             ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button 
+              onClick={() => onSelect(selectedItems)}
+              size="sm"
+            >
+              Сохранить ключевые слова
+            </Button>
           </div>
         </div>
       )}
