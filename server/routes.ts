@@ -6654,6 +6654,47 @@ https://t.me/channelname/ - description`;
   });
 
   // Campaign Keywords routes
+  app.get("/api/keywords/:campaignId", async (req, res) => {
+    try {
+      const campaignId = req.params.campaignId;
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        // Получаем ключевые слова для кампании из Directus
+        const response = await directusApi.get(`/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.data || !response.data.data) {
+          return res.json([]);
+        }
+        
+        // Трансформируем данные
+        const keywords = response.data.data.map((item: any) => ({
+          id: item.id,
+          keyword: item.keyword,
+          campaignId: item.campaign_id
+        }));
+        
+        return res.json(keywords);
+      } catch (error) {
+        console.error('Error fetching keywords:', error);
+        return res.status(500).json({ error: "Failed to fetch keywords" });
+      }
+    } catch (error) {
+      console.error('Error in /api/keywords/:campaignId endpoint:', error);
+      return res.status(500).json({ error: "Server error" });
+    }
+  });
+  
   app.get("/api/keywords", async (req, res) => {
     try {
       const campaignId = req.query.campaignId as string;

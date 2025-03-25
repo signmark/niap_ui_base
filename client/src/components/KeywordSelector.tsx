@@ -74,7 +74,10 @@ export function KeywordSelector({
   };
 
   useEffect(() => {
-    loadExistingKeywords();
+    if (campaignId) {
+      console.log("Loading keywords for campaign:", campaignId);
+      loadExistingKeywords();
+    }
   }, [campaignId]);
 
   useEffect(() => {
