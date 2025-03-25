@@ -24,7 +24,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
   const queryClient = useQueryClient();
 
   const { data: keywords, isLoading } = useQuery({
-    queryKey: ['/api/keywords', campaignId],
+    queryKey: ['campaign_keywords', campaignId],
     queryFn: async () => {
       if (!campaignId || campaignId === "loading" || campaignId === "empty") return [];
       const response = await apiRequest(`/api/keywords/${campaignId}`);
