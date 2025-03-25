@@ -53,9 +53,8 @@ export function KeywordList({ campaignId }: KeywordListProps) {
   });
 
   const handleDelete = async (keywordId: number) => {
-    if (confirm("Вы уверены, что хотите удалить это ключевое слово?")) {
-      deleteKeyword(keywordId);
-    }
+    // Удаляем сразу без подтверждения
+    deleteKeyword(keywordId);
   };
 
   const filteredKeywords = keywords?.filter((kw: Keyword) => 

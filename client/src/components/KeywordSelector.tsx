@@ -162,7 +162,7 @@ export function KeywordSelector({
     }
   };
 
-  // Функция для выбора/отмены выбора ключевого слова (используется в таблице результатов поиска)
+  // Функция для выбора/отмены выбора ключевого слова из результатов поиска
   const handleSelect = (keyword: string) => {
     const newSelected = [...selectedItems];
     
@@ -175,9 +175,8 @@ export function KeywordSelector({
     
     setSelectedItems(newSelected);
     
-    // Для новых ключевых слов из поиска мы не сохраняем автоматически,
-    // а для существующих ключевых слов моментально удаляем при клике на бейдж
-    // в handleRemoveKeyword
+    // Сразу сохраняем при выборе/отмене выбора из поиска
+    onSelect(newSelected);
   };
   
   // Функция для удаления ключевого слова при клике на бейдж (для уже выбранных слов)
@@ -188,10 +187,6 @@ export function KeywordSelector({
     
     // Сразу сохраняем изменения на сервере
     onSelect(newSelected);
-    
-    toast({
-      description: `Ключевое слово "${keyword}" удалено`
-    });
   };
 
   const formatNumber = (num: number): string => {
@@ -253,22 +248,7 @@ export function KeywordSelector({
             ))}
           </div>
           
-          {/* Показываем кнопку сохранения только если есть изменения по сравнению с исходными ключевыми словами */}
-          {!areArraysEqual(selectedItems, existingKeywords) && (
-            <div className="flex justify-end mt-4">
-              <Button 
-                onClick={() => onSelect(selectedItems)}
-                size="sm"
-                className={selectedItems.length < existingKeywords.length ? "bg-amber-600 hover:bg-amber-700" : ""}
-              >
-                {selectedItems.length < existingKeywords.length 
-                  ? `Сохранить изменения (${existingKeywords.length - selectedItems.length} удал.)` 
-                  : selectedItems.length > existingKeywords.length
-                    ? `Сохранить изменения (+${selectedItems.length - existingKeywords.length} нов.)`
-                    : 'Сохранить ключевые слова'}
-              </Button>
-            </div>
-          )}
+
         </div>
       )}
 
