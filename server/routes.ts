@@ -6773,7 +6773,12 @@ https://t.me/channelname/ - description`;
       const keywordId = req.params.keywordId;
       const authHeader = req.headers.authorization;
       
+      console.log(`=== DELETE KEYWORD REQUEST RECEIVED ===`);
+      console.log(`Requested keywordId: ${keywordId}`);
+      console.log(`Auth header present: ${!!authHeader}`);
+      
       if (!authHeader) {
+        console.log(`Authorization header missing, returning 401`);
         return res.status(401).json({ error: "Unauthorized" });
       }
       
@@ -6783,12 +6788,16 @@ https://t.me/channelname/ - description`;
         console.log(`Deleting keyword with ID: ${keywordId} from campaign_keywords table`);
         
         // Удаляем ключевое слово из Directus через таблицу campaign_keywords
-        await directusApi.delete(`/items/campaign_keywords/${keywordId}`, {
+        const deleteUrl = `/items/campaign_keywords/${keywordId}`;
+        console.log(`Making DELETE request to Directus: ${deleteUrl}`);
+        
+        await directusApi.delete(deleteUrl, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
+        console.log(`Successfully deleted keyword with ID: ${keywordId}`);
         return res.json({ success: true, message: "Keyword successfully deleted" });
       } catch (error) {
         console.error('Error deleting keyword from Directus:', error);
