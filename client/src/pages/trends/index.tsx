@@ -510,7 +510,7 @@ export default function Trends() {
       if (!authToken) {
         throw new Error("Требуется авторизация");
       }
-      const response = await directusApi.get('/items/user_keywords', {
+      const response = await directusApi.get('/items/campaign_keywords', {
         params: {
           filter: {
             campaign_id: {
