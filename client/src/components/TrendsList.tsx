@@ -64,10 +64,18 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     queryKey: ["campaign-trends", campaignId, selectedPeriod],
     queryFn: async () => {
       try {
+        // Получаем токен авторизации из localStorage
+        const token = localStorage.getItem('auth_token');
+        console.log("Authorization token from localStorage:", token ? `${token.substring(0, 10)}...` : 'not found');
+
         const response = await api.get('/api/campaign-trends', {
           params: {
             campaignId,
             period: selectedPeriod
+          },
+          // Явно указываем заголовок авторизации
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
           }
         });
         
@@ -146,8 +154,17 @@ export function TrendsList({ campaignId }: TrendsListProps) {
   // Мутация для управления закладками
   const bookmarkMutation = useMutation({
     mutationFn: async ({ id, isBookmarked }: { id: string; isBookmarked: boolean }) => {
+      // Получаем токен авторизации из localStorage
+      const token = localStorage.getItem('auth_token');
+      console.log("Bookmark mutation using token:", token ? `${token.substring(0, 10)}...` : 'not found');
+
       const response = await api.patch(`/api/campaign-trends/${id}/bookmark`, {
         isBookmarked
+      }, {
+        // Явно указываем заголовок авторизации
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
       });
       return response.data;
     },
