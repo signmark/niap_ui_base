@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useCampaignStore } from "@/lib/store";
+import { useCampaignStore } from "@/lib/campaignStore";
 
 interface SuggestedKeyword {
   keyword: string;
