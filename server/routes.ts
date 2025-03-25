@@ -6654,6 +6654,8 @@ https://t.me/channelname/ - description`;
   });
 
   // Campaign Keywords routes
+  // API эндпоинт для получения ключевых слов кампании по ID кампании
+  // Используется в KeywordSelector и KeywordTable
   app.get("/api/keywords/:campaignId", async (req, res) => {
     try {
       const campaignId = req.params.campaignId;
@@ -6697,6 +6699,8 @@ https://t.me/channelname/ - description`;
     }
   });
   
+  // API эндпоинт для получения ключевых слов по ID кампании через query параметр
+  // Используется в KeywordList и некоторых других компонентах
   app.get("/api/keywords", async (req, res) => {
     try {
       const campaignId = req.query.campaignId as string;
