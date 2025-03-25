@@ -15,6 +15,8 @@ import { ru } from 'date-fns/locale';
 
 interface TrendsListProps {
   campaignId: string;
+  onSelectTrends?: (trends: TrendTopic[]) => void;
+  selectable?: boolean;
 }
 
 type Period = "3days" | "7days" | "14days" | "30days";
@@ -52,13 +54,14 @@ interface TrendTopic {
 
 // Используем импортированную функцию createProxyImageUrl из utils/media
 
-export function TrendsList({ campaignId }: TrendsListProps) {
+export function TrendsList({ campaignId, onSelectTrends, selectable = false }: TrendsListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("7days");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [selectedTrend, setSelectedTrend] = useState<TrendTopic | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedTrends, setSelectedTrends] = useState<TrendTopic[]>([]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["campaign-trends", campaignId, selectedPeriod],
@@ -262,6 +265,40 @@ export function TrendsList({ campaignId }: TrendsListProps) {
     );
   }
 
+  // Обработчик выбора тренда
+  const handleTrendSelect = (trend: TrendTopic, e?: React.MouseEvent) => {
+    if (!selectable) return;
+    
+    // Если передано событие, предотвращаем всплытие, чтобы не открывался диалог
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    setSelectedTrends(prevSelected => {
+      const isSelected = prevSelected.some(t => t.id === trend.id);
+      
+      if (isSelected) {
+        // Если тренд уже выбран, удаляем его из выбранных
+        return prevSelected.filter(t => t.id !== trend.id);
+      } else {
+        // Иначе добавляем его к выбранным
+        return [...prevSelected, trend];
+      }
+    });
+  };
+  
+  // Проверка, выбран ли тренд
+  const isTrendSelected = (trendId: string): boolean => {
+    return selectedTrends.some(t => t.id === trendId);
+  };
+  
+  // Эффект для передачи выбранных трендов в родительский компонент
+  useEffect(() => {
+    if (onSelectTrends) {
+      onSelectTrends(selectedTrends);
+    }
+  }, [selectedTrends, onSelectTrends]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -279,6 +316,19 @@ export function TrendsList({ campaignId }: TrendsListProps) {
             <SelectItem value="30days">За месяц</SelectItem>
           </SelectContent>
         </Select>
+        
+        {selectable && selectedTrends.length > 0 && (
+          <div className="flex items-center">
+            <span className="text-sm mr-2">Выбрано: {selectedTrends.length}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedTrends([])}
+            >
+              Очистить
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 pr-2 pb-4">
