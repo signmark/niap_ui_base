@@ -185,14 +185,14 @@ export default function Keywords() {
     }
   };
 
-  // Получаем setSelectedCampaign из глобального хранилища
+  // Получаем функцию выбора кампании из глобального хранилища
   const { setSelectedCampaign } = useCampaignStore();
 
   // Функция для обновления выбранной кампании
   const handleCampaignSelect = (campaignId: string) => {
     const campaign = campaigns?.find((c: Campaign) => String(c.id) === campaignId);
     if (campaign) {
-      setSelectedCampaign(campaign);
+      setSelectedCampaign(campaign.id, campaign.name);
     }
   };
 
@@ -245,13 +245,13 @@ export default function Keywords() {
       <div className="flex flex-col">
         <h1 className="text-2xl font-bold">Ключевые слова</h1>
         <p className="text-muted-foreground mt-2">
-          {selectedCampaign 
-            ? `Ключевые слова для кампании "${selectedCampaign.name}"` 
+          {selectedCampaignId && selectedCampaignName
+            ? `Ключевые слова для кампании "${selectedCampaignName}"` 
             : "Выберите кампанию для управления ключевыми словами"}
         </p>
       </div>
 
-      {!selectedCampaign && (
+      {!(selectedCampaignId && selectedCampaignName) && (
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
@@ -261,7 +261,7 @@ export default function Keywords() {
         </Card>
       )}
 
-      {selectedCampaign && (
+      {selectedCampaignId && selectedCampaignName && (
         <Tabs defaultValue="search" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="search">Поиск ключевых слов</TabsTrigger>
