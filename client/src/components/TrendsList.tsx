@@ -298,7 +298,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
     if (onSelectTrends) {
       onSelectTrends(selectedTrends);
     }
-  }, [selectedTrends, onSelectTrends]);
+  }, [selectedTrends]); // Убираем onSelectTrends из зависимостей, чтобы избежать бесконечного цикла
 
   return (
     <div className="space-y-4">
