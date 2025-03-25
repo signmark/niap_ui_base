@@ -399,16 +399,24 @@ export default function CampaignDetails() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Найденные ключевые слова</DialogTitle>
+            <DialogDescription>
+              Выберите ключевые слова для добавления в кампанию
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="space-y-4">
               {suggestedKeywords.map((kw, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <Checkbox 
+                    id={`keyword-${index}`}
                     checked={kw.isSelected} 
                     onCheckedChange={() => toggleKeywordSelection(index)}
+                    className="data-[state=checked]:bg-primary"
                   />
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label 
+                    htmlFor={`keyword-${index}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
                     {kw.keyword}
                   </label>
                 </div>
