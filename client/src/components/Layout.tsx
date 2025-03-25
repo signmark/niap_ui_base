@@ -174,8 +174,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <Menu className="h-6 w-6" />
             </Button>
-            {/* Отображаем селектор кампаний на всех страницах для единообразия */}
-            <CampaignSelector />
+            {/* Исключаем отображение селектора на странице списка кампаний, где уже есть список */}
+            {!location.startsWith('/campaigns') && <CampaignSelector persistSelection={true} />}
           </div>
         </div>
         <main className="flex-1 p-4 lg:p-8">{children}</main>
