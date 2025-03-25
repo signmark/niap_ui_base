@@ -6766,6 +6766,49 @@ https://t.me/channelname/ - description`;
       res.status(500).json({ error: "Failed to fetch keywords" });
     }
   });
+  
+  // DELETE endpoint для удаления ключевых слов
+  app.delete("/api/keywords/:keywordId", async (req, res) => {
+    try {
+      const keywordId = req.params.keywordId;
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        console.log(`Deleting keyword with ID: ${keywordId} from campaign_keywords table`);
+        
+        // Удаляем ключевое слово из Directus через таблицу campaign_keywords
+        await directusApi.delete(`/items/campaign_keywords/${keywordId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        return res.json({ success: true, message: "Keyword successfully deleted" });
+      } catch (error) {
+        console.error('Error deleting keyword from Directus:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Directus API error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method
+            }
+          });
+        }
+        return res.status(500).json({ error: "Failed to delete keyword" });
+      }
+    } catch (error) {
+      console.error('Error in /api/keywords/:keywordId DELETE endpoint:', error);
+      return res.status(500).json({ error: "Server error" });
+    }
+  });
 
   // Campaign Content routes
   app.get("/api/campaign-content", async (req, res) => {
