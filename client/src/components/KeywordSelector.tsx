@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/lib/store';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Keyword {
   keyword: string;
