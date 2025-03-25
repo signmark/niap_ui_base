@@ -169,8 +169,21 @@ export function KeywordSelector({
     if (newSelected.includes(keyword)) {
       const index = newSelected.indexOf(keyword);
       newSelected.splice(index, 1);
+      
+      // Показываем сообщение об удалении
+      toast({
+        description: `Ключевое слово "${keyword}" удалено`
+      });
     } else {
-      newSelected.push(keyword);
+      // Проверяем, что ключевое слово уникально для этой кампании
+      if (!newSelected.includes(keyword)) {
+        newSelected.push(keyword);
+        
+        // Показываем сообщение о добавлении
+        toast({
+          description: `Ключевое слово "${keyword}" добавлено`
+        });
+      }
     }
     
     setSelectedItems(newSelected);
@@ -187,6 +200,10 @@ export function KeywordSelector({
     
     // Сразу сохраняем изменения на сервере
     onSelect(newSelected);
+    
+    toast({
+      description: `Ключевое слово "${keyword}" удалено`
+    });
   };
 
   const formatNumber = (num: number): string => {
