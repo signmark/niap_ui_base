@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Search } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
-import { useCampaignStore } from "@/lib/store"; // Используем общее хранилище
+import { useCampaignStore } from "@/lib/campaignStore"; // Используем общее хранилище
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WebsiteKeywordAnalyzer } from "@/components/WebsiteKeywordAnalyzer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

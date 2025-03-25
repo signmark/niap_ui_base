@@ -7,7 +7,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useCampaignStore } from "@/lib/store";
+import { useCampaignStore } from "@/lib/campaignStore";
 import { useAuthStore } from "@/lib/store";
 import { Loader2 } from "lucide-react";
 

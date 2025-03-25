@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+// Импортируем хранилище кампании из отдельного файла
+import { useCampaignStore } from './campaignStore';
 
 interface AuthState {
   token: string | null;
@@ -70,42 +72,5 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Интерфейс для состояния выбранной кампании
-interface CampaignState {
-  selectedCampaignId: string | null;
-  selectedCampaignName: string | null;
-  setSelectedCampaign: (id: string, name: string) => void;
-  clearSelectedCampaign: () => void;
-}
-
-// Хранилище для выбранной кампании
-export const useCampaignStore = create<CampaignState>()(
-  persist(
-    (set) => ({
-      selectedCampaignId: localStorage.getItem('selected_campaign_id') || null,
-      selectedCampaignName: localStorage.getItem('selected_campaign_name') || null,
-      setSelectedCampaign: (id, name) => {
-        // Сохраняем ID и название кампании в localStorage для быстрого доступа
-        localStorage.setItem('selected_campaign_id', id);
-        localStorage.setItem('selected_campaign_name', name);
-        
-        console.log(`Установлена активная кампания: id=${id}, name=${name}`);
-        set({ selectedCampaignId: id, selectedCampaignName: name });
-      },
-      clearSelectedCampaign: () => {
-        console.log('Очистка данных о выбранной кампании');
-        localStorage.removeItem('selected_campaign_id');
-        localStorage.removeItem('selected_campaign_name');
-        set({ selectedCampaignId: null, selectedCampaignName: null });
-      }
-    }),
-    {
-      name: 'campaign-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
-        selectedCampaignId: state.selectedCampaignId,
-        selectedCampaignName: state.selectedCampaignName
-      }),
-    }
-  )
-);
+// Хранилище для выбранной кампании перенесено в campaignStore.ts
+// Используйте импорт из 'lib/campaignStore' для доступа к состоянию кампании
