@@ -18,11 +18,28 @@ export interface Campaign {
   description?: string;
 }
 
-export function CampaignSelector() {
+interface CampaignSelectorProps {
+  /**
+   * Если true, компонент будет сохранять текущий выбор кампании и не будет
+   * автоматически менять его даже если в ответе от API есть другая кампания первой
+   */
+  persistSelection?: boolean;
+}
+
+export function CampaignSelector({ persistSelection = false }: CampaignSelectorProps) {
   const { selectedCampaignId, selectedCampaignName, setSelectedCampaign } = useCampaignStore();
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   const userId = useAuthStore((state) => state.userId);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [initiallySelectedId, setInitiallySelectedId] = useState<string | null>(null);
+
+  // Сохраняем ID выбранной кампании при первом рендере
+  useEffect(() => {
+    if (persistSelection && selectedCampaignId && !initiallySelectedId) {
+      setInitiallySelectedId(selectedCampaignId);
+      console.log(`Сохраняем ID выбранной кампании для постоянного отображения: ${selectedCampaignId}`);
+    }
+  }, [persistSelection, selectedCampaignId, initiallySelectedId]);
 
   // Получаем список всех кампаний
   const { data: campaignsResponse, isLoading, isError, error } = useQuery({
@@ -62,30 +79,47 @@ export function CampaignSelector() {
   });
 
   // При первой загрузке, проверяем:
-  // 1. Если есть сохранённая кампания в сторе, пропускаем авто-выбор
-  // 2. Если нет, выбираем первую из списка
+  // 1. Если persistSelection=true и у нас уже есть сохраненный ID, используем его
+  // 2. Если есть сохранённая кампания в сторе, пропускаем авто-выбор
+  // 3. Если нет, выбираем первую из списка
   useEffect(() => {
-    if (campaignsResponse?.data?.length > 0 && isFirstLoad) {
-      // Если кампания уже выбрана в сторе, просто завершаем первичную загрузку
-      if (selectedCampaignId) {
-        console.log(`Используем глобально выбранную кампанию: "${selectedCampaignName}"`);
+    if (!campaignsResponse?.data?.length || !isFirstLoad) return;
+
+    // Если мы хотим сохранить текущий выбор и у нас есть сохраненный ID
+    if (persistSelection && initiallySelectedId) {
+      const savedCampaign = campaignsResponse.data.find((c: Campaign) => c.id === initiallySelectedId);
+      if (savedCampaign) {
+        console.log(`Восстанавливаем сохраненную кампанию: "${savedCampaign.name}"`);
+        setSelectedCampaign(savedCampaign.id, savedCampaign.name);
         setIsFirstLoad(false);
         return;
       }
-      
-      // Если нет, выбираем первую из списка
-      const firstCampaign = campaignsResponse.data[0];
-      console.log(`Auto-selected campaign: "${firstCampaign.name}"`);
-      setSelectedCampaign(firstCampaign.id, firstCampaign.name);
-      setIsFirstLoad(false);
     }
-  }, [campaignsResponse, selectedCampaignId, selectedCampaignName, setSelectedCampaign, isFirstLoad]);
+    
+    // Если кампания уже выбрана в сторе, просто завершаем первичную загрузку
+    if (selectedCampaignId) {
+      console.log(`Используем глобально выбранную кампанию: "${selectedCampaignName}"`);
+      setIsFirstLoad(false);
+      return;
+    }
+    
+    // Если нет, выбираем первую из списка
+    const firstCampaign = campaignsResponse.data[0];
+    console.log(`Auto-selected campaign: "${firstCampaign.name}"`);
+    setSelectedCampaign(firstCampaign.id, firstCampaign.name);
+    setIsFirstLoad(false);
+  }, [campaignsResponse, selectedCampaignId, selectedCampaignName, setSelectedCampaign, isFirstLoad, persistSelection, initiallySelectedId]);
 
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
       console.log(`Manually selected campaign: "${campaign.name}"`);
       setSelectedCampaign(campaign.id, campaign.name);
+      
+      // Если используется режим сохранения выбора, обновляем сохраненный ID
+      if (persistSelection) {
+        setInitiallySelectedId(campaign.id);
+      }
     }
   };
 
@@ -96,6 +130,9 @@ export function CampaignSelector() {
       </div>
     );
   }
+
+  // Определяем значение для отображения в селекторе
+  const displayValue = persistSelection && initiallySelectedId ? initiallySelectedId : selectedCampaignId;
 
   return (
     <div className="flex items-center">
@@ -108,7 +145,7 @@ export function CampaignSelector() {
           </div>
         ) : (
           <Select
-            value={selectedCampaignId || undefined}
+            value={displayValue || undefined}
             onValueChange={handleCampaignChange}
           >
             <SelectTrigger>

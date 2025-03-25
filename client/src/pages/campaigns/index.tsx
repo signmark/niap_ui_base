@@ -5,12 +5,12 @@ import { Dialog } from "@/components/ui/dialog";
 import { Plus, Search, Pencil } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useCampaignStore } from "@/lib/store";
 import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 
 export default function Campaigns() {
@@ -19,7 +19,10 @@ export default function Campaigns() {
   const [editedName, setEditedName] = useState("");
   const { userId } = useAuthStore();
   const { toast } = useToast();
-
+  const [, navigate] = useLocation();
+  
+  // Получаем функцию для установки выбранной кампании
+  const { setSelectedCampaign } = useCampaignStore();
   const { getAuthToken } = useAuthStore();
   
   const { data: campaignsResponse, isLoading, error } = useQuery<{data: Campaign[]}>({
@@ -207,12 +210,21 @@ export default function Campaigns() {
             <CardContent>
               <p className="text-sm text-gray-500">{campaign.description}</p>
               <div className="mt-4 flex gap-2">
-                <Link href={`/campaigns/${campaign.id}`}>
-                  <Button variant="secondary" size="sm">
-                    <Search className="mr-2 h-4 w-4" />
-                    Управлять
-                  </Button>
-                </Link>
+                {/* Обновлено: устанавливаем выбранную кампанию при нажатии на "Управлять" */}
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    // Устанавливаем кампанию как выбранную
+                    setSelectedCampaign(campaign.id, campaign.name);
+                    console.log(`Выбрана кампания: ${campaign.name} (${campaign.id})`);
+                    // Перенаправляем на страницу кампании
+                    navigate(`/campaigns/${campaign.id}`);
+                  }}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Управлять
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
