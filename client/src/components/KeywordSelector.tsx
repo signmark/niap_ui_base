@@ -162,7 +162,7 @@ export function KeywordSelector({
     }
   };
 
-  // Функция для выбора ключевого слова из результатов поиска (только для добавления)
+  // Функция для выбора ключевого слова из результатов поиска (теперь только отмечает, но не очищает)
   const handleSelect = (keyword: string) => {
     // Проверяем, что ключевое слово еще не выбрано
     if (!selectedItems.includes(keyword)) {
@@ -171,15 +171,33 @@ export function KeywordSelector({
       
       // Показываем сообщение о добавлении
       toast({
-        description: `Ключевое слово "${keyword}" добавлено`
+        description: `Ключевое слово "${keyword}" добавлено в список выбора`
       });
       
       // Сохраняем изменения (только добавленные слова)
       onSelect([keyword]); // Отправляем только новое слово для добавления
+    }
+  };
+  
+  // Функция для сохранения всех выбранных ключевых слов
+  const handleSaveSelected = () => {
+    if (keywords.length > 0) {
+      // Отправляем все выбранные ключевые слова
+      const selectedKeywords = keywords
+        .filter(item => selectedItems.includes(item.keyword))
+        .map(item => item.keyword);
       
-      // Очищаем результаты поиска после добавления
-      setKeywords([]);
-      setSearchTerm('');
+      if (selectedKeywords.length > 0) {
+        onSelect(selectedKeywords);
+        
+        toast({
+          description: `Сохранено ${selectedKeywords.length} ключевых слов`
+        });
+        
+        // Очищаем результаты после сохранения
+        setKeywords([]);
+        setSearchTerm('');
+      }
     }
   };
   
@@ -292,6 +310,15 @@ export function KeywordSelector({
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleSaveSelected}
+              disabled={!keywords.some(item => selectedItems.includes(item.keyword))}
+            >
+              Сохранить выбранные
+            </Button>
           </div>
         </div>
       )}
