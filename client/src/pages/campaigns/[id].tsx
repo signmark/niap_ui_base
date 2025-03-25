@@ -16,7 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 interface SuggestedKeyword {
   keyword: string;
@@ -45,7 +45,22 @@ export default function CampaignDetails() {
   const queryClient = useQueryClient();
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
-  const [selectedTrends, setSelectedTrends] = useState<any[]>([]); // Для хранения выбранных трендов
+  
+  // Для хранения выбранных трендов - изменяем тип на конкретный с правильными полями для улучшения типизации
+  const [selectedTrends, setSelectedTrends] = useState<Array<{
+    id: string;
+    title: string;
+    sourceId?: string;
+    source_id?: string;
+    campaignId?: string;
+    campaign_id?: string;
+    [key: string]: any;  // Для поддержки других полей
+  }>>([]);
+  
+  // Используем useCallback для стабилизации функции обратного вызова
+  const handleSelectTrends = useCallback((trends: any[]) => {
+    setSelectedTrends(trends);
+  }, []);
 
   // Запрос для получения списка ключевых слов
   const { data: keywordList } = useQuery({
@@ -589,7 +604,7 @@ export default function CampaignDetails() {
               <TrendsList 
                 campaignId={id} 
                 selectable={true} 
-                onSelectTrends={(trends) => setSelectedTrends(trends)} 
+                onSelectTrends={handleSelectTrends} 
               />
             </div>
           </AccordionContent>
