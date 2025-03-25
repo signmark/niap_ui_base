@@ -162,7 +162,7 @@ export default function Keywords() {
           last_checked: now
         };
 
-        await directusApi.post('items/user_keywords', data);
+        await directusApi.post('items/campaign_keywords', data);
       }
 
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
@@ -218,7 +218,7 @@ export default function Keywords() {
           last_checked: now
         };
 
-        await directusApi.post('items/user_keywords', data);
+        await directusApi.post('items/campaign_keywords', data);
       }
 
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
@@ -311,7 +311,7 @@ export default function Keywords() {
             isLoading={isLoadingCampaigns || isLoadingKeywords || isSearching}
             onDelete={async (id) => {
               try {
-                await directusApi.delete(`items/user_keywords/${id}`);
+                await directusApi.delete(`items/campaign_keywords/${id}`);
                 queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
                 toast({ 
                   title: "Успешно",

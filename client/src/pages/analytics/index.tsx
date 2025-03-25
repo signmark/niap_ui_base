@@ -42,7 +42,7 @@ export default function Analytics() {
     queryFn: async () => {
       if (!campaignId) return 0;
       
-      const response = await directusApi.get('/items/user_keywords', {
+      const response = await directusApi.get('/items/campaign_keywords', {
         params: {
           filter: {
             campaign_id: {
