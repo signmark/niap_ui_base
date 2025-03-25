@@ -26,7 +26,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
     queryKey: ['/api/keywords', campaignId],
     queryFn: async () => {
       if (!campaignId || campaignId === "loading" || campaignId === "empty") return [];
-      const response = await apiRequest(`/api/campaigns/${campaignId}/keywords`);
+      const response = await apiRequest(`/api/keywords/${campaignId}`);
       return response?.data || [];
     },
     enabled: !!campaignId && campaignId !== "loading" && campaignId !== "empty"
