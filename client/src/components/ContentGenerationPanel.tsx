@@ -14,16 +14,21 @@ import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import RichTextEditor from "./RichTextEditor";
 
+// Расширенный интерфейс, совместимый с TrendsList
 interface TrendTopic {
   id: string;
   title: string;
-  source_id: string;
+  source_id?: string;
+  sourceId?: string;
   reactions: number;
   comments: number;
   views: number;
-  created_at: string;
-  is_bookmarked: boolean;
-  campaign_id: string;
+  created_at?: string; 
+  createdAt?: string;
+  is_bookmarked?: boolean;
+  isBookmarked?: boolean;
+  campaign_id?: string;
+  campaignId?: string;
 }
 
 const generateContentSchema = z.object({

@@ -45,6 +45,7 @@ export default function CampaignDetails() {
   const queryClient = useQueryClient();
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
+  const [selectedTrends, setSelectedTrends] = useState<any[]>([]); // Для хранения выбранных трендов
 
   // Запрос для получения списка ключевых слов
   const { data: keywordList } = useQuery({
@@ -585,7 +586,11 @@ export default function CampaignDetails() {
                   Тренды обновляются автоматически при их сборе на странице «Тренды».
                 </p>
               </div>
-              <TrendsList campaignId={id} />
+              <TrendsList 
+                campaignId={id} 
+                selectable={true} 
+                onSelectTrends={(trends) => setSelectedTrends(trends)} 
+              />
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -604,7 +609,7 @@ export default function CampaignDetails() {
                 </p>
               </div>
               <ContentGenerationPanel 
-                selectedTopics={[]} 
+                selectedTopics={selectedTrends} 
                 onGenerated={() => {
                   queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
                 }}
