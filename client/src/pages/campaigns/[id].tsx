@@ -267,20 +267,47 @@ export default function CampaignDetails() {
         const keywordId = response.data.data[0].id;
         // Удаляем ключевое слово по ID
         await directusApi.delete(`/items/campaign_keywords/${keywordId}`);
+        return { keyword, keywordId };
       } else {
         throw new Error(`Ключевое слово "${keyword}" не найдено`);
       }
     },
-    onSuccess: (_, keyword) => {
+    // Оптимистичное обновление UI до получения ответа от сервера
+    onMutate: async (keyword) => {
+      // Отменяем все запросы на получение ключевых слов, чтобы они не перезаписали наше обновление
+      await queryClient.cancelQueries({ queryKey: ["/api/keywords", id] });
+      
+      // Сохраняем текущие данные для возможного отката
+      const previousKeywords = queryClient.getQueryData(["/api/keywords", id]);
+      
+      // Оптимистично обновляем кэш
+      queryClient.setQueryData(["/api/keywords", id], (old: any[]) => {
+        return old ? old.filter(item => item.keyword !== keyword) : [];
+      });
+      
+      // Возвращаем контекст для отката в случае ошибки
+      return { previousKeywords };
+    },
+    onSuccess: (result, keyword) => {
+      // Запрашиваем новые данные, чтобы убедиться, что интерфейс синхронизирован с сервером
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
+      console.log(`Ключевое слово "${keyword}" успешно удалено`);
       // Удаляем дубликат уведомления, так как оно уже показывается в KeywordSelector
     },
-    onError: (error, keyword) => {
+    onError: (error, keyword, context) => {
       console.error("Ошибка при удалении ключевого слова:", error);
+      // Восстанавливаем предыдущее состояние кэша в случае ошибки
+      if (context?.previousKeywords) {
+        queryClient.setQueryData(["/api/keywords", id], context.previousKeywords);
+      }
       toast({
         variant: "destructive",
         description: `Не удалось удалить ключевое слово "${keyword}"`
       });
+    },
+    // Всегда запрашиваем новые данные после мутации, независимо от результата
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
     }
   });
 
