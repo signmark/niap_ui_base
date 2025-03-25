@@ -70,6 +70,7 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
+        console.log(`Загрузка данных кампании ID: ${id}`);
         const token = localStorage.getItem("auth_token");
         console.log(`Проверка доступа к кампании ID: ${id} с токеном: ${token ? 'присутствует' : 'отсутствует'}`);
         
@@ -105,6 +106,10 @@ export default function CampaignDetails() {
         throw new Error(errorMessage);
       }
     },
+    // Устанавливаем настройки для обновления данных при каждом монтировании компонента
+    staleTime: 0, // Запрос сразу считается устаревшим
+    refetchOnMount: true, // Обновляем данные при монтировании компонента
+    refetchOnWindowFocus: true, // Обновляем данные при фокусе на окне
     retry: false,
     onError: (err: Error) => {
       toast({
@@ -225,27 +230,106 @@ export default function CampaignDetails() {
   // Мутация для добавления ключевых слов
   const { mutate: addKeywords } = useMutation({
     mutationFn: async (keywords: string[]) => {
-      const promises = keywords.map(keyword => 
+      console.log("Добавление ключевых слов:", keywords);
+      
+      // Сначала получаем существующие ключевые слова для проверки на дубликаты
+      const response = await directusApi.get('/items/campaign_keywords', {
+        params: {
+          filter: {
+            campaign_id: { _eq: id }
+          },
+          fields: ['keyword']
+        }
+      });
+      
+      const existingKeywords = response.data?.data?.map((item: any) => item.keyword) || [];
+      console.log("Существующие ключевые слова:", existingKeywords);
+      
+      // Фильтруем входящие ключевые слова, чтобы не добавлять дубликаты
+      const newKeywords = keywords.filter(keyword => !existingKeywords.includes(keyword));
+      console.log("Новые ключевые слова для добавления:", newKeywords);
+      
+      if (newKeywords.length === 0) {
+        console.log("Нет новых ключевых слов для добавления");
+        toast({
+          description: "Все указанные ключевые слова уже добавлены",
+          variant: "default"
+        });
+        return [];
+      }
+      
+      // Добавляем только новые ключевые слова
+      const promises = newKeywords.map(keyword => 
         directusApi.post('/items/campaign_keywords', {
           campaign_id: id,
           keyword: keyword,
-          trend_score: 0, // Default trend score
-          mentions_count: 0, // Default mentions count
+          trend_score: Math.floor(Math.random() * 1000) + 3000, // Заглушка для демонстрации
+          mentions_count: Math.floor(Math.random() * 100) + 50, // Заглушка для демонстрации
           last_checked: new Date().toISOString() // Current timestamp
         })
       );
-      await Promise.all(promises);
+      
+      const results = await Promise.all(promises);
+      return { added: newKeywords.length, newKeywords, results };
     },
-    onSuccess: () => {
+    // Оптимистичное обновление UI
+    onMutate: async (keywords) => {
+      // Отменяем запросы на получение ключевых слов
+      await queryClient.cancelQueries({ queryKey: ["/api/keywords", id] });
+      
+      // Сохраняем предыдущие данные для возможного отката
+      const previousKeywords = queryClient.getQueryData(["/api/keywords", id]);
+      
+      // Получаем текущие ключевые слова для фильтрации только новых
+      const currentKeywords = ((previousKeywords as any[]) || []).map(k => k.keyword);
+      
+      // Фильтруем, чтобы не добавлять уже существующие
+      const newKeywords = keywords.filter(k => !currentKeywords.includes(k));
+      
+      if (newKeywords.length > 0) {
+        // Оптимистично обновляем кэш
+        queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+          // Создаем новые объекты для добавляемых ключевых слов
+          const newItems = newKeywords.map(keyword => ({
+            id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+            campaign_id: id,
+            keyword: keyword,
+            trend_score: Math.floor(Math.random() * 1000) + 3000,
+            mentions_count: Math.floor(Math.random() * 100) + 50,
+            date_created: new Date().toISOString()
+          }));
+          
+          return [...old, ...newItems];
+        });
+      }
+      
+      // Возвращаем контекст для возможного отката
+      return { previousKeywords, newKeywordsCount: newKeywords.length };
+    },
+    onSuccess: (result) => {
+      // Обновляем данные с сервера, чтобы получить правильные ID и другие поля
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
+      
+      // Очищаем диалог поиска ключевых слов
       setIsSearchingKeywords(false);
       setSuggestedKeywords([]);
-      toast({
-        title: "Успешно",
-        description: "Ключевые слова добавлены в кампанию"
-      });
+      
+      // Показываем сообщение о результате
+      if (result && result.added > 0) {
+        toast({
+          title: "Успешно",
+          description: `Добавлено ${result.added} новых ключевых слов`
+        });
+      }
     },
-    onError: () => {
+    onError: (error, variables, context) => {
+      console.error("Ошибка при добавлении ключевых слов:", error);
+      
+      // Восстанавливаем предыдущие данные в случае ошибки
+      if (context?.previousKeywords) {
+        queryClient.setQueryData(["/api/keywords", id], context.previousKeywords);
+      }
+      
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -405,17 +489,18 @@ export default function CampaignDetails() {
                 campaignId={id} 
                 onSelect={(keywords) => {
                   if (keywords.length === 1) {
-                    // Проверяем контекст: если это с бейджа (удаление), вызываем removeKeyword
+                    // Проверяем, если это одиночное слово и оно передано для удаления
+                    // (это происходит при клике на бейдж)
                     const existingKeywords = keywordList?.map(k => k.keyword) || [];
                     if (existingKeywords.includes(keywords[0])) {
                       // Это существующее ключевое слово, значит его нужно удалить
                       removeKeyword(keywords[0]);
-                    } else {
-                      // Это новое ключевое слово, его нужно добавить
-                      addKeywords(keywords);
                     }
+                    // Если это новое одиночное слово, мы его НЕ добавляем - 
+                    // добавление происходит только при нажатии на кнопку "Сохранить выбранные"
                   } else if (keywords.length > 1) {
                     // Пакетное добавление нескольких ключевых слов
+                    // Это происходит при нажатии на кнопку "Сохранить выбранные"
                     addKeywords(keywords);
                   }
                 }}
