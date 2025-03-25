@@ -107,22 +107,16 @@
   }
 
   body {
-    @apply font-sans antialiased bg-white text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
-  
-  /* Принудительный белый фон для основных элементов интерфейса */
+
   .bg-background {
-    background-color: white !important;
+    background-color: white;
   }
-  
-  /* Черные кнопки */
-  .btn-black, 
-  .btn-primary,
-  .btn-default,
-  [data-variant="default"],
-  :where(.btn):not([data-variant]) {
-    background-color: black !important;
-    color: white !important;
+
+  button[data-variant="default"],
+  .btn-primary {
+    @apply bg-black text-white hover:bg-gray-800;
   }
 }
 
