@@ -110,13 +110,77 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* Переменные темы */
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    
+    /* Sidebar colors */
+    --sidebar-bg: #1e3a8a;
+    --sidebar-fg: #ffffff;
+    --sidebar-accent: #60a5fa;
+    --sidebar-accent-fg: #ffffff;
+    --sidebar-border: #2563eb;
+    
+    /* Topbar colors */
+    --topbar-bg: #f1f5f9;
+    --topbar-fg: #0f172a;
+    --topbar-border: #cbd5e1;
+  }
+
+  /* Темный режим */
+  .dark {
+    --background: #121212;
+    --foreground: #ffffff;
+    --card: #1e1e1e;
+    --card-foreground: #ffffff;
+    --muted: #2d3748;
+    --muted-foreground: #a0aec0;
+  }
+
   .bg-background {
-    background-color: white;
+    background-color: var(--background);
   }
 
   button[data-variant="default"],
   .btn-primary {
     @apply bg-black text-white hover:bg-gray-700;
+  }
+  
+  /* Стилизация боковой панели */
+  .sidebar {
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-fg);
+    border-color: var(--sidebar-border);
+  }
+  
+  .sidebar-title {
+    color: var(--sidebar-fg);
+  }
+  
+  .sidebar-item {
+    color: var(--sidebar-fg);
+  }
+  
+  .sidebar-item:hover, 
+  .sidebar-item.active {
+    background-color: var(--sidebar-accent);
+    color: var(--sidebar-accent-fg);
+  }
+  
+  /* Стилизация верхней панели */
+  .topbar {
+    background-color: var(--topbar-bg);
+    color: var(--topbar-fg);
+    border-color: var(--topbar-border);
+  }
+  
+  .topbar-title {
+    color: var(--topbar-fg);
   }
 }
 
