@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "@/utils/media";
 import { TrendDetailDialog } from "./TrendDetailDialog";
 import { formatDistanceToNow } from 'date-fns';
@@ -418,6 +419,20 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
             >
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
+                  {/* Чекбокс для выбора тренда */}
+                  {selectable && (
+                    <div 
+                      className="flex-shrink-0 mt-1"
+                      onClick={(e) => handleTrendSelect(trend, e)}
+                    >
+                      <Checkbox 
+                        checked={isTrendSelected(trend.id)}
+                        onCheckedChange={() => handleTrendSelect(trend)}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+                
                   {/* Превью изображения с увеличенным размером */}
                   {previewImageUrl && !failedImages.has(previewImageUrl) ? (
                     <div className="flex-shrink-0">
