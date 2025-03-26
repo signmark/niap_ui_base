@@ -94,6 +94,39 @@ export default function CampaignDetails() {
     refetchOnMount: true, // Обновляем данные при монтировании компонента
     refetchOnWindowFocus: true // Обновляем данные при фокусе на окне
   });
+  
+  // Запрос контента кампании для календаря публикаций
+  const { data: campaignContent, isLoading: isLoadingContent } = useQuery({
+    queryKey: ['/api/campaign-content', id],
+    queryFn: async () => {
+      if (!id) return [];
+      
+      try {
+        console.log('Загрузка публикаций для кампании:', id);
+        const token = localStorage.getItem("auth_token");
+        
+        const response = await fetch(`/api/campaign-content?campaignId=${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Не удалось загрузить данные о контенте');
+        }
+        
+        const responseData = await response.json();
+        console.log('Загружено публикаций:', (responseData.data || []).length);
+        return responseData.data || [];
+      } catch (error) {
+        console.error('Ошибка при загрузке контента:', error);
+        return [];
+      }
+    },
+    enabled: !!id,
+    refetchOnMount: true,
+    staleTime: 0
+  });
 
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["/api/campaigns", id],
@@ -732,12 +765,16 @@ export default function CampaignDetails() {
                 </p>
               </div>
               <div className="h-full w-full">
-                {/* Получаем контент и передаем его в PublicationCalendar */}
+                {/* Получаем контент кампании и передаем в PublicationCalendar */}
                 {campaign && (
                   <PublicationCalendar 
-                    content={[]} 
-                    isLoading={true}
+                    content={campaignContent || []} 
+                    isLoading={isLoadingContent}
                     onCreateClick={() => window.location.href = '/content'}
+                    onViewPost={(post) => {
+                      console.log('View post:', post);
+                      // Здесь можно добавить дополнительную логику просмотра поста
+                    }}
                   />
                 )}
               </div>
