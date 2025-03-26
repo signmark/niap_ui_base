@@ -326,13 +326,14 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
   
   // Вызываем callback только при изменении selectedTrends
   useEffect(() => {
-    // Проверяем, что selectedTrends существует и callback определен
-    if (onSelectTrends && selectedTrends) {
-      try {
+    // Всегда выполняем эффект, даже если callback не определен
+    // Это предотвращает ошибку "rendered more hooks"
+    try {
+      if (onSelectTrends) {
         onSelectTrends(selectedTrends);
-      } catch (error) {
-        console.error("Error in onSelectTrends callback:", error);
       }
+    } catch (error) {
+      console.error("Error in onSelectTrends callback:", error);
     }
   }, [selectedTrends, onSelectTrends]);
 
