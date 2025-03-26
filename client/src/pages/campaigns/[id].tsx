@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
-import { PostCalendar } from "@/components/PostCalendar";
+import PublicationCalendar from "@/components/PublicationCalendar";
 import { directusApi } from "@/lib/directus";
 import { Loader2, Search, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -731,7 +731,16 @@ export default function CampaignDetails() {
                   а также отслеживать статус опубликованного контента на календаре.
                 </p>
               </div>
-              <PostCalendar campaignId={id} />
+              <div className="h-full w-full">
+                {/* Получаем контент и передаем его в PublicationCalendar */}
+                {campaign && (
+                  <PublicationCalendar 
+                    content={[]} 
+                    isLoading={true}
+                    onCreateClick={() => window.location.href = '/content'}
+                  />
+                )}
+              </div>
               <div className="mt-4 border-t pt-4">
                 <p className="text-sm text-muted-foreground">
                   Система автоматически опубликует контент в указанное время в настроенных в предыдущем разделе социальных сетях. 
