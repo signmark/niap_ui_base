@@ -31,10 +31,11 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const { data: posts, refetch: refetchPosts } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "posts"],
     queryFn: async () => {
-      const response = await directusApi.get("/items/campaign_posts", {
+      // Используем правильный эндпоинт campaign_content вместо campaign_posts
+      const response = await directusApi.get("/items/campaign_content", {
         params: {
           filter: {
-            campaign_id: {
+            campaignId: {
               _eq: campaignId
             }
           }
@@ -90,13 +91,16 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
       const scheduledAt = toUTCDate(selectedDate, selectedTime);
 
-      await directusApi.post("/items/campaign_posts", {
-        campaign_id: campaignId,
-        post_type: postType,
+      // Используем правильный эндпоинт campaign_content вместо campaign_posts
+      // и соответствующие имена полей
+      await directusApi.post("/items/campaign_content", {
+        campaignId: campaignId,
+        contentType: postType,
         content,
-        image_url: (postType === "image" || postType === "image-text") ? mediaUrl : null,
-        video_url: postType === "video" ? mediaUrl : null,
-        scheduled_at: scheduledAt.toISOString()
+        imageUrl: (postType === "image" || postType === "image-text") ? mediaUrl : null,
+        videoUrl: postType === "video" ? mediaUrl : null,
+        scheduledAt: scheduledAt.toISOString(),
+        status: 'scheduled'
       });
     },
     onSuccess: () => {
