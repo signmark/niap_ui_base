@@ -571,11 +571,11 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
         
-        <AccordionItem value="business-questionnaire" className="bg-background border rounded-lg shadow-sm mt-4">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Бизнес-анкета
           </AccordionTrigger>
-          <AccordionContent className="px-6 pt-2 pb-4">
+          <AccordionContent className="pt-2 pb-4">
             <BusinessQuestionnaireForm 
               campaignId={id}
               onQuestionnaireUpdated={() => {
@@ -585,11 +585,11 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trend-analysis" className="bg-background border rounded-lg shadow-sm mt-4">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+        <AccordionItem value="trend-analysis" className="border rounded-lg px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки анализа трендов
           </AccordionTrigger>
-          <AccordionContent className="px-6 pt-2 pb-4">
+          <AccordionContent className="pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Параметры сбора трендов</h3>
