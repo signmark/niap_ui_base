@@ -69,25 +69,26 @@ const AccordionTrigger = React.forwardRef<
       <AccordionPrimitive.Trigger
         ref={ref}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg.accordion-chevron]:rotate-180",
           className
         )}
         {...props}
       >
-        {children}
-        <div className="flex items-center gap-2">
+        <span className="flex-1 text-left">{children}</span>
+        <div className="flex items-center gap-2 ml-2">
           {/* Показываем значок только для аккордеонов, у которых есть страница */}
           {hasFullscreenPage && (
-            <div 
+            <button 
+              type="button"
               className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
               onClick={handleFullscreen}
               title="Открыть на полном экране"
               aria-label="Открыть на полном экране"
             >
               <Maximize className="h-4 w-4" />
-            </div>
+            </button>
           )}
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron" />
         </div>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
