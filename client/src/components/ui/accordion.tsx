@@ -6,41 +6,42 @@ import { cn } from "@/lib/utils"
 
 const Accordion = AccordionPrimitive.Root
 
+// Маппинг значений аккордеонов на URL страниц
+const expandablePages: Record<string, string> = {
+  'keywords': '/keywords',
+  'trends': '/trends',
+  'content': '/content',
+  'social-media': '/social-media-settings',
+  'schedule': '/schedule'
+};
+
 const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> & { 
     campaignId?: string;
   }
->(({ className, value, campaignId, ...props }, ref) => (
-  <AccordionPrimitive.Item
-    ref={ref}
-    className={cn("border-b", className)}
-    {...props}
-    data-accordion-value={value}
-    data-campaign-id={campaignId}
-  />
-))
+>(({ className, campaignId, ...props }, ref) => {
+  // Создаем копию props для передачи радиксу
+  const itemProps = { ...props };
+  
+  return (
+    <AccordionPrimitive.Item
+      ref={ref}
+      className={cn("border-b", className)}
+      data-campaign-id={campaignId}
+      // Передаем все свойства, кроме наших кастомных
+      {...itemProps}
+    />
+  );
+})
 AccordionItem.displayName = "AccordionItem"
 
 // Функция для определения URL для каждого типа аккордеона
 const getFullscreenUrl = (value: string | null, campaignId?: string | null): string | null => {
   // По умолчанию аккордеон не имеет страницы для расширения
-  if (!value || !campaignId) return null;
+  if (!value || !campaignId || !expandablePages[value]) return null;
   
-  // Маппинг значений аккордеонов на URL страниц
-  const urlMap: Record<string, string | null> = {
-    'site': null, // Нет отдельной страницы для сайта
-    'keywords': `/keywords?campaignId=${campaignId}`,
-    'business-questionnaire': null, // Нет отдельной страницы для анкеты
-    'trend-analysis': null, // Нет отдельной страницы для настроек анализа
-    'trends': `/trends?campaignId=${campaignId}`,
-    'content': `/content?campaignId=${campaignId}`,
-    'social-media': `/social-media-settings?campaignId=${campaignId}`, // Вероятное имя страницы
-    'schedule': `/schedule?campaignId=${campaignId}` // Вероятное имя страницы для календаря
-  };
-  
-  if (!(value in urlMap)) return null;
-  return urlMap[value];
+  return `${expandablePages[value]}?campaignId=${campaignId}`;
 };
 
 const AccordionTrigger = React.forwardRef<
@@ -85,12 +86,15 @@ const AccordionTrigger = React.forwardRef<
       {children}
       <div className="flex items-center gap-2">
         {/* Кнопка для разворачивания на весь экран */}
-        <Maximize 
-          className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-primary"
+        {/* Используем div вместо Maximize из-за проблем с типами */}
+        <div 
+          className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
           onClick={handleFullscreen}
           title="Открыть на полном экране"
           aria-label="Открыть на полном экране"
-        />
+        >
+          <Maximize className="h-4 w-4" />
+        </div>
         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
       </div>
     </AccordionPrimitive.Trigger>
