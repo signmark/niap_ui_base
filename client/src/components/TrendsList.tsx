@@ -489,12 +489,19 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                   {selectable && (
                     <div 
                       className="flex-shrink-0 mt-1"
-                      onClick={(e) => handleTrendSelect(trend, e)}
                     >
                       <Checkbox 
                         checked={isTrendSelected(trend.id)}
-                        onCheckedChange={() => handleTrendSelect(trend)}
+                        onCheckedChange={(checked) => {
+                          console.log("Checkbox changed:", checked, "for trend:", trend.id);
+                          handleTrendSelect(trend);
+                        }}
                         className="mt-1"
+                        id={`trend-checkbox-${trend.id}`}
+                        onClick={(e) => {
+                          // Предотвращаем всплытие клика, чтобы не открывался dialog
+                          e.stopPropagation();
+                        }}
                       />
                     </div>
                   )}
