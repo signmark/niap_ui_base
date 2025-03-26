@@ -493,43 +493,41 @@ export default function CampaignDetails() {
     <div className="space-y-6 p-6">
       <div className="sticky-header">
         <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
-        <Accordion type="single" defaultValue="site" collapsible className="mb-4">
-          <AccordionItem value="site" className="accordion-item px-6">
-            <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-              Сайт
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pt-2 pb-4">
-              <div className="flex gap-4 items-center pt-2">
-                <Input
-                  placeholder="Введите URL сайта"
-                  defaultValue={campaign.link || ""}
-                  onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
-                  className="max-w-md"
-                />
-                <Button
-                  variant="secondary"
-                  onClick={() => campaign.link && searchKeywords(campaign.link)}
-                  disabled={isSearching || !campaign.link}
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Поиск ключевых слов...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Найти ключевые слова
-                    </>
-                  )}
-                </Button>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
       </div>
 
-      <Accordion type="single" defaultValue="keywords" className="mb-4">
+      <Accordion type="single" defaultValue="site" className="mb-4">
+        <AccordionItem value="site" className="accordion-item px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+            Сайт
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pt-2 pb-4">
+            <div className="flex gap-4 items-center pt-2">
+              <Input
+                placeholder="Введите URL сайта"
+                defaultValue={campaign.link || ""}
+                onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
+                className="max-w-md"
+              />
+              <Button
+                variant="secondary"
+                onClick={() => campaign.link && searchKeywords(campaign.link)}
+                disabled={isSearching || !campaign.link}
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Поиск ключевых слов...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Найти ключевые слова
+                  </>
+                )}
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="keywords" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Ключевые слова
@@ -575,7 +573,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Бизнес-анкета
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <BusinessQuestionnaireForm 
               campaignId={id}
               onQuestionnaireUpdated={() => {
@@ -589,7 +587,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки анализа трендов
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Параметры сбора трендов</h3>
@@ -619,7 +617,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Тренды
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Мониторинг актуальных трендов</h3>
@@ -641,7 +639,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Генерация контента
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Создание контента на основе трендов</h3>
@@ -664,7 +662,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки публикации
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Подключение социальных сетей</h3>
@@ -694,7 +692,7 @@ export default function CampaignDetails() {
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Календарь публикаций
           </AccordionTrigger>
-          <AccordionContent className="pt-2 pb-4">
+          <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
                 <h3 className="text-xl font-semibold">Планирование и отслеживание публикаций</h3>
