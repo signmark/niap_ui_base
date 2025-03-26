@@ -55,6 +55,7 @@ const AccordionTrigger = React.forwardRef<
   // Обработчик клика по кнопке "Развернуть на весь экран"
   const handleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation(); // Предотвращаем срабатывание триггера аккордеона
+    e.preventDefault(); // Дополнительно предотвращаем любые действия по умолчанию
     const url = getFullscreenUrl();
     if (url) {
       setLocation(url);
@@ -74,13 +75,13 @@ const AccordionTrigger = React.forwardRef<
         )}
         {...props}
       >
-        <span className="flex-1 text-left">{children}</span>
-        <div className="flex items-center gap-2 ml-2">
+        {children}
+        <div className="flex items-center gap-2 ml-2" onClick={(e) => e.stopPropagation()}>
           {/* Показываем значок только для аккордеонов, у которых есть страница */}
           {hasFullscreenPage && (
             <button 
               type="button"
-              className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
+              className="flex items-center cursor-pointer text-muted-foreground hover:text-primary p-1"
               onClick={handleFullscreen}
               title="Открыть на полном экране"
               aria-label="Открыть на полном экране"
@@ -88,7 +89,7 @@ const AccordionTrigger = React.forwardRef<
               <Maximize className="h-4 w-4" />
             </button>
           )}
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron" />
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron pointer-events-none" />
         </div>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
