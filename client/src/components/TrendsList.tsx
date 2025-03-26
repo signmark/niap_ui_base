@@ -13,7 +13,6 @@ import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "@/util
 import { TrendDetailDialog } from "./TrendDetailDialog";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { TrendTopic, Post } from "@/lib/interfaces";
 
 interface TrendsListProps {
   campaignId: string;
@@ -443,27 +442,20 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
               onClick={() => {
                 // Для TrendDetailDialog нужен объект с полями в snake_case
                 // Создаем объект с правильной структурой для диалога
-                const transformedTrend = {
-                  id: trend.id,
-                  title: trend.title,
-                  source_id: trend.sourceId || trend.source_id || '',
-                  sourceName: trend.sourceName,
-                  sourceUrl: trend.sourceUrl,
-                  url: trend.url,
-                  reactions: trend.reactions || 0,
-                  comments: trend.comments || 0,
-                  description: trend.description,
-                  views: trend.views || 0,
-                  created_at: trend.createdAt || trend.created_at || new Date().toISOString(),
-                  is_bookmarked: trend.isBookmarked || trend.is_bookmarked || false,
-                  campaign_id: trend.campaignId || trend.campaign_id || campaignId || '',
+                // Создаем объект в формате для TrendDetailDialog (с использованием snake_case полей)
+                // Копируем все поля из исходного объекта и затем дополнительно добавляем поля в snake_case формате
+                // Создаем объект для TrendDetailDialog
+                // Этот объект имеет тип any, так как ему нужны snake_case поля
+                const transformedTrend: any = {
+                  ...trend,
+                  // Добавляем snake_case версии полей для совместимости
+                  source_id: trend.sourceId,
+                  created_at: trend.createdAt,
+                  is_bookmarked: trend.isBookmarked,
+                  campaign_id: trend.campaignId || campaignId,
+                  // Обрабатываем media_links
                   media_links: typeof trend.mediaLinks === 'string' ? trend.mediaLinks : 
-                              (trend.media_links ? JSON.stringify(trend.media_links) : undefined),
-                  // Сохраняем оригинальные поля для совместимости
-                  mediaLinks: trend.mediaLinks,
-                  trendScore: trend.trendScore,
-                  accountUrl: trend.accountUrl,
-                  urlPost: trend.urlPost
+                              (trend.media_links ? JSON.stringify(trend.media_links) : undefined)
                 };
                 setSelectedTrend(transformedTrend);
                 setDetailDialogOpen(true);
