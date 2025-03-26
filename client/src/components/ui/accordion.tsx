@@ -52,46 +52,43 @@ const AccordionTrigger = React.forwardRef<
     return `${expandablePages[value]}?campaignId=${campaignId}`;
   };
   
-  // Обработчик клика по кнопке "Развернуть на весь экран"
-  const handleFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Предотвращаем срабатывание триггера аккордеона
-    e.preventDefault(); // Дополнительно предотвращаем любые действия по умолчанию
-    const url = getFullscreenUrl();
-    if (url) {
-      setLocation(url);
-    }
-  };
-  
   // Проверяем, имеет ли аккордеон соответствующую полноэкранную страницу
   const hasFullscreenPage = value && expandablePages[value] !== undefined;
   
   return (
     <AccordionPrimitive.Header className="flex">
-      <AccordionPrimitive.Trigger
-        ref={ref}
-        className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg.accordion-chevron]:rotate-180",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        <div className="flex items-center gap-2 ml-2" onClick={(e) => e.stopPropagation()}>
-          {/* Показываем значок только для аккордеонов, у которых есть страница */}
-          {hasFullscreenPage && (
-            <button 
-              type="button"
-              className="flex items-center cursor-pointer text-muted-foreground hover:text-primary p-1"
-              onClick={handleFullscreen}
-              title="Открыть на полном экране"
-              aria-label="Открыть на полном экране"
-            >
-              <Maximize className="h-4 w-4" />
-            </button>
+      <div className="flex flex-1 items-center">
+        <AccordionPrimitive.Trigger
+          ref={ref}
+          className={cn(
+            "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
+            className
           )}
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron pointer-events-none" />
-        </div>
-      </AccordionPrimitive.Trigger>
+          {...props}
+        >
+          <span>{children}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 ml-2 [&[data-state=open]>svg]:rotate-180" />
+        </AccordionPrimitive.Trigger>
+        
+        {/* Кнопка для развёртывания на полный экран */}
+        {hasFullscreenPage && (
+          <button 
+            type="button"
+            className="ml-2 p-2 flex items-center cursor-pointer text-muted-foreground hover:text-primary"
+            onClick={(e) => {
+              e.preventDefault();
+              const url = getFullscreenUrl();
+              if (url) {
+                setLocation(url);
+              }
+            }}
+            title="Открыть на полном экране"
+            aria-label="Открыть на полном экране"
+          >
+            <Maximize className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </AccordionPrimitive.Header>
   );
 })
