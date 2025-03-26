@@ -4,13 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
 import { PostCalendar } from "@/components/PostCalendar";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
 import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { TrendAnalysisSettings } from "@/components/TrendAnalysisSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
 import { BusinessQuestionnaireForm } from "@/components/BusinessQuestionnaireForm";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ export default function CampaignDetails() {
   const queryClient = useQueryClient();
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
+  const [showContentGenerationDialog, setShowContentGenerationDialog] = useState(false);
   
   // Получаем доступ к глобальному хранилищу кампаний
   const { setSelectedCampaign } = useCampaignStore();
@@ -642,7 +644,18 @@ export default function CampaignDetails() {
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
               <div className="flex flex-col">
-                <h3 className="text-xl font-semibold">Создание контента на основе трендов</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-semibold">Создание контента на основе трендов</h3>
+                  <Button
+                    onClick={() => setShowContentGenerationDialog(true)}
+                    variant="default"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    Генерировать с ИИ
+                  </Button>
+                </div>
                 <p className="text-muted-foreground mt-1 mb-3">
                   Используйте собранные тренды для генерации контента. Система будет учитывать ключевые слова кампании и позволяет 
                   создавать тексты, изображения и комбинированный контент для разных социальных платформ.
@@ -655,6 +668,23 @@ export default function CampaignDetails() {
                 }}
               />
             </div>
+            
+            {/* Диалог с ИИ для генерации контента */}
+            {showContentGenerationDialog && (
+              <ContentGenerationDialog 
+                campaignId={id}
+                keywords={keywordList?.map(k => ({
+                  id: k.id,
+                  keyword: k.keyword,
+                  trendScore: k.trend_score || 0,
+                  campaignId: k.campaign_id
+                })) || []}
+                onClose={() => {
+                  setShowContentGenerationDialog(false);
+                  queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', id] });
+                }} 
+              />
+            )}
           </AccordionContent>
         </AccordionItem>
 
