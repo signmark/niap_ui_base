@@ -528,7 +528,7 @@ export default function CampaignDetails() {
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="keywords" className="accordion-item px-6">
+        <AccordionItem value="keywords" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Ключевые слова
           </AccordionTrigger>
@@ -569,7 +569,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
         
-        <AccordionItem value="business-questionnaire" className="accordion-item px-6">
+        <AccordionItem value="business-questionnaire" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Бизнес-анкета
           </AccordionTrigger>
@@ -583,7 +583,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trend-analysis" className="accordion-item px-6">
+        <AccordionItem value="trend-analysis" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки анализа трендов
           </AccordionTrigger>
@@ -613,7 +613,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trends" className="accordion-item px-6">
+        <AccordionItem value="trends" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Тренды
           </AccordionTrigger>
@@ -635,7 +635,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="content" className="accordion-item px-6">
+        <AccordionItem value="content" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Генерация контента
           </AccordionTrigger>
@@ -658,7 +658,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="social-media" className="accordion-item px-6">
+        <AccordionItem value="social-media" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки публикации
           </AccordionTrigger>
@@ -688,7 +688,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
             
-        <AccordionItem value="schedule" className="accordion-item px-6">
+        <AccordionItem value="schedule" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Календарь публикаций
           </AccordionTrigger>
