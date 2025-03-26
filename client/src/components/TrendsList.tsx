@@ -295,9 +295,13 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
   
   // Вызываем callback только при изменении selectedTrends
   useEffect(() => {
-    // Вызываем callback напрямую при изменении selectedTrends
-    if (onSelectTrends) {
-      onSelectTrends(selectedTrends);
+    // Проверяем, что selectedTrends существует и callback определен
+    if (onSelectTrends && selectedTrends) {
+      try {
+        onSelectTrends(selectedTrends);
+      } catch (error) {
+        console.error("Error in onSelectTrends callback:", error);
+      }
     }
   }, [selectedTrends, onSelectTrends]);
 
@@ -405,14 +409,27 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
               key={trend.id} 
               className={`shadow hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
               onClick={() => {
-                // Преобразуем camelCase свойства в snake_case для совместимости с TrendDetailDialog
-                const transformedTrend = {
-                  ...trend,
-                  created_at: trend.created_at || trend.createdAt,
-                  is_bookmarked: trend.is_bookmarked !== undefined ? trend.is_bookmarked : trend.isBookmarked,
-                  source_id: trend.source_id || trend.sourceId,
-                  campaign_id: trend.campaign_id || trend.campaignId,
-                  media_links: trend.media_links || trend.mediaLinks
+                // Для отображения в TrendDetailDialog используем текущий тренд
+                // При необходимости выполняем трансформацию полей из snake_case в camelCase
+                const transformedTrend: TrendTopic = {
+                  id: trend.id,
+                  title: trend.title,
+                  sourceId: trend.sourceId || '',
+                  sourceName: trend.sourceName,
+                  sourceUrl: trend.sourceUrl,
+                  url: trend.url,
+                  reactions: trend.reactions || 0,
+                  comments: trend.comments || 0,
+                  description: trend.description,
+                  views: trend.views || 0,
+                  createdAt: trend.createdAt || new Date().toISOString(),
+                  isBookmarked: Boolean(trend.isBookmarked),
+                  campaignId: trend.campaignId || campaignId || '',
+                  mediaLinks: typeof trend.mediaLinks === 'string' ? trend.mediaLinks : undefined,
+                  media_links: Array.isArray(trend.media_links) ? trend.media_links : undefined,
+                  trendScore: trend.trendScore,
+                  accountUrl: trend.accountUrl,
+                  urlPost: trend.urlPost
                 };
                 setSelectedTrend(transformedTrend);
                 setDetailDialogOpen(true);
@@ -496,9 +513,9 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                       WebkitBoxOrient: 'vertical',
                       textOverflow: 'ellipsis'
                     }}>
-                      {(trend.created_at || trend.createdAt) && (
+                      {(trend.createdAt) && (
                         <span className="inline-block bg-red-500 text-white px-2 py-1 rounded mr-2 text-xs">
-                          {new Date(trend.created_at || trend.createdAt).toLocaleDateString('ru-RU', { 
+                          {new Date(trend.createdAt).toLocaleDateString('ru-RU', { 
                             day: 'numeric', 
                             month: 'long'
                           }).toUpperCase()}
@@ -541,7 +558,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                       
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>{(trend.created_at || trend.createdAt) ? formatDistanceToNow(new Date(trend.created_at || trend.createdAt), { locale: ru, addSuffix: true }) : 'неизвестно'}</span>
+                        <span>{trend.createdAt ? formatDistanceToNow(new Date(trend.createdAt), { locale: ru, addSuffix: true }) : 'неизвестно'}</span>
                       </div>
                       
                       <Button

@@ -64,7 +64,13 @@ export default function CampaignDetails() {
   
   // Используем useCallback для стабилизации функции обратного вызова
   const handleSelectTrends = useCallback((trends: any[]) => {
-    setSelectedTrends(trends);
+    if (Array.isArray(trends)) {
+      console.log("handleSelectTrends received:", trends.length, "trends");
+      setSelectedTrends(trends);
+    } else {
+      console.warn("handleSelectTrends received non-array:", trends);
+      setSelectedTrends([]);
+    }
   }, []);
 
   // Запрос для получения списка ключевых слов
