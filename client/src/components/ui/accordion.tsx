@@ -20,64 +20,103 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> & { 
     campaignId?: string;
-    value: string;
+    value: string; // value должно быть обязательным для корректной работы
   }
->(({ className, campaignId, value, ...props }, ref) => (
-  <AccordionPrimitive.Item
-    ref={ref}
-    className={cn("border-b", className)}
-    value={value}
-    {...props}
-  />
-))
+>(({ className, campaignId, value, ...props }, ref) => {
+  // Создаем копию props для передачи радиксу
+  const itemProps = { ...props };
+  
+  return (
+    <AccordionPrimitive.Item
+      ref={ref}
+      className={cn("border-b", className)}
+      data-campaign-id={campaignId}
+      data-value={value}
+      value={value}
+      // Передаем все свойства, кроме наших кастомных
+      {...itemProps}
+    />
+  );
+})
 AccordionItem.displayName = "AccordionItem"
 
-interface AccordionTriggerProps extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> {
-  value?: string;
-  campaignId?: string;
-}
+// Функция для определения URL для каждого типа аккордеона
+const getFullscreenUrl = (value: string | null, campaignId?: string | null): string | null => {
+  // По умолчанию аккордеон не имеет страницы для расширения
+  if (!value || !campaignId || !expandablePages[value]) return null;
+  
+  return `${expandablePages[value]}?campaignId=${campaignId}`;
+};
 
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  AccordionTriggerProps
->(({ className, children, value, campaignId, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => {
+  // Используем wouter hook для навигации
   const [_, setLocation] = useLocation();
   
-  // Проверяем, имеет ли аккордеон соответствующую полноэкранную страницу
-  const hasFullscreenPage = Boolean(value && expandablePages[value]);
+  // Получаем значение аккордеона и ID кампании из родительского элемента
+  const getParentData = () => {
+    if (typeof window === 'undefined') return { value: null, campaignId: null };
+    
+    // Находим ближайший родительский AccordionItem
+    const parent = document.activeElement?.closest('[data-value]');
+    if (!parent) return { value: null, campaignId: null };
+    
+    const value = parent.getAttribute('data-value');
+    const campaignId = parent.getAttribute('data-campaign-id');
+    
+    return { value, campaignId };
+  };
   
-  const handleFullscreenClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!value || !campaignId || !expandablePages[value]) return;
-    const url = `${expandablePages[value]}?campaignId=${campaignId}`;
-    setLocation(url);
+  // Обработчик клика по кнопке "Развернуть на весь экран"
+  const handleFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Предотвращаем срабатывание триггера аккордеона
+    const { value, campaignId } = getParentData();
+    const url = getFullscreenUrl(value, campaignId);
+    
+    if (url) {
+      // Используем wouter для навигации вместо window.location
+      setLocation(url);
+    }
+  };
+  
+  // Функция для проверки, имеет ли аккордеон соответствующую полноэкранную страницу
+  const hasFullscreenPage = (): boolean => {
+    const { value } = getParentData();
+    return Boolean(value && expandablePages[value] !== undefined);
   };
   
   return (
-    <AccordionPrimitive.Header className="flex">
-      <AccordionPrimitive.Trigger
-        ref={ref}
-        className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
-          className
+  <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <div className="flex items-center gap-2">
+        {/* Кнопка для разворачивания на весь экран - показываем только если есть страница */}
+        {hasFullscreenPage() && (
+          <div 
+            className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
+            onClick={handleFullscreen}
+            title="Открыть на полном экране"
+            aria-label="Открыть на полном экране"
+          >
+            <Maximize className="h-4 w-4" />
+          </div>
         )}
-        {...props}
-      >
-        {children}
-        <div className="flex items-center gap-2">
-          {hasFullscreenPage && (
-            <Maximize 
-              className="h-4 w-4 shrink-0 cursor-pointer text-muted-foreground hover:text-primary"
-              onClick={handleFullscreenClick}
-            />
-          )}
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180" />
-        </div>
-      </AccordionPrimitive.Trigger>
-    </AccordionPrimitive.Header>
-  )
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+      </div>
+    </AccordionPrimitive.Trigger>
+  </AccordionPrimitive.Header>
+  );
 })
-AccordionTrigger.displayName = "AccordionTrigger"
+AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
 
 const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
@@ -92,6 +131,6 @@ const AccordionContent = React.forwardRef<
   </AccordionPrimitive.Content>
 ))
 
-AccordionContent.displayName = "AccordionContent"
+AccordionContent.displayName = AccordionPrimitive.Content.displayName
 
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
