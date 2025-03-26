@@ -490,12 +490,12 @@ export default function CampaignDetails() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6">
       <div className="sticky-header">
-        <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
+        <h1 className="text-2xl font-bold mb-6">{campaign.name}</h1>
       </div>
 
-      <Accordion type="single" defaultValue="site" className="mb-4">
+      <Accordion type="single" defaultValue="site">
         <AccordionItem value="site" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Сайт
