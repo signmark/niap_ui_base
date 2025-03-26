@@ -31,7 +31,7 @@ const expandablePages: Record<string, string> = {
   'content': '/content',
   'posts': '/posts',
   'social-media': '/social-media-settings',
-  'scheduled': '/scheduled'
+  'scheduled': '/posts'
 };
 
 const AccordionItem = React.forwardRef<
