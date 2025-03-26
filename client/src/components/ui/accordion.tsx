@@ -29,7 +29,7 @@ const expandablePages: Record<string, string> = {
   'trends': '/trends',
   'content': '/content',
   'social-media': '/social-media-settings',
-  'schedule': '/schedule' // исправлено с 'calendar' на 'schedule', чтобы соответствовать value аккордеона
+  'scheduled': '/scheduled' // исправлено с 'calendar' на 'scheduled', чтобы соответствовать value аккордеона
 };
 
 const AccordionItem = React.forwardRef<
