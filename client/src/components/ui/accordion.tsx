@@ -69,41 +69,39 @@ const getFullscreenUrl = (value: string | null, campaignId?: string | null): str
 
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
+    value?: string;
+    campaignId?: string;
+  }
+>(({ className, children, value, campaignId, ...props }, ref) => {
   // Используем wouter hook для навигации
   const [_, setLocation] = useLocation();
-  
-  // Получаем значение аккордеона и ID кампании из родительского элемента
-  const getParentData = () => {
-    if (typeof window === 'undefined') return { value: null, campaignId: null };
-    
-    // Находим ближайший родительский AccordionItem
-    const parent = document.activeElement?.closest('[data-value]');
-    if (!parent) return { value: null, campaignId: null };
-    
-    const value = parent.getAttribute('data-value');
-    const campaignId = parent.getAttribute('data-campaign-id');
-    
-    return { value, campaignId };
-  };
   
   // Обработчик клика по кнопке "Открыть в новой странице"
   const handleFullscreenPage = (e: React.MouseEvent) => {
     e.stopPropagation(); // Предотвращаем срабатывание триггера аккордеона
-    const { value, campaignId } = getParentData();
-    const url = getFullscreenUrl(value, campaignId);
     
-    if (url) {
-      // Используем wouter для навигации вместо window.location
-      setLocation(url);
+    if (value && campaignId) {
+      const url = getFullscreenUrl(value, campaignId);
+      console.log('Navigating to URL:', url, 'for value:', value, 'campaignId:', campaignId);
+      
+      if (url) {
+        // Используем wouter для навигации вместо window.location
+        setLocation(url);
+      }
     }
   };
   
   // Функция для проверки, имеет ли аккордеон соответствующую полноэкранную страницу
   const hasFullscreenPage = (): boolean => {
-    const { value } = getParentData();
-    return Boolean(value && expandablePages[value] !== undefined);
+    if (!value) {
+      console.log('hasFullscreenPage: value is undefined or not passed');
+      return false;
+    }
+    
+    const hasPage = Boolean(expandablePages[value] !== undefined);
+    console.log('Checking fullscreen page for value:', value, 'exists:', hasPage);
+    return hasPage;
   };
   
   return (

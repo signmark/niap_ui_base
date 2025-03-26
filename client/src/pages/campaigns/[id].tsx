@@ -532,7 +532,7 @@ export default function CampaignDetails() {
 
       <Accordion type="single" defaultValue="site">
         <AccordionItem value="site" campaignId={id} className="accordion-item px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger value="site" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Сайт
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
@@ -605,7 +605,7 @@ export default function CampaignDetails() {
         </AccordionItem>
         
         <AccordionItem value="business-questionnaire" campaignId={id} className="accordion-item px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger value="business-questionnaire" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Бизнес-анкета
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
@@ -619,7 +619,7 @@ export default function CampaignDetails() {
         </AccordionItem>
 
         <AccordionItem value="trend-analysis" campaignId={id} className="accordion-item px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger value="trend-analysis" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки анализа трендов
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
@@ -722,7 +722,7 @@ export default function CampaignDetails() {
         </AccordionItem>
 
         <AccordionItem value="social-media" campaignId={id} className="accordion-item px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger value="social-media" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки публикации
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
