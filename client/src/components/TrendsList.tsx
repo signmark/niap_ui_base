@@ -13,6 +13,7 @@ import { createProxyImageUrl, createVideoThumbnailUrl, isVideoUrl } from "@/util
 import { TrendDetailDialog } from "./TrendDetailDialog";
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { TrendTopic, Post } from "@/lib/interfaces";
 
 interface TrendsListProps {
   campaignId: string;
