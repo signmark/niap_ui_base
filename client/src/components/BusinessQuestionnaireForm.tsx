@@ -409,8 +409,8 @@ export function BusinessQuestionnaireForm({
         </div>
       )}
       
-      <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <div className="w-full">
+        <div className="flex justify-end mb-4">
           <div className="flex gap-2">
             {hasQuestionnaire && !isEditMode && (
               <Button 
@@ -439,72 +439,34 @@ export function BusinessQuestionnaireForm({
               </>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {!hasQuestionnaire && !isEditMode ? (
-            <div className="flex flex-col items-center py-8">
-              <p className="text-muted-foreground mb-4 text-center">
-                Для этой кампании еще не создана бизнес-анкета. 
-                Заполните анкету, чтобы помочь в создании релевантного контента.
-              </p>
-              <Button onClick={() => setIsEditMode(true)}>
-                Создать анкету
-              </Button>
-            </div>
-          ) : (
-            <Form {...form}>
-              <form 
-                onSubmit={form.handleSubmit(onSubmit)} 
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="companyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Название компании</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            readOnly={!isEditMode && hasQuestionnaire}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="contactInfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Контактная информация</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            readOnly={!isEditMode && hasQuestionnaire}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+        </div>
+        
+        {!hasQuestionnaire && !isEditMode ? (
+          <div className="flex flex-col items-center py-8">
+            <p className="text-muted-foreground mb-4 text-center">
+              Для этой кампании еще не создана бизнес-анкета. 
+              Заполните анкету, чтобы помочь в создании релевантного контента.
+            </p>
+            <Button onClick={() => setIsEditMode(true)}>
+              Создать анкету
+            </Button>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form 
+              onSubmit={form.handleSubmit(onSubmit)} 
+              className="space-y-6"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="businessDescription"
+                  name="companyName"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex flex-row justify-between items-center">
-                        <FormLabel>Описание бизнеса</FormLabel>
-                      </div>
+                      <FormLabel>Название компании</FormLabel>
                       <FormControl>
-                        <Textarea
+                        <Input
                           {...field}
-                          rows={3}
                           readOnly={!isEditMode && hasQuestionnaire}
                         />
                       </FormControl>
@@ -512,17 +474,16 @@ export function BusinessQuestionnaireForm({
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
-                  name="mainDirections"
+                  name="contactInfo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Основные направления деятельности</FormLabel>
+                      <FormLabel>Контактная информация</FormLabel>
                       <FormControl>
-                        <Textarea
+                        <Input
                           {...field}
-                          rows={3}
                           readOnly={!isEditMode && hasQuestionnaire}
                         />
                       </FormControl>
@@ -530,186 +491,222 @@ export function BusinessQuestionnaireForm({
                     </FormItem>
                   )}
                 />
+              </div>
 
-                <FormField
-                  control={form.control}
-                  name="brandImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Образ бренда</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="productsServices"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Продукты и услуги</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="targetAudience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Целевая аудитория</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="customerResults"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Какие результаты получают клиенты</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="companyFeatures"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Особенности компании</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="businessValues"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ценности бизнеса</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="productBeliefs"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Убеждения о продукте/услуге</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="competitiveAdvantages"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Конкурентные преимущества</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="marketingExpectations"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ожидания от маркетинга</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={3}
-                          readOnly={!isEditMode && hasQuestionnaire}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-
-
-                {isEditMode && (
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      type="submit"
-                      disabled={createQuestionnaireMutation.isPending || updateQuestionnaireMutation.isPending}
-                    >
-                      {hasQuestionnaire ? "Обновить" : "Сохранить"}
-                    </Button>
-                  </div>
+              <FormField
+                control={form.control}
+                name="businessDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex flex-row justify-between items-center">
+                      <FormLabel>Описание бизнеса</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </form>
-            </Form>
-          )}
-        </CardContent>
-      </Card>
+              />
+
+              <FormField
+                control={form.control}
+                name="mainDirections"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Основные направления деятельности</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="brandImage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Образ бренда</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="productsServices"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Продукты и услуги</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetAudience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Целевая аудитория</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="customerResults"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Какие результаты получают клиенты</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="companyFeatures"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Особенности компании</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="businessValues"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ценности бизнеса</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="productBeliefs"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Убеждения о продукте/услуге</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="competitiveAdvantages"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Конкурентные преимущества</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="marketingExpectations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ожидания от маркетинга</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={3}
+                        readOnly={!isEditMode && hasQuestionnaire}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {isEditMode && (
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="submit"
+                    disabled={createQuestionnaireMutation.isPending || updateQuestionnaireMutation.isPending}
+                  >
+                    {hasQuestionnaire ? "Обновить" : "Сохранить"}
+                  </Button>
+                </div>
+              )}
+            </form>
+          </Form>
+        )}
+      </div>
     </div>
   );
 }
