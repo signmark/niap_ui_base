@@ -518,7 +518,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                         onError={() => handleImageError(previewImageUrl)}
                       />
                       {hasVideos && (
-                        <div className="absolute top-8 left-8 bg-black/60 rounded-full p-1">
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 rounded-full p-1">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 5.14V19.14L19 12.14L8 5.14Z" fill="white" />
                           </svg>
