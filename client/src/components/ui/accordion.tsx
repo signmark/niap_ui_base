@@ -81,6 +81,12 @@ const AccordionTrigger = React.forwardRef<
     }
   };
   
+  // Функция для проверки, имеет ли аккордеон соответствующую полноэкранную страницу
+  const hasFullscreenPage = (): boolean => {
+    const { value } = getParentData();
+    return Boolean(value && expandablePages[value] !== undefined);
+  };
+  
   return (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
@@ -93,16 +99,17 @@ const AccordionTrigger = React.forwardRef<
     >
       {children}
       <div className="flex items-center gap-2">
-        {/* Кнопка для разворачивания на весь экран */}
-        {/* Используем div вместо Maximize из-за проблем с типами */}
-        <div 
-          className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
-          onClick={handleFullscreen}
-          title="Открыть на полном экране"
-          aria-label="Открыть на полном экране"
-        >
-          <Maximize className="h-4 w-4" />
-        </div>
+        {/* Кнопка для разворачивания на весь экран - показываем только если есть страница */}
+        {hasFullscreenPage() && (
+          <div 
+            className="flex items-center cursor-pointer text-muted-foreground hover:text-primary"
+            onClick={handleFullscreen}
+            title="Открыть на полном экране"
+            aria-label="Открыть на полном экране"
+          >
+            <Maximize className="h-4 w-4" />
+          </div>
+        )}
         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
       </div>
     </AccordionPrimitive.Trigger>
