@@ -2,22 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Переопределение стилей для диалоговых окон */
+/* Стили для диалоговых окон */
 .dialog-content {
-  background-color: hsl(var(--background)) !important;
+  background-color: white !important;
+  color: black !important;
   opacity: 1 !important;
 }
 
-/* Убираем прозрачность всех диалоговых окон */
-[data-radix-dialog-overlay],
-[role="dialog"],
-[data-state="open"] {
-  background-opacity: 1 !important;
+/* Стили для фона диалога с умеренной непрозрачностью */
+[data-radix-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.8) !important;
 }
 
-/* Дополнительные стили для фона диалога */
+/* Контент диалога должен быть непрозрачным */
 [data-radix-dialog-content] {
-  background-color: hsl(var(--background)) !important;
+  background-color: white !important;
+  color: black !important;
   opacity: 1 !important;
 }
 
