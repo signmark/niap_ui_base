@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CampaignContent, SocialPlatform } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc, Maximize2, Minimize2 } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
 
