@@ -496,7 +496,7 @@ export default function CampaignDetails() {
       </div>
 
       <Accordion type="single" defaultValue="site">
-        <AccordionItem value="site" className="accordion-item px-6">
+        <AccordionItem value="site" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Сайт
           </AccordionTrigger>
