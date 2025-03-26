@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video, Check } from "lucide-react";
@@ -323,18 +323,29 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
     return selectedTrends.some(t => t.id === trendId);
   };
   
-  // Вызываем callback только при изменении selectedTrends
+  // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убираем условный вызов useEffect,
+  // вместо этого используем ref для отслеживания изменений
+  const previousSelectedTrendsRef = useRef<TrendTopic[]>([]);
+  
+  // Используем единый useEffect без условий для всех случаев
   useEffect(() => {
-    // Всегда выполняем эффект, даже если callback не определен
-    // Это предотвращает ошибку "rendered more hooks"
-    try {
-      if (onSelectTrends) {
+    console.log('TrendsList: useEffect для обновления выбранных трендов, выбрано:', selectedTrends.length);
+    
+    // Если есть callback и selectedTrends изменились - вызываем callback
+    if (onSelectTrends && 
+        (selectedTrends.length !== previousSelectedTrendsRef.current.length ||
+         JSON.stringify(selectedTrends) !== JSON.stringify(previousSelectedTrendsRef.current))) {
+      
+      try {
         onSelectTrends(selectedTrends);
+      } catch (error) {
+        console.error("Error in onSelectTrends callback:", error);
       }
-    } catch (error) {
-      console.error("Error in onSelectTrends callback:", error);
     }
-  }, [selectedTrends, onSelectTrends]);
+    
+    // Обновляем ref для следующего сравнения
+    previousSelectedTrendsRef.current = [...selectedTrends];
+  }, [selectedTrends]);
 
   return (
     <div className="space-y-4">
