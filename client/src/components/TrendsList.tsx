@@ -32,6 +32,35 @@ interface Post {
   shares?: number;
 }
 
+// Интерфейс для работы с данными, приходящими с API
+interface ApiTrendTopic {
+  id: string;
+  title: string;
+  sourceId?: string;
+  source_id?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  url?: string;
+  reactions?: number;
+  comments?: number;
+  description?: string;
+  views?: number;
+  createdAt?: string;
+  created_at?: string;
+  isBookmarked?: boolean;
+  is_bookmarked?: boolean;
+  campaignId?: string;
+  campaign_id?: string;
+  mediaLinks?: string | any[];
+  media_links?: any[];
+  trendScore?: number;
+  trend_score?: number;
+  accountUrl?: string;
+  urlPost?: string;
+  [key: string]: any; // Для других полей, которые могут встретиться
+}
+
+// Интерфейс для внутреннего использования в компоненте (чистый camelCase)
 interface TrendTopic {
   id: string;
   title: string;
@@ -41,16 +70,16 @@ interface TrendTopic {
   url?: string; // URL оригинальной публикации
   reactions: number;
   comments: number;
-  description?: string; // Добавляем поле для описания
+  description?: string;
   views: number;
   createdAt: string;
   isBookmarked: boolean;
   campaignId: string;
-  mediaLinks?: string; // JSON строка с медиа-данными
-  media_links?: Post[]; // Массив постов
-  trendScore?: number; // Показатель трендовости контента
-  accountUrl?: string; // URL аккаунта (в snake_case формате из API)
-  urlPost?: string; // URL поста (в snake_case формате из API)
+  mediaLinks?: string | any[]; // Может быть JSON строкой или массивом
+  media_links?: Post[]; // Сохраняем это поле для совместимости
+  trendScore?: number;
+  accountUrl?: string;
+  urlPost?: string;
 }
 
 // Используем импортированную функцию createProxyImageUrl из utils/media
@@ -60,7 +89,8 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const [selectedTrend, setSelectedTrend] = useState<TrendTopic | null>(null);
+  // Используем тип any для selectedTrend, поскольку требуется совместимость с форматом из TrendDetailDialog
+  const [selectedTrend, setSelectedTrend] = useState<any>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedTrends, setSelectedTrends] = useState<TrendTopic[]>([]);
 
@@ -409,12 +439,12 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
               key={trend.id} 
               className={`shadow hover:shadow-md transition-shadow cursor-pointer ${trend.isBookmarked ? "border-primary" : ""}`}
               onClick={() => {
-                // Для отображения в TrendDetailDialog используем текущий тренд
-                // При необходимости выполняем трансформацию полей из snake_case в camelCase
-                const transformedTrend: TrendTopic = {
+                // Для TrendDetailDialog нужен объект с полями в snake_case
+                // Создаем объект с правильной структурой для диалога
+                const transformedTrend = {
                   id: trend.id,
                   title: trend.title,
-                  sourceId: trend.sourceId || '',
+                  source_id: trend.sourceId || trend.source_id || '',
                   sourceName: trend.sourceName,
                   sourceUrl: trend.sourceUrl,
                   url: trend.url,
@@ -422,11 +452,13 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                   comments: trend.comments || 0,
                   description: trend.description,
                   views: trend.views || 0,
-                  createdAt: trend.createdAt || new Date().toISOString(),
-                  isBookmarked: Boolean(trend.isBookmarked),
-                  campaignId: trend.campaignId || campaignId || '',
-                  mediaLinks: typeof trend.mediaLinks === 'string' ? trend.mediaLinks : undefined,
-                  media_links: Array.isArray(trend.media_links) ? trend.media_links : undefined,
+                  created_at: trend.createdAt || trend.created_at || new Date().toISOString(),
+                  is_bookmarked: trend.isBookmarked || trend.is_bookmarked || false,
+                  campaign_id: trend.campaignId || trend.campaign_id || campaignId || '',
+                  media_links: typeof trend.mediaLinks === 'string' ? trend.mediaLinks : 
+                              (trend.media_links ? JSON.stringify(trend.media_links) : undefined),
+                  // Сохраняем оригинальные поля для совместимости
+                  mediaLinks: trend.mediaLinks,
                   trendScore: trend.trendScore,
                   accountUrl: trend.accountUrl,
                   urlPost: trend.urlPost
