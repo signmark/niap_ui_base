@@ -411,7 +411,6 @@ export function BusinessQuestionnaireForm({
       
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Бизнес-анкета</CardTitle>
           <div className="flex gap-2">
             {hasQuestionnaire && !isEditMode && (
               <Button 
