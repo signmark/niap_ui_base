@@ -94,6 +94,18 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       const scheduledAt = toUTCDate(selectedDate, selectedTime);
 
       // Используем наш серверный API вместо прямого запроса к Directus
+      // Преобразование типа поста из интерфейса в формат API
+      let contentTypeForApi;
+      if (postType === 'text') {
+        contentTypeForApi = 'text';
+      } else if (postType === 'image') {
+        contentTypeForApi = 'image';
+      } else if (postType === 'image-text') {
+        contentTypeForApi = 'text-image';
+      } else if (postType === 'video') {
+        contentTypeForApi = 'video';
+      }
+
       const response = await fetch('/api/campaign-content', {
         method: 'POST',
         headers: {
@@ -101,7 +113,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
         },
         body: JSON.stringify({
           campaignId: campaignId,
-          contentType: postType,
+          contentType: contentTypeForApi,
           content,
           imageUrl: (postType === "image" || postType === "image-text") ? mediaUrl : null,
           videoUrl: postType === "video" ? mediaUrl : null,
@@ -146,10 +158,11 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
     switch (type) {
       case 'text':
         return 'bg-blue-500';
+      case 'text-image':
       case 'image':
-      case 'image-text':
         return 'bg-yellow-500';
       case 'video':
+      case 'video-text':
         return 'bg-red-500';
       default:
         return 'bg-gray-500';
@@ -177,7 +190,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
       <div className="flex flex-col gap-1 mt-1">
         {chunks.map((chunk, chunkIndex) => (
           <div key={chunkIndex} className="flex gap-1 justify-center">
-            {chunk.map((post) => (
+            {chunk.map((post: Post) => (
               <div
                 key={post.id}
                 className={`w-2 h-2 rounded-full ${getDotColor(post.contentType)}`}
