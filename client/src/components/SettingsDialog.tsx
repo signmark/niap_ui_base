@@ -317,7 +317,7 @@ export function SettingsDialog() {
 
   if (isLoading) {
     return (
-      <DialogContent>
+      <DialogContent className="dialog-content">
         <div className="flex justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -326,7 +326,7 @@ export function SettingsDialog() {
   }
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dialog-content">
       <DialogHeader>
         <DialogTitle>Настройки API ключей</DialogTitle>
       </DialogHeader>
