@@ -34,8 +34,8 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       // Начальные значения
       colorMode: 'light',
-      sidebarTheme: 'blue',     // Используем синюю тему для боковой панели вместо 'default'
-      topbarTheme: 'light',     // Используем светлую тему для верхней панели вместо 'default'
+      sidebarTheme: 'default',  // Используем default как базовую конфигурацию
+      topbarTheme: 'default',   // Используем default как базовую конфигурацию
       
       // Методы изменения
       setColorMode: (mode) => set({ colorMode: mode }),
@@ -45,8 +45,8 @@ export const useThemeStore = create<ThemeState>()(
       // Сброс к дефолтным настройкам
       resetToDefault: () => set({ 
         colorMode: 'light', 
-        sidebarTheme: 'blue',     // Сбрасываем к синей теме для боковой панели
-        topbarTheme: 'light'      // Сбрасываем к светлой теме для верхней панели
+        sidebarTheme: 'default',  // Сбрасываем к дефолтным настройкам
+        topbarTheme: 'default'    // Сбрасываем к дефолтным настройкам
       }),
       
       // Получение CSS переменных для темы
