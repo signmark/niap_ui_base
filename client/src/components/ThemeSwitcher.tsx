@@ -139,7 +139,7 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
   if (type === 'sidebar') {
     switch (theme) {
       case 'default': return '#ffffff'; // Белая тема (стандартная)
-      case 'blue': return '#1e3a8a';
+      case 'blue': return '#1a202c'; // Темно-синий, почти черный
       case 'green': return '#065f46';
       case 'purple': return '#701a75';
       default: return '#1e3a8a';
@@ -152,7 +152,8 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
         // Акцентный цвет от цвета боковой панели
         switch (sidebarColor) {
           case '#ffffff': return '#e0e0e0'; // Для белой темы
-          case '#1e3a8a': return '#60a5fa';
+          case '#1a202c': return '#3b82f6'; // Для темно-синего 
+          case '#1e3a8a': return '#60a5fa'; // Для старого синего (оставляем для совместимости)
           case '#065f46': return '#10b981';
           case '#701a75': return '#a855f7';
           default: return '#60a5fa';
@@ -161,7 +162,8 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
         // Более светлый оттенок цвета боковой панели
         switch (sidebarColor) {
           case '#ffffff': return '#f0f0f0'; // Для белой темы
-          case '#1e3a8a': return '#3b82f6';
+          case '#1a202c': return '#2d3748'; // Для темно-синего
+          case '#1e3a8a': return '#3b82f6'; // Для старого синего (оставляем для совместимости)
           case '#065f46': return '#10b981';
           case '#701a75': return '#c026d3';
           default: return '#3b82f6';
