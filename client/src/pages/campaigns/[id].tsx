@@ -752,7 +752,7 @@ export default function CampaignDetails() {
         </AccordionItem>
             
         <AccordionItem value="schedule" campaignId={id} className="accordion-item px-6">
-          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger value="schedule" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Календарь публикаций
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">

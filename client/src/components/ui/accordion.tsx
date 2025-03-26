@@ -29,7 +29,7 @@ const expandablePages: Record<string, string> = {
   'trends': '/trends',
   'content': '/content',
   'social-media': '/social-media-settings',
-  'calendar': '/schedule'
+  'schedule': '/schedule' // исправлено с 'calendar' на 'schedule', чтобы соответствовать value аккордеона
 };
 
 const AccordionItem = React.forwardRef<
@@ -99,8 +99,11 @@ const AccordionTrigger = React.forwardRef<
       return false;
     }
     
+    // Для отладки: показать все доступные страницы
+    console.log('Available expandable pages:', Object.keys(expandablePages));
+    
     const hasPage = Boolean(expandablePages[value] !== undefined);
-    console.log('Checking fullscreen page for value:', value, 'exists:', hasPage);
+    console.log('Checking fullscreen page for value:', value, 'exists:', hasPage, 'url:', expandablePages[value]);
     return hasPage;
   };
   
