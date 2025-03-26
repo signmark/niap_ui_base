@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface Post {
   id: string;
-  campaign_id: string;
+  campaignId: string;
   content: string;
-  post_type: 'text' | 'image' | 'image-text' | 'video';
-  image_url: string | null;
-  video_url: string | null;
-  scheduled_at: string;
+  contentType: 'text' | 'text-image' | 'video' | 'video-text';
+  imageUrl: string | null;
+  videoUrl: string | null;
+  scheduledAt: string;
+  status?: 'draft' | 'scheduled' | 'published' | 'failed';
 }
 
 export function PostCalendar({ campaignId }: { campaignId: string }) {
@@ -31,17 +32,18 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const { data: posts, refetch: refetchPosts } = useQuery({
     queryKey: ["/api/campaigns", campaignId, "posts"],
     queryFn: async () => {
-      // Используем правильный эндпоинт campaign_content вместо campaign_posts
-      const response = await directusApi.get("/items/campaign_content", {
-        params: {
-          filter: {
-            campaignId: {
-              _eq: campaignId
-            }
-          }
+      // Используем наш собственный API вместо прямого запроса к Directus
+      try {
+        const response = await fetch(`/api/campaign-content?campaignId=${campaignId}`);
+        if (!response.ok) {
+          throw new Error('Не удалось загрузить посты');
         }
-      });
-      return response.data?.data || [];
+        const data = await response.json();
+        return data.data || [];
+      } catch (error) {
+        console.error('Ошибка при загрузке постов:', error);
+        return [];
+      }
     }
   });
 
@@ -91,17 +93,29 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
       const scheduledAt = toUTCDate(selectedDate, selectedTime);
 
-      // Используем правильный эндпоинт campaign_content вместо campaign_posts
-      // и соответствующие имена полей
-      await directusApi.post("/items/campaign_content", {
-        campaignId: campaignId,
-        contentType: postType,
-        content,
-        imageUrl: (postType === "image" || postType === "image-text") ? mediaUrl : null,
-        videoUrl: postType === "video" ? mediaUrl : null,
-        scheduledAt: scheduledAt.toISOString(),
-        status: 'scheduled'
+      // Используем наш серверный API вместо прямого запроса к Directus
+      const response = await fetch('/api/campaign-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId: campaignId,
+          contentType: postType,
+          content,
+          imageUrl: (postType === "image" || postType === "image-text") ? mediaUrl : null,
+          videoUrl: postType === "video" ? mediaUrl : null,
+          scheduledAt: scheduledAt.toISOString(),
+          status: 'scheduled'
+        })
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Ошибка при создании поста');
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({ description: "Пост создан" });
@@ -144,8 +158,9 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
 
   // Generate calendar day content
   const getDayContent = (day: Date) => {
-    const postsForDay = posts?.filter(post => {
-      const postDate = new Date(post.scheduled_at);
+    const postsForDay = posts?.filter((post: Post) => {
+      // Используем правильное имя поля scheduledAt вместо scheduled_at
+      const postDate = new Date(post.scheduledAt);
       return postDate.getDate() === day.getDate() &&
              postDate.getMonth() === day.getMonth() &&
              postDate.getFullYear() === day.getFullYear();
@@ -165,8 +180,8 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
             {chunk.map((post) => (
               <div
                 key={post.id}
-                className={`w-2 h-2 rounded-full ${getDotColor(post.post_type)}`}
-                title={`${formatTime(post.scheduled_at)} - ${post.content.substring(0, 20)}...`}
+                className={`w-2 h-2 rounded-full ${getDotColor(post.contentType)}`}
+                title={`${formatTime(post.scheduledAt)} - ${post.content.substring(0, 20)}...`}
               />
             ))}
           </div>
@@ -179,8 +194,9 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   const getSelectedDatePosts = () => {
     if (!selectedDate || !posts) return [];
 
-    return posts.filter(post => {
-      const postDate = new Date(post.scheduled_at);
+    return posts.filter((post: Post) => {
+      // Используем правильное имя поля scheduledAt вместо scheduled_at
+      const postDate = new Date(post.scheduledAt);
       return postDate.getDate() === selectedDate.getDate() &&
              postDate.getMonth() === selectedDate.getMonth() &&
              postDate.getFullYear() === selectedDate.getFullYear();
@@ -215,15 +231,15 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
               {getSelectedDatePosts().map((post: Post) => (
                 <div key={post.id} className="p-2 bg-secondary rounded-md mb-2">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${getDotColor(post.post_type)}`} />
+                    <div className={`w-3 h-3 rounded-full ${getDotColor(post.contentType)}`} />
                     <p className="text-sm font-medium">
-                      {formatTime(post.scheduled_at)}
+                      {formatTime(post.scheduledAt)}
                     </p>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{post.content}</p>
-                  {(post.image_url || post.video_url) && (
+                  {(post.imageUrl || post.videoUrl) && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Медиа: {post.image_url || post.video_url}
+                      Медиа: {post.imageUrl || post.videoUrl}
                     </p>
                   )}
                 </div>
