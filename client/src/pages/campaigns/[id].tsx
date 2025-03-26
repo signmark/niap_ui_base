@@ -491,11 +491,11 @@ export default function CampaignDetails() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="sticky top-0 bg-background z-10 pb-6">
+      <div className="sticky-header">
         <h1 className="text-2xl font-bold mb-4">{campaign.name}</h1>
         <Accordion type="single" defaultValue="site" collapsible className="mb-4">
-          <AccordionItem value="site" className="bg-background border rounded-lg shadow-sm">
-            <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+          <AccordionItem value="site" className="accordion-item px-6">
+            <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
               Сайт
             </AccordionTrigger>
             <AccordionContent className="px-6 pt-2 pb-4">
@@ -530,8 +530,8 @@ export default function CampaignDetails() {
       </div>
 
       <Accordion type="single" defaultValue="keywords" className="mb-4">
-        <AccordionItem value="keywords" className="bg-background border rounded-lg shadow-sm">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
+        <AccordionItem value="keywords" className="accordion-item px-6">
+          <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Ключевые слова
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
@@ -571,7 +571,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
         
-        <AccordionItem value="business-questionnaire" className="border rounded-lg px-6">
+        <AccordionItem value="business-questionnaire" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Бизнес-анкета
           </AccordionTrigger>
@@ -585,7 +585,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trend-analysis" className="border rounded-lg px-6">
+        <AccordionItem value="trend-analysis" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки анализа трендов
           </AccordionTrigger>
@@ -615,7 +615,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="trends" className="border rounded-lg px-6">
+        <AccordionItem value="trends" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Тренды
           </AccordionTrigger>
@@ -637,7 +637,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="content" className="border rounded-lg px-6">
+        <AccordionItem value="content" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Генерация контента
           </AccordionTrigger>
@@ -660,7 +660,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="social-media" className="border rounded-lg px-6">
+        <AccordionItem value="social-media" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Настройки публикации
           </AccordionTrigger>
@@ -690,7 +690,7 @@ export default function CampaignDetails() {
           </AccordionContent>
         </AccordionItem>
             
-        <AccordionItem value="schedule" className="border rounded-lg px-6">
+        <AccordionItem value="schedule" className="accordion-item px-6">
           <AccordionTrigger className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             Календарь публикаций
           </AccordionTrigger>

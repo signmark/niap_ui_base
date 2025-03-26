@@ -185,6 +185,16 @@
 }
 
 @layer components {
+  /* Стили для аккордеонов - непрозрачные с тенью */
+  .accordion-item {
+    @apply bg-background border rounded-lg shadow-md;
+  }
+  
+  /* Стики-хедер для фиксированного первого блока */
+  .sticky-header {
+    @apply sticky top-0 z-10 bg-background pb-6 backdrop-blur-sm;
+  }
+  
   .resize-handle {
     resize: both;
     overflow: auto;
