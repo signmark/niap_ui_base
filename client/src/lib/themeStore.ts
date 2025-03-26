@@ -74,12 +74,12 @@ export const useThemeStore = create<ThemeState>()(
         // Цвета боковой панели
         switch (sidebarTheme) {
           case 'default':
-            // Оригинальные цвета из index.css
-            variables['--sidebar-bg'] = '#1e3a8a';
+            // Черно-белая тема
+            variables['--sidebar-bg'] = colorMode === 'light' ? '#000000' : '#121212';
             variables['--sidebar-fg'] = '#ffffff';
-            variables['--sidebar-accent'] = '#60a5fa';
+            variables['--sidebar-accent'] = colorMode === 'light' ? '#333333' : '#444444';
             variables['--sidebar-accent-fg'] = '#ffffff';
-            variables['--sidebar-border'] = '#2563eb';
+            variables['--sidebar-border'] = colorMode === 'light' ? '#222222' : '#333333';
             break;
           case 'blue':
             variables['--sidebar-bg'] = colorMode === 'light' ? '#1e3a8a' : '#1e3a8a';
@@ -107,10 +107,10 @@ export const useThemeStore = create<ThemeState>()(
         // Цвета верхней панели
         switch (topbarTheme) {
           case 'default':
-            // Оригинальные цвета из index.css
-            variables['--topbar-bg'] = colorMode === 'light' ? '#f1f5f9' : '#1e1e1e';
-            variables['--topbar-fg'] = colorMode === 'light' ? '#0f172a' : '#f8fafc';
-            variables['--topbar-border'] = colorMode === 'light' ? '#cbd5e1' : '#334155';
+            // Черно-белая тема для верхней панели
+            variables['--topbar-bg'] = colorMode === 'light' ? '#f0f0f0' : '#1a1a1a';
+            variables['--topbar-fg'] = colorMode === 'light' ? '#000000' : '#ffffff';
+            variables['--topbar-border'] = colorMode === 'light' ? '#cccccc' : '#333333';
             break;
           case 'light':
             variables['--topbar-bg'] = colorMode === 'light' ? '#f1f5f9' : '#1e1e1e';
