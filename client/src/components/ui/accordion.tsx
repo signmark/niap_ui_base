@@ -43,50 +43,46 @@ const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   AccordionTriggerProps
 >(({ className, children, value, campaignId, ...props }, ref) => {
+  // Используем wouter hook для навигации
   const [_, setLocation] = useLocation();
   
-  // Проверяем, имеет ли аккордеон соответствующую полноэкранную страницу
-  const hasFullscreenPage = Boolean(value && expandablePages[value]);
-  
-  // Функция для перехода на полноэкранную страницу
-  const navigateToFullscreen = (e: React.MouseEvent) => {
-    // Останавливаем всплытие события, чтобы не затронуть аккордеон
-    e.stopPropagation();
-    
-    if (!value || !campaignId || !expandablePages[value]) return;
-    const url = `${expandablePages[value]}?campaignId=${campaignId}`;
-    setLocation(url);
+  // Функция для определения URL для каждого типа аккордеона
+  const getFullscreenUrl = (): string | null => {
+    if (!value || !campaignId || !expandablePages[value]) return null;
+    return `${expandablePages[value]}?campaignId=${campaignId}`;
   };
-
+  
+  // Проверяем, имеет ли аккордеон соответствующую полноэкранную страницу
+  const hasFullscreenPage = value && expandablePages[value] !== undefined;
+  
   return (
-    <div className="flex relative w-full border-0">
-      <AccordionPrimitive.Header className="flex flex-1">
-        <AccordionPrimitive.Trigger
-          ref={ref}
-          className={cn(
-            "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
-            className
+    <AccordionPrimitive.Header className="flex">
+      <AccordionPrimitive.Trigger
+        ref={ref}
+        className={cn(
+          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <div className="flex items-center gap-2">
+          {hasFullscreenPage && (
+            <Maximize 
+              className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer" 
+              onClick={(e) => {
+                e.stopPropagation();
+                const url = getFullscreenUrl();
+                if (url) {
+                  setLocation(url);
+                }
+              }}
+            />
           )}
-          {...props}
-        >
-          <span className="flex-1">{children}</span>
-          <span className="flex items-center">
-            {hasFullscreenPage && (
-              <button
-                type="button"
-                className="mr-2 p-2 flex items-center cursor-pointer text-muted-foreground hover:text-primary"
-                onClick={navigateToFullscreen}
-                title="Открыть на полном экране"
-                aria-label="Открыть на полном экране"
-              >
-                <Maximize className="h-4 w-4" />
-              </button>
-            )}
-            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
-          </span>
-        </AccordionPrimitive.Trigger>
-      </AccordionPrimitive.Header>
-    </div>
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+        </div>
+      </AccordionPrimitive.Trigger>
+    </AccordionPrimitive.Header>
   );
 })
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
