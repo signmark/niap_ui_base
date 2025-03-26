@@ -305,16 +305,32 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
       e.stopPropagation();
     }
     
+    // Теперь вызываем callback прямо здесь, а не через useEffect
     setSelectedTrends(prevSelected => {
       const isSelected = prevSelected.some(t => t.id === trend.id);
       
+      let newSelectedTrends;
       if (isSelected) {
         // Если тренд уже выбран, удаляем его из выбранных
-        return prevSelected.filter(t => t.id !== trend.id);
+        newSelectedTrends = prevSelected.filter(t => t.id !== trend.id);
       } else {
         // Иначе добавляем его к выбранным
-        return [...prevSelected, trend];
+        newSelectedTrends = [...prevSelected, trend];
       }
+      
+      // ВАЖНО: Вызываем callback напрямую после обновления состояния
+      // Это решает проблему с условным вызовом хуков
+      if (onSelectTrends) {
+        setTimeout(() => {
+          try {
+            onSelectTrends(newSelectedTrends);
+          } catch (error) {
+            console.error("Error in onSelectTrends callback:", error);
+          }
+        }, 0);
+      }
+      
+      return newSelectedTrends;
     });
   };
   
@@ -323,29 +339,10 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
     return selectedTrends.some(t => t.id === trendId);
   };
   
-  // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убираем условный вызов useEffect,
-  // вместо этого используем ref для отслеживания изменений
-  const previousSelectedTrendsRef = useRef<TrendTopic[]>([]);
-  
-  // Используем единый useEffect без условий для всех случаев
-  useEffect(() => {
-    console.log('TrendsList: useEffect для обновления выбранных трендов, выбрано:', selectedTrends.length);
-    
-    // Если есть callback и selectedTrends изменились - вызываем callback
-    if (onSelectTrends && 
-        (selectedTrends.length !== previousSelectedTrendsRef.current.length ||
-         JSON.stringify(selectedTrends) !== JSON.stringify(previousSelectedTrendsRef.current))) {
-      
-      try {
-        onSelectTrends(selectedTrends);
-      } catch (error) {
-        console.error("Error in onSelectTrends callback:", error);
-      }
-    }
-    
-    // Обновляем ref для следующего сравнения
-    previousSelectedTrendsRef.current = [...selectedTrends];
-  }, [selectedTrends]);
+  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Полностью отказываемся от useEffect
+  // вместо этого используем прямой вызов коллбэка в handleTrendSelect
+  // Это решает проблему с условными хуками, которая вызывает
+  // ошибку "Rendered more hooks than during the previous render"
 
   return (
     <div className="space-y-4">
@@ -371,7 +368,21 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSelectedTrends([])}
+              onClick={() => {
+                // Очищаем выбранные тренды и вызываем коллбэк
+                setSelectedTrends([]);
+                
+                // Вызываем callback напрямую
+                if (onSelectTrends) {
+                  setTimeout(() => {
+                    try {
+                      onSelectTrends([]);
+                    } catch (error) {
+                      console.error("Error in onSelectTrends callback:", error);
+                    }
+                  }, 0);
+                }
+              }}
             >
               Очистить
             </Button>
