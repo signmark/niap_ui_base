@@ -232,12 +232,22 @@ export default function PublicationCalendar({
 
     if (!postsForDay.length) return null;
 
-    // Подсчет разных типов контента на эту дату
-    const contentTypes = postsForDay.reduce((types, post) => {
+    // Группируем посты по статусу и типу содержимого
+    const contentByStatus = postsForDay.reduce((result, post) => {
+      // Определяем статус поста
+      const status = post.status || 'draft';
       const type = post.contentType || 'text';
-      types[type] = (types[type] || 0) + 1;
-      return types;
-    }, {} as Record<string, number>);
+      
+      // Инициализация записи, если она еще не существует
+      if (!result[status]) {
+        result[status] = {};
+      }
+      
+      // Увеличиваем счетчик для этого типа и статуса
+      result[status][type] = (result[status][type] || 0) + 1;
+      
+      return result;
+    }, {} as Record<string, Record<string, number>>);
 
     // Получаем цвета для разных типов контента
     const getColorForType = (type: string): string => {
@@ -249,15 +259,38 @@ export default function PublicationCalendar({
         default: return 'bg-gray-500';
       }
     };
+    
+    // Получаем стили для разных статусов
+    const getStatusStyle = (status: string): { opacity: string, ring?: string } => {
+      switch (status) {
+        case 'published': 
+          return { opacity: '1', ring: 'ring-1 ring-green-500' }; // Опубликованные с зеленой рамкой
+        case 'scheduled': 
+          return { opacity: '0.7', ring: 'ring-1 ring-blue-400' }; // Запланированные с синей рамкой
+        case 'draft': 
+          return { opacity: '0.4' }; // Черновики полупрозрачные
+        default: 
+          return { opacity: '0.6' };
+      }
+    };
 
-    // Отображаем маркеры для типов контента
+    // Отображаем маркеры для типов контента, сгруппированные по статусу
     return (
-      <div className="flex justify-center gap-0.5 mt-1">
-        {Object.keys(contentTypes).map((type, index) => (
-          <div 
-            key={index} 
-            className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)}`}
-          ></div>
+      <div className="flex justify-center gap-1 mt-1">
+        {Object.entries(contentByStatus).map(([status, typesCounts], statusIndex) => (
+          <div key={statusIndex} className="flex gap-0.5">
+            {Object.keys(typesCounts).map((type, typeIndex) => {
+              const { opacity, ring } = getStatusStyle(status);
+              return (
+                <div 
+                  key={`${statusIndex}-${typeIndex}`} 
+                  className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)} ${ring || ''}`}
+                  style={{ opacity }}
+                  title={`${status}: ${type}`}
+                ></div>
+              );
+            })}
+          </div>
         ))}
       </div>
     );
