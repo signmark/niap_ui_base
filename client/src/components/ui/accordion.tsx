@@ -1,6 +1,7 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDown, Maximize } from "lucide-react"
+import { useLocation } from "wouter"
 
 import { cn } from "@/lib/utils"
 
@@ -19,8 +20,9 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> & { 
     campaignId?: string;
+    value: string; // value должно быть обязательным для корректной работы
   }
->(({ className, campaignId, ...props }, ref) => {
+>(({ className, campaignId, value, ...props }, ref) => {
   // Создаем копию props для передачи радиксу
   const itemProps = { ...props };
   
@@ -29,6 +31,8 @@ const AccordionItem = React.forwardRef<
       ref={ref}
       className={cn("border-b", className)}
       data-campaign-id={campaignId}
+      data-value={value}
+      value={value}
       // Передаем все свойства, кроме наших кастомных
       {...itemProps}
     />
@@ -48,15 +52,18 @@ const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => {
+  // Используем wouter hook для навигации
+  const [_, setLocation] = useLocation();
+  
   // Получаем значение аккордеона и ID кампании из родительского элемента
   const getParentData = () => {
     if (typeof window === 'undefined') return { value: null, campaignId: null };
     
     // Находим ближайший родительский AccordionItem
-    const parent = document.activeElement?.closest('[data-accordion-value]');
+    const parent = document.activeElement?.closest('[data-value]');
     if (!parent) return { value: null, campaignId: null };
     
-    const value = parent.getAttribute('data-accordion-value');
+    const value = parent.getAttribute('data-value');
     const campaignId = parent.getAttribute('data-campaign-id');
     
     return { value, campaignId };
@@ -69,7 +76,8 @@ const AccordionTrigger = React.forwardRef<
     const url = getFullscreenUrl(value, campaignId);
     
     if (url) {
-      window.location.href = url;
+      // Используем wouter для навигации вместо window.location
+      setLocation(url);
     }
   };
   
