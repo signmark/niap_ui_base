@@ -23,11 +23,13 @@ const Accordion = React.forwardRef<
 
 // Маппинг значений аккордеонов на URL страниц
 const expandablePages: Record<string, string> = {
-  'keywords': '/keywords',
+  'site': '/site',
+  'business-questionnaire': '/business-questionnaire',
+  'trend-analysis': '/trend-analysis',
   'trends': '/trends',
   'content': '/content',
   'social-media': '/social-media-settings',
-  'schedule': '/schedule'
+  'calendar': '/schedule'
 };
 
 const AccordionItem = React.forwardRef<
