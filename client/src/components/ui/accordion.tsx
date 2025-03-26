@@ -46,49 +46,49 @@ const AccordionTrigger = React.forwardRef<
   // Используем wouter hook для навигации
   const [_, setLocation] = useLocation();
   
-  // Функция для определения URL для каждого типа аккордеона
-  const getFullscreenUrl = (): string | null => {
-    if (!value || !campaignId || !expandablePages[value]) return null;
-    return `${expandablePages[value]}?campaignId=${campaignId}`;
-  };
-  
   // Проверяем, имеет ли аккордеон соответствующую полноэкранную страницу
   const hasFullscreenPage = value && expandablePages[value] !== undefined;
   
+  // Функция для перехода на полноэкранную страницу
+  const navigateToFullscreen = () => {
+    if (!value || !campaignId || !expandablePages[value]) return;
+    const url = `${expandablePages[value]}?campaignId=${campaignId}`;
+    setLocation(url);
+  };
+  
   return (
-    <AccordionPrimitive.Header className="flex">
-      <div className="flex flex-1 items-center">
-        <AccordionPrimitive.Trigger
-          ref={ref}
-          className={cn(
-            "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
-            className
-          )}
-          {...props}
+    <AccordionPrimitive.Header className="flex relative">
+      <AccordionPrimitive.Trigger
+        ref={ref}
+        className={cn(
+          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <div className="flex items-center gap-2">
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+        </div>
+      </AccordionPrimitive.Trigger>
+      
+      {/* Separate fullscreen button */}
+      {hasFullscreenPage && (
+        <div 
+          className="absolute right-10 top-1/2 -translate-y-1/2"
+          onClick={(e) => e.stopPropagation()}
         >
-          <span>{children}</span>
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 ml-2 [&[data-state=open]>svg]:rotate-180" />
-        </AccordionPrimitive.Trigger>
-        
-        {/* Кнопка для развёртывания на полный экран */}
-        {hasFullscreenPage && (
-          <button 
+          <button
             type="button"
-            className="ml-2 p-2 flex items-center cursor-pointer text-muted-foreground hover:text-primary"
-            onClick={(e) => {
-              e.preventDefault();
-              const url = getFullscreenUrl();
-              if (url) {
-                setLocation(url);
-              }
-            }}
+            className="p-2 flex items-center cursor-pointer text-muted-foreground hover:text-primary"
+            onClick={navigateToFullscreen}
             title="Открыть на полном экране"
             aria-label="Открыть на полном экране"
           >
             <Maximize className="h-4 w-4" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </AccordionPrimitive.Header>
   );
 })
