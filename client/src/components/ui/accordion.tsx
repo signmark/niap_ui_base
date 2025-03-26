@@ -22,15 +22,11 @@ const Accordion = React.forwardRef<
 });
 
 // Маппинг значений аккордеонов на URL страниц
+// Только разделы с существующими полноэкранными страницами
 const expandablePages: Record<string, string> = {
-  'site': '/site',
-  'business-questionnaire': '/business-questionnaire',
-  'trend-analysis': '/trend-analysis',
-  'trends': '/trends',
   'keywords': '/keywords',
+  'trends': '/trends',
   'content': '/content',
-  'posts': '/posts',
-  'social-media': '/social-media-settings',
   'scheduled': '/posts'
 };
 
