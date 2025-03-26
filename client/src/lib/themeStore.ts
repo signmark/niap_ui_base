@@ -3,8 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 // Типы для цветовых тем
 export type ColorMode = 'light' | 'dark';
-export type SidebarTheme = 'blue' | 'green' | 'purple';
-export type TopbarTheme = 'light' | 'accent' | 'colored';
+export type SidebarTheme = 'default' | 'blue' | 'green' | 'purple';
+export type TopbarTheme = 'default' | 'light' | 'accent' | 'colored';
 
 // Интерфейс для хранилища тем
 interface ThemeState {
@@ -22,6 +22,9 @@ interface ThemeState {
   setSidebarTheme: (theme: SidebarTheme) => void;
   setTopbarTheme: (theme: TopbarTheme) => void;
   
+  // Сбросить на дефолтные настройки
+  resetToDefault: () => void;
+  
   // Генерация CSS переменных для текущей темы
   getCssVariables: () => Record<string, string>;
 }
@@ -31,13 +34,20 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       // Начальные значения
       colorMode: 'light',
-      sidebarTheme: 'blue',
-      topbarTheme: 'light',
+      sidebarTheme: 'default',
+      topbarTheme: 'default',
       
       // Методы изменения
       setColorMode: (mode) => set({ colorMode: mode }),
       setSidebarTheme: (theme) => set({ sidebarTheme: theme }),
       setTopbarTheme: (theme) => set({ topbarTheme: theme }),
+      
+      // Сброс к дефолтным настройкам
+      resetToDefault: () => set({ 
+        colorMode: 'light', 
+        sidebarTheme: 'default', 
+        topbarTheme: 'default' 
+      }),
       
       // Получение CSS переменных для темы
       getCssVariables: () => {
@@ -63,6 +73,14 @@ export const useThemeStore = create<ThemeState>()(
         
         // Цвета боковой панели
         switch (sidebarTheme) {
+          case 'default':
+            // Оригинальные цвета из index.css
+            variables['--sidebar-bg'] = '#1e3a8a';
+            variables['--sidebar-fg'] = '#ffffff';
+            variables['--sidebar-accent'] = '#60a5fa';
+            variables['--sidebar-accent-fg'] = '#ffffff';
+            variables['--sidebar-border'] = '#2563eb';
+            break;
           case 'blue':
             variables['--sidebar-bg'] = colorMode === 'light' ? '#1e3a8a' : '#1e3a8a';
             variables['--sidebar-fg'] = '#ffffff';
@@ -88,6 +106,12 @@ export const useThemeStore = create<ThemeState>()(
         
         // Цвета верхней панели
         switch (topbarTheme) {
+          case 'default':
+            // Оригинальные цвета из index.css
+            variables['--topbar-bg'] = colorMode === 'light' ? '#f1f5f9' : '#1e1e1e';
+            variables['--topbar-fg'] = colorMode === 'light' ? '#0f172a' : '#f8fafc';
+            variables['--topbar-border'] = colorMode === 'light' ? '#cbd5e1' : '#334155';
+            break;
           case 'light':
             variables['--topbar-bg'] = colorMode === 'light' ? '#f1f5f9' : '#1e1e1e';
             variables['--topbar-fg'] = colorMode === 'light' ? '#0f172a' : '#f8fafc';

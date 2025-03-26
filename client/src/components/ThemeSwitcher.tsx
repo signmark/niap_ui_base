@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Palette } from 'lucide-react';
+import { Sun, Moon, Palette, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -19,7 +19,8 @@ export function ThemeSwitcher() {
     topbarTheme, 
     setColorMode, 
     setSidebarTheme, 
-    setTopbarTheme 
+    setTopbarTheme,
+    resetToDefault
   } = useThemeStore();
   
   const [open, setOpen] = useState(false);
@@ -55,9 +56,17 @@ export function ThemeSwitcher() {
           <DropdownMenuLabel>Цветовая схема</DropdownMenuLabel>
           <DropdownMenuSeparator />
           
+          <DropdownMenuItem 
+            className="flex items-center justify-center py-2 mt-1 mb-2"
+            onClick={() => resetToDefault()}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            <span>Вернуть стандартную тему</span>
+          </DropdownMenuItem>
+          
           <DropdownMenuLabel className="text-xs font-normal opacity-60">Боковая панель</DropdownMenuLabel>
           <div className="grid grid-cols-3 gap-1 p-1">
-            {['blue', 'green', 'purple'].map((theme) => (
+            {['default', 'blue', 'green', 'purple'].map((theme) => (
               <div 
                 key={`sidebar-${theme}`}
                 className={cn(
@@ -83,15 +92,15 @@ export function ThemeSwitcher() {
           
           <DropdownMenuLabel className="text-xs font-normal opacity-60">Верхняя панель</DropdownMenuLabel>
           <div className="grid grid-cols-3 gap-1 p-1">
-            {['light', 'accent', 'colored'].map((theme) => (
+            {['default', 'light', 'accent', 'colored'].map((theme) => (
               <div 
                 key={`topbar-${theme}`}
                 className={cn(
                   "w-full h-8 rounded-md cursor-pointer flex items-center justify-center",
                   {
                     "border-2 border-primary": topbarTheme === theme,
-                    "text-black": theme === 'light',
-                    "text-white": theme !== 'light',
+                    "text-black": theme === 'light' || theme === 'default',
+                    "text-white": theme !== 'light' && theme !== 'default',
                   }
                 )}
                 style={{ 
@@ -115,6 +124,7 @@ export function ThemeSwitcher() {
 // Вспомогательные функции
 function getThemeLabel(theme: string): string {
   switch (theme) {
+    case 'default': return 'Стд';
     case 'blue': return 'Синий';
     case 'green': return 'Зеленый';
     case 'purple': return 'Фиолет';
@@ -128,6 +138,7 @@ function getThemeLabel(theme: string): string {
 function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebarColor?: string): string {
   if (type === 'sidebar') {
     switch (theme) {
+      case 'default': return '#1e3a8a'; // Оригинальный цвет
       case 'blue': return '#1e3a8a';
       case 'green': return '#065f46';
       case 'purple': return '#701a75';
@@ -135,6 +146,7 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
     }
   } else {
     switch (theme) {
+      case 'default': return '#f1f5f9'; // Оригинальный цвет
       case 'light': return '#f1f5f9';
       case 'accent': 
         // Акцентный цвет от цвета боковой панели
