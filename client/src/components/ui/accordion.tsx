@@ -27,9 +27,11 @@ const expandablePages: Record<string, string> = {
   'business-questionnaire': '/business-questionnaire',
   'trend-analysis': '/trend-analysis',
   'trends': '/trends',
+  'keywords': '/keywords',
   'content': '/content',
+  'posts': '/posts',
   'social-media': '/social-media-settings',
-  'scheduled': '/scheduled' // исправлено с 'calendar' на 'scheduled', чтобы соответствовать value аккордеона
+  'scheduled': '/scheduled'
 };
 
 const AccordionItem = React.forwardRef<
