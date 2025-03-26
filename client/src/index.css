@@ -185,26 +185,15 @@
 }
 
 @layer components {
-  /* Стили для аккордеонов - непрозрачные с тенью, без отступов между элементами */
+  /* Стили для аккордеонов - непрозрачные с тенью */
   .accordion-item {
-    @apply bg-background border shadow-md;
-    margin-bottom: -1px; /* Убираем промежутки между аккордеонами */
-  }
-  
-  /* Первый элемент аккордеона - скругленные верхние углы */
-  .accordion-item:first-child {
-    @apply rounded-t-lg;
-  }
-  
-  /* Последний элемент аккордеона - скругленные нижние углы */
-  .accordion-item:last-child {
-    @apply rounded-b-lg;
-    margin-bottom: 0;
+    @apply bg-background border rounded-md shadow-sm;
+    margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
   /* Стики-хедер для фиксированного первого блока */
   .sticky-header {
-    @apply sticky top-0 z-10 bg-background pb-6 backdrop-blur-sm;
+    @apply sticky top-0 z-10 bg-background pb-6;
   }
   
   .resize-handle {
