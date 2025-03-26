@@ -82,11 +82,11 @@ export const useThemeStore = create<ThemeState>()(
             variables['--sidebar-border'] = colorMode === 'light' ? '#dddddd' : '#333333';
             break;
           case 'blue':
-            variables['--sidebar-bg'] = colorMode === 'light' ? '#1e3a8a' : '#1e3a8a';
+            variables['--sidebar-bg'] = colorMode === 'light' ? '#1a202c' : '#111827'; // Очень темно-синий, почти черный
             variables['--sidebar-fg'] = '#ffffff';
-            variables['--sidebar-accent'] = '#60a5fa';
+            variables['--sidebar-accent'] = '#3b82f6'; // Менее яркий синий акцент
             variables['--sidebar-accent-fg'] = '#ffffff';
-            variables['--sidebar-border'] = colorMode === 'light' ? '#2563eb' : '#3b82f6';
+            variables['--sidebar-border'] = colorMode === 'light' ? '#2d3748' : '#374151';
             break;
           case 'green':
             variables['--sidebar-bg'] = colorMode === 'light' ? '#065f46' : '#064e3b';
