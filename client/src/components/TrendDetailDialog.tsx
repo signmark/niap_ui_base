@@ -15,28 +15,11 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 import { handleInstagramVideoError } from "./instagram-error-handler";
+import { TrendTopic } from "../lib/interfaces";
 
 interface MediaData {
   images: string[];
   videos: string[];
-}
-
-interface TrendTopic {
-  id: string;
-  title: string;
-  description?: string; // Добавляем поле description
-  source_id: string;
-  reactions: number;
-  comments: number;
-  views: number;
-  created_at: string;
-  is_bookmarked: boolean;
-  campaign_id: string;
-  media_links?: string;
-  mediaLinks?: string; // Альтернативное имя поля (для обратной совместимости)
-  url?: string; // URL оригинальной публикации
-  sourceUrl?: string; // URL источника (аккаунта или страницы)
-  reposts?: number; // Количество репостов
 }
 
 interface TrendDetailDialogProps {
