@@ -390,7 +390,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
         )}
       </div>
 
-      <div className="flex flex-col gap-3 pr-2 pb-4">
+      <div className="flex flex-col gap-3 pr-2 pb-4 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {trends.map((trend: TrendTopic) => {
           // Получаем URL изображения из различных форматов данных
           let previewImageUrl = null;
