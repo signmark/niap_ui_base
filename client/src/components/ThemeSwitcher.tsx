@@ -138,7 +138,7 @@ function getThemeLabel(theme: string): string {
 function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebarColor?: string): string {
   if (type === 'sidebar') {
     switch (theme) {
-      case 'default': return '#000000'; // Черно-белая тема
+      case 'default': return '#1e3a8a'; // Синяя тема (оригинальная)
       case 'blue': return '#1e3a8a';
       case 'green': return '#065f46';
       case 'purple': return '#701a75';
@@ -146,12 +146,11 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
     }
   } else {
     switch (theme) {
-      case 'default': return '#f0f0f0'; // Черно-белая тема
+      case 'default': return '#f1f5f9'; // Оригинальная светлая
       case 'light': return '#f1f5f9';
       case 'accent': 
         // Акцентный цвет от цвета боковой панели
         switch (sidebarColor) {
-          case '#000000': return '#444444'; // Для черно-белой темы
           case '#1e3a8a': return '#60a5fa';
           case '#065f46': return '#10b981';
           case '#701a75': return '#a855f7';
@@ -160,7 +159,6 @@ function getThemePreviewColor(theme: string, type: 'sidebar' | 'topbar', sidebar
       case 'colored':
         // Более светлый оттенок цвета боковой панели
         switch (sidebarColor) {
-          case '#000000': return '#333333'; // Для черно-белой темы
           case '#1e3a8a': return '#3b82f6';
           case '#065f46': return '#10b981';
           case '#701a75': return '#c026d3';
