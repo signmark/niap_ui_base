@@ -414,10 +414,10 @@ export default function ScheduledPublications() {
           <Tabs value={viewTab} onValueChange={setViewTab}>
             <TabsList>
               <TabsTrigger value="upcoming">
-                Предстоящие <Badge className="ml-2 font-bold" variant="secondary">{upcomingContent.length}</Badge>
+                Предстоящие <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="past">
-                Прошедшие <Badge className="ml-2 font-bold" variant="secondary">{pastContent.length}</Badge>
+                Прошедшие <Badge variant="outline" className="ml-2">{pastContent.length}</Badge>
               </TabsTrigger>
             </TabsList>
           </Tabs>

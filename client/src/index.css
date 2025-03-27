@@ -9,45 +9,16 @@
   opacity: 1 !important;
 }
 
-/* Светлый режим для диалоговых окон */
-.dialog-content {
-  background-color: white !important;
-  color: #0f172a !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 12px !important;
-}
-
-/* Темный режим для диалоговых окон - тёмно-синий стиль */
-.dark .dialog-content {
-  background-color: #2b2b4c !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-  border-radius: 12px !important;
-}
-
 /* Стили для фона диалога с умеренной непрозрачностью */
 [data-radix-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.75) !important;
-  backdrop-filter: blur(2px) !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
 }
 
 /* Контент диалога должен быть непрозрачным */
 [data-radix-dialog-content] {
   background-color: white !important;
-  color: #0f172a !important;
+  color: black !important;
   opacity: 1 !important;
-  border-radius: 12px !important;
-}
-
-/* Темный режим для контента диалогов - тёмно-синий стиль */
-.dark [data-radix-dialog-content] {
-  background-color: #2b2b4c !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-  border-radius: 12px !important;
 }
 
 /* Общие стили для WYSIWYG контента */
@@ -180,17 +151,14 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим - глубокий тёмно-синий оттенок с белым текстом */
+  /* Темный режим */
   .dark {
-    --background: #232342;
+    --background: #121212;
     --foreground: #ffffff;
-    --card: #1e1e3b;  /* Более темный оттенок синего для точного соответствия скриншотам */
+    --card: #1e1e1e;
     --card-foreground: #ffffff;
-    --muted: #32325a;
-    --muted-foreground: #e5e7eb;
-    --border: #3a3a61;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
+    --muted: #2d3748;
+    --muted-foreground: #a0aec0;
   }
 
   .bg-background {
@@ -200,20 +168,6 @@
   button[data-variant="default"],
   .btn-primary {
     @apply bg-black text-white hover:bg-gray-700;
-  }
-  
-  /* Кнопки в темном режиме */
-  .dark button[data-variant="default"],
-  .dark .btn-primary {
-    background-color: #2563eb;
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .dark button[data-variant="default"]:hover,
-  .dark .btn-primary:hover {
-    background-color: #1d4ed8;
-    transform: translateY(-1px);
   }
   
   /* Стилизация боковой панели */
@@ -254,84 +208,6 @@
   .accordion-item {
     @apply bg-background border rounded-md shadow-sm;
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
-  }
-  
-  /* Базовый темный фон для страницы */
-  .dark body, 
-  .dark [data-theme="dark"] {
-    background-color: #121212 !important;
-  }
-
-  /* Стиль для основных контейнеров */
-  .dark .bg-background {
-    background-color: #1a1a1a !important;
-  }
-  
-  /* Улучшенные стили для заголовков страниц */
-  .dark h1,
-  .dark h2,
-  .dark h3,
-  .dark .page-title,
-  .dark [data-component-name="PageHeader"] {
-    color: #ffffff !important;
-    font-weight: 500;
-  }
-  
-  /* Стили для статей в темном режиме */
-  .dark .article-card {
-    background-color: #2d2d2d !important;
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
-  }
-  
-  /* Кнопки управления черного цвета */
-  .btn-manage {
-    background-color: #000000 !important;
-    color: white !important;
-  }
-  
-  .btn-delete {
-    background-color: transparent;
-    border: 1px solid #d1d5db;
-  }
-  
-  /* Стили для аккордеонов и других элементов интерфейса */
-  .dark [data-state="open"],
-  .dark .accordion-content,
-  .dark .accordion-item,
-  .dark .accordion-trigger {
-    background-color: #222222 !important;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Стилизация заголовков в карточках в темном режиме - чисто белый цвет */
-  .dark .rounded-lg.border h2,
-  .dark .rounded-lg.border h3,
-  .dark .rounded-lg.border p,
-  .dark .rounded-lg.border span,
-  .dark .rounded-lg.border div {
-    color: #ffffff;
-  }
-  
-  /* Стилизация тегов и меток в темном режиме - яркие и заметные */
-  .dark .badge,
-  .dark .tag {
-    background-color: #3b82f6;
-    color: #ffffff;
-    border: none;
-    font-weight: 500;
-  }
-  
-  .dark .badge-blue,
-  .dark .tag-blue {
-    background-color: #1e40af;
-    color: white;
-  }
-  
-  /* Убираем лишние рамки */
-  .dark .border-t, 
-  .dark .border-b {
-    border-color: rgba(255, 255, 255, 0.1);
   }
   
   /* Стики-хедер для фиксированного первого блока (отключено - больше не прилипает) */
@@ -412,23 +288,5 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
-  }
-  
-  /* Стили скроллбаров для темного режима */
-  .dark .scrollbar-thin::-webkit-scrollbar-track {
-    background: rgba(30, 32, 35, 0.5);
-  }
-  
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(100, 105, 115, 0.5);
-  }
-  
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(120, 125, 135, 0.7);
-  }
-  
-  .dark html,
-  .dark * {
-    scrollbar-color: rgba(100, 105, 115, 0.5) rgba(30, 32, 35, 0.5);
   }
 }
