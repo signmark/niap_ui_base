@@ -18,19 +18,19 @@
   border-radius: 12px !important;
 }
 
-/* Темный режим для диалоговых окон - мягкая серая гамма */
+/* Темный режим для диалоговых окон - классический стиль */
 .dark .dialog-content {
-  background-color: #2e2f34 !important;
-  color: #e5e7eb !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
   border-radius: 12px !important;
 }
 
 /* Стили для фона диалога с умеренной непрозрачностью */
 [data-radix-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(3px) !important;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(2px) !important;
 }
 
 /* Контент диалога должен быть непрозрачным */
@@ -43,10 +43,10 @@
 
 /* Темный режим для контента диалогов */
 .dark [data-radix-dialog-content] {
-  background-color: #2e2f34 !important;
-  color: #e5e7eb !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
   border-radius: 12px !important;
 }
 
@@ -180,16 +180,16 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим - более мягкий с серыми оттенками */
+  /* Темный режим - более яркий и контрастный */
   .dark {
-    --background: #202125;
-    --foreground: #e5e7eb;
-    --card: #2e2f34;
-    --card-foreground: #e5e7eb;
-    --muted: #3a3b42;
-    --muted-foreground: #a0aec0;
-    --border: #414348;
-    --primary: #60a5fa;
+    --background: #111827;
+    --foreground: #f9fafb;
+    --card: #1f2937;
+    --card-foreground: #f9fafb;
+    --muted: #374151;
+    --muted-foreground: #d1d5db;
+    --border: #4b5563;
+    --primary: #3b82f6;
     --primary-foreground: #ffffff;
   }
 
@@ -256,26 +256,26 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Более мягкий вид карточек в темном режиме */
+  /* Контрастный вид карточек в темном режиме */
   .dark .rounded-lg.border {
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(75, 85, 99, 0.5);
     background-color: var(--card);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
   }
   
   /* Улучшенный вид карточек при наведении */
   .dark .rounded-lg.border:hover {
-    border-color: rgba(96, 165, 250, 0.3);
-    background-color: #36373d;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    background-color: #2d3748;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   }
   
   /* Карточка в фокусе */
   .dark .rounded-lg.border:focus-within {
-    border-color: rgba(96, 165, 250, 0.5);
-    background-color: #36373d;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    border-color: rgba(59, 130, 246, 0.7);
+    background-color: #2d3748;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
   /* Стилизация заголовков в карточках в темном режиме */
