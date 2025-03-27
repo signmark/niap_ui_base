@@ -412,12 +412,18 @@ export default function ScheduledPublications() {
       <div className="flex justify-between items-center mb-4">
         <div className="flex-1">
           <Tabs value={viewTab} onValueChange={setViewTab}>
-            <TabsList>
-              <TabsTrigger value="upcoming">
-                Предстоящие <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
+            <TabsList className="p-1 bg-muted border">
+              <TabsTrigger 
+                value="upcoming" 
+                className="text-base font-medium px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow"
+              >
+                Предстоящие <Badge className="ml-2 font-bold" variant="secondary">{upcomingContent.length}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="past">
-                Прошедшие <Badge variant="outline" className="ml-2">{pastContent.length}</Badge>
+              <TabsTrigger 
+                value="past" 
+                className="text-base font-medium px-6 py-2.5 data-[state=active]:bg-background data-[state=active]:shadow"
+              >
+                Прошедшие <Badge className="ml-2 font-bold" variant="secondary">{pastContent.length}</Badge>
               </TabsTrigger>
             </TabsList>
           </Tabs>
