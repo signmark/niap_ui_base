@@ -40,7 +40,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('apiservice');
+  const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -201,22 +201,26 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           {!generationResult ? (
             <>
               <div className="grid grid-cols-4 items-center gap-4">
-                <div className="col-span-4">
-                  <Tabs 
-                    value={selectedService} 
+                <Label htmlFor="selectedService" className="text-right">
+                  API Сервис
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={selectedService}
                     onValueChange={(value) => setSelectedService(value as ApiService)}
-                    className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="apiservice">API Сервис</TabsTrigger>
-                      <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
-                      <TabsTrigger value="qwen">Qwen</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Выберите API Сервис" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="qwen">Qwen</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
-              {(selectedService === 'deepseek' || selectedService === 'apiservice') && (
+              {selectedService === 'deepseek' && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа
