@@ -9,6 +9,13 @@
   opacity: 1 !important;
 }
 
+/* Темный режим для диалоговых окон */
+.dark .dialog-content {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+  border-color: var(--border) !important;
+}
+
 /* Стили для фона диалога с умеренной непрозрачностью */
 [data-radix-dialog-overlay] {
   background-color: rgba(0, 0, 0, 0.8) !important;
@@ -19,6 +26,13 @@
   background-color: white !important;
   color: black !important;
   opacity: 1 !important;
+}
+
+/* Темный режим для контента диалогов */
+.dark [data-radix-dialog-content] {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+  border-color: var(--border) !important;
 }
 
 /* Общие стили для WYSIWYG контента */
@@ -159,6 +173,7 @@
     --card-foreground: #ffffff;
     --muted: #2d3748;
     --muted-foreground: #a0aec0;
+    --border: #333333;
   }
 
   .bg-background {
@@ -208,6 +223,16 @@
   .accordion-item {
     @apply bg-background border rounded-md shadow-sm;
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
+  }
+  
+  /* Улучшенные стили для карточек в темном режиме */
+  .dark .rounded-lg.border {
+    border-color: var(--border);
+  }
+  
+  /* Настройка фона модалок для темного режима */
+  .dark .bg-card {
+    background-color: var(--card);
   }
   
   /* Стики-хедер для фиксированного первого блока (отключено - больше не прилипает) */
