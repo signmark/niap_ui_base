@@ -1933,7 +1933,12 @@ export default function ContentPage() {
       {isGenerateDialogOpen && (
         <ContentGenerationDialog
           campaignId={selectedCampaignId || ''}
-          keywords={campaignKeywords}
+          keywords={campaignKeywords.map(k => ({
+            id: k.id,
+            keyword: k.keyword,
+            trendScore: k.trend_score || 0,
+            campaignId: k.campaign_id
+          }))}
           onClose={() => {
             setIsGenerateDialogOpen(false);
             queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', selectedCampaignId] });
