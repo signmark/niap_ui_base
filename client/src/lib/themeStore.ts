@@ -3,24 +3,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 // Типы для цветовых тем
 export type ColorMode = 'light' | 'dark';
-export type SidebarTheme = 'default' | 'blue' | 'green' | 'purple';
-export type TopbarTheme = 'default' | 'light' | 'accent' | 'colored';
 
 // Интерфейс для хранилища тем
 interface ThemeState {
   // Основной режим (светлый/темный)
   colorMode: ColorMode;
   
-  // Тема боковой панели
-  sidebarTheme: SidebarTheme;
-  
-  // Тема верхней панели
-  topbarTheme: TopbarTheme;
-  
   // Методы изменения состояния
   setColorMode: (mode: ColorMode) => void;
-  setSidebarTheme: (theme: SidebarTheme) => void;
-  setTopbarTheme: (theme: TopbarTheme) => void;
   
   // Сбросить на дефолтные настройки
   resetToDefault: () => void;
@@ -33,105 +23,62 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       // Начальные значения
-      colorMode: 'light',
-      sidebarTheme: 'default',  // Используем default как базовую конфигурацию
-      topbarTheme: 'default',   // Используем default как базовую конфигурацию
+      colorMode: 'light' as ColorMode,
       
       // Методы изменения
-      setColorMode: (mode) => set({ colorMode: mode }),
-      setSidebarTheme: (theme) => set({ sidebarTheme: theme }),
-      setTopbarTheme: (theme) => set({ topbarTheme: theme }),
+      setColorMode: (mode: ColorMode) => set({ colorMode: mode }),
       
       // Сброс к дефолтным настройкам
       resetToDefault: () => set({ 
-        colorMode: 'light', 
-        sidebarTheme: 'default',  // Сбрасываем к дефолтным настройкам
-        topbarTheme: 'default'    // Сбрасываем к дефолтным настройкам
+        colorMode: 'light' as ColorMode
       }),
       
       // Получение CSS переменных для темы
       getCssVariables: () => {
-        const { colorMode, sidebarTheme, topbarTheme } = get();
+        const { colorMode } = get();
         const variables: Record<string, string> = {};
         
         // Определение основных цветов в зависимости от цветового режима
         if (colorMode === 'light') {
+          // Светлая тема
           variables['--background'] = '#ffffff';
           variables['--foreground'] = '#000000';
           variables['--card'] = '#ffffff';
           variables['--card-foreground'] = '#000000';
           variables['--muted'] = '#f1f5f9';
           variables['--muted-foreground'] = '#64748b';
+          
+          // Боковая панель в светлой теме (белая)
+          variables['--sidebar-bg'] = '#ffffff';
+          variables['--sidebar-fg'] = '#000000';
+          variables['--sidebar-accent'] = '#e0e0e0';
+          variables['--sidebar-accent-fg'] = '#000000';
+          variables['--sidebar-border'] = '#dddddd';
+          
+          // Верхняя панель в светлой теме (светло-серая)
+          variables['--topbar-bg'] = '#f0f0f0';
+          variables['--topbar-fg'] = '#000000';
+          variables['--topbar-border'] = '#cccccc';
         } else {
+          // Темная тема
           variables['--background'] = '#121212';
           variables['--foreground'] = '#ffffff';
           variables['--card'] = '#1e1e1e';
           variables['--card-foreground'] = '#ffffff';
           variables['--muted'] = '#2d3748';
           variables['--muted-foreground'] = '#a0aec0';
-        }
-        
-        // Цвета боковой панели
-        switch (sidebarTheme) {
-          case 'default':
-            // Стандартная тема с белым меню
-            variables['--sidebar-bg'] = colorMode === 'light' ? '#ffffff' : '#1a1a1a';
-            variables['--sidebar-fg'] = colorMode === 'light' ? '#000000' : '#ffffff';
-            variables['--sidebar-accent'] = colorMode === 'light' ? '#e0e0e0' : '#444444';
-            variables['--sidebar-accent-fg'] = colorMode === 'light' ? '#000000' : '#ffffff';
-            variables['--sidebar-border'] = colorMode === 'light' ? '#dddddd' : '#333333';
-            break;
-          case 'blue':
-            variables['--sidebar-bg'] = colorMode === 'light' ? '#1a202c' : '#111827'; // Очень темно-синий, почти черный
-            variables['--sidebar-fg'] = '#ffffff';
-            variables['--sidebar-accent'] = '#3b82f6'; // Менее яркий синий акцент
-            variables['--sidebar-accent-fg'] = '#ffffff';
-            variables['--sidebar-border'] = colorMode === 'light' ? '#2d3748' : '#374151';
-            break;
-          case 'green':
-            variables['--sidebar-bg'] = colorMode === 'light' ? '#065f46' : '#064e3b';
-            variables['--sidebar-fg'] = '#ffffff';
-            variables['--sidebar-accent'] = '#10b981';
-            variables['--sidebar-accent-fg'] = '#ffffff';
-            variables['--sidebar-border'] = colorMode === 'light' ? '#059669' : '#10b981';
-            break;
-          case 'purple':
-            variables['--sidebar-bg'] = colorMode === 'light' ? '#701a75' : '#581c87';
-            variables['--sidebar-fg'] = '#ffffff';
-            variables['--sidebar-accent'] = '#a855f7';
-            variables['--sidebar-accent-fg'] = '#ffffff';
-            variables['--sidebar-border'] = colorMode === 'light' ? '#7e22ce' : '#9333ea';
-            break;
-        }
-        
-        // Цвета верхней панели
-        switch (topbarTheme) {
-          case 'default':
-            // Черно-белая тема для верхней панели
-            variables['--topbar-bg'] = colorMode === 'light' ? '#f0f0f0' : '#1a1a1a';
-            variables['--topbar-fg'] = colorMode === 'light' ? '#000000' : '#ffffff';
-            variables['--topbar-border'] = colorMode === 'light' ? '#cccccc' : '#333333';
-            break;
-          case 'light':
-            variables['--topbar-bg'] = colorMode === 'light' ? '#f1f5f9' : '#1e1e1e';
-            variables['--topbar-fg'] = colorMode === 'light' ? '#0f172a' : '#f8fafc';
-            variables['--topbar-border'] = colorMode === 'light' ? '#cbd5e1' : '#334155';
-            break;
-          case 'accent':
-            // Использует акцентный цвет от боковой панели
-            variables['--topbar-bg'] = colorMode === 'light' ? '#f8fafc' : '#1e1e1e';
-            variables['--topbar-fg'] = variables['--sidebar-accent'];
-            variables['--topbar-border'] = variables['--sidebar-accent'];
-            break;
-          case 'colored':
-            // Использует основной цвет боковой панели, но в более светлом оттенке
-            const baseColor = variables['--sidebar-bg'];
-            variables['--topbar-bg'] = colorMode === 'light' 
-              ? adjustBrightness(baseColor, 80) 
-              : adjustBrightness(baseColor, 20);
-            variables['--topbar-fg'] = colorMode === 'light' ? '#0f172a' : '#f8fafc';
-            variables['--topbar-border'] = variables['--sidebar-bg'];
-            break;
+          
+          // Боковая панель в темной теме (темно-серая)
+          variables['--sidebar-bg'] = '#1a1a1a';
+          variables['--sidebar-fg'] = '#ffffff';
+          variables['--sidebar-accent'] = '#444444';
+          variables['--sidebar-accent-fg'] = '#ffffff';
+          variables['--sidebar-border'] = '#333333';
+          
+          // Верхняя панель в темной теме (темно-серая)
+          variables['--topbar-bg'] = '#1a1a1a';
+          variables['--topbar-fg'] = '#ffffff';
+          variables['--topbar-border'] = '#333333';
         }
         
         return variables;
