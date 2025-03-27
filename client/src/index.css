@@ -176,6 +176,8 @@
     --muted: #2d3748;
     --muted-foreground: #a0aec0;
     --border: #333333;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
   }
 
   .bg-background {
@@ -185,6 +187,20 @@
   button[data-variant="default"],
   .btn-primary {
     @apply bg-black text-white hover:bg-gray-700;
+  }
+  
+  /* Кнопки в темном режиме */
+  .dark button[data-variant="default"],
+  .dark .btn-primary {
+    background-color: #2563eb;
+    color: white;
+    transition: all 0.2s ease;
+  }
+  
+  .dark button[data-variant="default"]:hover,
+  .dark .btn-primary:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
   }
   
   /* Стилизация боковой панели */
@@ -227,16 +243,41 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Улучшенный внешний вид карточек в темном режиме */
+  /* Стильный вид карточек в темном режиме */
   .dark .rounded-lg.border {
-    border-color: rgba(255, 255, 255, 0.1);
-    border-width: 1px;
+    border-color: transparent;
+    background-color: #1e1e1e;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
   }
   
-  /* Лучшая видимость при наведении в темном режиме */
-  .dark .rounded-lg.border:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  /* Улучшенный вид карточек при наведении и фокусе */
+  .dark .rounded-lg.border:hover,
+  .dark .rounded-lg.border:focus-within {
+    border-color: rgba(59, 130, 246, 0.3);
+    background-color: #212121;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  /* Стилизация заголовков в карточках в темном режиме */
+  .dark .rounded-lg.border h2,
+  .dark .rounded-lg.border h3 {
+    color: #f8fafc;
+  }
+  
+  /* Стилизация тегов и меток в темном режиме */
+  .dark .badge,
+  .dark .tag {
+    background-color: #334155;
+    color: #f1f5f9;
+    border: none;
+  }
+  
+  .dark .badge-blue,
+  .dark .tag-blue {
+    background-color: #1e40af;
+    color: white;
   }
   
   /* Убираем лишние рамки */
