@@ -180,11 +180,11 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим - тёмно-синий оттенок с белым текстом */
+  /* Темный режим - глубокий тёмно-синий оттенок с белым текстом */
   .dark {
     --background: #232342;
     --foreground: #ffffff;
-    --card: #262656;  /* Изменено на глубокий темно-синий для соответствия скриншотам */
+    --card: #1e1e3b;  /* Более темный оттенок синего для точного соответствия скриншотам */
     --card-foreground: #ffffff;
     --muted: #32325a;
     --muted-foreground: #e5e7eb;
@@ -259,22 +259,22 @@
   /* Контрастный вид карточек в темном режиме - глубокий темно-синий */
   .dark .rounded-lg.border {
     border-color: rgba(75, 85, 99, 0.3);
-    background-color: #262656;
+    background-color: #1e1e3b;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
     transition: all 0.2s ease;
   }
   
-  /* Улучшенный вид карточек при наведении - синий оттенок */
+  /* Улучшенный вид карточек при наведении - более темный оттенок */
   .dark .rounded-lg.border:hover {
     border-color: rgba(59, 130, 246, 0.5);
-    background-color: #32325e;
+    background-color: #242444;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   }
   
-  /* Карточка в фокусе - синий оттенок */
+  /* Карточка в фокусе - более темный оттенок */
   .dark .rounded-lg.border:focus-within {
     border-color: rgba(59, 130, 246, 0.7);
-    background-color: #32325e;
+    background-color: #242444;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
@@ -287,12 +287,13 @@
     color: #ffffff;
   }
   
-  /* Стилизация тегов и меток в темном режиме */
+  /* Стилизация тегов и меток в темном режиме - яркие и заметные */
   .dark .badge,
   .dark .tag {
-    background-color: #334155;
-    color: #f1f5f9;
+    background-color: #3b82f6;
+    color: #ffffff;
     border: none;
+    font-weight: 500;
   }
   
   .dark .badge-blue,
