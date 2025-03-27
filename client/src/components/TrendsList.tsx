@@ -544,7 +544,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                 
                   {/* Превью изображения с увеличенным размером */}
                   {previewImageUrl && !failedImages.has(previewImageUrl) ? (
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 relative">
                       <img 
                         src={previewImageUrl} 
                         alt="Миниатюра поста" 
