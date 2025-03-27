@@ -201,38 +201,18 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           {!generationResult ? (
             <>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service" className="text-right">
-                  API Сервис
-                </Label>
-                <div className="col-span-3">
-                  <div className="space-y-3">
-                    <div className="flex gap-2 justify-between">
-                      <Button 
-                        variant={selectedService === 'apiservice' ? "default" : "outline"}
-                        onClick={() => setSelectedService('apiservice')}
-                        className="flex-1"
-                        size="sm"
-                      >
-                        API Сервис
-                      </Button>
-                      <Button 
-                        variant={selectedService === 'deepseek' ? "default" : "outline"}
-                        onClick={() => setSelectedService('deepseek')}
-                        className="flex-1"
-                        size="sm"
-                      >
-                        DeepSeek
-                      </Button>
-                      <Button 
-                        variant={selectedService === 'qwen' ? "default" : "outline"}
-                        onClick={() => setSelectedService('qwen')}
-                        className="flex-1"
-                        size="sm"
-                      >
-                        Qwen
-                      </Button>
-                    </div>
-                  </div>
+                <div className="col-span-4">
+                  <Tabs 
+                    value={selectedService} 
+                    onValueChange={(value) => setSelectedService(value as ApiService)}
+                    className="w-full"
+                  >
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="apiservice">API Сервис</TabsTrigger>
+                      <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
+                      <TabsTrigger value="qwen">Qwen</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
               </div>
               
@@ -307,17 +287,18 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     keywords
                       .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
                       .map((kw) => (
-                        <div key={kw.id} className="flex items-center space-x-2">
+                        <div key={kw.id} className="flex items-start space-x-2">
                           <Checkbox 
                             id={`keyword-${kw.id}`}
                             checked={selectedKeywords.includes(kw.keyword)}
                             onCheckedChange={() => handleKeywordToggle(kw.keyword)}
+                            className="mt-1"
                           />
                           <Label 
                             htmlFor={`keyword-${kw.id}`}
                             className="cursor-pointer text-sm"
                           >
-                            {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
+                            {kw.keyword} ({kw.trendScore})
                           </Label>
                         </div>
                       ))
