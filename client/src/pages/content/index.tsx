@@ -1093,7 +1093,7 @@ export default function ContentPage() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      className="h-7 w-7 p-0"
+                                      className="h-7 w-7 p-0 btn-manage"
                                       onClick={(e) => {
                                         e.stopPropagation(); // Предотвращаем открытие превью
                                         setCurrentContentSafe(content);
