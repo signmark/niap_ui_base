@@ -18,9 +18,9 @@
   border-radius: 12px !important;
 }
 
-/* Темный режим для диалоговых окон - классический стиль */
+/* Темный режим для диалоговых окон - тёмно-синий стиль */
 .dark .dialog-content {
-  background-color: #1f2937 !important;
+  background-color: #2b2b4c !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
@@ -41,9 +41,9 @@
   border-radius: 12px !important;
 }
 
-/* Темный режим для контента диалогов */
+/* Темный режим для контента диалогов - тёмно-синий стиль */
 .dark [data-radix-dialog-content] {
-  background-color: #1f2937 !important;
+  background-color: #2b2b4c !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
@@ -180,15 +180,15 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим - более яркий и контрастный с чисто белым текстом */
+  /* Темный режим - тёмно-синий оттенок с белым текстом */
   .dark {
-    --background: #111827;
+    --background: #232342;
     --foreground: #ffffff;
-    --card: #1f2937;
+    --card: #2b2b4c;
     --card-foreground: #ffffff;
-    --muted: #374151;
+    --muted: #32325a;
     --muted-foreground: #e5e7eb;
-    --border: #4b5563;
+    --border: #3a3a61;
     --primary: #3b82f6;
     --primary-foreground: #ffffff;
   }
@@ -264,17 +264,17 @@
     transition: all 0.2s ease;
   }
   
-  /* Улучшенный вид карточек при наведении */
+  /* Улучшенный вид карточек при наведении - синий оттенок */
   .dark .rounded-lg.border:hover {
     border-color: rgba(59, 130, 246, 0.5);
-    background-color: #2d3748;
+    background-color: #32325e;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   }
   
-  /* Карточка в фокусе */
+  /* Карточка в фокусе - синий оттенок */
   .dark .rounded-lg.border:focus-within {
     border-color: rgba(59, 130, 246, 0.7);
-    background-color: #2d3748;
+    background-color: #32325e;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
