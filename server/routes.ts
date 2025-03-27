@@ -5013,7 +5013,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Sending webhook request to n8n with payload:', {
         campaignId,
         keywordsCount: keywordsList.length,
-        userId
+        userId,
+        collectSources
       });
       
       let webhookResponse = { status: 500, data: null };
@@ -5047,6 +5048,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
         const selectedPlatforms = req.body.platforms || ["instagram", "telegram", "vk"];
         const collectSources = req.body.collectSources || false;
+        
+        // Debug-логирование для проверки передачи флага collectSources
+        console.log('Request body from client:', {
+          campaignId: req.body.campaignId,
+          platformsCount: req.body.platforms?.length,
+          collectSources: req.body.collectSources,
+        });
         
         webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439', {
           minFollowers: followerRequirements,
