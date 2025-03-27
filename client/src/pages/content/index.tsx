@@ -569,19 +569,16 @@ export default function ContentPage() {
     mutationFn: async (contentId: string) => {
       console.log(`Перемещение контента ${contentId} в черновики`);
       
-      // Получаем токен авторизации из localStorage
-      const authToken = localStorage.getItem('auth_token');
-      
-      // Формируем заголовки с авторизацией
-      const headers: Record<string, string> = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      // Используем тот же API-эндпоинт, что и для отмены публикации
-      return await apiRequest(`/api/publish/cancel/${contentId}`, {
-        method: 'POST',
-        headers
+      // Используем API для обновления контента вместо отмены публикации
+      // Указываем только те поля, которые нужно изменить
+      return await apiRequest(`/api/publish/update-content/${contentId}`, {
+        method: 'PATCH',
+        data: {
+          status: 'draft',
+          scheduledAt: null,
+          // Обновляем статус для всех платформ на cancelled
+          socialPlatforms: null // Очищаем платформы публикации полностью
+        }
       });
     },
     onSuccess: () => {
@@ -1158,7 +1155,7 @@ export default function ContentPage() {
                                           moveToDraftMutation.mutate(content.id);
                                         }}
                                       >
-                                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                                         В черновики
                                       </Button>
                                     )}
