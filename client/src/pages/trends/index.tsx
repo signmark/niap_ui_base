@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
+import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -150,6 +151,11 @@ export default function Trends() {
   const [isSearchingNewSources, setIsSearchingNewSources] = useState(false);
   const [foundSourcesData, setFoundSourcesData] = useState<any>(null);
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
+  
+  // Состояния для сортировки
+  type SortField = 'reactions' | 'comments' | 'views' | 'trendScore' | 'date' | 'none';
+  const [sortField, setSortField] = useState<SortField>('none');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   // Используем глобальный стор кампаний
   const { selectedCampaign } = useCampaignStore();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
@@ -1174,6 +1180,43 @@ export default function Trends() {
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                          // Сортировка трендов
+                          .sort((a, b) => {
+                            if (sortField === 'none') return 0;
+                            
+                            let valueA, valueB;
+                            
+                            // Определяем значения для сравнения в зависимости от выбранного поля сортировки
+                            switch(sortField) {
+                              case 'reactions':
+                                valueA = a.reactions || 0;
+                                valueB = b.reactions || 0;
+                                break;
+                              case 'comments':
+                                valueA = a.comments || 0;
+                                valueB = b.comments || 0;
+                                break;
+                              case 'views':
+                                valueA = a.views || 0;
+                                valueB = b.views || 0;
+                                break;
+                              case 'trendScore':
+                                valueA = a.trendScore || 0;
+                                valueB = b.trendScore || 0;
+                                break;
+                              case 'date':
+                                valueA = new Date(a.created_at || a.createdAt || 0).getTime();
+                                valueB = new Date(b.created_at || b.createdAt || 0).getTime();
+                                break;
+                              default:
+                                return 0;
+                            }
+                            
+                            // Применяем выбранное направление сортировки
+                            return sortDirection === 'asc' 
+                              ? valueA - valueB 
+                              : valueB - valueA;
+                          })
                           .map((topic: TrendTopic) => {
                             const sourceName = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId)?.name || topic.sourceName || 'Неизвестный источник';
                             
@@ -1327,9 +1370,44 @@ export default function Trends() {
                 ) : (
                   <div className="max-h-[400px] overflow-y-auto pr-2">
                     <SourcePostsList
-                      posts={sourcePosts.filter(post =>
-                        post.post_content?.toLowerCase().includes(searchQuery.toLowerCase())
-                      )}
+                      posts={sourcePosts
+                        .filter(post =>
+                          post.post_content?.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        // Сортировка постов
+                        .sort((a, b) => {
+                          if (sortField === 'none') return 0;
+                          
+                          let valueA, valueB;
+                          
+                          // Определяем значения для сравнения в зависимости от выбранного поля сортировки
+                          switch(sortField) {
+                            case 'reactions':
+                              valueA = a.likes || 0;
+                              valueB = b.likes || 0;
+                              break;
+                            case 'comments':
+                              valueA = a.comments || 0;
+                              valueB = b.comments || 0;
+                              break;
+                            case 'views':
+                              valueA = a.views || 0;
+                              valueB = b.views || 0;
+                              break;
+                            case 'date':
+                              valueA = new Date(a.date || 0).getTime();
+                              valueB = new Date(b.date || 0).getTime();
+                              break;
+                            default:
+                              return 0;
+                          }
+                          
+                          // Применяем выбранное направление сортировки
+                          return sortDirection === 'asc' 
+                            ? valueA - valueB 
+                            : valueB - valueA;
+                        })
+                      }
                       isLoading={isLoadingSourcePosts}
                     />
                   </div>
