@@ -1171,7 +1171,7 @@ export default function Trends() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {trends
                           .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((topic: TrendTopic) => {
@@ -1325,7 +1325,7 @@ export default function Trends() {
                     )}
                   </>
                 ) : (
-                  <div>
+                  <div className="max-h-[400px] overflow-y-auto pr-2">
                     <SourcePostsList
                       posts={sourcePosts.filter(post =>
                         post.post_content?.toLowerCase().includes(searchQuery.toLowerCase())
