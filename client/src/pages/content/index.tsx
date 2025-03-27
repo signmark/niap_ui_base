@@ -569,15 +569,25 @@ export default function ContentPage() {
     mutationFn: async (contentId: string) => {
       console.log(`Перемещение контента ${contentId} в черновики`);
       
-      // Используем API для обновления контента вместо отмены публикации
-      // Указываем только те поля, которые нужно изменить
+      // Сначала получаем текущие данные контента
+      const content = await apiRequest(`/api/campaign-content/${contentId}`, {
+        method: 'GET'
+      });
+      
+      if (!content || !content.data) {
+        throw new Error('Не удалось получить данные контента');
+      }
+      
+      console.log(`Получен контент для перемещения в черновики:`, content.data);
+      
+      // Используем API для обновления контента
       return await apiRequest(`/api/publish/update-content/${contentId}`, {
         method: 'PATCH',
         data: {
           status: 'draft',
-          scheduledAt: null,
-          // Обновляем статус для всех платформ на cancelled
-          socialPlatforms: null // Очищаем платформы публикации полностью
+          scheduled_at: null, // Важно: используем snake_case для имени поля, т.к. API ожидает такой формат
+          // Очищаем информацию о публикации на платформах, но сохраняем структуру
+          social_platforms: {} // Пустой объект вместо null, чтобы не потерять структуру
         }
       });
     },
