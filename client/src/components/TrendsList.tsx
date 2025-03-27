@@ -80,6 +80,13 @@ interface TrendTopic {
   trendScore?: number;
   accountUrl?: string;
   urlPost?: string;
+  
+  // Поля для видео контента
+  hasVideo?: boolean;
+  hasVideos?: boolean;
+  
+  // Дополнительное поле для описания источника
+  sourceDescription?: string;
 }
 
 // Используем импортированную функцию createProxyImageUrl из utils/media
@@ -425,6 +432,10 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                 if (mediaData.videos && Array.isArray(mediaData.videos) && mediaData.videos.length > 0) {
                   hasVideos = true;
                   videoUrl = mediaData.videos[0];
+                  
+                  // Устанавливаем флаги наличия видео в тренде
+                  trend.hasVideos = true;
+                  trend.hasVideo = true;
                 }
               } else if (mediaData.posts && Array.isArray(mediaData.posts) && mediaData.posts.length > 0) {
                 // Формат с постами
@@ -434,6 +445,10 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                 if (post && post.video_url) {
                   hasVideos = true;
                   videoUrl = post.video_url;
+                  
+                  // Устанавливаем флаги наличия видео в тренде
+                  trend.hasVideos = true;
+                  trend.hasVideo = true;
                   
                   // Если есть видео, но мы не можем получить изображение,
                   // генерируем превью из видео
@@ -445,6 +460,27 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                 // Если нет видео или у нас есть изображение для поста с видео
                 if (post && post.image_url && !previewImageUrl) {
                   previewImageUrl = createProxyImageUrl(post.image_url, trend.id);
+                }
+              }
+              
+              // Если нашли видео, устанавливаем информацию о нём в самом тренде
+              if (hasVideos && videoUrl) {
+                // Сохраняем ссылку на видео в mediaLinks, если mediaLinks это строка
+                // преобразуем её в объект, добавляем видео и сериализуем обратно
+                if (typeof mediaLinksSource === 'string') {
+                  try {
+                    const mediaObj = JSON.parse(mediaLinksSource);
+                    if (!mediaObj.videos || !Array.isArray(mediaObj.videos)) {
+                      mediaObj.videos = [];
+                    }
+                    if (!mediaObj.videos.includes(videoUrl)) {
+                      mediaObj.videos.push(videoUrl);
+                    }
+                    // Заменяем строку с mediaLinks
+                    trend.mediaLinks = JSON.stringify(mediaObj);
+                  } catch (e) {
+                    console.error("Ошибка при обновлении mediaLinks с видео:", e);
+                  }
                 }
               }
               
