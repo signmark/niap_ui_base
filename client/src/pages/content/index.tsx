@@ -1091,7 +1091,7 @@ export default function ContentPage() {
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button 
-                                      variant="ghost" 
+                                      variant="black" 
                                       size="sm"
                                       className="h-7 w-7 p-0"
                                       onClick={(e) => {
@@ -1105,7 +1105,7 @@ export default function ContentPage() {
                                     {content.status === "draft" && (
                                       <>
                                         <Button 
-                                          variant="ghost" 
+                                          variant="black" 
                                           size="sm"
                                           className="h-7 w-7 p-0"
                                           onClick={(e) => {
@@ -1117,7 +1117,7 @@ export default function ContentPage() {
                                           <Calendar className="h-3.5 w-3.5" />
                                         </Button>
                                         <Button 
-                                          variant="ghost" 
+                                          variant="black" 
                                           size="sm"
                                           className="h-7 w-7 p-0"
                                           onClick={(e) => {
