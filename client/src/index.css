@@ -9,32 +9,45 @@
   opacity: 1 !important;
 }
 
-/* Темный режим для диалоговых окон */
+/* Светлый режим для диалоговых окон */
+.dialog-content {
+  background-color: white !important;
+  color: #0f172a !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+}
+
+/* Темный режим для диалоговых окон - мягкая серая гамма */
 .dark .dialog-content {
-  background-color: #1e1e1e !important;
-  color: white !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+  background-color: #2e2f34 !important;
+  color: #e5e7eb !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 12px !important;
 }
 
 /* Стили для фона диалога с умеренной непрозрачностью */
 [data-radix-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(3px) !important;
 }
 
 /* Контент диалога должен быть непрозрачным */
 [data-radix-dialog-content] {
   background-color: white !important;
-  color: black !important;
+  color: #0f172a !important;
   opacity: 1 !important;
+  border-radius: 12px !important;
 }
 
 /* Темный режим для контента диалогов */
 .dark [data-radix-dialog-content] {
-  background-color: #1e1e1e !important;
-  color: white !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+  background-color: #2e2f34 !important;
+  color: #e5e7eb !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 12px !important;
 }
 
 /* Общие стили для WYSIWYG контента */
@@ -167,16 +180,16 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим */
+  /* Темный режим - более мягкий с серыми оттенками */
   .dark {
-    --background: #161616;
-    --foreground: #ffffff;
-    --card: #1e1e1e;
-    --card-foreground: #f1f1f1;
-    --muted: #2d3748;
+    --background: #202125;
+    --foreground: #e5e7eb;
+    --card: #2e2f34;
+    --card-foreground: #e5e7eb;
+    --muted: #3a3b42;
     --muted-foreground: #a0aec0;
-    --border: #333333;
-    --primary: #3b82f6;
+    --border: #414348;
+    --primary: #60a5fa;
     --primary-foreground: #ffffff;
   }
 
@@ -243,21 +256,26 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Стильный вид карточек в темном режиме */
+  /* Более мягкий вид карточек в темном режиме */
   .dark .rounded-lg.border {
-    border-color: transparent;
-    background-color: #1e1e1e;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--card);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
   }
   
-  /* Улучшенный вид карточек при наведении и фокусе */
-  .dark .rounded-lg.border:hover,
+  /* Улучшенный вид карточек при наведении */
+  .dark .rounded-lg.border:hover {
+    border-color: rgba(96, 165, 250, 0.3);
+    background-color: #36373d;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Карточка в фокусе */
   .dark .rounded-lg.border:focus-within {
-    border-color: rgba(59, 130, 246, 0.3);
-    background-color: #212121;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
-    transform: translateY(-1px);
+    border-color: rgba(96, 165, 250, 0.5);
+    background-color: #36373d;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   }
   
   /* Стилизация заголовков в карточках в темном режиме */
@@ -364,5 +382,23 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
+  }
+  
+  /* Стили скроллбаров для темного режима */
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(30, 32, 35, 0.5);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(100, 105, 115, 0.5);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 125, 135, 0.7);
+  }
+  
+  .dark html,
+  .dark * {
+    scrollbar-color: rgba(100, 105, 115, 0.5) rgba(30, 32, 35, 0.5);
   }
 }
