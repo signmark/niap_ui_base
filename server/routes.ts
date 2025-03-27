@@ -5046,11 +5046,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const maxSourcesPerPlatform = trendAnalysisSettings?.maxSourcesPerPlatform || 5;
         const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
         const selectedPlatforms = req.body.platforms || ["instagram", "telegram", "vk"];
+        const collectSources = req.body.collectSources || false;
         
         webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439', {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
           platforms: selectedPlatforms,
+          collectSources: collectSources, // Добавляем флаг сбора источников
           keywords: keywordsList,
           maxTrendsPerSource: maxTrendsPerSource,
           language: "ru",

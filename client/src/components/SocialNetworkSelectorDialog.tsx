@@ -22,7 +22,7 @@ import { Loader2 } from "lucide-react";
 interface SocialNetworkSelectorDialogProps {
   isOpen: boolean;  // Открыт ли диалог
   onClose: () => void;  // Функция закрытия диалога
-  onConfirm: (selectedPlatforms: string[]) => void;  // Функция подтверждения выбора
+  onConfirm: (selectedPlatforms: string[], collectSources?: boolean) => void;  // Функция подтверждения выбора
   isLoading?: boolean;  // Состояние загрузки
 }
 
@@ -42,8 +42,12 @@ export function SocialNetworkSelectorDialog({
     }
   };
 
-  const handleConfirm = () => {
-    onConfirm(selectedPlatforms);
+  const handleCollectTrends = () => {
+    onConfirm(selectedPlatforms, false);
+  };
+  
+  const handleCollectSources = () => {
+    onConfirm(selectedPlatforms, true);
   };
 
   return (
@@ -111,11 +115,16 @@ export function SocialNetworkSelectorDialog({
             </div>
           </div>
         </div>
-        <DialogFooter className="sm:justify-end">
+        <DialogFooter className="sm:justify-end flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Отмена
           </Button>
-          <Button type="submit" onClick={handleConfirm} disabled={selectedPlatforms.length === 0 || isLoading}>
+          
+          <Button 
+            onClick={handleCollectTrends} 
+            disabled={selectedPlatforms.length === 0 || isLoading}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -124,7 +133,27 @@ export function SocialNetworkSelectorDialog({
             ) : (
               <div className="flex items-center gap-1">
                 <span>Собрать тренды</span>
-                <span className="ml-1 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded px-1.5 py-0.5" title="Использует n8n webhook">
+                <span className="ml-1 text-xs bg-blue-800 text-white rounded px-1.5 py-0.5" title="Использует n8n webhook">
+                  webhook
+                </span>
+              </div>
+            )}
+          </Button>
+          
+          <Button 
+            onClick={handleCollectSources} 
+            disabled={selectedPlatforms.length === 0 || isLoading}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сбор источников...
+              </>
+            ) : (
+              <div className="flex items-center gap-1">
+                <span>Собрать источники</span>
+                <span className="ml-1 text-xs bg-green-800 text-white rounded px-1.5 py-0.5" title="Использует n8n webhook">
                   webhook
                 </span>
               </div>
