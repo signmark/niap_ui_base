@@ -50,6 +50,18 @@ export function TrendDetailDialog({
   // Обработка медиа данных из темы
   if (topic) {
     try {
+      console.log("[TrendDetail] Исходные данные медиа в теме:", {
+        mediaLinks: topic.mediaLinks,
+        media_links: topic.media_links,
+        hasVideoProp: topic.hasVideos || topic.hasVideo,
+        hasVideo: Boolean(topic.hasVideos || topic.hasVideo)
+      });
+
+      // Проверяем, есть ли явное указание на наличие видео
+      if (topic.hasVideos || topic.hasVideo) {
+        console.log("[TrendDetail] Тренд имеет явное указание на видео");
+      }
+      
       // Пробуем сначала обработать новое поле mediaLinks
       if (topic.mediaLinks || topic.media_links) {
         const mediaLinks = topic.mediaLinks || topic.media_links;
@@ -58,7 +70,20 @@ export function TrendDetailDialog({
         if (typeof mediaLinks === 'string') {
           // Это JSON строка, пробуем распарсить
           try {
-            const parsedData = JSON.parse(mediaLinks);
+            // Удаляем лишние кавычки и экранирование - проблема с двойным экранированием
+            let cleanMediaLinks = mediaLinks;
+            
+            // Если строка начинается и заканчивается кавычками, удаляем их
+            if (cleanMediaLinks.startsWith('"') && cleanMediaLinks.endsWith('"')) {
+              cleanMediaLinks = cleanMediaLinks.slice(1, -1);
+              // Заменяем экранированные кавычки на обычные
+              cleanMediaLinks = cleanMediaLinks.replace(/\\"/g, '"');
+            }
+            
+            console.log("[TrendDetail] Очищенная строка mediaLinks:", cleanMediaLinks);
+            
+            const parsedData = JSON.parse(cleanMediaLinks);
+            console.log("[TrendDetail] Распарсенные данные:", parsedData);
             
             // Обработка разных форматов структуры данных
             if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
@@ -67,6 +92,7 @@ export function TrendDetailDialog({
             
             if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
               mediaData.videos = parsedData.videos.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
+              console.log("[TrendDetail] Найдены URL видео после фильтрации:", mediaData.videos);
             }
             
             // Проверка формата с постами
@@ -77,6 +103,7 @@ export function TrendDetailDialog({
                 }
                 if (post.video_url) {
                   mediaData.videos.push(post.video_url);
+                  console.log("[TrendDetail] Найдено видео в посте:", post.video_url);
                 }
               }
             }
@@ -114,24 +141,54 @@ export function TrendDetailDialog({
   }
   
   // Проверяем, есть ли у нас видео в трендах
-  const videoUrl = mediaData.videos && mediaData.videos.length > 0 ? mediaData.videos[0] : null;
-  const hasVideo = Boolean(videoUrl);
+  const videoUrl: string | undefined = mediaData.videos && mediaData.videos.length > 0 ? mediaData.videos[0] : undefined;
   
+  // Используем либо найденное видео URL, либо явный флаг hasVideo из темы
+  const hasVideo = Boolean(videoUrl) || Boolean(topic.hasVideos || topic.hasVideo);
+
+  // Отладочная информация
+  console.log("[TrendDetail] Видеоданные:", {
+    mediaData,
+    videoUrl,
+    hasVideo,
+    mediaLinksSource: topic.mediaLinks || topic.media_links,
+    topicHasVideo: topic.hasVideo,
+    topicHasVideos: topic.hasVideos
+  });
+  
+  // Обрабатываем случай, когда в videoUrl приходит еще экранированная строка
+  let processedVideoUrl = videoUrl;
+  if (videoUrl && typeof videoUrl === 'string' && (videoUrl.startsWith('\\\"') || videoUrl.startsWith('"\\\"'))) {
+    try {
+      // Если строка начинается с экранированных кавычек, это может быть случай двойного экранирования
+      let tempUrl = videoUrl;
+      if (tempUrl.startsWith('"') && tempUrl.endsWith('"')) {
+        tempUrl = tempUrl.slice(1, -1);
+      }
+      // Удаляем лишние экранирования
+      tempUrl = tempUrl.replace(/\\\"/g, '"').replace(/\\\\/g, '\\');
+      console.log("[TrendDetail] Обработан экранированный URL видео:", tempUrl);
+      processedVideoUrl = tempUrl;
+    } catch (e) {
+      console.error("[TrendDetail] Ошибка при обработке экранированного URL видео:", e);
+    }
+  }
+
   // Определяем тип источника видео для соответствующей обработки
-  const isInstagramVideo = videoUrl && (
-    videoUrl.includes('instagram.com/p/') || 
-    videoUrl.includes('instagram.com/reel/') || 
-    videoUrl.includes('instagram.com/reels/') ||
-    videoUrl.includes('cdninstagram.com') || 
-    videoUrl.includes('fbcdn.net') ||
-    videoUrl.includes('scontent.') ||  // домены scontent часто встречаются в CDN Instagram
-    (videoUrl.includes('.mp4') && (
-      videoUrl.includes('ig_') || 
-      videoUrl.includes('instagram')
+  const isInstagramVideo = processedVideoUrl && (
+    processedVideoUrl.includes('instagram.com/p/') || 
+    processedVideoUrl.includes('instagram.com/reel/') || 
+    processedVideoUrl.includes('instagram.com/reels/') ||
+    processedVideoUrl.includes('cdninstagram.com') || 
+    processedVideoUrl.includes('fbcdn.net') ||
+    processedVideoUrl.includes('scontent.') ||  // домены scontent часто встречаются в CDN Instagram
+    (processedVideoUrl.includes('.mp4') && (
+      processedVideoUrl.includes('ig_') || 
+      processedVideoUrl.includes('instagram')
     )) ||
-    videoUrl.includes('HBksFQIYUmlnX') || // маркер Instagram видео
-    videoUrl.includes('_nc_vs=') ||     // другой маркер Instagram видео
-    videoUrl.includes('efg=')          // еще один маркер Instagram видео
+    processedVideoUrl.includes('HBksFQIYUmlnX') || // маркер Instagram видео
+    processedVideoUrl.includes('_nc_vs=') ||     // другой маркер Instagram видео
+    processedVideoUrl.includes('efg=')          // еще один маркер Instagram видео
   );
     
   if (isInstagramVideo) {
@@ -160,16 +217,22 @@ export function TrendDetailDialog({
   
   // Проверяем URL для ВК видео
   React.useEffect(() => {
+    // Специальная обработка для видео ВКонтакте
     if (videoUrl && videoUrl.includes('vk.com/video')) {
+      console.log("[TrendDetail] Обрабатываем видео ВКонтакте:", videoUrl);
+      
       fetch(`/api/vk-video-info?url=${encodeURIComponent(videoUrl)}`)
         .then(response => response.json())
         .then(data => {
+          console.log("[TrendDetail] Получена информация о видео ВК:", data);
           if (data.success) {
             setVkVideoInfo(data);
+          } else {
+            console.warn("[TrendDetail] Не удалось получить данные видео ВК:", data.error || "Неизвестная ошибка");
           }
         })
         .catch(error => {
-          console.error('Error fetching VK video info:', error);
+          console.error('[TrendDetail] Error fetching VK video info:', error);
         });
     }
   }, [videoUrl]);
@@ -257,7 +320,7 @@ export function TrendDetailDialog({
                   ) : (
                     // Прямая ссылка на видео из Instagram - используем Video тег для прямого воспроизведения
                     <video 
-                      src={videoUrl}
+                      src={processedVideoUrl || ''}
                       controls
                       autoPlay={false}
                       loop={false}
@@ -270,7 +333,7 @@ export function TrendDetailDialog({
                         console.log("[TrendDetail] Начало загрузки Instagram видео напрямую");
                       }}
                       onError={(e) => {
-                        console.log(`[TrendDetail] Ошибка воспроизведения Instagram видео напрямую: ${videoUrl}`, e);
+                        console.log(`[TrendDetail] Ошибка воспроизведения Instagram видео напрямую: ${processedVideoUrl}`, e);
                         setVideoLoadError(true);
                         // При ошибке воспроизведения предлагаем открыть оригинальный источник
                         e.currentTarget.style.display = 'none';
@@ -283,7 +346,7 @@ export function TrendDetailDialog({
                               <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
                             </svg>
                             <p class="text-sm">Ошибка воспроизведения видео</p>
-                            <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
+                            <a href="${processedVideoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-300 hover:underline block">
                               Открыть оригинал
                             </a>
                           </div>

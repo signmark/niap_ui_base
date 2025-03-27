@@ -34,6 +34,13 @@ export interface TrendTopic {
   post?: any;
   type?: string;
   sourceType?: string;
+  
+  // Поля для видео контента
+  hasVideo?: boolean;
+  hasVideos?: boolean;
+  
+  // Дополнительное поле для описания источника
+  sourceDescription?: string;
 }
 
 // Тип для обработки данных постов от API
