@@ -1170,17 +1170,84 @@ export default function Trends() {
                       onValueChange={(value) => setSortField(value as SortField)}
                     >
                       <SelectTrigger className="h-9 w-[180px]">
-                        <SelectValue placeholder="Выберите поле" />
+                        <SelectValue placeholder="Выберите поле">
+                          {sortField === 'none' && (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                              <span>По умолчанию</span>
+                            </div>
+                          )}
+                          {sortField === 'reactions' && (
+                            <div className="flex items-center gap-2">
+                              <ThumbsUp className="h-4 w-4 text-blue-500" />
+                              <span>По лайкам</span>
+                            </div>
+                          )}
+                          {sortField === 'comments' && (
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-green-500" />
+                              <span>По комментариям</span>
+                            </div>
+                          )}
+                          {sortField === 'views' && (
+                            <div className="flex items-center gap-2">
+                              <Eye className="h-4 w-4 text-purple-500" />
+                              <span>По просмотрам</span>
+                            </div>
+                          )}
+                          {sortField === 'trendScore' && (
+                            <div className="flex items-center gap-2">
+                              <Flame className="h-4 w-4 text-orange-500" />
+                              <span>По трендовости</span>
+                            </div>
+                          )}
+                          {sortField === 'date' && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-gray-500" />
+                              <span>По дате</span>
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">По умолчанию</SelectItem>
-                        <SelectItem value="reactions">По лайкам</SelectItem>
-                        <SelectItem value="comments">По комментариям</SelectItem>
-                        <SelectItem value="views">По просмотрам</SelectItem>
+                        <SelectItem value="none">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                            <span>По умолчанию</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="reactions">
+                          <div className="flex items-center gap-2">
+                            <ThumbsUp className="h-4 w-4 text-blue-500" />
+                            <span>По лайкам</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="comments">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-green-500" />
+                            <span>По комментариям</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="views">
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4 text-purple-500" />
+                            <span>По просмотрам</span>
+                          </div>
+                        </SelectItem>
                         {activeTab === 'trends' && (
-                          <SelectItem value="trendScore">По трендовости</SelectItem>
+                          <SelectItem value="trendScore">
+                            <div className="flex items-center gap-2">
+                              <Flame className="h-4 w-4 text-orange-500" />
+                              <span>По трендовости</span>
+                            </div>
+                          </SelectItem>
                         )}
-                        <SelectItem value="date">По дате</SelectItem>
+                        <SelectItem value="date">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                            <span>По дате</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     
