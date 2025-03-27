@@ -135,7 +135,7 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
   const displayValue = persistSelection && initiallySelectedId ? initiallySelectedId : selectedCampaignId;
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center py-2">
       <span className="mr-2 text-sm font-medium">Кампания:</span>
       <div className="w-[250px]">
         {isLoading ? (
