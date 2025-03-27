@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
@@ -212,7 +213,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                         className="flex-1"
                         size="sm"
                       >
-                        XMLRiver
+                        API Сервис
                       </Button>
                       <Button 
                         variant={selectedService === 'deepseek' ? "default" : "outline"}
@@ -296,9 +297,9 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 <Label className="text-right pt-2">
                   Ключевые слова
                 </Label>
-                <div className="col-span-3 flex flex-wrap gap-2">
+                <div className="col-span-3 grid grid-cols-2 gap-2">
                   {keywords.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground col-span-2">
                       Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
                     </p>
                   ) : (
@@ -306,14 +307,19 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     keywords
                       .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
                       .map((kw) => (
-                        <Button
-                          key={kw.id}
-                          variant={selectedKeywords.includes(kw.keyword) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleKeywordToggle(kw.keyword)}
-                        >
-                          {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
-                        </Button>
+                        <div key={kw.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`keyword-${kw.id}`}
+                            checked={selectedKeywords.includes(kw.keyword)}
+                            onCheckedChange={() => handleKeywordToggle(kw.keyword)}
+                          />
+                          <Label 
+                            htmlFor={`keyword-${kw.id}`}
+                            className="cursor-pointer text-sm"
+                          >
+                            {kw.keyword}{kw.trendScore > 0 ? ` (${kw.trendScore})` : ''}
+                          </Label>
+                        </div>
                       ))
                   )}
                 </div>
