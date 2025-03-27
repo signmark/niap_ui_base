@@ -11,9 +11,10 @@
 
 /* Темный режим для диалоговых окон */
 .dark .dialog-content {
-  background-color: var(--card) !important;
-  color: var(--card-foreground) !important;
-  border-color: var(--border) !important;
+  background-color: #1e1e1e !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Стили для фона диалога с умеренной непрозрачностью */
@@ -30,9 +31,10 @@
 
 /* Темный режим для контента диалогов */
 .dark [data-radix-dialog-content] {
-  background-color: var(--card) !important;
-  color: var(--card-foreground) !important;
-  border-color: var(--border) !important;
+  background-color: #1e1e1e !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Общие стили для WYSIWYG контента */
@@ -167,10 +169,10 @@
 
   /* Темный режим */
   .dark {
-    --background: #121212;
+    --background: #161616;
     --foreground: #ffffff;
     --card: #1e1e1e;
-    --card-foreground: #ffffff;
+    --card-foreground: #f1f1f1;
     --muted: #2d3748;
     --muted-foreground: #a0aec0;
     --border: #333333;
@@ -225,14 +227,22 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Улучшенные стили для карточек в темном режиме */
+  /* Улучшенный внешний вид карточек в темном режиме */
   .dark .rounded-lg.border {
-    border-color: var(--border);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-width: 1px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
   
-  /* Настройка фона модалок для темного режима */
-  .dark .bg-card {
-    background-color: var(--card);
+  /* Лучшая видимость при наведении в темном режиме */
+  .dark .rounded-lg.border:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Убираем лишние рамки */
+  .dark .border-t, 
+  .dark .border-b {
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
   /* Стики-хедер для фиксированного первого блока (отключено - больше не прилипает) */
