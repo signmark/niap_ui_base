@@ -7,9 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
-  ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
+  ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -563,6 +563,47 @@ export default function ContentPage() {
       });
     }
   });
+  
+  // Мутация для перемещения контента в черновики (отмена запланированной публикации)
+  const moveToDraftMutation = useMutation({
+    mutationFn: async (contentId: string) => {
+      console.log(`Перемещение контента ${contentId} в черновики`);
+      
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
+      
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Используем тот же API-эндпоинт, что и для отмены публикации
+      return await apiRequest(`/api/publish/cancel/${contentId}`, {
+        method: 'POST',
+        headers
+      });
+    },
+    onSuccess: () => {
+      // Обновляем данные в интерфейсе
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
+        .then(() => {
+          toast({
+            title: "Перемещено в черновики",
+            description: "Публикация была успешно перемещена в черновики",
+            variant: "default"
+          });
+        });
+    },
+    onError: (error: Error) => {
+      console.error("Ошибка при перемещении в черновики:", error);
+      toast({
+        title: "Ошибка",
+        description: `Не удалось переместить публикацию в черновики: ${error.message || 'Неизвестная ошибка'}`,
+        variant: "destructive"
+      });
+    }
+  });
 
   // Обработчик создания контента
   const handleCreateContent = () => {
@@ -1103,6 +1144,23 @@ export default function ContentPage() {
                                           <SendHorizontal className="h-3.5 w-3.5" />
                                         </Button>
                                       </>
+                                    )}
+                                    
+                                    {/* Кнопка "В черновики" для запланированного контента */}
+                                    {content.status === "scheduled" && (
+                                      <Button 
+                                        variant="secondary" 
+                                        size="sm"
+                                        className="h-7 ml-1 text-xs"
+                                        title="Переместить в черновики"
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Предотвращаем открытие превью
+                                          moveToDraftMutation.mutate(content.id);
+                                        }}
+                                      >
+                                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                        В черновики
+                                      </Button>
                                     )}
                                     <Button 
                                       variant="ghost" 
