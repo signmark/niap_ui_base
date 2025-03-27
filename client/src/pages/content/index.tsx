@@ -9,7 +9,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Play, Ban
+  CalendarIcon, XCircle, Filter, Ban
 } from "lucide-react";
 import {
   AlertDialog,
