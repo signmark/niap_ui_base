@@ -117,19 +117,17 @@ export default function ScheduledPublicationDetails({
   // Обработчик перевода в черновик
   const handleMoveToDraft = async () => {
     try {
-      // Получаем токен авторизации из localStorage
-      const authToken = localStorage.getItem('auth_token');
+      console.log(`Перемещение контента ${content.id} в черновики`);
       
-      // Формируем заголовки с авторизацией
-      const headers: Record<string, string> = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      // Используем тот же API-эндпоинт, что и для отмены публикации
-      const response = await apiRequest(`/api/publish/cancel/${content.id}`, {
-        method: 'POST',
-        headers
+      // Используем API для обновления контента вместо отмены публикации
+      const response = await apiRequest(`/api/publish/update-content/${content.id}`, {
+        method: 'PATCH',
+        data: {
+          status: 'draft',
+          scheduled_at: null, // Важно: используем snake_case для имени поля, т.к. API ожидает такой формат
+          // Очищаем платформы публикации
+          social_platforms: {} // Пустой объект вместо null, чтобы сохранить структуру
+        }
       });
       
       // Проверяем успешность выполнения запроса
@@ -144,7 +142,8 @@ export default function ScheduledPublicationDetails({
         const updatedContent: CampaignContent = {
           ...content,
           status: 'draft' as const,
-          scheduledAt: null
+          scheduledAt: null,
+          socialPlatforms: {} // Очищаем платформы
         };
         
         // Обновляем статусы платформ

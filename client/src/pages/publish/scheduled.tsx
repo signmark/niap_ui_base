@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { CampaignContent, Campaign, SocialPlatform, PlatformPublishInfo } from '@/types';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,43 @@ export default function ScheduledPublications() {
   const [viewTab, setViewTab] = useState<string>('upcoming');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
+  
+  // Мутация для перемещения контента в черновики
+  const moveToDraftMutation = useMutation({
+    mutationFn: async (contentId: string) => {
+      console.log(`Перемещение контента ${contentId} в черновики`);
+      
+      // Используем API для обновления контента вместо отмены публикации
+      // Указываем только те поля, которые нужно изменить
+      return await apiRequest(`/api/publish/update-content/${contentId}`, {
+        method: 'PATCH',
+        data: {
+          status: 'draft',
+          scheduled_at: null, // Важно: используем snake_case для имени поля, т.к. API ожидает такой формат
+          // Обновляем статус для всех платформ
+          social_platforms: {} // Пустой объект вместо null, чтобы сохранить структуру
+        }
+      });
+    },
+    onSuccess: () => {
+      // Обновляем данные в интерфейсе
+      refetchScheduled();
+      
+      toast({
+        title: "Перемещено в черновики",
+        description: "Публикация была успешно перемещена в черновики",
+        variant: "default"
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Ошибка при перемещении в черновики:", error);
+      toast({
+        title: "Ошибка",
+        description: `Не удалось переместить публикацию в черновики: ${error.message || 'Неизвестная ошибка'}`,
+        variant: "destructive"
+      });
+    }
+  });
   
   // Используем глобальное состояние для получения текущей выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -511,14 +548,23 @@ export default function ScheduledPublications() {
                     )}
                   </CardContent>
                   
-                  <CardFooter>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleViewDetails(content)}
-                    >
-                      Подробнее
-                    </Button>
+                  <CardFooter className="flex justify-between">
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDetails(content)}
+                      >
+                        Подробнее
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
+                        onClick={() => moveToDraftMutation.mutate(content.id)}
+                      >
+                        В черновики
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))}
