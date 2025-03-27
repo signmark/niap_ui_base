@@ -988,7 +988,7 @@ export default function Trends() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center sticky top-0 bg-background z-10 pb-4">
+      <div className="flex justify-between items-center bg-background pb-4">
         <div>
           <h1 className="text-2xl font-bold">SMM Manager</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -1066,7 +1066,7 @@ export default function Trends() {
 
         {isValidCampaignSelected && (
           <>
-            <Card>
+            <Card className="bg-white shadow-md">
               <CardContent className="pt-6">
                 <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
                 {isLoadingSources ? (
@@ -1127,7 +1127,7 @@ export default function Trends() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white shadow-md">
               <CardContent className="p-6 space-y-4">
                 <div className="border-b mb-4">
                   <div className="flex">
