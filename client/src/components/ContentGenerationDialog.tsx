@@ -28,7 +28,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'deepseek' | 'qwen';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
+  const [selectedService, setSelectedService] = useState<ApiService>('apiservice');
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -209,7 +209,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     onValueChange={(value) => setSelectedService(value as ApiService)}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="apiservice">API Сервис</TabsTrigger>
                       <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
                       <TabsTrigger value="qwen">Qwen</TabsTrigger>
                     </TabsList>
@@ -217,7 +218,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 </div>
               </div>
               
-              {selectedService === 'deepseek' && (
+              {(selectedService === 'deepseek' || selectedService === 'apiservice') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа
