@@ -4966,10 +4966,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const { campaignId } = req.body;
+      const { campaignId, platforms = [] } = req.body;
+      // Принимаем collectSources как boolean или как число (1)
+      const collectSources = req.body.collectSources === true || req.body.collectSources === 1 || req.body.collectSources === "1";
+      
       if (!campaignId) {
         return res.status(400).json({ message: "Campaign ID is required" });
       }
+      
+      console.log('Received collectSources flag:', collectSources);
+      console.log('Received platforms:', platforms);
 
       // Проверяем существование кампании через Directus
       try {
@@ -5014,7 +5020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         campaignId,
         keywordsCount: keywordsList.length,
         userId,
-        collectSources
+        collectSources: collectSources
       });
       
       let webhookResponse = { status: 500, data: null };
@@ -5046,8 +5052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const maxSourcesPerPlatform = trendAnalysisSettings?.maxSourcesPerPlatform || 5;
         const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
-        const selectedPlatforms = req.body.platforms || ["instagram", "telegram", "vk"];
-        const collectSources = req.body.collectSources || false;
+        const selectedPlatforms = platforms || ["instagram", "telegram", "vk"];
         
         // Debug-логирование для проверки передачи флага collectSources
         console.log('Request body from client:', {
@@ -5060,7 +5065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
           platforms: selectedPlatforms,
-          collectSources: collectSources, // Добавляем флаг сбора источников
+          collectSources: collectSources ? 1 : 0, // Отправляем как числовое значение для совместимости
           keywords: keywordsList,
           maxTrendsPerSource: maxTrendsPerSource,
           language: "ru",

@@ -43,10 +43,12 @@ export function SocialNetworkSelectorDialog({
   };
 
   const handleCollectTrends = () => {
-    onConfirm(selectedPlatforms, false);
+    // Не отправляем collectSources, когда собираем тренды
+    onConfirm(selectedPlatforms);
   };
   
   const handleCollectSources = () => {
+    // Отправляем true только для сбора источников
     onConfirm(selectedPlatforms, true);
   };
 
@@ -131,12 +133,9 @@ export function SocialNetworkSelectorDialog({
                 Сбор трендов...
               </>
             ) : (
-              <div className="flex items-center gap-1">
-                <span>Собрать тренды</span>
-                <span className="ml-1 text-xs bg-blue-800 text-white rounded px-1.5 py-0.5" title="Использует n8n webhook">
-                  webhook
-                </span>
-              </div>
+              <>
+                Собрать тренды
+              </>
             )}
           </Button>
           
@@ -151,12 +150,9 @@ export function SocialNetworkSelectorDialog({
                 Сбор источников...
               </>
             ) : (
-              <div className="flex items-center gap-1">
-                <span>Собрать источники</span>
-                <span className="ml-1 text-xs bg-green-800 text-white rounded px-1.5 py-0.5" title="Использует n8n webhook">
-                  webhook
-                </span>
-              </div>
+              <>
+                Собрать источники
+              </>
             )}
           </Button>
         </DialogFooter>
