@@ -21,7 +21,7 @@
 /* Темный режим для диалоговых окон - классический стиль */
 .dark .dialog-content {
   background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
   border-radius: 12px !important;
@@ -44,7 +44,7 @@
 /* Темный режим для контента диалогов */
 .dark [data-radix-dialog-content] {
   background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
   border-radius: 12px !important;
@@ -180,14 +180,14 @@
     --topbar-border: #cbd5e1;
   }
 
-  /* Темный режим - более яркий и контрастный */
+  /* Темный режим - более яркий и контрастный с чисто белым текстом */
   .dark {
     --background: #111827;
-    --foreground: #f9fafb;
+    --foreground: #ffffff;
     --card: #1f2937;
-    --card-foreground: #f9fafb;
+    --card-foreground: #ffffff;
     --muted: #374151;
-    --muted-foreground: #d1d5db;
+    --muted-foreground: #e5e7eb;
     --border: #4b5563;
     --primary: #3b82f6;
     --primary-foreground: #ffffff;
@@ -278,10 +278,13 @@
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
-  /* Стилизация заголовков в карточках в темном режиме */
+  /* Стилизация заголовков в карточках в темном режиме - чисто белый цвет */
   .dark .rounded-lg.border h2,
-  .dark .rounded-lg.border h3 {
-    color: #f8fafc;
+  .dark .rounded-lg.border h3,
+  .dark .rounded-lg.border p,
+  .dark .rounded-lg.border span,
+  .dark .rounded-lg.border div {
+    color: #ffffff;
   }
   
   /* Стилизация тегов и меток в темном режиме */
