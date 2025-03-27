@@ -780,7 +780,7 @@ export default function Trends() {
 
 
   const { mutate: collectTrendsWithPlatforms, isPending: isCollecting } = useMutation({
-    mutationFn: async (platforms: string[]) => {
+    mutationFn: async ({ platforms, collectSources }: { platforms: string[], collectSources?: boolean }) => {
       if (!selectedCampaignId) {
         throw new Error("Выберите кампанию");
       }
@@ -808,7 +808,8 @@ export default function Trends() {
         body: JSON.stringify({ 
           campaignId: selectedCampaignId,
           keywords: keywordsList,
-          platforms: platforms // Добавляем выбранные платформы
+          platforms: platforms,
+          collectSources: collectSources // Добавляем флаг сбора источников
         })
       });
       
@@ -842,10 +843,12 @@ export default function Trends() {
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       return trendData;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, { platforms, collectSources }) => {
       toast({
         title: "Успешно",
-        description: `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
+        description: collectSources 
+          ? `Задача по сбору источников запущена. Данные будут обновляться автоматически.`
+          : `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
       });
       
       // Refresh the trend topics list и источники
@@ -1611,9 +1614,9 @@ export default function Trends() {
       <SocialNetworkSelectorDialog
         isOpen={isSocialNetworkDialogOpen}
         onClose={() => setIsSocialNetworkDialogOpen(false)}
-        onConfirm={(platforms) => {
+        onConfirm={(platforms, collectSources) => {
           setIsSocialNetworkDialogOpen(false);
-          collectTrendsWithPlatforms(platforms);
+          collectTrendsWithPlatforms({ platforms, collectSources });
         }}
         isLoading={isCollecting}
       />
