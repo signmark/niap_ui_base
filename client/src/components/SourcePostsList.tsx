@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from 'date-fns';
@@ -33,6 +33,28 @@ interface SourcePostsListProps {
 export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   const [openPopover, setOpenPopover] = useState<string | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  
+  // Логируем информацию о полученных постах для диагностики
+  useEffect(() => {
+    console.log("SourcePostsList received data:", {
+      postsCount: posts?.length || 0,
+      isLoading,
+      firstPost: posts?.[0] || null,
+      allPosts: posts || []
+    });
+    
+    // Проверка наличия null значений в post_content
+    const nullContentPosts = posts?.filter(post => post.post_content === null)?.length || 0;
+    if (nullContentPosts > 0) {
+      console.log(`[SourcePostsList] Найдено ${nullContentPosts} постов с null в post_content из ${posts?.length || 0}`);
+    }
+    
+    // Проверка наличия null значений в image_url
+    const nullImagePosts = posts?.filter(post => post.image_url === null)?.length || 0;
+    if (nullImagePosts > 0) {
+      console.log(`[SourcePostsList] Найдено ${nullImagePosts} постов с null в image_url из ${posts?.length || 0}`);
+    }
+  }, [posts, isLoading]);
 
   if (isLoading) {
     return (
@@ -47,6 +69,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     return (
       <div className="text-center p-8 text-muted-foreground">
         <p>Посты из источников отсутствуют. Соберите данные из источников, чтобы увидеть посты.</p>
+        <p className="text-xs mt-2">Необходимо добавить источники и запустить сбор данных.</p>
       </div>
     );
   }
@@ -71,8 +94,8 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   };
 
   // Function to process image and video URLs using our new proxy system
-  const processMediaUrl = (url: string | null, postId: string): string | null => {
-    if (!url) return null;
+  const processMediaUrl = (url: string | null, postId: string): string => {
+    if (!url) return '';
 
     // Если это видео, используем потоковую передачу
     if (isVideoUrl(url)) {

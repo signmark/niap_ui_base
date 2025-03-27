@@ -42,6 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
+import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
 import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
@@ -697,6 +698,7 @@ export default function Trends() {
     enabled: !!selectedCampaignId
   });
 
+  // Запрос для получения постов из источников
   const { data: sourcePosts = [], isLoading: isLoadingSourcePosts } = useQuery<SourcePost[]>({
     queryKey: ['source_posts', selectedCampaignId, selectedPeriod],
     queryFn: async () => {
@@ -749,10 +751,19 @@ export default function Trends() {
         console.log("Source posts API response:", {
           status: response.status,
           dataLength: response.data?.data?.length,
-          firstPost: response.data?.data?.[0]
+          firstPost: response.data?.data?.[0],
+          fullResponse: response.data
         });
 
-        return response.data?.data || [];
+        const posts = response.data?.data || [];
+        console.log("Returning posts array:", {
+          length: posts.length,
+          isEmpty: posts.length === 0,
+          campaignId: selectedCampaignId,
+          period: selectedPeriod
+        });
+        
+        return posts;
       } catch (error) {
         console.error("Error fetching source posts:", error);
         toast({
@@ -858,6 +869,15 @@ export default function Trends() {
   const collectTrends = () => {
     setIsSocialNetworkDialogOpen(true);
   };
+
+  // Мониторинг данных о постах из источников
+  useEffect(() => {
+    console.log("sourcePosts data changed:", {
+      length: sourcePosts?.length || 0, 
+      isLoading: isLoadingSourcePosts,
+      firstPost: sourcePosts?.[0] || null
+    });
+  }, [sourcePosts, isLoadingSourcePosts]);
 
   // Отслеживаем активные источники для стабильного отображения статуса
   const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
@@ -1149,20 +1169,23 @@ export default function Trends() {
                 {activeTab === 'trends' ? (
                   <>
                     <div className="flex items-center flex-wrap gap-4 mb-4">
-                      <Select
-                        value={selectedPeriod}
-                        onValueChange={(value: Period) => setSelectedPeriod(value)}
-                      >
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Выберите период" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="3days">За 3 дня</SelectItem>
-                          <SelectItem value="7days">За неделю</SelectItem>
-                          <SelectItem value="14days">За 2 недели</SelectItem>
-                          <SelectItem value="30days">За месяц</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground mr-1">Период:</div>
+                        <Select
+                          value={selectedPeriod}
+                          onValueChange={(value: Period) => setSelectedPeriod(value)}
+                        >
+                          <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="Выберите период" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="3days">За 3 дня</SelectItem>
+                            <SelectItem value="7days">За неделю</SelectItem>
+                            <SelectItem value="14days">За 2 недели</SelectItem>
+                            <SelectItem value="30days">За месяц</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
@@ -1474,124 +1497,26 @@ export default function Trends() {
                   </>
                 ) : (
                   <>
-                    <div className="flex justify-between items-center mb-3">
-                      <Select 
-                        defaultValue="7days" 
-                        value={selectedPeriod}
-                        onValueChange={(value) => {
-                          if (isValidPeriod(value)) {
-                            setSelectedPeriod(value);
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9 w-[180px]">
-                          <SelectValue placeholder="Выберите период" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="3days">За 3 дня</SelectItem>
-                          <SelectItem value="7days">За неделю</SelectItem>
-                          <SelectItem value="14days">За 2 недели</SelectItem>
-                          <SelectItem value="30days">За месяц</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
-                        <Select 
-                          defaultValue="none" 
-                          value={sortField}
-                          onValueChange={(value) => setSortField(value as SortField)}
-                        >
-                          <SelectTrigger className="h-9 w-[180px]">
-                            <SelectValue placeholder="Выберите поле">
-                              {sortField === 'none' && (
-                                <div className="flex items-center gap-2">
-                                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                                  <span>По умолчанию</span>
-                                </div>
-                              )}
-                              {sortField === 'reactions' && (
-                                <div className="flex items-center gap-2">
-                                  <ThumbsUp className="h-4 w-4 text-blue-500" />
-                                  <span>По лайкам</span>
-                                </div>
-                              )}
-                              {sortField === 'comments' && (
-                                <div className="flex items-center gap-2">
-                                  <MessageSquare className="h-4 w-4 text-green-500" />
-                                  <span>По комментариям</span>
-                                </div>
-                              )}
-                              {sortField === 'views' && (
-                                <div className="flex items-center gap-2">
-                                  <Eye className="h-4 w-4 text-purple-500" />
-                                  <span>По просмотрам</span>
-                                </div>
-                              )}
-                              {sortField === 'date' && (
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-gray-500" />
-                                  <span>По дате</span>
-                                </div>
-                              )}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                                <span>По умолчанию</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="reactions">
-                              <div className="flex items-center gap-2">
-                                <ThumbsUp className="h-4 w-4 text-blue-500" />
-                                <span>По лайкам</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="comments">
-                              <div className="flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-green-500" />
-                                <span>По комментариям</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="views">
-                              <div className="flex items-center gap-2">
-                                <Eye className="h-4 w-4 text-purple-500" />
-                                <span>По просмотрам</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="date">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-gray-500" />
-                                <span>По дате</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {sortField !== 'none' && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                            className="h-9 w-9"
-                          >
-                            {sortDirection === 'asc' ? (
-                              <ArrowUpIcon className="h-4 w-4" />
-                            ) : (
-                              <ArrowDownIcon className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                    <SourcePostsSearchForm
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
+                      sortField={sortField}
+                      setSortField={(value) => setSortField(value as SortField)}
+                      sortDirection={sortDirection}
+                      setSortDirection={setSortDirection}
+                      selectedPeriod={selectedPeriod}
+                      setSelectedPeriod={setSelectedPeriod}
+                      isValidPeriod={isValidPeriod}
+                    />
                     <div className="max-h-[400px] overflow-y-auto pr-2">
+                      {/* Логируем состояние постов перед фильтрацией в useEffect */}
                       <SourcePostsList
                       posts={sourcePosts
-                        .filter(post =>
-                          post.post_content?.toLowerCase().includes(searchQuery.toLowerCase())
-                        )
+                        .filter(post => {
+                          // Обрабатываем случай, когда post_content может быть null
+                          const content = post.post_content || '';
+                          return content.toLowerCase().includes(searchQuery.toLowerCase());
+                        })
                         // Сортировка постов
                         .sort((a, b) => {
                           if (sortField === 'none') return 0;
