@@ -186,14 +186,29 @@ export default function ScheduledPublications() {
       const isUpcoming = upcomingContent.some(c => c.id === content.id);
       if (isUpcoming) return false;
       
-      // Проверяем наличие запланированных дат
-      if (content.scheduledAt) return true;
+      // Проверяем наличие запланированных дат, и что они в прошлом
+      if (content.scheduledAt) {
+        const scheduledDate = new Date(content.scheduledAt);
+        return scheduledDate < new Date(); // Только если дата в прошлом
+      }
       
       // Проверяем социальные платформы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        let hasPastScheduledDate = false;
+        
         for (const platform in content.socialPlatforms) {
           const platformData = content.socialPlatforms[platform as SocialPlatform];
-          if (platformData && platformData.scheduledAt) return true;
+          if (platformData && platformData.scheduledAt) {
+            const platformScheduledDate = new Date(platformData.scheduledAt);
+            if (platformScheduledDate < new Date()) {
+              hasPastScheduledDate = true;
+              break; // Нашли хотя бы одну прошедшую дату, можно прекратить поиск
+            }
+          }
+        }
+        
+        if (hasPastScheduledDate) {
+          return true;
         }
       }
       
