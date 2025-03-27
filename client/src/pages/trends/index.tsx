@@ -1072,7 +1072,7 @@ export default function Trends() {
                     Нет добавленных источников
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                     {sources.map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div className="flex items-center gap-2">
