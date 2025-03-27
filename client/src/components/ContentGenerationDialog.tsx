@@ -204,17 +204,34 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   API Сервис
                 </Label>
                 <div className="col-span-3">
-                  <Tabs 
-                    value={selectedService} 
-                    onValueChange={(value) => setSelectedService(value as ApiService)}
-                    className="w-full"
-                  >
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="apiservice">API Сервис</TabsTrigger>
-                      <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
-                      <TabsTrigger value="qwen">Qwen</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <div className="space-y-3">
+                    <div className="flex gap-2 justify-between">
+                      <Button 
+                        variant={selectedService === 'apiservice' ? "default" : "outline"}
+                        onClick={() => setSelectedService('apiservice')}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        XMLRiver
+                      </Button>
+                      <Button 
+                        variant={selectedService === 'deepseek' ? "default" : "outline"}
+                        onClick={() => setSelectedService('deepseek')}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        DeepSeek
+                      </Button>
+                      <Button 
+                        variant={selectedService === 'qwen' ? "default" : "outline"}
+                        onClick={() => setSelectedService('qwen')}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        Qwen
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
               
