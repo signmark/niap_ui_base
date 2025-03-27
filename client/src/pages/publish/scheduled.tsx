@@ -240,12 +240,20 @@ export default function ScheduledPublications() {
     });
   };
   
-  const handleCancelSuccess = () => {
+  const handleCancelSuccess = (updatedContent?: CampaignContent) => {
     refetchScheduled();
-    toast({
-      title: "Публикация отменена",
-      description: "Запланированная публикация была успешно отменена",
-    });
+    
+    // Проверяем, если это перемещение в черновики (из компонента будет передаваться обновленный объект)
+    if (updatedContent) {
+      // Обычно сообщение уже отображается в компоненте ScheduledPublicationDetails
+      console.log("Публикация обновлена:", updatedContent.id, updatedContent.status);
+    } else {
+      // Это вызов после отмены публикации (старое поведение)
+      toast({
+        title: "Публикация отменена",
+        description: "Запланированная публикация была успешно отменена",
+      });
+    }
   };
   
   const handleViewDetails = (content: CampaignContent) => {
