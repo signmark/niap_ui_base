@@ -277,13 +277,22 @@
     font-weight: 500;
   }
   
-  /* Стили для карточек в темном режиме */
-  .dark .rounded-lg.border, 
-  .dark .rounded-lg.bg-card,
-  .dark [data-component-name="Card"] {
-    border-color: rgba(255, 255, 255, 0.1);
-    background-color: #222222 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* Стили для статей в темном режиме */
+  .dark .article-card {
+    background-color: #2d2d2d !important;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Кнопки управления черного цвета */
+  .btn-manage {
+    background-color: #000000 !important;
+    color: white !important;
+  }
+  
+  .btn-delete {
+    background-color: transparent;
+    border: 1px solid #d1d5db;
   }
   
   /* Стили для аккордеонов и других элементов интерфейса */
