@@ -1146,7 +1146,7 @@ export default function Trends() {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex items-center flex-wrap gap-4">
                   <Select
                     value={selectedPeriod}
                     onValueChange={(value: Period) => setSelectedPeriod(value)}
@@ -1161,6 +1161,44 @@ export default function Trends() {
                       <SelectItem value="30days">За месяц</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
+                    <Select 
+                      defaultValue="none" 
+                      value={sortField}
+                      onValueChange={(value) => setSortField(value as SortField)}
+                    >
+                      <SelectTrigger className="h-9 w-[180px]">
+                        <SelectValue placeholder="Выберите поле" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">По умолчанию</SelectItem>
+                        <SelectItem value="reactions">По лайкам</SelectItem>
+                        <SelectItem value="comments">По комментариям</SelectItem>
+                        <SelectItem value="views">По просмотрам</SelectItem>
+                        {activeTab === 'trends' && (
+                          <SelectItem value="trendScore">По трендовости</SelectItem>
+                        )}
+                        <SelectItem value="date">По дате</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {sortField !== 'none' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        className="h-9 px-2"
+                      >
+                        {sortDirection === 'asc' ? (
+                          <ArrowUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ArrowDownIcon className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
 
                   <Input
                     placeholder={activeTab === 'trends' ? "Поиск по темам" : "Поиск постов"}
