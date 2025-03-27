@@ -60,25 +60,25 @@ export const useThemeStore = create<ThemeState>()(
           variables['--topbar-fg'] = '#000000';
           variables['--topbar-border'] = '#cccccc';
         } else {
-          // Темная тема
-          variables['--background'] = '#121212';
+          // Темная тема (с темно-синим оттенком, как на скриншотах)
+          variables['--background'] = '#1a202c';
           variables['--foreground'] = '#ffffff';
-          variables['--card'] = '#1e1e1e';
+          variables['--card'] = '#252d3d';
           variables['--card-foreground'] = '#ffffff';
           variables['--muted'] = '#2d3748';
           variables['--muted-foreground'] = '#a0aec0';
           
-          // Боковая панель в темной теме (темно-серая)
-          variables['--sidebar-bg'] = '#1a1a1a';
+          // Боковая панель в темной теме (темно-синяя)
+          variables['--sidebar-bg'] = '#111827';
           variables['--sidebar-fg'] = '#ffffff';
-          variables['--sidebar-accent'] = '#444444';
+          variables['--sidebar-accent'] = '#2d3748';
           variables['--sidebar-accent-fg'] = '#ffffff';
-          variables['--sidebar-border'] = '#333333';
+          variables['--sidebar-border'] = '#1e293b';
           
-          // Верхняя панель в темной теме (темно-серая)
-          variables['--topbar-bg'] = '#1a1a1a';
+          // Верхняя панель в темной теме (темно-синяя)
+          variables['--topbar-bg'] = '#111827';
           variables['--topbar-fg'] = '#ffffff';
-          variables['--topbar-border'] = '#333333';
+          variables['--topbar-border'] = '#1e293b';
         }
         
         return variables;
