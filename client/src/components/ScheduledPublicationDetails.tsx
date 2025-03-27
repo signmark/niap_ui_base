@@ -113,6 +113,77 @@ export default function ScheduledPublicationDetails({
       });
     }
   };
+  
+  // Обработчик перевода в черновик
+  const handleMoveToDraft = async () => {
+    try {
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
+      
+      // Формируем заголовки с авторизацией
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Используем тот же API-эндпоинт, что и для отмены публикации
+      const response = await apiRequest(`/api/publish/cancel/${content.id}`, {
+        method: 'POST',
+        headers
+      });
+      
+      // Проверяем успешность выполнения запроса
+      if (response && !response.error) {
+        toast({
+          title: "Перемещено в черновики",
+          description: "Публикация была успешно перемещена в черновики.",
+          variant: "default",
+        });
+        
+        // Создаем локально обновленную копию контента
+        const updatedContent: CampaignContent = {
+          ...content,
+          status: 'draft' as const,
+          scheduledAt: null
+        };
+        
+        // Обновляем статусы платформ
+        if (updatedContent.socialPlatforms) {
+          const platforms = { ...updatedContent.socialPlatforms };
+          
+          // Для каждой платформы меняем статус на 'cancelled'
+          Object.keys(platforms).forEach(platformKey => {
+            const platform = platformKey as SocialPlatform;
+            if (platforms[platform]) {
+              platforms[platform] = {
+                ...platforms[platform],
+                status: 'cancelled'
+              };
+            }
+          });
+          
+          updatedContent.socialPlatforms = platforms;
+        }
+        
+        console.log('Локально обновленный контент после перемещения в черновики:', updatedContent);
+        
+        // Вызываем колбэк в случае успешной отмены, передавая обновленный контент
+        if (onCancelSuccess) {
+          onCancelSuccess(updatedContent);
+        }
+      } else {
+        // Обработка ошибки из ответа сервера
+        throw new Error(response?.error || 'Не удалось переместить публикацию в черновики');
+      }
+    } catch (error: any) {
+      console.error("Ошибка при перемещении в черновики:", error);
+      toast({
+        title: "Ошибка",
+        description: `Не удалось переместить публикацию в черновики: ${error?.message || 'Неизвестная ошибка'}`,
+        variant: "destructive",
+      });
+    }
+  };
 
   // Обработчик просмотра деталей контента
   const handleViewDetails = () => {
@@ -270,6 +341,15 @@ export default function ScheduledPublicationDetails({
             >
               <Edit2 className="mr-2" size={16} />
               Изменить
+            </Button>
+            
+            <Button 
+              variant="secondary" 
+              onClick={handleMoveToDraft}
+              size="sm"
+            >
+              <CheckCircle className="mr-2" size={16} />
+              В черновики
             </Button>
           </div>
           
