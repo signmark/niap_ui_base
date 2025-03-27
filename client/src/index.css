@@ -256,27 +256,31 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Контрастный вид карточек в темном режиме - глубокий темно-синий */
+  /* Контрастный вид карточек в темном режиме - светло-синий для выделения на тёмном фоне */
   .dark .rounded-lg.border, 
   .dark .rounded-lg.bg-card,
   .dark [data-component-name="Card"] {
     border-color: rgba(75, 85, 99, 0.3);
-    background-color: #1e1e3b !important;
+    background-color: #2b2b4c !important;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
     transition: all 0.2s ease;
   }
   
-  /* Улучшенный вид карточек при наведении - более темный оттенок */
-  .dark .rounded-lg.border:hover {
+  /* Улучшенный вид карточек при наведении - более светлый оттенок */
+  .dark .rounded-lg.border:hover,
+  .dark .rounded-lg.bg-card:hover,
+  .dark [data-component-name="Card"]:hover {
     border-color: rgba(59, 130, 246, 0.5);
-    background-color: #242444;
+    background-color: #323262 !important;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   }
   
-  /* Карточка в фокусе - более темный оттенок */
-  .dark .rounded-lg.border:focus-within {
+  /* Карточка в фокусе - более светлый оттенок */
+  .dark .rounded-lg.border:focus-within,
+  .dark .rounded-lg.bg-card:focus-within,
+  .dark [data-component-name="Card"]:focus-within {
     border-color: rgba(59, 130, 246, 0.7);
-    background-color: #242444;
+    background-color: #323262 !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
