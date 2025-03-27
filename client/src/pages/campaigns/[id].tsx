@@ -526,7 +526,7 @@ export default function CampaignDetails() {
 
   return (
     <div className="p-6">
-      <div className="sticky-header">
+      <div className="page-header">
         <h1 className="text-2xl font-bold mb-6">{campaign.name}</h1>
       </div>
 

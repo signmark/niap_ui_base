@@ -210,9 +210,14 @@
     margin-bottom: 2px; /* Небольшой промежуток между аккордеонами */
   }
   
-  /* Стики-хедер для фиксированного первого блока */
+  /* Стики-хедер для фиксированного первого блока (отключено - больше не прилипает) */
   .sticky-header {
-    @apply sticky top-0 z-10 bg-background pb-6;
+    @apply z-10 bg-background pb-6;
+  }
+  
+  /* Обычный заголовок страницы */
+  .page-header {
+    @apply z-10 bg-background pb-6;
   }
   
   .resize-handle {
