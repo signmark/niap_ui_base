@@ -50,16 +50,6 @@ export function SourcePostsSearchForm({
           </SelectContent>
         </Select>
       </div>
-
-      <div className="flex items-center gap-2">
-        <div className="text-sm text-muted-foreground mr-1">Поиск:</div>
-        <Input
-          placeholder="Поиск по содержимому"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-9 w-[200px]"
-        />
-      </div>
       
       <div className="flex items-center gap-2">
         <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
@@ -150,6 +140,16 @@ export function SourcePostsSearchForm({
             )}
           </Button>
         )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="text-sm text-muted-foreground mr-1">Поиск:</div>
+        <Input
+          placeholder="Поиск по содержимому"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-9 w-[200px]"
+        />
       </div>
     </div>
   );
