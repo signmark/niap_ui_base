@@ -331,21 +331,15 @@ export function BusinessQuestionnaireForm({
         const formValues = form.getValues();
         console.log('After website analysis, form values:', formValues);
         
-        // Если анкета уже существует, автоматически сохраняем обновленные данные
-        if (questionnaireData?.id) {
-          console.log('Automatically saving updated questionnaire after analysis for existing questionnaire');
-          updateQuestionnaireMutation.mutate(formValues);
-        } else {
-          // Если анкеты еще нет, устанавливаем режим редактирования и предлагаем сохранить
-          console.log('Setting edit mode for new questionnaire after analysis');
-          setIsEditMode(true);
-          
-          // Предлагаем пользователю сохранить данные
-          toast({
-            title: 'Данные подготовлены',
-            description: 'Пожалуйста, проверьте и сохраните анкету, нажав кнопку "Сохранить"',
-          });
-        }
+        // Всегда устанавливаем режим редактирования после анализа сайта
+        setIsEditMode(true);
+        
+        // Предлагаем пользователю сохранить данные
+        toast({
+          title: 'Данные подготовлены',
+          description: 'Пожалуйста, проверьте и нажмите кнопку "Сохранить" или "Обновить" в нижней части формы, чтобы сохранить изменения',
+          duration: 7000,
+        });
         
         // Скрываем индикатор прогресса через 1 секунду
         setTimeout(() => {
@@ -727,9 +721,24 @@ export function BusinessQuestionnaireForm({
                 <div className="flex justify-end space-x-2">
                   <Button 
                     type="submit"
+                    variant="default"
+                    size="lg"
+                    className="animate-pulse"
                     disabled={createQuestionnaireMutation.isPending || updateQuestionnaireMutation.isPending}
                   >
-                    {hasQuestionnaire ? "Обновить" : "Сохранить"}
+                    {createQuestionnaireMutation.isPending || updateQuestionnaireMutation.isPending ? (
+                      <>
+                        <span className="mr-2">
+                          {hasQuestionnaire ? "Обновление..." : "Сохранение..."}
+                        </span>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </>
+                    ) : (
+                      <span>{hasQuestionnaire ? "Обновить" : "Сохранить"}</span>
+                    )}
                   </Button>
                 </div>
               )}
