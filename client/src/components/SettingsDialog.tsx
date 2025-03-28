@@ -61,6 +61,8 @@ export function SettingsDialog() {
   const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
+  const [instagramTesting, setInstagramTesting] = useState<TestingState>({ status: 'idle' });
+  const [facebookTesting, setFacebookTesting] = useState<TestingState>({ status: 'idle' });
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
   const { toast } = useToast();
@@ -91,7 +93,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'instagram' | 'facebook',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -201,6 +203,9 @@ export function SettingsDialog() {
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  // Токены социальных сетей (Instagram и Facebook) были перемещены
+  // в настройки каждой кампании и убраны из глобальных настроек
+  
   const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
     if (!xmlRiverUserId.trim()) {
       toast({
@@ -220,6 +225,7 @@ export function SettingsDialog() {
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
+      // Социальные сети перенесены в настройки кампаний
 
       if (perplexityKeyData) {
         setPerplexityKey(perplexityKeyData.api_key);
@@ -275,7 +281,9 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey }
+        { name: 'xmlriver', key: xmlRiverCombinedKey },
+        { name: 'instagram', key: instagramToken },
+        { name: 'facebook', key: facebookToken }
       ];
 
       for (const service of services) {
@@ -571,6 +579,29 @@ export function SettingsDialog() {
           </div>
         </div>
 
+        <Separator className="my-4" />
+        
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <Label className="text-lg font-semibold">Социальные сети</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Эти токены используются для публикации контента в социальных сетях.</p>
+                  <p className="mt-2">Получить токены можно в разделах для разработчиков соответствующих социальных сетей.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {/* Настройки социальных сетей (Facebook, Instagram) были перенесены в настройки кампаний */}
+        </div>
+        
         <Button
           onClick={() => saveSettings()}
           disabled={isPending}
