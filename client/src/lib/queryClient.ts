@@ -61,11 +61,30 @@ export async function apiRequest(
   
   try {
     const contentType = res.headers.get('content-type');
+    
     if (contentType && contentType.includes('application/json')) {
       return await res.json();
     } else {
       console.warn('Ответ сервера не в формате JSON:', contentType);
       const text = await res.text();
+      
+      // Отображаем первые 100 символов ответа для отладки
+      console.warn('Начало текста ответа:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+      
+      // Если ответ содержит HTML, вернем заглушку с предупреждением
+      // Это временное решение для перехвата ошибок HTML вместо JSON
+      if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+        console.warn('Сервер вернул HTML вместо JSON');
+        return {
+          success: false,
+          error: "Сервер вернул HTML вместо JSON. Возможно, проблема с маршрутизацией или авторизацией.",
+          content: {
+            title: "Ошибка генерации",
+            html: "<p>Не удалось сгенерировать контент. Пожалуйста, попробуйте еще раз или обратитесь к администратору.</p>"
+          }
+        };
+      }
+      
       // Попытаемся проверить, не содержит ли текст JSON
       try {
         if (text.includes('{') && text.includes('}')) {
@@ -75,15 +94,41 @@ export async function apiRequest(
             return JSON.parse(jsonMatch[0]);
           }
         }
-        // Если JSON не найден, вернем текст как сообщение об ошибке
-        throw new Error(`Сервер вернул не JSON: ${text.substring(0, 100)}...`);
+        
+        // Если JSON не найден, возвращаем структурированный ответ с ошибкой
+        return {
+          success: false,
+          error: "Неверный формат ответа сервера",
+          content: {
+            title: "Ошибка обработки ответа",
+            html: "<p>Сервер вернул данные в неизвестном формате. Пожалуйста, обратитесь к администратору.</p>"
+          }
+        };
       } catch (e) {
-        throw new Error(`Ошибка при обработке ответа: ${e.message}`);
+        // В случае ошибки при разборе, также возвращаем структурированный ответ
+        console.error('Ошибка при попытке извлечь JSON из текста:', e);
+        return {
+          success: false,
+          error: `Ошибка при обработке ответа: ${e.message}`,
+          content: {
+            title: "Ошибка обработки данных",
+            html: "<p>Произошла ошибка при обработке данных от сервера. Пожалуйста, обратитесь к администратору.</p>"
+          }
+        };
       }
     }
   } catch (error) {
     console.error('Ошибка при разборе ответа сервера:', error);
-    throw error;
+    
+    // Вместо выбрасывания исключения возвращаем структурированный ответ с ошибкой
+    return {
+      success: false,
+      error: error.message || "Неизвестная ошибка при обработке ответа",
+      content: {
+        title: "Ошибка сервера",
+        html: "<p>Произошла ошибка при обработке ответа сервера. Пожалуйста, попробуйте позже.</p>"
+      }
+    };
   }
 }
 
@@ -96,20 +141,84 @@ export const getQueryFn: <T>(options: {
     const token = useAuthStore.getState().token;
     const userId = useAuthStore.getState().userId;
 
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-      headers: {
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-        "x-user-id": userId || ''
+    try {
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+          "x-user-id": userId || ''
+        }
+      });
+
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
       }
-    });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      await throwIfResNotOk(res);
+      
+      // Если статус 204 No Content, не пытаемся распарсить JSON
+      if (res.status === 204) {
+        return { success: true };
+      }
+      
+      try {
+        const contentType = res.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          return await res.json();
+        } else {
+          console.warn('Ответ сервера не в формате JSON (query):', contentType);
+          const text = await res.text();
+          
+          // Если ответ содержит HTML, вернем заглушку с предупреждением
+          if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+            return {
+              success: false,
+              error: "Получен HTML вместо данных. Возможно, проблема с авторизацией.",
+              data: []
+            };
+          }
+          
+          // Попытаемся найти JSON в тексте
+          try {
+            if (text.includes('{') && text.includes('}')) {
+              const jsonMatch = text.match(/\{.*\}/s);
+              if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+              }
+            }
+            
+            // Если JSON не найден, возвращаем пустой массив или объект
+            return {
+              success: false,
+              error: "Неверный формат ответа",
+              data: []
+            };
+          } catch (e) {
+            console.error('Ошибка при анализе текста ответа:', e);
+            return {
+              success: false,
+              error: `Ошибка обработки: ${e.message}`,
+              data: []
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при разборе ответа сервера:', error);
+        return {
+          success: false,
+          error: error.message || "Неизвестная ошибка при обработке ответа",
+          data: []
+        };
+      }
+    } catch (error) {
+      console.error('Ошибка при выполнении запроса:', error);
+      return {
+        success: false,
+        error: error.message || "Ошибка сетевого запроса",
+        data: []
+      };
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
