@@ -6,6 +6,7 @@ import { Request, Response, Express } from 'express';
 import axios from 'axios';
 import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
+import { initiateInstagramAuth, handleInstagramCallback, getInstagramSettings } from '../services/instagram-auth';
 
 /**
  * Регистрирует маршруты для авторизации
@@ -236,6 +237,99 @@ export function registerAuthRoutes(app: Express): void {
       log(`Ошибка при получении данных пользователя: ${error.message}`, 'auth');
       return res.status(401).json({
         error: 'Не удалось получить информацию о пользователе',
+        message: error.message
+      });
+    }
+  });
+  
+  // Маршруты для OAuth авторизации Instagram
+  
+  // Маршрут для инициирования OAuth авторизации Instagram
+  app.get('/api/auth/instagram', async (req: Request, res: Response) => {
+    // Проверяем авторизацию
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Не авторизован',
+        message: 'Требуется токен авторизации'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Получаем информацию о пользователе по токену
+      const userInfo = await directusApiManager.request({
+        url: '/users/me',
+        method: 'get'
+      }, token);
+      
+      if (userInfo?.data?.data?.id) {
+        // Сохраняем идентификатор пользователя в объекте запроса
+        req.user = {
+          id: userInfo.data.data.id,
+          token
+        };
+        
+        // Инициируем авторизацию Instagram
+        return initiateInstagramAuth(req, res);
+      }
+      
+      return res.status(401).json({
+        error: 'Недействительный токен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при инициировании авторизации Instagram: ${error.message}`, 'auth');
+      return res.status(500).json({
+        error: 'Не удалось инициировать авторизацию Instagram',
+        message: error.message
+      });
+    }
+  });
+  
+  // Маршрут для обработки коллбека после авторизации Instagram
+  app.get('/api/auth/instagram/callback', handleInstagramCallback);
+  
+  // Маршрут для получения настроек Instagram
+  app.get('/api/auth/instagram/settings', async (req: Request, res: Response) => {
+    // Проверяем авторизацию
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'Не авторизован',
+        message: 'Требуется токен авторизации'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Получаем информацию о пользователе по токену
+      const userInfo = await directusApiManager.request({
+        url: '/users/me',
+        method: 'get'
+      }, token);
+      
+      if (userInfo?.data?.data?.id) {
+        // Сохраняем идентификатор пользователя в объекте запроса
+        req.user = {
+          id: userInfo.data.data.id,
+          token
+        };
+        
+        // Получаем настройки Instagram
+        return getInstagramSettings(req, res);
+      }
+      
+      return res.status(401).json({
+        error: 'Недействительный токен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при получении настроек Instagram: ${error.message}`, 'auth');
+      return res.status(500).json({
+        error: 'Не удалось получить настройки Instagram',
         message: error.message
       });
     }
