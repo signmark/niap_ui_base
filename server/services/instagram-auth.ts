@@ -6,9 +6,9 @@ import { Request, Response } from 'express';
 import { directusApi } from '../directus';
 
 // Конфигурация приложения Facebook/Instagram
-const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID || '4071290253194999';
-const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET || 'f9c0b00de0167bd519ba37052858a069';
-const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
+const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
+const BASE_URL = process.env.BASE_URL;
 const REDIRECT_URI = `${BASE_URL}/api/auth/instagram/callback`;
 
 /**

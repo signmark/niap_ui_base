@@ -246,39 +246,73 @@ export function registerAuthRoutes(app: Express): void {
   
   // Маршрут для инициирования OAuth авторизации Instagram
   app.get('/api/auth/instagram', async (req: Request, res: Response) => {
-    // Проверяем авторизацию
-    const authHeader = req.headers.authorization;
+    // Проверяем авторизацию из Cookie, если не найдена - проверяем заголовок авторизации
+    // Это необходимо, потому что при клике на кнопке браузер выполняет обычное GET-запрос без заголовков авторизации
+    let userId = null;
+    let token = null;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        error: 'Не авторизован',
-        message: 'Требуется токен авторизации'
+    // Сначала проверяем cookies
+    if (req.cookies && req.cookies.auth_token) {
+      token = req.cookies.auth_token;
+      try {
+        // Пытаемся получить ID пользователя из токена в cookie
+        const userInfo = await directusApiManager.request({
+          url: '/users/me',
+          method: 'get'
+        }, token);
+        
+        if (userInfo?.data?.data?.id) {
+          userId = userInfo.data.data.id;
+        }
+      } catch (error) {
+        log(`Ошибка при получении пользователя из cookie токена: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
+      }
+    }
+    
+    // Если не удалось получить ID пользователя из cookie, пробуем заголовок авторизации
+    if (!userId) {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ 
+          error: 'Не авторизован',
+          message: 'Требуется токен авторизации. Пожалуйста, войдите в систему.'
+        });
+      }
+      
+      token = authHeader.substring(7);
+      
+      try {
+        // Получаем информацию о пользователе по токену
+        const userInfo = await directusApiManager.request({
+          url: '/users/me',
+          method: 'get'
+        }, token);
+        
+        if (userInfo?.data?.data?.id) {
+          userId = userInfo.data.data.id;
+        }
+      } catch (error: any) {
+        log(`Ошибка при получении пользователя из заголовка авторизации: ${error.message}`, 'auth');
+      }
+    }
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Недействительный токен',
+        message: 'Не удалось определить пользователя. Пожалуйста, войдите в систему заново.'
       });
     }
     
-    const token = authHeader.substring(7);
-    
     try {
-      // Получаем информацию о пользователе по токену
-      const userInfo = await directusApiManager.request({
-        url: '/users/me',
-        method: 'get'
-      }, token);
+      // Сохраняем идентификатор пользователя в объекте запроса
+      req.user = {
+        id: userId,
+        token
+      };
       
-      if (userInfo?.data?.data?.id) {
-        // Сохраняем идентификатор пользователя в объекте запроса
-        req.user = {
-          id: userInfo.data.data.id,
-          token
-        };
-        
-        // Инициируем авторизацию Instagram
-        return initiateInstagramAuth(req, res);
-      }
-      
-      return res.status(401).json({
-        error: 'Недействительный токен'
-      });
+      // Инициируем авторизацию Instagram
+      return initiateInstagramAuth(req, res);
     } catch (error: any) {
       log(`Ошибка при инициировании авторизации Instagram: ${error.message}`, 'auth');
       return res.status(500).json({
