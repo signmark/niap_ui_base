@@ -21,7 +21,8 @@ function getServiceDisplayName(serviceName: string): string {
     'apify': 'Apify',
     'deepseek': 'DeepSeek',
     'fal_ai': 'FAL.AI',
-    'xmlriver': 'XMLRiver'
+    'xmlriver': 'XMLRiver',
+    'qwen': 'Qwen'
   };
   
   return serviceNames[serviceName] || serviceName;
@@ -52,6 +53,7 @@ export function SettingsDialog() {
   const [apifyKey, setApifyKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
+  const [qwenKey, setQwenKey] = useState("");
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
@@ -61,6 +63,7 @@ export function SettingsDialog() {
   const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
+  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' });
   // Состояния для соцсетей убраны, т.к. токены перенесены в настройки кампаний
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
@@ -92,7 +95,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -173,7 +176,8 @@ export function SettingsDialog() {
         apify: 'Apify',
         deepseek: 'DeepSeek',
         xmlriver: 'XMLRiver',
-        fal_ai: 'FAL.AI'
+        fal_ai: 'FAL.AI',
+        qwen: 'Qwen'
       };
       
       const serviceName = serviceNames[keyType as keyof typeof serviceNames] || keyType;
@@ -202,6 +206,7 @@ export function SettingsDialog() {
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  const testQwenKey = () => testApiKey('qwen', qwenKey, setQwenTesting);
   // Токены социальных сетей (Instagram и Facebook) были перемещены
   // в настройки каждой кампании и убраны из глобальных настроек
   
@@ -224,6 +229,7 @@ export function SettingsDialog() {
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
+      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
       // Социальные сети перенесены в настройки кампаний
 
       if (perplexityKeyData) {
@@ -237,6 +243,9 @@ export function SettingsDialog() {
       }
       if (falAiKeyData) {
         setFalAiKey(falAiKeyData.api_key);
+      }
+      if (qwenKeyData) {
+        setQwenKey(qwenKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -280,7 +289,8 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey }
+        { name: 'xmlriver', key: xmlRiverCombinedKey },
+        { name: 'qwen', key: qwenKey }
       ];
       // Токены социальных сетей перенесены в настройки кампаний
 
@@ -503,6 +513,41 @@ export function SettingsDialog() {
           </p>
           {falAiTesting.status === 'error' && (
             <p className="text-sm text-red-500">{falAiTesting.message}</p>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <Label>API Ключ Qwen</Label>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={qwenKey}
+              onChange={(e) => setQwenKey(e.target.value)}
+              placeholder="Введите API ключ Qwen"
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testQwenKey}
+              disabled={!qwenKey.trim() || isPending || qwenTesting.status === 'testing'}
+              className="shrink-0"
+            >
+              {qwenTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : qwenTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : qwenTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Ключ используется для генерации контента через модель Qwen
+          </p>
+          {qwenTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{qwenTesting.message}</p>
           )}
         </div>
         

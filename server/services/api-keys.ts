@@ -48,6 +48,7 @@ interface ApiKeyCache {
 export class ApiKeyService {
   private keyCache: ApiKeyCache = {};
   private readonly cacheDuration = 30 * 60 * 1000; // 30 минут
+  private keyUpdateListeners: {[key in ApiServiceName]?: Array<(newKey: string) => void>} = {};
   
   constructor() {
     // Инициализация сервиса
@@ -55,6 +56,35 @@ export class ApiKeyService {
     
     // Запускаем периодическую очистку кэша
     setInterval(() => this.cleanupCache(), 10 * 60 * 1000); // каждые 10 минут
+  }
+  
+  /**
+   * Добавляет слушателя обновлений API ключа для указанного сервиса
+   * @param serviceName Название сервиса
+   * @param callback Функция обратного вызова, вызываемая при обновлении API ключа
+   */
+  addKeyUpdateListener(serviceName: ApiServiceName, callback: (newKey: string) => void): void {
+    if (!this.keyUpdateListeners[serviceName]) {
+      this.keyUpdateListeners[serviceName] = [];
+    }
+    this.keyUpdateListeners[serviceName]!.push(callback);
+    console.log(`Added update listener for ${serviceName} API key`);
+  }
+  
+  /**
+   * Получает API ключ пользователя для указанного сервиса
+   * @param userId ID пользователя
+   * @param serviceName Название сервиса
+   * @returns API ключ или пустую строку, если ключ не найден
+   */
+  async getUserApiKey(userId: string, serviceName: ApiServiceName): Promise<string> {
+    try {
+      const apiKey = await this.getApiKey(userId, serviceName);
+      return apiKey || '';
+    } catch (error) {
+      console.error(`Error getting ${serviceName} API key for user ${userId}:`, error);
+      return '';
+    }
   }
   
   /**
@@ -354,6 +384,19 @@ export class ApiKeyService {
         key: apiKey,
         expiresAt: Date.now() + this.cacheDuration
       };
+      
+      // Уведомляем всех слушателей об обновлении ключа
+      if (this.keyUpdateListeners[serviceName]?.length > 0) {
+        console.log(`[${serviceName}] Оповещение ${this.keyUpdateListeners[serviceName]!.length} слушателей об обновлении ключа`);
+        
+        this.keyUpdateListeners[serviceName]!.forEach(listener => {
+          try {
+            listener(apiKey);
+          } catch (e) {
+            console.error(`[${serviceName}] Ошибка при оповещении слушателя:`, e);
+          }
+        });
+      }
       
       return true;
     } catch (error) {
