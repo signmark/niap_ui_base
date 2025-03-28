@@ -1,151 +1,243 @@
-import { Express } from 'express';
-import { deepSeekService } from '../services/deepseek';
-import { falAiSdk } from '../services/fal-ai';
-import { authenticateUser } from '../middleware/auth';
+import { Express, Request, Response } from "express";
+import { authenticateUser } from "../middleware/auth";
+import { deepseekService, DeepSeekMessage } from '../services/deepseek';
+import { qwenService, QwenMessage } from '../services/qwen';
 
 /**
- * Регистрирует маршруты для генерации контента
- * @param app - экземпляр приложения Express
+ * Настройка маршрутов для генерации контента
  */
-export function registerContentGenerationRoutes(app: Express) {
-  console.log('[content-generation] Регистрация маршрутов для генерации контента...');
-
-  // Маршрут для генерации контента через DeepSeek API
-  app.post("/api/content/generate-deepseek", authenticateUser, async (req: any, res) => {
+export const setupContentGenerationRoutes = (app: Express): void => {
+  /**
+   * Маршрут для генерации текста с использованием DeepSeek AI
+   */
+  app.post('/api/content-generation/deepseek/text', authenticateUser, async (req: Request, res: Response) => {
     try {
-      const { prompt, keywords = [], tone, platform, campaignId, trends } = req.body;
-      
-      if (!prompt) {
-        return res.status(400).json({ error: "Missing required parameter: prompt" });
+      // Проверяем, что пользователь авторизован
+      if (!req.user?.id) {
+        return res.status(401).json({ success: false, error: 'Требуется авторизация' });
       }
       
-      // Получаем userId, установленный в authenticateUser 
-      const userId = req.userId;
-      const token = req.headers.authorization?.replace('Bearer ', '');
+      const { prompt, trendsContext, tone = 'informative' } = req.body;
       
-      console.log(`Запрос на генерацию контента через DeepSeek для кампании ${campaignId} от пользователя ${userId}`);
+      if (!prompt) {
+        return res.status(400).json({ success: false, error: 'Не указан текст запроса (prompt)' });
+      }
       
-      // Генерируем контент с помощью DeepSeek API
-      const content = await deepSeekService.generateContent(
-        prompt,
-        {
-          keywords,
-          tone,
-          platform,
-          trends
-        },
-        userId,
-        token
+      // Инициализируем DeepSeek сервис с API ключом пользователя
+      const initialized = await deepseekService.initialize(req.user.id);
+      
+      if (!initialized) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Не удалось инициализировать DeepSeek API. Проверьте настройки API ключа.' 
+        });
+      }
+      
+      // Формируем системный промт в зависимости от выбранного тона
+      let systemInstructions = '';
+      
+      switch(tone) {
+        case 'professional':
+          systemInstructions = 'Используй профессиональный и формальный стиль. Предоставь экспертную информацию с использованием терминологии и четкой структуры.';
+          break;
+        case 'casual':
+          systemInstructions = 'Используй повседневный, разговорный стиль. Будь дружелюбным и доступным, как при общении с другом.';
+          break;
+        case 'informative':
+          systemInstructions = 'Предоставь фактическую информацию в четком, понятном формате. Сохрани баланс между детальностью и доступностью.';
+          break;
+        case 'funny':
+          systemInstructions = 'Добавь юмор и легкость в текст. Используй игру слов, забавные примеры и доброжелательную интонацию.';
+          break;
+        default:
+          systemInstructions = 'Предоставь полезную информацию в понятной форме.';
+      }
+      
+      const systemPrompt = `Ты профессиональный копирайтер. Твоя задача - создать качественный контент для социальных сетей на основе предоставленного запроса и трендов.
+
+${systemInstructions}
+
+Учитывай контекст предоставленных трендовых тем, но концентрируйся в первую очередь на запросе пользователя.
+
+ВАЖНЫЕ ПРАВИЛА:
+- Создавай HTML-форматированный текст с тегами <p>, <strong>, <em> и <br> для структурирования
+- Не используй заголовки <h1>, <h2> и т.д.
+- Не включай цитат в формате блоков
+- Не упоминай, что контент создан ИИ
+- Не используй шаблонные фразы и клише
+- Пиши естественным языком, избегая сложных конструкций
+- Сохраняй оригинальный стиль, указанный в запросе`;
+      
+      // Подготавливаем контекст с трендами, если он есть
+      let userPrompt = prompt;
+      if (trendsContext && trendsContext.trim() !== '') {
+        userPrompt = `Актуальные тренды: ${trendsContext}\n\nЗапрос: ${prompt}`;
+      }
+      
+      // Формируем сообщения для запроса
+      const messages: DeepSeekMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+      
+      console.log(`Отправка запроса в DeepSeek API для генерации текста: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
+      
+      // Отправляем запрос к API
+      const generatedText = await deepseekService.generateText(
+        messages,
+        { 
+          model: 'deepseek-chat',
+          temperature: 0.7,
+          max_tokens: 1000
+        }
       );
       
+      console.log(`Успешно получен ответ от DeepSeek API длиной ${generatedText.length} символов`);
+      
+      // Возвращаем результат
       return res.json({
         success: true,
-        data: {
-          content,
-          service: 'deepseek',
-        }
+        content: generatedText
       });
+      
     } catch (error: any) {
-      console.error('Error generating content with DeepSeek:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: `Error generating content: ${error.message}` 
+      console.error('Ошибка при генерации текста с DeepSeek API:', error);
+      
+      // Формируем подробное сообщение об ошибке для фронтенда
+      let errorMessage = error.message || 'Непредвиденная ошибка при генерации текста';
+      
+      if (error.response?.data) {
+        try {
+          const errorDetails = typeof error.response.data === 'string' 
+            ? error.response.data 
+            : JSON.stringify(error.response.data).substring(0, 300);
+          errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
+        } catch (e) {
+          errorMessage += ` (Статус: ${error.response.status})`;
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: errorMessage
       });
     }
   });
 
-  // Маршрут для генерации изображений через FAL.AI API
-  app.post("/api/images/generate", authenticateUser, async (req: any, res) => {
+  /**
+   * Маршрут для генерации текста с использованием Qwen AI
+   */
+  app.post('/api/content-generation/qwen/text', authenticateUser, async (req: Request, res: Response) => {
     try {
-      const { 
-        prompt, 
-        negativePrompt = "bad quality, blurry, text, watermark", 
-        width = 1024, 
-        height = 1024,
-        numImages = 1,
-        campaignId
-      } = req.body;
+      // Проверяем, что пользователь авторизован
+      if (!req.user?.id) {
+        return res.status(401).json({ success: false, error: 'Требуется авторизация' });
+      }
+      
+      const { prompt, trendsContext, tone = 'informative' } = req.body;
       
       if (!prompt) {
-        return res.status(400).json({ error: "Missing required parameter: prompt" });
+        return res.status(400).json({ success: false, error: 'Не указан текст запроса (prompt)' });
       }
       
-      // Получаем userId, установленный в authenticateUser 
-      const userId = req.userId;
-      const token = req.headers.authorization?.replace('Bearer ', '');
+      // Инициализируем Qwen сервис с API ключом пользователя
+      const initialized = await qwenService.initialize(req.user.id);
       
-      console.log(`Запрос на генерацию изображения через FAL.AI для кампании ${campaignId} от пользователя ${userId}`);
+      if (!initialized) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Не удалось инициализировать Qwen API. Проверьте настройки API ключа.' 
+        });
+      }
       
-      // Инициализируем FAL.AI SDK с ключом API пользователя
-      await falAiSdk.initializeFromApiKeyService(userId || '', token);
+      // Формируем системный промт в зависимости от выбранного тона
+      let systemInstructions = '';
       
-      // Генерируем изображение с помощью FAL.AI SDK
-      const result = await falAiSdk.generateImage('fal-ai/fast-sdxl', {
-        prompt,
-        negative_prompt: negativePrompt,
-        width,
-        height,
-        num_images: numImages
-      });
+      switch(tone) {
+        case 'professional':
+          systemInstructions = 'Используй профессиональный и формальный стиль. Предоставь экспертную информацию с использованием терминологии и четкой структуры.';
+          break;
+        case 'casual':
+          systemInstructions = 'Используй повседневный, разговорный стиль. Будь дружелюбным и доступным, как при общении с другом.';
+          break;
+        case 'informative':
+          systemInstructions = 'Предоставь фактическую информацию в четком, понятном формате. Сохрани баланс между детальностью и доступностью.';
+          break;
+        case 'funny':
+          systemInstructions = 'Добавь юмор и легкость в текст. Используй игру слов, забавные примеры и доброжелательную интонацию.';
+          break;
+        default:
+          systemInstructions = 'Предоставь полезную информацию в понятной форме.';
+      }
       
-      // Извлекаем URL изображений из результата
-      const imageURLs = result?.images || [];
+      const systemPrompt = `Ты профессиональный копирайтер. Твоя задача - создать качественный контент для социальных сетей на основе предоставленного запроса и трендов.
+
+${systemInstructions}
+
+Учитывай контекст предоставленных трендовых тем, но концентрируйся в первую очередь на запросе пользователя.
+
+ВАЖНЫЕ ПРАВИЛА:
+- Создавай HTML-форматированный текст с тегами <p>, <strong>, <em> и <br> для структурирования
+- Не используй заголовки <h1>, <h2> и т.д.
+- Не включай цитат в формате блоков
+- Не упоминай, что контент создан ИИ
+- Не используй шаблонные фразы и клише
+- Пиши естественным языком, избегая сложных конструкций
+- Сохраняй оригинальный стиль, указанный в запросе`;
       
+      // Подготавливаем контекст с трендами, если он есть
+      let userPrompt = prompt;
+      if (trendsContext && trendsContext.trim() !== '') {
+        userPrompt = `Актуальные тренды: ${trendsContext}\n\nЗапрос: ${prompt}`;
+      }
+      
+      // Формируем сообщения для запроса
+      const messages: QwenMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+      
+      console.log(`Отправка запроса в Qwen API для генерации текста: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
+      
+      // Отправляем запрос к API
+      const generatedText = await qwenService.generateText(
+        messages,
+        { 
+          model: 'qwen-plus',
+          temperature: 0.7,
+          max_tokens: 1000
+        }
+      );
+      
+      console.log(`Успешно получен ответ от Qwen API длиной ${generatedText.length} символов`);
+      
+      // Возвращаем результат
       return res.json({
         success: true,
-        data: {
-          imageURLs,
-          service: 'fal.ai',
-        }
+        content: generatedText
       });
+      
     } catch (error: any) {
-      console.error('Error generating image with FAL.AI:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: `Error generating image: ${error.message}` 
+      console.error('Ошибка при генерации текста с Qwen API:', error);
+      
+      // Формируем подробное сообщение об ошибке для фронтенда
+      let errorMessage = error.message || 'Непредвиденная ошибка при генерации текста';
+      
+      if (error.response?.data) {
+        try {
+          const errorDetails = typeof error.response.data === 'string' 
+            ? error.response.data 
+            : JSON.stringify(error.response.data).substring(0, 300);
+          errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
+        } catch (e) {
+          errorMessage += ` (Статус: ${error.response.status})`;
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: errorMessage
       });
     }
   });
-
-  // Маршрут для сохранения сгенерированного контента как пост
-  app.post("/api/generated-content/save", authenticateUser, async (req: any, res) => {
-    try {
-      const { 
-        content, 
-        title, 
-        imageUrl, 
-        campaignId, 
-        contentType = 'text',
-        socialPlatforms = []
-      } = req.body;
-      
-      if (!content || !campaignId) {
-        return res.status(400).json({ error: "Missing required parameters: content, campaignId" });
-      }
-      
-      // Получаем userId, установленный в authenticateUser 
-      const userId = req.userId;
-      
-      console.log(`Запрос на сохранение сгенерированного контента для кампании ${campaignId} от пользователя ${userId}`);
-      
-      // Здесь будет логика сохранения контента в Directus
-      // Эта функциональность будет имплементирована в будущем
-      
-      return res.json({
-        success: true,
-        data: {
-          message: 'Content saved successfully',
-          id: 'temp-id-for-saved-content' // В реальной реализации здесь будет ID созданного поста
-        }
-      });
-    } catch (error: any) {
-      console.error('Error saving generated content:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: `Error saving content: ${error.message}` 
-      });
-    }
-  });
-
-  console.log('[content-generation] Маршруты для генерации контента успешно зарегистрированы');
-}
+};

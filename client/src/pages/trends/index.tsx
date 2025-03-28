@@ -48,8 +48,7 @@ import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
-import { TrendContentGenerator } from "@/components/TrendContentGenerator";
-import { TrendContentGeneratorAccordion } from "@/components/TrendContentGeneratorAccordion";
+import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -1564,21 +1563,9 @@ export default function Trends() {
             </Card>
 
             {selectedTopics.length > 0 && (
-              <TrendContentGenerator
-                selectedTrends={selectedTopics.map(topic => ({
-                  id: topic.id,
-                  title: topic.title,
-                  description: topic.description || '',
-                  url: topic.url || '',
-                }))}
-                campaignId={selectedCampaignId}
-                keywords={keywords?.map((kw: any) => kw.keyword)}
-                onContentGenerated={(content) => {
-                  toast({
-                    title: "Контент сгенерирован",
-                    description: "Вы можете скопировать его или сохранить"
-                  });
-                }}
+              <ContentGenerationPanel
+                selectedTopics={selectedTopics}
+                onGenerated={() => setSelectedTopics([])}
               />
             )}
           </>
