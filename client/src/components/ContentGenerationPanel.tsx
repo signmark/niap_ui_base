@@ -53,7 +53,12 @@ interface ContentGenerationPanelProps {
 
 // Типы для результатов генерации контента
 interface GenerationResult {
-  content: string;
+  success?: boolean;
+  error?: string;
+  content: string | {
+    title?: string;
+    html: string;
+  };
 }
 
 export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentGenerationPanelProps) {
@@ -142,38 +147,98 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
       
       console.log('Отправка запроса с очищенным текстом:', plainTextPrompt);
       
-      // Вызываем API генерации текста с выбранной моделью
-      const response = await apiRequest(
-        `/api/content-generation/${values.modelType}/text`,
-        {
-          method: 'POST',
-          data: {
-            prompt: plainTextPrompt,
-            trendsContext,
-            tone: values.tone,
+      try {
+        // Вызываем API генерации текста с выбранной моделью
+        const response = await apiRequest(
+          `/api/content-generation/${values.modelType}/text`,
+          {
+            method: 'POST',
+            data: {
+              prompt: plainTextPrompt,
+              trendsContext,
+              tone: values.tone,
+            }
           }
+        );
+        
+        // Проверяем на ошибки в ответе
+        if (response.success === false) {
+          throw new Error(response.error || "Ошибка при генерации контента");
         }
-      ) as GenerationResult;
-      
-      return response;
+        
+        // Проверяем, содержит ли ответ поле content
+        if (!response.content) {
+          console.error('Неожиданный формат ответа API:', response);
+          throw new Error("API вернул неверный формат данных");
+        }
+        
+        return response as GenerationResult;
+      } catch (error: any) { // Используем any для обработки разных типов ошибок
+        console.error('Ошибка при генерации контента:', error);
+        
+        // Проверяем, возможно, error уже содержит готовый ответ с заглушкой
+        if (error && error.content && typeof error.content === 'object' && 'html' in error.content) {
+          return error as GenerationResult;
+        }
+        
+        throw error;
+      }
     },
-    onSuccess: (data) => {
-      // Сохраняем результат генерации
-      setGeneratedContent(data.content);
+    onSuccess: (data: GenerationResult) => {
+      // Проверяем, является ли ответ успешным
+      if (data.success === false) {
+        // Отображаем ошибку, но продолжаем обработку
+        toast({
+          title: "Предупреждение",
+          description: data.error || "Проблема при генерации контента",
+          variant: "destructive"
+        });
+        
+        // Если есть заглушка контента, используем ее
+        if (typeof data.content === 'object' && data.content.html) {
+          setGeneratedContent(data.content.html);
+          setGeneratedTitle(data.content.title || "Ошибка генерации");
+          return;
+        }
+      }
       
-      // Извлекаем заголовок из сгенерированного контента
-      const title = extractTitle(data.content);
-      setGeneratedTitle(title);
-      
-      toast({
-        title: "Успешно",
-        description: "Контент сгенерирован"
-      });
+      // Если это обычный успешный ответ
+      if (data.content) {
+        if (typeof data.content === 'string') {
+          // Сохраняем результат генерации
+          setGeneratedContent(data.content);
+          
+          // Извлекаем заголовок из сгенерированного контента
+          const title = extractTitle(data.content);
+          setGeneratedTitle(title);
+          
+          toast({
+            title: "Успешно",
+            description: "Контент сгенерирован"
+          });
+        } else if (typeof data.content === 'object' && data.content.html) {
+          // Обрабатываем случай, когда content - объект с html-полем
+          setGeneratedContent(data.content.html);
+          setGeneratedTitle(data.content.title || "Сгенерированный контент");
+          
+          toast({
+            title: "Успешно",
+            description: "Контент сгенерирован"
+          });
+        }
+      } else {
+        // Если по какой-то причине content отсутствует
+        toast({
+          title: "Ошибка данных",
+          description: "Сервер вернул неожиданный формат данных",
+          variant: "destructive"
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
         title: "Ошибка при генерации",
-        description: error.message,
+        description: error.message || "Не удалось сгенерировать контент",
         variant: "destructive"
       });
     },
