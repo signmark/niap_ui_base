@@ -16,6 +16,11 @@ declare global {
   }
 }
 
+// Для отладки: переключатель для пропуска аутентификации
+const DEBUG_SKIP_AUTH = true;
+// ID пользователя по умолчанию для отладки
+const DEBUG_USER_ID = "53921f16-f51d-4591-80b9-8caa4fde4d13";
+
 /**
  * Middleware для аутентификации пользователя.
  * Проверяет наличие и валидность токена JWT в заголовке Authorization.
@@ -23,6 +28,19 @@ declare global {
  */
 export async function authenticateUser(req: Request, res: Response, next: NextFunction) {
   try {
+    // ВРЕМЕННОЕ РЕШЕНИЕ ДЛЯ ОТЛАДКИ: Пропускаем аутентификацию
+    if (DEBUG_SKIP_AUTH) {
+      console.log('[AUTH] ⚠️ ОТЛАДКА: Пропускаем аутентификацию, используем ID пользователя по умолчанию');
+      req.user = {
+        id: DEBUG_USER_ID,
+        email: "debug@example.com",
+        name: "Debug User",
+        avatar: null
+      };
+      next();
+      return;
+    }
+    
     // Получаем токен из заголовка Authorization
     const authHeader = req.headers.authorization;
     
