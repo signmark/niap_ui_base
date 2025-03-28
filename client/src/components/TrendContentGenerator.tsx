@@ -153,7 +153,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
             tone: values.tone,
             campaignId: campaignId || selectedTopics[0]?.campaignId || selectedTopics[0]?.campaign_id,
             platform: 'general', // В данном случае используем общую платформу
-            service: values.modelType // Указываем выбранный сервис
+            service: values.modelType, // Указываем выбранный сервис
+            analyzeTrends: true, // Включаем анализ трендов для выявления фишек
+            extractKeywords: true // Указываем необходимость подбора ключевых слов из кампании
           })
         });
         
@@ -254,8 +256,8 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
         throw new Error('Выберите хотя бы одну платформу для публикации');
       }
       
-      // Подготовка статуса публикации, планирование только если есть дата
-      const status = scheduledFor ? 'scheduled' : 'pending';
+      // Всегда сохраняем как черновик (draft), а не в очередь на публикацию
+      const status = 'draft';
       
       // Создаем новый контент в системе через API
       return await apiRequest('/api/campaign-content', {
@@ -267,18 +269,17 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
           contentType: 'text',
           prompt: form.getValues().prompt,
           platforms: values.platforms,
-          scheduledFor,
+          scheduledFor: null, // Не устанавливаем дату планирования
           status,
-          keywords: selectedTopics.map(t => t.title) // Используем темы трендов как ключевые слова
+          keywords: selectedTopics.map(t => t.title), // Используем темы трендов как ключевые слова
+          trendAnalysis: true // Указываем, что контент создан на основе анализа трендов
         }
       });
     },
     onSuccess: () => {
       toast({
         title: "Успешно",
-        description: scheduledFor 
-          ? `Контент запланирован на ${scheduledFor.toLocaleString('ru')}` 
-          : "Контент добавлен в очередь на публикацию"
+        description: "Контент сохранен как черновик"
       });
       // Сбрасываем форму и состояние
       onGenerated?.();
@@ -331,6 +332,10 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
     <Card className="mt-6">
       <CardHeader>
         <CardTitle>Генерация контента по трендам</CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          ИИ проанализирует выбранные тренды, выявит их особенности и создаст подходящий контент с учетом заданного промта.
+          Сгенерированный контент будет сохранен как черновик со всеми указанными ключевыми словами для дальнейшего редактирования.
+        </p>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -468,7 +473,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Сохранение...
                       </>
-                    ) : "Сохранить контент"}
+                    ) : "Сохранить как черновик"}
                   </Button>
                 </div>
               </div>
