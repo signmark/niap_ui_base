@@ -12,6 +12,7 @@ import { SocialMediaSettings } from "@/components/SocialMediaSettings";
 import { TrendAnalysisSettings } from "@/components/TrendAnalysisSettings";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
+import { TrendContentGenerator } from "@/components/TrendContentGenerator";
 import { BusinessQuestionnaireForm } from "@/components/BusinessQuestionnaireForm";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
@@ -694,11 +695,13 @@ export default function CampaignDetails() {
                   создавать тексты, изображения и комбинированный контент для разных социальных платформ.
                 </p>
               </div>
-              <ContentGenerationPanel 
+              <TrendContentGenerator 
                 selectedTopics={selectedTrends} 
                 onGenerated={() => {
                   queryClient.invalidateQueries({ queryKey: ['/api/posts', id] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/campaign-content', id] });
                 }}
+                campaignId={id}
               />
             </div>
             
