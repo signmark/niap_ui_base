@@ -315,6 +315,10 @@ export function BusinessQuestionnaireForm({
           const formValues = form.getValues();
           console.log('Automatically saving updated questionnaire after analysis');
           updateQuestionnaireMutation.mutate(formValues);
+        } else {
+          // Если анкеты еще нет, устанавливаем режим редактирования
+          // чтобы пользователь мог сохранить данные
+          setIsEditMode(true);
         }
         
         // Скрываем индикатор прогресса через 1 секунду
