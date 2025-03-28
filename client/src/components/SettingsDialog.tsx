@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { Loader2, HelpCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, HelpCircle, CheckCircle2, XCircle, Info as InfoIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -61,8 +61,7 @@ export function SettingsDialog() {
   const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
-  const [instagramTesting, setInstagramTesting] = useState<TestingState>({ status: 'idle' });
-  const [facebookTesting, setFacebookTesting] = useState<TestingState>({ status: 'idle' });
+  // Состояния для соцсетей убраны, т.к. токены перенесены в настройки кампаний
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
   const { toast } = useToast();
@@ -93,7 +92,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'instagram' | 'facebook',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -281,10 +280,9 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey },
-        { name: 'instagram', key: instagramToken },
-        { name: 'facebook', key: facebookToken }
+        { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
+      // Токены социальных сетей перенесены в настройки кампаний
 
       for (const service of services) {
         // Пропускаем пустые ключи, кроме XMLRiver, которому нужно сохранить user_id даже если ключ пуст
@@ -583,7 +581,7 @@ export function SettingsDialog() {
         
         <div className="space-y-4">
           <div className="flex items-center">
-            <Label className="text-lg font-semibold">Социальные сети</Label>
+            <Label className="text-lg font-semibold">Настройки социальных сетей</Label>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -592,14 +590,27 @@ export function SettingsDialog() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p>Эти токены используются для публикации контента в социальных сетях.</p>
-                  <p className="mt-2">Получить токены можно в разделах для разработчиков соответствующих социальных сетей.</p>
+                  <p>Настройки токенов социальных сетей были перенесены в настройки каждой кампании.</p>
+                  <p className="mt-2">Вы можете настроить публикацию в соцсети при создании или редактировании кампании.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           
-          {/* Настройки социальных сетей (Facebook, Instagram) были перенесены в настройки кампаний */}
+          <div className="rounded-md bg-blue-50 dark:bg-blue-950 p-4">
+            <div className="flex">
+              <InfoIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Информация</h3>
+                <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                  <p>Токены доступа к социальным сетям (VK, Telegram, Facebook, Instagram) 
+                  теперь настраиваются индивидуально для каждой кампании.</p>
+                  <p className="mt-1">Это позволяет публиковать контент в разные аккаунты и группы 
+                  для разных кампаний.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
         <Button
