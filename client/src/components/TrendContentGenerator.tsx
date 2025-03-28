@@ -30,6 +30,46 @@ interface TrendTopic {
   [key: string]: any;
 }
 
+/**
+ * Извлекает релевантные ключевые слова из трендов,
+ * отфильтровывая длинные тексты и форматированные даты
+ * @param trends Список трендов
+ * @returns Массив ключевых слов
+ */
+function extractKeywordsFromTrends(trends: TrendTopic[]): string[] {
+  const maxKeywordLength = 50; // Максимальная длина ключевого слова
+  const datePattern = /\d{2}\.\d{2}\.\d{4}/; // Шаблон для даты
+  const postPrefixPattern = /^Пост от \d+/; // Шаблон для префикса "Пост от"
+  
+  const keywordSet = new Set<string>();
+  
+  trends.forEach(trend => {
+    // Если название тренда слишком длинное, вероятно это целый пост
+    if (trend.title.length > maxKeywordLength || 
+        datePattern.test(trend.title) || 
+        postPrefixPattern.test(trend.title)) {
+      
+      // Пытаемся извлечь ключевые слова из названия поста
+      const words = trend.title
+        .split(/[.,;:!?()]+/) // Разбиваем по знакам препинания
+        .map(word => word.trim())
+        .filter(word => word.length >= 4 && word.length <= 25) // Берем только слова разумной длины
+        .filter(word => !word.match(/^\d+$/)) // Исключаем чисто числовые строки
+        .filter(word => !datePattern.test(word)) // Исключаем даты
+        .slice(0, 5); // Берем только первые 5 слов
+      
+      words.forEach(word => {
+        if (word) keywordSet.add(word);
+      });
+    } else {
+      // Если название короткое - используем его как ключевое слово
+      keywordSet.add(trend.title);
+    }
+  });
+  
+  return [...keywordSet];
+}
+
 const generateContentSchema = z.object({
   prompt: z.string().min(1, "Введите промт для генерации контента"),
   modelType: z.enum(['deepseek', 'qwen']).default('deepseek'),
@@ -155,7 +195,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
             platform: 'general', // В данном случае используем общую платформу
             service: values.modelType, // Указываем выбранный сервис
             analyzeTrends: true, // Включаем анализ трендов для выявления фишек
-            extractKeywords: true // Указываем необходимость подбора ключевых слов из кампании
+            extractKeywords: true, // Указываем необходимость подбора ключевых слов из кампании
+            formatOutput: 'html', // Запрашиваем формат вывода в HTML, а не Markdown
+            includeFormatting: true // Включаем форматирование с абзацами, заголовками и т.д.
           })
         });
         
@@ -194,17 +236,30 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
         // Сохраняем результат генерации
         let formattedContent = data.content;
         
-        // Форматируем контент в HTML, если это обычный текст без HTML
-        if (!formattedContent.includes('<p>') && !formattedContent.includes('<div>')) {
+        // Если контент уже содержит теги HTML, мы сохраняем его как есть
+        // Но если это простой текст, мы форматируем его в HTML
+        if (!formattedContent.includes('<p>') && !formattedContent.includes('<div>') && !formattedContent.includes('<h1>')) {
+          // Преобразуем любые оставшиеся признаки Markdown в HTML
           formattedContent = formattedContent
             .split('\n\n').map(paragraph => paragraph.trim())
             .filter(p => p)
             .map(paragraph => {
-              // Проверяем, является ли параграф заголовком (начинается с # или ##)
+              // Обрабатываем заголовки
               if (paragraph.startsWith('# ')) {
                 return `<h1>${paragraph.substring(2)}</h1>`;
               } else if (paragraph.startsWith('## ')) {
                 return `<h2>${paragraph.substring(3)}</h2>`;
+              } else if (paragraph.startsWith('### ')) {
+                return `<h3>${paragraph.substring(4)}</h3>`;
+              // Обрабатываем списки
+              } else if (paragraph.includes('\n- ')) {
+                const items = paragraph.split('\n- ');
+                const title = items.shift();
+                return `${title ? `<p>${title}</p>` : ''}<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+              } else if (/^\d+\.\s/.test(paragraph)) {
+                const items = paragraph.split(/\n\d+\.\s/);
+                const title = items.shift();
+                return `${title ? `<p>${title}</p>` : ''}<ol>${items.map(item => `<li>${item}</li>`).join('')}</ol>`;
               } else {
                 return `<p>${paragraph}</p>`;
               }
@@ -271,7 +326,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
           platforms: values.platforms,
           scheduledFor: null, // Не устанавливаем дату планирования
           status,
-          keywords: selectedTopics.map(t => t.title), // Используем темы трендов как ключевые слова
+          keywords: extractKeywordsFromTrends(selectedTopics), // Используем только релевантные ключевые слова из трендов
           trendAnalysis: true // Указываем, что контент создан на основе анализа трендов
         }
       });
