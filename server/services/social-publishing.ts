@@ -516,9 +516,20 @@ export class SocialPublishingService {
       };
     }
 
+    if (!instagramSettings?.businessAccountId) {
+      log(`Отсутствует ID бизнес-аккаунта Instagram для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует ID бизнес-аккаунта Instagram в настройках кампании',
+        userId: content.userId
+      };
+    }
+
     try {
       log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-      log(`Публикация в Instagram. Токен: ${instagramSettings.token.substring(0, 6)}...`, 'social-publishing');
+      log(`Публикация в Instagram. Токен: ${instagramSettings.token.substring(0, 6)}..., ID аккаунта: ${instagramSettings.businessAccountId}`, 'social-publishing');
 
       // Подготовка описания
       let caption = content.title ? `${content.title}\n\n` : '';
@@ -552,102 +563,81 @@ export class SocialPublishingService {
         };
       }
 
-      // Используем n8n webhook для публикации
-      const n8nWebhookUrl = process.env.N8N_PUBLISH_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
-      const n8nApiKey = process.env.N8N_API_KEY;
+      // Процесс публикации через Facebook Graph API для Instagram:
+      // 1. Создаем медиа-контейнер
+      // 2. Публикуем медиа из контейнера
 
-      if (!n8nApiKey) {
-        log(`Отсутствует API ключ для n8n webhook`, 'social-publishing');
+      const igBusinessId = instagramSettings.businessAccountId;
+      const token = instagramSettings.token;
+      const imageUrl = content.imageUrl;
+
+      // Шаг 1: Создаем медиа-контейнер
+      log(`Шаг 1: Создание медиа-контейнера для Instagram`, 'social-publishing');
+      const createMediaResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media`,
+        {
+          image_url: imageUrl,
+          caption: caption,
+          access_token: token
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (!createMediaResponse.data || !createMediaResponse.data.id) {
+        log(`Ошибка при создании медиа-контейнера: Неверный формат ответа`, 'social-publishing');
         return {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Отсутствует API ключ для n8n webhook в переменных окружения',
+          error: 'Ошибка при создании медиа-контейнера: Неверный формат ответа',
           userId: content.userId
         };
       }
 
-      // Подготовка данных для отправки на webhook
-      const webhookData = {
-        contentId: content.id,
-        campaignId: content.campaignId,
-        platforms: ['instagram'],
-        credentials: {
-          instagram: {
-            accessToken: instagramSettings.token
-          }
+      const mediaContainerId = createMediaResponse.data.id;
+      log(`Медиа-контейнер создан успешно, ID: ${mediaContainerId}`, 'social-publishing');
+
+      // Шаг 2: Публикуем медиа из контейнера
+      log(`Шаг 2: Публикация медиа в Instagram`, 'social-publishing');
+      const publishResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media_publish`,
+        {
+          creation_id: mediaContainerId,
+          access_token: token
         },
-        content: {
-          instagram: {
-            caption: caption,
-            hashtags: content.hashtags || [],
-            imageUrl: content.imageUrl
-          }
-        },
-        scheduleTime: new Date().toISOString() // Публикуем сразу
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (!publishResponse.data || !publishResponse.data.id) {
+        log(`Ошибка при публикации медиа: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при публикации медиа: Неверный формат ответа',
+          userId: content.userId
+        };
+      }
+
+      const postId = publishResponse.data.id;
+      log(`Медиа успешно опубликовано в Instagram, ID: ${postId}`, 'social-publishing');
+
+      // Формируем URL публикации
+      const postUrl = `https://www.instagram.com/p/${postId}/`;
+
+      return {
+        platform: 'instagram',
+        status: 'published',
+        publishedAt: new Date(),
+        postId: postId,
+        postUrl: postUrl,
+        error: null,
+        userId: content.userId
       };
-
-      log(`Отправка запроса на публикацию в Instagram через webhook: ${n8nWebhookUrl}`, 'social-publishing');
-      log(`Данные для webhook: ${JSON.stringify(webhookData).substring(0, 100)}...`, 'social-publishing');
-
-      // Отправка запроса на webhook
-      const response = await axios.post(n8nWebhookUrl, webhookData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-N8N-Authorization': n8nApiKey
-        }
-      });
-
-      log(`Получен ответ от n8n webhook: ${JSON.stringify(response.data)}`, 'social-publishing');
-
-      // Обработка ответа от webhook
-      if (response.data && response.data.success) {
-        // Успешная публикация
-        if (response.data.results && response.data.results.instagram) {
-          const result = response.data.results.instagram;
-          return {
-            platform: 'instagram',
-            status: result.status || 'published',
-            publishedAt: new Date(),
-            postId: result.postId || null,
-            postUrl: result.postUrl || null,
-            error: null,
-            userId: content.userId
-          };
-        } else {
-          // Webhook вернул успех, но без данных для Instagram
-          return {
-            platform: 'instagram',
-            status: 'pending',
-            publishedAt: null,
-            postId: null,
-            postUrl: null,
-            error: null,
-            userId: content.userId
-          };
-        }
-      } else if (response.data && !response.data.success && response.data.errors && response.data.errors.instagram) {
-        // Ошибка публикации
-        const error = response.data.errors.instagram;
-        return {
-          platform: 'instagram',
-          status: 'failed',
-          publishedAt: null,
-          error: `Ошибка при публикации в Instagram: ${error.message || JSON.stringify(error)}`,
-          userId: content.userId
-        };
-      } else {
-        // Неизвестный формат ответа
-        return {
-          platform: 'instagram',
-          status: 'pending',
-          publishedAt: null,
-          postId: null,
-          postUrl: null,
-          error: null,
-          userId: content.userId
-        };
-      }
     } catch (error: any) {
       log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
       if (error.response) {
@@ -720,21 +710,63 @@ export class SocialPublishingService {
 
       log(`Подготовлено сообщение для Facebook: ${message.substring(0, 50)}...`, 'social-publishing');
 
-      // Используем Facebook Graph API для публикации
-      // Это просто заглушка, так как для публикации в Facebook требуется настроенный webhook в n8n
-      log(`Отправка запроса на публикацию в Facebook через webhook`, 'social-publishing');
+      const pageId = facebookSettings.pageId;
+      const token = facebookSettings.token;
       
-      // TODO: Реализация интеграции с n8n для публикации в Facebook
-
-      return {
-        platform: 'facebook',
-        status: 'pending',
-        publishedAt: null,
-        postId: null,
-        postUrl: null,
-        error: null,
-        userId: content.userId
+      // Подготовка данных для публикации
+      const requestData: Record<string, any> = {
+        message: message,
+        access_token: token
       };
+
+      // Добавляем изображение, если оно есть
+      if (content.imageUrl) {
+        log(`Добавление изображения в пост Facebook: ${content.imageUrl}`, 'social-publishing');
+        requestData.link = content.imageUrl;
+      }
+
+      // Публикация в Facebook через Graph API
+      log(`Отправка запроса в Facebook Graph API для публикации на странице ${pageId}`, 'social-publishing');
+      const response = await axios.post(
+        `https://graph.facebook.com/v18.0/${pageId}/feed`,
+        requestData,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      log(`Получен ответ от Facebook API: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data && response.data.id) {
+        const postId = response.data.id;
+        // Формат ID поста: {page-id}_{post-id}
+        const parts = postId.split('_');
+        const actualPostId = parts.length > 1 ? parts[1] : postId;
+        
+        // Формируем URL публикации
+        const postUrl = `https://www.facebook.com/${pageId}/posts/${actualPostId}`;
+        
+        log(`Успешная публикация в Facebook. Post ID: ${postId}, URL: ${postUrl}`, 'social-publishing');
+        
+        return {
+          platform: 'facebook',
+          status: 'published',
+          publishedAt: new Date(),
+          postId: postId,
+          postUrl: postUrl,
+          error: null,
+          userId: content.userId
+        };
+      } else {
+        log(`Неизвестный формат ответа от Facebook API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return {
+          platform: 'facebook',
+          status: 'failed',
+          publishedAt: null,
+          error: `Неизвестный формат ответа от Facebook API: ${JSON.stringify(response.data)}`,
+          userId: content.userId
+        };
+      }
     } catch (error: any) {
       log(`Ошибка при публикации в Facebook: ${error.message}`, 'social-publishing');
       if (error.response) {
