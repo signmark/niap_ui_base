@@ -3,18 +3,7 @@ import { useAuthStore } from "@/lib/store";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    let text;
-    try {
-      const responseText = await res.text();
-      // Проверяем, не является ли ответ HTML-документом (что может быть при ошибке сервера)
-      if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
-        text = 'Получен HTML-ответ вместо JSON. Возможно, сервер недоступен или вернул ошибку.';
-      } else {
-        text = responseText || res.statusText;
-      }
-    } catch (e) {
-      text = res.statusText;
-    }
+    const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
 }

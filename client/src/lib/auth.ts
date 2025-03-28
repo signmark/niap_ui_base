@@ -69,19 +69,7 @@ export const refreshAccessToken = async () => {
       });
       
       if (apiResponse.ok) {
-        let data;
-        try {
-          const responseText = await apiResponse.text();
-          // Проверяем, не является ли ответ HTML-документом
-          if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
-            console.error('Получен HTML-ответ вместо JSON при обновлении токена через API');
-            throw new Error('Получен HTML-ответ вместо JSON. Возможно, сервер недоступен или вернул ошибку.');
-          }
-          data = JSON.parse(responseText);
-        } catch (e: any) {
-          console.error('Ошибка при разборе ответа от API:', e);
-          throw new Error(`Ошибка при разборе ответа: ${e.message}`);
-        }
+        const data = await apiResponse.json();
         if (data.token) {
           console.log('API endpoint refresh successful');
           localStorage.setItem('auth_token', data.token);
@@ -128,19 +116,7 @@ export const refreshAccessToken = async () => {
       throw new Error(`Token refresh failed: ${response.statusText}`);
     }
     
-    let responseData;
-    try {
-      const responseText = await response.text();
-      // Проверяем, не является ли ответ HTML-документом
-      if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
-        console.error('Получен HTML-ответ вместо JSON при обновлении токена');
-        throw new Error('Получен HTML-ответ вместо JSON. Возможно, сервер недоступен или вернул ошибку.');
-      }
-      responseData = JSON.parse(responseText);
-    } catch (e: any) {
-      console.error('Ошибка при разборе ответа:', e);
-      throw new Error(`Ошибка при разборе ответа: ${e.message}`);
-    }
+    const responseData = await response.json();
     
     if (!responseData?.data?.access_token) {
       console.error('Неверный формат ответа при обновлении токена:', responseData);

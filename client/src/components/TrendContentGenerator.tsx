@@ -4,27 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { 
-  AlertCircle, 
-  CheckCircle2, 
   Copy, 
-  Image, 
   Loader2, 
-  Send, 
-  Settings, 
-  Sparkles,
-  FileText,
-  Instagram,
-  Facebook,
-  Tv
+  Send,
+  Sparkles
 } from "lucide-react";
 import { SiTelegram, SiVk } from "react-icons/si";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,38 +23,16 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 import { apiRequest } from "@/lib/queryClient";
-import { cn } from "@/lib/utils";
 
 // Схема формы для генерации контента
 const contentGenerationSchema = z.object({
   title: z.string().min(3, "Заголовок должен содержать не менее 3 символов").optional(),
   description: z.string().min(10, "Описание должно содержать не менее 10 символов"),
-  contentType: z.enum(["text", "text-image", "image", "video"]),
-  tone: z.enum(["informative", "casual", "professional", "funny"]),
-  platform: z.enum(["all", "vk", "telegram", "instagram", "facebook"]),
 });
 
 type ContentGenerationFormValues = z.infer<typeof contentGenerationSchema>;
@@ -74,12 +43,6 @@ export interface Trend {
   title: string;
   description?: string;
   url?: string;
-  image_url?: string;
-  created_at?: string;
-  source?: string;
-  source_name?: string;
-  source_type?: string;
-  is_bookmarked?: boolean;
 }
 
 interface TrendContentGeneratorProps {
@@ -98,10 +61,6 @@ export function TrendContentGenerator({
   const { toast } = useToast();
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["telegram"]);
-  const [includeImage, setIncludeImage] = useState(true);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("generation");
   
   // Формируем строку с ключевыми словами для подсказки
   const keywordSuggestions = keywords?.length 
@@ -123,10 +82,7 @@ export function TrendContentGenerator({
 Используйте ключевые слова: ${keywordSuggestions}.
 
 Тренды:
-${trendsText}`,
-      contentType: "text",
-      tone: "informative",
-      platform: "telegram",
+${trendsText}`
     },
   });
 
@@ -146,8 +102,7 @@ ${trendsText}`,
         data: {
           prompt: values.description,
           keywords: keywords,
-          tone: values.tone,
-          platform: values.platform,
+          platform: selectedPlatforms[0] || "telegram",
           campaignId: campaignId,
           trends: trendInfo
         },
@@ -157,7 +112,6 @@ ${trendsText}`,
     },
     onSuccess: (content) => {
       setGeneratedContent(content);
-      setActiveTab("preview");
       
       toast({
         title: "Контент сгенерирован",
@@ -168,9 +122,7 @@ ${trendsText}`,
       if (onContentGenerated) {
         onContentGenerated({
           content,
-          imageUrl: generatedImageUrl,
-          platform: form.getValues("platform"),
-          contentType: includeImage ? "text-image" : "text"
+          platform: selectedPlatforms[0] || "telegram"
         });
       }
     },
@@ -184,58 +136,9 @@ ${trendsText}`,
     },
   });
 
-  // Мутация для генерации изображения
-  const generateImageMutation = useMutation({
-    mutationFn: async () => {
-      setIsGeneratingImage(true);
-      
-      // Формируем промпт для генерации изображения на основе трендов
-      const imagePrompt = `Create an image related to ${selectedTrends.map(t => t.title).join(", ")}. 
-      The image should be high quality, photorealistic, suitable for social media post.`;
-      
-      // Выполняем запрос к API для генерации изображения
-      const response = await apiRequest("/api/images/generate", {
-        method: "POST",
-        data: {
-          prompt: imagePrompt,
-          negativePrompt: "bad quality, blurry, text, watermark, low resolution",
-          width: 1024,
-          height: 1024,
-          campaignId: campaignId
-        },
-      });
-
-      return response.data?.imageURLs?.[0] || null;
-    },
-    onSuccess: (imageUrl) => {
-      setGeneratedImageUrl(imageUrl);
-      
-      toast({
-        title: "Изображение сгенерировано",
-        description: "Изображение успешно создано на основе выбранных трендов",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Error generating image:", error);
-      toast({
-        title: "Ошибка генерации",
-        description: `Не удалось сгенерировать изображение: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      setIsGeneratingImage(false);
-    }
-  });
-
   // Обработчик отправки формы
   const onSubmit = (values: ContentGenerationFormValues) => {
     generateContentMutation.mutate(values);
-    
-    // Если выбран тип контента с изображением, генерируем изображение
-    if (includeImage) {
-      generateImageMutation.mutate();
-    }
   };
 
   // Обработчик копирования текста
@@ -260,16 +163,13 @@ ${trendsText}`,
   // Индикатор загрузки данных
   if (generateContentMutation.isPending) {
     return (
-      <Card className="w-full">
+      <Card className="w-full mt-4">
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               <div className="text-sm">Генерация контента на основе трендов...</div>
             </div>
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
           </div>
         </CardContent>
       </Card>
@@ -277,145 +177,67 @@ ${trendsText}`,
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="generation">Генерация</TabsTrigger>
-        <TabsTrigger value="preview" disabled={!generatedContent}>Просмотр</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="generation" className="space-y-4 py-4">
+    <Card className="w-full mt-4">
+      <CardHeader>
+        <CardTitle>Генерация контента</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <strong>Выбранные темы:</strong>
+          <ul className="list-disc pl-5 mt-2">
+            {selectedTrends.map((trend) => (
+              <li key={trend.id}>{trend.title}</li>
+            ))}
+          </ul>
+        </div>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="platform"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Выберите платформу</FormLabel>
-                    <div className="flex flex-wrap gap-3 mt-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="telegram" 
-                          checked={selectedPlatforms.includes("telegram")}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPlatforms(prev => [...prev, "telegram"]);
-                            } else {
-                              setSelectedPlatforms(prev => prev.filter(p => p !== "telegram"));
-                            }
-                          }}
-                        />
-                        <Label 
-                          htmlFor="telegram" 
-                          className="flex items-center space-x-1 cursor-pointer"
-                        >
-                          <SiTelegram className="h-4 w-4 text-blue-500" />
-                          <span>Telegram</span>
-                        </Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="vk" 
-                          checked={selectedPlatforms.includes("vk")}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPlatforms(prev => [...prev, "vk"]);
-                            } else {
-                              setSelectedPlatforms(prev => prev.filter(p => p !== "vk"));
-                            }
-                          }}
-                        />
-                        <Label 
-                          htmlFor="vk" 
-                          className="flex items-center space-x-1 cursor-pointer"
-                        >
-                          <SiVk className="h-4 w-4 text-blue-500" />
-                          <span>ВКонтакте</span>
-                        </Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="instagram" 
-                          checked={selectedPlatforms.includes("instagram")}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPlatforms(prev => [...prev, "instagram"]);
-                            } else {
-                              setSelectedPlatforms(prev => prev.filter(p => p !== "instagram"));
-                            }
-                          }}
-                        />
-                        <Label 
-                          htmlFor="instagram" 
-                          className="flex items-center space-x-1 cursor-pointer"
-                        >
-                          <Instagram className="h-4 w-4 text-pink-500" />
-                          <span>Instagram</span>
-                        </Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="facebook" 
-                          checked={selectedPlatforms.includes("facebook")}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPlatforms(prev => [...prev, "facebook"]);
-                            } else {
-                              setSelectedPlatforms(prev => prev.filter(p => p !== "facebook"));
-                            }
-                          }}
-                        />
-                        <Label 
-                          htmlFor="facebook" 
-                          className="flex items-center space-x-1 cursor-pointer"
-                        >
-                          <Facebook className="h-4 w-4 text-blue-600" />
-                          <span>Facebook</span>
-                        </Label>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id="include-image" 
-                  checked={includeImage}
-                  onCheckedChange={setIncludeImage}
-                />
-                <Label htmlFor="include-image">Сгенерировать изображение</Label>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="telegram" 
+                    checked={selectedPlatforms.includes("telegram")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPlatforms(["telegram"]);
+                      } else {
+                        setSelectedPlatforms([]);
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor="telegram" 
+                    className="flex items-center space-x-1 cursor-pointer"
+                  >
+                    <SiTelegram className="h-4 w-4 text-blue-500" />
+                    <span>Telegram</span>
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="vk" 
+                    checked={selectedPlatforms.includes("vk")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPlatforms(["vk"]);
+                      } else {
+                        setSelectedPlatforms([]);
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor="vk" 
+                    className="flex items-center space-x-1 cursor-pointer"
+                  >
+                    <SiVk className="h-4 w-4 text-blue-500" />
+                    <span>ВКонтакте</span>
+                  </Label>
+                </div>
               </div>
-              
-              <FormField
-                control={form.control}
-                name="tone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Тон контента</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите тон контента" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="informative">Информативный</SelectItem>
-                        <SelectItem value="casual">Непринужденный</SelectItem>
-                        <SelectItem value="professional">Профессиональный</SelectItem>
-                        <SelectItem value="funny">С юмором</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
+
               <FormField
                 control={form.control}
                 name="title"
@@ -446,10 +268,6 @@ ${trendsText}`,
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription>
-                      Опишите что нужно сгенерировать на основе выбранных трендов. 
-                      Можно указать формат, особые требования или ключевые слова.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -477,15 +295,13 @@ ${trendsText}`,
             </div>
           </form>
         </Form>
-      </TabsContent>
-      
-      <TabsContent value="preview" className="space-y-4 py-4">
+
         {generatedContent && (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6 border-t pt-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-lg">Сгенерированный контент</h3>
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm" 
                 onClick={() => copyToClipboard(generatedContent)}
                 className="flex items-center space-x-1"
@@ -496,68 +312,13 @@ ${trendsText}`,
             </div>
             
             <div className="rounded-lg border p-4 bg-muted/30">
-              {isGeneratingImage && includeImage && (
-                <div className="mb-4 flex justify-center">
-                  <div className="rounded-lg bg-background border w-full max-w-md h-64 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                </div>
-              )}
-              
-              {generatedImageUrl && includeImage && (
-                <div className="mb-4 flex justify-center">
-                  <img 
-                    src={generatedImageUrl} 
-                    alt="Сгенерированное изображение" 
-                    className="rounded-lg max-h-96 object-cover"
-                  />
-                </div>
-              )}
-              
               <div className="whitespace-pre-line text-sm">
                 {generatedContent}
               </div>
             </div>
-            
-            <div className="flex justify-between items-center pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveTab("generation")}
-              >
-                Вернуться к редактированию
-              </Button>
-              
-              <div className="flex items-center space-x-2">
-                {!generatedImageUrl && includeImage && (
-                  <Button
-                    variant="outline"
-                    onClick={() => generateImageMutation.mutate()}
-                    disabled={isGeneratingImage}
-                    className="flex items-center space-x-2"
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Генерация...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Image className="h-4 w-4" />
-                        <span>Сгенерировать изображение</span>
-                      </>
-                    )}
-                  </Button>
-                )}
-                
-                <Button className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4" />
-                  <span>Сохранить как пост</span>
-                </Button>
-              </div>
-            </div>
           </div>
         )}
-      </TabsContent>
-    </Tabs>
+      </CardContent>
+    </Card>
   );
 }
