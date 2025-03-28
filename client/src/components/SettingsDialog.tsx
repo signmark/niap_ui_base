@@ -717,7 +717,19 @@ export function SettingsDialog() {
                   </ul>
                 </div>
                 
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md w-full">
+                    <h4 className="font-medium text-blue-800 dark:text-blue-300">Важное примечание</h4>
+                    <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+                      В соответствии с требованиями Facebook, после первого подключения может потребоваться до 24 часов, 
+                      прежде чем вы сможете использовать API для публикации контента.
+                    </p>
+                    <p className="mt-2 text-sm text-blue-700 dark:text-blue-400">
+                      Если процесс авторизации прерывается с ошибкой, вам могут потребоваться дополнительные действия 
+                      для настройки приложения Facebook.
+                    </p>
+                  </div>
+                  
                   <Button
                     onClick={connectInstagram}
                     className="mt-2"
