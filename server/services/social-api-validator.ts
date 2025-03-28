@@ -156,36 +156,83 @@ export async function validateInstagramToken(token: string): Promise<ApiKeyValid
   try {
     log(`Проверка токена Instagram: ${token.slice(0, 5)}...`, 'api-validator');
     
-    // Запрос к Facebook Graph API для получения информации о токене
-    const response = await axios.get('https://graph.facebook.com/v16.0/me', {
+    // Проверяем, что токен имеет правильный формат для Instagram/Facebook Graph API
+    if (!token || token.trim().length < 20) {
+      return {
+        isValid: false,
+        message: 'Токен имеет неправильный формат',
+        details: { error: 'Invalid token format' }
+      };
+    }
+
+    // Базовая проверка - использование простого запроса для получения информации о пользователе
+    // Это позволит проверить, что токен вообще работает, без проверки доступа к Instagram
+    const response = await axios.get('https://graph.facebook.com/v18.0/me', {
       params: {
         access_token: token,
-        fields: 'id,name,instagram_business_account'
+        fields: 'id,name' // Минимальный запрос полей для проверки валидности токена
       },
       timeout: 10000
     });
     
+    // Если получили ответ с ID пользователя - токен работает для Facebook
     if (response.data && response.data.id) {
-      // Проверяем наличие привязанного бизнес-аккаунта Instagram
-      const hasInstagramAccount = response.data.instagram_business_account && response.data.instagram_business_account.id;
+      log(`Токен Facebook валиден для базового доступа. ID: ${response.data.id}, Имя: ${response.data.name}`, 'api-validator');
       
-      if (hasInstagramAccount) {
+      // Теперь пробуем последовательно проверить доступ к данным, необходимым для Instagram
+      // 1. Сначала проверяем, может ли токен получить список страниц пользователя
+      try {
+        const pagesResponse = await axios.get('https://graph.facebook.com/v18.0/me/accounts', {
+          params: {
+            access_token: token
+          },
+          timeout: 10000
+        });
+        
+        if (pagesResponse.data && pagesResponse.data.data && pagesResponse.data.data.length > 0) {
+          log(`Найдены страницы Facebook: ${pagesResponse.data.data.length} шт.`, 'api-validator');
+          
+          // Токен имеет доступ к страницам - это уже хороший признак
+          // Даже если нет Instagram-аккаунта, токен может быть использован для Facebook
+          
+          // Возвращаем успешный результат, но с информацией, что Instagram не проверен
+          return {
+            isValid: true,
+            message: `Токен Facebook валиден, доступно ${pagesResponse.data.data.length} страниц. Для публикации в Instagram настройте бизнес-аккаунт Instagram.`,
+            details: {
+              user: response.data,
+              pages: pagesResponse.data.data
+            }
+          };
+        } else {
+          // Токен работает для базового доступа, но нет доступа к страницам
+          return {
+            isValid: true,
+            message: `Токен Facebook валиден для базового доступа (${response.data.name}), но не найдены доступные страницы. Для публикации контента необходимы дополнительные разрешения.`,
+            details: {
+              user: response.data
+            }
+          };
+        }
+      } catch (pagesError: any) {
+        log(`Ошибка при проверке доступа к страницам: ${pagesError.message}`, 'api-validator');
+        
+        // Если не удалось получить страницы, но токен базовый валиден, 
+        // возвращаем успех с предупреждением
         return {
           isValid: true,
-          message: `Токен Facebook валиден, Instagram бизнес-аккаунт подключен: ID ${response.data.instagram_business_account.id}`,
-          details: response.data
-        };
-      } else {
-        return {
-          isValid: false,
-          message: 'Токен Facebook валиден, но Instagram бизнес-аккаунт не подключен',
-          details: response.data
+          message: `Токен валиден для базового доступа (${response.data.name}), но нет прав на управление страницами. Для полной функциональности требуются дополнительные разрешения.`,
+          details: {
+            user: response.data,
+            error: pagesError.response?.data?.error
+          }
         };
       }
     } else {
+      // Базовая проверка не прошла
       return {
         isValid: false,
-        message: 'Некорректный формат ответа от Facebook Graph API',
+        message: 'Не удалось получить информацию о пользователе с данным токеном',
         details: response.data
       };
     }
@@ -217,47 +264,146 @@ export async function validateFacebookToken(token: string, pageId?: string): Pro
   try {
     log(`Проверка токена Facebook: ${token.slice(0, 5)}...${pageId ? ` для страницы ${pageId}` : ''}`, 'api-validator');
     
-    // Запрос к Facebook Graph API для получения информации о токене
-    const response = await axios.get('https://graph.facebook.com/v16.0/me', {
+    // Проверяем, что токен имеет правильный формат
+    if (!token || token.trim().length < 20) {
+      return {
+        isValid: false,
+        message: 'Токен имеет неправильный формат',
+        details: { error: 'Invalid token format' }
+      };
+    }
+
+    // Упрощенная проверка - только базовая информация пользователя
+    const response = await axios.get('https://graph.facebook.com/v18.0/me', {
       params: {
         access_token: token,
-        fields: 'id,name,accounts'
+        fields: 'id,name' // Запрашиваем минимальный набор полей для проверки
       },
       timeout: 10000
     });
     
     if (response.data && response.data.id) {
-      // Если указан ID страницы, проверяем доступ к ней
-      if (pageId && response.data.accounts && response.data.accounts.data) {
-        const page = response.data.accounts.data.find((p: any) => p.id === pageId);
-        
-        if (page) {
+      // Токен как минимум предоставляет базовый доступ к данным
+      log(`Токен Facebook валиден для базового доступа. ID: ${response.data.id}, Имя: ${response.data.name}`, 'api-validator');
+      
+      // Проверяем доступ к страницам, если это не указан конкретный pageId
+      if (!pageId) {
+        try {
+          const pagesResponse = await axios.get('https://graph.facebook.com/v18.0/me/accounts', {
+            params: {
+              access_token: token,
+              fields: 'id,name,access_token'
+            },
+            timeout: 10000
+          });
+          
+          if (pagesResponse.data && pagesResponse.data.data && pagesResponse.data.data.length > 0) {
+            const pagesCount = pagesResponse.data.data.length;
+            const pageNames = pagesResponse.data.data.map((p: any) => p.name).join(", ");
+            
+            return {
+              isValid: true,
+              message: `Токен Facebook валиден. Доступно ${pagesCount} ${pagesCount === 1 ? 'страница' : 'страниц'}: ${pageNames}`,
+              details: {
+                user: response.data,
+                pages: pagesResponse.data.data
+              }
+            };
+          } else {
+            // Страниц нет, но базовый доступ есть
+            return {
+              isValid: true,
+              message: `Токен Facebook валиден для пользователя ${response.data.name}, но нет доступных страниц`,
+              details: {
+                user: response.data
+              }
+            };
+          }
+        } catch (pagesError: any) {
+          log(`Ошибка при проверке страниц: ${pagesError.message}`, 'api-validator');
+          
+          // Если страницы не удалось получить, возвращаем базовую информацию
           return {
             isValid: true,
-            message: `Токен валиден. Пользователь: ${response.data.name}, Страница: ${page.name}`,
+            message: `Токен Facebook валиден для базового доступа (${response.data.name}), но доступ к страницам ограничен`,
             details: {
               user: response.data,
-              page: page
+              error: pagesError.response?.data?.error
             }
           };
-        } else {
+        }
+      } else {
+        // Если указан конкретный ID страницы, проверяем его напрямую
+        try {
+          const pageResponse = await axios.get(`https://graph.facebook.com/v18.0/${pageId}`, {
+            params: {
+              access_token: token,
+              fields: 'id,name'
+            },
+            timeout: 10000
+          });
+          
+          if (pageResponse.data && pageResponse.data.id) {
+            return {
+              isValid: true,
+              message: `Токен Facebook валиден. Страница ${pageResponse.data.name} (ID: ${pageResponse.data.id}) доступна`,
+              details: {
+                user: response.data,
+                page: pageResponse.data
+              }
+            };
+          }
+        } catch (pageError: any) {
+          log(`Ошибка при проверке конкретной страницы ${pageId}: ${pageError.message}`, 'api-validator');
+          
+          // Если не удалось получить страницу по ID, проверяем общий доступ к страницам
+          try {
+            const pagesResponse = await axios.get('https://graph.facebook.com/v18.0/me/accounts', {
+              params: {
+                access_token: token
+              },
+              timeout: 10000
+            });
+            
+            if (pagesResponse.data && pagesResponse.data.data && pagesResponse.data.data.length > 0) {
+              // Есть доступ к страницам, но не к запрошенной
+              return {
+                isValid: true,
+                message: `Токен Facebook валиден, но страница с ID ${pageId} не найдена или недоступна. Доступно ${pagesResponse.data.data.length} других страниц.`,
+                details: {
+                  user: response.data,
+                  pages: pagesResponse.data.data,
+                  requestedPageId: pageId
+                }
+              };
+            }
+          } catch (error) {
+            // Игнорируем ошибку
+          }
+          
+          // Возвращаем результат с ошибкой доступа к конкретной странице
           return {
-            isValid: false,
-            message: `Токен валиден, но страница с ID ${pageId} не найдена`,
-            details: response.data
+            isValid: true, // Основной токен валиден
+            message: `Токен Facebook валиден для базового доступа, но страница с ID ${pageId} недоступна`,
+            details: {
+              user: response.data,
+              pageError: pageError.response?.data
+            }
           };
         }
       }
       
+      // Если дошли до этой точки, значит базовая проверка прошла, но не удалось проверить страницы
       return {
         isValid: true,
-        message: `Токен валиден. Пользователь: ${response.data.name}`,
+        message: `Токен Facebook валиден для пользователя ${response.data.name}`,
         details: response.data
       };
     } else {
+      // Базовый запрос не вернул данные пользователя
       return {
         isValid: false,
-        message: 'Некорректный формат ответа от Facebook Graph API',
+        message: 'Не удалось получить информацию о пользователе с данным токеном',
         details: response.data
       };
     }
