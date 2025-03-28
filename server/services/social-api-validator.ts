@@ -198,7 +198,7 @@ export async function validateInstagramToken(token: string): Promise<ApiKeyValid
           // Возвращаем успешный результат, но с информацией, что Instagram не проверен
           return {
             isValid: true,
-            message: `Токен Facebook валиден, доступно ${pagesResponse.data.data.length} страниц. Для публикации в Instagram настройте бизнес-аккаунт Instagram.`,
+            message: `Токен Facebook валиден, доступно ${pagesResponse.data.data.length} страниц. Для публикации в Instagram добавьте ID бизнес-аккаунта Instagram в настройках кампании.`,
             details: {
               user: response.data,
               pages: pagesResponse.data.data
@@ -208,7 +208,7 @@ export async function validateInstagramToken(token: string): Promise<ApiKeyValid
           // Токен работает для базового доступа, но нет доступа к страницам
           return {
             isValid: true,
-            message: `Токен Facebook валиден для базового доступа (${response.data.name}), но не найдены доступные страницы. Для публикации контента необходимы дополнительные разрешения.`,
+            message: `Токен Facebook валиден для базового доступа (${response.data.name}), но не найдены доступные страницы. Для публикации контента в Instagram требуется ID бизнес-аккаунта Instagram и дополнительные разрешения.`,
             details: {
               user: response.data
             }
@@ -221,7 +221,7 @@ export async function validateInstagramToken(token: string): Promise<ApiKeyValid
         // возвращаем успех с предупреждением
         return {
           isValid: true,
-          message: `Токен валиден для базового доступа (${response.data.name}), но нет прав на управление страницами. Для полной функциональности требуются дополнительные разрешения.`,
+          message: `Токен валиден для базового доступа (${response.data.name}), но нет прав на управление страницами. Для публикации в Instagram требуется ID бизнес-аккаунта Instagram и дополнительные разрешения.`,
           details: {
             user: response.data,
             error: pagesError.response?.data?.error

@@ -37,6 +37,7 @@ const socialMediaSettingsSchema = z.object({
   instagram: z.object({
     token: z.string().nullable(),
     accessToken: z.string().nullable(),
+    businessAccountId: z.string().nullable(),
   }),
   facebook: z.object({
     token: z.string().nullable(),
@@ -80,7 +81,7 @@ export function SocialMediaSettings({
     defaultValues: initialSettings || {
       telegram: { token: null, chatId: null },
       vk: { token: null, groupId: null },
-      instagram: { token: null, accessToken: null },
+      instagram: { token: null, accessToken: null, businessAccountId: null },
       facebook: { token: null, pageId: null },
       youtube: { apiKey: null, channelId: null }
     }
@@ -510,6 +511,23 @@ export function SocialMediaSettings({
                   <Input 
                     type="password" 
                     placeholder="Введите дополнительный токен" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="instagram.businessAccountId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ID бизнес-аккаунта</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Введите ID бизнес-аккаунта Instagram" 
                     {...field} 
                     value={field.value || ''}
                   />

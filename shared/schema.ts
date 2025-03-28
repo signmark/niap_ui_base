@@ -34,7 +34,7 @@ export const campaigns = pgTable("user_campaigns", {
   socialMediaSettings: jsonb("social_media_settings").default({
     telegram: { token: null, chatId: null },
     vk: { token: null, groupId: null },
-    instagram: { token: null, accessToken: null },
+    instagram: { token: null, accessToken: null, businessAccountId: null },
     facebook: { token: null, pageId: null },
     youtube: { apiKey: null, channelId: null }
   }),
@@ -134,6 +134,7 @@ export interface SocialMediaSettings {
   instagram?: {
     token: string | null;
     accessToken: string | null;
+    businessAccountId: string | null;
   };
   facebook?: {
     token: string | null;
