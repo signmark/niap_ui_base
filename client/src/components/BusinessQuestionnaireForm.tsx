@@ -106,6 +106,7 @@ export function BusinessQuestionnaireForm({
   const createQuestionnaireMutation = useMutation({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
       try {
+        console.log('Creating questionnaire with data:', { ...values, campaignId });
         const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
           method: 'POST',
           data: {
@@ -113,6 +114,7 @@ export function BusinessQuestionnaireForm({
             campaignId,
           },
         });
+        console.log('Create questionnaire response:', response);
         return response;
       } catch (error) {
         console.error('Error in create mutation:', error);
@@ -145,12 +147,23 @@ export function BusinessQuestionnaireForm({
   // Мутация для обновления анкеты
   const updateQuestionnaireMutation = useMutation({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
-      if (!questionnaireData?.id) return null;
+      if (!questionnaireData?.id) {
+        console.error('Attempted to update questionnaire without ID');
+        return null;
+      }
       
-      return await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
+      console.log('Updating questionnaire with ID:', questionnaireData.id, 'values:', values);
+      const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
         method: 'PATCH',
-        data: values,
+        data: { 
+          ...values,
+          id: questionnaireData.id,
+          campaignId: campaignId
+        },
       });
+      
+      console.log('Update questionnaire response:', response);
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -195,9 +208,13 @@ export function BusinessQuestionnaireForm({
 
   // Обработка отправки формы
   const onSubmit = async (values: BusinessQuestionnaireFormValues) => {
+    console.log('Form submit with values:', values);
+    
     if (questionnaireData?.id) {
+      console.log('Updating existing questionnaire with ID:', questionnaireData.id);
       updateQuestionnaireMutation.mutate(values);
     } else {
+      console.log('Creating new questionnaire for campaign:', campaignId);
       createQuestionnaireMutation.mutate(values);
     }
   };
@@ -310,15 +327,24 @@ export function BusinessQuestionnaireForm({
           description: 'Данные успешно получены и заполнены в анкету.',
         });
         
+        // Получаем значения формы
+        const formValues = form.getValues();
+        console.log('After website analysis, form values:', formValues);
+        
         // Если анкета уже существует, автоматически сохраняем обновленные данные
         if (questionnaireData?.id) {
-          const formValues = form.getValues();
-          console.log('Automatically saving updated questionnaire after analysis');
+          console.log('Automatically saving updated questionnaire after analysis for existing questionnaire');
           updateQuestionnaireMutation.mutate(formValues);
         } else {
-          // Если анкеты еще нет, устанавливаем режим редактирования
-          // чтобы пользователь мог сохранить данные
+          // Если анкеты еще нет, устанавливаем режим редактирования и предлагаем сохранить
+          console.log('Setting edit mode for new questionnaire after analysis');
           setIsEditMode(true);
+          
+          // Предлагаем пользователю сохранить данные
+          toast({
+            title: 'Данные подготовлены',
+            description: 'Пожалуйста, проверьте и сохраните анкету, нажав кнопку "Сохранить"',
+          });
         }
         
         // Скрываем индикатор прогресса через 1 секунду
