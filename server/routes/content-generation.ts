@@ -24,9 +24,14 @@ export const setupContentGenerationRoutes = (app: Express): void => {
       }
       
       // Инициализируем DeepSeek сервис с API ключом пользователя
+      console.log(`[content-generation] Попытка инициализации DeepSeek для пользователя ${req.user.id}`);
+      
       const initialized = await deepseekService.initialize(req.user.id);
       
+      console.log(`[content-generation] Результат инициализации DeepSeek: ${initialized ? 'успешно' : 'неудачно'}`);
+      
       if (!initialized) {
+        console.log(`[content-generation] Ошибка инициализации DeepSeek API для пользователя ${req.user.id}`);
         return res.status(400).json({ 
           success: false, 
           error: 'Не удалось инициализировать DeepSeek API. Проверьте настройки API ключа.' 

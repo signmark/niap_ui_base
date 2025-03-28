@@ -104,6 +104,12 @@ export class ApiKeyService {
       return null;
     }
     
+    // ВРЕМЕННОЕ РЕШЕНИЕ: Для отладки всегда возвращаем тестовый ключ
+    if (serviceName === 'deepseek') {
+      console.log(`[ОТЛАДКА] Возвращаем тестовый ключ для DeepSeek для пользователя ${userId}`);
+      return "test_deepseek_key_for_debugging_only";
+    }
+    
     // 1. Сначала проверяем кэш пользовательских ключей
     if (this.keyCache[userId]?.[serviceName]?.key &&
         this.keyCache[userId][serviceName]!.expiresAt > Date.now()) {
