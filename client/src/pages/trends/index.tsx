@@ -49,6 +49,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
 import { NewSourcesDialog } from "@/components/NewSourcesDialog";
 import { ContentGenerationPanel } from "@/components/ContentGenerationPanel";
+import { TrendContentGenerator } from "@/components/TrendContentGenerator";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -1563,9 +1564,10 @@ export default function Trends() {
             </Card>
 
             {selectedTopics.length > 0 && (
-              <ContentGenerationPanel
+              <TrendContentGenerator
                 selectedTopics={selectedTopics}
                 onGenerated={() => setSelectedTopics([])}
+                campaignId={selectedCampaignId}
               />
             )}
           </>
