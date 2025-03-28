@@ -108,14 +108,42 @@ ${systemInstructions}
       
       if (error.response?.data) {
         try {
-          const errorDetails = typeof error.response.data === 'string' 
-            ? error.response.data 
-            : JSON.stringify(error.response.data).substring(0, 300);
+          // Пытаемся корректно обработать разные форматы ответа
+          let errorDetails = '';
+          
+          if (typeof error.response.data === 'string') {
+            // Если данные - это строка, попробуем распарсить JSON, если он там есть
+            if (error.response.data.includes('{') && error.response.data.includes('}')) {
+              try {
+                const jsonMatch = error.response.data.match(/\{.*\}/s);
+                if (jsonMatch) {
+                  const parsedJson = JSON.parse(jsonMatch[0]);
+                  errorDetails = JSON.stringify(parsedJson);
+                } else {
+                  // Если не смогли найти JSON, используем часть текста
+                  errorDetails = error.response.data.substring(0, 300);
+                }
+              } catch (e) {
+                // Если не смогли распарсить, используем текст как есть
+                errorDetails = error.response.data.substring(0, 300);
+              }
+            } else {
+              // Простой текст
+              errorDetails = error.response.data.substring(0, 300);
+            }
+          } else {
+            // Объект, преобразуем в строку
+            errorDetails = JSON.stringify(error.response.data).substring(0, 300);
+          }
+          
           errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
         } catch (e) {
           errorMessage += ` (Статус: ${error.response.status})`;
         }
       }
+      
+      // Важно: устанавливаем заголовок Content-Type явно, чтобы предотвратить автоматическое определение
+      res.setHeader('Content-Type', 'application/json');
       
       return res.status(500).json({
         success: false,
@@ -225,14 +253,42 @@ ${systemInstructions}
       
       if (error.response?.data) {
         try {
-          const errorDetails = typeof error.response.data === 'string' 
-            ? error.response.data 
-            : JSON.stringify(error.response.data).substring(0, 300);
+          // Пытаемся корректно обработать разные форматы ответа
+          let errorDetails = '';
+          
+          if (typeof error.response.data === 'string') {
+            // Если данные - это строка, попробуем распарсить JSON, если он там есть
+            if (error.response.data.includes('{') && error.response.data.includes('}')) {
+              try {
+                const jsonMatch = error.response.data.match(/\{.*\}/s);
+                if (jsonMatch) {
+                  const parsedJson = JSON.parse(jsonMatch[0]);
+                  errorDetails = JSON.stringify(parsedJson);
+                } else {
+                  // Если не смогли найти JSON, используем часть текста
+                  errorDetails = error.response.data.substring(0, 300);
+                }
+              } catch (e) {
+                // Если не смогли распарсить, используем текст как есть
+                errorDetails = error.response.data.substring(0, 300);
+              }
+            } else {
+              // Простой текст
+              errorDetails = error.response.data.substring(0, 300);
+            }
+          } else {
+            // Объект, преобразуем в строку
+            errorDetails = JSON.stringify(error.response.data).substring(0, 300);
+          }
+          
           errorMessage += ` (Статус: ${error.response.status}) Ответ API: ${errorDetails}`;
         } catch (e) {
           errorMessage += ` (Статус: ${error.response.status})`;
         }
       }
+      
+      // Важно: устанавливаем заголовок Content-Type явно, чтобы предотвратить автоматическое определение
+      res.setHeader('Content-Type', 'application/json');
       
       return res.status(500).json({
         success: false,
