@@ -7,12 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Loader2, Sparkles } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import RichTextEditor from "./RichTextEditor";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Select,
@@ -41,11 +39,7 @@ interface TrendTopic {
 
 const generateContentSchema = z.object({
   topics: z.array(z.string()),
-  prompt: z.string().min(1, "Требуется описание контента"),
-  useAI: z.boolean().default(true),
-  scheduledFor: z.date().optional(),
-  platforms: z.array(z.enum(['telegram', 'vk', 'instagram', 'youtube'])),
-  title: z.string().optional(),
+  prompt: z.string().min(1, "Введите промт для генерации контента"),
   modelType: z.enum(['deepseek', 'qwen']).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
 });
@@ -66,17 +60,17 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [generatedTitle, setGeneratedTitle] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  // Для сохранения и планирования публикации
+  const [platforms, setPlatforms] = useState(['telegram']);
+  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(undefined);
 
   const form = useForm<GenerateContentForm>({
     resolver: zodResolver(generateContentSchema),
     defaultValues: {
       topics: selectedTopics.map(topic => topic.id),
       prompt: "",
-      useAI: true,
-      platforms: ['telegram'],
-      scheduledFor: undefined,
-      title: "",
       modelType: 'deepseek',
       tone: 'informative',
     }
@@ -108,6 +102,35 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     }
   };
 
+  // Функция для извлечения заголовка из сгенерированного контента
+  const extractTitle = (content: string): string => {
+    // Пытаемся найти заголовок в теге h1 или h2
+    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    if (h1Match && h1Match[1]) {
+      return stripHtml(h1Match[1]);
+    }
+    
+    const h2Match = content.match(/<h2[^>]*>(.*?)<\/h2>/i);
+    if (h2Match && h2Match[1]) {
+      return stripHtml(h2Match[1]);
+    }
+    
+    // Если не нашли в тегах, берем первое предложение
+    const plainText = stripHtml(content);
+    const firstSentence = plainText.split(/[.!?]/).filter(s => s.trim())[0];
+    
+    if (firstSentence && firstSentence.length > 5) {
+      // Если предложение слишком длинное, ограничиваем его
+      if (firstSentence.length > 70) {
+        return firstSentence.substring(0, 67) + '...';
+      }
+      return firstSentence;
+    }
+    
+    // В крайнем случае возвращаем общий заголовок
+    return "Новая публикация";
+  };
+
   // Мутация для генерации контента через API
   const { mutate: generateContent } = useMutation({
     mutationFn: async (values: GenerateContentForm) => {
@@ -137,6 +160,11 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     onSuccess: (data) => {
       // Сохраняем результат генерации
       setGeneratedContent(data.content);
+      
+      // Извлекаем заголовок из сгенерированного контента
+      const title = extractTitle(data.content);
+      setGeneratedTitle(title);
+      
       toast({
         title: "Успешно",
         description: "Контент сгенерирован"
@@ -158,28 +186,45 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
   const { mutate: saveContent } = useMutation({
     mutationFn: async (content: string) => {
       const values = form.getValues();
+      // Публикация только в том случае, если выбраны платформы
+      if (platforms.length === 0) {
+        throw new Error('Выберите хотя бы одну платформу для публикации');
+      }
+      
+      // Подготовка статуса публикации, планирование только если есть дата
+      const status = scheduledFor ? 'scheduled' : 'pending';
+      
       return await directusApi.post('/items/content_generations', {
+        // Базовая информация о генерации
         topics: values.topics,
         prompt: values.prompt,
-        useAI: values.useAI,
-        scheduledFor: values.scheduledFor,
-        platforms: values.platforms,
-        title: values.title,
         modelType: values.modelType,
         tone: values.tone,
-        content,
+        
+        // Контент публикации
+        title: generatedTitle, // Используем извлеченный заголовок
+        content, // Сгенерированный контент
+        
+        // Параметры публикации
+        platforms, // Выбранные платформы
+        scheduledFor, // Дата публикации (если задана)
         campaign_id: selectedTopics[0]?.campaign_id || selectedTopics[0]?.campaignId,
-        status: 'pending'
+        status // Статус публикации: 'scheduled' или 'pending'
       });
     },
     onSuccess: () => {
       toast({
         title: "Успешно",
-        description: "Контент сохранен и запланирован"
+        description: scheduledFor 
+          ? `Контент запланирован на ${scheduledFor.toLocaleString('ru')}` 
+          : "Контент добавлен в очередь на публикацию"
       });
       // Сбрасываем форму и состояние
       onGenerated?.();
       setGeneratedContent(null);
+      setGeneratedTitle('');
+      setPlatforms(['telegram']);
+      setScheduledFor(undefined);
       form.reset();
     },
     onError: (error: Error) => {
@@ -213,6 +258,16 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     { id: 'youtube', label: 'YouTube' },
   ];
 
+  const togglePlatform = (platformId: string) => {
+    setPlatforms(current => {
+      if (current.includes(platformId)) {
+        return current.filter(p => p !== platformId);
+      } else {
+        return [...current, platformId];
+      }
+    });
+  };
+
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -234,91 +289,12 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
 
             <FormField
               control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Заголовок</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Введите заголовок публикации" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="prompt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Описание контента</FormLabel>
+                  <FormLabel>Промт для генерации</FormLabel>
                   <FormControl>
-                    <RichTextEditor
-                      content={field.value}
-                      onChange={field.onChange}
-                      placeholder="Опишите, какой контент нужно сгенерировать..."
-                      minHeight="150px"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="platforms"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Платформы для публикации</FormLabel>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {platformOptions.map((platform) => (
-                      <FormField
-                        key={platform.id}
-                        control={form.control}
-                        name="platforms"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={platform.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(platform.id as any)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value || [];
-                                    const updated = checked
-                                      ? [...current, platform.id]
-                                      : current.filter((value) => value !== platform.id);
-                                    field.onChange(updated);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {platform.label}
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="scheduledFor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Дата и время публикации</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    <Input {...field} placeholder="Введите промт для генерации контента" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -379,24 +355,6 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="useAI"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="text-sm font-normal">
-                    Использовать AI для улучшения контента
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
             <Button type="submit" disabled={isGenerating} className="w-full">
               {isGenerating ? (
                 <>
@@ -411,15 +369,44 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
             {generatedContent && (
               <div className="mt-6 border rounded-lg p-4">
                 <h3 className="text-lg font-medium mb-2">Сгенерированный контент:</h3>
+                <div className="mb-4 px-4 py-2 bg-muted/20 rounded-md border">
+                  <strong>Заголовок: </strong> {generatedTitle}
+                </div>
                 <div className="prose max-w-none mb-4 bg-muted/50 p-4 rounded-md">
                   <div dangerouslySetInnerHTML={{ __html: generatedContent }} />
                 </div>
+                
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-2">Платформы для публикации:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {platformOptions.map((platform) => (
+                      <Button 
+                        key={platform.id}
+                        type="button"
+                        variant={platforms.includes(platform.id) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => togglePlatform(platform.id)}
+                      >
+                        {platform.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-2">Время публикации (опционально):</h4>
+                  <DateTimePicker
+                    value={scheduledFor}
+                    onChange={setScheduledFor}
+                  />
+                </div>
+                
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={() => navigator.clipboard.writeText(generatedContent.replace(/<[^>]*>/g, ''))}
+                    onClick={() => navigator.clipboard.writeText(stripHtml(generatedContent))}
                   >
                     <Copy className="mr-2 h-4 w-4" /> Копировать текст
                   </Button>
