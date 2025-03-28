@@ -153,7 +153,13 @@ export function BusinessQuestionnaireForm({
       }
       
       console.log('Updating questionnaire with ID:', questionnaireData.id, 'values:', values);
-      const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
+      console.log(`Sending PATCH to /api/campaigns/${campaignId}/questionnaire with data:`, {
+        ...values,
+        id: questionnaireData.id,
+        campaignId: campaignId
+      });
+      
+      const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire/${questionnaireData.id}`, {
         method: 'PATCH',
         data: { 
           ...values,
@@ -165,7 +171,8 @@ export function BusinessQuestionnaireForm({
       console.log('Update questionnaire response:', response);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Update successful with response:', response);
       toast({
         title: 'Анкета обновлена',
         description: 'Анкета успешно обновлена',
@@ -174,6 +181,9 @@ export function BusinessQuestionnaireForm({
       if (onQuestionnaireUpdated) {
         onQuestionnaireUpdated();
       }
+      
+      // Обновляем данные в кэше React Query
+      queryClient.invalidateQueries({ queryKey: ['business-questionnaire', campaignId] });
     },
     onError: (error: Error) => {
       console.error('Error updating questionnaire:', error);
