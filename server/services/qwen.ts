@@ -17,7 +17,16 @@ export interface QwenMessage {
 
 export class QwenService {
   private apiKey: string;
-  private readonly baseUrl = 'https://api.qwen.ai/v1';
+  // Поддерживаемые базовые URL для Qwen API
+  private readonly baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+  private readonly compatModes = {
+    dashscope: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    openai: 'https://api.openai.com/v1'
+  };
+  
+  // Указываем активную конфигурацию API
+  private apiMode: 'dashscope' | 'qwen' | 'openai' = 'dashscope';
   
   constructor(config: QwenConfig) {
     this.apiKey = config.apiKey;
@@ -40,30 +49,6 @@ export class QwenService {
   hasApiKey(): boolean {
     return !!(this.apiKey && this.apiKey.trim() !== '');
   }
-  
-  /**
-   * Инициализирует сервис с API ключом пользователя
-   * @param userId ID пользователя
-   * @returns true, если сервис инициализирован успешно, иначе false
-   */
-  async initialize(userId: string): Promise<boolean> {
-    try {
-      // Ищем API ключ пользователя 
-      const apiKey = await apiKeyService.getUserApiKey(userId, 'qwen');
-      
-      if (apiKey && apiKey.trim() !== '') {
-        this.apiKey = apiKey;
-        console.log(`Qwen API key updated from user settings for user ${userId}`);
-        return true;
-      } else {
-        console.log(`Qwen API key not found for user ${userId}`);
-        return false;
-      }
-    } catch (error) {
-      console.error(`Error initializing Qwen service for user ${userId}:`, error);
-      return false;
-    }
-  }
 
   /**
    * Отправляет запрос на генерацию текста через Qwen API
@@ -76,24 +61,10 @@ export class QwenService {
     stop?: string[];
   } = {}): Promise<string> {
     try {
-      // Модель Qwen по умолчанию - Qwen 1.5-72B-Chat
-      const model = options.model || 'qwen1.5-72b-chat';
+      const model = options.model || 'qwen-plus';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
       const max_tokens = options.max_tokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
-      
-      // ВРЕМЕННОЕ РЕШЕНИЕ ДЛЯ ОТЛАДКИ: Если ключ - это тестовый ключ, возвращаем фиктивный ответ
-      if (this.apiKey === "test_qwen_key_for_debugging_only") {
-        console.log('[qwen] ⚠️ ОТЛАДКА: Используем отладочный ключ, возвращаем тестовый ответ');
-        return `<p>Вот <strong>тестовый ответ</strong> от Qwen AI о здоровом питании.</p>
-<p>Здоровое питание — это основа хорошего самочувствия и энергии на весь день. 🌿</p>
-<p>Несколько ключевых принципов:</p>
-<p>1️⃣ Разнообразие — включайте в рацион продукты из всех групп питательных веществ</p>
-<p>2️⃣ Баланс — соблюдайте правильное соотношение белков, жиров и углеводов</p>
-<p>3️⃣ Умеренность — следите за размерами порций</p>
-<p>4️⃣ Минимум обработки — отдавайте предпочтение цельным продуктам</p>
-<p>Ваше тело — самый важный проект, над которым вы когда-либо будете работать. Инвестируйте в него через здоровое питание! 💪</p>`;
-      }
       
       // Проверяем, что API ключ установлен
       if (!this.apiKey || this.apiKey.trim() === '') {
@@ -103,8 +74,22 @@ export class QwenService {
       
       console.log(`Sending request to Qwen API (model: ${model}, temp: ${temperature})`);
       
+      // Получаем активный URL API на основе режима
+      const activeBaseUrl = this.compatModes[this.apiMode];
+      
+      // Добавляем подробное логирование
+      console.log(`Using Qwen API URL: ${activeBaseUrl}/chat/completions (mode: ${this.apiMode})`);
+      console.log(`Request payload: ${JSON.stringify({
+        model,
+        messages,
+        temperature,
+        max_tokens,
+        top_p,
+        stop: options.stop || null
+      }, null, 2)}`);
+      
       const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
+        `${activeBaseUrl}/chat/completions`,
         {
           model,
           messages,
@@ -121,6 +106,8 @@ export class QwenService {
         }
       );
       
+      console.log(`Successful response from Qwen API, status ${response.status}`);
+      
       if (!response.data?.choices?.[0]?.message?.content) {
         console.error('Invalid response format from Qwen API:', response.data);
         throw new Error('Некорректный ответ от Qwen API. Пожалуйста, проверьте настройки или попробуйте позже.');
@@ -130,7 +117,7 @@ export class QwenService {
     } catch (error: any) {
       console.error('Error calling Qwen API:', error);
       
-      // Проверяем, содержит ли сообщение об ошибке "Invalid API key"
+      // Проверяем, содержит ли сообщение об ошибке проблемы с API ключом
       if (error.response?.data?.error) {
         const errorMessage = error.response.data.error.message || error.response.data.error;
         
@@ -142,7 +129,12 @@ export class QwenService {
         }
       }
       
-      throw error;
+      // Если проблема с доступом к API
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw new Error(`Не удалось подключиться к Qwen API (${this.baseUrl}). Пожалуйста, проверьте подключение к интернету и доступность сервиса.`);
+      }
+      
+      throw new Error(`Ошибка при обращении к Qwen API: ${error.message || 'Неизвестная ошибка'}`);
     }
   }
   
@@ -203,12 +195,8 @@ ${platformSpecifics}
 - Делай текст живым, с естественными переходами между мыслями
 - Используй активный залог вместо пассивного`;
 
-    // Обработка различных типов данных
-    let keywordsStr = Array.isArray(keywords) ? keywords.join(', ') : typeof keywords === 'string' ? keywords : String(keywords || '');
-    let topicsStr = Array.isArray(topics) ? topics.join(', ') : typeof topics === 'string' ? topics : String(topics || '');
-    
-    const userContent = `Ключевые слова: ${keywordsStr}
-Темы для раскрытия: ${topicsStr}
+    const userContent = `Ключевые слова: ${keywords.join(', ')}
+Темы для раскрытия: ${topics.join(', ')}
 
 Создай привлекательный пост для ${platform} ${language === 'ru' ? 'на русском языке' : 'на английском языке'}.`;
 
@@ -223,145 +211,53 @@ ${platformSpecifics}
           max_tokens: length === 'short' ? 300 : length === 'medium' ? 500 : 800
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating social content with Qwen:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Генерирует промт для изображения на основе текстового контента
-   * @param content Текстовый контент, на основе которого нужно сгенерировать промт
-   * @param keywords Ключевые слова для усиления релевантности промта (опционально)
-   * @returns Промт для генерации изображения на английском языке
-   */
-  async generateImagePrompt(
-    content: string,
-    keywords: string[] = []
-  ): Promise<string> {
-    try {
-      // Очищаем HTML-теги из контента, но сохраняем структуру текста
-      const cleanedContent = content
-        .replace(/<[^>]*>/g, ' ')  // Заменяем HTML-теги пробелами
-        .replace(/\s+/g, ' ')      // Заменяем множественные пробелы одним
-        .trim();                    // Убираем пробелы в начале и конце
+      const errorMessage = error.message || 'Неизвестная ошибка при генерации контента';
+      log(`Qwen генерация контента не удалась: ${errorMessage}`, 'qwen');
       
-      console.log('Генерация промта на основе текста через Qwen (одноэтапный метод)');
-      console.log(`Очищенный текст перед отправкой: ${cleanedContent.substring(0, 150)}...`);
-      
-      // Формируем системный промт с улучшенными инструкциями для работы с русским текстом
-      const systemPrompt = `You are an expert image prompt generator for Stable Diffusion AI.
-Your task is to translate Russian text into detailed English image generation prompts.
-
-INSTRUCTIONS:
-1. Read the provided Russian text content carefully
-2. Translate and transform the content directly into a detailed, vivid image prompt in ENGLISH
-3. Focus on the main subject, scene, mood, and style from the content
-4. Include visual details like lighting, color scheme, and composition
-5. DO NOT mention text, captions, or writing in the image
-6. Output ONLY the image prompt text in English - nothing else
-7. Format the prompt to be optimized for Stable Diffusion or Midjourney
-8. DO NOT put quotation marks around the prompt
-9. DO NOT include any explanations or comments
-10. Length should be 1-3 sentences maximum
-11. Include adjectives like "detailed", "high quality", "photorealistic" or art styles
-12. Always add quality boosters like "4k", "masterpiece", "intricate details"`;
-
-      // Подготавливаем пользовательское сообщение с ключевыми словами
-      let userPrompt = `Generate an image prompt from this Russian text:\n\n${cleanedContent.substring(0, 1000)}`;
-      
-      // Добавляем ключевые слова, если они предоставлены
-      if (keywords && keywords.length > 0) {
-        userPrompt += `\n\nAdditional keywords to emphasize: ${keywords.join(', ')}`;
+      // Форматируем сообщение об ошибке для более понятного отображения пользователю
+      if (errorMessage.includes('API ключ')) {
+        throw new Error(`Проблема с API ключом Qwen: ${errorMessage}`);
+      } else if (errorMessage.includes('подключиться')) {
+        throw new Error('Не удалось подключиться к Qwen API. Проверьте соединение или доступность сервиса.');
+      } else {
+        throw new Error(`Ошибка при генерации контента через Qwen: ${errorMessage}`);
       }
-      
-      // Выполняем один запрос для генерации промта
-      const finalPrompt = await this.generateText(
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        {
-          temperature: 0.7,
-          max_tokens: 500
-        }
-      );
-      
-      console.log(`Generated image prompt via Qwen: ${finalPrompt.substring(0, 100)}...`);
-      return finalPrompt;
-    } catch (error) {
-      console.error('Error generating image prompt with Qwen:', error);
-      // В случае ошибки генерируем базовый промт
-      return 'A detailed, high-quality image related to the content, photorealistic style, 4k, masterpiece';
     }
   }
   
   /**
-   * Генерирует крючки (hooks) для контента
+   * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
    */
-  async generateHooks(
-    subject: string,
-    tone: 'professional' | 'casual' | 'urgent' | 'curiosity' = 'professional'
-  ): Promise<string[]> {
+  async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
-      const toneMap = {
-        professional: 'профессиональный и информативный',
-        casual: 'неформальный и дружественный',
-        urgent: 'срочный и вызывающий желание действовать немедленно',
-        curiosity: 'вызывающий любопытство и интригующий'
-      };
+      console.log('Initializing Qwen service for user', userId);
       
-      const systemPrompt = `Ты копирайтер, специалист по созданию привлекательных заголовков и крючков.
-Твоя задача - создать 5 вариантов крючков (hooks) для привлечения внимания читателя.
-
-Крючки должны быть:
-- Короткими (не более 100 символов)
-- Цепляющими внимание
-- С ${toneMap[tone]} тоном
-- Без излишнего хайпа или кликбейта
-- Соответствующими теме
-
-Создай 5 разных вариантов, которые вызовут желание узнать подробности.`;
-
-      const userPrompt = `Тема для крючков: ${subject}
-
-Пожалуйста, создай 5 вариантов крючков для этой темы.`;
-
-      const response = await this.generateText(
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        {
-          temperature: 0.8,
-          max_tokens: 400
-        }
-      );
+      // Используем централизованную систему API ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       
-      // Обрабатываем ответ, разбивая его на отдельные строки
-      // и фильтруя пустые строки или нумерацию
-      return response
-        .split('\n')
-        .map(line => line.trim())
-        .map(line => line.replace(/^[0-9]+[\.\)\-:]?\s*/, '')) // Удаляем нумерацию (1., 2), 3: и т.д.)
-        .filter(line => line && line.length > 10); // Оставляем только непустые строки достаточной длины
+      if (apiKey) {
+        console.log('Qwen API key successfully obtained from API Key Service');
+        this.updateApiKey(apiKey);
+        log('Qwen API key successfully obtained from API Key Service', 'qwen');
+        return true;
+      } else {
+        console.log('Qwen API key not found for user', userId);
+        log('Qwen API key not found in user settings', 'qwen');
+        return false;
+      }
     } catch (error) {
-      console.error('Error generating hooks with Qwen:', error);
-      return [
-        'Узнайте, почему это важно сейчас',
-        'Интересное открытие, которое стоит увидеть',
-        'Вы точно об этом не знали!',
-        'Простой способ решить сложную проблему',
-        'Только факты: что нужно знать'
-      ];
+      console.error('Error initializing Qwen service:', error);
+      log(`Error initializing Qwen service: ${error instanceof Error ? error.message : 'unknown error'}`, 'qwen');
+      return false;
     }
   }
 }
 
-// Создаем инстанс сервиса с пустым ключом
-export const qwenService = new QwenService({ apiKey: '' });
-
-// Обновляем API ключ при инициализации и когда он меняется
-apiKeyService.addKeyUpdateListener('qwen', (newKey) => {
-  qwenService.updateApiKey(newKey);
+export const qwenService = new QwenService({
+  apiKey: ''
 });

@@ -7,18 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { apiRequest } from "@/lib/queryClient";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import RichTextEditor from "./RichTextEditor";
 
 // Расширенный интерфейс, совместимый с TrendsList
 interface TrendTopic {
@@ -39,9 +33,11 @@ interface TrendTopic {
 
 const generateContentSchema = z.object({
   topics: z.array(z.string()),
-  prompt: z.string().min(1, "Введите промт для генерации контента"),
-  modelType: z.enum(['deepseek', 'qwen']).default('deepseek'),
-  tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
+  prompt: z.string().min(1, "Требуется описание контента"),
+  useAI: z.boolean().default(true),
+  scheduledFor: z.date().optional(),
+  platforms: z.array(z.enum(['telegram', 'vk', 'instagram', 'youtube'])),
+  title: z.string().optional(),
 });
 
 type GenerateContentForm = z.infer<typeof generateContentSchema>;
@@ -51,194 +47,42 @@ interface ContentGenerationPanelProps {
   onGenerated?: () => void;
 }
 
-// Типы для результатов генерации контента
-interface GenerationResult {
-  success?: boolean;
-  error?: string;
-  content: string | {
-    title?: string;
-    html: string;
-  };
-}
-
 export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentGenerationPanelProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string | null>(null);
-  const [generatedTitle, setGeneratedTitle] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  // Для сохранения и планирования публикации
-  const [platforms, setPlatforms] = useState(['telegram']);
-  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(undefined);
 
   const form = useForm<GenerateContentForm>({
     resolver: zodResolver(generateContentSchema),
     defaultValues: {
       topics: selectedTopics.map(topic => topic.id),
       prompt: "",
-      modelType: 'deepseek',
-      tone: 'informative',
+      useAI: true,
+      platforms: ['telegram'],
+      scheduledFor: undefined,
+      title: "",
     }
   });
 
-  /**
-   * Функция для очистки HTML-контента от HTML-тегов
-   * @param html HTML-контент
-   * @returns Очищенный текст
-   */
-  const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return '';
-    
-    // Обработка случая, когда html - это простой текст без HTML-тегов
-    if (typeof html === 'string' && !html.includes('<')) {
-      return html;
-    }
-    
-    try {
-      // Создаем временный DOM-элемент
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      // Возвращаем только текстовый контент
-      return tempDiv.textContent || tempDiv.innerText || '';
-    } catch (error) {
-      console.error('Ошибка при очистке HTML:', error);
-      // В случае ошибки возвращаем исходный текст, или пустую строку, если его нет
-      return typeof html === 'string' ? html : '';
-    }
-  };
-
-  // Функция для извлечения заголовка из сгенерированного контента
-  const extractTitle = (content: string): string => {
-    // Пытаемся найти заголовок в теге h1 или h2
-    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
-    if (h1Match && h1Match[1]) {
-      return stripHtml(h1Match[1]);
-    }
-    
-    const h2Match = content.match(/<h2[^>]*>(.*?)<\/h2>/i);
-    if (h2Match && h2Match[1]) {
-      return stripHtml(h2Match[1]);
-    }
-    
-    // Если не нашли в тегах, берем первое предложение
-    const plainText = stripHtml(content);
-    const firstSentence = plainText.split(/[.!?]/).filter(s => s.trim())[0];
-    
-    if (firstSentence && firstSentence.length > 5) {
-      // Если предложение слишком длинное, ограничиваем его
-      if (firstSentence.length > 70) {
-        return firstSentence.substring(0, 67) + '...';
-      }
-      return firstSentence;
-    }
-    
-    // В крайнем случае возвращаем общий заголовок
-    return "Новая публикация";
-  };
-
-  // Мутация для генерации контента через API
   const { mutate: generateContent } = useMutation({
     mutationFn: async (values: GenerateContentForm) => {
-      // Формируем контекст из выбранных трендов
-      const trendsContext = selectedTopics.map(topic => topic.title).join(", ");
-      
-      // Очищаем HTML из prompt перед отправкой
-      const plainTextPrompt = stripHtml(values.prompt);
-      
-      console.log('Отправка запроса с очищенным текстом:', plainTextPrompt);
-      
-      try {
-        // Вызываем API генерации текста с выбранной моделью
-        const response = await apiRequest(
-          `/api/content-generation/${values.modelType}/text`,
-          {
-            method: 'POST',
-            data: {
-              prompt: plainTextPrompt,
-              trendsContext,
-              tone: values.tone,
-            }
-          }
-        );
-        
-        // Проверяем на ошибки в ответе
-        if (response.success === false) {
-          throw new Error(response.error || "Ошибка при генерации контента");
-        }
-        
-        // Проверяем, содержит ли ответ поле content
-        if (!response.content) {
-          console.error('Неожиданный формат ответа API:', response);
-          throw new Error("API вернул неверный формат данных");
-        }
-        
-        return response as GenerationResult;
-      } catch (error: any) { // Используем any для обработки разных типов ошибок
-        console.error('Ошибка при генерации контента:', error);
-        
-        // Проверяем, возможно, error уже содержит готовый ответ с заглушкой
-        if (error && error.content && typeof error.content === 'object' && 'html' in error.content) {
-          return error as GenerationResult;
-        }
-        
-        throw error;
-      }
+      return await directusApi.post('/items/content_generations', {
+        ...values,
+        campaign_id: selectedTopics[0]?.campaign_id || selectedTopics[0]?.campaignId,
+        status: 'pending'
+      });
     },
-    onSuccess: (data: GenerationResult) => {
-      // Проверяем, является ли ответ успешным
-      if (data.success === false) {
-        // Отображаем ошибку, но продолжаем обработку
-        toast({
-          title: "Предупреждение",
-          description: data.error || "Проблема при генерации контента",
-          variant: "destructive"
-        });
-        
-        // Если есть заглушка контента, используем ее
-        if (typeof data.content === 'object' && data.content.html) {
-          setGeneratedContent(data.content.html);
-          setGeneratedTitle(data.content.title || "Ошибка генерации");
-          return;
-        }
-      }
-      
-      // Если это обычный успешный ответ
-      if (data.content) {
-        if (typeof data.content === 'string') {
-          // Сохраняем результат генерации
-          setGeneratedContent(data.content);
-          
-          // Извлекаем заголовок из сгенерированного контента
-          const title = extractTitle(data.content);
-          setGeneratedTitle(title);
-          
-          toast({
-            title: "Успешно",
-            description: "Контент сгенерирован"
-          });
-        } else if (typeof data.content === 'object' && data.content.html) {
-          // Обрабатываем случай, когда content - объект с html-полем
-          setGeneratedContent(data.content.html);
-          setGeneratedTitle(data.content.title || "Сгенерированный контент");
-          
-          toast({
-            title: "Успешно",
-            description: "Контент сгенерирован"
-          });
-        }
-      } else {
-        // Если по какой-то причине content отсутствует
-        toast({
-          title: "Ошибка данных",
-          description: "Сервер вернул неожиданный формат данных",
-          variant: "destructive"
-        });
-      }
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "Контент сгенерирован и запланирован"
+      });
+      onGenerated?.();
+      form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Ошибка при генерации",
-        description: error.message || "Не удалось сгенерировать контент",
+        title: "Ошибка",
+        description: error.message,
         variant: "destructive"
       });
     },
@@ -247,73 +91,9 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     }
   });
 
-  // Мутация для сохранения сгенерированного контента в Directus
-  const { mutate: saveContent } = useMutation({
-    mutationFn: async (content: string) => {
-      const values = form.getValues();
-      // Публикация только в том случае, если выбраны платформы
-      if (platforms.length === 0) {
-        throw new Error('Выберите хотя бы одну платформу для публикации');
-      }
-      
-      // Подготовка статуса публикации, планирование только если есть дата
-      const status = scheduledFor ? 'scheduled' : 'pending';
-      
-      return await directusApi.post('/items/content_generations', {
-        // Базовая информация о генерации
-        topics: values.topics,
-        prompt: values.prompt,
-        modelType: values.modelType,
-        tone: values.tone,
-        
-        // Контент публикации
-        title: generatedTitle, // Используем извлеченный заголовок
-        content, // Сгенерированный контент
-        
-        // Параметры публикации
-        platforms, // Выбранные платформы
-        scheduledFor, // Дата публикации (если задана)
-        campaign_id: selectedTopics[0]?.campaign_id || selectedTopics[0]?.campaignId,
-        status // Статус публикации: 'scheduled' или 'pending'
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Успешно",
-        description: scheduledFor 
-          ? `Контент запланирован на ${scheduledFor.toLocaleString('ru')}` 
-          : "Контент добавлен в очередь на публикацию"
-      });
-      // Сбрасываем форму и состояние
-      onGenerated?.();
-      setGeneratedContent(null);
-      setGeneratedTitle('');
-      setPlatforms(['telegram']);
-      setScheduledFor(undefined);
-      form.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Ошибка при сохранении",
-        description: error.message,
-        variant: "destructive"
-      });
-    },
-    onSettled: () => {
-      setIsSaving(false);
-    }
-  });
-
   const onSubmit = (values: GenerateContentForm) => {
     setIsGenerating(true);
     generateContent(values);
-  };
-  
-  const handleSaveContent = () => {
-    if (generatedContent) {
-      setIsSaving(true);
-      saveContent(generatedContent);
-    }
   };
 
   const platformOptions = [
@@ -322,16 +102,6 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     { id: 'instagram', label: 'Instagram' },
     { id: 'youtube', label: 'YouTube' },
   ];
-
-  const togglePlatform = (platformId: string) => {
-    setPlatforms(current => {
-      if (current.includes(platformId)) {
-        return current.filter(p => p !== platformId);
-      } else {
-        return [...current, platformId];
-      }
-    });
-  };
 
   return (
     <Card className="mt-6">
@@ -354,145 +124,125 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
 
             <FormField
               control={form.control}
-              name="prompt"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Промт для генерации</FormLabel>
+                  <FormLabel>Заголовок</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Введите промт для генерации контента" />
+                    <Input {...field} placeholder="Введите заголовок публикации" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="modelType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Модель AI</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите модель" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="deepseek">DeepSeek</SelectItem>
-                        <SelectItem value="qwen">Qwen</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="prompt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Описание контента</FormLabel>
+                  <FormControl>
+                    <RichTextEditor
+                      content={field.value}
+                      onChange={field.onChange}
+                      placeholder="Опишите, какой контент нужно сгенерировать..."
+                      minHeight="150px"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="tone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Тон сообщения</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите тон" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="informative">Информативный</SelectItem>
-                        <SelectItem value="casual">Повседневный</SelectItem>
-                        <SelectItem value="professional">Профессиональный</SelectItem>
-                        <SelectItem value="funny">Юмористический</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="platforms"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Платформы для публикации</FormLabel>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {platformOptions.map((platform) => (
+                      <FormField
+                        key={platform.id}
+                        control={form.control}
+                        name="platforms"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={platform.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(platform.id as any)}
+                                  onCheckedChange={(checked) => {
+                                    const current = field.value || [];
+                                    const updated = checked
+                                      ? [...current, platform.id]
+                                      : current.filter((value) => value !== platform.id);
+                                    field.onChange(updated);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {platform.label}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                </FormItem>
+              )}
+            />
 
-            <Button type="submit" disabled={isGenerating} className="w-full">
+            <FormField
+              control={form.control}
+              name="scheduledFor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Дата и время публикации</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="useAI"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="text-sm font-normal">
+                    Использовать AI для улучшения контента
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" disabled={isGenerating}>
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Генерация...
                 </>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Сгенерировать</>
+                "Сгенерировать"
               )}
             </Button>
-            
-            {generatedContent && (
-              <div className="mt-6 border rounded-lg p-4">
-                <h3 className="text-lg font-medium mb-2">Сгенерированный контент:</h3>
-                <div className="mb-4 px-4 py-2 bg-muted/20 rounded-md border">
-                  <strong>Заголовок: </strong> {generatedTitle}
-                </div>
-                <div className="prose max-w-none mb-4 bg-muted/50 p-4 rounded-md">
-                  <div dangerouslySetInnerHTML={{ __html: generatedContent }} />
-                </div>
-                
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Платформы для публикации:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {platformOptions.map((platform) => (
-                      <Button 
-                        key={platform.id}
-                        type="button"
-                        variant={platforms.includes(platform.id) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => togglePlatform(platform.id)}
-                      >
-                        {platform.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2">Время публикации (опционально):</h4>
-                  <DateTimePicker
-                    value={scheduledFor}
-                    onChange={setScheduledFor}
-                  />
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => navigator.clipboard.writeText(stripHtml(generatedContent))}
-                  >
-                    <Copy className="mr-2 h-4 w-4" /> Копировать текст
-                  </Button>
-                  <Button
-                    type="button"
-                    className="flex-1"
-                    onClick={handleSaveContent}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Сохранение...
-                      </>
-                    ) : (
-                      "Сохранить и запланировать"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
           </form>
         </Form>
       </CardContent>

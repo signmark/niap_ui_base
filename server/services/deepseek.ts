@@ -57,8 +57,6 @@ export class DeepSeekService {
       const max_tokens = options.max_tokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
-
-      
       // Проверяем, что API ключ установлен
       if (!this.apiKey || this.apiKey.trim() === '') {
         console.error('DeepSeek API key is not set');
@@ -492,19 +490,16 @@ ${originalContent}
       console.log('Попытка инициализации DeepSeek сервиса для пользователя', userId);
       
       // Используем только централизованную систему API ключей
-      console.log(`[deepseek] Запрашиваем API ключ для пользователя: ${userId}`);
       const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
-      console.log(`[deepseek] Результат запроса API ключа: ${apiKey ? 'ключ получен' : 'ключ НЕ получен'}`);
-      
       if (apiKey) {
-        console.log(`[deepseek] DeepSeek API ключ получен из БД (длина: ${apiKey.length})`);
+        console.log(`DeepSeek API ключ получен из БД (длина: ${apiKey.length})`);
         this.updateApiKey(apiKey);
         log('DeepSeek API ключ успешно получен через API Key Service', 'deepseek');
-        console.log(`[deepseek] API ключ успешно установлен для сервиса, hasApiKey(): ${this.hasApiKey()}`);
+        console.log('DeepSeek API ключ успешно получен через API Key Service');
         return true;
       } else {
-        console.log(`[deepseek] API ключ DeepSeek не найден в БД для пользователя: ${userId}`);
+        console.log('API ключ DeepSeek не найден в БД для пользователя', userId);
         log('DeepSeek API ключ не найден в настройках пользователя', 'deepseek');
         return false;
       }
