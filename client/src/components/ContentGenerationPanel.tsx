@@ -82,11 +82,42 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
     }
   });
 
+  /**
+   * Функция для очистки HTML-контента от HTML-тегов
+   * @param html HTML-контент
+   * @returns Очищенный текст
+   */
+  const stripHtml = (html: string | null | undefined): string => {
+    if (!html) return '';
+    
+    // Обработка случая, когда html - это простой текст без HTML-тегов
+    if (typeof html === 'string' && !html.includes('<')) {
+      return html;
+    }
+    
+    try {
+      // Создаем временный DOM-элемент
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      // Возвращаем только текстовый контент
+      return tempDiv.textContent || tempDiv.innerText || '';
+    } catch (error) {
+      console.error('Ошибка при очистке HTML:', error);
+      // В случае ошибки возвращаем исходный текст, или пустую строку, если его нет
+      return typeof html === 'string' ? html : '';
+    }
+  };
+
   // Мутация для генерации контента через API
   const { mutate: generateContent } = useMutation({
     mutationFn: async (values: GenerateContentForm) => {
       // Формируем контекст из выбранных трендов
       const trendsContext = selectedTopics.map(topic => topic.title).join(", ");
+      
+      // Очищаем HTML из prompt перед отправкой
+      const plainTextPrompt = stripHtml(values.prompt);
+      
+      console.log('Отправка запроса с очищенным текстом:', plainTextPrompt);
       
       // Вызываем API генерации текста с выбранной моделью
       const response = await apiRequest(
@@ -94,7 +125,7 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
         {
           method: 'POST',
           data: {
-            prompt: values.prompt,
+            prompt: plainTextPrompt,
             trendsContext,
             tone: values.tone,
           }
