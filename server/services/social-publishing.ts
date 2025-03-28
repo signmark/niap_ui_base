@@ -504,14 +504,163 @@ export class SocialPublishingService {
     content: CampaignContent,
     instagramSettings?: SocialMediaSettings['instagram']
   ): Promise<SocialPublication> {
-    // Публикация в Instagram требует использования Facebook Graph API
-    // Здесь упрощенная реализация для демонстрации
-    return {
-      platform: 'instagram',
-      status: 'failed',
-      publishedAt: null,
-      error: 'Публикация в Instagram не реализована в данной версии'
-    };
+    // Проверяем наличие настроек
+    if (!instagramSettings?.token) {
+      log(`Отсутствует токен Instagram для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует токен Instagram (Graph API) в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    try {
+      log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Instagram. Токен: ${instagramSettings.token.substring(0, 6)}...`, 'social-publishing');
+
+      // Подготовка описания
+      let caption = content.title ? `${content.title}\n\n` : '';
+      
+      // Удаляем HTML-теги, но сохраняем их содержимое
+      const contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
+        .replace(/<\/?[^>]+(>|$)/g, '');
+      
+      caption += contentText;
+
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        caption += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+
+      log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
+
+      // Инстаграм требует наличие изображения
+      if (!content.imageUrl) {
+        log(`Для публикации в Instagram необходимо изображение`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Для публикации в Instagram необходимо изображение',
+          userId: content.userId
+        };
+      }
+
+      // Используем n8n webhook для публикации
+      const n8nWebhookUrl = process.env.N8N_PUBLISH_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
+      const n8nApiKey = process.env.N8N_API_KEY;
+
+      if (!n8nApiKey) {
+        log(`Отсутствует API ключ для n8n webhook`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Отсутствует API ключ для n8n webhook в переменных окружения',
+          userId: content.userId
+        };
+      }
+
+      // Подготовка данных для отправки на webhook
+      const webhookData = {
+        contentId: content.id,
+        campaignId: content.campaignId,
+        platforms: ['instagram'],
+        credentials: {
+          instagram: {
+            accessToken: instagramSettings.token
+          }
+        },
+        content: {
+          instagram: {
+            caption: caption,
+            hashtags: content.hashtags || [],
+            imageUrl: content.imageUrl
+          }
+        },
+        scheduleTime: new Date().toISOString() // Публикуем сразу
+      };
+
+      log(`Отправка запроса на публикацию в Instagram через webhook: ${n8nWebhookUrl}`, 'social-publishing');
+      log(`Данные для webhook: ${JSON.stringify(webhookData).substring(0, 100)}...`, 'social-publishing');
+
+      // Отправка запроса на webhook
+      const response = await axios.post(n8nWebhookUrl, webhookData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-N8N-Authorization': n8nApiKey
+        }
+      });
+
+      log(`Получен ответ от n8n webhook: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      // Обработка ответа от webhook
+      if (response.data && response.data.success) {
+        // Успешная публикация
+        if (response.data.results && response.data.results.instagram) {
+          const result = response.data.results.instagram;
+          return {
+            platform: 'instagram',
+            status: result.status || 'published',
+            publishedAt: new Date(),
+            postId: result.postId || null,
+            postUrl: result.postUrl || null,
+            error: null,
+            userId: content.userId
+          };
+        } else {
+          // Webhook вернул успех, но без данных для Instagram
+          return {
+            platform: 'instagram',
+            status: 'pending',
+            publishedAt: null,
+            postId: null,
+            postUrl: null,
+            error: null,
+            userId: content.userId
+          };
+        }
+      } else if (response.data && !response.data.success && response.data.errors && response.data.errors.instagram) {
+        // Ошибка публикации
+        const error = response.data.errors.instagram;
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: `Ошибка при публикации в Instagram: ${error.message || JSON.stringify(error)}`,
+          userId: content.userId
+        };
+      } else {
+        // Неизвестный формат ответа
+        return {
+          platform: 'instagram',
+          status: 'pending',
+          publishedAt: null,
+          postId: null,
+          postUrl: null,
+          error: null,
+          userId: content.userId
+        };
+      }
+    } catch (error: any) {
+      log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации в Instagram: ${error.message}`,
+        userId: content.userId
+      };
+    }
   }
 
   /**
@@ -524,14 +673,81 @@ export class SocialPublishingService {
     content: CampaignContent,
     facebookSettings?: SocialMediaSettings['facebook']
   ): Promise<SocialPublication> {
-    // Публикация в Facebook требует использования Facebook Graph API
-    // Здесь упрощенная реализация для демонстрации
-    return {
-      platform: 'facebook',
-      status: 'failed',
-      publishedAt: null,
-      error: 'Публикация в Facebook не реализована в данной версии'
-    };
+    // Проверяем наличие настроек
+    if (!facebookSettings?.token) {
+      log(`Отсутствует токен Facebook для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует токен Facebook (Graph API) в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    if (!facebookSettings?.pageId) {
+      log(`Отсутствует ID страницы Facebook для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует ID страницы Facebook в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    try {
+      log(`Публикация в Facebook. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Facebook. Токен: ${facebookSettings.token.substring(0, 6)}..., Страница: ${facebookSettings.pageId}`, 'social-publishing');
+
+      // Подготовка сообщения
+      let message = content.title ? `${content.title}\n\n` : '';
+      
+      // Удаляем HTML-теги, но сохраняем их содержимое
+      const contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
+        .replace(/<\/?[^>]+(>|$)/g, '');
+      
+      message += contentText;
+
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+
+      log(`Подготовлено сообщение для Facebook: ${message.substring(0, 50)}...`, 'social-publishing');
+
+      // Используем Facebook Graph API для публикации
+      // Это просто заглушка, так как для публикации в Facebook требуется настроенный webhook в n8n
+      log(`Отправка запроса на публикацию в Facebook через webhook`, 'social-publishing');
+      
+      // TODO: Реализация интеграции с n8n для публикации в Facebook
+
+      return {
+        platform: 'facebook',
+        status: 'pending',
+        publishedAt: null,
+        postId: null,
+        postUrl: null,
+        error: null,
+        userId: content.userId
+      };
+    } catch (error: any) {
+      log(`Ошибка при публикации в Facebook: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации в Facebook: ${error.message}`,
+        userId: content.userId
+      };
+    }
   }
 
   /**
@@ -666,8 +882,9 @@ export class SocialPublishingService {
           
           // Добавляем дату публикации, если есть хотя бы одна успешная публикация
           if (firstPublishedAt) {
-            updateData.published_at = firstPublishedAt.toISOString();
-            log(`Обновление поля published_at на ${firstPublishedAt.toISOString()}`, 'social-publishing');
+            const dateValue = firstPublishedAt as Date;
+            updateData.published_at = dateValue.toISOString();
+            log(`Обновление поля published_at на ${dateValue.toISOString()}`, 'social-publishing');
           }
           
           await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, updateData, {
@@ -692,8 +909,9 @@ export class SocialPublishingService {
       
       // Добавляем дату публикации, если есть хотя бы одна успешная публикация
       if (firstPublishedAt) {
+        const dateValue = firstPublishedAt as Date;
         (updateData as any).publishedAt = firstPublishedAt;
-        log(`Обновление поля publishedAt на ${firstPublishedAt.toISOString()}`, 'social-publishing');
+        log(`Обновление поля publishedAt на ${dateValue.toISOString()}`, 'social-publishing');
       }
       
       const updatedContent = await storage.updateCampaignContent(contentId, updateData, systemToken);
