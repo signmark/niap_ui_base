@@ -59,7 +59,32 @@ export async function apiRequest(
     return { success: true };
   }
   
-  return res.json();
+  try {
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await res.json();
+    } else {
+      console.warn('Ответ сервера не в формате JSON:', contentType);
+      const text = await res.text();
+      // Попытаемся проверить, не содержит ли текст JSON
+      try {
+        if (text.includes('{') && text.includes('}')) {
+          // Попытка найти JSON в тексте
+          const jsonMatch = text.match(/\{.*\}/s);
+          if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+          }
+        }
+        // Если JSON не найден, вернем текст как сообщение об ошибке
+        throw new Error(`Сервер вернул не JSON: ${text.substring(0, 100)}...`);
+      } catch (e) {
+        throw new Error(`Ошибка при обработке ответа: ${e.message}`);
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при разборе ответа сервера:', error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

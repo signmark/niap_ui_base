@@ -89,15 +89,17 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
       const trendsContext = selectedTopics.map(topic => topic.title).join(", ");
       
       // Вызываем API генерации текста с выбранной моделью
-      const response = await apiRequest({
-        url: `/api/content-generation/${values.modelType}/text`,
-        method: 'POST',
-        data: {
-          prompt: values.prompt,
-          trendsContext,
-          tone: values.tone,
+      const response = await apiRequest(
+        `/api/content-generation/${values.modelType}/text`,
+        {
+          method: 'POST',
+          data: {
+            prompt: values.prompt,
+            trendsContext,
+            tone: values.tone,
+          }
         }
-      }) as GenerationResult;
+      ) as GenerationResult;
       
       return response;
     },
