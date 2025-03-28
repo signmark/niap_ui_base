@@ -94,6 +94,9 @@ ${systemInstructions}
       
       console.log(`Успешно получен ответ от DeepSeek API длиной ${generatedText.length} символов`);
       
+      // Важно: устанавливаем заголовок Content-Type явно, чтобы предотвратить автоматическое определение
+      res.setHeader('Content-Type', 'application/json');
+      
       // Возвращаем результат
       return res.json({
         success: true,
@@ -238,6 +241,9 @@ ${systemInstructions}
       );
       
       console.log(`Успешно получен ответ от Qwen API длиной ${generatedText.length} символов`);
+      
+      // Важно: устанавливаем заголовок Content-Type явно, чтобы предотвратить автоматическое определение
+      res.setHeader('Content-Type', 'application/json');
       
       // Возвращаем результат
       return res.json({

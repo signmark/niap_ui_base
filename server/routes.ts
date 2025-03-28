@@ -32,6 +32,7 @@ import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
+import { setupContentGenerationRoutes } from './routes/content-generation';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -1269,6 +1270,9 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Регистрируем маршруты для генерации контента с использованием AI
+  setupContentGenerationRoutes(app);
+  
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
