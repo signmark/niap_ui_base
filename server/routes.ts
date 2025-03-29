@@ -8316,6 +8316,58 @@ https://t.me/channelname/ - description`;
     }
   });
   
+  // Маршрут для анализа медиаконтента
+  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
+    try {
+      const { mediaUrl } = req.query;
+      
+      if (!mediaUrl) {
+        return res.status(400).json({ error: "Требуется URL медиаконтента" });
+      }
+      
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Не удалось определить пользователя" });
+      }
+      
+      console.log(`[media-analysis] Analyzing media content: ${mediaUrl}`);
+      
+      // Используем сервис медиа-анализатора для анализа контента
+      const analysisResult = await mediaAnalyzerService.analyzeMedia(mediaUrl as string, userId, token);
+      
+      if (!analysisResult) {
+        return res.status(500).json({ error: "Не удалось проанализировать медиаконтент" });
+      }
+      
+      return res.json({
+        success: true,
+        result: {
+          mediaUrl: mediaUrl,
+          mediaType: analysisResult.mediaType || 'image',
+          objects: analysisResult.details?.objects || [],
+          textContent: analysisResult.details?.textContent || [],
+          colors: analysisResult.details?.colorPalette?.map((color: any) => color.hex) || [],
+          description: analysisResult.summary?.description || '',
+          sentiment: 'neutral', // Заглушка для будущей интеграции
+          timestamp: new Date()
+        }
+      });
+    } catch (error: any) {
+      console.error('[media-analysis] Error analyzing media:', error);
+      return res.status(500).json({ 
+        error: "Ошибка при анализе медиаконтента",
+        details: error.message 
+      });
+    }
+  });
+
   // Анализ сайта для автоматического заполнения анкеты
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
     try {
@@ -10459,6 +10511,64 @@ ${datesText}
         success: false,
         error: "Ошибка при тестировании формата ключа",
         message: error.message
+      });
+    }
+  });
+
+  // Маршрут для анализа медиаконтента (изображения или видео)
+  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
+    try {
+      const { mediaUrl, trendId } = req.query;
+      
+      if (!mediaUrl || typeof mediaUrl !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Требуется указать URL медиаконтента",
+          message: "Укажите URL изображения или видео для анализа" 
+        });
+      }
+      
+      // Получаем userId и токен из запроса, которые были установлены в authenticateUser middleware
+      const userId = req.user?.id;
+      const authToken = req.user?.token;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Unauthorized",
+          message: "Неавторизованный запрос" 
+        });
+      }
+      
+      console.log(`[media-analysis] Анализ медиаконтента для пользователя ${userId}: ${mediaUrl.substring(0, 50)}...`);
+      
+      // Анализируем медиаконтент с помощью MediaAnalyzerService
+      const result = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
+      
+      if (!result) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "Ошибка анализа",
+          message: "Не удалось проанализировать медиаконтент" 
+        });
+      }
+      
+      return res.json({ 
+        success: true, 
+        result
+      });
+    } catch (error) {
+      console.error("Error analyzing media:", error);
+      
+      let errorMessage = "Ошибка при анализе медиаконтента";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: "Ошибка анализа",
+        message: errorMessage 
       });
     }
   });
