@@ -58,17 +58,22 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
         params.append('trendId', trendId);
       }
       
-      const response = await fetch(`/api/media-analysis?${params.toString()}`);
-      const json = await response.json();
+      // Используем API клиент, который автоматически добавляет заголовок авторизации
+      const response = await apiRequest<any>({
+        url: `/api/media-analysis?${params.toString()}`,
+        method: 'GET',
+      });
       
-      if (json.result) {
+      console.log('Media analysis response:', response);
+      
+      if (response.result) {
         // Вызываем обработчик успешного анализа, если он предоставлен
         if (onAnalysisComplete) {
-          onAnalysisComplete(json.result);
+          onAnalysisComplete(response.result);
         }
       }
       
-      return json;
+      return response;
     },
     enabled: false, // Не запускаем запрос автоматически при монтировании компонента
     retry: 1
