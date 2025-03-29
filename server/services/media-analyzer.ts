@@ -26,7 +26,7 @@ class MediaAnalyzerService {
       
       if (!falAiApiKey) {
         console.error(`[media-analyzer] Не удалось получить API ключ FAL AI для пользователя ${userId}`);
-        throw new Error("Не удалось получить API ключ FAL AI. Проверьте настройки пользователя.");
+        throw new Error("Для анализа медиаконтента требуется API ключ FAL AI. Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}");
       }
       
       // В зависимости от типа медиа используем соответствующий метод анализа
