@@ -197,60 +197,13 @@ export function SettingsDialog() {
     }
   };
 
-  // Состояние Instagram соединения
-  const [instagramConnected, setInstagramConnected] = useState(false);
-  const [instagramPageName, setInstagramPageName] = useState("");
-  const [instagramId, setInstagramId] = useState("");
-  const [loadingInstagram, setLoadingInstagram] = useState(false);
-  
-  // Проверяем статус подключения Instagram
-  const checkInstagramConnection = async () => {
-    try {
-      setLoadingInstagram(true);
-      const response = await api.get('/auth/instagram/settings');
-      if (response.data?.success && response.data?.data) {
-        const { connected, pageName, instagramId, message } = response.data.data;
-        setInstagramConnected(connected);
-        setInstagramPageName(pageName || "");
-        setInstagramId(instagramId || "");
-        
-        if (!connected && response.data.data.error) {
-          toast({
-            variant: "destructive",
-            title: "Ошибка подключения Instagram",
-            description: response.data.data.error
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error("Ошибка при проверке подключения Instagram:", error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось проверить подключение Instagram"
-      });
-    } finally {
-      setLoadingInstagram(false);
-    }
-  };
-  
-  // Запускаем подключение Instagram через OAuth
-  const connectInstagram = () => {
-    window.location.href = "/api/auth/instagram";
-  };
-  
-  // Проверяем подключение Instagram при загрузке компонента
-  useEffect(() => {
-    if (userId) {
-      checkInstagramConnection();
-    }
-  }, [userId]);
-
   // Вызовы обобщенной функции для каждого типа ключа
   const testFalAiKey = () => testApiKey('fal_ai', falAiKey, setFalAiTesting);
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  // Токены социальных сетей (Instagram и Facebook) были перемещены
+  // в настройки каждой кампании и убраны из глобальных настроек
   
   const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
     if (!xmlRiverUserId.trim()) {
@@ -644,114 +597,16 @@ export function SettingsDialog() {
             </TooltipProvider>
           </div>
           
-          {/* Instagram OAuth авторизация */}
-          <Separator className="my-6" />
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-semibold">Instagram Business</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="ml-2">
-                        <HelpCircle className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>Подключите бизнес-аккаунт Instagram для публикации контента.</p>
-                      <p className="mt-2">Для работы с Instagram требуется бизнес-аккаунт, связанный с Facebook страницей.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <Badge 
-                variant={instagramConnected ? "success" : "destructive"}
-                className="ml-auto"
-              >
-                {instagramConnected ? "Подключен" : "Отключен"}
-              </Badge>
-            </div>
-            
-            {loadingInstagram ? (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2">Проверка подключения...</span>
-              </div>
-            ) : instagramConnected ? (
-              <div className="space-y-2 p-4 bg-primary/5 rounded-md">
-                <div className="flex flex-col space-y-1">
-                  <span className="font-medium">Страница Facebook:</span>
-                  <span>{instagramPageName}</span>
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <span className="font-medium">ID бизнес-аккаунта Instagram:</span>
-                  <span>{instagramId}</span>
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Instagram успешно подключен и готов к публикациям
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={connectInstagram}
-                  >
-                    Переподключить
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md">
-                  <h4 className="font-medium text-amber-800 dark:text-amber-300">Instagram не подключен</h4>
-                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-                    Для публикации контента в Instagram необходимо подключить бизнес-аккаунт через Facebook.
-                  </p>
-                  <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
-                    Убедитесь, что у вас есть:
-                  </p>
-                  <ul className="list-disc list-inside mt-1 text-sm text-amber-700 dark:text-amber-400">
-                    <li>Страница Facebook</li>
-                    <li>Бизнес-аккаунт Instagram, связанный с этой страницей</li>
-                    <li>Права администратора на странице Facebook</li>
-                  </ul>
-                </div>
-                
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md w-full">
-                    <h4 className="font-medium text-blue-800 dark:text-blue-300">Важное примечание</h4>
-                    <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
-                      В соответствии с требованиями Facebook, после первого подключения может потребоваться до 24 часов, 
-                      прежде чем вы сможете использовать API для публикации контента.
-                    </p>
-                    <p className="mt-2 text-sm text-blue-700 dark:text-blue-400">
-                      Если процесс авторизации прерывается с ошибкой, вам могут потребоваться дополнительные действия 
-                      для настройки приложения Facebook.
-                    </p>
-                  </div>
-                  
-                  <Button
-                    onClick={connectInstagram}
-                    className="mt-2"
-                  >
-                    Подключить Instagram
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-          </div>
-
-          <Separator className="my-6" />
-
           <div className="rounded-md bg-blue-50 dark:bg-blue-950 p-4">
             <div className="flex">
               <InfoIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
               <div>
                 <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Информация</h3>
                 <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                  <p>Токены доступа к социальным сетям (VK, Telegram) настраиваются индивидуально для каждой кампании.</p>
-                  <p className="mt-1">Авторизация Instagram выполняется глобально и используется для всех кампаний.</p>
+                  <p>Токены доступа к социальным сетям (VK, Telegram, Facebook, Instagram) 
+                  теперь настраиваются индивидуально для каждой кампании.</p>
+                  <p className="mt-1">Это позволяет публиковать контент в разные аккаунты и группы 
+                  для разных кампаний.</p>
                 </div>
               </div>
             </div>
