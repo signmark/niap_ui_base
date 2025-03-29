@@ -9922,6 +9922,53 @@ ${datesText}
     }
   });
 
+  // Маршрут для анализа медиаконтента (изображений и видео) в трендах
+  app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { mediaUrl, trendId } = req.query;
+      
+      if (!mediaUrl) {
+        return res.status(400).json({ error: "Требуется URL медиаконтента" });
+      }
+      
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Пользователь не авторизован" });
+      }
+      
+      console.log(`[media-analysis] Analyzing media for user ${userId}: ${String(mediaUrl).substring(0, 50)}...`);
+      
+      // Анализируем медиаконтент через сервис анализатора
+      const result = await mediaAnalyzerService.analyzeMedia(
+        mediaUrl as string, 
+        userId,
+        token
+      );
+      
+      if (!result) {
+        return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
+      }
+      
+      // Если указан ID тренда, можно в будущем сохранять результаты анализа в базу данных
+      if (trendId) {
+        console.log(`[media-analysis] Analysis for trend ID: ${trendId}`);
+        // TODO: Реализовать сохранение результатов анализа для тренда
+      }
+      
+      return res.json({ result });
+    } catch (error) {
+      console.error("[media-analysis] Error analyzing media:", error);
+      return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
+    }
+  });
+  
   // Эндпоинт для тестирования Qwen API
   app.get('/api/test-qwen', async (req, res) => {
     try {

@@ -249,6 +249,47 @@ export class FalAiClient {
     
     return { images };
   }
+
+  /**
+   * Анализирует изображение и возвращает информацию о его содержимом
+   * Использует модель компьютерного зрения FAL AI для анализа
+   * 
+   * @param imageUrl URL изображения для анализа
+   * @returns Объект с результатами анализа (объекты, цвета, текст, композиция)
+   */
+  async analyzeImage(imageUrl: string): Promise<any> {
+    try {
+      console.log(`[FalAiClient] Анализ изображения: ${imageUrl.substring(0, 50)}...`);
+      
+      if (!this.apiKey) {
+        throw new Error('FAL API ключ не установлен');
+      }
+      
+      // Конечная точка для анализа изображений FAL AI
+      const endpoint = 'fal-ai/image-analyzer';
+      
+      // Формируем данные запроса
+      const requestData = {
+        image: imageUrl,
+        features: ['objects', 'colors', 'text', 'composition', 'sentiment']
+      };
+      
+      // Выполняем запрос к FAL AI
+      const response = await this.request(endpoint, requestData);
+      
+      console.log('[FalAiClient] Получен ответ анализа изображения');
+      
+      return response;
+    } catch (error: any) {
+      console.error('[FalAiClient] Ошибка анализа изображения:', error.message);
+      // Дополнительная информация об ошибке
+      if (error.response) {
+        console.error(`Статус код: ${error.response.status}`);
+        console.error(`Ответ сервера:`, error.response.data);
+      }
+      throw error;
+    }
+  }
 }
 
 // Экспортируем синглтон клиента для использования во всем приложении

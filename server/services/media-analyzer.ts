@@ -54,7 +54,7 @@ class MediaAnalyzerService {
   async analyzeMedia(mediaUrl: string, userId: string, authToken?: string): Promise<MediaAnalysisResult | null> {
     try {
       // Получаем API ключи для сервисов анализа
-      const falApiKey = await apiKeyService.getUserApiKey(userId, 'fal_api_key', authToken);
+      const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
       
       // Определяем тип медиа
       const isVideo = this.isVideoUrl(mediaUrl);
@@ -73,7 +73,7 @@ class MediaAnalyzerService {
   /**
    * Анализирует изображение с помощью FAL AI
    */
-  private async analyzeImage(imageUrl: string, userId: string, falApiKey?: string): Promise<ImageAnalysisResult> {
+  private async analyzeImage(imageUrl: string, userId: string, falApiKey?: string | null): Promise<ImageAnalysisResult> {
     try {
       console.log(`[media-analyzer] Analyzing image: ${imageUrl.substring(0, 50)}...`);
       
@@ -160,11 +160,30 @@ class MediaAnalyzerService {
    */
   private extractColors(imageAnalysis: any): string[] {
     try {
-      // Это заглушка, в будущем будет интегрирована с FAL AI
-      return ['#FFFFFF', '#000000']; // Будет заменено реальными данными от FAL AI
+      if (!imageAnalysis || !imageAnalysis.colors) {
+        return ['#FFFFFF', '#000000']; // Значения по умолчанию
+      }
+      
+      // Извлекаем цвета из анализа изображения
+      const colors = imageAnalysis.colors;
+      
+      if (Array.isArray(colors)) {
+        // Если уже массив, возвращаем его
+        return colors.map(color => typeof color === 'string' ? color : color.hex || color.value || '#000000');
+      } else if (typeof colors === 'object') {
+        // Если объект с доминирующими цветами
+        if (colors.dominant && Array.isArray(colors.dominant)) {
+          return colors.dominant.map((c: any) => c.hex || c.color || '#000000');
+        } else if (colors.palette && Array.isArray(colors.palette)) {
+          return colors.palette.map((c: any) => c.hex || c.color || '#000000');
+        }
+      }
+      
+      // Если ничего не найдено, возвращаем массив по умолчанию
+      return ['#FFFFFF', '#000000'];
     } catch (error) {
       console.error('[media-analyzer] Error extracting colors:', error);
-      return [];
+      return ['#FFFFFF', '#000000'];
     }
   }
 
@@ -173,8 +192,36 @@ class MediaAnalyzerService {
    */
   private extractObjects(imageAnalysis: any): string[] {
     try {
-      // Это заглушка, в будущем будет интегрирована с FAL AI
-      return ['Object 1', 'Object 2']; // Будет заменено реальными данными от FAL AI
+      if (!imageAnalysis) {
+        return [];
+      }
+      
+      // Проверяем разные форматы ответа от FAL AI
+      if (imageAnalysis.objects && Array.isArray(imageAnalysis.objects)) {
+        // Если есть массив объектов
+        return imageAnalysis.objects.map((obj: any) => {
+          if (typeof obj === 'string') return obj;
+          return obj.name || obj.label || obj.class || '';
+        }).filter(Boolean);
+      } else if (imageAnalysis.detection && Array.isArray(imageAnalysis.detection)) {
+        // Альтернативный формат с полем detection
+        return imageAnalysis.detection.map((obj: any) => {
+          if (typeof obj === 'string') return obj;
+          return obj.name || obj.label || obj.class || '';
+        }).filter(Boolean);
+      } else if (imageAnalysis.analysis && imageAnalysis.analysis.objects) {
+        // Еще один возможный формат с вложенным полем analysis
+        const objects = imageAnalysis.analysis.objects;
+        if (Array.isArray(objects)) {
+          return objects.map((obj: any) => {
+            if (typeof obj === 'string') return obj;
+            return obj.name || obj.label || obj.class || '';
+          }).filter(Boolean);
+        }
+      }
+      
+      // Если ничего не найдено, возвращаем пустой массив
+      return [];
     } catch (error) {
       console.error('[media-analyzer] Error extracting objects:', error);
       return [];
@@ -186,8 +233,32 @@ class MediaAnalyzerService {
    */
   private extractText(imageAnalysis: any): string[] {
     try {
-      // Это заглушка, в будущем будет интегрирована с FAL AI
-      return []; // Будет заменено реальными данными от FAL AI
+      if (!imageAnalysis) {
+        return [];
+      }
+      
+      // Проверяем различные форматы ответа
+      if (imageAnalysis.text && Array.isArray(imageAnalysis.text)) {
+        // Если есть массив текстов
+        return imageAnalysis.text.map((text: any) => {
+          if (typeof text === 'string') return text;
+          return text.content || text.value || '';
+        }).filter(Boolean);
+      } else if (imageAnalysis.text && typeof imageAnalysis.text === 'string') {
+        // Если текст в виде строки
+        return [imageAnalysis.text];
+      } else if (imageAnalysis.ocr && imageAnalysis.ocr.text) {
+        // Формат с OCR данными
+        const ocrText = imageAnalysis.ocr.text;
+        if (Array.isArray(ocrText)) {
+          return ocrText.filter(Boolean);
+        } else if (typeof ocrText === 'string') {
+          return [ocrText];
+        }
+      }
+      
+      // Если ничего не найдено
+      return [];
     } catch (error) {
       console.error('[media-analyzer] Error extracting text:', error);
       return [];
@@ -199,8 +270,38 @@ class MediaAnalyzerService {
    */
   private determineComposition(imageAnalysis: any): string {
     try {
-      // Это заглушка, в будущем будет интегрирована с FAL AI
-      return 'balanced'; // Будет заменено реальными данными от FAL AI
+      if (!imageAnalysis) {
+        return 'unknown';
+      }
+      
+      // Проверяем различные форматы ответа
+      if (imageAnalysis.composition && typeof imageAnalysis.composition === 'string') {
+        return imageAnalysis.composition;
+      } else if (imageAnalysis.analysis && imageAnalysis.analysis.composition) {
+        return imageAnalysis.analysis.composition;
+      }
+      
+      // Если есть данные о разных аспектах композиции, анализируем их
+      const compositionData = imageAnalysis.composition || {};
+      
+      if (compositionData.balance) {
+        if (compositionData.balance === 'symmetric' || compositionData.balance > 0.7) {
+          return 'balanced';
+        } else if (compositionData.balance < 0.3) {
+          return 'dynamic';
+        }
+      }
+      
+      if (compositionData.rule_of_thirds && compositionData.rule_of_thirds > 0.7) {
+        return 'rule_of_thirds';
+      }
+      
+      if (compositionData.golden_ratio && compositionData.golden_ratio > 0.7) {
+        return 'golden_ratio';
+      }
+      
+      // Если не удалось определить по предыдущим признакам
+      return 'balanced';
     } catch (error) {
       console.error('[media-analyzer] Error determining composition:', error);
       return 'unknown';
@@ -212,8 +313,36 @@ class MediaAnalyzerService {
    */
   private determineSentiment(imageAnalysis: any): 'positive' | 'neutral' | 'negative' {
     try {
-      // Это заглушка, в будущем будет интегрирована с FAL AI
-      return 'neutral'; // Будет заменено реальными данными от FAL AI
+      if (!imageAnalysis) {
+        return 'neutral';
+      }
+      
+      // Проверяем различные форматы ответа
+      if (imageAnalysis.sentiment) {
+        const sentiment = imageAnalysis.sentiment;
+        
+        // Если sentiment - это строка
+        if (typeof sentiment === 'string') {
+          if (sentiment.includes('positive') || sentiment.includes('happy') || sentiment.includes('joy')) {
+            return 'positive';
+          } else if (sentiment.includes('negative') || sentiment.includes('sad') || sentiment.includes('angry')) {
+            return 'negative';
+          }
+          return 'neutral';
+        }
+        
+        // Если sentiment - это объект с оценками
+        if (typeof sentiment === 'object') {
+          if (sentiment.positive > sentiment.negative && sentiment.positive > sentiment.neutral) {
+            return 'positive';
+          } else if (sentiment.negative > sentiment.positive && sentiment.negative > sentiment.neutral) {
+            return 'negative';
+          }
+        }
+      }
+      
+      // По умолчанию нейтральный тон
+      return 'neutral';
     } catch (error) {
       console.error('[media-analyzer] Error determining sentiment:', error);
       return 'neutral';

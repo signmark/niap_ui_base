@@ -1,39 +1,17 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle
-} from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  Loader2, 
-  Image as ImageIcon, 
-  Video, 
-  Droplets, 
-  ShapesIcon, 
-  PencilIcon, 
-  LayoutIcon, 
-  SmileIcon, 
-  GaugeIcon 
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { CheckIcon, Cross2Icon, ImageIcon, VideoIcon, ColorWheelIcon, InfoCircledIcon } from '@radix-ui/react-icons';
+import { apiRequest } from '@/lib/queryClient';
+import { Loader2, BarChart2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface MediaAnalysisResult {
+type MediaAnalysisResult = {
   mediaUrl: string;
   mediaType: 'image' | 'video';
   objects?: string[];
@@ -41,10 +19,6 @@ interface MediaAnalysisResult {
   colors?: string[];
   composition?: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
-  engagement?: number;
-  resolution?: { width: number; height: number };
-  aspectRatio?: string;
-  dominant_colors?: string[];
   duration?: number;
   keyScenes?: Array<{ timestamp: number; description: string }>;
   audio?: {
@@ -52,357 +26,380 @@ interface MediaAnalysisResult {
     hasSpeech: boolean;
     speechText?: string;
   };
-  timestamp: string | Date;
-}
+  engagement?: number;
+  timestamp: Date;
+};
 
 interface MediaAnalysisPanelProps {
-  trendId: string;
   mediaUrl?: string;
-  isVisible?: boolean;
+  trendId?: string;
+  onAnalysisComplete?: (result: MediaAnalysisResult) => void;
 }
 
-export function MediaAnalysisPanel({ trendId, mediaUrl, isVisible = true }: MediaAnalysisPanelProps) {
+export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
+  mediaUrl,
+  trendId,
+  onAnalysisComplete
+}) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>("overview");
   
-  // Получаем результаты анализа медиа
-  const { data: analysisResult, isLoading, isError, error } = useQuery({
-    queryKey: ["media-analysis", trendId, mediaUrl],
+  // Запрос на анализ медиаконтента
+  const { isLoading, data, error, refetch } = useQuery({
+    queryKey: ['mediaAnalysis', mediaUrl],
     queryFn: async () => {
-      try {
-        // Получаем токен авторизации из localStorage
-        const authToken = localStorage.getItem('auth_token');
-        if (!authToken) {
-          throw new Error("Требуется авторизация");
-        }
-        
-        // Если нет URL медиа, возвращаем null
-        if (!mediaUrl) {
-          return null;
-        }
-        
-        // Запрос к API для анализа медиа
-        const response = await fetch(`/api/media-analysis?trendId=${trendId}&mediaUrl=${encodeURIComponent(mediaUrl)}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Не удалось получить анализ медиа");
-        }
-        
-        const data = await response.json();
-        return data.result as MediaAnalysisResult;
-      } catch (error) {
-        console.error("Error fetching media analysis:", error);
-        throw error;
+      if (!mediaUrl) return null;
+      
+      const params = new URLSearchParams();
+      params.append('mediaUrl', mediaUrl);
+      
+      if (trendId) {
+        params.append('trendId', trendId);
       }
+      
+      const response = await apiRequest<{ result: MediaAnalysisResult }>({
+        url: `/api/media-analysis?${params.toString()}`,
+        method: 'GET'
+      });
+      
+      if (response.result) {
+        // Вызываем обработчик успешного анализа, если он предоставлен
+        if (onAnalysisComplete) {
+          onAnalysisComplete(response.result);
+        }
+      }
+      
+      return response;
     },
-    enabled: !!trendId && !!mediaUrl && isVisible
+    enabled: false, // Не запускаем запрос автоматически при монтировании компонента
+    retry: 1
   });
   
-  // Обработка ошибок
-  useEffect(() => {
-    if (isError) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка анализа медиа",
-        description: error instanceof Error ? error.message : "Не удалось проанализировать медиаконтент"
-      });
+  // Отображение ошибки анализа
+  const showError = (error: any) => {
+    let errorMessage = 'Не удалось проанализировать медиаконтент';
+    
+    if (error?.message) {
+      errorMessage += `: ${error.message}`;
     }
-  }, [isError, error, toast]);
+    
+    toast({
+      title: 'Ошибка анализа',
+      description: errorMessage,
+      variant: 'destructive'
+    });
+  };
   
-  // Если нет URL медиа или компонент скрыт
-  if (!mediaUrl || !isVisible) {
-    return null;
-  }
+  // Запуск анализа медиаконтента
+  const startAnalysis = async () => {
+    try {
+      if (!mediaUrl) {
+        toast({
+          title: 'Ошибка',
+          description: 'URL медиаконтента не указан',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      await refetch();
+      setIsDialogOpen(true);
+    } catch (error) {
+      showError(error);
+    }
+  };
   
-  // Пока идет загрузка
-  if (isLoading) {
+  // Преобразование эмоционального тона в человекочитаемый формат
+  const getSentimentLabel = (sentiment?: 'positive' | 'neutral' | 'negative') => {
+    switch (sentiment) {
+      case 'positive':
+        return { label: 'Позитивный', color: 'bg-green-500' };
+      case 'negative':
+        return { label: 'Негативный', color: 'bg-red-500' };
+      case 'neutral':
+      default:
+        return { label: 'Нейтральный', color: 'bg-gray-500' };
+    }
+  };
+  
+  // Преобразование композиции в человекочитаемый формат
+  const getCompositionLabel = (composition?: string) => {
+    switch (composition) {
+      case 'rule_of_thirds':
+        return 'Правило третей';
+      case 'golden_ratio':
+        return 'Золотое сечение';
+      case 'balanced':
+        return 'Сбалансированная';
+      case 'dynamic':
+        return 'Динамичная';
+      default:
+        return composition || 'Не определена';
+    }
+  };
+  
+  // Если mediaUrl не указан, отображаем кнопку загрузки
+  if (!mediaUrl) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Анализ медиаконтента</CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center p-6">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Анализируем медиаконтент...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // Если нет результатов анализа
-  if (!analysisResult) {
-    return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Анализ медиаконтента</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center">
-            Нет данных для анализа или медиаконтент не поддерживается.
-          </p>
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Укажите URL медиаконтента для анализа</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
   
-  // Получаем иконку и название типа медиа
-  const mediaTypeIcon = analysisResult.mediaType === 'image' ? <ImageIcon className="h-4 w-4" /> : <Video className="h-4 w-4" />;
-  const mediaTypeName = analysisResult.mediaType === 'image' ? 'Изображение' : 'Видео';
-  
-  // Генерируем цветовые блоки для отображения
-  const renderColorBlocks = () => {
-    if (!analysisResult.colors || analysisResult.colors.length === 0) {
-      return <p className="text-sm text-muted-foreground">Данные о цветах отсутствуют.</p>;
-    }
-    
-    return (
-      <div className="flex flex-wrap gap-2 mt-2">
-        {analysisResult.colors.map((color, index) => (
-          <div 
-            key={index} 
-            className="flex flex-col items-center"
-          >
-            <div 
-              className="h-8 w-8 rounded-md border"
-              style={{ backgroundColor: color }}
-            />
-            <span className="text-xs mt-1">{color}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-  
-  // Рендерим компонент с результатами анализа
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-muted/50">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">Анализ медиаконтента</CardTitle>
-          <Badge variant="outline" className="flex gap-1 items-center">
-            {mediaTypeIcon}
-            <span>{mediaTypeName}</span>
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Обзор</TabsTrigger>
-            {analysisResult.mediaType === 'image' && (
-              <TabsTrigger value="image">Изображение</TabsTrigger>
+    <>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            {mediaUrl.includes('.mp4') || mediaUrl.includes('video') ? (
+              <VideoIcon className="mr-2" />
+            ) : (
+              <ImageIcon className="mr-2" />
             )}
-            {analysisResult.mediaType === 'video' && (
-              <TabsTrigger value="video">Видео</TabsTrigger>
-            )}
-            <TabsTrigger value="engagement">Вовлеченность</TabsTrigger>
-          </TabsList>
-          
-          {/* Вкладка общего обзора */}
-          <TabsContent value="overview" className="p-4">
-            <div className="space-y-4">
-              <div className="mb-2">
+            Анализ медиаконтента
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="relative w-full h-48 overflow-hidden rounded-md">
+              {mediaUrl.includes('.mp4') || mediaUrl.includes('video') ? (
+                <video 
+                  src={mediaUrl} 
+                  className="w-full h-full object-cover"
+                  controls
+                />
+              ) : (
                 <img 
                   src={mediaUrl} 
-                  alt="Контент тренда" 
-                  className="w-full h-auto rounded-md object-cover max-h-[200px]"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder-image.jpg';
-                  }}
+                  alt="Медиаконтент для анализа" 
+                  className="w-full h-full object-cover"
                 />
-              </div>
-
-              <Accordion type="single" collapsible className="w-full">
-                {/* Объекты на медиа */}
-                {analysisResult.objects && analysisResult.objects.length > 0 && (
-                  <AccordionItem value="objects">
-                    <AccordionTrigger className="flex gap-2">
-                      <ShapesIcon className="h-4 w-4" />
-                      <span>Объекты</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {analysisResult.objects.map((object, index) => (
-                          <Badge key={index} variant="secondary">{object}</Badge>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                
-                {/* Цвета */}
-                {analysisResult.colors && analysisResult.colors.length > 0 && (
-                  <AccordionItem value="colors">
-                    <AccordionTrigger className="flex gap-2">
-                      <Droplets className="h-4 w-4" />
-                      <span>Цветовая схема</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      {renderColorBlocks()}
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                
-                {/* Текст (если есть) */}
-                {analysisResult.textContent && analysisResult.textContent.length > 0 && (
-                  <AccordionItem value="text">
-                    <AccordionTrigger className="flex gap-2">
-                      <PencilIcon className="h-4 w-4" />
-                      <span>Текст</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {analysisResult.textContent.map((text, index) => (
-                          <li key={index} className="text-sm">{text}</li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                
-                {/* Композиция */}
-                {analysisResult.composition && (
-                  <AccordionItem value="composition">
-                    <AccordionTrigger className="flex gap-2">
-                      <LayoutIcon className="h-4 w-4" />
-                      <span>Композиция</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <p className="text-sm">{analysisResult.composition}</p>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                
-                {/* Эмоциональный тон */}
-                {analysisResult.sentiment && (
-                  <AccordionItem value="sentiment">
-                    <AccordionTrigger className="flex gap-2">
-                      <SmileIcon className="h-4 w-4" />
-                      <span>Эмоциональный тон</span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <Badge variant={
-                        analysisResult.sentiment === 'positive' ? 'success' :
-                        analysisResult.sentiment === 'negative' ? 'destructive' : 
-                        'outline'
-                      }>
-                        {analysisResult.sentiment === 'positive' ? 'Позитивный' :
-                         analysisResult.sentiment === 'negative' ? 'Негативный' : 
-                         'Нейтральный'}
-                      </Badge>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-              </Accordion>
+              )}
             </div>
-          </TabsContent>
+            
+            <Button 
+              onClick={startAnalysis} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Анализируем...
+                </>
+              ) : (
+                <>
+                  <BarChart2 className="mr-2 h-4 w-4" />
+                  Анализировать контент
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Результаты анализа медиаконтента</DialogTitle>
+            <DialogDescription>
+              Детальный анализ содержимого, композиции и эмоционального тона
+            </DialogDescription>
+          </DialogHeader>
           
-          {/* Вкладка для изображений */}
-          {analysisResult.mediaType === 'image' && (
-            <TabsContent value="image" className="p-4">
-              <div className="space-y-4">
-                {analysisResult.resolution && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Разрешение</span>
-                    <p className="text-sm text-muted-foreground">
-                      {`${analysisResult.resolution.width} × ${analysisResult.resolution.height}`}
-                    </p>
-                  </div>
-                )}
-                
-                {analysisResult.aspectRatio && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Соотношение сторон</span>
-                    <p className="text-sm text-muted-foreground">{analysisResult.aspectRatio}</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          )}
-          
-          {/* Вкладка для видео */}
-          {analysisResult.mediaType === 'video' && (
-            <TabsContent value="video" className="p-4">
-              <div className="space-y-4">
-                {analysisResult.duration !== undefined && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Длительность</span>
-                    <p className="text-sm text-muted-foreground">
-                      {`${Math.floor(analysisResult.duration / 60)}:${String(Math.floor(analysisResult.duration % 60)).padStart(2, '0')}`}
-                    </p>
-                  </div>
-                )}
-                
-                {analysisResult.audio && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Аудио</span>
-                    <div className="flex gap-2">
-                      {analysisResult.audio.hasMusic && (
-                        <Badge variant="outline">Музыка</Badge>
-                      )}
-                      {analysisResult.audio.hasSpeech && (
-                        <Badge variant="outline">Речь</Badge>
-                      )}
-                    </div>
-                    {analysisResult.audio.hasSpeech && analysisResult.audio.speechText && (
-                      <div className="mt-2">
-                        <span className="text-xs font-medium">Распознанная речь:</span>
-                        <p className="text-xs text-muted-foreground mt-1">{analysisResult.audio.speechText}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {analysisResult.keyScenes && analysisResult.keyScenes.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Ключевые сцены</span>
-                    <div className="space-y-2 mt-1">
-                      {analysisResult.keyScenes.map((scene, index) => (
-                        <div key={index} className="flex gap-2 items-start">
-                          <Badge variant="outline" className="whitespace-nowrap">
-                            {`${Math.floor(scene.timestamp / 60)}:${String(Math.floor(scene.timestamp % 60)).padStart(2, '0')}`}
-                          </Badge>
-                          <p className="text-xs">{scene.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          )}
-          
-          {/* Вкладка с показателями вовлеченности */}
-          <TabsContent value="engagement" className="p-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Анализируем медиаконтент...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center py-4 text-destructive">
+              <p>Произошла ошибка при анализе медиаконтента</p>
+              <Button 
+                variant="outline" 
+                onClick={() => refetch()}
+                className="mt-2"
+              >
+                Попробовать снова
+              </Button>
+            </div>
+          ) : data?.result ? (
             <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Уровень вовлеченности</span>
-                  <span className="text-sm font-medium">
-                    {analysisResult.engagement ? `${Math.round(analysisResult.engagement)}%` : 'Н/Д'}
-                  </span>
-                </div>
-                {analysisResult.engagement && (
-                  <Progress value={analysisResult.engagement} className="h-2" />
+              {/* Превью медиаконтента */}
+              <div className="relative w-full h-64 overflow-hidden rounded-md">
+                {data.result.mediaType === 'video' ? (
+                  <video 
+                    src={data.result.mediaUrl} 
+                    className="w-full h-full object-cover"
+                    controls
+                  />
+                ) : (
+                  <img 
+                    src={data.result.mediaUrl} 
+                    alt="Медиаконтент" 
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
               
-              <div className="bg-muted/40 p-3 rounded-md mt-4">
-                <p className="text-xs text-muted-foreground">
-                  Показатели вовлеченности рассчитываются на основе сравнения этого медиаконтента с другими трендовыми публикациями. Учитываются цвета, композиция, количество объектов и другие факторы.
-                </p>
+              <Separator />
+              
+              {/* Основная информация */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Основные характеристики</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <span className="text-muted-foreground w-32">Тип контента:</span>
+                      <Badge variant="outline">
+                        {data.result.mediaType === 'video' ? 'Видео' : 'Изображение'}
+                      </Badge>
+                    </div>
+                    
+                    {data.result.mediaType === 'video' && data.result.duration && (
+                      <div className="flex items-center">
+                        <span className="text-muted-foreground w-32">Длительность:</span>
+                        <span>{Math.floor(data.result.duration / 60)}:{(data.result.duration % 60).toString().padStart(2, '0')}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center">
+                      <span className="text-muted-foreground w-32">Эмоциональный тон:</span>
+                      <Badge className={getSentimentLabel(data.result.sentiment).color}>
+                        {getSentimentLabel(data.result.sentiment).label}
+                      </Badge>
+                    </div>
+                    
+                    {data.result.mediaType === 'image' && data.result.composition && (
+                      <div className="flex items-center">
+                        <span className="text-muted-foreground w-32">Композиция:</span>
+                        <Badge variant="outline">{getCompositionLabel(data.result.composition)}</Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Объекты на изображении/видео */}
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Обнаруженные объекты</h3>
+                  {data.result.objects && data.result.objects.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {data.result.objects.map((obj, index) => (
+                        <Badge key={index} variant="secondary">{obj}</Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">Объекты не обнаружены</p>
+                  )}
+                </div>
               </div>
+              
+              <Separator />
+              
+              {/* Палитра цветов */}
+              {data.result.colors && data.result.colors.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Цветовая палитра</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {data.result.colors.map((color, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div 
+                          className="w-8 h-8 rounded-full" 
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-xs mt-1">{color}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Текст на изображении */}
+              {data.result.textContent && data.result.textContent.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Текст на изображении</h3>
+                  <div className="bg-muted p-2 rounded-md">
+                    {data.result.textContent.map((text, index) => (
+                      <p key={index}>{text}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Ключевые сцены видео */}
+              {data.result.mediaType === 'video' && data.result.keyScenes && data.result.keyScenes.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Ключевые сцены</h3>
+                  <div className="space-y-2">
+                    {data.result.keyScenes.map((scene, index) => (
+                      <div key={index} className="flex items-start space-x-2 border p-2 rounded-md">
+                        <span className="text-muted-foreground whitespace-nowrap">
+                          {Math.floor(scene.timestamp / 60)}:{(scene.timestamp % 60).toString().padStart(2, '0')}
+                        </span>
+                        <p>{scene.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Аудио информация (для видео) */}
+              {data.result.mediaType === 'video' && data.result.audio && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Аудио анализ</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-muted-foreground">Музыка:</span>
+                      {data.result.audio.hasMusic ? (
+                        <CheckIcon className="text-green-500" />
+                      ) : (
+                        <Cross2Icon className="text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-muted-foreground">Речь:</span>
+                      {data.result.audio.hasSpeech ? (
+                        <CheckIcon className="text-green-500" />
+                      ) : (
+                        <Cross2Icon className="text-red-500" />
+                      )}
+                    </div>
+                  </div>
+                  {data.result.audio.hasSpeech && data.result.audio.speechText && (
+                    <div className="mt-2">
+                      <Label>Распознанный текст</Label>
+                      <div className="bg-muted p-2 rounded-md mt-1">
+                        <p>{data.result.audio.speechText}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">Нет данных для отображения</p>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Закрыть
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-}
+};
+
+export default MediaAnalysisPanel;
