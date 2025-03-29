@@ -217,7 +217,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           />
         )}
         
-        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <Dialog 
+          open={isSettingsOpen} 
+          onOpenChange={(open) => {
+            setIsSettingsOpen(open);
+            // Если диалог открывается, убедимся, что сайдбар закрыт на мобильных устройствах
+            if (open) {
+              setIsSidebarOpen(false);
+            }
+          }}
+        >
           <SettingsDialog />
         </Dialog>
       </div>
