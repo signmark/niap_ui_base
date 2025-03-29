@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 
 // Импортируем функции для работы с медиа
 import { createProxyImageUrl, createVideoThumbnailUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
-import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video, Loader2 } from "lucide-react";
+import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video, Loader2, BarChart2 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 import { handleInstagramVideoError } from "./instagram-error-handler";
 import { TrendTopic } from "../lib/interfaces";
+import MediaAnalysisPanel from "./MediaAnalysisPanel";
 
 interface MediaData {
   images: string[];
@@ -547,7 +548,15 @@ export function TrendDetailDialog({
             </div>
           </div>
 
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-between mt-4">
+            {/* Компонент для анализа медиаконтента */}
+            {mediaData.images.length > 0 || mediaData.videos.length > 0 ? (
+              <MediaAnalysisPanel 
+                mediaUrl={imageUrl || videoUrl} 
+                trendId={topic.id}
+              />
+            ) : null}
+            
             <Button
               variant="ghost"
               size="sm"
