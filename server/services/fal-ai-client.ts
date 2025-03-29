@@ -25,6 +25,31 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
       throw new Error('API ключ FAL AI не найден');
     }
     
+    // Проверяем, что URL изображения валидный перед отправкой
+    let validatedUrl = imageUrl;
+    try {
+      // Проверка на корректность URL
+      new URL(imageUrl);
+      
+      // Проверяем доступность изображения по URL с таймаутом в 5 секунд
+      const headCheck = await axios.head(imageUrl, { timeout: 5000 })
+        .catch(() => null);
+      
+      // Если не смогли получить заголовки или код ответа не 200, логируем это
+      if (!headCheck || headCheck.status !== 200) {
+        console.warn(`[fal-ai] Предупреждение: URL изображения может быть недоступен: ${imageUrl.substring(0, 50)}...`);
+      }
+      
+      // Проверяем, что Content-Type содержит image или video
+      const contentType = headCheck?.headers?.['content-type'] || '';
+      if (!contentType.includes('image') && !contentType.includes('video') && !isVideo) {
+        console.warn(`[fal-ai] Предупреждение: URL ведет не на изображение/видео, а на контент типа: ${contentType}`);
+      }
+    } catch (urlError) {
+      console.error(`[fal-ai] Ошибка при валидации URL изображения: ${urlError instanceof Error ? urlError.message : String(urlError)}`);
+      // Продолжаем с исходным URL, так как FAL AI может иногда работать и с "неправильными" URL
+    }
+    
     // Создаем заголовки запроса с API ключом
     const headers = {
       'Authorization': `Key ${apiKey}`,
@@ -33,15 +58,19 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
     
     // Параметры для запроса анализа изображения
     const analysisParams = {
-      image_url: imageUrl,
+      image_url: validatedUrl,
       detail_level: 'high'
     };
     
     // Запрос на анализ изображения
+    console.log(`[fal-ai] Отправляем запрос на анализ изображения: ${validatedUrl.substring(0, 50)}...`);
     const response = await axios.post(
       `${FAL_AI_BASE_URL}/image-analysis`, 
       analysisParams,
-      { headers }
+      { 
+        headers,
+        timeout: 30000 // 30 секунд таймаут для запроса
+      }
     );
     
     if (!response.data) {
@@ -63,8 +92,18 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
         throw new Error('Неверный или недействительный API ключ FAL AI');
       } else if (error.response?.status === 429) {
         throw new Error('Превышен лимит запросов к FAL AI API');
+      } else if (error.response?.status === 400) {
+        // Для ошибки 400 Bad Request проверяем содержимое ответа
+        if (typeof error.response.data === 'string' && 
+            (error.response.data.includes('<!DOCTYPE') || error.response.data.includes('<html'))) {
+          throw new Error('Недопустимый формат ответа: получен HTML вместо JSON. Проверьте правильность URL изображения');
+        } else {
+          const errorDetail = error.response.data?.detail || JSON.stringify(error.response.data);
+          throw new Error(`Ошибка запроса к FAL AI: ${errorDetail}`);
+        }
       } else if (error.response) {
-        throw new Error(`Ошибка API FAL AI: ${error.response.status} - ${error.response.data?.detail || 'Неизвестная ошибка'}`);
+        const responseText = typeof error.response.data === 'string' ? error.response.data.substring(0, 100) : JSON.stringify(error.response.data);
+        throw new Error(`Ошибка API FAL AI: ${error.response.status} - ${responseText || 'Неизвестная ошибка'}`);
       } else if (error.request) {
         throw new Error('Ошибка соединения с FAL AI. Проверьте интернет-соединение.');
       }
