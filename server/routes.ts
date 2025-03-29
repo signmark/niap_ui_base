@@ -10540,6 +10540,17 @@ ${datesText}
         });
       }
       
+      // Проверяем наличие ключа FAL AI у пользователя
+      const hasFalAiKey = await apiKeyService.hasFalAiApiKey(userId, authToken);
+      if (!hasFalAiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Для анализа медиаконтента требуется API ключ FAL AI",
+          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}",
+          missingApiKey: true
+        });
+      }
+      
       console.log(`[media-analysis] Анализ медиаконтента для пользователя ${userId}: ${mediaUrl.substring(0, 50)}...`);
       
       // Анализируем медиаконтент с помощью MediaAnalyzerService
