@@ -21,12 +21,21 @@ class MediaAnalyzerService {
       const mediaType = this.detectMediaType(mediaUrl);
       console.log(`[media-analyzer] Определен тип медиа: ${mediaType}`);
       
-      // Получаем API ключ пользователя для FAL AI
-      const falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', authToken);
+      // Сначала проверяем, доступен ли API ключ FAL AI
+      const hasFalAi = await apiKeyService.hasFalAiApiKey(userId, authToken);
       
-      if (!falAiApiKey) {
+      if (!hasFalAi) {
         console.error(`[media-analyzer] Не удалось получить API ключ FAL AI для пользователя ${userId}`);
         throw new Error("Для анализа медиаконтента требуется API ключ FAL AI. Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}");
+      }
+      
+      // Получаем API ключ пользователя для FAL AI или используем системный ключ
+      let falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', authToken);
+      
+      // Если ключ не найден в настройках пользователя, используем ключ из переменных окружения
+      if (!falAiApiKey) {
+        console.log('[media-analyzer] Используем системный API ключ FAL AI из переменных окружения');
+        falAiApiKey = process.env.FAL_AI_API_KEY || '';
       }
       
       // В зависимости от типа медиа используем соответствующий метод анализа

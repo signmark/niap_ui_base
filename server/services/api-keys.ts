@@ -168,8 +168,23 @@ export async function getAllUserApiKeys(userId: string, authToken: string): Prom
  * @returns true, если API ключ FAL AI доступен, иначе false
  */
 export async function hasFalAiApiKey(userId: string, authToken: string): Promise<boolean> {
+  // Сначала проверяем API ключ в настройках пользователя
   const apiKey = await getUserApiKey(userId, 'falAiApiKey', authToken);
-  return apiKey !== null && apiKey !== '';
+  
+  if (apiKey !== null && apiKey !== '') {
+    return true;
+  }
+  
+  // Если ключ не найден в настройках пользователя, проверяем переменные окружения
+  const envApiKey = process.env.FAL_AI_API_KEY;
+  
+  if (envApiKey && envApiKey.trim() !== '') {
+    console.log('[api-keys] Используется системный API ключ FAL AI из переменных окружения');
+    return true;
+  }
+  
+  console.warn('[api-keys] API ключ FAL AI не найден ни в настройках пользователя, ни в переменных окружения');
+  return false;
 }
 
 /**
