@@ -59,7 +59,7 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
       }
       
       // Используем API клиент, который автоматически добавляет заголовок авторизации
-      const response = await apiRequest<any>({
+      const response = await apiRequest({
         url: `/api/media-analysis?${params.toString()}`,
         method: 'GET',
       });
@@ -227,13 +227,25 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
           ) : error ? (
             <div className="text-center py-4 text-destructive">
               <p>Произошла ошибка при анализе медиаконтента</p>
-              <Button 
-                variant="outline" 
-                onClick={() => refetch()}
-                className="mt-2"
-              >
-                Попробовать снова
-              </Button>
+              <p className="text-sm mt-2">
+                {(error as any)?.response?.data?.error || 
+                 (error as Error)?.message || 
+                 "Неизвестная ошибка"}
+              </p>
+              {(error as any)?.response?.data?.missingApiKey ? (
+                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md text-amber-800 dark:text-amber-200 text-sm">
+                  <p className="font-medium">Требуется API ключ FAL AI</p>
+                  <p className="mt-1">Для работы с анализом медиаконтента необходимо добавить API ключ FAL AI в настройках вашего аккаунта в Directus.</p>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => refetch()}
+                  className="mt-2"
+                >
+                  Попробовать снова
+                </Button>
+              )}
             </div>
           ) : data?.result ? (
             <div className="space-y-4">
