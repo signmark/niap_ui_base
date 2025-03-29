@@ -115,6 +115,31 @@ class MediaAnalyzerService {
     console.log(`[media-analyzer] Анализируем изображение: ${imageUrl.substring(0, 50)}...`);
     
     try {
+      // Проверяем доступность URL изображения перед отправкой на анализ
+      let isImageAccessible = false;
+      try {
+        console.log(`[media-analyzer] Проверка доступности изображения перед анализом...`);
+        
+        // Используем fetch для проверки доступности изображения
+        const response = await fetch(imageUrl, { method: 'HEAD' })
+          .catch(() => null);
+        
+        // Проверяем статус ответа
+        if (response && response.ok) {
+          console.log(`[media-analyzer] Изображение доступно для анализа, статус: ${response.status}`);
+          isImageAccessible = true;
+        } else {
+          console.warn(`[media-analyzer] Предупреждение: изображение может быть недоступно, статус: ${response?.status || 'неизвестно'}`);
+        }
+      } catch (urlCheckError) {
+        console.warn(`[media-analyzer] Ошибка при проверке доступности изображения: ${urlCheckError instanceof Error ? urlCheckError.message : 'Ошибка сети'}`);
+      }
+      
+      // Если изображение недоступно и URL явно указывает на социальные сети, модифицируем предупреждение
+      if (!isImageAccessible && (imageUrl.includes('instagram.com') || imageUrl.includes('facebook.com') || imageUrl.includes('vk.com'))) {
+        console.warn(`[media-analyzer] URL указывает на социальную сеть. Возможно, требуется авторизация для доступа к контенту.`);
+      }
+      
       // Используем FAL AI для анализа изображения
       const imageAnalysis = await falAiClient.analyzeImage(imageUrl, apiKey);
       
@@ -126,6 +151,18 @@ class MediaAnalyzerService {
       return this.formatAnalysisResults(imageAnalysis, 'image');
     } catch (error) {
       console.error('[media-analyzer] Ошибка при анализе изображения:', error);
+      
+      // Улучшенное сообщение об ошибке для пользователя
+      if (error instanceof Error) {
+        if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+          throw new Error('Ошибка соединения с FAL AI. Проверьте интернет-соединение и URL изображения.');
+        } else if (error.message.includes('timeout')) {
+          throw new Error('Превышено время ожидания ответа от сервиса анализа изображений. Попробуйте позже или проверьте URL изображения.');
+        } else if (error.message.includes('API ключ не настроен') || error.message.includes('API ключ FAL AI не найден')) {
+          throw new Error('API ключ для FAL AI не настроен. Перейдите в настройки пользователя для добавления ключа.');
+        }
+      }
+      
       throw error;
     }
   }
@@ -141,6 +178,31 @@ class MediaAnalyzerService {
     console.log(`[media-analyzer] Анализируем видео: ${videoUrl.substring(0, 50)}...`);
     
     try {
+      // Проверяем доступность видео перед анализом
+      let isVideoAccessible = false;
+      try {
+        console.log(`[media-analyzer] Проверка доступности видео перед анализом...`);
+        
+        // Используем fetch для проверки доступности видео
+        const response = await fetch(videoUrl, { method: 'HEAD' })
+          .catch(() => null);
+        
+        // Проверяем статус ответа
+        if (response && response.ok) {
+          console.log(`[media-analyzer] Видео доступно для анализа, статус: ${response.status}`);
+          isVideoAccessible = true;
+        } else {
+          console.warn(`[media-analyzer] Предупреждение: видео может быть недоступно, статус: ${response?.status || 'неизвестно'}`);
+        }
+      } catch (urlCheckError) {
+        console.warn(`[media-analyzer] Ошибка при проверке доступности видео: ${urlCheckError instanceof Error ? urlCheckError.message : 'Ошибка сети'}`);
+      }
+      
+      // Если видео недоступно и URL явно указывает на социальные сети, модифицируем предупреждение
+      if (!isVideoAccessible && (videoUrl.includes('instagram.com') || videoUrl.includes('facebook.com') || videoUrl.includes('vk.com'))) {
+        console.warn(`[media-analyzer] URL указывает на социальную сеть. Возможно, требуется авторизация для доступа к контенту.`);
+      }
+      
       // Для видео нам нужно сначала извлечь первый кадр или постер
       // В будущем можно будет извлекать несколько ключевых кадров
       
@@ -156,6 +218,18 @@ class MediaAnalyzerService {
       return this.formatAnalysisResults(videoAnalysis, 'video');
     } catch (error) {
       console.error('[media-analyzer] Ошибка при анализе видео:', error);
+      
+      // Улучшенное сообщение об ошибке для пользователя
+      if (error instanceof Error) {
+        if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+          throw new Error('Ошибка соединения с FAL AI. Проверьте интернет-соединение и URL видео.');
+        } else if (error.message.includes('timeout')) {
+          throw new Error('Превышено время ожидания ответа от сервиса анализа видео. Попробуйте позже или проверьте URL видео.');
+        } else if (error.message.includes('API ключ не настроен') || error.message.includes('API ключ FAL AI не найден')) {
+          throw new Error('API ключ для FAL AI не настроен. Перейдите в настройки пользователя для добавления ключа.');
+        }
+      }
+      
       throw error;
     }
   }

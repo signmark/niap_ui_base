@@ -110,6 +110,39 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
         return;
       }
       
+      // Проверка доступности медиаконтента перед анализом
+      try {
+        // Показываем уведомление о проверке URL
+        toast({
+          title: 'Проверка URL',
+          description: 'Проверяем доступность медиаконтента...',
+        });
+        
+        // Простая предварительная проверка URL медиаконтента
+        const response = await fetch(mediaUrl, { 
+          method: 'HEAD',
+          mode: 'no-cors', // Используем no-cors для обхода CORS ограничений при проверке
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }).catch(() => null);
+        
+        // Если не смогли получить ответ, показываем предупреждение, но всё равно продолжаем
+        if (!response) {
+          console.warn('Не удалось проверить доступность медиаконтента, но всё равно продолжаем');
+          toast({
+            title: 'Предупреждение',
+            description: 'Не удалось проверить доступность медиаконтента. Анализ может быть затруднён.'
+          });
+        }
+      } catch (urlCheckError) {
+        // Логируем ошибку, но продолжаем анализ
+        console.warn('Ошибка при проверке URL медиаконтента:', urlCheckError);
+      }
+      
+      // Запускаем анализ
       await refetch();
       setIsDialogOpen(true);
     } catch (error) {
@@ -313,7 +346,7 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
                   <h3 className="text-lg font-medium mb-2">Обнаруженные объекты</h3>
                   {data.result.objects && data.result.objects.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {data.result.objects.map((obj, index) => (
+                      {data.result.objects.map((obj: string, index: number) => (
                         <Badge key={index} variant="secondary">{obj}</Badge>
                       ))}
                     </div>
@@ -330,7 +363,7 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
                 <div>
                   <h3 className="text-lg font-medium mb-2">Цветовая палитра</h3>
                   <div className="flex flex-wrap gap-2">
-                    {data.result.colors.map((color, index) => (
+                    {data.result.colors.map((color: string, index: number) => (
                       <div key={index} className="flex flex-col items-center">
                         <div 
                           className="w-8 h-8 rounded-full" 
@@ -348,7 +381,7 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
                 <div>
                   <h3 className="text-lg font-medium mb-2">Текст на изображении</h3>
                   <div className="bg-muted p-2 rounded-md">
-                    {data.result.textContent.map((text, index) => (
+                    {data.result.textContent.map((text: string, index: number) => (
                       <p key={index}>{text}</p>
                     ))}
                   </div>
@@ -360,7 +393,7 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
                 <div>
                   <h3 className="text-lg font-medium mb-2">Ключевые сцены</h3>
                   <div className="space-y-2">
-                    {data.result.keyScenes.map((scene, index) => (
+                    {data.result.keyScenes.map((scene: { timestamp: number; description: string }, index: number) => (
                       <div key={index} className="flex items-start space-x-2 border p-2 rounded-md">
                         <span className="text-muted-foreground whitespace-nowrap">
                           {Math.floor(scene.timestamp / 60)}:{(scene.timestamp % 60).toString().padStart(2, '0')}
