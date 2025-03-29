@@ -1,296 +1,291 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { log } from '../utils/logger';
+import axios from 'axios';
+
+/** 
+ * Клиент для работы с FAL AI API
+ * Обеспечивает интеграцию с сервисами FAL AI для анализа изображений
+ * @module fal-ai-client
+ */
+
+const FAL_AI_BASE_URL = 'https://gateway.fal.ai/v1';
 
 /**
- * Единый клиент для работы с FAL.AI API
- * Центральное место для всех запросов к FAL.AI
+ * Анализирует изображение с помощью FAL AI API
+ * @param imageUrl URL изображения для анализа
+ * @param apiKey API ключ для FAL AI
+ * @param isVideo Флаг, указывающий, что анализируется видео (для логирования)
+ * @returns Результаты анализа изображения или null в случае ошибки
  */
-export class FalAiClient {
-  private client: AxiosInstance;
-  private apiKey: string = '';
-  private readonly baseUrl = 'https://queue.fal.run';
-
-  constructor() {
-    // Инициализируем клиент с базовым URL
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      timeout: 300000, // 5 минут таймаут
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
+async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean = false): Promise<any | null> {
+  try {
+    const contentType = isVideo ? 'видео' : 'изображения';
+    console.log(`[fal-ai] Начинаем анализ ${contentType}: ${imageUrl.substring(0, 50)}...`);
     
-    log('FalAiClient создан', 'fal-ai');
-  }
-
-  /**
-   * Устанавливает API-ключ для клиента
-   * @param apiKey API-ключ FAL.AI в формате 'id:secret' или с префиксом 'Key id:secret'
-   */
-  setApiKey(apiKey: string): void {
     if (!apiKey) {
-      console.error('FalAiClient: получен пустой API-ключ');
-      return;
-    }
-
-    // Проверяем, приходит ли ключ уже с префиксом "Key "
-    const hasKeyPrefix = apiKey.startsWith('Key ');
-    
-    // Сохраняем базовый ключ (без префикса "Key ")
-    // Если префикс есть - убираем его для внутреннего хранения
-    // FAL.AI требует в заголовке формат: 'Key id:secret'
-    const baseKey = hasKeyPrefix ? apiKey.substring(4) : apiKey;
-    
-    // Сохраняем базовый ключ
-    this.apiKey = baseKey;
-    
-    // Проверка наличия формата id:secret в ключе
-    if (!baseKey.includes(':')) {
-      console.warn('FalAiClient: API-ключ не содержит символ ":", это может вызвать проблемы с авторизацией');
+      console.error('[fal-ai] API ключ FAL AI отсутствует');
+      throw new Error('API ключ FAL AI не найден');
     }
     
-    // Маскируем ключ для логов
-    const colonIndex = baseKey.indexOf(':');
-    const maskedKey = colonIndex > 0
-      ? `${baseKey.substring(0, 10)}...${colonIndex > 0 ? ':***' : ''}`
-      : `${baseKey.substring(0, 5)}...${baseKey.substring(baseKey.length - 5)}`;
-    
-    log(`FalAiClient: установлен API-ключ${hasKeyPrefix ? ' (с префиксом Key)' : ''} (${maskedKey})`, 'fal-ai');
-  }
-
-  /**
-   * Выполняет запрос к FAL.AI API
-   * @param endpoint Эндпоинт API (не включая базовый URL)
-   * @param data Данные запроса
-   * @param config Дополнительная конфигурация запроса
-   * @returns Результат запроса
-   */
-  async request<T = any>(endpoint: string, data: any, config: AxiosRequestConfig = {}): Promise<T> {
-    if (!this.apiKey) {
-      throw new Error('FalAiClient: API-ключ не установлен. Вызовите setApiKey() перед выполнением запросов.');
-    }
-
-    const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    
-    try {
-      // ВАЖНО: Заголовок авторизации всегда должен быть в формате "Key {apiKey}"
-      const headers = {
-        ...config.headers,
-        'Authorization': `Key ${this.apiKey}`
-      };
-      
-      // Добавляем отладочную информацию для важного заголовка
-      console.log(`[FalAiClient] Используемый заголовок Authorization: ${headers.Authorization}`);
-
-      // Логируем детали запроса (для отладки)
-      console.log(`[FalAiClient] Запрос к ${url}`);
-      console.log(`[FalAiClient] Заголовок Authorization: "Key ${this.apiKey.substring(0, 5)}..."`);
-      
-      // Выполняем запрос
-      const response = await this.client.post(url, data, {
-        ...config,
-        headers
-      });
-
-      return response.data;
-    } catch (error: any) {
-      console.error(`[FalAiClient] Ошибка запроса к ${url}:`, error.message);
-      
-      // Дополнительная информация об ошибке для отладки
-      if (error.response) {
-        console.error(`Статус код: ${error.response.status}`);
-        console.error(`Ответ сервера:`, error.response.data);
-      }
-      
-      throw error;
-    }
-  }
-  
-  /**
-   * Генерирует изображение с помощью модели fast-sdxl
-   * @param prompt Текстовый запрос для генерации
-   * @param options Дополнительные параметры
-   * @returns Объект с массивом URL изображений
-   */
-  async generateImage(prompt: string, options: {
-    negativePrompt?: string;
-    width?: number;
-    height?: number;
-    numImages?: number;
-    model?: string;
-  } = {}): Promise<{ images: string[] }> {
-    const {
-      negativePrompt = '',
-      width = 1024,
-      height = 1024,
-      numImages = 1,
-      model = 'fast-sdxl'
-    } = options;
-    
-    // Формируем эндпоинт в зависимости от модели
-    let endpoint = 'fal-ai/fast-sdxl';
-    
-    if (model === 'sdxl') {
-      endpoint = 'fal-ai/sdxl';
-    } else if (model === 'fooocus') {
-      endpoint = 'fal-ai/fooocus';
-    } else if (model === 'schnell') {
-      endpoint = 'flux/schnell';
-    }
-    
-    // Формируем данные запроса
-    const requestData = {
-      prompt,
-      negative_prompt: negativePrompt,
-      width,
-      height,
-      num_images: numImages
+    // Создаем заголовки запроса с API ключом
+    const headers = {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json'
     };
     
-    // Выполняем запрос
-    const result = await this.request(endpoint, requestData);
+    // Параметры для запроса анализа изображения
+    const analysisParams = {
+      image_url: imageUrl,
+      detail_level: 'high'
+    };
     
-    // Обрабатываем различные варианты ответа FAL.AI API
-    if (!result) {
-      throw new Error('Пустой ответ от FAL.AI API');
+    // Запрос на анализ изображения
+    const response = await axios.post(
+      `${FAL_AI_BASE_URL}/image-analysis`, 
+      analysisParams,
+      { headers }
+    );
+    
+    if (!response.data) {
+      throw new Error('Пустой ответ от FAL AI API');
     }
     
-    // Проверяем, был ли запрос поставлен в очередь
-    if (result.status === 'IN_QUEUE' && result.status_url) {
-      return await this.pollQueueResult(result.status_url);
-    }
+    console.log(`[fal-ai] Успешно получены результаты анализа ${contentType}`);
     
-    // Извлекаем URL изображений из результата
-    return this.extractImagesFromResult(result);
-  }
-  
-  /**
-   * Опрашивает статус очереди пока результат не будет готов
-   * @param statusUrl URL для проверки статуса
-   * @returns Объект с массивом URL изображений
-   */
-  private async pollQueueResult(statusUrl: string): Promise<{ images: string[] }> {
-    console.log(`[FalAiClient] Запрос поставлен в очередь, ожидаем результат (${statusUrl})`);
+    // Объединяем данные из разных частей ответа в единый объект результатов
+    const combinedResults = processAnalysisResponse(response.data);
     
-    // Максимальное время ожидания - 4 минуты
-    const maxWaitTime = 240 * 1000; // в миллисекундах
-    const pollInterval = 3000; // интервал проверки - 3 секунды
-    const startTime = Date.now();
+    return combinedResults;
+  } catch (error) {
+    console.error('[fal-ai] Ошибка при анализе изображения:', error);
     
-    while (Date.now() - startTime < maxWaitTime) {
-      try {
-        // Запрашиваем статус
-        const authHeader = `Key ${this.apiKey}`;
-        console.log(`[FalAiClient] Запрос статуса с заголовком: ${authHeader}`);
-        
-        const statusResponse = await axios.get(statusUrl, {
-          headers: {
-            'Authorization': authHeader,
-            'Accept': 'application/json'
-          }
-        });
-        
-        // Проверяем, готов ли результат
-        if (statusResponse.data.status === 'COMPLETED') {
-          console.log(`[FalAiClient] Результат готов`);
-          return this.extractImagesFromResult(statusResponse.data);
-        }
-        
-        if (statusResponse.data.status === 'FAILED') {
-          throw new Error(`Ошибка генерации: ${statusResponse.data.error || 'Неизвестная ошибка'}`);
-        }
-        
-        // Ждем перед следующей проверкой
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-      } catch (error: any) {
-        console.error(`[FalAiClient] Ошибка при проверке статуса:`, error.message);
-        throw error;
+    // Обрабатываем различные типы ошибок
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error('Неверный или недействительный API ключ FAL AI');
+      } else if (error.response?.status === 429) {
+        throw new Error('Превышен лимит запросов к FAL AI API');
+      } else if (error.response) {
+        throw new Error(`Ошибка API FAL AI: ${error.response.status} - ${error.response.data?.detail || 'Неизвестная ошибка'}`);
+      } else if (error.request) {
+        throw new Error('Ошибка соединения с FAL AI. Проверьте интернет-соединение.');
       }
     }
     
-    throw new Error('Превышено время ожидания результата');
-  }
-  
-  /**
-   * Извлекает URL изображений из результата разных форматов FAL.AI API
-   * @param result Результат запроса к API
-   * @returns Объект с массивом URL изображений
-   */
-  private extractImagesFromResult(result: any): { images: string[] } {
-    const images: string[] = [];
-    
-    // Проверяем различные форматы результата
-    if (result.images && Array.isArray(result.images)) {
-      // Поддержка формата с массивом изображений
-      images.push(...result.images.map((img: any) => {
-        if (typeof img === 'string') return img;
-        return img.url || img.image || '';
-      }).filter(Boolean));
-    } else if (result.output) {
-      // Поддержка формата с полем output
-      if (Array.isArray(result.output)) {
-        images.push(...result.output);
-      } else if (typeof result.output === 'string') {
-        images.push(result.output);
-      }
-    } else if (result.image) {
-      // Поддержка формата с полем image
-      images.push(result.image);
-    } else if (result.url) {
-      // Поддержка формата с полем url
-      images.push(result.url);
-    }
-    
-    if (images.length === 0) {
-      console.error('[FalAiClient] Не удалось извлечь URL изображений из ответа:', result);
-      throw new Error('Не удалось извлечь URL изображений из ответа');
-    }
-    
-    return { images };
-  }
-
-  /**
-   * Анализирует изображение и возвращает информацию о его содержимом
-   * Использует модель компьютерного зрения FAL AI для анализа
-   * 
-   * @param imageUrl URL изображения для анализа
-   * @returns Объект с результатами анализа (объекты, цвета, текст, композиция)
-   */
-  async analyzeImage(imageUrl: string): Promise<any> {
-    try {
-      console.log(`[FalAiClient] Анализ изображения: ${imageUrl.substring(0, 50)}...`);
-      
-      if (!this.apiKey) {
-        throw new Error('FAL API ключ не установлен');
-      }
-      
-      // Конечная точка для анализа изображений FAL AI
-      const endpoint = 'fal-ai/image-analyzer';
-      
-      // Формируем данные запроса
-      const requestData = {
-        image: imageUrl,
-        features: ['objects', 'colors', 'text', 'composition', 'sentiment']
-      };
-      
-      // Выполняем запрос к FAL AI
-      const response = await this.request(endpoint, requestData);
-      
-      console.log('[FalAiClient] Получен ответ анализа изображения');
-      
-      return response;
-    } catch (error: any) {
-      console.error('[FalAiClient] Ошибка анализа изображения:', error.message);
-      // Дополнительная информация об ошибке
-      if (error.response) {
-        console.error(`Статус код: ${error.response.status}`);
-        console.error(`Ответ сервера:`, error.response.data);
-      }
-      throw error;
-    }
+    // Для всех остальных ошибок
+    throw error;
   }
 }
 
-// Экспортируем синглтон клиента для использования во всем приложении
-export const falAiClient = new FalAiClient();
+/**
+ * Обрабатывает и объединяет различные части ответа от FAL AI API
+ * @param responseData Данные ответа от FAL AI API
+ * @returns Объединенные и обработанные результаты анализа
+ */
+function processAnalysisResponse(responseData: any): any {
+  // Результаты анализа, которые мы будем возвращать
+  const results: any = {
+    colors: [],
+    objects: [],
+    scenes: [],
+    text: [],
+    description: '',
+    engagementScore: 0
+  };
+  
+  // Обрабатываем различные секции ответа
+  
+  // 1. Извлекаем цветовую палитру, если она есть
+  if (responseData.colors && Array.isArray(responseData.colors)) {
+    results.colors = responseData.colors.map((color: any) => ({
+      hex: color.hex || color.color || '#000000',
+      proportion: color.proportion || color.percentage || 0,
+      name: color.name || 'Не определено'
+    }));
+  }
+  
+  // 2. Извлекаем объекты на изображении
+  if (responseData.objects && Array.isArray(responseData.objects)) {
+    results.objects = responseData.objects;
+  } else if (responseData.detected_objects && Array.isArray(responseData.detected_objects)) {
+    results.objects = responseData.detected_objects;
+  }
+  
+  // 3. Извлекаем распознанные сцены или категории
+  if (responseData.scenes && Array.isArray(responseData.scenes)) {
+    results.scenes = responseData.scenes;
+  } else if (responseData.categories && Array.isArray(responseData.categories)) {
+    results.scenes = responseData.categories;
+  }
+  
+  // 4. Извлекаем текст с изображения
+  if (responseData.text) {
+    if (Array.isArray(responseData.text)) {
+      results.text = responseData.text;
+    } else if (typeof responseData.text === 'string') {
+      // Если текст представлен строкой, разбиваем его на отдельные строки по переносам
+      results.text = responseData.text.split('\n').filter((line: string) => line.trim().length > 0);
+    }
+  } else if (responseData.extracted_text) {
+    if (Array.isArray(responseData.extracted_text)) {
+      results.text = responseData.extracted_text;
+    } else if (typeof responseData.extracted_text === 'string') {
+      results.text = responseData.extracted_text.split('\n').filter((line: string) => line.trim().length > 0);
+    }
+  }
+  
+  // 5. Общее описание изображения
+  if (responseData.description) {
+    results.description = responseData.description;
+  } else if (responseData.caption) {
+    results.description = responseData.caption;
+  } else if (responseData.summary) {
+    results.description = responseData.summary;
+  }
+  
+  // 6. Оценка вовлеченности (если есть)
+  if (responseData.engagement_score !== undefined) {
+    results.engagementScore = responseData.engagement_score;
+  } else if (responseData.popularity_score !== undefined) {
+    results.engagementScore = responseData.popularity_score;
+  }
+  
+  // Возвращаем обработанные результаты
+  return results;
+}
+
+/**
+ * Переводит текст с русского на английский для генерации изображений
+ * @param text Текст для перевода
+ * @param apiKey API ключ для FAL AI
+ * @returns Переведенный текст
+ */
+async function translatePrompt(text: string, apiKey: string): Promise<string> {
+  try {
+    console.log(`[fal-ai] Переводим текст для промпта: ${text.substring(0, 100)}...`);
+    
+    if (!apiKey) {
+      console.error('[fal-ai] API ключ FAL AI отсутствует');
+      throw new Error('API ключ FAL AI не найден');
+    }
+    
+    // Создаем заголовки запроса с API ключом
+    const headers = {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+    
+    // Параметры для запроса перевода
+    const translationParams = {
+      text: text,
+      source_language: 'ru',
+      target_language: 'en'
+    };
+    
+    // Запрос на перевод текста
+    const response = await axios.post(
+      `${FAL_AI_BASE_URL}/text-translation`, 
+      translationParams,
+      { headers }
+    );
+    
+    if (!response.data || !response.data.translated_text) {
+      throw new Error('Некорректный ответ от API перевода');
+    }
+    
+    console.log(`[fal-ai] Текст успешно переведен`);
+    
+    return response.data.translated_text;
+  } catch (error) {
+    console.error('[fal-ai] Ошибка при переводе текста:', error);
+    
+    // Возвращаем исходный текст в случае ошибки
+    return text;
+  }
+}
+
+/**
+ * Генерирует изображение на основе текстового промпта
+ * @param prompt Текстовый промпт для генерации изображения
+ * @param apiKey API ключ для FAL AI
+ * @param options Дополнительные параметры для генерации (ширина, высота, модель и т.д.)
+ * @returns URL сгенерированного изображения или null в случае ошибки
+ */
+async function generateImage(
+  prompt: string, 
+  apiKey: string, 
+  options: { 
+    width?: number; 
+    height?: number; 
+    model?: string; 
+    negativePrompt?: string; 
+    translatePrompt?: boolean;
+  } = {}
+): Promise<string | null> {
+  try {
+    console.log(`[fal-ai] Генерация изображения по промпту: ${prompt.substring(0, 100)}...`);
+    
+    if (!apiKey) {
+      console.error('[fal-ai] API ключ FAL AI отсутствует');
+      throw new Error('API ключ FAL AI не найден');
+    }
+    
+    // Если требуется перевод и промпт на русском языке
+    if (options.translatePrompt && /[а-яА-ЯёЁ]/.test(prompt)) {
+      prompt = await translatePrompt(prompt, apiKey);
+    }
+    
+    // Создаем заголовки запроса с API ключом
+    const headers = {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+    
+    // Параметры для запроса генерации изображения
+    const generationParams = {
+      prompt: prompt,
+      negative_prompt: options.negativePrompt || 'bad quality, blurry, pixelated, distorted, watermark, text, error',
+      width: options.width || 1024,
+      height: options.height || 1024,
+      model: options.model || 'stable-diffusion-xl'
+    };
+    
+    // Запрос на генерацию изображения
+    const response = await axios.post(
+      `${FAL_AI_BASE_URL}/image-generation`, 
+      generationParams,
+      { headers }
+    );
+    
+    if (!response.data || !response.data.image_url) {
+      throw new Error('Некорректный ответ от API генерации изображений');
+    }
+    
+    console.log(`[fal-ai] Изображение успешно сгенерировано: ${response.data.image_url}`);
+    
+    return response.data.image_url;
+  } catch (error) {
+    console.error('[fal-ai] Ошибка при генерации изображения:', error);
+    
+    // Обрабатываем различные типы ошибок
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error('Неверный или недействительный API ключ FAL AI');
+      } else if (error.response?.status === 429) {
+        throw new Error('Превышен лимит запросов к FAL AI API');
+      } else if (error.response) {
+        throw new Error(`Ошибка API FAL AI: ${error.response.status} - ${error.response.data?.detail || 'Неизвестная ошибка'}`);
+      } else if (error.request) {
+        throw new Error('Ошибка соединения с FAL AI. Проверьте интернет-соединение.');
+      }
+    }
+    
+    // Для всех остальных ошибок
+    throw error;
+  }
+}
+
+// Экспортируем объект клиента
+export const falAiClient = {
+  analyzeImage,
+  translatePrompt,
+  generateImage
+};

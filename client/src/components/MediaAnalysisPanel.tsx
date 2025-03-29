@@ -11,7 +11,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Loader2, BarChart2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type MediaAnalysisResult = {
+interface MediaAnalysisResult {
   mediaUrl: string;
   mediaType: 'image' | 'video';
   objects?: string[];
@@ -28,7 +28,8 @@ type MediaAnalysisResult = {
   };
   engagement?: number;
   timestamp: Date;
-};
+  description?: string;
+}
 
 interface MediaAnalysisPanelProps {
   mediaUrl?: string;
@@ -57,19 +58,17 @@ export const MediaAnalysisPanel: React.FC<MediaAnalysisPanelProps> = ({
         params.append('trendId', trendId);
       }
       
-      const response = await apiRequest<{ result: MediaAnalysisResult }>({
-        url: `/api/media-analysis?${params.toString()}`,
-        method: 'GET'
-      });
+      const response = await fetch(`/api/media-analysis?${params.toString()}`);
+      const json = await response.json();
       
-      if (response.result) {
+      if (json.result) {
         // Вызываем обработчик успешного анализа, если он предоставлен
         if (onAnalysisComplete) {
-          onAnalysisComplete(response.result);
+          onAnalysisComplete(json.result);
         }
       }
       
-      return response;
+      return json;
     },
     enabled: false, // Не запускаем запрос автоматически при монтировании компонента
     retry: 1

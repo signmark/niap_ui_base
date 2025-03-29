@@ -1,394 +1,206 @@
-/**
- * Сервис для анализа медиаконтента (изображений и видео) в трендах
- * Интегрируется с FAL AI для анализа изображений и других сервисов для видео
- */
-
-import { FalAiClient } from './fal-ai-client';
+import { falAiClient } from './fal-ai-client';
 import { apiKeyService } from './api-keys';
-import axios from 'axios';
 
-// Интерфейс для результатов анализа изображения
-export interface ImageAnalysisResult {
-  mediaUrl: string;
-  mediaType: 'image';
-  objects: string[];
-  textContent?: string[];
-  colors: string[];
-  composition: string;
-  sentiment: 'positive' | 'neutral' | 'negative';
-  engagement?: number;
-  resolution?: { width: number; height: number };
-  aspectRatio?: string;
-  dominant_colors?: string[];
-  timestamp: Date;
-}
-
-// Интерфейс для результатов анализа видео
-export interface VideoAnalysisResult {
-  mediaUrl: string;
-  mediaType: 'video';
-  duration?: number;
-  keyScenes?: Array<{ timestamp: number; description: string }>;
-  audio?: {
-    hasMusic: boolean;
-    hasSpeech: boolean;
-    speechText?: string;
-  };
-  engagement?: number;
-  timestamp: Date;
-}
-
-export type MediaAnalysisResult = ImageAnalysisResult | VideoAnalysisResult;
-
+/**
+ * Сервис для анализа медиаконтента с использованием FAL AI и других инструментов.
+ * Поддерживает анализ изображений и видео.
+ */
 class MediaAnalyzerService {
-  private falAiClient: FalAiClient;
-  
-  constructor() {
-    this.falAiClient = new FalAiClient();
-    console.log('[media-analyzer] MediaAnalyzerService initialized');
-  }
-
   /**
-   * Анализирует медиаконтент (фото или видео) и возвращает результаты анализа
+   * Анализирует медиаконтент по URL
+   * @param mediaUrl URL изображения или видео для анализа
+   * @param userId ID пользователя для получения API ключей
+   * @param authToken Токен авторизации пользователя
+   * @returns Результаты анализа медиаконтента или null в случае ошибки
    */
-  async analyzeMedia(mediaUrl: string, userId: string, authToken?: string): Promise<MediaAnalysisResult | null> {
+  async analyzeMedia(mediaUrl: string, userId: string, authToken: string): Promise<any | null> {
     try {
-      // Получаем API ключи для сервисов анализа
-      const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
+      console.log(`[media-analyzer] Начинаем анализ контента: ${mediaUrl.substring(0, 50)}...`);
       
-      // Определяем тип медиа
-      const isVideo = this.isVideoUrl(mediaUrl);
+      // Определяем тип медиа по расширению файла или Content-Type
+      const mediaType = this.detectMediaType(mediaUrl);
+      console.log(`[media-analyzer] Определен тип медиа: ${mediaType}`);
       
-      if (isVideo) {
-        return await this.analyzeVideo(mediaUrl, userId, authToken);
+      // Получаем API ключ пользователя для FAL AI
+      const falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', authToken);
+      
+      if (!falAiApiKey) {
+        console.error(`[media-analyzer] Не удалось получить API ключ FAL AI для пользователя ${userId}`);
+        throw new Error("Не удалось получить API ключ FAL AI. Проверьте настройки пользователя.");
+      }
+      
+      // В зависимости от типа медиа используем соответствующий метод анализа
+      if (mediaType === 'image') {
+        return await this.analyzeImage(mediaUrl, falAiApiKey);
+      } else if (mediaType === 'video') {
+        return await this.analyzeVideo(mediaUrl, falAiApiKey);
       } else {
-        return await this.analyzeImage(mediaUrl, userId, falApiKey);
+        throw new Error(`Неподдерживаемый тип медиаконтента: ${mediaType}`);
       }
     } catch (error) {
-      console.error('[media-analyzer] Error analyzing media:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Анализирует изображение с помощью FAL AI
-   */
-  private async analyzeImage(imageUrl: string, userId: string, falApiKey?: string | null): Promise<ImageAnalysisResult> {
-    try {
-      console.log(`[media-analyzer] Analyzing image: ${imageUrl.substring(0, 50)}...`);
+      console.error('[media-analyzer] Ошибка при анализе медиаконтента:', error);
       
-      // Инициализируем клиент FAL AI с ключом пользователя
-      if (falApiKey) {
-        this.falAiClient.setApiKey(falApiKey);
+      // Переформатируем сообщение об ошибке для пользователя
+      let errorMessage = 'Ошибка при анализе медиаконтента';
+      if (error instanceof Error) {
+        errorMessage = error.message;
       }
       
-      // Запрос на анализ изображения через FAL AI
-      const imageAnalysis = await this.falAiClient.analyzeImage(imageUrl);
-      
-      // Извлекаем информацию о цветах, объектах и тексте
-      const colors = this.extractColors(imageAnalysis);
-      const objects = this.extractObjects(imageAnalysis);
-      const textContent = this.extractText(imageAnalysis);
-      
-      // Определяем композицию изображения
-      const composition = this.determineComposition(imageAnalysis);
-      
-      // Определяем эмоциональный тон изображения
-      const sentiment = this.determineSentiment(imageAnalysis);
-      
-      return {
-        mediaUrl: imageUrl,
-        mediaType: 'image',
-        objects,
-        textContent,
-        colors,
-        composition,
-        sentiment,
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error('[media-analyzer] Error analyzing image:', error);
-      
-      // Возвращаем базовый результат в случае ошибки
-      return {
-        mediaUrl: imageUrl,
-        mediaType: 'image',
-        objects: [],
-        colors: [],
-        composition: 'unknown',
-        sentiment: 'neutral',
-        timestamp: new Date()
-      };
+      throw new Error(errorMessage);
     }
   }
-
+  
   /**
-   * Анализирует видео и возвращает результаты анализа
+   * Определяет тип медиаконтента по URL
+   * @param url URL медиаконтента
+   * @returns Тип медиаконтента ('image', 'video', 'unknown')
    */
-  private async analyzeVideo(videoUrl: string, userId: string, authToken?: string): Promise<VideoAnalysisResult> {
-    try {
-      console.log(`[media-analyzer] Analyzing video: ${videoUrl.substring(0, 50)}...`);
-      
-      // Здесь будет интеграция с сервисами анализа видео
-      // Пока возвращаем базовый результат
-      
-      return {
-        mediaUrl: videoUrl,
-        mediaType: 'video',
-        duration: 0, // Будет получено от сервиса анализа видео
-        keyScenes: [],
-        audio: {
-          hasMusic: false,
-          hasSpeech: false
-        },
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error('[media-analyzer] Error analyzing video:', error);
-      
-      // Возвращаем базовый результат в случае ошибки
-      return {
-        mediaUrl: videoUrl,
-        mediaType: 'video',
-        timestamp: new Date()
-      };
+  private detectMediaType(url: string): string {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv'];
+    
+    // Проверяем расширение файла
+    const lowercaseUrl = url.toLowerCase();
+    
+    for (const ext of imageExtensions) {
+      if (lowercaseUrl.includes(ext)) {
+        return 'image';
+      }
     }
-  }
-
-  /**
-   * Извлекает информацию о цветах из результатов анализа изображения
-   */
-  private extractColors(imageAnalysis: any): string[] {
-    try {
-      if (!imageAnalysis || !imageAnalysis.colors) {
-        return ['#FFFFFF', '#000000']; // Значения по умолчанию
+    
+    for (const ext of videoExtensions) {
+      if (lowercaseUrl.includes(ext)) {
+        return 'video';
+      }
+    }
+    
+    // Если не удалось определить по расширению, проверяем домены
+    if (lowercaseUrl.includes('instagram.com') || 
+        lowercaseUrl.includes('facebook.com') || 
+        lowercaseUrl.includes('twitter.com') ||
+        lowercaseUrl.includes('tiktok.com')) {
+      
+      // Для видеохостингов и соцсетей проверяем специфические паттерны в URL
+      if (lowercaseUrl.includes('/video/') || 
+          lowercaseUrl.includes('/reel/') || 
+          lowercaseUrl.includes('/watch/') ||
+          lowercaseUrl.includes('/stories/')) {
+        return 'video';
       }
       
-      // Извлекаем цвета из анализа изображения
-      const colors = imageAnalysis.colors;
-      
-      if (Array.isArray(colors)) {
-        // Если уже массив, возвращаем его
-        return colors.map(color => typeof color === 'string' ? color : color.hex || color.value || '#000000');
-      } else if (typeof colors === 'object') {
-        // Если объект с доминирующими цветами
-        if (colors.dominant && Array.isArray(colors.dominant)) {
-          return colors.dominant.map((c: any) => c.hex || c.color || '#000000');
-        } else if (colors.palette && Array.isArray(colors.palette)) {
-          return colors.palette.map((c: any) => c.hex || c.color || '#000000');
-        }
-      }
-      
-      // Если ничего не найдено, возвращаем массив по умолчанию
-      return ['#FFFFFF', '#000000'];
-    } catch (error) {
-      console.error('[media-analyzer] Error extracting colors:', error);
-      return ['#FFFFFF', '#000000'];
+      // По умолчанию для соцсетей считаем контент изображением
+      return 'image';
     }
+    
+    // По умолчанию считаем контент изображением
+    return 'image';
   }
-
+  
   /**
-   * Извлекает информацию об объектах из результатов анализа изображения
+   * Анализирует изображение с использованием FAL AI
+   * @param imageUrl URL изображения для анализа
+   * @param apiKey API ключ для FAL AI
+   * @returns Результаты анализа изображения
    */
-  private extractObjects(imageAnalysis: any): string[] {
+  private async analyzeImage(imageUrl: string, apiKey: string): Promise<any> {
+    console.log(`[media-analyzer] Анализируем изображение: ${imageUrl.substring(0, 50)}...`);
+    
     try {
+      // Используем FAL AI для анализа изображения
+      const imageAnalysis = await falAiClient.analyzeImage(imageUrl, apiKey);
+      
       if (!imageAnalysis) {
-        return [];
+        throw new Error('Не удалось получить результаты анализа изображения');
       }
       
-      // Проверяем разные форматы ответа от FAL AI
-      if (imageAnalysis.objects && Array.isArray(imageAnalysis.objects)) {
-        // Если есть массив объектов
-        return imageAnalysis.objects.map((obj: any) => {
-          if (typeof obj === 'string') return obj;
-          return obj.name || obj.label || obj.class || '';
-        }).filter(Boolean);
-      } else if (imageAnalysis.detection && Array.isArray(imageAnalysis.detection)) {
-        // Альтернативный формат с полем detection
-        return imageAnalysis.detection.map((obj: any) => {
-          if (typeof obj === 'string') return obj;
-          return obj.name || obj.label || obj.class || '';
-        }).filter(Boolean);
-      } else if (imageAnalysis.analysis && imageAnalysis.analysis.objects) {
-        // Еще один возможный формат с вложенным полем analysis
-        const objects = imageAnalysis.analysis.objects;
-        if (Array.isArray(objects)) {
-          return objects.map((obj: any) => {
-            if (typeof obj === 'string') return obj;
-            return obj.name || obj.label || obj.class || '';
-          }).filter(Boolean);
-        }
-      }
-      
-      // Если ничего не найдено, возвращаем пустой массив
-      return [];
+      // Форматируем результаты для фронтенда
+      return this.formatAnalysisResults(imageAnalysis, 'image');
     } catch (error) {
-      console.error('[media-analyzer] Error extracting objects:', error);
-      return [];
+      console.error('[media-analyzer] Ошибка при анализе изображения:', error);
+      throw error;
     }
   }
-
+  
   /**
-   * Извлекает текст из изображения
+   * Анализирует видео с использованием FAL AI
+   * Извлекает ключевые кадры из видео и анализирует их
+   * @param videoUrl URL видео для анализа
+   * @param apiKey API ключ для FAL AI
+   * @returns Результаты анализа видео
    */
-  private extractText(imageAnalysis: any): string[] {
+  private async analyzeVideo(videoUrl: string, apiKey: string): Promise<any> {
+    console.log(`[media-analyzer] Анализируем видео: ${videoUrl.substring(0, 50)}...`);
+    
     try {
-      if (!imageAnalysis) {
-        return [];
+      // Для видео нам нужно сначала извлечь первый кадр или постер
+      // В будущем можно будет извлекать несколько ключевых кадров
+      
+      // Сейчас используем временное решение - анализируем видео как изображение
+      // В реальном проекте здесь будет логика извлечения кадров и их анализа
+      const videoAnalysis = await falAiClient.analyzeImage(videoUrl, apiKey, true);
+      
+      if (!videoAnalysis) {
+        throw new Error('Не удалось получить результаты анализа видео');
       }
       
-      // Проверяем различные форматы ответа
-      if (imageAnalysis.text && Array.isArray(imageAnalysis.text)) {
-        // Если есть массив текстов
-        return imageAnalysis.text.map((text: any) => {
-          if (typeof text === 'string') return text;
-          return text.content || text.value || '';
-        }).filter(Boolean);
-      } else if (imageAnalysis.text && typeof imageAnalysis.text === 'string') {
-        // Если текст в виде строки
-        return [imageAnalysis.text];
-      } else if (imageAnalysis.ocr && imageAnalysis.ocr.text) {
-        // Формат с OCR данными
-        const ocrText = imageAnalysis.ocr.text;
-        if (Array.isArray(ocrText)) {
-          return ocrText.filter(Boolean);
-        } else if (typeof ocrText === 'string') {
-          return [ocrText];
-        }
-      }
-      
-      // Если ничего не найдено
-      return [];
+      // Форматируем результаты для фронтенда
+      return this.formatAnalysisResults(videoAnalysis, 'video');
     } catch (error) {
-      console.error('[media-analyzer] Error extracting text:', error);
-      return [];
+      console.error('[media-analyzer] Ошибка при анализе видео:', error);
+      throw error;
     }
   }
-
+  
   /**
-   * Определяет композицию изображения
+   * Форматирует результаты анализа для отображения на фронтенде
+   * @param analysisResults Результаты анализа от FAL AI
+   * @param mediaType Тип медиаконтента ('image' или 'video')
+   * @returns Форматированные результаты для фронтенда
    */
-  private determineComposition(imageAnalysis: any): string {
-    try {
-      if (!imageAnalysis) {
-        return 'unknown';
-      }
-      
-      // Проверяем различные форматы ответа
-      if (imageAnalysis.composition && typeof imageAnalysis.composition === 'string') {
-        return imageAnalysis.composition;
-      } else if (imageAnalysis.analysis && imageAnalysis.analysis.composition) {
-        return imageAnalysis.analysis.composition;
-      }
-      
-      // Если есть данные о разных аспектах композиции, анализируем их
-      const compositionData = imageAnalysis.composition || {};
-      
-      if (compositionData.balance) {
-        if (compositionData.balance === 'symmetric' || compositionData.balance > 0.7) {
-          return 'balanced';
-        } else if (compositionData.balance < 0.3) {
-          return 'dynamic';
-        }
-      }
-      
-      if (compositionData.rule_of_thirds && compositionData.rule_of_thirds > 0.7) {
-        return 'rule_of_thirds';
-      }
-      
-      if (compositionData.golden_ratio && compositionData.golden_ratio > 0.7) {
-        return 'golden_ratio';
-      }
-      
-      // Если не удалось определить по предыдущим признакам
-      return 'balanced';
-    } catch (error) {
-      console.error('[media-analyzer] Error determining composition:', error);
-      return 'unknown';
+  private formatAnalysisResults(analysisResults: any, mediaType: string): any {
+    const formattedResults: any = {
+      mediaType,
+      summary: {},
+      details: {}
+    };
+    
+    // Если есть результаты анализа цветов
+    if (analysisResults.colors && Array.isArray(analysisResults.colors)) {
+      formattedResults.details.colorPalette = analysisResults.colors.map((color: any) => ({
+        hex: color.hex || color.color || '#000000',
+        proportion: color.proportion || color.percentage || 0,
+        name: color.name || 'Не определено'
+      }));
     }
-  }
-
-  /**
-   * Определяет эмоциональный тон изображения
-   */
-  private determineSentiment(imageAnalysis: any): 'positive' | 'neutral' | 'negative' {
-    try {
-      if (!imageAnalysis) {
-        return 'neutral';
-      }
-      
-      // Проверяем различные форматы ответа
-      if (imageAnalysis.sentiment) {
-        const sentiment = imageAnalysis.sentiment;
-        
-        // Если sentiment - это строка
-        if (typeof sentiment === 'string') {
-          if (sentiment.includes('positive') || sentiment.includes('happy') || sentiment.includes('joy')) {
-            return 'positive';
-          } else if (sentiment.includes('negative') || sentiment.includes('sad') || sentiment.includes('angry')) {
-            return 'negative';
-          }
-          return 'neutral';
-        }
-        
-        // Если sentiment - это объект с оценками
-        if (typeof sentiment === 'object') {
-          if (sentiment.positive > sentiment.negative && sentiment.positive > sentiment.neutral) {
-            return 'positive';
-          } else if (sentiment.negative > sentiment.positive && sentiment.negative > sentiment.neutral) {
-            return 'negative';
-          }
-        }
-      }
-      
-      // По умолчанию нейтральный тон
-      return 'neutral';
-    } catch (error) {
-      console.error('[media-analyzer] Error determining sentiment:', error);
-      return 'neutral';
+    
+    // Если есть результаты распознавания текста
+    if (analysisResults.text) {
+      formattedResults.details.textContent = Array.isArray(analysisResults.text) 
+        ? analysisResults.text 
+        : [analysisResults.text];
     }
-  }
-
-  /**
-   * Проверяет, является ли URL ссылкой на видео
-   */
-  private isVideoUrl(url: string): boolean {
-    if (!url) return false;
     
-    // Нормализуем URL для проверки
-    const normalizedUrl = url.toLowerCase();
+    // Если есть результаты распознавания объектов
+    if (analysisResults.objects && Array.isArray(analysisResults.objects)) {
+      formattedResults.details.objects = analysisResults.objects;
+    }
     
-    // Проверка по расширению файла
-    const hasVideoExtension = normalizedUrl.endsWith('.mp4') || 
-                           normalizedUrl.endsWith('.webm') || 
-                           normalizedUrl.endsWith('.avi') || 
-                           normalizedUrl.endsWith('.mov') || 
-                           normalizedUrl.endsWith('.mkv') || 
-                           normalizedUrl.endsWith('.wmv');
+    // Если есть результаты распознавания сцен
+    if (analysisResults.scenes && Array.isArray(analysisResults.scenes)) {
+      formattedResults.details.scenes = analysisResults.scenes;
+    }
     
-    // Проверка по ссылкам на видео ВКонтакте
-    const isVkVideo = normalizedUrl.includes('vk.com/video') || 
-                    // Формат video-GROUPID_VIDEOID
-                    /vk\.com\/video-\d+_\d+/.test(normalizedUrl);
+    // Добавляем общее описание, если есть
+    if (analysisResults.description) {
+      formattedResults.summary.description = analysisResults.description;
+    }
     
-    // Проверка на Instagram видео
-    const isInstagramVideo = normalizedUrl.includes('instagram.') && 
-                          (normalizedUrl.includes('_nc_vs=') || 
-                          normalizedUrl.includes('fbcdn.net') && normalizedUrl.includes('.mp4') ||
-                          normalizedUrl.includes('cdninstagram.com') && normalizedUrl.includes('.mp4') ||
-                          normalizedUrl.includes('scontent.') && normalizedUrl.includes('.mp4') ||
-                          normalizedUrl.includes('efg=') ||
-                          normalizedUrl.includes('HBksFQIYUmlnX'));
+    // Добавляем уровень вовлеченности, если есть
+    if (analysisResults.engagementScore !== undefined) {
+      formattedResults.summary.engagementScore = analysisResults.engagementScore;
+    }
     
-    // Проверка по доменам видеохостингов
-    const isVideoHosting = normalizedUrl.includes('youtube.com/watch') || 
-                          normalizedUrl.includes('youtu.be/') || 
-                          normalizedUrl.includes('vimeo.com/') || 
-                          isVkVideo ||
-                          isInstagramVideo ||
-                          (normalizedUrl.includes('tgcnt.ru') && normalizedUrl.includes('.mp4'));
-    
-    return hasVideoExtension || isVideoHosting;
+    return formattedResults;
   }
 }
 
