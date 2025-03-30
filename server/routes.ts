@@ -6984,6 +6984,48 @@ https://t.me/channelname/ - description`;
       });
     }
   });
+
+  // Endpoint для получения отдельной трендовой темы по ID
+  app.get("/api/campaign-trends/:id", authenticateUser, async (req, res) => {
+    try {
+      const topicId = req.params.id;
+      
+      // Получаем токен авторизации
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ success: false, message: "Отсутствует токен авторизации" });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      console.log(`[GET /api/campaign-trends/:id] Получен запрос на тренд с ID: ${topicId}`);
+      
+      // Делаем запрос к Directus API
+      try {
+        const response = await axios.get(
+          `${DIRECTUS_URL}/items/campaign_trend_topics/${topicId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        
+        // Логируем успешный ответ и возвращаем данные
+        console.log(`[GET /api/campaign-trends/:id] Данные для тренда ${topicId} успешно получены`);
+        res.json({ success: true, data: response.data.data });
+      } catch (directusError) {
+        console.error(`[GET /api/campaign-trends/:id] Ошибка при запросе к Directus:`, directusError.message);
+        res.status(500).json({ 
+          success: false, 
+          message: "Ошибка при получении данных тренда", 
+          error: directusError.message 
+        });
+      }
+    } catch (error) {
+      console.error(`[GET /api/campaign-trends/:id] Ошибка:`, error);
+      res.status(500).json({ success: false, message: "Внутренняя ошибка сервера" });
+    }
+  });
   
   // Endpoint для закладок трендовых тем
   app.patch("/api/campaign-trends/:id/bookmark", authenticateUser, async (req, res) => {
