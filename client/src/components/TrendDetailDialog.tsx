@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 // Импортируем функции для работы с медиа
 import { createProxyImageUrl, createVideoThumbnailUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
@@ -521,8 +522,10 @@ export function TrendDetailDialog({
                   <div className="absolute bottom-2 right-2">
                     <MediaAnalysisButton 
                       mediaUrl={mediaData.images[0]} 
+                      trendId={topic.id} 
                       buttonText="Анализировать" 
                       buttonVariant="secondary" 
+                      onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
                     />
                   </div>
                 )}
