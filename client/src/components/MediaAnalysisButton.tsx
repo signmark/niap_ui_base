@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { 
   Dialog,
   DialogContent,
@@ -10,28 +10,32 @@ import {
   DialogDescription
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ImageDown } from 'lucide-react';
+import { Loader2, ImageDown, Save, CheckCircle2 } from 'lucide-react';
 
 interface MediaAnalysisButtonProps {
   mediaUrl: string; // URL изображения или видео для анализа
   trendId?: string; // ID тренда для сохранения результатов анализа (опционально)
   buttonText?: string; // Текст кнопки (опционально)
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"; // Вариант оформления кнопки
+  onAnalysisComplete?: () => void; // Опциональный колбэк для обновления родительского компонента после анализа
 }
 
 /**
  * Компонент кнопки для анализа медиаконтента
  * Открывает диалоговое окно с результатами анализа при нажатии
+ * Автоматически сохраняет результаты анализа в базе данных, если передан trendId
  */
 export function MediaAnalysisButton({ 
   mediaUrl, 
   trendId,
   buttonText = "Анализировать медиа", 
-  buttonVariant = "outline" 
+  buttonVariant = "outline",
+  onAnalysisComplete 
 }: MediaAnalysisButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
 
   // Функция для анализа медиаконтента
@@ -47,6 +51,7 @@ export function MediaAnalysisButton({
 
     setIsLoading(true);
     setResult(null);
+    setIsSaved(false);
 
     try {
       const response = await apiRequest('/api/analyze-media', {
@@ -57,6 +62,19 @@ export function MediaAnalysisButton({
       if (response.success) {
         setResult(response.results);
         setIsOpen(true);
+        
+        // Если результаты были сохранены в тренде
+        if (response.savedToTrend && trendId) {
+          setIsSaved(true);
+          // Инвалидируем кэш трендов, чтобы UI обновился с новыми данными анализа
+          queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
+          
+          // Если есть колбэк для обновления родительского компонента
+          if (onAnalysisComplete) {
+            onAnalysisComplete();
+          }
+        }
+        
         toast({
           title: "Анализ завершен",
           description: response.savedToTrend 
@@ -107,14 +125,22 @@ export function MediaAnalysisButton({
             <div className="space-y-4 py-4">
               <div className="rounded-lg overflow-hidden">
                 {result.mediaType === 'image' ? (
-                  <img 
-                    src={mediaUrl} 
-                    alt="Анализируемое изображение" 
-                    className="w-full h-auto rounded border"
-                    style={{ maxHeight: '300px', objectFit: 'contain' }}
-                  />
+                  <div className="relative">
+                    <img 
+                      src={mediaUrl} 
+                      alt="Анализируемое изображение" 
+                      className="w-full h-auto rounded border"
+                      style={{ maxHeight: '300px', objectFit: 'contain' }}
+                    />
+                    {isSaved && (
+                      <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Сохранено
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div className="bg-gray-100 p-4 rounded text-center">
+                  <div className="bg-gray-100 p-4 rounded text-center relative">
                     <p>Превью видео</p>
                     {result.thumbnailUrl && (
                       <img 
@@ -125,6 +151,12 @@ export function MediaAnalysisButton({
                       />
                     )}
                     <p className="text-xs text-gray-500 mt-1">{mediaUrl}</p>
+                    {isSaved && (
+                      <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Сохранено
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
