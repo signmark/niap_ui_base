@@ -10661,42 +10661,57 @@ ${datesText}
   // Отладочный маршрут для анализа медиаконтента (без аутентификации, использует системный API ключ)
   app.post("/api/debug/analyze-media", async (req, res) => {
     try {
-      // Устанавливаем заголовок Content-Type для предотвращения перехвата ответа Vite
+      // Устанавливаем заголовки для предотвращения перехвата ответа Vite и кэширования
       res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
       
+      // Получаем URL медиаконтента из тела запроса
       const { mediaUrl } = req.body;
       
       if (!mediaUrl || typeof mediaUrl !== 'string') {
-        return res.status(400).json({ 
+        return res.status(400).send(JSON.stringify({ 
           success: false, 
           error: "Требуется указать URL медиаконтента",
           message: "Укажите URL изображения или видео для анализа в теле запроса" 
-        });
+        }));
       }
       
       // В этом отладочном маршруте используем системный API ключ FAL AI
       const systemApiKey = process.env.FAL_AI_API_KEY;
       
       if (!systemApiKey) {
-        return res.status(500).json({
+        return res.status(500).send(JSON.stringify({
           success: false,
           error: "Отсутствует системный API ключ FAL AI",
           message: "Не удалось получить системный API ключ FAL AI"
-        });
+        }));
       }
       
       console.log(`[debug-media-analysis] Отладочный анализ медиаконтента: ${mediaUrl.substring(0, 50)}...`);
+      console.log(`[debug-media-analysis] Системный API ключ FAL AI: ${systemApiKey ? "присутствует" : "отсутствует"}`);
+      
+      // Проверяем, что URL действительно указывает на изображение
+      const isImageUrl = /\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i.test(mediaUrl);
+      if (!isImageUrl) {
+        console.log(`[debug-media-analysis] Предупреждение: URL не похож на изображение: ${mediaUrl}`);
+      }
       
       // Анализируем медиаконтент напрямую через FAL AI клиент
+      console.log(`[debug-media-analysis] Вызов FAL AI API для анализа изображения...`);
       const analysisResult = await falAiClient.analyzeImage(mediaUrl, systemApiKey);
       
       if (!analysisResult) {
-        return res.status(500).json({ 
+        return res.status(500).send(JSON.stringify({ 
           success: false, 
           error: "Ошибка анализа",
           message: "Не удалось проанализировать медиаконтент" 
-        });
+        }));
       }
+      
+      console.log(`[debug-media-analysis] Успешно получен результат анализа от FAL AI`);
       
       // Форматируем результаты для фронтенда
       const result = {
@@ -10706,10 +10721,11 @@ ${datesText}
         timestamp: new Date()
       };
       
-      return res.json({ 
+      // Отправляем ответ с явным преобразованием в строку
+      return res.status(200).send(JSON.stringify({ 
         success: true, 
         result
-      });
+      }));
     } catch (error) {
       console.error("Error analyzing media (debug):", error);
       
@@ -10718,11 +10734,11 @@ ${datesText}
         errorMessage = error.message;
       }
       
-      return res.status(500).json({ 
+      return res.status(500).send(JSON.stringify({ 
         success: false, 
         error: "Ошибка анализа",
         message: errorMessage 
-      });
+      }));
     }
   });
   
