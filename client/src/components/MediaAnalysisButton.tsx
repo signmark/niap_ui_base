@@ -314,7 +314,23 @@ export function MediaAnalysisButton({
   };
 
   // Определяем, какую функцию вызывать при клике на кнопку
-  const handleButtonClick = hasExistingAnalysis ? showExistingAnalysis : analyzeMedia;
+  const handleButtonClick = () => {
+    console.log("[MediaAnalysisButton] Нажата кнопка, hasExistingAnalysis:", hasExistingAnalysis);
+    if (hasExistingAnalysis) {
+      showExistingAnalysis();
+    } else {
+      analyzeMedia();
+    }
+    
+    // Всегда вызываем колбэк для обновления родительского компонента,
+    // это поможет родительскому компоненту получить актуальные данные
+    if (onAnalysisComplete) {
+      setTimeout(() => {
+        console.log("[MediaAnalysisButton] Вызываем колбэк для обновления родительского компонента");
+        onAnalysisComplete();
+      }, 300); // Небольшая задержка, чтобы дать время на обработку
+    }
+  };
   
   // Определяем текст и иконку для кнопки
   const buttonIcon = isLoading ? 
@@ -402,15 +418,8 @@ export function MediaAnalysisButton({
       <Dialog 
         open={isOpen} 
         onOpenChange={(open) => {
-          // Закрытие диалога
-          if (!open && result) {
-            // Запускаем колбэк для обновления родительского компонента только если у нас есть результаты анализа
-            // Это обеспечит отображение анализа сразу после закрытия диалога
-            if (onAnalysisComplete) {
-              console.log("[MediaAnalysisButton] Вызываем колбэк обновления после закрытия диалога");
-              onAnalysisComplete();
-            }
-          }
+          // Просто устанавливаем состояние, не вызывая никаких дополнительных функций
+          // Это предотвратит дублирование обновлений
           setIsOpen(open);
         }}
       >
@@ -581,11 +590,7 @@ export function MediaAnalysisButton({
             <Button
               variant="outline"
               onClick={() => {
-                // Дополнительно вызываем колбэк при закрытии диалога через кнопку "Закрыть"
-                if (result && onAnalysisComplete) {
-                  console.log("[MediaAnalysisButton] Закрытие через кнопку Закрыть, вызываем колбэк");
-                  onAnalysisComplete();
-                }
+                // Просто закрываем диалог, не вызывая колбэк
                 setIsOpen(false);
               }}
             >
