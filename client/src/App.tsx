@@ -21,6 +21,7 @@ import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
 import TestPage from "@/pages/test/index";
+import MediaAnalysisDebugPage from "@/pages/debug/media-analysis";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
       <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
+      <Route path="/debug/media-analysis" component={() => <Layout><MediaAnalysisDebugPage /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
       {/* NotFound должен быть последним */}

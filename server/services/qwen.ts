@@ -12,7 +12,7 @@ export interface QwenConfig {
 
 export interface QwenMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | any[]; // Поддержка мультимодальных сообщений
 }
 
 export class QwenService {
@@ -135,6 +135,143 @@ export class QwenService {
       }
       
       throw new Error(`Ошибка при обращении к Qwen API: ${error.message || 'Неизвестная ошибка'}`);
+    }
+  }
+  
+  /**
+   * Анализирует изображение с помощью Qwen-VL и возвращает структурированную информацию
+   * @param imageUrl URL изображения для анализа
+   * @param analysisType Тип анализа: 'basic', 'detailed', 'objects', 'text', 'sentiment'
+   * @returns Структурированный результат анализа изображения
+   */
+  async analyzeImage(imageUrl: string, analysisType: 'basic' | 'detailed' | 'objects' | 'text' | 'sentiment' = 'detailed'): Promise<any> {
+    try {
+      if (!this.apiKey) {
+        throw new Error('Qwen API ключ не установлен');
+      }
+      
+      console.log(`[qwen] Начинаем анализ изображения: ${imageUrl.substring(0, 50)}...`);
+      
+      // Преобразование URL изображения в Base64, если это необходимо
+      const imageData = await this.getImageAsBase64(imageUrl);
+      
+      // Шаблоны системных сообщений для разных типов анализа
+      const systemPrompts = {
+        basic: "Опиши что изображено на этой картинке. Дай краткое общее описание.",
+        detailed: `Проанализируй изображение и предоставь детальную структурированную информацию в формате JSON со следующими полями:
+          - description: общее описание изображения
+          - objects: список основных объектов на изображении
+          - colors: основные цвета в порядке преобладания
+          - composition: описание композиции и расположения элементов
+          - text: любой текст, видимый на изображении
+          - mood: общее настроение или эмоциональный тон изображения
+          - engagement_factors: элементы, которые могут привлечь внимание аудитории
+          - recommendations: 3-5 рекомендаций для создания подобного контента`,
+        objects: "Перечисли все объекты на изображении и их примерное расположение. Представь результат как JSON-массив объектов.",
+        text: "Извлеки весь текст, видимый на изображении. Сохрани оригинальное форматирование и порядок текста.",
+        sentiment: "Проанализируй эмоциональное воздействие этого изображения. Какие эмоции оно вызывает и почему? Оцени от 1 до 10 потенциальную вовлеченность аудитории."
+      };
+      
+      // Формируем сообщения для API запроса
+      const messages = [
+        { 
+          role: 'system', 
+          content: systemPrompts[analysisType]
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Проанализируй это изображение:' },
+            { type: 'image_url', image_url: { url: imageData } }
+          ]
+        }
+      ];
+      
+      console.log(`[qwen] Отправляем запрос на анализ изображения в Qwen-VL (тип анализа: ${analysisType})`);
+      
+      // Получаем активный URL API на основе режима
+      const activeBaseUrl = this.compatModes[this.apiMode];
+      
+      // Отправляем запрос к Qwen-VL API
+      const response = await axios.post(
+        `${activeBaseUrl}/chat/completions`,
+        {
+          model: 'qwen-vl',  // Используем мультимодальную модель
+          messages: messages,
+          temperature: 0.2, // Низкая температура для более точных результатов
+          max_tokens: 1500, // Достаточно для подробного анализа
+          response_format: { type: 'json_object' } // Запрашиваем ответ в формате JSON
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.data?.choices?.[0]?.message?.content) {
+        throw new Error('Некорректный ответ от Qwen-VL API');
+      }
+      
+      // Обрабатываем ответ и преобразуем его в структурированный JSON, если необходимо
+      let result = response.data.choices[0].message.content;
+      
+      // Если ответ в виде JSON-строки, преобразуем в объект
+      if (typeof result === 'string' && analysisType !== 'basic' && analysisType !== 'text') {
+        try {
+          // Извлекаем JSON из текста ответа, если он окружен другим текстом
+          const jsonMatch = result.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            result = JSON.parse(jsonMatch[0]);
+          } else {
+            result = JSON.parse(result);
+          }
+        } catch (e) {
+          console.warn('[qwen] Не удалось преобразовать ответ в JSON:', e);
+          // Оставляем как есть, если не удалось преобразовать
+        }
+      }
+      
+      console.log('[qwen] Анализ изображения успешно получен от Qwen-VL');
+      return result;
+    } catch (error) {
+      console.error('[qwen] Ошибка при анализе изображения с помощью Qwen-VL:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Получает изображение по URL и преобразует его в Base64 для отправки в API
+   * @param imageUrl URL изображения
+   * @returns Строка с данными изображения в формате data URL
+   */
+  private async getImageAsBase64(imageUrl: string): Promise<string> {
+    try {
+      // Если URL уже в формате data:image
+      if (imageUrl.startsWith('data:image')) {
+        return imageUrl;
+      }
+      
+      console.log(`[qwen] Получаем изображение по URL: ${imageUrl.substring(0, 50)}...`);
+      
+      // Получаем изображение через axios
+      const response = await axios.get(imageUrl, {
+        responseType: 'arraybuffer'
+      });
+      
+      // Определяем тип изображения из заголовков ответа
+      const contentType = response.headers['content-type'] || 'image/jpeg';
+      
+      // Преобразуем в Base64
+      const base64 = Buffer.from(response.data).toString('base64');
+      const dataUrl = `data:${contentType};base64,${base64}`;
+      
+      console.log(`[qwen] Изображение успешно преобразовано в Base64 (длина: ${dataUrl.length} символов)`);
+      return dataUrl;
+    } catch (error) {
+      console.error('[qwen] Ошибка при получении изображения по URL:', error);
+      throw new Error(`Не удалось получить изображение по URL: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
     }
   }
   
