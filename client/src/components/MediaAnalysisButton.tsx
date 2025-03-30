@@ -71,9 +71,27 @@ export function MediaAnalysisButton({
   });
   
   // Определяем, есть ли результаты анализа медиа
+  // Проверяем передаваемые параметры и данные из API
   const hasExistingAnalysis = Boolean(
     existingAnalysis || (trend && trend.media_analysis)
   );
+  
+  // Подробная информация о существующем медиа-анализе
+  if (existingAnalysis) {
+    console.log("[MediaAnalysisButton] Используем существующий анализ из пропса:", {
+      hasContent: Boolean(existingAnalysis),
+      type: typeof existingAnalysis,
+      isObject: typeof existingAnalysis === 'object',
+      keys: existingAnalysis && typeof existingAnalysis === 'object' ? Object.keys(existingAnalysis) : null
+    });
+  } else if (trend && trend.media_analysis) {
+    console.log("[MediaAnalysisButton] Используем существующий анализ из тренда:", {
+      hasContent: Boolean(trend.media_analysis),
+      type: typeof trend.media_analysis,
+      isObject: typeof trend.media_analysis === 'object',
+      keys: trend.media_analysis && typeof trend.media_analysis === 'object' ? Object.keys(trend.media_analysis) : null
+    });
+  }
   
   // Вспомогательная функция для безопасного отображения данных
   const safeRender = (item: any): string => {
@@ -277,11 +295,21 @@ export function MediaAnalysisButton({
       <Search className="mr-2 h-4 w-4" /> : 
       <ImageDown className="mr-2 h-4 w-4" />;
       
-  const displayButtonText = isLoading ? 
-    "Анализ..." : 
-    hasExistingAnalysis ? 
-      "Просмотреть анализ" : 
-      buttonText;
+  // Определяем текст кнопки в зависимости от наличия результатов анализа
+  const displayButtonText = isLoading 
+    ? "Анализ..." 
+    : (hasExistingAnalysis 
+        ? "Просмотреть анализ" 
+        : buttonText);
+  
+  // Явно логируем состояние для отладки выбора текста кнопки
+  console.log("[MediaAnalysisButton] Состояние кнопки:", {
+    hasExistingAnalysis,
+    existingAnalysis: Boolean(existingAnalysis),
+    trendMediaAnalysis: Boolean(trend && trend.media_analysis),
+    displayButtonText,
+    isLoading
+  });
 
   // При загрузке данных о тренде показываем лоадер
   if (isTrendLoading && !existingAnalysis) {
