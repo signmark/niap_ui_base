@@ -169,7 +169,7 @@ export async function getAllUserApiKeys(userId: string, authToken: string): Prom
  */
 export async function hasFalAiApiKey(userId: string, authToken: string): Promise<boolean> {
   // Сначала проверяем API ключ в настройках пользователя
-  const apiKey = await getUserApiKey(userId, 'falAiApiKey', authToken);
+  const apiKey = await getUserApiKey(userId, 'fal_ai', authToken);
   
   if (apiKey !== null && apiKey !== '') {
     return true;
@@ -212,10 +212,21 @@ function formatAuthToken(token: string): string {
   return `Bearer ${token}`;
 }
 
+/**
+ * Псевдоним для метода getUserApiKey для обратной совместимости
+ * @deprecated Используйте getUserApiKey вместо этого метода
+ */
+export async function getApiKey(userId: string, keyName: string, authToken: string): Promise<string | null> {
+  console.log(`[api-keys] Используется устаревший метод getApiKey, замените на getUserApiKey`);
+  return getUserApiKey(userId, keyName, authToken);
+}
+
 // Экспортируем сервис для API-ключей
 export const apiKeyService = {
   getUserApiKey,
   getAllUserApiKeys,
   hasFalAiApiKey,
-  startApiKeysCleanupInterval
+  startApiKeysCleanupInterval,
+  // Для обратной совместимости
+  getApiKey
 };

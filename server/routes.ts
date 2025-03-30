@@ -1293,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Получаем API ключ из сервиса ключей
-    let apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+    let apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
     
     // Инициализируем клиент FAL.AI с полученным ключом
     if (apiKey) {
@@ -8317,56 +8317,7 @@ https://t.me/channelname/ - description`;
   });
   
   // Маршрут для анализа медиаконтента
-  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
-    try {
-      const { mediaUrl } = req.query;
-      
-      if (!mediaUrl) {
-        return res.status(400).json({ error: "Требуется URL медиаконтента" });
-      }
-      
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        return res.status(401).json({ error: "Не авторизован" });
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      const userId = req.user?.id;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Не удалось определить пользователя" });
-      }
-      
-      console.log(`[media-analysis] Analyzing media content: ${mediaUrl}`);
-      
-      // Используем сервис медиа-анализатора для анализа контента
-      const analysisResult = await mediaAnalyzerService.analyzeMedia(mediaUrl as string, userId, token);
-      
-      if (!analysisResult) {
-        return res.status(500).json({ error: "Не удалось проанализировать медиаконтент" });
-      }
-      
-      return res.json({
-        success: true,
-        result: {
-          mediaUrl: mediaUrl,
-          mediaType: analysisResult.mediaType || 'image',
-          objects: analysisResult.details?.objects || [],
-          textContent: analysisResult.details?.textContent || [],
-          colors: analysisResult.details?.colorPalette?.map((color: any) => color.hex) || [],
-          description: analysisResult.summary?.description || '',
-          sentiment: 'neutral', // Заглушка для будущей интеграции
-          timestamp: new Date()
-        }
-      });
-    } catch (error: any) {
-      console.error('[media-analysis] Error analyzing media:', error);
-      return res.status(500).json({ 
-        error: "Ошибка при анализе медиаконтента",
-        details: error.message 
-      });
-    }
-  });
+  // Маршрут /api/media-analysis определен ниже
 
   // Анализ сайта для автоматического заполнения анкеты
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
@@ -9975,38 +9926,7 @@ ${datesText}
   });
 
   // Маршрут для анализа медиаконтента (изображений и видео) в трендах
-  app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
-    try {
-      const { mediaUrl, trendId } = req.query;
-      
-      if (!mediaUrl) {
-        return res.status(400).json({ error: "Требуется URL медиаконтента" });
-      }
-      
-      const authHeader = req.headers['authorization'];
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      const userId = req.user?.id;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Пользователь не авторизован" });
-      }
-      
-      console.log(`[media-analysis] Analyzing media for user ${userId}: ${String(mediaUrl).substring(0, 50)}...`);
-      
-      // Анализируем медиаконтент через сервис анализатора
-      const result = await mediaAnalyzerService.analyzeMedia(
-        mediaUrl as string, 
-        userId,
-        token
-      );
-      
-      if (!result) {
-        return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
-      }
+  // Маршрут /api/media-analysis определен ниже
       
       // Если указан ID тренда, можно в будущем сохранять результаты анализа в базу данных
       if (trendId) {
@@ -10546,7 +10466,7 @@ ${datesText}
         return res.status(400).json({
           success: false,
           error: "Для анализа медиаконтента требуется API ключ FAL AI",
-          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}",
+          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
           missingApiKey: true
         });
       }
