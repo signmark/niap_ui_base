@@ -428,7 +428,7 @@ export function TrendDetailDialog({
                           <MediaAnalysisButton 
                             mediaUrl={mediaData.videos[0]} 
                             trendId={topic.id}
-                            buttonText="Анализировать" 
+                            buttonText={topic.media_analysis ? "Просмотреть анализ" : "Анализировать"} 
                             buttonVariant="secondary" 
                             existingAnalysis={topic.media_analysis}
                             onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ["/api/campaign-trends"] })}
@@ -459,7 +459,7 @@ export function TrendDetailDialog({
                           <MediaAnalysisButton 
                             mediaUrl={mediaData.videos[0]} 
                             trendId={topic.id}
-                            buttonText="Анализировать" 
+                            buttonText={topic.media_analysis ? "Просмотреть анализ" : "Анализировать"} 
                             buttonVariant="secondary" 
                             existingAnalysis={topic.media_analysis}
                             onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
@@ -533,7 +533,7 @@ export function TrendDetailDialog({
                     <MediaAnalysisButton 
                       mediaUrl={mediaData.images[0]} 
                       trendId={topic.id}
-                      buttonText="Анализировать" 
+                      buttonText={topic.media_analysis ? "Просмотреть анализ" : "Анализировать"} 
                       buttonVariant="secondary" 
                       existingAnalysis={topic.media_analysis}
                       onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
