@@ -2327,7 +2327,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Используем сервис анализа медиаконтента
       const analysisResults = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
       
-      // Если указан ID тренда, сохраняем результаты анализа
+      // Сохраняем результаты автоматически, если указан ID тренда
+      let savedSuccessfully = false;
       if (trendId) {
         try {
           console.log(`[api] Сохраняем результаты анализа медиаконтента для тренда: ${trendId}`);
@@ -2379,13 +2380,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           // Обновляем запись тренда с результатами анализа
-          await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
-            media_analysis: mediaAnalysisData
-          });
+          console.log(`[api] Отправка запроса на обновление тренда ${trendId} с данными:`, JSON.stringify(mediaAnalysisData).substring(0, 300) + "...");
           
-          console.log(`[api] Результаты анализа медиаконтента успешно сохранены для тренда: ${trendId}`);
+          try {
+            const response = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+              media_analysis: mediaAnalysisData
+            });
+            
+            console.log(`[api] Результаты анализа медиаконтента успешно сохранены для тренда: ${trendId}`);
+            console.log(`[api] Статус ответа: ${response.status}, Данные ответа:`, response.data ? JSON.stringify(response.data).substring(0, 100) + "..." : "Нет данных");
+            
+            // Успешное сохранение
+            savedSuccessfully = true;
+          } catch (patchError) {
+            console.error(`[api] Ошибка HTTP при обновлении тренда:`, patchError.response ? {
+              status: patchError.response.status,
+              statusText: patchError.response.statusText,
+              data: patchError.response.data
+            } : patchError.message);
+            
+            // Пробуем еще раз с другим форматом данных, преобразовав объекты в строки
+            try {
+              console.log(`[api] Повторная попытка с упрощенным форматом данных...`);
+              
+              // Упрощенный вариант данных
+              const simplifiedData = {
+                description: analysisResults.description,
+                objects: Array.isArray(analysisResults.objects) ? 
+                  analysisResults.objects.map(o => typeof o === 'object' ? JSON.stringify(o) : String(o)) : [],
+                colors: Array.isArray(analysisResults.colors) ? 
+                  analysisResults.colors.map(c => typeof c === 'object' ? JSON.stringify(c) : String(c)) : [],
+                mood: analysisResults.mood,
+                imageUrl: mediaUrl
+              };
+              
+              const retryResponse = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+                media_analysis: simplifiedData
+              });
+              
+              console.log(`[api] Упрощенные результаты успешно сохранены. Статус:`, retryResponse.status);
+              savedSuccessfully = true;
+            } catch (retryError) {
+              console.error(`[api] Повторная попытка также не удалась:`, retryError.message);
+              savedSuccessfully = false;
+            }
+          }
         } catch (saveError) {
-          console.error(`[api] Ошибка при сохранении результатов анализа медиаконтента:`, saveError);
+          console.error(`[api] Ошибка при сохранении результатов анализа медиаконтента:`, saveError.message);
+          savedSuccessfully = false;
         }
       }
       
@@ -2393,7 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json({
         success: true,
         results: analysisResults,
-        savedToTrend: trendId ? true : false
+        savedToTrend: savedSuccessfully
       });
     } catch (error) {
       console.error("Ошибка при анализе медиаконтента:", error);
@@ -2415,6 +2457,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({
         success: false,
         error: errorMessage
+      });
+    }
+  });
+  
+  // Эндпоинт для явного (ручного) сохранения результатов анализа медиаконтента
+  app.post('/api/save-media-analysis', authenticateUser, async (req, res) => {
+    try {
+      // Получаем параметры запроса
+      const { mediaUrl, trendId, analysisResults } = req.body;
+      
+      // Проверяем обязательные параметры
+      if (!mediaUrl || !trendId || !analysisResults) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Отсутствуют обязательные параметры: URL медиаконтента, ID тренда или результаты анализа" 
+        });
+      }
+      
+      // Получаем ID пользователя и токен
+      const userId = req.user?.id;
+      const authToken = req.user?.token;
+      
+      if (!userId || !authToken) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не авторизован" 
+        });
+      }
+      
+      console.log(`[api] Явное сохранение результатов анализа медиаконтента для тренда: ${trendId}`);
+      
+      // Создаем API-клиент Directus с токеном пользователя
+      const directusApi = axios.create({
+        baseURL: process.env.DIRECTUS_URL || 'https://directus.nplanner.ru',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Функция для преобразования объектов с name и quantity в строки
+      const formatComplexObjects = (items: any[]) => {
+        if (!Array.isArray(items)) return [];
+        
+        return items.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            // Если это объект с name и quantity
+            if ('name' in item && 'quantity' in item) {
+              return {
+                text: `${item.name} (${item.quantity})`,
+                originalName: item.name,
+                originalQuantity: item.quantity
+              };
+            } else if ('name' in item) {
+              return {
+                text: item.name,
+                originalName: item.name
+              };
+            }
+            // Для остальных объектов - преобразуем в строку
+            return { text: JSON.stringify(item) };
+          }
+          // Примитивные типы оставляем как есть
+          return { text: String(item) };
+        });
+      };
+      
+      // Формируем данные анализа для сохранения в безопасном формате
+      const mediaAnalysisData = {
+        description: analysisResults.description,
+        objects: Array.isArray(analysisResults.objects) ? formatComplexObjects(analysisResults.objects) : [],
+        colors: Array.isArray(analysisResults.colors) ? formatComplexObjects(analysisResults.colors) : [],
+        mood: analysisResults.mood,
+        imageUrl: mediaUrl
+      };
+      
+      try {
+        // Проверяем существование тренда
+        const checkResponse = await directusApi.get(`/items/campaign_trend_topics/${trendId}`);
+        console.log(`[api] Проверка существования тренда: ${trendId}, статус: ${checkResponse.status}`);
+        
+        // Обновляем запись тренда с результатами анализа
+        const response = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+          media_analysis: mediaAnalysisData
+        });
+        
+        console.log(`[api] Результаты анализа успешно сохранены для тренда: ${trendId}`);
+        console.log(`[api] Статус ответа: ${response.status}`);
+        
+        return res.json({
+          success: true,
+          message: "Результаты анализа успешно сохранены"
+        });
+      } catch (error) {
+        console.error(`[api] Ошибка при сохранении результатов анализа:`, error);
+        
+        // Упрощаем формат данных для второй попытки
+        try {
+          console.log(`[api] Повторная попытка с упрощенным форматом данных...`);
+          
+          // Упрощенный вариант данных
+          const simplifiedData = {
+            description: analysisResults.description,
+            objects: Array.isArray(analysisResults.objects) ? 
+              analysisResults.objects.map((o: any) => typeof o === 'object' ? JSON.stringify(o) : String(o)) : [],
+            colors: Array.isArray(analysisResults.colors) ? 
+              analysisResults.colors.map((c: any) => typeof c === 'object' ? JSON.stringify(c) : String(c)) : [],
+            mood: analysisResults.mood,
+            imageUrl: mediaUrl
+          };
+          
+          // Последняя попытка сохранения упрощенных данных
+          const retryResponse = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+            media_analysis: simplifiedData
+          });
+          
+          console.log(`[api] Упрощенные результаты успешно сохранены. Статус:`, retryResponse.status);
+          
+          return res.json({
+            success: true,
+            message: "Результаты анализа успешно сохранены (с упрощенным форматом данных)"
+          });
+        } catch (retryError) {
+          console.error(`[api] Все попытки сохранения не удались:`, retryError);
+          
+          return res.status(500).json({
+            success: false,
+            error: "Не удалось сохранить результаты анализа. Пожалуйста, попробуйте еще раз или свяжитесь с администратором."
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`[api] Ошибка при явном сохранении результатов анализа:`, error);
+      
+      return res.status(500).json({
+        success: false,
+        error: "Произошла неизвестная ошибка при сохранении результатов анализа."
       });
     }
   });

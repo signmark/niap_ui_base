@@ -7,10 +7,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ImageDown, Save, CheckCircle2 } from 'lucide-react';
+import { Loader2, ImageDown, Save, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface MediaAnalysisButtonProps {
   mediaUrl: string; // URL изображения или видео для анализа
@@ -36,7 +37,65 @@ export function MediaAnalysisButton({
   const [isOpen, setIsOpen] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  // Функция для явного сохранения анализа медиа в тренде
+  const saveMediaAnalysis = async () => {
+    if (!result || !trendId) {
+      toast({
+        title: "Ошибка",
+        description: "Нет данных для сохранения или не указан ID тренда",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      console.log('[MediaAnalysisButton] Явный запрос на сохранение результатов анализа для тренда:', trendId);
+      
+      const response = await apiRequest('/api/save-media-analysis', {
+        method: 'POST',
+        data: { 
+          mediaUrl,
+          trendId,
+          analysisResults: result 
+        }
+      });
+
+      console.log('[MediaAnalysisButton] Результат запроса на сохранение:', response);
+
+      if (response.success) {
+        setIsSaved(true);
+        queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
+        
+        if (onAnalysisComplete) {
+          onAnalysisComplete();
+        }
+        
+        toast({
+          title: "Данные сохранены",
+          description: "Результаты анализа медиаконтента успешно сохранены"
+        });
+      } else {
+        toast({
+          title: "Ошибка сохранения",
+          description: response.error || "Не удалось сохранить результаты анализа",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('[MediaAnalysisButton] Ошибка при сохранении анализа:', error);
+      toast({
+        title: "Ошибка сохранения",
+        description: error instanceof Error ? error.message : "Произошла ошибка при сохранении результатов",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Функция для анализа медиаконтента
   const analyzeMedia = async () => {
@@ -52,12 +111,39 @@ export function MediaAnalysisButton({
     setIsLoading(true);
     setResult(null);
     setIsSaved(false);
+    setIsSaving(false);
+
+    // Добавляем отладочную информацию
+    console.log('[MediaAnalysisButton] Запрос анализа медиаконтента:', { 
+      mediaUrl, 
+      trendId,
+      mediaUrlType: typeof mediaUrl 
+    });
 
     try {
+      // Убедимся, что mediaUrl не содержит экранированные кавычки
+      let processedMediaUrl = mediaUrl;
+      if (typeof mediaUrl === 'string' && (mediaUrl.startsWith('"') || mediaUrl.includes('\\"'))) {
+        try {
+          // Чистим URL от лишних кавычек и экранирования
+          processedMediaUrl = mediaUrl.replace(/^"(.*)"$/, '$1').replace(/\\"/g, '"');
+          console.log('[MediaAnalysisButton] Обработанный URL для анализа:', processedMediaUrl);
+        } catch (e) {
+          console.error('[MediaAnalysisButton] Ошибка при обработке URL:', e);
+        }
+      }
+
+      console.log('[MediaAnalysisButton] Отправка запроса с данными:', { 
+        mediaUrl: processedMediaUrl, 
+        trendId 
+      });
+
       const response = await apiRequest('/api/analyze-media', {
         method: 'POST',
-        data: { mediaUrl, trendId }
+        data: { mediaUrl: processedMediaUrl, trendId }
       });
+
+      console.log('[MediaAnalysisButton] Результат запроса:', response);
 
       if (response.success) {
         setResult(response.results);
@@ -67,12 +153,18 @@ export function MediaAnalysisButton({
         if (response.savedToTrend && trendId) {
           setIsSaved(true);
           // Инвалидируем кэш трендов, чтобы UI обновился с новыми данными анализа
+          console.log('[MediaAnalysisButton] Инвалидируем кэш трендов для обновления UI');
           queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
           
           // Если есть колбэк для обновления родительского компонента
           if (onAnalysisComplete) {
             onAnalysisComplete();
           }
+        } else {
+          console.log('[MediaAnalysisButton] Результаты не были сохранены:', { 
+            savedToTrend: response.savedToTrend, 
+            trendId 
+          });
         }
         
         toast({
@@ -239,12 +331,61 @@ export function MediaAnalysisButton({
                   </p>
                 </div>
               )}
+              
+              {/* Предупреждение, если результаты не сохранены автоматически */}
+              {trendId && !isSaved && (
+                <div className="bg-amber-50 p-3 rounded border border-amber-200 mt-4 flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-amber-800 text-sm font-medium">Результаты анализа не были сохранены автоматически</p>
+                    <p className="text-amber-700 text-xs mt-1">
+                      Нажмите кнопку ниже, чтобы сохранить результаты анализа для выбранного тренда. 
+                      Это позволит использовать данные анализа при генерации контента.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Анализ медиаконтента...</span>
             </div>
+          )}
+          
+          {/* Футер диалога с кнопками действий */}
+          {result && trendId && (
+            <DialogFooter className="flex justify-between items-center border-t pt-3">
+              <div className="text-sm text-muted-foreground">
+                {isSaved ? (
+                  <span className="flex items-center text-green-600">
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                    Результаты сохранены в базе данных
+                  </span>
+                ) : (
+                  <span className="text-amber-600">Результаты не сохранены</span>
+                )}
+              </div>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={saveMediaAnalysis}
+                disabled={isSaving || isSaved}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Сохранение...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSaved ? "Сохранено" : "Сохранить анализ"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>
