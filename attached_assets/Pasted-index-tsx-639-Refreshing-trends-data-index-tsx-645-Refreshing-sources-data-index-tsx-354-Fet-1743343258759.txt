@@ -1,0 +1,149 @@
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+MediaAnalysisButton.tsx:209 [MediaAnalysisButton] Запрос анализа медиаконтента: {mediaUrl: 'https://sun1-14.userapi.com/s/v1/ig2/QDnS2ZC3vloMv…dZKenN8koLHpfx5-a4seH8-Mg-_qPKWnzpxHG0&cs=510x502', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', mediaUrlType: 'string'}
+MediaAnalysisButton.tsx:228 [MediaAnalysisButton] Отправка запроса с данными: {mediaUrl: 'https://sun1-14.userapi.com/s/v1/ig2/QDnS2ZC3vloMv…dZKenN8koLHpfx5-a4seH8-Mg-_qPKWnzpxHG0&cs=510x502', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e'}
+queryClient.ts:27 📤 API Запрос: POST /api/analyze-media
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: 'application/json', userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+MediaAnalysisButton.tsx:80 [MediaAnalysisButton-Debug] Состояние existingAnalysis: {isExistingAnalysisTruthy: false, existingAnalysisType: 'undefined', isObject: undefined, rawValue: 'undefined', keys: Array(0), …}
+MediaAnalysisButton.tsx:318 [MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки: {existingAnalysis: null, trend: null, hasExistingAnalysis: false, buttonText: 'Анализировать', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+MediaAnalysisButton.tsx:338 [MediaAnalysisButton] Состояние кнопки: {hasExistingAnalysis: false, existingAnalysis: false, trendMediaAnalysis: false, displayButtonText: 'Анализ...', isLoading: true}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+MediaAnalysisButton.tsx:238 [MediaAnalysisButton] Результат запроса: {success: true, results: {…}, savedToTrend: true}
+MediaAnalysisButton.tsx:248 [MediaAnalysisButton] Инвалидируем кэш трендов для обновления UI
+queryClient.ts:27 📤 API Запрос: GET /api/campaign-trends/6e5eab05-74a4-42d0-a2be-8ebf6744794e
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+queryClient.ts:27 📤 API Запрос: GET /api/campaign-trends/6e5eab05-74a4-42d0-a2be-8ebf6744794e
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+TrendDetailDialog.tsx:77 [TrendDetail] Исходные данные медиа в теме: {mediaLinks: undefined, media_links: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', hasVideoProp: undefined, hasVideo: false}
+TrendDetailDialog.tsx:107 [TrendDetail] Очищенная строка mediaLinks: {"images":["https://sun1-14.userapi.com/s/v1/ig2/QDnS2ZC3vloMvAiuY3LAYfkXDStA4csvCYJska5EJEjLmCdsX_xgQ6LHx9wwN32ylZtnLflHztyKM3a_l5hfwYBv.jpg?quality=95&as=32x32,48x47,72x71,108x106,160x158,240x236,360x355,480x473,540x532,640x631,720x709,1080x1064,1280x1261,1283x1264&from=bu&u=UpxTLdZKenN8koLHpfx5-a4seH8-Mg-_qPKWnzpxHG0&cs=510x502","https://sun1-19.userapi.com/s/v1/ig2/hY7XLU1LO6QhivXKUIKLDUKwrh27JLbnnOgpJebRvGpLVfIIMerfZXNOyYd3Hkb0M25_AwqzqC0sorz5iiVSj5jN.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x156,240x233,360x350,480x467,540x525,640x623,720x700,1080x1051,1280x1245,1290x1255&from=bu&u=S82K1yOnKkxOeV1pt82LOszZSGBvADBmB12m74OPVUs&cs=510x496","https://sun1-28.userapi.com/s/v1/ig2/SIhLyKPlrtK5n0tSsQhax-KhcAoXr7rMse92HfDby0D9LaR2Ysg0L_aPTAYgPkWG05ZbtQPrlqurNBtTnAf5TQ3S.jpg?quality=95&as=32x31,48x47,72x71,108x106,160x157,240x235,360x353,480x470,540x529,640x627,720x705,1080x1058,1280x1254,1290x1264&from=bu&u=ImkUR8exgBzpHI9zffqOpDvhk9gM2G35ujFN-canXWY&cs=510x500","https://sun1-24.userapi.com/s/v1/ig2/RdqVE2cvmG7GzfsJkl7rIdOe64_H3RRTg4-HyYDpC9ClEQcLysxyViLr-6XLkzEkGuE75jFbavPWSeOsMUI3to5X.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x520,640x617,720x694,1080x1041,1280x1233,1290x1243&from=bu&u=m-wzfBNMph2eTsScld_i6_18J5QRJGILsfEEhvBg3nk&cs=510x491","https://sun1-24.userapi.com/s/v1/ig2/h-eJViQ0qOqC40VG3tk0rqmH2Ss2y7uHzWwA-pPFM9B-uKz1ooL5FFQM0RYvEpliRqHOVSUh_VyUf1jeulDPYLek.jpg?quality=95&as=32x31,48x46,72x70,108x104,160x155,240x232,360x348,480x464,540x522,640x619,720x696,1080x1044,1280x1237,1290x1247&from=bu&u=RZvw0Q_q4JuGmouTdGlr5MKp-cjqkTjX28TVm8rp0OY&cs=510x493","https://sun1-18.userapi.com/s/v1/ig2/Y5T17XISTI_6wxuGyZaibcyRcsFdbXLjCsyf1zBeofoV9mYW767iFdGkPsE2UQ8C8Gdg4dFdT0uw_SoXvE-KGp3z.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x521,640x617,720x694,1080x1041,1280x1234,1290x1244&from=bu&u=QHK-00ry1558PBz8vv-Re2obPF0WfQQDbnBlItVW8C4&cs=510x492","https://sun1-96.userapi.com/s/v1/ig2/WWIirMiXAhcDq_MxOoOQkc0r4D0dFKCF9BEwPSXty-kIE1dpnnEr1VUClxwtoqD9g87iToXOLNgoF77scZFhL1oS.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x155,240x233,360x350,480x466,540x525,640x622,720x699,1080x1049,1280x1243,1290x1253&from=bu&u=9wTiof8JX73VAtuRzG0kuEoRqAVtxRKEJoHGzLERohI&cs=510x495","https://sun1-90.userapi.com/s/v1/ig2/0DRWseX_jBKJzf7jvhZMKrHi_U1BndENSWW13OvQUP9oFSsDD55yAzZ2RTJBLtN1HHPzaZJqh4p1peR8nh3IHCDy.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x230,360x345,480x461,540x518,640x614,720x691,1080x1036,1280x1228,1290x1238&from=bu&u=kZluhzHkgvkBdJxEX7Sn_MzJrE4AKj4PjtuhAddqTeA&cs=510x489","https://sun1-96.userapi.com/s/v1/ig2/ETzc7SCbXBuhNT3WlHs4g6b6IzIghZQLEDNyF3ue-k4kQpzPqRQfNlU3Z03typw5Jow9hcxQ_5X0ML5dHFgDZ6cP.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x346,480x462,540x519,640x616,720x693,1080x1039,1280x1231,1290x1241&from=bu&u=tqjN7xseCAC5aJQYUXZO3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}
+TrendDetailDialog.tsx:110 [TrendDetail] Распарсенные данные: {images: Array(9), videos: Array(0)}
+TrendDetailDialog.tsx:174 [TrendDetail] Видеоданные: {mediaData: {…}, videoUrl: undefined, hasVideo: false, mediaLinksSource: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', topicHasVideo: undefined, …}
+TrendDetailDialog.tsx:322 [TrendDetailDialog] hasVideo состояние: {hasVideo: false, vkVideoInfo: false, videoThumbnailUrl: false, mediaDataVideos: 0, topicId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+TrendDetailDialog.tsx:563 [TrendDetailDialog] Перед рендерингом кнопки анализа изображения: {hasMediaAnalysis: false, mediaAnalysisType: 'undefined', mediaAnalysisJSONValue: 'null', buttonTextValue: 'Анализировать', topicId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e'}
+MediaAnalysisButton.tsx:80 [MediaAnalysisButton-Debug] Состояние existingAnalysis: {isExistingAnalysisTruthy: false, existingAnalysisType: 'undefined', isObject: undefined, rawValue: 'undefined', keys: Array(0), …}
+MediaAnalysisButton.tsx:318 [MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки: {existingAnalysis: null, trend: null, hasExistingAnalysis: false, buttonText: 'Анализировать', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+MediaAnalysisButton.tsx:338 [MediaAnalysisButton] Состояние кнопки: {hasExistingAnalysis: false, existingAnalysis: false, trendMediaAnalysis: false, displayButtonText: 'Анализировать', isLoading: false}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+MediaAnalysisButton.tsx:65 Ошибка при получении данных тренда: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+queryFn @ MediaAnalysisButton.tsx:65
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=3a493731:840
+run @ @tanstack_react-query.js?v=3a493731:494
+start @ @tanstack_react-query.js?v=3a493731:536
+fetch @ @tanstack_react-query.js?v=3a493731:926
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1726
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1725
+batch @ @tanstack_react-query.js?v=3a493731:583
+refetchQueries @ @tanstack_react-query.js?v=3a493731:1724
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1716
+batch @ @tanstack_react-query.js?v=3a493731:583
+invalidateQueries @ @tanstack_react-query.js?v=3a493731:1705
+analyzeMedia @ MediaAnalysisButton.tsx:249
+await in analyzeMedia
+callCallback2 @ chunk-276SZO74.js?v=3a493731:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=3a493731:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=3a493731:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=3a493731:3736
+executeDispatch @ chunk-276SZO74.js?v=3a493731:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=3a493731:7034
+processDispatchQueue @ chunk-276SZO74.js?v=3a493731:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=3a493731:7051
+(anonymous) @ chunk-276SZO74.js?v=3a493731:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=3a493731:18913
+batchedUpdates @ chunk-276SZO74.js?v=3a493731:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=3a493731:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=3a493731:5478
+dispatchEvent @ chunk-276SZO74.js?v=3a493731:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=3a493731:5449
+MediaAnalysisButton.tsx:65 Ошибка при получении данных тренда: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+queryFn @ MediaAnalysisButton.tsx:65
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=3a493731:840
+run @ @tanstack_react-query.js?v=3a493731:494
+start @ @tanstack_react-query.js?v=3a493731:536
+fetch @ @tanstack_react-query.js?v=3a493731:926
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1726
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1725
+batch @ @tanstack_react-query.js?v=3a493731:583
+refetchQueries @ @tanstack_react-query.js?v=3a493731:1724
+(anonymous) @ @tanstack_react-query.js?v=3a493731:1716
+batch @ @tanstack_react-query.js?v=3a493731:583
+invalidateQueries @ @tanstack_react-query.js?v=3a493731:1705
+onAnalysisComplete @ TrendDetailDialog.tsx:578
+analyzeMedia @ MediaAnalysisButton.tsx:253
+await in analyzeMedia
+callCallback2 @ chunk-276SZO74.js?v=3a493731:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=3a493731:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=3a493731:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=3a493731:3736
+executeDispatch @ chunk-276SZO74.js?v=3a493731:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=3a493731:7034
+processDispatchQueue @ chunk-276SZO74.js?v=3a493731:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=3a493731:7051
+(anonymous) @ chunk-276SZO74.js?v=3a493731:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=3a493731:18913
+batchedUpdates @ chunk-276SZO74.js?v=3a493731:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=3a493731:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=3a493731:5478
+dispatchEvent @ chunk-276SZO74.js?v=3a493731:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=3a493731:5449
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+TrendDetailDialog.tsx:77 [TrendDetail] Исходные данные медиа в теме: {mediaLinks: undefined, media_links: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', hasVideoProp: undefined, hasVideo: false}
+TrendDetailDialog.tsx:107 [TrendDetail] Очищенная строка mediaLinks: {"images":["https://sun1-14.userapi.com/s/v1/ig2/QDnS2ZC3vloMvAiuY3LAYfkXDStA4csvCYJska5EJEjLmCdsX_xgQ6LHx9wwN32ylZtnLflHztyKM3a_l5hfwYBv.jpg?quality=95&as=32x32,48x47,72x71,108x106,160x158,240x236,360x355,480x473,540x532,640x631,720x709,1080x1064,1280x1261,1283x1264&from=bu&u=UpxTLdZKenN8koLHpfx5-a4seH8-Mg-_qPKWnzpxHG0&cs=510x502","https://sun1-19.userapi.com/s/v1/ig2/hY7XLU1LO6QhivXKUIKLDUKwrh27JLbnnOgpJebRvGpLVfIIMerfZXNOyYd3Hkb0M25_AwqzqC0sorz5iiVSj5jN.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x156,240x233,360x350,480x467,540x525,640x623,720x700,1080x1051,1280x1245,1290x1255&from=bu&u=S82K1yOnKkxOeV1pt82LOszZSGBvADBmB12m74OPVUs&cs=510x496","https://sun1-28.userapi.com/s/v1/ig2/SIhLyKPlrtK5n0tSsQhax-KhcAoXr7rMse92HfDby0D9LaR2Ysg0L_aPTAYgPkWG05ZbtQPrlqurNBtTnAf5TQ3S.jpg?quality=95&as=32x31,48x47,72x71,108x106,160x157,240x235,360x353,480x470,540x529,640x627,720x705,1080x1058,1280x1254,1290x1264&from=bu&u=ImkUR8exgBzpHI9zffqOpDvhk9gM2G35ujFN-canXWY&cs=510x500","https://sun1-24.userapi.com/s/v1/ig2/RdqVE2cvmG7GzfsJkl7rIdOe64_H3RRTg4-HyYDpC9ClEQcLysxyViLr-6XLkzEkGuE75jFbavPWSeOsMUI3to5X.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x520,640x617,720x694,1080x1041,1280x1233,1290x1243&from=bu&u=m-wzfBNMph2eTsScld_i6_18J5QRJGILsfEEhvBg3nk&cs=510x491","https://sun1-24.userapi.com/s/v1/ig2/h-eJViQ0qOqC40VG3tk0rqmH2Ss2y7uHzWwA-pPFM9B-uKz1ooL5FFQM0RYvEpliRqHOVSUh_VyUf1jeulDPYLek.jpg?quality=95&as=32x31,48x46,72x70,108x104,160x155,240x232,360x348,480x464,540x522,640x619,720x696,1080x1044,1280x1237,1290x1247&from=bu&u=RZvw0Q_q4JuGmouTdGlr5MKp-cjqkTjX28TVm8rp0OY&cs=510x493","https://sun1-18.userapi.com/s/v1/ig2/Y5T17XISTI_6wxuGyZaibcyRcsFdbXLjCsyf1zBeofoV9mYW767iFdGkPsE2UQ8C8Gdg4dFdT0uw_SoXvE-KGp3z.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x521,640x617,720x694,1080x1041,1280x1234,1290x1244&from=bu&u=QHK-00ry1558PBz8vv-Re2obPF0WfQQDbnBlItVW8C4&cs=510x492","https://sun1-96.userapi.com/s/v1/ig2/WWIirMiXAhcDq_MxOoOQkc0r4D0dFKCF9BEwPSXty-kIE1dpnnEr1VUClxwtoqD9g87iToXOLNgoF77scZFhL1oS.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x155,240x233,360x350,480x466,540x525,640x622,720x699,1080x1049,1280x1243,1290x1253&from=bu&u=9wTiof8JX73VAtuRzG0kuEoRqAVtxRKEJoHGzLERohI&cs=510x495","https://sun1-90.userapi.com/s/v1/ig2/0DRWseX_jBKJzf7jvhZMKrHi_U1BndENSWW13OvQUP9oFSsDD55yAzZ2RTJBLtN1HHPzaZJqh4p1peR8nh3IHCDy.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x230,360x345,480x461,540x518,640x614,720x691,1080x1036,1280x1228,1290x1238&from=bu&u=kZluhzHkgvkBdJxEX7Sn_MzJrE4AKj4PjtuhAddqTeA&cs=510x489","https://sun1-96.userapi.com/s/v1/ig2/ETzc7SCbXBuhNT3WlHs4g6b6IzIghZQLEDNyF3ue-k4kQpzPqRQfNlU3Z03typw5Jow9hcxQ_5X0ML5dHFgDZ6cP.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x346,480x462,540x519,640x616,720x693,1080x1039,1280x1231,1290x1241&from=bu&u=tqjN7xseCAC5aJQYUXZO3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}
+TrendDetailDialog.tsx:110 [TrendDetail] Распарсенные данные: {images: Array(9), videos: Array(0)}
+TrendDetailDialog.tsx:174 [TrendDetail] Видеоданные: {mediaData: {…}, videoUrl: undefined, hasVideo: false, mediaLinksSource: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', topicHasVideo: undefined, …}
+TrendDetailDialog.tsx:322 [TrendDetailDialog] hasVideo состояние: {hasVideo: false, vkVideoInfo: false, videoThumbnailUrl: false, mediaDataVideos: 0, topicId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+TrendDetailDialog.tsx:563 [TrendDetailDialog] Перед рендерингом кнопки анализа изображения: {hasMediaAnalysis: false, mediaAnalysisType: 'undefined', mediaAnalysisJSONValue: 'null', buttonTextValue: 'Анализировать', topicId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e'}
+MediaAnalysisButton.tsx:80 [MediaAnalysisButton-Debug] Состояние existingAnalysis: {isExistingAnalysisTruthy: false, existingAnalysisType: 'undefined', isObject: undefined, rawValue: 'undefined', keys: Array(0), …}
+MediaAnalysisButton.tsx:318 [MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки: {existingAnalysis: null, trend: null, hasExistingAnalysis: false, buttonText: 'Анализировать', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+MediaAnalysisButton.tsx:338 [MediaAnalysisButton] Состояние кнопки: {hasExistingAnalysis: false, existingAnalysis: false, trendMediaAnalysis: false, displayButtonText: 'Анализировать', isLoading: false}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}

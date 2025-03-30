@@ -72,9 +72,19 @@ export function MediaAnalysisButton({
   
   // Определяем, есть ли результаты анализа медиа
   // Проверяем передаваемые параметры и данные из API
-  const hasExistingAnalysis = Boolean(
-    existingAnalysis || (trend && trend.media_analysis)
-  );
+  // Убедимся, что existingAnalysis - это объект и в нем есть данные
+  const hasValidExistingAnalysis = existingAnalysis && 
+    typeof existingAnalysis === 'object' && 
+    existingAnalysis !== null &&
+    Object.keys(existingAnalysis).length > 0;
+    
+  // Проверяем наличие анализа в данных тренда
+  const hasTrendAnalysis = trend?.media_analysis && 
+    typeof trend.media_analysis === 'object' && 
+    trend.media_analysis !== null &&
+    Object.keys(trend.media_analysis).length > 0;
+    
+  const hasExistingAnalysis = hasValidExistingAnalysis || hasTrendAnalysis;
   
   // Детальный анализ полученного объекта existingAnalysis для отладки
   console.log('[MediaAnalysisButton-Debug] Состояние existingAnalysis:', {
@@ -287,7 +297,27 @@ export function MediaAnalysisButton({
   // Функция для отображения существующего анализа
   const showExistingAnalysis = () => {
     // Используем существующие результаты анализа
-    const analysisData = existingAnalysis || (trend && trend.media_analysis);
+    let analysisData = existingAnalysis || (trend?.media_analysis && Object.keys(trend.media_analysis).length > 0 ? trend.media_analysis : null);
+    
+    console.log("[MediaAnalysisButton] showExistingAnalysis вызвана с данными:", {
+      hasExistingAnalysis: Boolean(existingAnalysis),
+      hasTrendAnalysis: Boolean(trend?.media_analysis),
+      analysisDataExists: Boolean(analysisData),
+      analysisDataType: analysisData ? typeof analysisData : 'null'
+    });
+    
+    // Если данные пришли в формате строки, преобразуем их в объект
+    if (analysisData && typeof analysisData === 'string') {
+      try {
+        analysisData = JSON.parse(analysisData);
+        console.log("[MediaAnalysisButton] Преобразовали строку в объект:", { 
+          parsedType: typeof analysisData,
+          hasKeys: analysisData && typeof analysisData === 'object' ? Object.keys(analysisData).length : 0
+        });
+      } catch (error) {
+        console.error("[MediaAnalysisButton] Ошибка парсинга данных анализа:", error);
+      }
+    }
     
     if (!analysisData) {
       toast({
@@ -313,6 +343,39 @@ export function MediaAnalysisButton({
     hasExistingAnalysis ? 
       <Search className="mr-2 h-4 w-4" /> : 
       <ImageDown className="mr-2 h-4 w-4" />;
+  
+  // Обработка существующего анализа при монтировании и изменении зависимостей
+  useEffect(() => {
+    // Обработка случая, когда existingAnalysis приходит как строка (из Directus JSON)
+    if (existingAnalysis && typeof existingAnalysis === 'string') {
+      try {
+        // Пытаемся распарсить JSON строку
+        const parsedAnalysis = JSON.parse(existingAnalysis);
+        console.log("[MediaAnalysisButton] Преобразовали existingAnalysis из строки в объект:", {
+          originalType: typeof existingAnalysis,
+          parsedType: typeof parsedAnalysis,
+          hasData: parsedAnalysis && typeof parsedAnalysis === 'object' && Object.keys(parsedAnalysis).length > 0
+        });
+        
+        // Если есть данные анализа, предустанавливаем их для диалога
+        if (parsedAnalysis && typeof parsedAnalysis === 'object' && Object.keys(parsedAnalysis).length > 0) {
+          setResult(parsedAnalysis);
+          setIsSaved(true);
+        }
+      } catch (error) {
+        console.error("[MediaAnalysisButton] Ошибка при обработке existingAnalysis как JSON строки:", error);
+      }
+    }
+    // Если анализ уже приходит как объект из trend
+    else if (trend?.media_analysis && typeof trend.media_analysis === 'object' && Object.keys(trend.media_analysis).length > 0) {
+      console.log("[MediaAnalysisButton] Используем media_analysis из трендов:", {
+        type: typeof trend.media_analysis,
+        hasData: Object.keys(trend.media_analysis).length > 0
+      });
+      setResult(trend.media_analysis);
+      setIsSaved(true);
+    }
+  }, [existingAnalysis, trend]);
   
   // Отладочная информация о том, как определяется наличие результатов анализа
   console.log("[MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки:", {

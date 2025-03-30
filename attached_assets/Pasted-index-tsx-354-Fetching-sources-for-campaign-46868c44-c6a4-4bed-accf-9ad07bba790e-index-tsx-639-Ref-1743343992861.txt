@@ -1,0 +1,104 @@
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+TrendDetailDialog.tsx:77 [TrendDetail] Исходные данные медиа в теме: {mediaLinks: undefined, media_links: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', hasVideoProp: undefined, hasVideo: false}
+TrendDetailDialog.tsx:107 [TrendDetail] Очищенная строка mediaLinks: {"images":["https://sun1-14.userapi.com/s/v1/ig2/QDnS2ZC3vloMvAiuY3LAYfkXDStA4csvCYJska5EJEjLmCdsX_xgQ6LHx9wwN32ylZtnLflHztyKM3a_l5hfwYBv.jpg?quality=95&as=32x32,48x47,72x71,108x106,160x158,240x236,360x355,480x473,540x532,640x631,720x709,1080x1064,1280x1261,1283x1264&from=bu&u=UpxTLdZKenN8koLHpfx5-a4seH8-Mg-_qPKWnzpxHG0&cs=510x502","https://sun1-19.userapi.com/s/v1/ig2/hY7XLU1LO6QhivXKUIKLDUKwrh27JLbnnOgpJebRvGpLVfIIMerfZXNOyYd3Hkb0M25_AwqzqC0sorz5iiVSj5jN.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x156,240x233,360x350,480x467,540x525,640x623,720x700,1080x1051,1280x1245,1290x1255&from=bu&u=S82K1yOnKkxOeV1pt82LOszZSGBvADBmB12m74OPVUs&cs=510x496","https://sun1-28.userapi.com/s/v1/ig2/SIhLyKPlrtK5n0tSsQhax-KhcAoXr7rMse92HfDby0D9LaR2Ysg0L_aPTAYgPkWG05ZbtQPrlqurNBtTnAf5TQ3S.jpg?quality=95&as=32x31,48x47,72x71,108x106,160x157,240x235,360x353,480x470,540x529,640x627,720x705,1080x1058,1280x1254,1290x1264&from=bu&u=ImkUR8exgBzpHI9zffqOpDvhk9gM2G35ujFN-canXWY&cs=510x500","https://sun1-24.userapi.com/s/v1/ig2/RdqVE2cvmG7GzfsJkl7rIdOe64_H3RRTg4-HyYDpC9ClEQcLysxyViLr-6XLkzEkGuE75jFbavPWSeOsMUI3to5X.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x520,640x617,720x694,1080x1041,1280x1233,1290x1243&from=bu&u=m-wzfBNMph2eTsScld_i6_18J5QRJGILsfEEhvBg3nk&cs=510x491","https://sun1-24.userapi.com/s/v1/ig2/h-eJViQ0qOqC40VG3tk0rqmH2Ss2y7uHzWwA-pPFM9B-uKz1ooL5FFQM0RYvEpliRqHOVSUh_VyUf1jeulDPYLek.jpg?quality=95&as=32x31,48x46,72x70,108x104,160x155,240x232,360x348,480x464,540x522,640x619,720x696,1080x1044,1280x1237,1290x1247&from=bu&u=RZvw0Q_q4JuGmouTdGlr5MKp-cjqkTjX28TVm8rp0OY&cs=510x493","https://sun1-18.userapi.com/s/v1/ig2/Y5T17XISTI_6wxuGyZaibcyRcsFdbXLjCsyf1zBeofoV9mYW767iFdGkPsE2UQ8C8Gdg4dFdT0uw_SoXvE-KGp3z.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x347,480x463,540x521,640x617,720x694,1080x1041,1280x1234,1290x1244&from=bu&u=QHK-00ry1558PBz8vv-Re2obPF0WfQQDbnBlItVW8C4&cs=510x492","https://sun1-96.userapi.com/s/v1/ig2/WWIirMiXAhcDq_MxOoOQkc0r4D0dFKCF9BEwPSXty-kIE1dpnnEr1VUClxwtoqD9g87iToXOLNgoF77scZFhL1oS.jpg?quality=95&as=32x31,48x47,72x70,108x105,160x155,240x233,360x350,480x466,540x525,640x622,720x699,1080x1049,1280x1243,1290x1253&from=bu&u=9wTiof8JX73VAtuRzG0kuEoRqAVtxRKEJoHGzLERohI&cs=510x495","https://sun1-90.userapi.com/s/v1/ig2/0DRWseX_jBKJzf7jvhZMKrHi_U1BndENSWW13OvQUP9oFSsDD55yAzZ2RTJBLtN1HHPzaZJqh4p1peR8nh3IHCDy.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x230,360x345,480x461,540x518,640x614,720x691,1080x1036,1280x1228,1290x1238&from=bu&u=kZluhzHkgvkBdJxEX7Sn_MzJrE4AKj4PjtuhAddqTeA&cs=510x489","https://sun1-96.userapi.com/s/v1/ig2/ETzc7SCbXBuhNT3WlHs4g6b6IzIghZQLEDNyF3ue-k4kQpzPqRQfNlU3Z03typw5Jow9hcxQ_5X0ML5dHFgDZ6cP.jpg?quality=95&as=32x31,48x46,72x69,108x104,160x154,240x231,360x346,480x462,540x519,640x616,720x693,1080x1039,1280x1231,1290x1241&from=bu&u=tqjN7xseCAC5aJQYUXZO3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}
+TrendDetailDialog.tsx:110 [TrendDetail] Распарсенные данные: {images: Array(9), videos: Array(0)}
+TrendDetailDialog.tsx:174 [TrendDetail] Видеоданные: {mediaData: {…}, videoUrl: undefined, hasVideo: false, mediaLinksSource: '{"images":["https://sun1-14.userapi.com/s/v1/ig2/Q…3vcWrmN6BnGJ8O0d-K49B-M&cs=510x491"],"videos":[]}', topicHasVideo: undefined, …}
+TrendDetailDialog.tsx:322 [TrendDetailDialog] hasVideo состояние: {hasVideo: false, vkVideoInfo: false, videoThumbnailUrl: false, mediaDataVideos: 0, topicId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+TrendDetailDialog.tsx:604 [TrendDetailDialog] Перед рендерингом кнопки анализа изображения: {hasMediaAnalysis: false, mediaAnalysisType: 'undefined', mediaAnalysisJSONValue: 'null', hasValidAnalysis: undefined, objectKeys: Array(0), …}
+MediaAnalysisButton.tsx:80 [MediaAnalysisButton-Debug] Состояние existingAnalysis: {isExistingAnalysisTruthy: false, existingAnalysisType: 'undefined', isObject: null, rawValue: 'undefined', keys: Array(0), …}
+MediaAnalysisButton.tsx:325 [MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки: {existingAnalysis: null, trend: null, hasExistingAnalysis: false, buttonText: 'Анализировать', trendId: '6e5eab05-74a4-42d0-a2be-8ebf6744794e', …}
+MediaAnalysisButton.tsx:345 [MediaAnalysisButton] Состояние кнопки: {hasExistingAnalysis: false, existingAnalysis: false, trendMediaAnalysis: false, displayButtonText: 'Анализировать', isLoading: false}
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-ZENKUAXS.js?v=3a493731:330:29)
+    at chunk-ZENKUAXS.js?v=3a493731:234:13
+    at chunk-ZENKUAXS.js?v=3a493731:157:58
+    at Presence (chunk-RNAEPQ6M.js?v=3a493731:24:11)
+    at chunk-ZENKUAXS.js?v=3a493731:148:64
+    at chunk-D3CTYCI6.js?v=3a493731:52:11
+    at chunk-D3CTYCI6.js?v=3a493731:33:11
+    at chunk-QCAFA6Y2.js?v=3a493731:41:13
+    at chunk-XXO3RPXQ.js?v=3a493731:260:22
+    at Presence (chunk-RNAEPQ6M.js?v=3a493731:24:11)
+    at Provider (chunk-QUKTJ62H.js?v=3a493731:38:15)
+    at DialogPortal (chunk-ZENKUAXS.js?v=3a493731:111:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-QUKTJ62H.js?v=3a493731:38:15)
+    at Dialog (chunk-ZENKUAXS.js?v=3a493731:52:5)
+    at TrendDetailDialog (TrendDetailDialog.tsx:37:3)
+    at div (<anonymous>)
+    at Trends (index.tsx:150:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:13:26)
+    at component (<anonymous>)
+    at Route (wouter.js?v=3a493731:323:16)
+    at Switch (wouter.js?v=3a493731:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=3a493731:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-ZENKUAXS.js?v=3a493731:338
+commitHookEffectListMount @ chunk-276SZO74.js?v=3a493731:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=3a493731:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=3a493731:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=3a493731:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=3a493731:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=3a493731:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=3a493731:19447
+commitRootImpl @ chunk-276SZO74.js?v=3a493731:19416
+commitRoot @ chunk-276SZO74.js?v=3a493731:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=3a493731:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=3a493731:9119
+(anonymous) @ chunk-276SZO74.js?v=3a493731:18627
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:684 Fetched trends data: {success: true, data: Array(5)}
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
+index.tsx:639 Refreshing trends data...
+index.tsx:645 Refreshing sources data...
+index.tsx:354 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:369 Sources API response: {status: 200, dataLength: 67, firstSource: {…}, allSources: Array(67)}
