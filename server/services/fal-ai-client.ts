@@ -11,11 +11,13 @@ const FAL_AI_BASE_URL = 'https://gateway.fal.ai/v1';
 /**
  * Анализирует изображение с помощью FAL AI API
  * @param imageUrl URL изображения для анализа
- * @param apiKey API ключ для FAL AI
+ * @param apiKey API ключ для FAL AI (опционально, если не указан, используется ключ из setApiKey)
  * @param isVideo Флаг, указывающий, что анализируется видео (для логирования)
  * @returns Результаты анализа изображения или null в случае ошибки
  */
-async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean = false): Promise<any | null> {
+async function analyzeImage(imageUrl: string, apiKey?: string, isVideo: boolean = false): Promise<any | null> {
+  // Если API ключ не передан, используем сохраненный ключ
+  const effectiveApiKey = apiKey || _apiKey;
   const MAX_RETRIES = 3; // Максимальное количество попыток
   const RETRY_DELAY = 2000; // Задержка между попытками в миллисекундах
   let retryCount = 0;
@@ -32,7 +34,7 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
       const contentType = isVideo ? 'видео' : 'изображения';
       console.log(`[fal-ai] Начинаем анализ ${contentType}: ${imageUrl.substring(0, 50)}...`);
       
-      if (!apiKey) {
+      if (!effectiveApiKey) {
         console.error('[fal-ai] API ключ FAL AI отсутствует');
         throw new Error('API ключ FAL AI не найден');
       }
@@ -68,7 +70,7 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
       }
       
       // Убедимся, что API ключ имеет правильный формат
-      const formattedApiKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
+      const formattedApiKey = effectiveApiKey.startsWith('Key ') ? effectiveApiKey : `Key ${effectiveApiKey}`;
       
       // Создаем заголовки запроса с API ключом
       const headers = {
@@ -381,9 +383,31 @@ async function generateImage(
   }
 }
 
+// Переменная для хранения API-ключа
+let _apiKey: string | null = null;
+
+/**
+ * Устанавливает API ключ для FAL AI
+ * @param apiKey API ключ для FAL AI
+ */
+function setApiKey(apiKey: string): void {
+  _apiKey = apiKey;
+  console.log('[fal-ai] API ключ установлен');
+}
+
+/**
+ * Возвращает текущий API ключ для FAL AI
+ * @returns API ключ или null, если не установлен
+ */
+function getApiKey(): string | null {
+  return _apiKey;
+}
+
 // Экспортируем объект клиента
 export const falAiClient = {
   analyzeImage,
   translatePrompt,
-  generateImage
+  generateImage,
+  setApiKey,
+  getApiKey
 };
