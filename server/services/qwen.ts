@@ -192,24 +192,47 @@ export class QwenService {
       // Получаем активный URL API на основе режима
       const activeBaseUrl = this.compatModes[this.apiMode];
       
-      // Отправляем запрос к Qwen-VL API
+      // Проверяем наличие API ключа
+      if (!this.apiKey || this.apiKey.trim() === '') {
+        console.error('[qwen] Отсутствует API ключ для запроса к Qwen-VL API');
+        throw new Error('Отсутствует API ключ для сервиса Qwen. Проверьте настройки в Directus.');
+      }
+      
+      // Логируем параметры запроса
       console.log(`[qwen] Используем модель Qwen-VL Plus для анализа изображения`);
-      const response = await axios.post(
-        `${activeBaseUrl}/chat/completions`,
-        {
-          model: 'qwen-vl-plus',  // Используем мультимодальную модель по документации Alibaba Cloud
-          messages: messages,
-          temperature: 0.2, // Низкая температура для более точных результатов
-          max_tokens: 1500, // Достаточно для подробного анализа
-          response_format: { type: 'json_object' } // Запрашиваем ответ в формате JSON
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
+      console.log(`[qwen] Используем API URL: ${activeBaseUrl}/chat/completions`);
+      console.log(`[qwen] Длина API ключа: ${this.apiKey.length} символов`);
+      console.log(`[qwen] Первые 5 символов ключа: ${this.apiKey.substring(0, 5)}...`);
+      
+      try {
+        // Проверяем доступность URL изображения, прежде чем отправлять его в API
+        try {
+          // Отправляем HEAD запрос, чтобы проверить доступность изображения
+          await axios.head(imageUrl, { timeout: 10000 });
+        } catch (headError) {
+          console.error(`[qwen] Ошибка проверки доступности изображения: ${imageUrl}`, headError);
+          console.log(`[qwen] Продолжаем, так как изображение может быть доступно через GET запрос...`);
         }
-      );
+        
+        // Отправляем запрос к Qwen-VL API с дополнительной обработкой ошибок
+        console.log(`[qwen] Выполняем POST запрос к ${activeBaseUrl}/chat/completions`);
+        const response = await axios.post(
+          `${activeBaseUrl}/chat/completions`,
+          {
+            model: 'qwen-vl-plus',  // Используем мультимодальную модель по документации Alibaba Cloud
+            messages: messages,
+            temperature: 0.2, // Низкая температура для более точных результатов
+            max_tokens: 1500, // Достаточно для подробного анализа
+            response_format: { type: 'json_object' } // Запрашиваем ответ в формате JSON
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 60000 // Увеличиваем таймаут до 60 секунд
+          }
+        );
       
       if (!response.data?.choices?.[0]?.message?.content) {
         throw new Error('Некорректный ответ от Qwen-VL API');
@@ -256,20 +279,61 @@ export class QwenService {
       
       console.log(`[qwen] Получаем изображение по URL: ${imageUrl.substring(0, 50)}...`);
       
-      // Получаем изображение через axios
-      const response = await axios.get(imageUrl, {
-        responseType: 'arraybuffer'
-      });
-      
-      // Определяем тип изображения из заголовков ответа
-      const contentType = response.headers['content-type'] || 'image/jpeg';
-      
-      // Преобразуем в Base64
-      const base64 = Buffer.from(response.data).toString('base64');
-      const dataUrl = `data:${contentType};base64,${base64}`;
-      
-      console.log(`[qwen] Изображение успешно преобразовано в Base64 (длина: ${dataUrl.length} символов)`);
-      return dataUrl;
+      try {
+        // Получаем изображение через axios
+        const response = await axios.get(imageUrl, {
+          responseType: 'arraybuffer',
+          timeout: 30000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          }
+        });
+        
+        // Определяем тип изображения из заголовков ответа
+        const contentType = response.headers['content-type'] || 'image/jpeg';
+        
+        // Преобразуем в Base64
+        const base64 = Buffer.from(response.data).toString('base64');
+        const dataUrl = `data:${contentType};base64,${base64}`;
+        
+        console.log(`[qwen] Изображение успешно преобразовано в Base64 (длина: ${dataUrl.length} символов)`);
+        return dataUrl;
+      } catch (getError) {
+        console.error('[qwen] Ошибка при получении изображения через GET:', getError);
+        
+        // Если URL содержит прокси в нашем проекте, пробуем получить прямой URL
+        if (imageUrl.includes('/api/proxy-image')) {
+          const urlParams = new URL(imageUrl).searchParams;
+          const originalUrl = urlParams.get('url');
+          
+          if (originalUrl) {
+            console.log(`[qwen] Пробуем получить изображение по оригинальному URL: ${originalUrl.substring(0, 50)}...`);
+            
+            try {
+              // Пытаемся обратиться к оригинальному URL
+              const directResponse = await axios.get(originalUrl, {
+                responseType: 'arraybuffer',
+                timeout: 30000,
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                }
+              });
+              
+              const directContentType = directResponse.headers['content-type'] || 'image/jpeg';
+              const directBase64 = Buffer.from(directResponse.data).toString('base64');
+              const directDataUrl = `data:${directContentType};base64,${directBase64}`;
+              
+              console.log(`[qwen] Изображение успешно получено по оригинальному URL (длина: ${directDataUrl.length} символов)`);
+              return directDataUrl;
+            } catch (directError) {
+              console.error('[qwen] Ошибка при получении изображения по оригинальному URL:', directError);
+              throw new Error(`Не удалось получить изображение ни через прокси, ни напрямую: ${directError instanceof Error ? directError.message : 'неизвестная ошибка'}`);
+            }
+          }
+        }
+        
+        throw getError;
+      }
     } catch (error) {
       console.error('[qwen] Ошибка при получении изображения по URL:', error);
       throw new Error(`Не удалось получить изображение по URL: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
@@ -373,24 +437,48 @@ ${platformSpecifics}
    */
   async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
-      console.log('Initializing Qwen service for user', userId);
+      console.log('[qwen] Initializing Qwen service for user', userId);
       
       // Используем централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       
       if (apiKey) {
-        console.log('Qwen API key successfully obtained from API Key Service');
+        const keyPreview = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
+        console.log(`[qwen] API key successfully obtained from API Key Service: ${keyPreview} (длина ключа: ${apiKey.length})`);
         this.updateApiKey(apiKey);
-        log('Qwen API key successfully obtained from API Key Service', 'qwen');
+        log('[qwen] API key successfully obtained from API Key Service', 'qwen');
         return true;
       } else {
-        console.log('Qwen API key not found for user', userId);
-        log('Qwen API key not found in user settings', 'qwen');
+        console.log('[qwen] API key not found for user', userId);
+        console.log('[qwen] Checking fallback environment variable QWEN_API_KEY');
+        
+        // Пробуем использовать ключ из переменных окружения как резервный вариант
+        const envApiKey = process.env.QWEN_API_KEY;
+        if (envApiKey && envApiKey.trim() !== '') {
+          console.log('[qwen] Using API key from environment variable QWEN_API_KEY');
+          this.updateApiKey(envApiKey);
+          log('[qwen] Using API key from environment variable QWEN_API_KEY', 'qwen');
+          return true;
+        }
+        
+        log('[qwen] API key not found in user settings or environment variables', 'qwen');
+        console.warn('[qwen] Не найден API ключ ни в настройках пользователя, ни в переменных окружения');
         return false;
       }
     } catch (error) {
-      console.error('Error initializing Qwen service:', error);
-      log(`Error initializing Qwen service: ${error instanceof Error ? error.message : 'unknown error'}`, 'qwen');
+      console.error('[qwen] Error initializing Qwen service:', error);
+      
+      // Более подробное логирование ошибки
+      if ('response' in (error as any)) {
+        const axiosError = error as any;
+        console.error('[qwen] Error details:', {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          message: axiosError.message
+        });
+      }
+      
+      log(`[qwen] Error initializing Qwen service: ${error instanceof Error ? error.message : 'unknown error'}`, 'qwen');
       return false;
     }
   }
