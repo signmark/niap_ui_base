@@ -399,7 +399,21 @@ export function MediaAnalysisButton({
         {displayButtonText}
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog 
+        open={isOpen} 
+        onOpenChange={(open) => {
+          // Закрытие диалога
+          if (!open && result) {
+            // Запускаем колбэк для обновления родительского компонента только если у нас есть результаты анализа
+            // Это обеспечит отображение анализа сразу после закрытия диалога
+            if (onAnalysisComplete) {
+              console.log("[MediaAnalysisButton] Вызываем колбэк обновления после закрытия диалога");
+              onAnalysisComplete();
+            }
+          }
+          setIsOpen(open);
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Результаты анализа медиаконтента</DialogTitle>
@@ -566,7 +580,14 @@ export function MediaAnalysisButton({
             
             <Button
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                // Дополнительно вызываем колбэк при закрытии диалога через кнопку "Закрыть"
+                if (result && onAnalysisComplete) {
+                  console.log("[MediaAnalysisButton] Закрытие через кнопку Закрыть, вызываем колбэк");
+                  onAnalysisComplete();
+                }
+                setIsOpen(false);
+              }}
             >
               Закрыть
             </Button>

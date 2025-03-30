@@ -674,72 +674,76 @@ export function TrendDetailDialog({
             <div className="font-normal whitespace-pre-line mt-4 text-base leading-normal">{topic.title}</div>
           )}
           
-          {/* Результаты анализа медиаконтента (если есть) */}
+          {/* Анализ медиаконтента - отображаем только если есть данные */}
           {(() => {
-            // Проверяем, существует ли media_analysis и преобразуем его при необходимости
-            let analysisData = topic.media_analysis;
+            // Получаем данные анализа из тренда
+            let analysisData: any = null;
             
-            // Если media_analysis - строка, пытаемся преобразовать её в объект
-            if (analysisData && typeof analysisData === 'string') {
-              try {
-                analysisData = JSON.parse(analysisData);
-              } catch (error) {
-                console.error("[TrendDetailDialog] Ошибка при преобразовании media_analysis из строки в объект:", error);
-                return null;
+            // Проверяем формат данных и парсим при необходимости
+            if (topic.media_analysis) {
+              if (typeof topic.media_analysis === 'object') {
+                analysisData = topic.media_analysis;
+              } else if (typeof topic.media_analysis === 'string') {
+                try {
+                  analysisData = JSON.parse(topic.media_analysis);
+                } catch (error) {
+                  console.error("[TrendDetailDialog] Ошибка при парсинге JSON строки media_analysis:", error);
+                }
               }
             }
             
-            // Если данных нет или они не объект, не отображаем секцию
-            if (!analysisData || typeof analysisData !== 'object' || Object.keys(analysisData).length === 0) {
-              return null;
+            // Проверяем наличие данных анализа
+            if (analysisData && typeof analysisData === 'object' && Object.keys(analysisData).length > 0) {
+              return (
+                <div className="mt-6 bg-gray-50 p-4 rounded-md border border-gray-100">
+                  <h3 className="text-sm font-medium mb-2">Анализ медиаконтента</h3>
+                  
+                  <div className="space-y-2 text-sm">
+                    {analysisData.description && (
+                      <div>
+                        <span className="font-medium">Описание: </span>
+                        <span>{analysisData.description}</span>
+                      </div>
+                    )}
+                    
+                    {analysisData.objects && analysisData.objects.length > 0 && (
+                      <div>
+                        <span className="font-medium">Объекты: </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {analysisData.objects.map((obj: any, i: number) => (
+                            <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                              {safeRender(obj)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {analysisData.mood && (
+                      <div>
+                        <span className="font-medium">Настроение: </span>
+                        <span>{analysisData.mood}</span>
+                      </div>
+                    )}
+                    
+                    {analysisData.colors && analysisData.colors.length > 0 && (
+                      <div>
+                        <span className="font-medium">Основные цвета: </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {analysisData.colors.map((color: any, i: number) => (
+                            <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                              {safeRender(color)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
             }
             
-            return (
-              <div className="mt-4 bg-gray-50 p-3 rounded-md border border-gray-100">
-                <h3 className="text-md font-medium mb-2">Анализ медиаконтента</h3>
-                <div className="space-y-2 text-sm">
-                  {analysisData.description && (
-                    <div>
-                      <span className="font-medium">Описание: </span>
-                      <span>{analysisData.description}</span>
-                    </div>
-                  )}
-                  
-                  {analysisData.objects && analysisData.objects.length > 0 && (
-                    <div>
-                      <span className="font-medium">Объекты: </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {analysisData.objects.map((obj, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                            {safeRender(obj)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {analysisData.mood && (
-                    <div>
-                      <span className="font-medium">Настроение: </span>
-                      <span>{analysisData.mood}</span>
-                    </div>
-                  )}
-                  
-                  {analysisData.colors && analysisData.colors.length > 0 && (
-                    <div>
-                      <span className="font-medium">Основные цвета: </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {analysisData.colors.map((color, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                            {safeRender(color)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
+            return null;
           })()}
 
           {/* Разделитель */}
