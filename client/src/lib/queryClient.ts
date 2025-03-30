@@ -19,7 +19,7 @@ export async function apiRequest(
   url: string,
   config: ApiRequestConfig = {}
 ): Promise<any> {
-  const { method = 'GET', data, params } = config;
+  const { method = 'GET', data, params, headers: configHeaders = {} } = config;
   const token = useAuthStore.getState().token;
   const userId = useAuthStore.getState().userId;
 
@@ -36,30 +36,52 @@ export async function apiRequest(
   const headers: Record<string, string> = {
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    "x-user-id": userId || ''
+    "x-user-id": userId || '',
+    ...configHeaders // Добавляем пользовательские заголовки
   };
 
   console.log(`📤 Заголовки запроса:`, { 
     hasAuthHeader: !!headers["Authorization"],
     contentType: headers["Content-Type"],
-    userIdHeader: headers["x-user-id"]
+    userIdHeader: headers["x-user-id"],
+    customHeaders: Object.keys(configHeaders).length > 0 ? Object.keys(configHeaders) : null
   });
-
-  const res = await fetch(url + queryString, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
   
-  // Если статус 204 No Content, не пытаемся распарсить JSON
-  if (res.status === 204) {
-    return { success: true };
+  // Добавляем обработку таймаута для запроса медиа-анализа
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, url.includes('/media-analysis') ? 60000 : 30000); // Для анализа медиа используем больший таймаут
+  
+  try {
+    const res = await fetch(url + queryString, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    await throwIfResNotOk(res);
+    
+    // Если статус 204 No Content, не пытаемся распарсить JSON
+    if (res.status === 204) {
+      return { success: true };
+    }
+    
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      console.error(`📤 Запрос к ${url} прерван по таймауту`);
+      throw new Error(`Запрос превысил время ожидания. Пожалуйста, попробуйте позже.`);
+    }
+    
+    throw error;
   }
-  
-  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -70,21 +92,47 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const token = useAuthStore.getState().token;
     const userId = useAuthStore.getState().userId;
+    
+    // Добавляем обработку таймаута для запроса
+    const controller = new AbortController();
+    const url = queryKey[0] as string;
+    // Для анализа медиа используем больший таймаут
+    const timeoutDuration = url.includes('/media-analysis') ? 60000 : 30000;
+    
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeoutDuration);
 
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-      headers: {
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-        "x-user-id": userId || ''
+    try {
+      console.log(`📤 Query fetch: GET ${url}`);
+      
+      const res = await fetch(url, {
+        credentials: "include",
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+          "x-user-id": userId || ''
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
       }
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        console.error(`📤 Запрос к ${url} прерван по таймауту (${timeoutDuration}ms)`);
+        throw new Error(`Запрос превысил время ожидания (${timeoutDuration / 1000}с). Пожалуйста, попробуйте позже.`);
+      }
+      
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({

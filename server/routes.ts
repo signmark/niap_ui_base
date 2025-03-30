@@ -1293,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Получаем API ключ из сервиса ключей
-    let apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+    let apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
     
     // Инициализируем клиент FAL.AI с полученным ключом
     if (apiKey) {
@@ -1336,7 +1336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Получаем API ключ из сервиса ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(404).json({
@@ -1469,7 +1469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ только из его настроек в Directus
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
         if (apiKey) {
           console.log('Найден API ключ FAL.AI в настройках пользователя');
         }
@@ -1596,7 +1596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isUserAuthenticated = !!userId;
       
       // Получаем ключ через новую систему приоритизации (сначала пользовательский, потом системный)
-      const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
+      const falApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
       
       // Проверяем источники ключей (только из базы данных)
       let userKey = null;
@@ -1975,7 +1975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ из настроек пользователя
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', token);
         
         if (falAiApiKey) {
           console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
@@ -2337,7 +2337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ из настроек пользователя в Directus
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
@@ -2896,7 +2896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Сначала пытаемся получить из сервиса API ключей
-        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
       } catch (error) {
         console.error('Ошибка при получении FAL.AI API ключа:', error);
       }
@@ -3698,7 +3698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
             
             // Получаем конфигурацию XMLRiver из централизованного хранилища
-            const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
+            const xmlRiverConfig = await apiKeyService.getUserApiKey(userId, 'xmlriver', token);
             
             if (!xmlRiverConfig) {
               console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
@@ -4400,7 +4400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
           
           // Получаем API ключ XMLRiver из сервиса API ключей
-          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
+          const xmlRiverConfig = await apiKeyService.getUserApiKey(userId, 'xmlriver', token);
           
           if (!xmlRiverConfig) {
             console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
@@ -5470,7 +5470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Получаем API ключ Perplexity
-      const perplexityApiKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
+      const perplexityApiKey = await apiKeyService.getUserApiKey(userId, 'perplexity', token);
       
       if (!perplexityApiKey) {
         return res.status(400).json({ 
@@ -5696,7 +5696,7 @@ NOTE: Format is CRITICAL. Each channel MUST start with **@channelname** with two
       
       try {
         // Получаем API ключ Perplexity из сервиса ключей
-        const perplexityKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
+        const perplexityKey = await apiKeyService.getUserApiKey(userId, 'perplexity', token);
         if (!perplexityKey) {
           return res.status(400).json({ 
             success: false, 
@@ -8610,7 +8610,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         
         // ВАЖНО: Выведем полный лог API ключа и заголовка для отладки
         // Получаем ключ через API Key Service для проверки формата напрямую
-        const falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+        const falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           // Проверяем формат ключа - должен быть "Key {apiKey}"
@@ -9171,7 +9171,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       
       if (userId) {
         // Если пользователь авторизован, пробуем получить ключ из его настроек
-        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
+        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai');
       }
       
       // Если не удалось получить ключ, пробуем использовать ключ из переменных окружения
@@ -9302,7 +9302,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       
       if (userId) {
         // Если пользователь авторизован, пробуем получить ключ из его настроек
-        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
+        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai');
       }
       
       // Если не удалось получить ключ пользователя, используем системный
@@ -9934,7 +9934,7 @@ ${datesText}
         serviceNames.map(async (serviceName) => {
           try {
             console.log(`[DEBUG API Keys] Получаем ключ для сервиса: ${serviceName}`);
-            const key = await apiKeyService.getApiKey(userId, serviceName);
+            const key = await apiKeyService.getUserApiKey(userId, serviceName);
             return {
               service: serviceName,
               keyExists: !!key,
@@ -10062,7 +10062,7 @@ ${datesText}
       }
       
       // Получаем API ключ Qwen из сервиса ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
+      const apiKey = await apiKeyService.getUserApiKey(userId, 'qwen', token);
       
       if (!apiKey) {
         return res.status(400).json({
@@ -10149,7 +10149,7 @@ ${datesText}
       
       if (userId) {
         try {
-          apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+          apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
           if (apiKey) {
             console.log(`Получен ключ FAL.AI из базы данных для пользователя: ${userId.substring(0, 8)}...`);
           } else {
@@ -10300,7 +10300,7 @@ ${datesText}
       }
       
       // Получаем ключ из базы данных через сервис API ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(400).json({
@@ -10400,7 +10400,7 @@ ${datesText}
       }
       
       // Получаем ключ из базы данных через сервис API ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(400).json({
