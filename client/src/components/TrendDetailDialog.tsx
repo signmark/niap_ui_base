@@ -547,10 +547,23 @@ export function TrendDetailDialog({
                     <span className="font-medium">Объекты: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {topic.media_analysis.objects.map((obj, i) => {
-                        // Проверяем, является ли объект сложным объектом или строкой
-                        const objText = typeof obj === 'object' && obj !== null
-                          ? ((obj as any).name || JSON.stringify(obj)) 
-                          : obj;
+                        // Преобразуем объект в строку для безопасного отображения
+                        let objText;
+                        if (typeof obj === 'object' && obj !== null) {
+                          // Если это объект с name и quantity
+                          if ('name' in obj && 'quantity' in obj) {
+                            objText = `${(obj as any).name} (${(obj as any).quantity})`;
+                          } else if ('name' in obj) {
+                            objText = (obj as any).name;
+                          } else {
+                            // Если это просто объект без name, преобразуем в JSON строку
+                            objText = JSON.stringify(obj);
+                          }
+                        } else {
+                          // Если это примитивное значение, преобразуем в строку
+                          objText = String(obj);
+                        }
+                        
                         return (
                           <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
                             {objText}
@@ -573,10 +586,23 @@ export function TrendDetailDialog({
                     <span className="font-medium">Основные цвета: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {topic.media_analysis.colors.map((color, i) => {
-                        // Проверяем, является ли цвет объектом или строкой
-                        const colorText = typeof color === 'object' && color !== null
-                          ? ((color as any).name || JSON.stringify(color)) 
-                          : color;
+                        // Преобразуем объект в строку для безопасного отображения
+                        let colorText;
+                        if (typeof color === 'object' && color !== null) {
+                          // Если это объект с name и quantity
+                          if ('name' in color && 'quantity' in color) {
+                            colorText = `${(color as any).name} (${(color as any).quantity})`;
+                          } else if ('name' in color) {
+                            colorText = (color as any).name;
+                          } else {
+                            // Если это просто объект без name, преобразуем в JSON строку
+                            colorText = JSON.stringify(color);
+                          }
+                        } else {
+                          // Если это примитивное значение, преобразуем в строку
+                          colorText = String(color);
+                        }
+                        
                         return (
                           <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
                             {colorText}
