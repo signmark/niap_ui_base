@@ -76,6 +76,25 @@ export function MediaAnalysisButton({
     existingAnalysis || (trend && trend.media_analysis)
   );
   
+  // Детальный анализ полученного объекта existingAnalysis для отладки
+  console.log('[MediaAnalysisButton-Debug] Состояние existingAnalysis:', {
+    isExistingAnalysisTruthy: Boolean(existingAnalysis),
+    existingAnalysisType: existingAnalysis ? typeof existingAnalysis : 'undefined',
+    isObject: existingAnalysis && typeof existingAnalysis === 'object',
+    rawValue: existingAnalysis ? 
+      typeof existingAnalysis === 'string' ? 
+        existingAnalysis.substring(0, 100) : 
+        JSON.stringify(existingAnalysis).substring(0, 100) 
+      : 'undefined',
+    keys: existingAnalysis && typeof existingAnalysis === 'object' ? Object.keys(existingAnalysis) : [],
+    description: existingAnalysis?.description?.substring(0, 50) || 'нет',
+    trend: trend ? { 
+      id: trend.id,
+      hasMediaAnalysis: Boolean(trend.media_analysis),
+      mediaAnalysisType: trend.media_analysis ? typeof trend.media_analysis : 'undefined'
+    } : 'нет данных тренда'
+  });
+  
   // Подробная информация о существующем медиа-анализе
   if (existingAnalysis) {
     console.log("[MediaAnalysisButton] Используем существующий анализ из пропса:", {
@@ -294,6 +313,19 @@ export function MediaAnalysisButton({
     hasExistingAnalysis ? 
       <Search className="mr-2 h-4 w-4" /> : 
       <ImageDown className="mr-2 h-4 w-4" />;
+  
+  // Отладочная информация о том, как определяется наличие результатов анализа
+  console.log("[MediaAnalysisButton] ДЕТАЛЬНОЕ состояние перед выбором текста кнопки:", {
+    existingAnalysis: existingAnalysis ? JSON.stringify(existingAnalysis).substring(0, 50) : null,
+    trend: trend ? { 
+      id: trend.id,
+      media_analysis: trend.media_analysis ? JSON.stringify(trend.media_analysis).substring(0, 50) : null
+    } : null,
+    hasExistingAnalysis,
+    buttonText,
+    trendId,
+    mediaUrl: mediaUrl ? mediaUrl.substring(0, 30) + "..." : null
+  });
       
   // Определяем текст кнопки в зависимости от наличия результатов анализа
   const displayButtonText = isLoading 
