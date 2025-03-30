@@ -26,11 +26,11 @@ class MediaAnalyzerService {
       
       if (!hasFalAi) {
         console.error(`[media-analyzer] Не удалось получить API ключ FAL AI для пользователя ${userId}`);
-        throw new Error("Для анализа медиаконтента требуется API ключ FAL AI. Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}");
+        throw new Error("Для анализа медиаконтента требуется API ключ FAL AI. Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}");
       }
       
       // Получаем API ключ пользователя для FAL AI или используем системный ключ
-      let falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', authToken);
+      let falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', authToken);
       
       // Если ключ не найден в настройках пользователя, используем ключ из переменных окружения
       if (!falAiApiKey) {

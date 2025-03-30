@@ -169,7 +169,7 @@ export async function getAllUserApiKeys(userId: string, authToken: string): Prom
  */
 export async function hasFalAiApiKey(userId: string, authToken: string): Promise<boolean> {
   // Сначала проверяем API ключ в настройках пользователя
-  const apiKey = await getUserApiKey(userId, 'falAiApiKey', authToken);
+  const apiKey = await getUserApiKey(userId, 'fal_ai', authToken);
   
   if (apiKey !== null && apiKey !== '') {
     return true;
