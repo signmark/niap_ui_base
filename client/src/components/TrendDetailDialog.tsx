@@ -317,6 +317,25 @@ export function TrendDetailDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="py-4">
+          {/* Отладочная информация о состоянии видео и media_analysis */}
+          {(() => {
+            console.log("[TrendDetailDialog] hasVideo состояние:", {
+              hasVideo,
+              videoEmbedCode: !!videoEmbedCode,
+              videoThumbnailUrl: !!videoThumbnailUrl,
+              mediaDataVideos: mediaData.videos?.length || 0,
+              topicId: topic.id,
+              mediaAnalysisExists: !!topic.media_analysis,
+              existingAnalysisDetails: topic.media_analysis ? 
+                typeof topic.media_analysis === 'string' ? 
+                  'string: ' + topic.media_analysis.substring(0, 20) :
+                  Object.keys(topic.media_analysis)
+                : null
+            });
+            
+            return null; // Не отображаем ничего
+          })()}
+          
           {/* Медиа: видео или изображение */}
           {hasVideo && (
             <div className="mb-4">
@@ -425,6 +444,13 @@ export function TrendDetailDialog({
                       {/* Кнопка анализа видео */}
                       {mediaData.videos && mediaData.videos.length > 0 && (
                         <div className="absolute bottom-2 right-2 z-10">
+                          {console.log("[TrendDetailDialog] Перед рендерингом кнопки анализа видео (встроенное):", {
+                            hasMediaAnalysis: !!topic.media_analysis,
+                            mediaAnalysisType: topic.media_analysis ? typeof topic.media_analysis : 'undefined',
+                            mediaAnalysisJSONValue: topic.media_analysis ? JSON.stringify(topic.media_analysis).substring(0, 100) : 'null',
+                            buttonTextValue: topic.media_analysis ? "Просмотреть анализ" : "Анализировать",
+                            topicId: topic.id
+                          })}
                           <MediaAnalysisButton 
                             mediaUrl={mediaData.videos[0]} 
                             trendId={topic.id}
@@ -530,6 +556,13 @@ export function TrendDetailDialog({
                 {/* Кнопка анализа изображения */}
                 {mediaData.images && mediaData.images.length > 0 && (
                   <div className="absolute bottom-2 right-2">
+                    {console.log("[TrendDetailDialog] Перед рендерингом кнопки анализа изображения:", {
+                      hasMediaAnalysis: !!topic.media_analysis,
+                      mediaAnalysisType: topic.media_analysis ? typeof topic.media_analysis : 'undefined',
+                      mediaAnalysisJSONValue: topic.media_analysis ? JSON.stringify(topic.media_analysis).substring(0, 100) : 'null',
+                      buttonTextValue: topic.media_analysis ? "Просмотреть анализ" : "Анализировать",
+                      topicId: topic.id
+                    })}
                     <MediaAnalysisButton 
                       mediaUrl={mediaData.images[0]} 
                       trendId={topic.id}
