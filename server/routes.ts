@@ -1293,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Получаем API ключ из сервиса ключей
-    let apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+    let apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
     
     // Инициализируем клиент FAL.AI с полученным ключом
     if (apiKey) {
@@ -1336,7 +1336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Получаем API ключ из сервиса ключей
-      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(404).json({
@@ -1469,7 +1469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ только из его настроек в Directus
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         if (apiKey) {
           console.log('Найден API ключ FAL.AI в настройках пользователя');
         }
@@ -1596,7 +1596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let isUserAuthenticated = !!userId;
       
       // Получаем ключ через новую систему приоритизации (сначала пользовательский, потом системный)
-      const falApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
+      const falApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authHeader?.split(' ')[1]);
       
       // Проверяем источники ключей (только из базы данных)
       let userKey = null;
@@ -1975,7 +1975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ из настроек пользователя
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
@@ -2337,7 +2337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ из настроек пользователя в Directus
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
@@ -2896,7 +2896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Сначала пытаемся получить из сервиса API ключей
-        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
       } catch (error) {
         console.error('Ошибка при получении FAL.AI API ключа:', error);
       }
@@ -3698,7 +3698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
             
             // Получаем конфигурацию XMLRiver из централизованного хранилища
-            const xmlRiverConfig = await apiKeyService.getUserApiKey(userId, 'xmlriver', token);
+            const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
             
             if (!xmlRiverConfig) {
               console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
@@ -4400,7 +4400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
           
           // Получаем API ключ XMLRiver из сервиса API ключей
-          const xmlRiverConfig = await apiKeyService.getUserApiKey(userId, 'xmlriver', token);
+          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
           
           if (!xmlRiverConfig) {
             console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
@@ -5470,7 +5470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Получаем API ключ Perplexity
-      const perplexityApiKey = await apiKeyService.getUserApiKey(userId, 'perplexity', token);
+      const perplexityApiKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
       
       if (!perplexityApiKey) {
         return res.status(400).json({ 
@@ -5696,7 +5696,7 @@ NOTE: Format is CRITICAL. Each channel MUST start with **@channelname** with two
       
       try {
         // Получаем API ключ Perplexity из сервиса ключей
-        const perplexityKey = await apiKeyService.getUserApiKey(userId, 'perplexity', token);
+        const perplexityKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
         if (!perplexityKey) {
           return res.status(400).json({ 
             success: false, 
@@ -8317,8 +8317,7 @@ https://t.me/channelname/ - description`;
   });
   
   // Маршрут для анализа медиаконтента
-  // КОММЕНТАРИЙ: Этот маршрут закомментирован, так как он дублирует функциональность маршрута на строке ~10519
-  /* app.get("/api/media-analysis", authenticateUser, async (req, res) => {
+  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
     try {
       const { mediaUrl } = req.query;
       
@@ -8367,7 +8366,7 @@ https://t.me/channelname/ - description`;
         details: error.message 
       });
     }
-  }); */
+  });
 
   // Анализ сайта для автоматического заполнения анкеты
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
@@ -8610,7 +8609,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         
         // ВАЖНО: Выведем полный лог API ключа и заголовка для отладки
         // Получаем ключ через API Key Service для проверки формата напрямую
-        const falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+        const falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           // Проверяем формат ключа - должен быть "Key {apiKey}"
@@ -9171,7 +9170,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       
       if (userId) {
         // Если пользователь авторизован, пробуем получить ключ из его настроек
-        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai');
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
       }
       
       // Если не удалось получить ключ, пробуем использовать ключ из переменных окружения
@@ -9302,7 +9301,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       
       if (userId) {
         // Если пользователь авторизован, пробуем получить ключ из его настроек
-        apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai');
+        apiKey = await apiKeyService.getApiKey(userId, 'fal_ai');
       }
       
       // Если не удалось получить ключ пользователя, используем системный
@@ -9934,7 +9933,7 @@ ${datesText}
         serviceNames.map(async (serviceName) => {
           try {
             console.log(`[DEBUG API Keys] Получаем ключ для сервиса: ${serviceName}`);
-            const key = await apiKeyService.getUserApiKey(userId, serviceName);
+            const key = await apiKeyService.getApiKey(userId, serviceName);
             return {
               service: serviceName,
               keyExists: !!key,
@@ -9976,8 +9975,7 @@ ${datesText}
   });
 
   // Маршрут для анализа медиаконтента (изображений и видео) в трендах
-  // КОММЕНТАРИЙ: Этот маршрут закомментирован, так как он дублирует функциональность маршрута на строке ~10519
-  /* app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
+  app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
     try {
       const { mediaUrl, trendId } = req.query;
       
@@ -10021,7 +10019,7 @@ ${datesText}
       console.error("[media-analysis] Error analyzing media:", error);
       return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
     }
-  }); */
+  });
   
   // Эндпоинт для тестирования Qwen API
   app.get('/api/test-qwen', async (req, res) => {
@@ -10062,7 +10060,7 @@ ${datesText}
       }
       
       // Получаем API ключ Qwen из сервиса ключей
-      const apiKey = await apiKeyService.getUserApiKey(userId, 'qwen', token);
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
       
       if (!apiKey) {
         return res.status(400).json({
@@ -10149,7 +10147,7 @@ ${datesText}
       
       if (userId) {
         try {
-          apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+          apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
           if (apiKey) {
             console.log(`Получен ключ FAL.AI из базы данных для пользователя: ${userId.substring(0, 8)}...`);
           } else {
@@ -10300,7 +10298,7 @@ ${datesText}
       }
       
       // Получаем ключ из базы данных через сервис API ключей
-      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(400).json({
@@ -10400,7 +10398,7 @@ ${datesText}
       }
       
       // Получаем ключ из базы данных через сервис API ключей
-      const apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
       
       if (!apiKey) {
         return res.status(400).json({
@@ -10548,7 +10546,7 @@ ${datesText}
         return res.status(400).json({
           success: false,
           error: "Для анализа медиаконтента требуется API ключ FAL AI",
-          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
+          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}",
           missingApiKey: true
         });
       }
@@ -10583,162 +10581,6 @@ ${datesText}
         error: "Ошибка анализа",
         message: errorMessage 
       });
-    }
-  });
-  
-  // Маршрут для анализа медиаконтента через POST-запрос
-  app.post("/api/analyze-media", authenticateUser, async (req, res) => {
-    try {
-      // Устанавливаем заголовок Content-Type для предотвращения перехвата ответа Vite
-      res.setHeader('Content-Type', 'application/json');
-      
-      const { mediaUrl } = req.body;
-      
-      if (!mediaUrl || typeof mediaUrl !== 'string') {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Требуется указать URL медиаконтента",
-          message: "Укажите URL изображения или видео для анализа в теле запроса" 
-        });
-      }
-      
-      // Получаем userId и токен из запроса, которые были установлены в authenticateUser middleware
-      const userId = req.user?.id;
-      const authToken = req.user?.token;
-      
-      if (!userId) {
-        return res.status(401).json({ 
-          success: false, 
-          error: "Unauthorized",
-          message: "Неавторизованный запрос" 
-        });
-      }
-      
-      // Проверяем наличие ключа FAL AI у пользователя
-      const hasFalAiKey = await apiKeyService.hasFalAiApiKey(userId, authToken);
-      if (!hasFalAiKey) {
-        return res.status(400).json({
-          success: false,
-          error: "Для анализа медиаконтента требуется API ключ FAL AI",
-          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
-          missingApiKey: true
-        });
-      }
-      
-      console.log(`[media-analysis] Анализ медиаконтента для пользователя ${userId}: ${mediaUrl.substring(0, 50)}...`);
-      
-      // Анализируем медиаконтент с помощью MediaAnalyzerService
-      const result = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
-      
-      if (!result) {
-        return res.status(500).json({ 
-          success: false, 
-          error: "Ошибка анализа",
-          message: "Не удалось проанализировать медиаконтент" 
-        });
-      }
-      
-      return res.json({ 
-        success: true, 
-        result
-      });
-    } catch (error) {
-      console.error("Error analyzing media:", error);
-      
-      let errorMessage = "Ошибка при анализе медиаконтента";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      return res.status(500).json({ 
-        success: false, 
-        error: "Ошибка анализа",
-        message: errorMessage 
-      });
-    }
-  });
-  
-  // Отладочный маршрут для анализа медиаконтента (без аутентификации, использует системный API ключ)
-  app.post("/api/debug/analyze-media", async (req, res) => {
-    try {
-      // Устанавливаем заголовки для предотвращения перехвата ответа Vite и кэширования
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.setHeader('Surrogate-Control', 'no-store');
-      
-      // Получаем URL медиаконтента из тела запроса
-      const { mediaUrl } = req.body;
-      
-      if (!mediaUrl || typeof mediaUrl !== 'string') {
-        return res.status(400).send(JSON.stringify({ 
-          success: false, 
-          error: "Требуется указать URL медиаконтента",
-          message: "Укажите URL изображения или видео для анализа в теле запроса" 
-        }));
-      }
-      
-      // В этом отладочном маршруте используем системный API ключ FAL AI
-      const systemApiKey = process.env.FAL_AI_API_KEY;
-      
-      if (!systemApiKey) {
-        return res.status(500).send(JSON.stringify({
-          success: false,
-          error: "Отсутствует системный API ключ FAL AI",
-          message: "Не удалось получить системный API ключ FAL AI"
-        }));
-      }
-      
-      console.log(`[debug-media-analysis] Отладочный анализ медиаконтента: ${mediaUrl.substring(0, 50)}...`);
-      console.log(`[debug-media-analysis] Системный API ключ FAL AI: ${systemApiKey ? "присутствует" : "отсутствует"}`);
-      
-      // Проверяем, что URL действительно указывает на изображение
-      const isImageUrl = /\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i.test(mediaUrl);
-      if (!isImageUrl) {
-        console.log(`[debug-media-analysis] Предупреждение: URL не похож на изображение: ${mediaUrl}`);
-      }
-      
-      // Анализируем медиаконтент напрямую через FAL AI клиент
-      console.log(`[debug-media-analysis] Вызов FAL AI API для анализа изображения...`);
-      const analysisResult = await falAiClient.analyzeImage(mediaUrl, systemApiKey);
-      
-      if (!analysisResult) {
-        return res.status(500).send(JSON.stringify({ 
-          success: false, 
-          error: "Ошибка анализа",
-          message: "Не удалось проанализировать медиаконтент" 
-        }));
-      }
-      
-      console.log(`[debug-media-analysis] Успешно получен результат анализа от FAL AI`);
-      
-      // Форматируем результаты для фронтенда
-      const result = {
-        mediaUrl,
-        mediaType: 'image',
-        analysis: analysisResult,
-        timestamp: new Date()
-      };
-      
-      // Отправляем ответ с явным преобразованием в строку
-      return res.status(200).send(JSON.stringify({ 
-        success: true, 
-        result
-      }));
-    } catch (error) {
-      console.error("Error analyzing media (debug):", error);
-      
-      let errorMessage = "Ошибка при анализе медиаконтента";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      return res.status(500).send(JSON.stringify({ 
-        success: false, 
-        error: "Ошибка анализа",
-        message: errorMessage 
-      }));
     }
   });
   

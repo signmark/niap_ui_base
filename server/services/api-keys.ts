@@ -168,11 +168,10 @@ export async function getAllUserApiKeys(userId: string, authToken: string): Prom
  * @returns true, если API ключ FAL AI доступен, иначе false
  */
 export async function hasFalAiApiKey(userId: string, authToken: string): Promise<boolean> {
-  // Проверяем API ключ в настройках пользователя в формате 'fal_ai'
-  const apiKey = await getUserApiKey(userId, 'fal_ai', authToken);
+  // Сначала проверяем API ключ в настройках пользователя
+  const apiKey = await getUserApiKey(userId, 'falAiApiKey', authToken);
   
   if (apiKey !== null && apiKey !== '') {
-    console.log('[api-keys] API ключ FAL AI найден в настройках пользователя');
     return true;
   }
   
