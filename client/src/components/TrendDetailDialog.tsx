@@ -16,6 +16,7 @@ import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 import { handleInstagramVideoError } from "./instagram-error-handler";
 import { TrendTopic } from "../lib/interfaces";
+import { MediaAnalysisButton } from "./MediaAnalysisButton";
 
 interface MediaData {
   images: string[];
@@ -397,6 +398,17 @@ export function TrendDetailDialog({
                           e.currentTarget.parentNode?.appendChild(errorContainer);
                         }}
                       />
+                      
+                      {/* Кнопка анализа видео */}
+                      {mediaData.videos && mediaData.videos.length > 0 && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <MediaAnalysisButton 
+                            mediaUrl={mediaData.videos[0]} 
+                            buttonText="Анализировать" 
+                            buttonVariant="secondary" 
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : videoThumbnailUrl ? (
                     <div className="relative">
@@ -412,6 +424,17 @@ export function TrendDetailDialog({
                           <Video className="h-8 w-8 text-white" />
                         </div>
                       </div>
+                      
+                      {/* Кнопка анализа видео */}
+                      {mediaData.videos && mediaData.videos.length > 0 && (
+                        <div className="absolute bottom-2 right-2">
+                          <MediaAnalysisButton 
+                            mediaUrl={mediaData.videos[0]} 
+                            buttonText="Анализировать" 
+                            buttonVariant="secondary" 
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center justify-center bg-muted rounded-md h-[200px]">
@@ -438,37 +461,51 @@ export function TrendDetailDialog({
           {/* Если нет видео, но есть изображение, показываем его */}
           {!hasVideo && imageUrl && (
             <div className="mb-4">
-              <img
-                src={imageUrl}
-                alt={topic.title}
-                loading="lazy"
-                className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
-                crossOrigin="anonymous"
-                onError={(e) => {
-                  console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
-                  // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
-                  if (mediaData.images && mediaData.images.length > 0) {
-                    handleImageError(mediaData.images[0]);
-                  } else {
-                    // Если нет альтернативных изображений, показываем ошибку
-                    e.currentTarget.style.display = 'none';
-                    const errorContainer = document.createElement('div');
-                    errorContainer.className = "flex items-center justify-center bg-slate-100 rounded-md h-[200px] w-full";
-                    errorContainer.innerHTML = `
-                      <div class="text-center text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
-                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                          <circle cx="9" cy="9" r="2"></circle>
-                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-                        </svg>
-                        <p class="text-sm">Ошибка загрузки изображения</p>
-                        ${topic.url ? `<a href="${topic.url}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-500 hover:underline block">Открыть оригинал</a>` : ''}
-                      </div>
-                    `;
-                    e.currentTarget.parentNode?.appendChild(errorContainer);
-                  }
-                }}
-              />
+              <div className="relative">
+                <img
+                  src={imageUrl}
+                  alt={topic.title}
+                  loading="lazy"
+                  className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
+                    // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
+                    if (mediaData.images && mediaData.images.length > 0) {
+                      handleImageError(mediaData.images[0]);
+                    } else {
+                      // Если нет альтернативных изображений, показываем ошибку
+                      e.currentTarget.style.display = 'none';
+                      const errorContainer = document.createElement('div');
+                      errorContainer.className = "flex items-center justify-center bg-slate-100 rounded-md h-[200px] w-full";
+                      errorContainer.innerHTML = `
+                        <div class="text-center text-gray-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                            <circle cx="9" cy="9" r="2"></circle>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                          </svg>
+                          <p class="text-sm">Ошибка загрузки изображения</p>
+                          ${topic.url ? `<a href="${topic.url}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-500 hover:underline block">Открыть оригинал</a>` : ''}
+                        </div>
+                      `;
+                      e.currentTarget.parentNode?.appendChild(errorContainer);
+                    }
+                  }}
+                />
+                
+                {/* Кнопка анализа изображения */}
+                {mediaData.images && mediaData.images.length > 0 && (
+                  <div className="absolute bottom-2 right-2">
+                    <MediaAnalysisButton 
+                      mediaUrl={mediaData.images[0]} 
+                      buttonText="Анализировать" 
+                      buttonVariant="secondary" 
+                    />
+                  </div>
+                )}
+              </div>
+              
               {topic.url && (
                 <div className="text-right mt-2">
                   <a
