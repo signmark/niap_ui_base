@@ -44,6 +44,26 @@ export function TrendDetailDialog({
   const [videoLoadError, setVideoLoadError] = React.useState(false);
   const { toast } = useToast();
   
+  // Вспомогательная функция для безопасного отображения данных
+  const safeRender = (item: any): string => {
+    if (typeof item === 'string') {
+      return item;
+    } else if (typeof item === 'object' && item !== null) {
+      // Приоритет для поля text, которое добавляется сервером при обработке
+      if ('text' in item) {
+        return item.text;
+      } 
+      // Обработка объектов с полями name и quantity
+      else if ('name' in item) {
+        return item.quantity ? `${item.name} (${item.quantity})` : item.name;
+      }
+      // Для других объектов - преобразуем в JSON строку
+      return JSON.stringify(item);
+    }
+    // Преобразуем все остальные типы в строку
+    return String(item);
+  };
+  
   // Инициализируем пустую структуру для медиаданных
   let mediaData: MediaData = { 
     images: [], 
@@ -546,20 +566,11 @@ export function TrendDetailDialog({
                   <div>
                     <span className="font-medium">Объекты: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {topic.media_analysis.objects.map((obj, i) => {
-                        // Используем новый формат объекта с полем text
-                        const displayText = typeof obj === 'object' && obj !== null && 'text' in obj 
-                          ? obj.text
-                          : typeof obj === 'string' 
-                            ? obj 
-                            : JSON.stringify(obj);
-                        
-                        return (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                            {displayText}
-                          </span>
-                        );
-                      })}
+                      {topic.media_analysis.objects.map((obj, i) => (
+                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                          {safeRender(obj)}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -575,20 +586,11 @@ export function TrendDetailDialog({
                   <div>
                     <span className="font-medium">Основные цвета: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {topic.media_analysis.colors.map((color, i) => {
-                        // Используем новый формат объекта с полем text
-                        const displayText = typeof color === 'object' && color !== null && 'text' in color 
-                          ? color.text
-                          : typeof color === 'string' 
-                            ? color 
-                            : JSON.stringify(color);
-                        
-                        return (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                            {displayText}
-                          </span>
-                        );
-                      })}
+                      {topic.media_analysis.colors.map((color, i) => (
+                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                          {safeRender(color)}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}

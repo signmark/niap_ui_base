@@ -39,6 +39,26 @@ export function MediaAnalysisButton({
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  
+  // Вспомогательная функция для безопасного отображения данных
+  const safeRender = (item: any): string => {
+    if (typeof item === 'string') {
+      return item;
+    } else if (typeof item === 'object' && item !== null) {
+      // Приоритет для поля text, которое добавляется сервером при обработке
+      if (item.text) {
+        return item.text;
+      } 
+      // Обработка объектов с полями name и quantity
+      else if (item.name) {
+        return item.quantity ? `${item.name} (${item.quantity})` : item.name;
+      }
+      // Для других объектов - преобразуем в JSON строку
+      return JSON.stringify(item);
+    }
+    // Преобразуем все остальные типы в строку
+    return String(item);
+  };
 
   // Функция для явного сохранения анализа медиа в тренде
   const saveMediaAnalysis = async () => {
@@ -265,9 +285,9 @@ export function MediaAnalysisButton({
                   <h3 className="text-lg font-medium mb-2">Распознанные объекты</h3>
                   <div className="flex flex-wrap gap-1">
                     {Array.isArray(result.objects) 
-                      ? result.objects.map((obj: string, i: number) => (
+                      ? result.objects.map((obj: any, i: number) => (
                           <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                            {obj}
+                            {safeRender(obj)}
                           </span>
                         ))
                       : typeof result.objects === 'string' 
@@ -283,9 +303,9 @@ export function MediaAnalysisButton({
                   <h3 className="text-lg font-medium mb-2">Основные цвета</h3>
                   <div className="flex flex-wrap gap-1">
                     {Array.isArray(result.colors) 
-                      ? result.colors.map((color: string, i: number) => (
+                      ? result.colors.map((color: any, i: number) => (
                           <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                            {color}
+                            {safeRender(color)}
                           </span>
                         ))
                       : typeof result.colors === 'string'
