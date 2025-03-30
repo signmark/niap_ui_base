@@ -2415,9 +2415,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Обновляем запись тренда с результатами анализа
           console.log(`[api] Отправка запроса на обновление тренда ${trendId} с данными:`, JSON.stringify(mediaAnalysisData).substring(0, 300) + "...");
           
+          // Преобразуем объект в строку JSON и потом обратно для корректного сохранения в Directus
+          const jsonData = JSON.stringify(mediaAnalysisData);
+          console.log(`[api] Данные для сохранения в формате JSON-строки: ${jsonData.substring(0, 100)}...`);
+          
           try {
+            // Отправляем как строку JSON, затем Directus сам парсит её в JSON-поле
             const response = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
-              media_analysis: mediaAnalysisData
+              media_analysis: JSON.parse(jsonData)
             });
             
             console.log(`[api] Результаты анализа медиаконтента успешно сохранены для тренда: ${trendId}`);
@@ -2436,8 +2441,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               console.log(`[api] Повторная попытка с упрощенным форматом данных...`);
               
-              // Упрощенный вариант данных
-              const simplifiedData = {
+              // Упрощенный вариант данных как строка JSON, затем преобразованная обратно в объект
+              // Это обеспечивает правильный формат для сохранения в JSON-поле Directus
+              let simplifiedData = {
                 description: analysisResults.description,
                 objects: Array.isArray(analysisResults.objects) ? 
                   analysisResults.objects.map(o => typeof o === 'object' ? JSON.stringify(o) : String(o)) : [],
@@ -2446,6 +2452,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 mood: analysisResults.mood,
                 imageUrl: mediaUrl
               };
+              
+              // Преобразуем в JSON строку и обратно для корректного форматирования
+              simplifiedData = JSON.parse(JSON.stringify(simplifiedData));
               
               const retryResponse = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
                 media_analysis: simplifiedData
@@ -2605,8 +2614,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[api] Проверка существования тренда: ${trendId}, статус: ${checkResponse.status}`);
         
         // Обновляем запись тренда с результатами анализа
+        // Преобразуем объект в строку JSON и потом обратно для корректного сохранения в Directus
+        const jsonData = JSON.stringify(mediaAnalysisData);
+        console.log(`[api] Данные для сохранения в формате JSON-строки: ${jsonData.substring(0, 100)}...`);
+        
         const response = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
-          media_analysis: mediaAnalysisData
+          media_analysis: JSON.parse(jsonData)
         });
         
         console.log(`[api] Результаты анализа успешно сохранены для тренда: ${trendId}`);
@@ -2623,8 +2636,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`[api] Повторная попытка с упрощенным форматом данных...`);
           
-          // Упрощенный вариант данных
-          const simplifiedData = {
+          // Упрощенный вариант данных как строка JSON, затем преобразованная обратно в объект
+          // для корректного сохранения в формате JSON в Directus
+          let simplifiedData = {
             description: analysisResults.description,
             objects: Array.isArray(analysisResults.objects) ? 
               analysisResults.objects.map((o: any) => typeof o === 'object' ? JSON.stringify(o) : String(o)) : [],
@@ -2633,6 +2647,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mood: analysisResults.mood,
             imageUrl: mediaUrl
           };
+          
+          // Преобразуем в JSON строку и обратно для корректного форматирования
+          const jsonString = JSON.stringify(simplifiedData);
+          console.log(`[api] Данные для сохранения в формате JSON-строки: ${jsonString.substring(0, 100)}...`);
+          simplifiedData = JSON.parse(jsonString);
           
           // Последняя попытка сохранения упрощенных данных
           const retryResponse = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
