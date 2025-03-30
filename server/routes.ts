@@ -3249,49 +3249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  /**
-   * Маршрут для анализа медиаконтента с использованием Qwen-VL
-   * Поддерживает анализ изображений и видео
-   */
-  app.post("/api/analyze-media", authenticateUser, async (req, res) => {
-    try {
-      const { mediaUrl } = req.body;
-      
-      if (!mediaUrl || mediaUrl.trim() === '') {
-        return res.status(400).json({ 
-          success: false,
-          error: "Отсутствует URL медиаконтента для анализа" 
-        });
-      }
-      
-      // Получаем userId и token из middleware аутентификации
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          error: "Пользователь не авторизован"
-        });
-      }
-      
-      const userId = req.user.id;
-      const authToken = req.user.token;
-      
-      console.log(`[api/analyze-media] Анализ медиаконтента для пользователя ${userId}, URL: ${mediaUrl}`);
-      
-      // Выполняем анализ медиаконтента через сервис
-      const results = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
-      
-      return res.json({
-        success: true,
-        results
-      });
-    } catch (error) {
-      console.error('[api/analyze-media] Ошибка при анализе медиаконтента:', error);
-      return res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Неизвестная ошибка при анализе медиаконтента'
-      });
-    }
-  });
+  // ПРИМЕЧАНИЕ: API эндпоинт для анализа медиаконтента уже определен выше (строка 2301)
 
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
   app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {

@@ -193,10 +193,11 @@ export class QwenService {
       const activeBaseUrl = this.compatModes[this.apiMode];
       
       // Отправляем запрос к Qwen-VL API
+      console.log(`[qwen] Используем модель Qwen-VL Plus для анализа изображения`);
       const response = await axios.post(
         `${activeBaseUrl}/chat/completions`,
         {
-          model: 'qwen-vl',  // Используем мультимодальную модель
+          model: 'qwen-vl-plus',  // Используем мультимодальную модель по документации Alibaba Cloud
           messages: messages,
           temperature: 0.2, // Низкая температура для более точных результатов
           max_tokens: 1500, // Достаточно для подробного анализа
