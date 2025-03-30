@@ -234,31 +234,35 @@ export class QwenService {
           }
         );
       
-      if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Некорректный ответ от Qwen-VL API');
-      }
-      
-      // Обрабатываем ответ и преобразуем его в структурированный JSON, если необходимо
-      let result = response.data.choices[0].message.content;
-      
-      // Если ответ в виде JSON-строки, преобразуем в объект
-      if (typeof result === 'string' && analysisType !== 'basic' && analysisType !== 'text') {
-        try {
-          // Извлекаем JSON из текста ответа, если он окружен другим текстом
-          const jsonMatch = result.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            result = JSON.parse(jsonMatch[0]);
-          } else {
-            result = JSON.parse(result);
-          }
-        } catch (e) {
-          console.warn('[qwen] Не удалось преобразовать ответ в JSON:', e);
-          // Оставляем как есть, если не удалось преобразовать
+        if (!response.data?.choices?.[0]?.message?.content) {
+          throw new Error('Некорректный ответ от Qwen-VL API');
         }
+        
+        // Обрабатываем ответ и преобразуем его в структурированный JSON, если необходимо
+        let result = response.data.choices[0].message.content;
+        
+        // Если ответ в виде JSON-строки, преобразуем в объект
+        if (typeof result === 'string' && analysisType !== 'basic' && analysisType !== 'text') {
+          try {
+            // Извлекаем JSON из текста ответа, если он окружен другим текстом
+            const jsonMatch = result.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              result = JSON.parse(jsonMatch[0]);
+            } else {
+              result = JSON.parse(result);
+            }
+          } catch (e) {
+            console.warn('[qwen] Не удалось преобразовать ответ в JSON:', e);
+            // Оставляем как есть, если не удалось преобразовать
+          }
+        }
+        
+        console.log('[qwen] Анализ изображения успешно получен от Qwen-VL');
+        return result;
+      } catch (error) {
+        console.error('[qwen] Ошибка при анализе изображения с помощью Qwen-VL:', error);
+        throw error;
       }
-      
-      console.log('[qwen] Анализ изображения успешно получен от Qwen-VL');
-      return result;
     } catch (error) {
       console.error('[qwen] Ошибка при анализе изображения с помощью Qwen-VL:', error);
       throw error;
@@ -389,64 +393,58 @@ export class QwenService {
 
 ${platformSpecifics}
 
-В тексте обязательно используй предоставленные ключевые слова органично, без искусственного вставления. Раскрой предоставленные темы, но делай это естественно и интересно для читателя.
+В тексте обязательно используй предоставленные ключевые слова органично, без искусственного вставления. Раскрой предоставленные темы актуально и интересно.`;
 
-ВАЖНО:
-- Не упоминай, что текст создан ИИ или для каких-то конкретных целей
-- Не используй клише и шаблонные фразы
-- Делай текст живым, с естественными переходами между мыслями
-- Используй активный залог вместо пассивного`;
+    const userPrompt = `Ключевые слова: ${keywords.join(', ')}
+Темы: ${topics.join(', ')}
 
-    const userContent = `Ключевые слова: ${keywords.join(', ')}
-Темы для раскрытия: ${topics.join(', ')}
+Создай пост для ${platform} по этим темам и ключевым словам.`;
 
-Создай привлекательный пост для ${platform} ${language === 'ru' ? 'на русском языке' : 'на английском языке'}.`;
+    const messages: QwenMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
 
     try {
-      return await this.generateText(
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent }
-        ],
-        {
-          temperature: 0.7,  // Более высокая температура для креативности
-          max_tokens: length === 'short' ? 300 : length === 'medium' ? 500 : 800
-        }
-      );
-    } catch (error: any) {
-      console.error('Error generating social content with Qwen:', error);
-      const errorMessage = error.message || 'Неизвестная ошибка при генерации контента';
-      log(`Qwen генерация контента не удалась: ${errorMessage}`, 'qwen');
+      const generatedContent = await this.generateText(messages, {
+        model: 'qwen-plus',
+        temperature: 0.7,
+        max_tokens: 1500
+      });
       
-      // Форматируем сообщение об ошибке для более понятного отображения пользователю
-      if (errorMessage.includes('API ключ')) {
-        throw new Error(`Проблема с API ключом Qwen: ${errorMessage}`);
-      } else if (errorMessage.includes('подключиться')) {
-        throw new Error('Не удалось подключиться к Qwen API. Проверьте соединение или доступность сервиса.');
-      } else {
-        throw new Error(`Ошибка при генерации контента через Qwen: ${errorMessage}`);
-      }
+      return generatedContent;
+    } catch (error: any) {
+      console.error(`Ошибка при генерации контента для ${platform}:`, error);
+      throw new Error(`Не удалось сгенерировать контент: ${error.message}`);
     }
   }
-  
+
+  /**
+   * Инициализирует сервис с API ключом пользователя
+   * @param userId ID пользователя
+   * @param authToken Токен авторизации для Directus (опционально)
+   * @returns true в случае успешной инициализации, false в случае ошибки
+   */
+  async initialize(userId: string, authToken?: string): Promise<boolean> {
+    return this.initWithUserApiKey(userId, authToken);
+  }
+
   /**
    * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
    * @param userId ID пользователя
    * @param authToken Токен авторизации для Directus (опционально)
    * @returns true в случае успешной инициализации, false в случае ошибки
    */
-  async initialize(userId: string, authToken?: string): Promise<boolean> {
+  async initWithUserApiKey(userId: string, authToken?: string): Promise<boolean> {
     try {
-      console.log('[qwen] Initializing Qwen service for user', userId);
+      console.log('[qwen] Initializing Qwen service with user API key for user', userId);
       
-      // Используем централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       
       if (apiKey) {
-        const keyPreview = apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 5);
-        console.log(`[qwen] API key successfully obtained from API Key Service: ${keyPreview} (длина ключа: ${apiKey.length})`);
+        console.log('[qwen] API key found for user', userId);
         this.updateApiKey(apiKey);
-        log('[qwen] API key successfully obtained from API Key Service', 'qwen');
+        log('[qwen] API key found and set for user ' + userId, 'qwen');
         return true;
       } else {
         console.log('[qwen] API key not found for user', userId);
