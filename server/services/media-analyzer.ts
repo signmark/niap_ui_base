@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { qwenService } from './qwen';
 import { apiKeyService } from './api-keys';
+import ffprobe from 'ffprobe';
+import ffprobeStatic from 'ffprobe-static';
 
 /**
  * Сервис для анализа медиаконтента с использованием Qwen-VL.
@@ -17,19 +19,19 @@ class MediaAnalyzerService {
   async analyzeMedia(mediaUrl: string, userId: string, authToken: string): Promise<any> {
     try {
       console.log(`[media-analyzer] Начинаем анализ медиаконтента по URL: ${mediaUrl}`);
-      
+
       // Инициализация Qwen сервиса с API ключом пользователя
       const initialized = await qwenService.initialize(userId, authToken);
       if (!initialized) {
         throw new Error('Не удалось инициализировать Qwen сервис. Убедитесь, что API ключ настроен в профиле пользователя.');
       }
-      
+
       // Определение типа медиаконтента
       const mediaType = this.detectMediaType(mediaUrl);
       console.log(`[media-analyzer] Определен тип медиаконтента: ${mediaType}`);
-      
+
       let analysisResults: any;
-      
+
       if (mediaType === 'image') {
         // Анализ изображения
         analysisResults = await this.analyzeImage(mediaUrl);
@@ -39,10 +41,10 @@ class MediaAnalyzerService {
       } else {
         throw new Error('Неподдерживаемый тип медиаконтента. Поддерживаются только изображения и видео.');
       }
-      
+
       // Форматируем результаты для фронтенда
       const formattedResults = this.formatAnalysisResults(analysisResults, mediaType);
-      
+
       return {
         success: true,
         mediaType,
@@ -53,7 +55,7 @@ class MediaAnalyzerService {
       throw error;
     }
   }
-  
+
   /**
    * Определяет тип медиаконтента по URL
    * @param url URL медиаконтента
@@ -63,22 +65,22 @@ class MediaAnalyzerService {
     // Проверка на основе расширения файла
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
     const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv'];
-    
+
     const lowercaseUrl = url.toLowerCase();
-    
+
     // Проверка по расширению в URL
     for (const ext of imageExtensions) {
       if (lowercaseUrl.includes(ext)) {
         return 'image';
       }
     }
-    
+
     for (const ext of videoExtensions) {
       if (lowercaseUrl.includes(ext)) {
         return 'video';
       }
     }
-    
+
     // Проверка по доменам видеохостингов
     if (
       lowercaseUrl.includes('youtube.com') || 
@@ -89,7 +91,7 @@ class MediaAnalyzerService {
     ) {
       return 'video';
     }
-    
+
     // Проверка по доменам фотохостингов
     if (
       lowercaseUrl.includes('flickr.com') || 
@@ -98,12 +100,12 @@ class MediaAnalyzerService {
     ) {
       return 'image';
     }
-    
+
     // По умолчанию считаем URL изображением
     console.log(`[media-analyzer] Не удалось определить тип медиаконтента по URL, предполагаем что это изображение: ${url}`);
     return 'image';
   }
-  
+
   /**
    * Анализирует изображение с помощью Qwen-VL
    * @param imageUrl URL изображения для анализа
@@ -112,17 +114,17 @@ class MediaAnalyzerService {
   private async analyzeImage(imageUrl: string): Promise<any> {
     try {
       console.log(`[media-analyzer] Анализ изображения с помощью Qwen-VL: ${imageUrl}`);
-      
+
       // Используем Qwen-VL для детального анализа изображения
       const analysisResults = await qwenService.analyzeImage(imageUrl, 'detailed');
-      
+
       return analysisResults;
     } catch (error) {
       console.error('[media-analyzer] Ошибка при анализе изображения:', error);
       throw new Error(`Не удалось проанализировать изображение: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
     }
   }
-  
+
   /**
    * Анализирует видео, извлекая ключевые кадры
    * @param videoUrl URL видео для анализа
@@ -131,43 +133,74 @@ class MediaAnalyzerService {
   private async analyzeVideo(videoUrl: string): Promise<any> {
     try {
       console.log(`[media-analyzer] Анализ видео: ${videoUrl}`);
-      
-      // На данный момент анализируем только превью видео
-      // В будущем можно реализовать извлечение ключевых кадров
-      console.log('[media-analyzer] Получаем превью видео для анализа');
-      const thumbnailUrl = await this.getVideoThumbnail(videoUrl);
-      
-      // Анализируем превью как изображение
-      console.log('[media-analyzer] Анализируем превью видео как изображение');
-      const thumbnailAnalysis = await this.analyzeImage(thumbnailUrl);
-      
-      // Добавляем пометку, что анализ основан только на превью
+
+      // Placeholder for actual keyframe extraction logic using ffmpeg or similar.  This is a simplified example.
+      const keyframes = await this.extractKeyframes(videoUrl);
+      const analyses = await Promise.all(keyframes.map(async ({url}) => this.analyzeImage(url)));
+      const combinedAnalysis = this.combineFrameAnalyses(analyses);
+
       return {
-        ...thumbnailAnalysis,
-        isPreviewOnly: true,
-        videoUrl: videoUrl,
-        thumbnailUrl: thumbnailUrl
+        ...combinedAnalysis,
+        keyframes,
+        videoUrl: videoUrl
       };
     } catch (error) {
       console.error('[media-analyzer] Ошибка при анализе видео:', error);
       throw new Error(`Не удалось проанализировать видео: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
     }
   }
-  
-  /**
+
+    /**
    * Извлекает ключевые кадры из видео
    * @param videoUrl URL видео
    * @returns Список URL ключевых кадров с временными метками
    */
   private async extractKeyframes(videoUrl: string): Promise<{url: string, timestamp: number}[]> {
-    // Заглушка для будущей реализации
-    // В полной реализации здесь должна быть логика извлечения ключевых кадров
-    console.log('[media-analyzer] Извлечение ключевых кадров пока не реализовано, используем только превью');
-    
-    const thumbnailUrl = await this.getVideoThumbnail(videoUrl);
-    return [{ url: thumbnailUrl, timestamp: 0 }];
+    try {
+        // This is a placeholder and requires a proper video processing library like ffmpeg
+        const videoInfo = await ffprobe(videoUrl, { path: ffprobeStatic.path });
+        const duration = videoInfo.streams[0].duration;
+        const frameOffsets = [];
+        frameOffsets.push(0); // Начальный кадр
+
+        if (duration <= 60) { // Для коротких видео до 1 минуты
+          frameOffsets.push(
+            Math.floor(duration / 3),  // 1/3 видео
+            Math.floor(duration * 2 / 3), // 2/3 видео
+            Math.floor(duration -1) // Последний кадр
+          );
+        } else if (duration <= 300) { // Для видео 1-5 минут
+          for (let i = 15; i < duration; i += 15) {
+            frameOffsets.push(i);
+          }
+        } else { // Для длинных видео
+          for (let i = 30; i < duration; i += 60) {
+            frameOffsets.push(i);
+          }
+        }
+
+        // Placeholder for generating keyframe URLs.  Replace with actual keyframe extraction.
+        return frameOffsets.map(offset => ({ url: `placeholder-keyframe-${offset}.jpg`, timestamp: offset }));
+    } catch (error) {
+        console.error("[media-analyzer] Error extracting keyframes:", error);
+        throw new Error(`Failed to extract keyframes: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
   }
-  
+
+
+  /**
+   * Объединяет анализы нескольких кадров в один общий результат
+   * @param frameAnalyses Массив результатов анализа отдельных кадров
+   * @returns Объединенный результат анализа
+   */
+  private combineFrameAnalyses(frameAnalyses: any[]): any {
+    // Simple averaging of descriptions for now.  More sophisticated combining logic might be needed.
+    const descriptions = frameAnalyses.map(analysis => analysis.description).filter(desc => desc);
+    const combinedDescription = descriptions.join(". ");
+
+    return { description: combinedDescription };
+  }
+
   /**
    * Получает превью видео по URL
    * @param videoUrl URL видео
@@ -184,24 +217,11 @@ class MediaAnalyzerService {
         return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       }
     }
-    
+
     // Для других платформ возвращаем заглушку
     return 'https://via.placeholder.com/640x360?text=Video+Preview';
   }
-  
-  /**
-   * Объединяет анализы нескольких кадров в один общий результат
-   * @param frameAnalyses Массив результатов анализа отдельных кадров
-   * @returns Объединенный результат анализа
-   */
-  private combineFrameAnalyses(frameAnalyses: any[]): any {
-    // Заглушка для будущей реализации
-    // В полной реализации здесь должна быть логика объединения результатов анализа разных кадров
-    
-    // Пока просто возвращаем результат анализа первого кадра
-    return frameAnalyses[0];
-  }
-  
+
   /**
    * Форматирует результаты анализа для отображения на фронтенде
    * @param analysisResults Результаты анализа от AI
@@ -211,20 +231,20 @@ class MediaAnalyzerService {
   private formatAnalysisResults(analysisResults: any, mediaType: string): any {
     try {
       console.log('[media-analyzer] Форматирование результатов анализа для фронтенда');
-      
+
       // Если результат уже является объектом с нужными полями, используем его напрямую
       if (typeof analysisResults === 'object' && analysisResults !== null) {
         const { 
           description, objects, colors, text, mood, composition,
-          engagement_factors, recommendations, isPreviewOnly, videoUrl, thumbnailUrl
+          engagement_factors, recommendations, keyframes, videoUrl
         } = analysisResults;
-        
+
         // Формируем структурированный объект с результатами
         const formattedResults: any = {
           description: description || '',
           mediaType
         };
-        
+
         // Добавляем остальные поля, если они есть
         if (objects) formattedResults.objects = objects;
         if (colors) formattedResults.colors = colors;
@@ -233,17 +253,12 @@ class MediaAnalyzerService {
         if (composition) formattedResults.composition = composition;
         if (engagement_factors) formattedResults.engagement_factors = engagement_factors;
         if (recommendations) formattedResults.recommendations = recommendations;
-        
-        // Добавляем дополнительную информацию для видео
-        if (mediaType === 'video') {
-          formattedResults.isPreviewOnly = isPreviewOnly === true;
-          if (videoUrl) formattedResults.videoUrl = videoUrl;
-          if (thumbnailUrl) formattedResults.thumbnailUrl = thumbnailUrl;
-        }
-        
+        if (keyframes) formattedResults.keyframes = keyframes;
+        if (videoUrl) formattedResults.videoUrl = videoUrl;
+
         return formattedResults;
       }
-      
+
       // Если результат - строка (текстовое описание)
       if (typeof analysisResults === 'string') {
         return {
@@ -251,7 +266,7 @@ class MediaAnalyzerService {
           mediaType
         };
       }
-      
+
       // Если не удалось распознать формат результатов
       console.warn('[media-analyzer] Не удалось распознать формат результатов анализа:', analysisResults);
       return {
