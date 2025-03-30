@@ -2301,7 +2301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/analyze-media', authenticateUser, async (req, res) => {
     try {
       // Получаем параметры запроса
-      const { mediaUrl } = req.body;
+      const { mediaUrl, trendId } = req.body;
       
       // Проверяем обязательные параметры
       if (!mediaUrl) {
@@ -2327,10 +2327,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Используем сервис анализа медиаконтента
       const analysisResults = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
       
+      // Если указан ID тренда, сохраняем результаты анализа
+      if (trendId) {
+        try {
+          console.log(`[api] Сохраняем результаты анализа медиаконтента для тренда: ${trendId}`);
+          
+          // Создаем API-клиент Directus с токеном пользователя
+          const directusApi = axios.create({
+            baseURL: process.env.DIRECTUS_URL || 'https://directus.nplanner.ru',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // Формируем данные анализа для сохранения
+          const mediaAnalysisData = {
+            description: analysisResults.description,
+            objects: analysisResults.objects || [],
+            colors: analysisResults.colors || [],
+            mood: analysisResults.mood,
+            imageUrl: mediaUrl // Сохраняем URL исходного изображения
+          };
+          
+          // Обновляем запись тренда с результатами анализа
+          await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+            media_analysis: mediaAnalysisData
+          });
+          
+          console.log(`[api] Результаты анализа медиаконтента успешно сохранены для тренда: ${trendId}`);
+        } catch (saveError) {
+          console.error(`[api] Ошибка при сохранении результатов анализа медиаконтента:`, saveError);
+        }
+      }
+      
       // Возвращаем успешный результат
       return res.json({
         success: true,
-        results: analysisResults
+        results: analysisResults,
+        savedToTrend: trendId ? true : false
       });
     } catch (error) {
       console.error("Ошибка при анализе медиаконтента:", error);

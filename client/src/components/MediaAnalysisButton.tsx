@@ -14,6 +14,7 @@ import { Loader2, ImageDown } from 'lucide-react';
 
 interface MediaAnalysisButtonProps {
   mediaUrl: string; // URL изображения или видео для анализа
+  trendId?: string; // ID тренда для сохранения результатов анализа (опционально)
   buttonText?: string; // Текст кнопки (опционально)
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"; // Вариант оформления кнопки
 }
@@ -24,6 +25,7 @@ interface MediaAnalysisButtonProps {
  */
 export function MediaAnalysisButton({ 
   mediaUrl, 
+  trendId,
   buttonText = "Анализировать медиа", 
   buttonVariant = "outline" 
 }: MediaAnalysisButtonProps) {
@@ -49,7 +51,7 @@ export function MediaAnalysisButton({
     try {
       const response = await apiRequest('/api/analyze-media', {
         method: 'POST',
-        data: { mediaUrl }
+        data: { mediaUrl, trendId }
       });
 
       if (response.success) {
@@ -57,7 +59,9 @@ export function MediaAnalysisButton({
         setIsOpen(true);
         toast({
           title: "Анализ завершен",
-          description: "Медиаконтент успешно проанализирован",
+          description: response.savedToTrend 
+            ? "Медиаконтент успешно проанализирован и сохранен" 
+            : "Медиаконтент успешно проанализирован",
         });
       } else {
         toast({
