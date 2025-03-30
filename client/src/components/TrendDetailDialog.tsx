@@ -477,7 +477,7 @@ export function TrendDetailDialog({
                             trendId={topic.id}
                             buttonText="Анализировать" 
                             buttonVariant="secondary" 
-                            existingAnalysis={topic.media_analysis && typeof topic.media_analysis === 'object' && Object.keys(topic.media_analysis).length > 0 ? topic.media_analysis : null}
+                            existingAnalysis={topic.media_analysis}
                             onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ["/api/campaign-trends"] })}
                           />
                         </div>
@@ -526,7 +526,7 @@ export function TrendDetailDialog({
                             trendId={topic.id}
                             buttonText="Анализировать" 
                             buttonVariant="secondary" 
-                            existingAnalysis={topic.media_analysis && typeof topic.media_analysis === 'object' && Object.keys(topic.media_analysis).length > 0 ? topic.media_analysis : null}
+                            existingAnalysis={topic.media_analysis}
                             onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
                           />
                         </div>
