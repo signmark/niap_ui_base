@@ -468,18 +468,23 @@ export function TrendDetailDialog({
                                   <span>Анализ выполнен</span>
                                 </div>
                               );
+                            } else {
+                              return (
+                                <MediaAnalysisButton 
+                                  mediaUrl={mediaData.videos[0]} 
+                                  trendId={topic.id}
+                                  buttonText="Анализировать" 
+                                  buttonVariant="secondary" 
+                                  existingAnalysis={topic.media_analysis}
+                                  onAnalysisComplete={() => {
+                                    console.log("[TrendDetailDialog] Вызов onAnalysisComplete в видео");
+                                    queryClient.invalidateQueries({ queryKey: ["/api/campaign-trends"] });
+                                    queryClient.refetchQueries({ queryKey: ["/api/campaign-trends"] });
+                                  }}
+                                />
+                              );
                             }
-                            
-                            return null;
                           })()}
-                          <MediaAnalysisButton 
-                            mediaUrl={mediaData.videos[0]} 
-                            trendId={topic.id}
-                            buttonText="Анализировать" 
-                            buttonVariant="secondary" 
-                            existingAnalysis={topic.media_analysis}
-                            onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ["/api/campaign-trends"] })}
-                          />
                         </div>
                       )}
                     </div>
@@ -521,14 +526,20 @@ export function TrendDetailDialog({
                             
                             return null;
                           })()}
-                          <MediaAnalysisButton 
-                            mediaUrl={mediaData.videos[0]} 
-                            trendId={topic.id}
-                            buttonText="Анализировать" 
-                            buttonVariant="secondary" 
-                            existingAnalysis={topic.media_analysis}
-                            onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
-                          />
+                          {!hasValidAnalysis && (
+                            <MediaAnalysisButton 
+                              mediaUrl={mediaData.videos[0]} 
+                              trendId={topic.id}
+                              buttonText="Анализировать" 
+                              buttonVariant="secondary" 
+                              existingAnalysis={topic.media_analysis}
+                              onAnalysisComplete={() => {
+                                console.log("[TrendDetailDialog] Вызов onAnalysisComplete для видео превью");
+                                queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
+                                queryClient.refetchQueries({ queryKey: ['/api/campaign-trends'] });
+                              }}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
@@ -640,14 +651,20 @@ export function TrendDetailDialog({
                       
                       return null;
                     })()}
-                    <MediaAnalysisButton 
-                      mediaUrl={mediaData.images[0]} 
-                      trendId={topic.id}
-                      buttonText="Анализировать" 
-                      buttonVariant="secondary" 
-                      existingAnalysis={topic.media_analysis}
-                      onAnalysisComplete={() => queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] })}
-                    />
+                    {!hasValidAnalysis && (
+                      <MediaAnalysisButton 
+                        mediaUrl={mediaData.images[0]} 
+                        trendId={topic.id}
+                        buttonText="Анализировать" 
+                        buttonVariant="secondary" 
+                        existingAnalysis={topic.media_analysis}
+                        onAnalysisComplete={() => {
+                          console.log("[TrendDetailDialog] Вызов onAnalysisComplete для изображения");
+                          queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
+                          queryClient.refetchQueries({ queryKey: ['/api/campaign-trends'] });
+                        }}
+                      />
+                    )}
                   </div>
                 )}
               </div>
