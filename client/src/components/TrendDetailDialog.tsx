@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 // Импортируем функции для работы с медиа
 import { createProxyImageUrl, createVideoThumbnailUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
@@ -41,6 +42,7 @@ export function TrendDetailDialog({
   // Нет необходимости в отслеживании индекса изображения, т.к. показываем только первое
   const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
   const [videoLoadError, setVideoLoadError] = React.useState(false);
+  const { toast } = useToast();
   
   // Инициализируем пустую структуру для медиаданных
   let mediaData: MediaData = { 
@@ -640,6 +642,14 @@ export function TrendDetailDialog({
                 trendId={topic.id}
                 buttonText="Анализировать медиаконтент"
                 buttonVariant="secondary"
+                onAnalysisComplete={() => {
+                  // Обновление данных делается автоматически через invalidateQueries в MediaAnalysisButton
+                  // Но можно добавить дополнительную логику обновления, если будет необходимо
+                  toast({
+                    title: "Данные обновлены",
+                    description: "Результаты анализа медиаконтента сохранены для тренда",
+                  });
+                }}
               />
             </div>
           )}
