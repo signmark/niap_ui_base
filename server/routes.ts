@@ -8317,7 +8317,8 @@ https://t.me/channelname/ - description`;
   });
   
   // Маршрут для анализа медиаконтента
-  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
+  // КОММЕНТАРИЙ: Этот маршрут закомментирован, так как он дублирует функциональность маршрута на строке ~10519
+  /* app.get("/api/media-analysis", authenticateUser, async (req, res) => {
     try {
       const { mediaUrl } = req.query;
       
@@ -8366,7 +8367,7 @@ https://t.me/channelname/ - description`;
         details: error.message 
       });
     }
-  });
+  }); */
 
   // Анализ сайта для автоматического заполнения анкеты
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
@@ -9975,7 +9976,8 @@ ${datesText}
   });
 
   // Маршрут для анализа медиаконтента (изображений и видео) в трендах
-  app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
+  // КОММЕНТАРИЙ: Этот маршрут закомментирован, так как он дублирует функциональность маршрута на строке ~10519
+  /* app.get("/api/media-analysis", authenticateUser, async (req: Request, res: Response) => {
     try {
       const { mediaUrl, trendId } = req.query;
       
@@ -10019,7 +10021,7 @@ ${datesText}
       console.error("[media-analysis] Error analyzing media:", error);
       return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
     }
-  });
+  }); */
   
   // Эндпоинт для тестирования Qwen API
   app.get('/api/test-qwen', async (req, res) => {
