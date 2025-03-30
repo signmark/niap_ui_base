@@ -67,7 +67,7 @@ async function analyzeImage(imageUrl: string, apiKey: string, isVideo: boolean =
         // Продолжаем с исходным URL, так как FAL AI может иногда работать и с "неправильными" URL
       }
       
-      // Убедимся, что API ключ имеет правильный формат
+      // Убедимся, что API ключ имеет правильный формат с префиксом 'Key '
       const formattedApiKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
       
       // Создаем заголовки запроса с API ключом
