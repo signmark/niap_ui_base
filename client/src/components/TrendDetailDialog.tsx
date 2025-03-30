@@ -546,11 +546,17 @@ export function TrendDetailDialog({
                   <div>
                     <span className="font-medium">Объекты: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {topic.media_analysis.objects.map((obj, i) => (
-                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                          {obj}
-                        </span>
-                      ))}
+                      {topic.media_analysis.objects.map((obj, i) => {
+                        // Проверяем, является ли объект сложным объектом или строкой
+                        const objText = typeof obj === 'object' && obj !== null
+                          ? ((obj as any).name || JSON.stringify(obj)) 
+                          : obj;
+                        return (
+                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                            {objText}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -566,11 +572,17 @@ export function TrendDetailDialog({
                   <div>
                     <span className="font-medium">Основные цвета: </span>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {topic.media_analysis.colors.map((color, i) => (
-                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                          {color}
-                        </span>
-                      ))}
+                      {topic.media_analysis.colors.map((color, i) => {
+                        // Проверяем, является ли цвет объектом или строкой
+                        const colorText = typeof color === 'object' && color !== null
+                          ? ((color as any).name || JSON.stringify(color)) 
+                          : color;
+                        return (
+                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                            {colorText}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
