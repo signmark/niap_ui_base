@@ -6920,7 +6920,8 @@ https://t.me/channelname/ - description`;
             created_at: item.created_at ? new Date(item.created_at).toISOString() : null, // Дублируем для Snake Case
             isBookmarked: item.is_bookmarked,
             campaignId: item.campaign_id,
-            media_links: item.media_links // Добавляем поле media_links
+            media_links: item.media_links, // Добавляем поле media_links
+            media_analysis: item.media_analysis // Добавляем поле media_analysis для отображения анализа на клиенте
           };
         });
         
