@@ -2342,6 +2342,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
           
+          // Устанавливаем полное логирование запросов и ответов
+          directusApi.interceptors.request.use(request => {
+            console.log(`[api] ПОЛНАЯ ДИАГНОСТИКА: Отправка ${request.method?.toUpperCase()} запроса:`, 
+              { 
+                url: request.url,
+                data: request.data ? JSON.stringify(request.data).substring(0, 300) + '...' : null,
+                headers: Object.keys(request.headers || {})
+              }
+            );
+            return request;
+          });
+          
+          directusApi.interceptors.response.use(
+            response => {
+              console.log(`[api] ПОЛНАЯ ДИАГНОСТИКА: Получен ответ ${response.status}:`, 
+                { 
+                  data: response.data ? JSON.stringify(response.data).substring(0, 300) + '...' : null 
+                }
+              );
+              return response;
+            },
+            error => {
+              console.error(`[api] ПОЛНАЯ ДИАГНОСТИКА: Ошибка запроса:`, 
+                { 
+                  message: error.message,
+                  status: error.response?.status,
+                  data: error.response?.data ? JSON.stringify(error.response.data).substring(0, 300) + '...' : null
+                }
+              );
+              return Promise.reject(error);
+            }
+          );
+          
           // Предварительно обрабатываем объекты для безопасного отображения в React
           // Функция для преобразования объектов с name и quantity в строки
           const formatComplexObjects = (items: any[]) => {
@@ -2496,6 +2529,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Content-Type': 'application/json'
         }
       });
+      
+      // Устанавливаем полное логирование запросов и ответов
+      directusApi.interceptors.request.use(request => {
+        console.log(`[api] ПОЛНАЯ ДИАГНОСТИКА SAVE: Отправка ${request.method?.toUpperCase()} запроса:`, 
+          { 
+            url: request.url,
+            data: request.data ? JSON.stringify(request.data).substring(0, 300) + '...' : null,
+            headers: Object.keys(request.headers || {})
+          }
+        );
+        return request;
+      });
+      
+      directusApi.interceptors.response.use(
+        response => {
+          console.log(`[api] ПОЛНАЯ ДИАГНОСТИКА SAVE: Получен ответ ${response.status}:`, 
+            { 
+              data: response.data ? JSON.stringify(response.data).substring(0, 300) + '...' : null 
+            }
+          );
+          return response;
+        },
+        error => {
+          console.error(`[api] ПОЛНАЯ ДИАГНОСТИКА SAVE: Ошибка запроса:`, 
+            { 
+              message: error.message,
+              status: error.response?.status,
+              data: error.response?.data ? JSON.stringify(error.response.data).substring(0, 300) + '...' : null
+            }
+          );
+          return Promise.reject(error);
+        }
+      );
       
       // Функция для преобразования объектов с name и quantity в строки
       const formatComplexObjects = (items: any[]) => {
