@@ -658,24 +658,9 @@ export function TrendDetailDialog({
           </div>
 
           {/* Кнопка для анализа медиаконтента */}
-          {(imageUrl || videoUrl) && (
-            <div className="mt-4">
-              <MediaAnalysisButton 
-                mediaUrl={imageUrl || videoUrl || ''}
-                trendId={topic.id}
-                buttonText="Анализировать медиаконтент"
-                buttonVariant="secondary"
-                onAnalysisComplete={() => {
-                  // Обновление данных делается автоматически через invalidateQueries в MediaAnalysisButton
-                  // Но можно добавить дополнительную логику обновления, если будет необходимо
-                  toast({
-                    title: "Данные обновлены",
-                    description: "Результаты анализа медиаконтента сохранены для тренда",
-                  });
-                }}
-              />
-            </div>
-          )}
+          {/* Удалена общая кнопка анализа медиаконтента, поскольку теперь
+             результаты анализа отображаются в карточке тренда и
+             у каждого изображения/видео есть своя кнопка анализа */}
 
           <div className="flex justify-end mt-4">
             <Button
