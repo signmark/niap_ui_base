@@ -5,7 +5,6 @@ import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
-import { mediaAnalyzerService } from './services/media-analyzer';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
@@ -1293,7 +1292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Получаем API ключ из сервиса ключей
-    let apiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
+    let apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
     
     // Инициализируем клиент FAL.AI с полученным ключом
     if (apiKey) {
@@ -8316,9 +8315,6 @@ https://t.me/channelname/ - description`;
     }
   });
   
-  // Маршрут для анализа медиаконтента
-  // Маршрут /api/media-analysis определен ниже
-
   // Анализ сайта для автоматического заполнения анкеты
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
     try {
@@ -9925,22 +9921,6 @@ ${datesText}
     }
   });
 
-  // Маршрут для анализа медиаконтента (изображений и видео) в трендах
-  // Маршрут /api/media-analysis определен ниже
-      
-      // Если указан ID тренда, можно в будущем сохранять результаты анализа в базу данных
-      if (trendId) {
-        console.log(`[media-analysis] Analysis for trend ID: ${trendId}`);
-        // TODO: Реализовать сохранение результатов анализа для тренда
-      }
-      
-      return res.json({ result });
-    } catch (error) {
-      console.error("[media-analysis] Error analyzing media:", error);
-      return res.status(500).json({ error: "Ошибка анализа медиаконтента" });
-    }
-  });
-  
   // Эндпоинт для тестирования Qwen API
   app.get('/api/test-qwen', async (req, res) => {
     try {
@@ -10431,75 +10411,6 @@ ${datesText}
         success: false,
         error: "Ошибка при тестировании формата ключа",
         message: error.message
-      });
-    }
-  });
-
-  // Маршрут для анализа медиаконтента (изображения или видео)
-  app.get("/api/media-analysis", authenticateUser, async (req, res) => {
-    try {
-      const { mediaUrl, trendId } = req.query;
-      
-      if (!mediaUrl || typeof mediaUrl !== 'string') {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Требуется указать URL медиаконтента",
-          message: "Укажите URL изображения или видео для анализа" 
-        });
-      }
-      
-      // Получаем userId и токен из запроса, которые были установлены в authenticateUser middleware
-      const userId = req.user?.id;
-      const authToken = req.user?.token;
-      
-      if (!userId) {
-        return res.status(401).json({ 
-          success: false, 
-          error: "Unauthorized",
-          message: "Неавторизованный запрос" 
-        });
-      }
-      
-      // Проверяем наличие ключа FAL AI у пользователя
-      const hasFalAiKey = await apiKeyService.hasFalAiApiKey(userId, authToken);
-      if (!hasFalAiKey) {
-        return res.status(400).json({
-          success: false,
-          error: "Для анализа медиаконтента требуется API ключ FAL AI",
-          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
-          missingApiKey: true
-        });
-      }
-      
-      console.log(`[media-analysis] Анализ медиаконтента для пользователя ${userId}: ${mediaUrl.substring(0, 50)}...`);
-      
-      // Анализируем медиаконтент с помощью MediaAnalyzerService
-      const result = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
-      
-      if (!result) {
-        return res.status(500).json({ 
-          success: false, 
-          error: "Ошибка анализа",
-          message: "Не удалось проанализировать медиаконтент" 
-        });
-      }
-      
-      return res.json({ 
-        success: true, 
-        result
-      });
-    } catch (error) {
-      console.error("Error analyzing media:", error);
-      
-      let errorMessage = "Ошибка при анализе медиаконтента";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      return res.status(500).json({ 
-        success: false, 
-        error: "Ошибка анализа",
-        message: errorMessage 
       });
     }
   });

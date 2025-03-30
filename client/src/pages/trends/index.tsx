@@ -5,7 +5,6 @@ import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import MediaAnalysisPanel from "@/components/MediaAnalysisPanel";
 
 /**
  * Создает проксированный URL для загрузки изображений/видео через серверный прокси
