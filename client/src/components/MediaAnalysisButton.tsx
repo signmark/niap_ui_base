@@ -44,37 +44,10 @@ export function MediaAnalysisButton({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
-  // Если кнопка находится в контексте тренда, получаем его данные
-  const { data: trend, isLoading: isTrendLoading } = useQuery({
-    queryKey: [`/api/campaign-trends/${trendId}`], // Исправлено форматирование ключа запроса
-    queryFn: async () => {
-      // Только если передан trendId, делаем запрос
-      if (!trendId) return null;
-      
-      try {
-        // Получаем данные тренда
-        const response = await apiRequest(`/api/campaign-trends/${trendId}`, {
-          method: "GET"
-        });
-        
-        if (response.success && response.data) {
-          console.log(`[MediaAnalysisButton] Успешно получены данные тренда ${trendId}:`, {
-            mediaAnalysisType: response.data.media_analysis ? typeof response.data.media_analysis : "не определено",
-            hasMediaAnalysis: !!response.data.media_analysis,
-            firstFields: response.data ? Object.keys(response.data).slice(0, 5) : []
-          });
-          return response.data;
-        }
-        return null;
-      } catch (error) {
-        console.error(`[MediaAnalysisButton] Ошибка при получении данных тренда ${trendId}:`, error);
-        return null;
-      }
-    },
-    enabled: !!trendId, // Запрос включен только если есть trendId (убрали проверку existingAnalysis)
-    staleTime: 60000, // Кэшируем данные на 1 минуту
-    retry: 1, // Максимум 1 повторная попытка
-  });
+  // В этой версии мы не делаем отдельный запрос на получение данных тренда
+  // Вместо этого используем переданный проп existingAnalysis
+  // Это позволяет избежать проблем с API
+  const trend = { id: trendId, media_analysis: existingAnalysis };
   
   // Определяем, есть ли результаты анализа медиа
   // Проверяем передаваемые параметры и данные из API
@@ -412,19 +385,7 @@ export function MediaAnalysisButton({
     isLoading
   });
 
-  // При загрузке данных о тренде показываем лоадер
-  if (isTrendLoading && !existingAnalysis) {
-    return (
-      <Button 
-        variant={buttonVariant} 
-        size="sm"
-        disabled={true}
-      >
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Загрузка...
-      </Button>
-    );
-  }
+  // В нашей версии нет загрузки данных о тренде, поэтому убираем проверку isTrendLoading
 
   return (
     <>

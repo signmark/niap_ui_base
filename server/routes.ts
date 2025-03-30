@@ -7002,7 +7002,7 @@ https://t.me/channelname/ - description`;
       // Делаем запрос к Directus API
       try {
         const response = await axios.get(
-          `${DIRECTUS_URL}/items/campaign_trend_topics/${topicId}`,
+          `${process.env.DIRECTUS_API_URL}/items/campaign_trend_topics/${topicId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
