@@ -3,6 +3,7 @@ import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
+import { mediaAnalyzerService } from './services/media-analyzer';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -2293,6 +2294,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * Маршрут для анализа медиаконтента с использованием Qwen-VL
+   * Поддерживает анализ изображений и видео
+   */
+  app.post('/api/analyze-media', authenticateUser, async (req, res) => {
+    try {
+      // Получаем параметры запроса
+      const { mediaUrl } = req.body;
+      
+      // Проверяем обязательные параметры
+      if (!mediaUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "URL медиаконтента обязателен" 
+        });
+      }
+      
+      // Получаем ID пользователя и токен
+      const userId = req.user?.id;
+      const authToken = req.user?.token;
+      
+      if (!userId || !authToken) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Не авторизован" 
+        });
+      }
+      
+      console.log(`[api] Начинаем анализ медиаконтента: ${mediaUrl.substring(0, 50)}...`);
+      
+      // Используем сервис анализа медиаконтента
+      const analysisResults = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
+      
+      // Возвращаем успешный результат
+      return res.json({
+        success: true,
+        results: analysisResults
+      });
+    } catch (error) {
+      console.error("Ошибка при анализе медиаконтента:", error);
+      
+      // Формируем понятное сообщение об ошибке
+      let errorMessage = "Неизвестная ошибка при анализе медиаконтента";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Проверяем специфические ошибки для улучшения UX
+        if (errorMessage.includes('API ключ')) {
+          errorMessage = "Требуется API ключ Qwen. Пожалуйста, добавьте ключ в настройках пользователя.";
+        } else if (errorMessage.includes('доступ') || errorMessage.includes('соединения')) {
+          errorMessage = "Не удалось получить доступ к указанному медиаконтенту. Проверьте URL и доступность ресурса.";
+        }
+      }
+      
+      // Возвращаем ошибку клиенту
+      return res.status(500).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
+  
   // Старый метод генерации изображений (для обратной совместимости)
   app.post('/api/old-generate-image', async (req, res) => {
     try {
@@ -3182,6 +3245,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ 
         error: "Ошибка при извлечении ключевых слов", 
         details: error.message 
+      });
+    }
+  });
+
+  /**
+   * Маршрут для анализа медиаконтента с использованием Qwen-VL
+   * Поддерживает анализ изображений и видео
+   */
+  app.post("/api/analyze-media", authenticateUser, async (req, res) => {
+    try {
+      const { mediaUrl } = req.body;
+      
+      if (!mediaUrl || mediaUrl.trim() === '') {
+        return res.status(400).json({ 
+          success: false,
+          error: "Отсутствует URL медиаконтента для анализа" 
+        });
+      }
+      
+      // Получаем userId и token из middleware аутентификации
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: "Пользователь не авторизован"
+        });
+      }
+      
+      const userId = req.user.id;
+      const authToken = req.user.token;
+      
+      console.log(`[api/analyze-media] Анализ медиаконтента для пользователя ${userId}, URL: ${mediaUrl}`);
+      
+      // Выполняем анализ медиаконтента через сервис
+      const results = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
+      
+      return res.json({
+        success: true,
+        results
+      });
+    } catch (error) {
+      console.error('[api/analyze-media] Ошибка при анализе медиаконтента:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка при анализе медиаконтента'
       });
     }
   });
