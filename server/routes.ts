@@ -2614,12 +2614,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[api] Проверка существования тренда: ${trendId}, статус: ${checkResponse.status}`);
         
         // Обновляем запись тренда с результатами анализа
-        // Преобразуем объект в строку JSON и потом обратно для корректного сохранения в Directus
-        const jsonData = JSON.stringify(mediaAnalysisData);
-        console.log(`[api] Данные для сохранения в формате JSON-строки: ${jsonData.substring(0, 100)}...`);
+        // Directus автоматически сериализует объект в JSON при отправке в JSONB поле
+        console.log(`[api] Данные для сохранения:`, JSON.stringify(mediaAnalysisData).substring(0, 100) + '...');
         
         const response = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
-          media_analysis: JSON.parse(jsonData)
+          media_analysis: mediaAnalysisData
         });
         
         console.log(`[api] Результаты анализа успешно сохранены для тренда: ${trendId}`);
@@ -2648,10 +2647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             imageUrl: mediaUrl
           };
           
-          // Преобразуем в JSON строку и обратно для корректного форматирования
-          const jsonString = JSON.stringify(simplifiedData);
-          console.log(`[api] Данные для сохранения в формате JSON-строки: ${jsonString.substring(0, 100)}...`);
-          simplifiedData = JSON.parse(jsonString);
+          // Directus автоматически сериализует объект в JSON при отправке в JSONB поле
+          console.log(`[api] Данные для сохранения:`, JSON.stringify(simplifiedData).substring(0, 100) + '...');
           
           // Последняя попытка сохранения упрощенных данных
           const retryResponse = await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
