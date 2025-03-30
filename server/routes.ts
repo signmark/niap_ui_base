@@ -2341,11 +2341,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
           
+          // Предварительно обрабатываем объекты для безопасного отображения в React
+          // Функция для преобразования объектов с name и quantity в строки
+          const formatComplexObjects = (items: any[]) => {
+            if (!Array.isArray(items)) return [];
+            
+            return items.map(item => {
+              if (typeof item === 'object' && item !== null) {
+                // Если это объект с name и quantity
+                if ('name' in item && 'quantity' in item) {
+                  return {
+                    text: `${item.name} (${item.quantity})`,
+                    originalName: item.name,
+                    originalQuantity: item.quantity
+                  };
+                } else if ('name' in item) {
+                  return {
+                    text: item.name,
+                    originalName: item.name
+                  };
+                }
+                // Для остальных объектов - преобразуем в строку
+                return { text: JSON.stringify(item) };
+              }
+              // Примитивные типы оставляем как есть
+              return { text: String(item) };
+            });
+          };
+          
           // Формируем данные анализа для сохранения
           const mediaAnalysisData = {
             description: analysisResults.description,
-            objects: analysisResults.objects || [],
-            colors: analysisResults.colors || [],
+            objects: Array.isArray(analysisResults.objects) ? formatComplexObjects(analysisResults.objects) : [],
+            colors: Array.isArray(analysisResults.colors) ? formatComplexObjects(analysisResults.colors) : [],
             mood: analysisResults.mood,
             imageUrl: mediaUrl // Сохраняем URL исходного изображения
           };
