@@ -41,6 +41,18 @@ export interface TrendTopic {
   
   // Дополнительное поле для описания источника
   sourceDescription?: string;
+  
+  // Поле для результатов анализа медиаконтента
+  media_analysis?: {
+    description?: string;
+    objects?: string[];
+    colors?: string[];
+    mood?: string;
+    text?: string;
+    engagement_factors?: string;
+    recommendations?: string;
+    mediaType?: 'image' | 'video';
+  };
 }
 
 // Тип для обработки данных постов от API

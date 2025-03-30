@@ -262,7 +262,8 @@ export const campaignTrendTopics = pgTable("campaign_trend_topics", {
   views: integer("views").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   isBookmarked: boolean("is_bookmarked").default(false),
-  mediaLinks: jsonb("media_links").default({})
+  mediaLinks: jsonb("media_links").default({}),
+  mediaAnalysis: jsonb("media_analysis").default({}) // Результаты анализа медиа-контента через Qwen-VL
 });
 
 // Schema для создания трендовых тем из webhook
@@ -275,7 +276,8 @@ export const insertCampaignTrendTopicSchema = createInsertSchema(campaignTrendTo
     comments: true,
     views: true,
     isBookmarked: true,
-    mediaLinks: true
+    mediaLinks: true,
+    mediaAnalysis: true
   });
 
 // Тип трендовых тем из webhook

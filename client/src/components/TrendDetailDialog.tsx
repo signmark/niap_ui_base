@@ -527,6 +527,54 @@ export function TrendDetailDialog({
           ) : (
             <div className="font-normal whitespace-pre-line mt-4 text-base leading-normal">{topic.title}</div>
           )}
+          
+          {/* Результаты анализа медиаконтента (если есть) */}
+          {topic.media_analysis && (
+            <div className="mt-4 bg-gray-50 p-3 rounded-md border border-gray-100">
+              <h3 className="text-md font-medium mb-2">Анализ медиаконтента</h3>
+              <div className="space-y-2 text-sm">
+                {topic.media_analysis.description && (
+                  <div>
+                    <span className="font-medium">Описание: </span>
+                    <span>{topic.media_analysis.description}</span>
+                  </div>
+                )}
+                
+                {topic.media_analysis.objects && topic.media_analysis.objects.length > 0 && (
+                  <div>
+                    <span className="font-medium">Объекты: </span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {topic.media_analysis.objects.map((obj, i) => (
+                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                          {obj}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {topic.media_analysis.mood && (
+                  <div>
+                    <span className="font-medium">Настроение: </span>
+                    <span>{topic.media_analysis.mood}</span>
+                  </div>
+                )}
+                
+                {topic.media_analysis.colors && topic.media_analysis.colors.length > 0 && (
+                  <div>
+                    <span className="font-medium">Основные цвета: </span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {topic.media_analysis.colors.map((color, i) => (
+                        <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
+                          {color}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Разделитель */}
           <Separator className="my-4" />
@@ -583,6 +631,18 @@ export function TrendDetailDialog({
               )}
             </div>
           </div>
+
+          {/* Кнопка для анализа медиаконтента */}
+          {(imageUrl || videoUrl) && (
+            <div className="mt-4">
+              <MediaAnalysisButton 
+                mediaUrl={imageUrl || videoUrl || ''}
+                trendId={topic.id}
+                buttonText="Анализировать медиаконтент"
+                buttonVariant="secondary"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end mt-4">
             <Button
