@@ -1975,7 +1975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Если пользователь авторизован, получаем ключ из настроек пользователя
         console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'falAiApiKey', token);
+        falAiApiKey = await apiKeyService.getUserApiKey(userId, 'fal_ai', token);
         
         if (falAiApiKey) {
           console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
@@ -10548,7 +10548,7 @@ ${datesText}
         return res.status(400).json({
           success: false,
           error: "Для анализа медиаконтента требуется API ключ FAL AI",
-          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"falAiApiKey\": \"ваш-ключ-fal-ai\"}",
+          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
           missingApiKey: true
         });
       }
@@ -10572,6 +10572,146 @@ ${datesText}
       });
     } catch (error) {
       console.error("Error analyzing media:", error);
+      
+      let errorMessage = "Ошибка при анализе медиаконтента";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: "Ошибка анализа",
+        message: errorMessage 
+      });
+    }
+  });
+  
+  // Маршрут для анализа медиаконтента через POST-запрос
+  app.post("/api/analyze-media", authenticateUser, async (req, res) => {
+    try {
+      // Устанавливаем заголовок Content-Type для предотвращения перехвата ответа Vite
+      res.setHeader('Content-Type', 'application/json');
+      
+      const { mediaUrl } = req.body;
+      
+      if (!mediaUrl || typeof mediaUrl !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Требуется указать URL медиаконтента",
+          message: "Укажите URL изображения или видео для анализа в теле запроса" 
+        });
+      }
+      
+      // Получаем userId и токен из запроса, которые были установлены в authenticateUser middleware
+      const userId = req.user?.id;
+      const authToken = req.user?.token;
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Unauthorized",
+          message: "Неавторизованный запрос" 
+        });
+      }
+      
+      // Проверяем наличие ключа FAL AI у пользователя
+      const hasFalAiKey = await apiKeyService.hasFalAiApiKey(userId, authToken);
+      if (!hasFalAiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Для анализа медиаконтента требуется API ключ FAL AI",
+          message: "Пожалуйста, добавьте ключ в настройках пользователя в Directus в поле api_keys как JSON: {\"fal_ai\": \"ваш-ключ-fal-ai\"}",
+          missingApiKey: true
+        });
+      }
+      
+      console.log(`[media-analysis] Анализ медиаконтента для пользователя ${userId}: ${mediaUrl.substring(0, 50)}...`);
+      
+      // Анализируем медиаконтент с помощью MediaAnalyzerService
+      const result = await mediaAnalyzerService.analyzeMedia(mediaUrl, userId, authToken);
+      
+      if (!result) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "Ошибка анализа",
+          message: "Не удалось проанализировать медиаконтент" 
+        });
+      }
+      
+      return res.json({ 
+        success: true, 
+        result
+      });
+    } catch (error) {
+      console.error("Error analyzing media:", error);
+      
+      let errorMessage = "Ошибка при анализе медиаконтента";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: "Ошибка анализа",
+        message: errorMessage 
+      });
+    }
+  });
+  
+  // Отладочный маршрут для анализа медиаконтента (без аутентификации, использует системный API ключ)
+  app.post("/api/debug/analyze-media", async (req, res) => {
+    try {
+      // Устанавливаем заголовок Content-Type для предотвращения перехвата ответа Vite
+      res.setHeader('Content-Type', 'application/json');
+      
+      const { mediaUrl } = req.body;
+      
+      if (!mediaUrl || typeof mediaUrl !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Требуется указать URL медиаконтента",
+          message: "Укажите URL изображения или видео для анализа в теле запроса" 
+        });
+      }
+      
+      // В этом отладочном маршруте используем системный API ключ FAL AI
+      const systemApiKey = process.env.FAL_AI_API_KEY;
+      
+      if (!systemApiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "Отсутствует системный API ключ FAL AI",
+          message: "Не удалось получить системный API ключ FAL AI"
+        });
+      }
+      
+      console.log(`[debug-media-analysis] Отладочный анализ медиаконтента: ${mediaUrl.substring(0, 50)}...`);
+      
+      // Анализируем медиаконтент напрямую через FAL AI клиент
+      const analysisResult = await falAiClient.analyzeImage(mediaUrl, systemApiKey);
+      
+      if (!analysisResult) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "Ошибка анализа",
+          message: "Не удалось проанализировать медиаконтент" 
+        });
+      }
+      
+      // Форматируем результаты для фронтенда
+      const result = {
+        mediaUrl,
+        mediaType: 'image',
+        analysis: analysisResult,
+        timestamp: new Date()
+      };
+      
+      return res.json({ 
+        success: true, 
+        result
+      });
+    } catch (error) {
+      console.error("Error analyzing media (debug):", error);
       
       let errorMessage = "Ошибка при анализе медиаконтента";
       if (error instanceof Error) {
