@@ -5,7 +5,6 @@ import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
-import { mediaAnalyzerService } from './services/media-analyzer';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
