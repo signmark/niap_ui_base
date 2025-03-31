@@ -97,6 +97,8 @@ export class SocialPublishingService {
       
       // Проверяем дополнительные изображения
       if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+        log(`Найдено ${content.additionalImages.length} дополнительных изображений для Telegram`, 'social-publishing');
+        
         for (const additionalImage of content.additionalImages) {
           if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim() !== '') {
             // Проверяем формат URL изображения
@@ -110,8 +112,11 @@ export class SocialPublishingService {
             }
             
             images.push(photoUrl);
+            log(`Добавлено дополнительное изображение в массив для Telegram: ${photoUrl}`, 'social-publishing');
           }
         }
+        
+        log(`Всего подготовлено ${images.length} изображений для Telegram`, 'social-publishing');
       }
       
       // Проверяем доступность видео
@@ -125,8 +130,8 @@ export class SocialPublishingService {
       
       // Решение о методе публикации на основе доступности медиа и типа контента
       if (images.length > 1) {
-        // Отправка группы изображений (медиагруппы)
-        log(`Отправка медиагруппы в Telegram с ${images.length} изображениями`, 'social-publishing');
+        // Отправка группы изображений (медиагруппы) через sendMediaGroup
+        log(`Отправка медиагруппы в Telegram с ${images.length} изображениями через API sendMediaGroup`, 'social-publishing');
         
         // Формируем массив объектов медиа для API Telegram
         const mediaGroup = images.map((url, index) => ({
@@ -138,13 +143,13 @@ export class SocialPublishingService {
         
         log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
         
-        // Отправляем медиагруппу в теле запроса
+        // Отправляем медиагруппу в теле запроса (формат JSON)
         const requestBody = {
           chat_id: formattedChatId,
           media: mediaGroup
         };
         
-        log(`Отправляем запрос к Telegram API: ${JSON.stringify(requestBody)}`, 'social-publishing');
+        log(`Отправляем запрос к Telegram API (sendMediaGroup): ${JSON.stringify(requestBody)}`, 'social-publishing');
         
         response = await axios.post(`${baseUrl}/sendMediaGroup`, requestBody, {
           headers: { 'Content-Type': 'application/json' }
@@ -224,16 +229,34 @@ export class SocialPublishingService {
 
       // Обработка успешного ответа
       if (response.data.ok) {
-        const message = response.data.result;
-        log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
-        return {
-          platform: 'telegram',
-          status: 'published',
-          publishedAt: new Date(),
-          postId: message.message_id.toString(),
-          postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
-          userId: content.userId // Добавляем userId из контента
-        };
+        // Для множественных сообщений (медиагруппы) - результат это массив сообщений
+        if (Array.isArray(response.data.result)) {
+          const messages = response.data.result;
+          log(`Успешная публикация группы в Telegram. Количество сообщений: ${messages.length}`, 'social-publishing');
+          
+          // Берем ID первого сообщения в группе для ссылки
+          const firstMessageId = messages[0].message_id;
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date(),
+            postId: firstMessageId.toString(),
+            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`,
+            userId: content.userId // Добавляем userId из контента
+          };
+        } else {
+          // Для одиночного сообщения
+          const message = response.data.result;
+          log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date(),
+            postId: message.message_id.toString(),
+            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+            userId: content.userId // Добавляем userId из контента
+          };
+        }
       } else {
         log(`Ошибка в ответе Telegram API: ${response.data.description}`, 'social-publishing');
         return {
@@ -502,14 +525,14 @@ export class SocialPublishingService {
       
       // Обработка дополнительных изображений, если они есть
       if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
-        log(`Контент содержит ${content.additionalImages.length} дополнительных изображений`, 'social-publishing');
+        log(`Контент содержит ${content.additionalImages.length} дополнительных изображений для VK`, 'social-publishing');
         
         for (let i = 0; i < content.additionalImages.length; i++) {
           const imageUrl = content.additionalImages[i];
           if (!imageUrl) continue;
           
           try {
-            log(`Обработка дополнительного изображения ${i + 1}/${content.additionalImages.length}: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
+            log(`Обработка дополнительного изображения для VK ${i + 1}/${content.additionalImages.length}: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
             
             // Шаг 1: Получаем URL сервера для загрузки изображения
             const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
@@ -716,7 +739,12 @@ export class SocialPublishingService {
       
       // Добавляем дополнительные изображения, если они есть
       if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
-        images.push(...content.additionalImages.filter(url => url && typeof url === 'string'));
+        log(`Найдено ${content.additionalImages.length} дополнительных изображений для Instagram`, 'social-publishing');
+        
+        const validImages = content.additionalImages.filter(url => url && typeof url === 'string');
+        images.push(...validImages);
+        
+        log(`Добавлено ${validImages.length} дополнительных изображений в массив для Instagram`, 'social-publishing');
       }
       
       log(`Подготовлено ${images.length} изображений для публикации в Instagram`, 'social-publishing');
@@ -1151,6 +1179,17 @@ export class SocialPublishingService {
   ): Promise<SocialPublication> {
     try {
       log(`Публикация карусели в Instagram. Контент: ${content.id}, количество изображений: ${images.length}`, 'social-publishing');
+      
+      if (images.length <= 1) {
+        log(`Недостаточно изображений для карусели в Instagram (${images.length}). Нужно минимум 2 изображения.`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: `Недостаточно изображений для карусели в Instagram. Нужно минимум 2 изображения.`,
+          userId: content.userId
+        };
+      }
       
       // Шаг 1: Создаем дочерние медиа-контейнеры для каждого изображения
       const childrenMediaIds = [];
