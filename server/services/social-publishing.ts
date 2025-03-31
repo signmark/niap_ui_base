@@ -45,15 +45,13 @@ export class SocialPublishingService {
       const telegramApiUrl = `https://api.telegram.org/bot${token}`;
       const messageText = this.formatTelegramMessageText(content);
 
-      // Проверяем наличие изображений
-      const allImages = [
-        content.imageUrl, 
-        ...(content.additionalImages && Array.isArray(content.additionalImages) ? content.additionalImages : [])
-      ].filter(Boolean) as string[];
-
+      // ВАЖНО: Используем только первое (основное) изображение и игнорируем дополнительные до фикса проблем с API
+      // Эта временная мера вернет работоспособность публикации в Telegram, которая работала раньше
+      const mainImage = content.imageUrl;
+      
       let result: any = null;
 
-      if (allImages.length === 0) {
+      if (!mainImage) {
         // Отправляем только текст, без изображений
         log(`Отправка сообщения в Telegram без изображений для контента ${content.id}`, 'social-publishing');
         result = await axios.post(`${telegramApiUrl}/sendMessage`, {
@@ -61,146 +59,39 @@ export class SocialPublishingService {
           text: messageText,
           parse_mode: 'HTML'
         });
-      } else if (allImages.length === 1) {
+      } else {
         // Отправляем одно изображение с текстом
         log(`Отправка сообщения в Telegram с одним изображением для контента ${content.id}`, 'social-publishing');
-        result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
-          chat_id: chatId,
-          photo: allImages[0],
-          caption: messageText,
-          parse_mode: 'HTML'
-        });
-      } else {
-        // Отправляем несколько изображений через метод sendMediaGroup
-        log(`Отправка сообщения в Telegram с ${allImages.length} изображениями для контента ${content.id}`, 'social-publishing');
-        const media = allImages.map((imageUrl, index) => {
-          return {
-            type: 'photo',
-            media: imageUrl,
-            // Добавляем текст только к первому изображению
-            caption: index === 0 ? messageText : '',
-            parse_mode: index === 0 ? 'HTML' : undefined
-          };
-        });
-
-        log(`Prepared media for Telegram: ${JSON.stringify(media)}`, 'social-publishing');
+        
+        // Преобразуем URL в https, если он не такой
+        const secureImageUrl = mainImage.startsWith('http:') 
+          ? mainImage.replace('http:', 'https:') 
+          : mainImage;
+            
+        log(`Отправка основного изображения с текстом: ${secureImageUrl}`, 'social-publishing');
         
         try {
-          // Пробуем с подробным логированием, чтобы выявить причину ошибки
-          log(`Отправка запроса в Telegram API на URL: ${telegramApiUrl}/sendMediaGroup`, 'social-publishing');
-          
-          // Удаляем дубликаты URL изображений, так как Telegram API не поддерживает дублирование фото
-          const uniqueUrlsMap = new Map();
-          allImages.forEach(url => {
-            const normalizedUrl = url.startsWith('http:') ? url.replace('http:', 'https:') : url;
-            uniqueUrlsMap.set(normalizedUrl, true);
-          });
-          
-          const uniqueImages = Array.from(uniqueUrlsMap.keys());
-          log(`Оригинальные изображения: ${allImages.length}, после удаления дубликатов: ${uniqueImages.length}`, 'social-publishing');
-          
-          // Если осталось только одно изображение после удаления дубликатов, используем sendPhoto вместо sendMediaGroup
-          if (uniqueImages.length === 1) {
-            log(`После удаления дубликатов осталось только одно изображение, переключаемся на sendPhoto`, 'social-publishing');
-            result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
-              chat_id: chatId,
-              photo: uniqueImages[0],
-              caption: messageText,
-              parse_mode: 'HTML'
-            });
-            return;
-          }
-          
-          // Создаем новый массив media с уникальными изображениями
-          const uniqueMedia = uniqueImages.map((imageUrl, index) => {
-            return {
-              type: 'photo',
-              media: imageUrl,
-              // Добавляем текст только к первому изображению
-              caption: index === 0 ? messageText : '',
-              parse_mode: index === 0 ? 'HTML' : undefined
-            };
-          });
-          
-          // Проверяем на наличие media
-          const secureMedia = uniqueMedia.filter(item => item.media);
-          
-          if (secureMedia.length === 0) {
-            throw new Error('Нет валидных URL изображений для отправки в Telegram');
-          }
-          
-          log(`Параметры запроса: chat_id=${chatId}, media=${JSON.stringify(secureMedia)}`, 'social-publishing');
-          
-          // Создаем тело запроса для дополнительной проверки
-          const requestBody = {
-            chat_id: chatId,
-            media: secureMedia
-          };
-          
-          log(`Тело запроса sendMediaGroup: ${JSON.stringify(requestBody)}`, 'social-publishing');
-          
-          try {
-            // В Telegram API media должен быть массивом объектов, а не строкой
-            result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, requestBody);
-            log(`Получен успешный ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
-          } catch (tgError: any) {
-            log(`Telegram API вернул ошибку: ${tgError.message}`, 'social-publishing');
-            if (tgError.response) {
-              log(`Детальная информация об ошибке Telegram API: ${JSON.stringify(tgError.response.data)}`, 'social-publishing');
-              if (tgError.response.data && tgError.response.data.description) {
-                log(`Описание ошибки Telegram API: ${tgError.response.data.description}`, 'social-publishing');
-                throw new Error(`Telegram API ошибка: ${tgError.response.data.description}`);
-              }
-            }
-            throw tgError;
-          }
-          
-          log(`Получен ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
-        } catch (mediaGroupError: any) {
-          log(`Ошибка при отправке медиагруппы: ${mediaGroupError.message}`, 'social-publishing');
-          
-          if (mediaGroupError.response) {
-            log(`Детали ошибки медиагруппы: ${JSON.stringify(mediaGroupError.response.data)}`, 'social-publishing');
-          }
-          
-          // Если не получилось отправить группу, пробуем отправить первое изображение с текстом
-          log(`Пробуем альтернативный вариант - отправка одного изображения с текстом`, 'social-publishing');
-          // Преобразуем URL в https, если он не такой
-          const secureFirstImageUrl = allImages[0].startsWith('http:') 
-            ? allImages[0].replace('http:', 'https:') 
-            : allImages[0];
-              
-          log(`Отправка первого изображения с текстом: ${secureFirstImageUrl}`, 'social-publishing');
-          
           result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
             chat_id: chatId,
-            photo: secureFirstImageUrl,
+            photo: secureImageUrl,
             caption: messageText,
             parse_mode: 'HTML'
           });
+          log(`Основное изображение успешно отправлено в Telegram`, 'social-publishing');
+        } catch (photoError: any) {
+          log(`Ошибка при отправке фото в Telegram: ${photoError.message}`, 'social-publishing');
           
-          // Если остались дополнительные изображения, отправляем их по одному без текста
-          for (let i = 1; i < allImages.length; i++) {
-            try {
-              // Преобразуем URL в https, если он не такой
-              const secureImageUrl = allImages[i].startsWith('http:') 
-                ? allImages[i].replace('http:', 'https:') 
-                : allImages[i];
-              
-              log(`Отправка дополнительного изображения ${i}: ${secureImageUrl}`, 'social-publishing');
-              
-              await axios.post(`${telegramApiUrl}/sendPhoto`, {
-                chat_id: chatId,
-                photo: secureImageUrl
-              });
-              log(`Отправлено дополнительное изображение ${i}`, 'social-publishing');
-            } catch (photoError: any) {
-              log(`Ошибка при отправке дополнительного изображения ${i}: ${photoError.message}`, 'social-publishing');
-              if (photoError.response) {
-                log(`Детали ошибки отправки изображения ${i}: ${JSON.stringify(photoError.response.data)}`, 'social-publishing');
-              }
-            }
+          if (photoError.response) {
+            log(`Детали ошибки отправки фото: ${JSON.stringify(photoError.response.data)}`, 'social-publishing');
           }
+          
+          // Если фото не отправилось, пробуем отправить только текст
+          log(`Пробуем отправить только текст сообщения в Telegram`, 'social-publishing');
+          result = await axios.post(`${telegramApiUrl}/sendMessage`, {
+            chat_id: chatId,
+            text: messageText,
+            parse_mode: 'HTML'
+          });
         }
       }
 
@@ -663,27 +554,25 @@ export class SocialPublishingService {
         };
       }
 
-      // Получаем список всех изображений
-      const allImages = [
-        content.imageUrl, 
-        ...(content.additionalImages && Array.isArray(content.additionalImages) ? content.additionalImages : [])
-      ].filter(Boolean) as string[];
+      // ВАЖНО: Используем только первое (основное) изображение и игнорируем дополнительные до фикса проблем с API
+      // Эта временная мера вернет работоспособность публикации в Instagram, которая работала раньше
+      const mainImage = content.imageUrl;
       
-      log(`Публикация в Instagram контента ${content.id} с ${allImages.length} изображениями`, 'social-publishing');
+      log(`Публикация в Instagram контента ${content.id} с основным изображением`, 'social-publishing');
 
-      if (allImages.length === 0) {
-        log(`Контент ${content.id} не содержит изображений для публикации в Instagram`, 'social-publishing');
+      if (!mainImage) {
+        log(`Контент ${content.id} не содержит основного изображения для публикации в Instagram`, 'social-publishing');
         return {
           status: 'failed',
           publishedAt: null,
           url: null,
-          error: 'Контент не содержит изображений для публикации в Instagram',
+          error: 'Контент не содержит основного изображения для публикации в Instagram',
           userId: content.userId
         };
       }
 
       // Имитация успешной публикации (реальная публикация требует бизнес-аккаунт Facebook и Instagram)
-      log(`Имитация публикации контента ${content.id} в Instagram с ${allImages.length} изображениями`, 'social-publishing');
+      log(`Имитация публикации контента ${content.id} в Instagram с основным изображением`, 'social-publishing');
       return {
         status: 'published',
         publishedAt: new Date(),
