@@ -76,11 +76,47 @@ export class SocialPublishingService {
 
         log(`Prepared media for Telegram: ${JSON.stringify(media)}`, 'social-publishing');
         
-        // В Telegram API media должен быть массивом объектов, а не строкой
-        result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, {
-          chat_id: chatId,
-          media: media
-        });
+        try {
+          // Пробуем с подробным логированием, чтобы выявить причину ошибки
+          log(`Отправка запроса в Telegram API на URL: ${telegramApiUrl}/sendMediaGroup`, 'social-publishing');
+          log(`Параметры запроса: chat_id=${chatId}, media=${JSON.stringify(media)}`, 'social-publishing');
+          
+          // В Telegram API media должен быть массивом объектов, а не строкой
+          result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, {
+            chat_id: chatId,
+            media: media
+          });
+          
+          log(`Получен ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
+        } catch (mediaGroupError: any) {
+          log(`Ошибка при отправке медиагруппы: ${mediaGroupError.message}`, 'social-publishing');
+          
+          if (mediaGroupError.response) {
+            log(`Детали ошибки медиагруппы: ${JSON.stringify(mediaGroupError.response.data)}`, 'social-publishing');
+          }
+          
+          // Если не получилось отправить группу, пробуем отправить первое изображение с текстом
+          log(`Пробуем альтернативный вариант - отправка одного изображения с текстом`, 'social-publishing');
+          result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
+            chat_id: chatId,
+            photo: allImages[0],
+            caption: messageText,
+            parse_mode: 'HTML'
+          });
+          
+          // Если остались дополнительные изображения, отправляем их по одному без текста
+          for (let i = 1; i < allImages.length; i++) {
+            try {
+              await axios.post(`${telegramApiUrl}/sendPhoto`, {
+                chat_id: chatId,
+                photo: allImages[i]
+              });
+              log(`Отправлено дополнительное изображение ${i}`, 'social-publishing');
+            } catch (photoError: any) {
+              log(`Ошибка при отправке дополнительного изображения ${i}: ${photoError.message}`, 'social-publishing');
+            }
+          }
+        }
       }
 
       if (result && result.data && result.data.ok) {
