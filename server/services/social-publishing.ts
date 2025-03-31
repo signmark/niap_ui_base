@@ -30,7 +30,7 @@ export class SocialPublishingService {
     
     log(`Обработка дополнительных изображений для ${platform}. Тип: ${typeof processedContent.additionalImages}, значение: ${
       typeof processedContent.additionalImages === 'string' 
-        ? processedContent.additionalImages.substring(0, 100) + '...' 
+        ? (processedContent.additionalImages as string).substring(0, 100) + '...' 
         : JSON.stringify(processedContent.additionalImages).substring(0, 100) + '...'
     }`, 'social-publishing');
     
@@ -58,9 +58,9 @@ export class SocialPublishingService {
         
         // Создаем массив из строки
         const additionalImagesArray: string[] = [];
-        if (typeof processedContent.additionalImages === 'string' && processedContent.additionalImages.trim() !== '') {
-          additionalImagesArray.push(processedContent.additionalImages);
-          log(`${platform}: Добавили строку additionalImages как URL: ${processedContent.additionalImages.substring(0, 50)}...`, 'social-publishing');
+        if (typeof processedContent.additionalImages === 'string' && (processedContent.additionalImages as string).trim() !== '') {
+          additionalImagesArray.push(processedContent.additionalImages as string);
+          log(`${platform}: Добавили строку additionalImages как URL: ${(processedContent.additionalImages as string).substring(0, 50)}...`, 'social-publishing');
         }
         processedContent.additionalImages = additionalImagesArray;
       }
@@ -1009,22 +1009,65 @@ export class SocialPublishingService {
       
       log(`Подготовлено ${images.length} изображений для публикации в Facebook`, 'social-publishing');
       
-      // Facebook в настоящий момент поддерживает только одно изображение в обычных постах через Graph API,
-      // для карусели нужно использовать другой эндпоинт и больше кода
-
-      // Добавляем изображение, если оно есть (только первое из массива)
-      if (images.length > 0) {
+      // Проверяем количество изображений для выбора стратегии публикации
+      if (images.length > 1) {
+        // Если несколько изображений, используем публикацию карусели
+        log(`Facebook: обнаружено ${images.length} изображений, публикуем как карусель`, 'social-publishing');
+        const carouselPublicationResult = await this.publishFacebookCarousel(processedContent, pageId, token, images, message);
+        return carouselPublicationResult;
+      } else if (images.length === 1) {
+        // Если одно изображение, добавляем его к посту
         const imageUrl = images[0];
         log(`Добавление изображения в пост Facebook: ${imageUrl}`, 'social-publishing');
-        requestData.link = imageUrl;
         
-        if (images.length > 1) {
-          log(`Внимание: Facebook API в данной реализации поддерживает только одно изображение. Используется первое из ${images.length}`, 'social-publishing');
+        // Для одного изображения используем photos endpoint вместо feed
+        // Это обеспечивает лучшее отображение изображения в посте
+        try {
+          log(`Отправка запроса в Facebook Graph API для публикации фото на странице ${pageId}`, 'social-publishing');
+          const response = await axios.post(
+            `https://graph.facebook.com/v18.0/${pageId}/photos`,
+            {
+              url: imageUrl,
+              message: message,
+              access_token: token,
+              published: true
+            },
+            {
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+          
+          if (response.data && response.data.id) {
+            const photoId = response.data.id;
+            log(`Успешная публикация фото в Facebook. Photo ID: ${photoId}`, 'social-publishing');
+            
+            // Формируем URL публикации
+            // Здесь используется ID фото, но это не ID поста
+            // В идеале нужно получить post_id из API, но он не всегда доступен
+            const postUrl = `https://www.facebook.com/${pageId}/photos/${photoId}`;
+            
+            return {
+              platform: 'facebook',
+              status: 'published',
+              publishedAt: new Date(),
+              postId: photoId,
+              postUrl: postUrl,
+              error: null,
+              userId: content.userId
+            };
+          }
+        } catch (error: any) {
+          log(`Ошибка при публикации фото в Facebook, пробуем feed endpoint: ${error.message}`, 'social-publishing');
+          if (error.response?.data) {
+            log(`Данные ошибки: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+          // Продолжаем с feed endpoint, если photos endpoint не сработал
+          requestData.link = imageUrl;
         }
       }
 
-      // Публикация в Facebook через Graph API
-      log(`Отправка запроса в Facebook Graph API для публикации на странице ${pageId}`, 'social-publishing');
+      // Публикация в Facebook через Graph API с использованием feed endpoint
+      log(`Отправка запроса в Facebook Graph API (feed) для публикации на странице ${pageId}`, 'social-publishing');
       const response = await axios.post(
         `https://graph.facebook.com/v18.0/${pageId}/feed`,
         requestData,
@@ -1429,6 +1472,151 @@ export class SocialPublishingService {
         status: 'failed',
         publishedAt: null,
         error: `Ошибка при публикации карусели в Instagram: ${error.message}`,
+        userId: content.userId
+      };
+    }
+  }
+
+  /**
+   * Публикует карусель изображений в Facebook
+   * @param content Контент для публикации
+   * @param pageId ID страницы Facebook
+   * @param token Токен доступа
+   * @param images Массив URL изображений для публикации
+   * @param message Текст сообщения
+   * @returns Результат публикации
+   */
+  private async publishFacebookCarousel(
+    content: CampaignContent,
+    pageId: string,
+    token: string,
+    images: string[],
+    message: string
+  ): Promise<SocialPublication> {
+    try {
+      log(`Публикация карусели в Facebook. Контент: ${content.id}, количество изображений: ${images.length}`, 'social-publishing');
+      
+      if (images.length <= 1) {
+        log(`Недостаточно изображений для карусели в Facebook (${images.length}). Нужно минимум 2 изображения.`, 'social-publishing');
+        return {
+          platform: 'facebook',
+          status: 'failed',
+          publishedAt: null,
+          error: `Недостаточно изображений для карусели в Facebook. Нужно минимум 2 изображения.`,
+          userId: content.userId
+        };
+      }
+      
+      // Facebook использует другой метод публикации карусели через feed endpoint
+      // с использованием параметра attached_media для добавления нескольких изображений
+      
+      // Шаг 1: Загружаем каждое изображение отдельно
+      const mediaIds = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const imageUrl = images[i];
+        log(`Загрузка изображения ${i + 1}/${images.length} для Facebook: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
+        
+        try {
+          // Сначала загружаем фото на страницу, но без публикации (unpublished)
+          const uploadResponse = await axios.post(
+            `https://graph.facebook.com/v18.0/${pageId}/photos`,
+            {
+              url: imageUrl,
+              published: false, // важно: не публикуем сейчас
+              access_token: token
+            },
+            {
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+          
+          if (uploadResponse.data && uploadResponse.data.id) {
+            mediaIds.push({ media_fbid: uploadResponse.data.id });
+            log(`Изображение ${i + 1} загружено успешно, ID: ${uploadResponse.data.id}`, 'social-publishing');
+          } else {
+            log(`Ошибка при загрузке изображения ${i + 1} для Facebook: Неверный формат ответа`, 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Ошибка при загрузке изображения ${i + 1} для Facebook: ${error.message}`, 'social-publishing');
+          if (error.response) {
+            log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+          
+          // Продолжаем с оставшимися изображениями
+        }
+      }
+      
+      // Проверяем, загрузилось ли хоть одно изображение
+      if (mediaIds.length === 0) {
+        return {
+          platform: 'facebook',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Не удалось загрузить ни одного изображения для карусели в Facebook',
+          userId: content.userId
+        };
+      }
+      
+      // Шаг 2: Публикуем пост со всеми загруженными изображениями
+      log(`Публикация поста в Facebook с ${mediaIds.length} изображениями`, 'social-publishing');
+      const publishData: Record<string, any> = {
+        message: message,
+        access_token: token
+      };
+      
+      // Добавляем все загруженные медиа-файлы к посту
+      publishData.attached_media = mediaIds;
+      
+      log(`Отправка запроса в Facebook API для публикации карусели на странице ${pageId}`, 'social-publishing');
+      const response = await axios.post(
+        `https://graph.facebook.com/v18.0/${pageId}/feed`,
+        publishData,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      
+      if (!response.data || !response.data.id) {
+        log(`Ошибка при публикации карусели в Facebook: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'facebook',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при публикации карусели в Facebook: Неверный формат ответа',
+          userId: content.userId
+        };
+      }
+      
+      const postId = response.data.id;
+      log(`Карусель успешно опубликована в Facebook, Post ID: ${postId}`, 'social-publishing');
+      
+      // Формат ID поста: {page-id}_{post-id}
+      const parts = postId.split('_');
+      const actualPostId = parts.length > 1 ? parts[1] : postId;
+      
+      // Формируем URL публикации
+      const postUrl = `https://www.facebook.com/${pageId}/posts/${actualPostId}`;
+      
+      return {
+        platform: 'facebook',
+        status: 'published',
+        publishedAt: new Date(),
+        postId: postId,
+        postUrl: postUrl,
+        error: null,
+        userId: content.userId
+      };
+    } catch (error: any) {
+      log(`Ошибка при публикации карусели в Facebook: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации карусели в Facebook: ${error.message}`,
         userId: content.userId
       };
     }
