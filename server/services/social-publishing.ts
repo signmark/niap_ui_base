@@ -60,7 +60,9 @@ export class SocialPublishingService {
         .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
       
       // Удаляем все оставшиеся неподдерживаемые HTML-теги
-      contentText = contentText.replace(/<(?!\/?(b|i|code|pre|s|u|a)(?=>|\s.*>))[^>]*>/g, '');
+      // Вместо сложного regex, который может создавать невалидные HTML-теги,
+      // полностью удаляем все HTML-теги для безопасности, затем добавляем базовое форматирование
+      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
       
       text += contentText;
 
@@ -134,45 +136,78 @@ export class SocialPublishingService {
           ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
         }));
         
-        response = await axios.post(`${baseUrl}/sendMediaGroup`, {
+        log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
+        
+        // Отправляем медиагруппу в теле запроса
+        const requestBody = {
           chat_id: formattedChatId,
-          media: JSON.stringify(mediaGroup)
+          media: mediaGroup
+        };
+        
+        log(`Отправляем запрос к Telegram API: ${JSON.stringify(requestBody)}`, 'social-publishing');
+        
+        response = await axios.post(`${baseUrl}/sendMediaGroup`, requestBody, {
+          headers: { 'Content-Type': 'application/json' }
         });
       } else if (images.length === 1) {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
         
-        response = await axios.post(`${baseUrl}/sendPhoto`, {
+        const photoRequestBody = {
           chat_id: formattedChatId, 
           photo: images[0],
           caption: truncatedCaption,
           parse_mode: 'HTML'
+        };
+        
+        log(`Отправляем запрос фото к Telegram API: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
+        
+        response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
+          headers: { 'Content-Type': 'application/json' }
         });
       } else if (hasVideo) {
         // Отправка видео с подписью
         log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${content.videoUrl}`, 'social-publishing');
-        response = await axios.post(`${baseUrl}/sendVideo`, {
+        const videoRequestBody = {
           chat_id: formattedChatId,
           video: content.videoUrl,
           caption: text,
           parse_mode: 'HTML'
+        };
+        
+        log(`Отправляем запрос видео к Telegram API: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
+        
+        response = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
+          headers: { 'Content-Type': 'application/json' }
         });
       } else if (content.contentType === 'text' || !content.contentType) {
         // Отправка текстового сообщения (по умолчанию)
         log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
-        response = await axios.post(`${baseUrl}/sendMessage`, {
+        const messageRequestBody = {
           chat_id: formattedChatId,
           text,
           parse_mode: 'HTML'
+        };
+        
+        log(`Отправляем текстовый запрос к Telegram API: ${JSON.stringify(messageRequestBody)}`, 'social-publishing');
+        
+        response = await axios.post(`${baseUrl}/sendMessage`, messageRequestBody, {
+          headers: { 'Content-Type': 'application/json' }
         });
       } else {
         // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
         log(`Для типа контента ${content.contentType} не найдены медиа. Отправляем как текст`, 'social-publishing');
         try {
-          response = await axios.post(`${baseUrl}/sendMessage`, {
+          const fallbackMessageBody = {
             chat_id: formattedChatId,
             text,
             parse_mode: 'HTML'
+          };
+          
+          log(`Отправляем fallback-текстовый запрос к Telegram API: ${JSON.stringify(fallbackMessageBody)}`, 'social-publishing');
+          
+          response = await axios.post(`${baseUrl}/sendMessage`, fallbackMessageBody, {
+            headers: { 'Content-Type': 'application/json' }
           });
         } catch (error) {
           log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
@@ -1130,7 +1165,8 @@ export class SocialPublishingService {
             {
               image_url: imageUrl,
               is_carousel_item: true,
-              access_token: token
+              access_token: token,
+              media_type: 'IMAGE'
             },
             {
               headers: { 'Content-Type': 'application/json' }
