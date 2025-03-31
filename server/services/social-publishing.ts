@@ -74,9 +74,12 @@ export class SocialPublishingService {
           };
         });
 
+        log(`Prepared media for Telegram: ${JSON.stringify(media)}`, 'social-publishing');
+        
+        // В Telegram API media должен быть массивом объектов, а не строкой
         result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, {
           chat_id: chatId,
-          media: JSON.stringify(media)
+          media: media
         });
       }
 
@@ -379,9 +382,23 @@ export class SocialPublishingService {
       }
 
       // Публикуем пост с изображениями
+      // Обработка groupId - удаляем префикс 'club' если он есть
+      let cleanGroupId = groupId;
+      if (typeof groupId === 'string' && groupId.startsWith('club')) {
+        cleanGroupId = groupId.replace('club', '');
+      }
+      
+      // Убедимся, что cleanGroupId - строка и содержит только цифры
+      if (typeof cleanGroupId === 'string') {
+        cleanGroupId = cleanGroupId.replace(/\D/g, '');
+      }
+      
+      const ownerId = `-${cleanGroupId}`; // Минус перед ID группы для публикации от имени сообщества
+      log(`Формирование owner_id для VK: ${ownerId} из groupId: ${groupId}`, 'social-publishing');
+      
       const postParams: any = {
         access_token: token,
-        owner_id: `-${parseInt(groupId, 10)}`, // Минус перед ID группы для публикации от имени сообщества (используем parseInt для гарантии числа)
+        owner_id: ownerId,
         message,
         v: '5.131'
       };
@@ -398,7 +415,15 @@ export class SocialPublishingService {
         log(`Контент ${content.id} успешно опубликован в VK`, 'social-publishing');
         
         const postId = response.data.response.post_id;
-        const postUrl = `https://vk.com/wall-${parseInt(groupId, 10)}_${postId}`;
+        // Получаем очищенный ID группы для URL
+        let cleanGroupId = groupId;
+        if (typeof groupId === 'string' && groupId.startsWith('club')) {
+          cleanGroupId = groupId.replace('club', '');
+        }
+        if (typeof cleanGroupId === 'string') {
+          cleanGroupId = cleanGroupId.replace(/\D/g, '');
+        }
+        const postUrl = `https://vk.com/wall-${cleanGroupId}_${postId}`;
         
         return {
           status: 'published',
