@@ -13,6 +13,58 @@ import FormData from 'form-data';
 export class SocialPublishingService {
 
   /**
+   * Обрабатывает поле дополнительных изображений в контенте, проверяя и преобразуя его при необходимости
+   * @param content Контент, содержащий дополнительные изображения
+   * @param platform Название социальной платформы (для логирования)
+   * @returns Обновленный контент с обработанным полем additionalImages
+   */
+  private processAdditionalImages(content: CampaignContent, platform: string): CampaignContent {
+    // Создаем копию контента для изменений
+    const processedContent = { ...content };
+    
+    if (!processedContent.additionalImages) {
+      return processedContent;
+    }
+    
+    log(`Обработка дополнительных изображений для ${platform}. Тип: ${typeof processedContent.additionalImages}`, 'social-publishing');
+    
+    // Если это строка, пытаемся распарсить как JSON
+    if (typeof processedContent.additionalImages === 'string') {
+      try {
+        const parsedImages = JSON.parse(processedContent.additionalImages as string);
+        log(`Успешно распарсили строку additionalImages как JSON: ${JSON.stringify(parsedImages)}`, 'social-publishing');
+        
+        if (Array.isArray(parsedImages)) {
+          processedContent.additionalImages = parsedImages;
+        } else {
+          processedContent.additionalImages = [parsedImages];
+        }
+      } catch (e) {
+        log(`Не удалось распарсить additionalImages как JSON: ${(e as Error).message}`, 'social-publishing');
+        
+        // Создаем массив из строки
+        const additionalImagesArray: string[] = [];
+        if (typeof processedContent.additionalImages === 'string') {
+          additionalImagesArray.push(processedContent.additionalImages);
+        }
+        processedContent.additionalImages = additionalImagesArray;
+      }
+    }
+    
+    // Проверяем итоговый массив и фильтруем некорректные значения
+    if (Array.isArray(processedContent.additionalImages)) {
+      const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
+      log(`Найдено ${validImages.length} корректных дополнительных изображений для ${platform}`, 'social-publishing');
+      processedContent.additionalImages = validImages;
+    } else {
+      // Если по какой-то причине additionalImages не массив, создаем пустой массив
+      processedContent.additionalImages = [];
+    }
+    
+    return processedContent;
+  }
+
+  /**
    * Публикует контент в Telegram
    * @param content Контент для публикации
    * @param telegramSettings Настройки Telegram API
@@ -36,6 +88,9 @@ export class SocialPublishingService {
       log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
       log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
+      // Обработка дополнительных изображений
+      const processedContent = this.processAdditionalImages(content, 'Telegram');
+
       // Правильное форматирование ID чата
       let formattedChatId = chatId;
       if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
@@ -44,11 +99,11 @@ export class SocialPublishingService {
       }
 
       // Подготовка сообщения с сохранением HTML-форматирования
-      let text = content.title ? `<b>${content.title}</b>\n\n` : '';
+      let text = processedContent.title ? `<b>${processedContent.title}</b>\n\n` : '';
       
       // Telegram поддерживает только ограниченный набор HTML-тегов
       // Нужно преобразовать HTML-теги к поддерживаемому Telegram формату
-      let contentText = content.content
+      let contentText = processedContent.content
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
@@ -67,8 +122,8 @@ export class SocialPublishingService {
       text += contentText;
 
       // Добавление хэштегов
-      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
-        text += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
+        text += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
       
       log(`Подготовлено сообщение для Telegram: ${text.substring(0, 50)}...`, 'social-publishing');
@@ -81,9 +136,9 @@ export class SocialPublishingService {
       const images = [];
       
       // Проверяем основное изображение
-      if (content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '') {
+      if (processedContent.imageUrl && typeof processedContent.imageUrl === 'string' && processedContent.imageUrl.trim() !== '') {
         // Проверяем формат URL изображения для Telegram
-        let photoUrl = content.imageUrl;
+        let photoUrl = processedContent.imageUrl;
         
         // Если URL не начинается с http, добавляем базовый URL сервера
         if (photoUrl && !photoUrl.startsWith('http')) {
@@ -95,11 +150,9 @@ export class SocialPublishingService {
         images.push(photoUrl);
       }
       
-      // Проверяем дополнительные изображения
-      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
-        log(`Найдено ${content.additionalImages.length} дополнительных изображений для Telegram`, 'social-publishing');
-        
-        for (const additionalImage of content.additionalImages) {
+      // Добавляем дополнительные изображения
+      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
+        for (const additionalImage of processedContent.additionalImages) {
           if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim() !== '') {
             // Проверяем формат URL изображения
             let photoUrl = additionalImage;
@@ -692,14 +745,17 @@ export class SocialPublishingService {
     }
 
     try {
-      log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      // Обработка дополнительных изображений
+      const processedContent = this.processAdditionalImages(content, 'Instagram');
+      
+      log(`Публикация в Instagram. Контент: ${processedContent.id}, тип: ${processedContent.contentType}`, 'social-publishing');
       log(`Публикация в Instagram. Токен: ${token.substring(0, 6)}..., ID аккаунта: ${instagramSettings.businessAccountId}`, 'social-publishing');
 
       // Подготовка описания
-      let caption = content.title ? `${content.title}\n\n` : '';
+      let caption = processedContent.title ? `${processedContent.title}\n\n` : '';
       
       // Удаляем HTML-теги, но сохраняем их содержимое
-      const contentText = content.content
+      const contentText = processedContent.content
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
@@ -709,21 +765,21 @@ export class SocialPublishingService {
       caption += contentText;
 
       // Добавление хэштегов
-      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
-        caption += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
+        caption += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
 
       log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
 
       // Инстаграм требует наличие хотя бы одного изображения
-      if (!content.imageUrl && (!content.additionalImages || content.additionalImages.length === 0)) {
+      if (!processedContent.imageUrl && (!processedContent.additionalImages || processedContent.additionalImages.length === 0)) {
         log(`Для публикации в Instagram необходимо хотя бы одно изображение`, 'social-publishing');
         return {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
           error: 'Для публикации в Instagram необходимо хотя бы одно изображение',
-          userId: content.userId
+          userId: processedContent.userId
         };
       }
 
@@ -733,15 +789,16 @@ export class SocialPublishingService {
       const images = [];
       
       // Добавляем основное изображение, если оно есть
-      if (content.imageUrl) {
-        images.push(content.imageUrl);
+      if (processedContent.imageUrl) {
+        images.push(processedContent.imageUrl);
       }
       
       // Добавляем дополнительные изображения, если они есть
-      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
-        log(`Найдено ${content.additionalImages.length} дополнительных изображений для Instagram`, 'social-publishing');
+      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
+        log(`Найдено ${processedContent.additionalImages.length} дополнительных изображений для Instagram`, 'social-publishing');
         
-        const validImages = content.additionalImages.filter(url => url && typeof url === 'string');
+        // Фильтруем только валидные URL
+        const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
         images.push(...validImages);
         
         log(`Добавлено ${validImages.length} дополнительных изображений в массив для Instagram`, 'social-publishing');
@@ -751,7 +808,7 @@ export class SocialPublishingService {
       
       // Если у нас несколько изображений, публикуем карусель
       if (images.length > 1) {
-        return await this.publishInstagramCarousel(content, igBusinessId, token, images, caption);
+        return await this.publishInstagramCarousel(processedContent, igBusinessId, token, images, caption);
       }
       
       // Если одно изображение, публикуем как обычный пост
@@ -778,7 +835,7 @@ export class SocialPublishingService {
           status: 'failed',
           publishedAt: null,
           error: 'Ошибка при создании медиа-контейнера: Неверный формат ответа',
-          userId: content.userId
+          userId: processedContent.userId
         };
       }
 
@@ -805,7 +862,7 @@ export class SocialPublishingService {
           status: 'failed',
           publishedAt: null,
           error: 'Ошибка при публикации медиа: Неверный формат ответа',
-          userId: content.userId
+          userId: processedContent.userId
         };
       }
 
@@ -834,7 +891,7 @@ export class SocialPublishingService {
         status: 'failed',
         publishedAt: null,
         error: `Ошибка при публикации в Instagram: ${error.message}`,
-        userId: content.userId
+        userId: processedContent.userId
       };
     }
   }
