@@ -7122,6 +7122,8 @@ https://t.me/channelname/ - description`;
           content: req.body.content,
           image_url: req.body.imageUrl,
           video_url: req.body.videoUrl,
+          // Добавляем поле additional_images
+          additional_images: Array.isArray(req.body.additionalImages) ? req.body.additionalImages : [],
           // Проверяем, что keywords это массив
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
           status: req.body.status || "draft",
