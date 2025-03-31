@@ -942,6 +942,9 @@ export class SocialPublishingService {
         userId: content.userId
       };
     }
+    
+    // Предупреждение о необходимых разрешениях
+    log(`Публикация в Facebook требует специальных разрешений в токене. Убедитесь, что ваш токен имеет разрешения pages_read_engagement и pages_manage_posts для публикации на страницу, или publish_to_groups для групп.`, 'social-publishing');
 
     try {
       log(`Публикация в Facebook. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
@@ -1110,14 +1113,25 @@ export class SocialPublishingService {
       }
     } catch (error: any) {
       log(`Ошибка при публикации в Facebook: ${error.message}`, 'social-publishing');
-      if (error.response) {
+      
+      // Проверяем, связана ли ошибка с отсутствием необходимых разрешений
+      let errorMessage = `Ошибка при публикации в Facebook: ${error.message}`;
+      
+      if (error.response?.data?.error) {
         log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+        
+        // Проверка на специфические ошибки разрешений
+        const responseError = error.response.data.error;
+        if (responseError.message && responseError.message.includes('permission')) {
+          errorMessage = `Ошибка при публикации в Facebook: Недостаточно разрешений в токене. Для публикации на страницу требуются разрешения "pages_read_engagement" и "pages_manage_posts". Для публикации в группу требуется разрешение "publish_to_groups".`;
+        }
       }
+      
       return {
         platform: 'facebook',
         status: 'failed',
         publishedAt: null,
-        error: `Ошибка при публикации в Facebook: ${error.message}`,
+        error: errorMessage,
         userId: content.userId
       };
     }
