@@ -89,19 +89,41 @@ export class SocialPublishingService {
           // Пробуем с подробным логированием, чтобы выявить причину ошибки
           log(`Отправка запроса в Telegram API на URL: ${telegramApiUrl}/sendMediaGroup`, 'social-publishing');
           
-          // Преобразуем все URL изображений в https, если они не такие, и проверяем наличие media
-          const secureMedia = media.map(item => {
-            if (!item.media) {
-              log(`Ошибка: элемент media не содержит URL: ${JSON.stringify(item)}`, 'social-publishing');
-              return item;
-            }
-            
-            if (typeof item.media === 'string' && item.media.startsWith('http:')) {
-              return { ...item, media: item.media.replace('http:', 'https:') };
-            }
-            
-            return item;
-          }).filter(item => item.media); // Убираем элементы без URL
+          // Удаляем дубликаты URL изображений, так как Telegram API не поддерживает дублирование фото
+          const uniqueUrlsMap = new Map();
+          allImages.forEach(url => {
+            const normalizedUrl = url.startsWith('http:') ? url.replace('http:', 'https:') : url;
+            uniqueUrlsMap.set(normalizedUrl, true);
+          });
+          
+          const uniqueImages = Array.from(uniqueUrlsMap.keys());
+          log(`Оригинальные изображения: ${allImages.length}, после удаления дубликатов: ${uniqueImages.length}`, 'social-publishing');
+          
+          // Если осталось только одно изображение после удаления дубликатов, используем sendPhoto вместо sendMediaGroup
+          if (uniqueImages.length === 1) {
+            log(`После удаления дубликатов осталось только одно изображение, переключаемся на sendPhoto`, 'social-publishing');
+            result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
+              chat_id: chatId,
+              photo: uniqueImages[0],
+              caption: messageText,
+              parse_mode: 'HTML'
+            });
+            return;
+          }
+          
+          // Создаем новый массив media с уникальными изображениями
+          const uniqueMedia = uniqueImages.map((imageUrl, index) => {
+            return {
+              type: 'photo',
+              media: imageUrl,
+              // Добавляем текст только к первому изображению
+              caption: index === 0 ? messageText : '',
+              parse_mode: index === 0 ? 'HTML' : undefined
+            };
+          });
+          
+          // Проверяем на наличие media
+          const secureMedia = uniqueMedia.filter(item => item.media);
           
           if (secureMedia.length === 0) {
             throw new Error('Нет валидных URL изображений для отправки в Telegram');
@@ -117,8 +139,21 @@ export class SocialPublishingService {
           
           log(`Тело запроса sendMediaGroup: ${JSON.stringify(requestBody)}`, 'social-publishing');
           
-          // В Telegram API media должен быть массивом объектов, а не строкой
-          result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, requestBody);
+          try {
+            // В Telegram API media должен быть массивом объектов, а не строкой
+            result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, requestBody);
+            log(`Получен успешный ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
+          } catch (tgError: any) {
+            log(`Telegram API вернул ошибку: ${tgError.message}`, 'social-publishing');
+            if (tgError.response) {
+              log(`Детальная информация об ошибке Telegram API: ${JSON.stringify(tgError.response.data)}`, 'social-publishing');
+              if (tgError.response.data && tgError.response.data.description) {
+                log(`Описание ошибки Telegram API: ${tgError.response.data.description}`, 'social-publishing');
+                throw new Error(`Telegram API ошибка: ${tgError.response.data.description}`);
+              }
+            }
+            throw tgError;
+          }
           
           log(`Получен ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
         } catch (mediaGroupError: any) {
