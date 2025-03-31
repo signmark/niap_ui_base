@@ -274,8 +274,7 @@ export class PublishScheduler {
               videoUrl: item.video_url,
               scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
               createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms,
-              additionalImages: Array.isArray(item.additional_images) ? item.additional_images : []
+              socialPlatforms: item.social_platforms
             }));
             
             scheduledContent = [...scheduledContent, ...contentItems];
@@ -325,8 +324,7 @@ export class PublishScheduler {
               videoUrl: item.video_url,
               scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
               createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms,
-              additionalImages: Array.isArray(item.additional_images) ? item.additional_images : []
+              socialPlatforms: item.social_platforms
             }));
             
             scheduledContent = [...scheduledContent, ...contentItems];

@@ -1,15 +1,17 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
-import FormData from 'form-data';
-import { storage } from '../storage';
 import { log } from '../utils/logger';
-import { CampaignContent, SocialPlatform, SocialPublication, SocialMediaSettings, InsertCampaignContent } from '@shared/schema';
+import { CampaignContent, InsertCampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
+import { storage } from '../storage';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import FormData from 'form-data';
 
 /**
  * Сервис для публикации контента в социальные сети
  */
 export class SocialPublishingService {
+
   /**
    * Публикует контент в Telegram
    * @param content Контент для публикации
@@ -18,197 +20,168 @@ export class SocialPublishingService {
    */
   async publishToTelegram(
     content: CampaignContent,
-    telegramSettings: { token: string; chatId: string }
+    telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    log(`Начинаем публикацию контента ${content.id} в Telegram`, 'social-publishing');
-    log(`Настройки Telegram: chatId=${telegramSettings.chatId}`, 'social-publishing');
-    log(`Контент для публикации в Telegram: ${JSON.stringify({
-      id: content.id,
-      title: content.title,
-      hasMainImage: !!content.imageUrl,
-      hasAdditionalImages: Array.isArray(content.additionalImages) && content.additionalImages.length > 0,
-      additionalImagesCount: Array.isArray(content.additionalImages) ? content.additionalImages.length : 0,
-    })}`, 'social-publishing');
+    if (!telegramSettings?.token || !telegramSettings?.chatId) {
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
+      };
+    }
+
     try {
-      if (!telegramSettings.token || !telegramSettings.chatId) {
-        log(`Отсутствуют настройки Telegram API для публикации контента ${content.id}`, 'social-publishing');
-        return {
-          status: 'failed',
-          publishedAt: null,
-          url: null,
-          error: 'Отсутствуют настройки Telegram API',
-          userId: content.userId
-        };
+      const { token, chatId } = telegramSettings;
+      log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+
+      // Правильное форматирование ID чата
+      let formattedChatId = chatId;
+      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+        formattedChatId = `-100${chatId}`;
+        log(`Переформатирован ID чата для Telegram: ${formattedChatId}`, 'social-publishing');
       }
 
-      const { token, chatId } = telegramSettings;
-      const telegramApiUrl = `https://api.telegram.org/bot${token}`;
-      const messageText = this.formatTelegramMessageText(content);
-
-      // ВАЖНО: Используем только первое (основное) изображение и игнорируем дополнительные до фикса проблем с API
-      // Эта временная мера вернет работоспособность публикации в Telegram, которая работала раньше
-      const mainImage = content.imageUrl;
+      // Подготовка сообщения с сохранением HTML-форматирования
+      let text = content.title ? `<b>${content.title}</b>\n\n` : '';
       
-      let result: any = null;
+      // Telegram поддерживает только ограниченный набор HTML-тегов
+      // Нужно преобразовать HTML-теги к поддерживаемому Telegram формату
+      let contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+      
+      // Удаляем все оставшиеся неподдерживаемые HTML-теги
+      contentText = contentText.replace(/<(?!\/?(b|i|code|pre|s|u|a)(?=>|\s.*>))[^>]*>/g, '');
+      
+      text += contentText;
 
-      if (!mainImage) {
-        // Отправляем только текст, без изображений
-        log(`Отправка сообщения в Telegram без изображений для контента ${content.id}`, 'social-publishing');
-        result = await axios.post(`${telegramApiUrl}/sendMessage`, {
-          chat_id: chatId,
-          text: messageText,
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        text += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+      
+      log(`Подготовлено сообщение для Telegram: ${text.substring(0, 50)}...`, 'social-publishing');
+
+      // Разные методы API в зависимости от типа контента
+      let response;
+      const baseUrl = `https://api.telegram.org/bot${token}`;
+
+      // Проверяем доступность изображения
+      const hasImage = content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '';
+      
+      // Проверяем доступность видео
+      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+      
+      // Решение о методе публикации на основе доступности медиа и типа контента
+      if (hasImage) {
+        // Отправка изображения с подписью
+        log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${content.imageUrl}`, 'social-publishing');
+        
+        // Проверяем формат URL изображения для Telegram
+        let photoUrl = content.imageUrl;
+        
+        // Если URL не начинается с http, добавляем базовый URL сервера
+        if (photoUrl && !photoUrl.startsWith('http')) {
+          const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+          photoUrl = `${baseAppUrl}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
+          log(`Изменен URL изображения для Telegram: ${photoUrl}`, 'social-publishing');
+        }
+        
+        // Ограничиваем длину подписи, так как Telegram имеет ограничение
+        const maxCaptionLength = 1024;
+        const truncatedCaption = text.length > maxCaptionLength ? 
+          text.substring(0, maxCaptionLength - 3) + '...' : 
+          text;
+
+        response = await axios.post(`${baseUrl}/sendPhoto`, {
+          chat_id: formattedChatId, 
+          photo: photoUrl,
+          caption: truncatedCaption,
+          parse_mode: 'HTML'
+        });
+      } else if (hasVideo) {
+        // Отправка видео с подписью
+        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${content.videoUrl}`, 'social-publishing');
+        response = await axios.post(`${baseUrl}/sendVideo`, {
+          chat_id: formattedChatId,
+          video: content.videoUrl,
+          caption: text,
+          parse_mode: 'HTML'
+        });
+      } else if (content.contentType === 'text' || !content.contentType) {
+        // Отправка текстового сообщения (по умолчанию)
+        log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
+        response = await axios.post(`${baseUrl}/sendMessage`, {
+          chat_id: formattedChatId,
+          text,
           parse_mode: 'HTML'
         });
       } else {
-        // Отправляем одно изображение с текстом
-        log(`Отправка сообщения в Telegram с одним изображением для контента ${content.id}`, 'social-publishing');
-        
-        // Преобразуем URL в https, если он не такой
-        const secureImageUrl = mainImage.startsWith('http:') 
-          ? mainImage.replace('http:', 'https:') 
-          : mainImage;
-            
-        log(`Отправка основного изображения с текстом: ${secureImageUrl}`, 'social-publishing');
-        
+        // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
+        log(`Для типа контента ${content.contentType} не найдены медиа. Отправляем как текст`, 'social-publishing');
         try {
-          result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
-            chat_id: chatId,
-            photo: secureImageUrl,
-            caption: messageText,
+          response = await axios.post(`${baseUrl}/sendMessage`, {
+            chat_id: formattedChatId,
+            text,
             parse_mode: 'HTML'
           });
-          log(`Основное изображение успешно отправлено в Telegram`, 'social-publishing');
-        } catch (photoError: any) {
-          log(`Ошибка при отправке фото в Telegram: ${photoError.message}`, 'social-publishing');
-          
-          if (photoError.response) {
-            log(`Детали ошибки отправки фото: ${JSON.stringify(photoError.response.data)}`, 'social-publishing');
-          }
-          
-          // Если фото не отправилось, пробуем отправить только текст
-          log(`Пробуем отправить только текст сообщения в Telegram`, 'social-publishing');
-          result = await axios.post(`${telegramApiUrl}/sendMessage`, {
-            chat_id: chatId,
-            text: messageText,
-            parse_mode: 'HTML'
-          });
+        } catch (error) {
+          log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Неподдерживаемый тип контента: ${content.contentType}`
+          };
         }
       }
 
-      if (result && result.data && result.data.ok) {
-        log(`Контент ${content.id} успешно опубликован в Telegram`, 'social-publishing');
+      log(`Получен ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
 
-        let messageUrl = '';
-        let messageId = null;
-        
-        if (result.data.result) {
-          if (Array.isArray(result.data.result)) {
-            // Для группы медиа берем ID первого сообщения
-            messageId = result.data.result[0].message_id;
-          } else {
-            messageId = result.data.result.message_id;
-          }
-        }
-
-        if (messageId) {
-          // Формируем URL сообщения, используя username канала, если он есть
-          try {
-            const chatInfo = await axios.get(`${telegramApiUrl}/getChat`, {
-              params: { chat_id: chatId }
-            });
-            
-            if (chatInfo.data.ok && chatInfo.data.result.username) {
-              messageUrl = `https://t.me/${chatInfo.data.result.username}/${messageId}`;
-            }
-          } catch (error) {
-            log(`Не удалось получить информацию о чате для формирования URL: ${(error as any).message}`, 'social-publishing');
-          }
-        }
-
+      // Обработка успешного ответа
+      if (response.data.ok) {
+        const message = response.data.result;
+        log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
         return {
+          platform: 'telegram',
           status: 'published',
           publishedAt: new Date(),
-          url: messageUrl || null,
-          messageId,
-          userId: content.userId
+          postId: message.message_id.toString(),
+          postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+          userId: content.userId // Добавляем userId из контента
         };
       } else {
-        log(`Ошибка при публикации контента ${content.id} в Telegram: ${JSON.stringify(result && result.data)}`, 'social-publishing');
+        log(`Ошибка в ответе Telegram API: ${response.data.description}`, 'social-publishing');
         return {
+          platform: 'telegram',
           status: 'failed',
           publishedAt: null,
-          url: null,
-          error: result && result.data ? JSON.stringify(result.data) : 'Неизвестная ошибка',
-          userId: content.userId
+          error: `Telegram API вернул ошибку: ${response.data.description}`,
+          userId: content.userId // Добавляем userId из контента
         };
       }
     } catch (error: any) {
-      log(`Ошибка при публикации контента ${content.id} в Telegram: ${error.message}`, 'social-publishing');
+      log(`Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
+        platform: 'telegram',
         status: 'failed',
         publishedAt: null,
-        url: null,
-        error: error.message || 'Неизвестная ошибка',
-        userId: content.userId
+        error: `Ошибка при публикации в Telegram: ${error.message}`,
+        userId: content.userId // Добавляем userId из контента
       };
     }
-  }
-
-  /**
-   * Форматирует текст сообщения для Telegram
-   * @param content Контент для публикации
-   * @returns Отформатированный текст сообщения
-   */
-  private formatTelegramMessageText(content: CampaignContent): string {
-    // Очищаем текст от неподдерживаемых HTML-тегов
-    // Telegram поддерживает только следующие HTML-теги: <b>, <i>, <u>, <s>, <a>, <code>, <pre>
-    let cleanedContent = content.content || '';
-    
-    // Заменяем <p> на перенос строки
-    cleanedContent = cleanedContent.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n\n');
-    
-    // Заменяем <div> и другие блочные элементы на перенос строки
-    cleanedContent = cleanedContent.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
-    cleanedContent = cleanedContent.replace(/<br\s*\/?>/gi, '\n');
-    
-    // Удаляем все остальные теги, кроме поддерживаемых
-    cleanedContent = cleanedContent.replace(/<(?!b|\/b|i|\/i|u|\/u|s|\/s|a|\/a|code|\/code|pre|\/pre)[^>]*>/gi, '');
-    
-    // Удаляем двойные переносы строк
-    cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n');
-    
-    let messageText = cleanedContent.trim();
-    
-    // Добавляем заголовок, если он есть
-    if (content.title) {
-      messageText = `<b>${content.title}</b>\n\n${messageText}`;
-    }
-    
-    // Добавляем хэштеги, если они есть
-    if (content.hashtags && content.hashtags.length > 0) {
-      let hashtagsText = '';
-      
-      // Преобразуем строку в массив, если hashtags - строка
-      if (typeof content.hashtags === 'string') {
-        try {
-          const hashtagsArray = JSON.parse(content.hashtags);
-          if (Array.isArray(hashtagsArray)) {
-            hashtagsText = hashtagsArray.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-          }
-        } catch (e) {
-          // Если не удалось распарсить JSON, считаем, что хэштеги разделены запятыми
-          hashtagsText = content.hashtags.split(',').map(tag => `#${tag.trim().replace(/\s+/g, '_')}`).join(' ');
-        }
-      } else if (Array.isArray(content.hashtags)) {
-        hashtagsText = content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-      }
-      
-      if (hashtagsText) {
-        messageText += `\n\n${hashtagsText}`;
-      }
-    }
-    
-    return messageText;
   }
 
   /**
@@ -219,41 +192,32 @@ export class SocialPublishingService {
    */
   private async getVkPhotoUploadUrl(token: string, groupId: string): Promise<string | null> {
     try {
-      // Обработка groupId - удаляем префикс 'club' если он есть
-      let cleanGroupId = groupId;
-      if (typeof groupId === 'string' && groupId.startsWith('club')) {
-        cleanGroupId = groupId.replace('club', '');
-      }
-      
-      // Убедимся, что cleanGroupId - строка и содержит только цифры
-      if (typeof cleanGroupId === 'string') {
-        cleanGroupId = cleanGroupId.replace(/\D/g, '');
-      }
-      
-      log(`Запрос URL для загрузки фото в VK с очищенным group_id: ${cleanGroupId} (исходный: ${groupId})`, 'social-publishing');
-      
-      const response = await axios.get('https://api.vk.com/method/photos.getWallUploadServer', {
-        params: {
-          access_token: token,
-          group_id: cleanGroupId,
-          v: '5.131'
-        }
+      const params = {
+        group_id: groupId, // ID группы без минуса
+        access_token: token,
+        v: '5.131'
+      };
+
+      // API метод для получения адреса сервера
+      const response = await axios({
+        method: 'get',
+        url: 'https://api.vk.com/method/photos.getWallUploadServer',
+        params
       });
-      
-      log(`Ответ на запрос URL для загрузки: ${JSON.stringify(response.data)}`, 'social-publishing');
-      
-      if (response.data && response.data.response && response.data.response.upload_url) {
-        log(`Получен URL для загрузки фото в VK: ${response.data.response.upload_url}`, 'social-publishing');
+
+      log(`Получен ответ для загрузки фото: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data.response && response.data.response.upload_url) {
+        log(`Получен URL для загрузки фото: ${response.data.response.upload_url}`, 'social-publishing');
         return response.data.response.upload_url;
+      } else if (response.data.error) {
+        log(`Ошибка при получении URL для загрузки: ${JSON.stringify(response.data.error)}`, 'social-publishing');
+        return null;
       }
       
-      log(`Не удалось получить URL для загрузки фото в VK: ${JSON.stringify(response.data)}`, 'social-publishing');
       return null;
     } catch (error: any) {
       log(`Ошибка при получении URL для загрузки фото в VK: ${error.message}`, 'social-publishing');
-      if (error.response) {
-        log(`Детали ошибки получения URL: ${JSON.stringify(error.response.data)}`, 'social-publishing');
-      }
       return null;
     }
   }
@@ -266,61 +230,42 @@ export class SocialPublishingService {
    */
   private async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
     try {
-      log(`Начало загрузки изображения в VK. URL изображения: ${imageUrl}`, 'social-publishing');
+      // Скачиваем изображение
+      log(`Скачивание изображения с URL: ${imageUrl}`, 'social-publishing');
+      const imageResponse = await axios({
+        method: 'get',
+        url: imageUrl,
+        responseType: 'arraybuffer'
+      });
+
+      // Создаем временный файл на сервере
+      const tempFilePath = path.join(os.tmpdir(), `vk_upload_${Date.now()}.jpg`);
+      log(`Создаем временный файл: ${tempFilePath}`, 'social-publishing');
       
-      // Скачиваем изображение во временный файл
-      log(`Скачивание изображения по URL: ${imageUrl}`, 'social-publishing');
-      const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      log(`Изображение скачано, размер: ${response.data.length} байт`, 'social-publishing');
+      // Сохраняем изображение во временный файл
+      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
       
-      // Создаем временную директорию, если ее нет
-      const tempDir = path.join(process.cwd(), 'temp');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-        log(`Создана временная директория: ${tempDir}`, 'social-publishing');
-      }
-      
-      const tempFilePath = path.join(tempDir, `vk_upload_${Date.now()}.jpg`);
-      fs.writeFileSync(tempFilePath, Buffer.from(response.data));
-      log(`Изображение сохранено во временный файл: ${tempFilePath}`, 'social-publishing');
-      
-      // Проверяем, что файл существует и имеет ненулевой размер
-      const fileStats = fs.statSync(tempFilePath);
-      log(`Размер временного файла: ${fileStats.size} байт`, 'social-publishing');
-      
-      if (fileStats.size === 0) {
-        log(`Ошибка: временный файл имеет нулевой размер`, 'social-publishing');
-        return null;
-      }
-      
-      // Создаем форму для загрузки
+      // Создаем форму для загрузки файла
       const formData = new FormData();
       formData.append('photo', fs.createReadStream(tempFilePath));
-      log(`Форма для отправки в VK создана`, 'social-publishing');
       
-      // Отправляем запрос на загрузку
-      log(`Отправка изображения на uploadUrl: ${uploadUrl}`, 'social-publishing');
+      // Выполняем запрос на загрузку на сервер ВК
+      log(`Загрузка файла на сервер ВК по URL: ${uploadUrl}`, 'social-publishing');
+      
       const uploadResponse = await axios.post(uploadUrl, formData, {
         headers: formData.getHeaders()
       });
       
-      log(`Ответ сервера VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
-      
-      // Удаляем временный файл
+      // Удаляем временный файл после загрузки
       fs.unlinkSync(tempFilePath);
       log(`Временный файл удален: ${tempFilePath}`, 'social-publishing');
       
-      if (uploadResponse.data && uploadResponse.data.server) {
-        log(`Успешная загрузка фото в VK. Server: ${uploadResponse.data.server}`, 'social-publishing');
-        return uploadResponse.data;
-      }
-      
-      log(`Не удалось загрузить фото на сервер VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
-      return null;
+      log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+      return uploadResponse.data;
     } catch (error: any) {
       log(`Ошибка при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
       if (error.response) {
-        log(`Детали ошибки загрузки: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+        log(`Данные ответа при ошибке загрузки: ${JSON.stringify(error.response.data)}`, 'social-publishing');
       }
       return null;
     }
@@ -337,45 +282,36 @@ export class SocialPublishingService {
    */
   private async savePhotoToVk(token: string, groupId: string, server: number, photoData: string, hash: string): Promise<any | null> {
     try {
-      // Обработка groupId - удаляем префикс 'club' если он есть
-      let cleanGroupId = groupId;
-      if (typeof groupId === 'string' && groupId.startsWith('club')) {
-        cleanGroupId = groupId.replace('club', '');
-      }
-      
-      // Убедимся, что cleanGroupId - строка и содержит только цифры
-      if (typeof cleanGroupId === 'string') {
-        cleanGroupId = cleanGroupId.replace(/\D/g, '');
-      }
-      
-      log(`Сохранение фото в VK с очищенным group_id: ${cleanGroupId} (исходный: ${groupId})`, 'social-publishing');
-      log(`Данные для сохранения фото: server=${server}, hash=${hash}, photo длина=${photoData ? photoData.length : 0}`, 'social-publishing');
-      
-      const response = await axios.get('https://api.vk.com/method/photos.saveWallPhoto', {
-        params: {
-          access_token: token,
-          group_id: cleanGroupId,
-          server,
-          photo: photoData,
-          hash,
-          v: '5.131'
-        }
+      const params = {
+        group_id: groupId, // ID группы без минуса
+        server,
+        photo: photoData,
+        hash,
+        access_token: token,
+        v: '5.131'
+      };
+
+      // API метод для сохранения фото
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.vk.com/method/photos.saveWallPhoto',
+        params
       });
-      
-      log(`Ответ на запрос сохранения фото: ${JSON.stringify(response.data)}`, 'social-publishing');
-      
-      if (response.data && response.data.response && response.data.response.length > 0) {
-        log(`Фото успешно сохранено в VK, идентификатор: ${response.data.response[0].id}`, 'social-publishing');
-        return response.data.response[0];
+
+      log(`Ответ от VK API при сохранении фото: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data.response && response.data.response.length > 0) {
+        const photo = response.data.response[0];
+        log(`Фото успешно сохранено в VK, ID: ${photo.id}`, 'social-publishing');
+        return photo;
+      } else if (response.data.error) {
+        log(`Ошибка при сохранении фото: ${JSON.stringify(response.data.error)}`, 'social-publishing');
+        return null;
       }
       
-      log(`Не удалось сохранить фото в VK: ${JSON.stringify(response.data)}`, 'social-publishing');
       return null;
     } catch (error: any) {
       log(`Ошибка при сохранении фото в VK: ${error.message}`, 'social-publishing');
-      if (error.response) {
-        log(`Детали ошибки сохранения фото: ${JSON.stringify(error.response.data)}`, 'social-publishing');
-      }
       return null;
     }
   }
@@ -388,163 +324,172 @@ export class SocialPublishingService {
    */
   async publishToVk(
     content: CampaignContent,
-    vkSettings: { token: string; groupId: string }
+    vkSettings?: SocialMediaSettings['vk']
   ): Promise<SocialPublication> {
-    try {
-      if (!vkSettings.token || !vkSettings.groupId) {
-        log(`Отсутствуют настройки VK API для публикации контента ${content.id}`, 'social-publishing');
-        return {
-          status: 'failed',
-          publishedAt: null,
-          url: null,
-          error: 'Отсутствуют настройки VK API',
-          userId: content.userId
-        };
-      }
-
-      const { token, groupId } = vkSettings;
-      // Формируем текст публикации, удаляя HTML-теги
-      const contentWithoutHtml = content.content ? content.content.replace(/<[^>]*>?/gm, '') : '';
-      const titleWithoutHtml = content.title ? content.title.replace(/<[^>]*>?/gm, '') : '';
-      
-      let message = titleWithoutHtml ? `${titleWithoutHtml}\n\n${contentWithoutHtml}` : contentWithoutHtml;
-      
-      // Добавляем хэштеги, если они есть
-      if (content.hashtags && content.hashtags.length > 0) {
-        let hashtagsText = '';
-        
-        // Преобразуем строку в массив, если hashtags - строка
-        if (typeof content.hashtags === 'string') {
-          try {
-            const hashtagsArray = JSON.parse(content.hashtags);
-            if (Array.isArray(hashtagsArray)) {
-              hashtagsText = hashtagsArray.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-            }
-          } catch (e) {
-            // Если не удалось распарсить JSON, считаем, что хэштеги разделены запятыми
-            hashtagsText = content.hashtags.split(',').map(tag => `#${tag.trim().replace(/\s+/g, '_')}`).join(' ');
-          }
-        } else if (Array.isArray(content.hashtags)) {
-          hashtagsText = content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-        }
-        
-        if (hashtagsText) {
-          message += `\n\n${hashtagsText}`;
-        }
-      }
-
-      // Получаем список всех изображений
-      const allImages = [
-        content.imageUrl, 
-        ...(content.additionalImages && Array.isArray(content.additionalImages) ? content.additionalImages : [])
-      ].filter(Boolean) as string[];
-
-      // Загружаем изображения в VK
-      const attachments: string[] = [];
-      
-      if (allImages.length > 0) {
-        for (const imageUrl of allImages) {
-          // Получаем URL для загрузки фото
-          const uploadUrl = await this.getVkPhotoUploadUrl(token, groupId);
-          if (!uploadUrl) {
-            log(`Не удалось получить URL для загрузки фото в VK для контента ${content.id}`, 'social-publishing');
-            continue;
-          }
-          
-          // Загружаем фото на сервер VK
-          const uploadResult = await this.uploadPhotoToVk(uploadUrl, imageUrl);
-          if (!uploadResult) {
-            log(`Не удалось загрузить фото на сервер VK для контента ${content.id}`, 'social-publishing');
-            continue;
-          }
-          
-          // Сохраняем фото в альбоме группы
-          const savedPhoto = await this.savePhotoToVk(
-            token,
-            groupId,
-            uploadResult.server,
-            uploadResult.photo,
-            uploadResult.hash
-          );
-          
-          if (savedPhoto) {
-            log(`Фото успешно загружено и сохранено в VK для контента ${content.id}`, 'social-publishing');
-            attachments.push(`photo${savedPhoto.owner_id}_${savedPhoto.id}`);
-          } else {
-            log(`Не удалось сохранить фото в VK для контента ${content.id}`, 'social-publishing');
-          }
-        }
-      }
-
-      // Публикуем пост с изображениями
-      // Обработка groupId - удаляем префикс 'club' если он есть
-      let cleanGroupId = groupId;
-      if (typeof groupId === 'string' && groupId.startsWith('club')) {
-        cleanGroupId = groupId.replace('club', '');
-      }
-      
-      // Убедимся, что cleanGroupId - строка и содержит только цифры
-      if (typeof cleanGroupId === 'string') {
-        cleanGroupId = cleanGroupId.replace(/\D/g, '');
-      }
-      
-      const ownerId = `-${cleanGroupId}`; // Минус перед ID группы для публикации от имени сообщества
-      log(`Формирование owner_id для VK: ${ownerId} из groupId: ${groupId}`, 'social-publishing');
-      
-      const postParams: any = {
-        access_token: token,
-        owner_id: ownerId,
-        message,
-        v: '5.131'
+    if (!vkSettings?.token || !vkSettings?.groupId) {
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для VK (токен или ID группы)'
       };
+    }
+
+    try {
+      const { token, groupId } = vkSettings;
+      log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+
+      // Подготовка сообщения
+      let message = content.title ? `${content.title}\n\n` : '';
       
-      if (attachments.length > 0) {
-        postParams.attachments = attachments.join(',');
+      // Преобразовываем HTML-теги в VK-разметку
+      // VK использует разные API для форматирования. Мы можем только переносы строк и эмодзи сохранить
+      let contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n');
+      
+      // Убираем все HTML-теги, но сохраняем их содержимое
+      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
+      message += contentText;
+
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+
+      log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
+
+      // Обработка ID группы - удаляем префикс "club" если он есть
+      let cleanGroupId = groupId;
+      if (cleanGroupId.startsWith('club')) {
+        cleanGroupId = cleanGroupId.replace('club', '');
+        log(`Очищен ID группы от префикса 'club': ${cleanGroupId}`, 'social-publishing');
       }
       
-      const response = await axios.post('https://api.vk.com/method/wall.post', null, {
-        params: postParams
+      // Параметры для запроса публикации
+      const requestData: any = {
+        owner_id: `-${cleanGroupId}`, // Отрицательный ID для групп/сообществ
+        from_group: 1, // Публикация от имени группы
+        message: message,
+        access_token: token,
+        v: '5.131' // версия API
+      };
+
+      // Обработка прикрепленного изображения, если оно есть
+      let attachments = '';
+      if (content.imageUrl) {
+        log(`Контент содержит изображение: ${content.imageUrl}`, 'social-publishing');
+        
+        try {
+          // Используем правильный подход для загрузки изображения в VK
+          log(`Загружаем изображение на сервер VK`, 'social-publishing');
+          
+          // Шаг 1: Получаем URL сервера для загрузки изображения
+          const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
+          
+          if (!uploadUrl) {
+            log(`Не удалось получить URL для загрузки фото, публикуем без изображения`, 'social-publishing');
+          } else {
+            // Шаг 2: Загружаем фото на сервер VK
+            const uploadResult = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
+            
+            if (!uploadResult) {
+              log(`Ошибка при загрузке фото на сервер VK, публикуем без изображения`, 'social-publishing');
+            } else {
+              // Шаг 3: Сохраняем фото в альбом группы
+              const photo = await this.savePhotoToVk(
+                token, 
+                cleanGroupId, 
+                uploadResult.server, 
+                uploadResult.photo, 
+                uploadResult.hash
+              );
+              
+              if (photo) {
+                // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
+                const attachment = `photo${photo.owner_id}_${photo.id}`;
+                requestData.attachment = attachment;
+                log(`Фото успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
+              } else {
+                log(`Не удалось сохранить фото в альбом VK, публикуем без изображения`, 'social-publishing');
+              }
+            }
+          }
+        } catch (error: any) {
+          log(`Ошибка при подготовке изображения для VK: ${error.message}`, 'social-publishing');
+          log(`Публикуем пост без изображения`, 'social-publishing');
+        }
+      }
+
+      // Прямой запрос к VK API через form data для избежания ошибки 414 (URI Too Large)
+      const apiUrl = 'https://api.vk.com/method/wall.post';
+      log(`Отправка запроса к VK API: ${apiUrl}`, 'social-publishing');
+      log(`Параметры запроса: ${JSON.stringify(requestData)}`, 'social-publishing');
+
+      // Вместо формы данных отправляем обычный запрос с URL-кодированными данными
+      // Новый подход без FormData, который вызывал ошибку require
+      const urlEncodedData = new URLSearchParams();
+      
+      // Добавляем все поля в запрос
+      Object.keys(requestData).forEach(key => {
+        urlEncodedData.append(key, requestData[key]);
       });
       
-      if (response.data && response.data.response && response.data.response.post_id) {
-        log(`Контент ${content.id} успешно опубликован в VK`, 'social-publishing');
-        
-        const postId = response.data.response.post_id;
-        // Получаем очищенный ID группы для URL
-        let cleanGroupId = groupId;
-        if (typeof groupId === 'string' && groupId.startsWith('club')) {
-          cleanGroupId = groupId.replace('club', '');
+      // Отправка запроса как обычная форма
+      const response = await axios({
+        method: 'post',
+        url: apiUrl,
+        data: urlEncodedData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
-        if (typeof cleanGroupId === 'string') {
-          cleanGroupId = cleanGroupId.replace(/\D/g, '');
-        }
-        const postUrl = `https://vk.com/wall-${cleanGroupId}_${postId}`;
-        
+      });
+
+      log(`Получен ответ от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data.response && response.data.response.post_id) {
+        log(`Успешная публикация в VK. Post ID: ${response.data.response.post_id}`, 'social-publishing');
+        // Используем тот же очищенный ID группы для формирования URL поста
         return {
+          platform: 'vk',
           status: 'published',
           publishedAt: new Date(),
-          url: postUrl,
-          postId,
-          userId: content.userId
+          postId: response.data.response.post_id.toString(),
+          postUrl: `https://vk.com/wall-${cleanGroupId}_${response.data.response.post_id}`,
+          userId: content.userId // Добавляем userId из контента
         };
-      } else {
-        log(`Ошибка при публикации контента ${content.id} в VK: ${JSON.stringify(response.data)}`, 'social-publishing');
+      } else if (response.data.error) {
+        log(`Ошибка VK API: ${JSON.stringify(response.data.error)}`, 'social-publishing');
         return {
+          platform: 'vk',
           status: 'failed',
           publishedAt: null,
-          url: null,
-          error: response.data.error ? JSON.stringify(response.data.error) : 'Неизвестная ошибка',
-          userId: content.userId
+          error: `VK API вернул ошибку: Код ${response.data.error.error_code} - ${response.data.error.error_msg}`,
+          userId: content.userId // Добавляем userId из контента
+        };
+      } else {
+        log(`Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return {
+          platform: 'vk',
+          status: 'failed',
+          publishedAt: null,
+          error: `Неизвестный формат ответа от VK API: ${JSON.stringify(response.data)}`,
+          userId: content.userId // Добавляем userId из контента
         };
       }
     } catch (error: any) {
-      log(`Ошибка при публикации контента ${content.id} в VK: ${error.message}`, 'social-publishing');
+      log(`Ошибка при публикации в VK: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
+        platform: 'vk',
         status: 'failed',
         publishedAt: null,
-        url: null,
-        error: error.message || 'Неизвестная ошибка',
-        userId: content.userId
+        error: `Ошибка при публикации в VK: ${error.message}`,
+        userId: content.userId // Добавляем userId из контента
       };
     }
   }
@@ -557,53 +502,152 @@ export class SocialPublishingService {
    */
   async publishToInstagram(
     content: CampaignContent,
-    instagramSettings: { token: string; accountId: string }
+    instagramSettings?: SocialMediaSettings['instagram']
   ): Promise<SocialPublication> {
-    try {
-      if (!instagramSettings.token || !instagramSettings.accountId) {
-        log(`Отсутствуют настройки Instagram API для публикации контента ${content.id}`, 'social-publishing');
-        return {
-          status: 'failed',
-          publishedAt: null,
-          url: null,
-          error: 'Отсутствуют настройки Instagram API',
-          userId: content.userId
-        };
-      }
-
-      // ВАЖНО: Используем только первое (основное) изображение и игнорируем дополнительные до фикса проблем с API
-      // Эта временная мера вернет работоспособность публикации в Instagram, которая работала раньше
-      const mainImage = content.imageUrl;
-      
-      log(`Публикация в Instagram контента ${content.id} с основным изображением`, 'social-publishing');
-
-      if (!mainImage) {
-        log(`Контент ${content.id} не содержит основного изображения для публикации в Instagram`, 'social-publishing');
-        return {
-          status: 'failed',
-          publishedAt: null,
-          url: null,
-          error: 'Контент не содержит основного изображения для публикации в Instagram',
-          userId: content.userId
-        };
-      }
-
-      // Имитация успешной публикации (реальная публикация требует бизнес-аккаунт Facebook и Instagram)
-      log(`Имитация публикации контента ${content.id} в Instagram с основным изображением`, 'social-publishing');
+    // Проверяем наличие настроек
+    if (!instagramSettings?.token) {
+      log(`Отсутствует токен Instagram для публикации контента ${content.id}`, 'social-publishing');
       return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует токен Instagram (Graph API) в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    if (!instagramSettings?.businessAccountId) {
+      log(`Отсутствует ID бизнес-аккаунта Instagram для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует ID бизнес-аккаунта Instagram в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    try {
+      log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Instagram. Токен: ${instagramSettings.token.substring(0, 6)}..., ID аккаунта: ${instagramSettings.businessAccountId}`, 'social-publishing');
+
+      // Подготовка описания
+      let caption = content.title ? `${content.title}\n\n` : '';
+      
+      // Удаляем HTML-теги, но сохраняем их содержимое
+      const contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
+        .replace(/<\/?[^>]+(>|$)/g, '');
+      
+      caption += contentText;
+
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        caption += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+
+      log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
+
+      // Инстаграм требует наличие изображения
+      if (!content.imageUrl) {
+        log(`Для публикации в Instagram необходимо изображение`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Для публикации в Instagram необходимо изображение',
+          userId: content.userId
+        };
+      }
+
+      // Процесс публикации через Facebook Graph API для Instagram:
+      // 1. Создаем медиа-контейнер
+      // 2. Публикуем медиа из контейнера
+
+      const igBusinessId = instagramSettings.businessAccountId;
+      const token = instagramSettings.token;
+      const imageUrl = content.imageUrl;
+
+      // Шаг 1: Создаем медиа-контейнер
+      log(`Шаг 1: Создание медиа-контейнера для Instagram`, 'social-publishing');
+      const createMediaResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media`,
+        {
+          image_url: imageUrl,
+          caption: caption,
+          access_token: token
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (!createMediaResponse.data || !createMediaResponse.data.id) {
+        log(`Ошибка при создании медиа-контейнера: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при создании медиа-контейнера: Неверный формат ответа',
+          userId: content.userId
+        };
+      }
+
+      const mediaContainerId = createMediaResponse.data.id;
+      log(`Медиа-контейнер создан успешно, ID: ${mediaContainerId}`, 'social-publishing');
+
+      // Шаг 2: Публикуем медиа из контейнера
+      log(`Шаг 2: Публикация медиа в Instagram`, 'social-publishing');
+      const publishResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media_publish`,
+        {
+          creation_id: mediaContainerId,
+          access_token: token
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (!publishResponse.data || !publishResponse.data.id) {
+        log(`Ошибка при публикации медиа: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при публикации медиа: Неверный формат ответа',
+          userId: content.userId
+        };
+      }
+
+      const postId = publishResponse.data.id;
+      log(`Медиа успешно опубликовано в Instagram, ID: ${postId}`, 'social-publishing');
+
+      // Формируем URL публикации
+      const postUrl = `https://www.instagram.com/p/${postId}/`;
+
+      return {
+        platform: 'instagram',
         status: 'published',
         publishedAt: new Date(),
-        url: `https://www.instagram.com/p/mock-${content.id.substring(0, 8)}`,
-        mediaId: `mock-${content.id.substring(0, 8)}`,
+        postId: postId,
+        postUrl: postUrl,
+        error: null,
         userId: content.userId
       };
     } catch (error: any) {
-      log(`Ошибка при публикации контента ${content.id} в Instagram: ${error.message}`, 'social-publishing');
+      log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
+        platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        url: null,
-        error: error.message || 'Неизвестная ошибка',
+        error: `Ошибка при публикации в Instagram: ${error.message}`,
         userId: content.userId
       };
     }
@@ -617,36 +661,122 @@ export class SocialPublishingService {
    */
   async publishToFacebook(
     content: CampaignContent,
-    facebookSettings: { token: string; pageId: string }
+    facebookSettings?: SocialMediaSettings['facebook']
   ): Promise<SocialPublication> {
+    // Проверяем наличие настроек
+    if (!facebookSettings?.token) {
+      log(`Отсутствует токен Facebook для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует токен Facebook (Graph API) в настройках кампании',
+        userId: content.userId
+      };
+    }
+
+    if (!facebookSettings?.pageId) {
+      log(`Отсутствует ID страницы Facebook для публикации контента ${content.id}`, 'social-publishing');
+      return {
+        platform: 'facebook',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует ID страницы Facebook в настройках кампании',
+        userId: content.userId
+      };
+    }
+
     try {
-      if (!facebookSettings.token || !facebookSettings.pageId) {
-        log(`Отсутствуют настройки Facebook API для публикации контента ${content.id}`, 'social-publishing');
+      log(`Публикация в Facebook. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Facebook. Токен: ${facebookSettings.token.substring(0, 6)}..., Страница: ${facebookSettings.pageId}`, 'social-publishing');
+
+      // Подготовка сообщения
+      let message = content.title ? `${content.title}\n\n` : '';
+      
+      // Удаляем HTML-теги, но сохраняем их содержимое
+      const contentText = content.content
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
+        .replace(/<\/?[^>]+(>|$)/g, '');
+      
+      message += contentText;
+
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+
+      log(`Подготовлено сообщение для Facebook: ${message.substring(0, 50)}...`, 'social-publishing');
+
+      const pageId = facebookSettings.pageId;
+      const token = facebookSettings.token;
+      
+      // Подготовка данных для публикации
+      const requestData: Record<string, any> = {
+        message: message,
+        access_token: token
+      };
+
+      // Добавляем изображение, если оно есть
+      if (content.imageUrl) {
+        log(`Добавление изображения в пост Facebook: ${content.imageUrl}`, 'social-publishing');
+        requestData.link = content.imageUrl;
+      }
+
+      // Публикация в Facebook через Graph API
+      log(`Отправка запроса в Facebook Graph API для публикации на странице ${pageId}`, 'social-publishing');
+      const response = await axios.post(
+        `https://graph.facebook.com/v18.0/${pageId}/feed`,
+        requestData,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      log(`Получен ответ от Facebook API: ${JSON.stringify(response.data)}`, 'social-publishing');
+
+      if (response.data && response.data.id) {
+        const postId = response.data.id;
+        // Формат ID поста: {page-id}_{post-id}
+        const parts = postId.split('_');
+        const actualPostId = parts.length > 1 ? parts[1] : postId;
+        
+        // Формируем URL публикации
+        const postUrl = `https://www.facebook.com/${pageId}/posts/${actualPostId}`;
+        
+        log(`Успешная публикация в Facebook. Post ID: ${postId}, URL: ${postUrl}`, 'social-publishing');
+        
         return {
+          platform: 'facebook',
+          status: 'published',
+          publishedAt: new Date(),
+          postId: postId,
+          postUrl: postUrl,
+          error: null,
+          userId: content.userId
+        };
+      } else {
+        log(`Неизвестный формат ответа от Facebook API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return {
+          platform: 'facebook',
           status: 'failed',
           publishedAt: null,
-          url: null,
-          error: 'Отсутствуют настройки Facebook API',
+          error: `Неизвестный формат ответа от Facebook API: ${JSON.stringify(response.data)}`,
           userId: content.userId
         };
       }
-
-      // Имитация успешной публикации (реальная публикация требует бизнес-аккаунт Facebook)
-      log(`Имитация публикации контента ${content.id} в Facebook`, 'social-publishing');
-      return {
-        status: 'published',
-        publishedAt: new Date(),
-        url: `https://www.facebook.com/${facebookSettings.pageId}/posts/mock-${content.id.substring(0, 8)}`,
-        postId: `mock-${content.id.substring(0, 8)}`,
-        userId: content.userId
-      };
     } catch (error: any) {
-      log(`Ошибка при публикации контента ${content.id} в Facebook: ${error.message}`, 'social-publishing');
+      log(`Ошибка при публикации в Facebook: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
       return {
+        platform: 'facebook',
         status: 'failed',
         publishedAt: null,
-        url: null,
-        error: error.message || 'Неизвестная ошибка',
+        error: `Ошибка при публикации в Facebook: ${error.message}`,
         userId: content.userId
       };
     }
@@ -664,102 +794,24 @@ export class SocialPublishingService {
     platform: SocialPlatform,
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
-    try {
-      log(`Публикация контента ${content.id} на платформе ${platform}`, 'social-publishing');
-      
-      let publicationResult: SocialPublication;
-      
-      switch (platform) {
-        case 'telegram':
-          if (!settings.telegram || !settings.telegram.token || !settings.telegram.chatId) {
-            log(`Отсутствуют настройки Telegram для публикации контента ${content.id}`, 'social-publishing');
-            publicationResult = {
-              status: 'failed',
-              publishedAt: null,
-              url: null,
-              error: 'Отсутствуют настройки Telegram',
-              userId: content.userId
-            };
-          } else {
-            publicationResult = await this.publishToTelegram(content, settings.telegram);
-          }
-          break;
-          
-        case 'vk':
-          if (!settings.vk || !settings.vk.token || !settings.vk.groupId) {
-            log(`Отсутствуют настройки VK для публикации контента ${content.id}`, 'social-publishing');
-            publicationResult = {
-              status: 'failed',
-              publishedAt: null,
-              url: null,
-              error: 'Отсутствуют настройки VK',
-              userId: content.userId
-            };
-          } else {
-            publicationResult = await this.publishToVk(content, settings.vk);
-          }
-          break;
-          
-        case 'instagram':
-          if (!settings.instagram || !settings.instagram.token || !settings.instagram.accountId) {
-            log(`Отсутствуют настройки Instagram для публикации контента ${content.id}`, 'social-publishing');
-            publicationResult = {
-              status: 'failed',
-              publishedAt: null,
-              url: null,
-              error: 'Отсутствуют настройки Instagram',
-              userId: content.userId
-            };
-          } else {
-            publicationResult = await this.publishToInstagram(content, settings.instagram);
-          }
-          break;
-          
-        case 'facebook':
-          if (!settings.facebook || !settings.facebook.token || !settings.facebook.pageId) {
-            log(`Отсутствуют настройки Facebook для публикации контента ${content.id}`, 'social-publishing');
-            publicationResult = {
-              status: 'failed',
-              publishedAt: null,
-              url: null,
-              error: 'Отсутствуют настройки Facebook',
-              userId: content.userId
-            };
-          } else {
-            publicationResult = await this.publishToFacebook(content, settings.facebook);
-          }
-          break;
-          
-        default:
-          log(`Неподдерживаемая платформа ${platform} для публикации контента ${content.id}`, 'social-publishing');
-          publicationResult = {
-            status: 'failed',
-            publishedAt: null,
-            url: null,
-            error: `Неподдерживаемая платформа ${platform}`,
-            userId: content.userId
-          };
-      }
-      
-      // Обновляем статус публикации в базе данных
-      await this.updatePublicationStatus(content.id, platform, publicationResult);
-      
-      return publicationResult;
-    } catch (error: any) {
-      log(`Ошибка при публикации контента ${content.id} на платформе ${platform}: ${error.message}`, 'social-publishing');
-      
-      const publicationResult: SocialPublication = {
-        status: 'failed',
-        publishedAt: null,
-        url: null,
-        error: error.message || 'Неизвестная ошибка',
-        userId: content.userId
-      };
-      
-      // Обновляем статус публикации в базе данных
-      await this.updatePublicationStatus(content.id, platform, publicationResult);
-      
-      return publicationResult;
+    log(`Публикация контента "${content.title}" в ${platform}`, 'social-publishing');
+
+    switch (platform) {
+      case 'telegram':
+        return await this.publishToTelegram(content, settings.telegram);
+      case 'vk':
+        return await this.publishToVk(content, settings.vk);
+      case 'instagram':
+        return await this.publishToInstagram(content, settings.instagram);
+      case 'facebook':
+        return await this.publishToFacebook(content, settings.facebook);
+      default:
+        return {
+          platform: platform as SocialPlatform,
+          status: 'failed',
+          publishedAt: null,
+          error: `Неподдерживаемая платформа: ${platform}`
+        };
     }
   }
 
