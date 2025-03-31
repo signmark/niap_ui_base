@@ -381,7 +381,7 @@ export class SocialPublishingService {
       // Публикуем пост с изображениями
       const postParams: any = {
         access_token: token,
-        owner_id: `-${groupId}`, // Минус перед ID группы для публикации от имени сообщества
+        owner_id: `-${parseInt(groupId, 10)}`, // Минус перед ID группы для публикации от имени сообщества (используем parseInt для гарантии числа)
         message,
         v: '5.131'
       };
@@ -398,7 +398,7 @@ export class SocialPublishingService {
         log(`Контент ${content.id} успешно опубликован в VK`, 'social-publishing');
         
         const postId = response.data.response.post_id;
-        const postUrl = `https://vk.com/wall-${groupId}_${postId}`;
+        const postUrl = `https://vk.com/wall-${parseInt(groupId, 10)}_${postId}`;
         
         return {
           status: 'published',
