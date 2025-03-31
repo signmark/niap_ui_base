@@ -883,6 +883,44 @@ export class SocialPublishingService {
       const postId = publishResponse.data.id;
       log(`Медиа успешно опубликовано в Instagram, ID: ${postId}`, 'social-publishing');
 
+      // Получаем информацию о созданном медиа, чтобы извлечь permalink с коротким кодом
+      try {
+        log(`Запрос медиа данных для получения permalink/shortcode для ID: ${postId}`, 'social-publishing');
+        const mediaInfoResponse = await axios.get(
+          `https://graph.facebook.com/v18.0/${postId}`,
+          {
+            params: {
+              fields: 'permalink',
+              access_token: token
+            }
+          }
+        );
+        
+        if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
+          // Получаем permalink из ответа API, содержащий реальный короткий код Instagram
+          const permalink = mediaInfoResponse.data.permalink;
+          log(`Получен permalink из API Instagram: ${permalink}`, 'social-publishing');
+          
+          // Формируем URL публикации из permalink
+          const postUrl = permalink;
+          log(`Использован permalink как postUrl: ${postUrl}`, 'social-publishing');
+          
+          return {
+            platform: 'instagram',
+            status: 'published',
+            publishedAt: new Date(),
+            postId: postId,
+            postUrl: postUrl,
+            error: null,
+            userId: processedContent.userId
+          };
+        }
+      } catch (permalinkError: any) {
+        log(`Ошибка при получении permalink для поста Instagram: ${permalinkError.message}`, 'social-publishing');
+        log(`Используем запасной метод с генерацией короткого кода`, 'social-publishing');
+      }
+      
+      // Запасной вариант, если не удалось получить permalink
       // Преобразуем ID в короткий код для URL
       const shortCode = this.convertInstagramIdToShortCode(postId);
       log(`Преобразован ID Instagram ${postId} в короткий код: ${shortCode}`, 'social-publishing');
@@ -1468,9 +1506,47 @@ export class SocialPublishingService {
       const postId = publishResponse.data.id;
       log(`Карусель успешно опубликована в Instagram, ID: ${postId}`, 'social-publishing');
       
+      // Получаем информацию о созданном медиа, чтобы извлечь permalink с коротким кодом
+      try {
+        log(`Запрос медиа данных для получения permalink/shortcode для карусели с ID: ${postId}`, 'social-publishing');
+        const mediaInfoResponse = await axios.get(
+          `https://graph.facebook.com/v18.0/${postId}`,
+          {
+            params: {
+              fields: 'permalink',
+              access_token: token
+            }
+          }
+        );
+        
+        if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
+          // Получаем permalink из ответа API, содержащий реальный короткий код Instagram
+          const permalink = mediaInfoResponse.data.permalink;
+          log(`Получен permalink из API Instagram для карусели: ${permalink}`, 'social-publishing');
+          
+          // Формируем URL публикации из permalink
+          const postUrl = permalink;
+          log(`Использован permalink как postUrl для карусели: ${postUrl}`, 'social-publishing');
+          
+          return {
+            platform: 'instagram',
+            status: 'published',
+            publishedAt: new Date(),
+            postId: postId,
+            postUrl: postUrl,
+            error: null,
+            userId: content.userId
+          };
+        }
+      } catch (permalinkError: any) {
+        log(`Ошибка при получении permalink для карусели в Instagram: ${permalinkError.message}`, 'social-publishing');
+        log(`Используем запасной метод с генерацией короткого кода для карусели`, 'social-publishing');
+      }
+      
+      // Запасной вариант, если не удалось получить permalink
       // Преобразуем ID в короткий код для URL
       const shortCode = this.convertInstagramIdToShortCode(postId);
-      log(`Преобразован ID Instagram ${postId} в короткий код: ${shortCode}`, 'social-publishing');
+      log(`Преобразован ID Instagram карусели ${postId} в короткий код: ${shortCode}`, 'social-publishing');
       
       // Формируем URL публикации
       const postUrl = `https://www.instagram.com/p/${shortCode}/`;
