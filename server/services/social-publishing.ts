@@ -23,29 +23,44 @@ export class SocialPublishingService {
     const processedContent = { ...content };
     
     if (!processedContent.additionalImages) {
+      log(`${platform}: additionalImages отсутствует, возвращаем пустой массив`, 'social-publishing');
+      processedContent.additionalImages = [];
       return processedContent;
     }
     
-    log(`Обработка дополнительных изображений для ${platform}. Тип: ${typeof processedContent.additionalImages}`, 'social-publishing');
+    log(`Обработка дополнительных изображений для ${platform}. Тип: ${typeof processedContent.additionalImages}, значение: ${
+      typeof processedContent.additionalImages === 'string' 
+        ? processedContent.additionalImages.substring(0, 100) + '...' 
+        : JSON.stringify(processedContent.additionalImages).substring(0, 100) + '...'
+    }`, 'social-publishing');
     
     // Если это строка, пытаемся распарсить как JSON
     if (typeof processedContent.additionalImages === 'string') {
       try {
-        const parsedImages = JSON.parse(processedContent.additionalImages as string);
-        log(`Успешно распарсили строку additionalImages как JSON: ${JSON.stringify(parsedImages)}`, 'social-publishing');
-        
-        if (Array.isArray(parsedImages)) {
-          processedContent.additionalImages = parsedImages;
+        // Проверяем, начинается ли строка с [ или {
+        const trimmedStr = (processedContent.additionalImages as string).trim();
+        if (trimmedStr.startsWith('[') || trimmedStr.startsWith('{')) {
+          const parsedImages = JSON.parse(processedContent.additionalImages as string);
+          log(`Успешно распарсили строку additionalImages как JSON для ${platform}: ${JSON.stringify(parsedImages).substring(0, 100)}...`, 'social-publishing');
+          
+          if (Array.isArray(parsedImages)) {
+            processedContent.additionalImages = parsedImages;
+          } else {
+            processedContent.additionalImages = [parsedImages];
+          }
         } else {
-          processedContent.additionalImages = [parsedImages];
+          // Если строка не начинается с [ или {, это не JSON, а просто URL
+          log(`${platform}: additionalImages это строка-URL, а не JSON: ${(processedContent.additionalImages as string).substring(0, 50)}...`, 'social-publishing');
+          processedContent.additionalImages = [processedContent.additionalImages as string];
         }
       } catch (e) {
-        log(`Не удалось распарсить additionalImages как JSON: ${(e as Error).message}`, 'social-publishing');
+        log(`${platform}: Не удалось распарсить additionalImages как JSON: ${(e as Error).message}`, 'social-publishing');
         
         // Создаем массив из строки
         const additionalImagesArray: string[] = [];
-        if (typeof processedContent.additionalImages === 'string') {
+        if (typeof processedContent.additionalImages === 'string' && processedContent.additionalImages.trim() !== '') {
           additionalImagesArray.push(processedContent.additionalImages);
+          log(`${platform}: Добавили строку additionalImages как URL: ${processedContent.additionalImages.substring(0, 50)}...`, 'social-publishing');
         }
         processedContent.additionalImages = additionalImagesArray;
       }
@@ -53,11 +68,15 @@ export class SocialPublishingService {
     
     // Проверяем итоговый массив и фильтруем некорректные значения
     if (Array.isArray(processedContent.additionalImages)) {
-      const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
-      log(`Найдено ${validImages.length} корректных дополнительных изображений для ${platform}`, 'social-publishing');
+      const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string' && url.trim() !== '');
+      log(`${platform}: Найдено ${validImages.length} корректных дополнительных изображений`, 'social-publishing');
+      if (validImages.length > 0) {
+        log(`${platform}: Первое изображение: ${validImages[0].substring(0, 50)}...`, 'social-publishing');
+      }
       processedContent.additionalImages = validImages;
     } else {
       // Если по какой-то причине additionalImages не массив, создаем пустой массив
+      log(`${platform}: additionalImages не является массивом после обработки, создаем пустой массив`, 'social-publishing');
       processedContent.additionalImages = [];
     }
     
@@ -87,6 +106,9 @@ export class SocialPublishingService {
       const { token, chatId } = telegramSettings;
       log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
       log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+      log(`Telegram публикация - тип additionalImages в контенте: ${typeof content.additionalImages}, значение: ${content.additionalImages ? 
+        (typeof content.additionalImages === 'string' ? content.additionalImages : JSON.stringify(content.additionalImages).substring(0, 100)) 
+        : 'null'}`, 'social-publishing');
 
       // Обработка дополнительных изображений
       const processedContent = this.processAdditionalImages(content, 'Telegram');
@@ -492,6 +514,7 @@ export class SocialPublishingService {
 
       // Обработка контента и дополнительных изображений
       const processedContent = this.processAdditionalImages(content, 'vk');
+      log(`VK публикация - обрабатываем контент: ${content.id}, тип данных additionalImages: ${typeof content.additionalImages}`, 'social-publishing');
       log(`Обработанный контент для VK имеет ${processedContent.additionalImages ? processedContent.additionalImages.length : 0} дополнительных изображений`, 'social-publishing');
 
       // Подготовка сообщения
@@ -746,17 +769,18 @@ export class SocialPublishingService {
       }
       
       // Ограничиваем длину подписи до 2200 символов (ограничение Instagram)
-      // ТОЛЬКО если у нас несколько изображений
       const maxInstagramCaptionLength = 2200;
-      const hasMultipleImages = processedContent.additionalImages && 
-                               Array.isArray(processedContent.additionalImages) && 
-                               processedContent.additionalImages.length > 0;
       
-      if (hasMultipleImages && caption.length > maxInstagramCaptionLength) {
-        caption = caption.substring(0, maxInstagramCaptionLength - 3) + '...';
-        log(`Подпись для Instagram обрезана до ${caption.length} символов, т.к. публикуется несколько изображений`, 'social-publishing');
-      } else if (caption.length > maxInstagramCaptionLength) {
-        log(`Публикация в Instagram с одиночным изображением. Подпись длиной ${caption.length} символов не обрезается`, 'social-publishing');
+      // Проверка и логирование данных, показывающих текущую длину подписи
+      log(`Instagram - длина подписи: ${caption.length} символов, лимит: ${maxInstagramCaptionLength}`, 'social-publishing');
+      
+      // Всегда обрезаем длинную подпись для Instagram
+      if (caption.length > maxInstagramCaptionLength) {
+        log(`Подпись для Instagram превышает лимит: ${caption.length} символов (лимит ${maxInstagramCaptionLength})`, 'social-publishing');
+        // Обрезаем с запасом в 50 символов чтобы избежать проблем с Unicode или emoji
+        const safeLimit = maxInstagramCaptionLength - 53;
+        caption = caption.substring(0, safeLimit) + '...';
+        log(`Подпись для Instagram обрезана до ${caption.length} символов`, 'social-publishing');
       }
 
       log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
@@ -923,11 +947,14 @@ export class SocialPublishingService {
       log(`Публикация в Facebook. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
       log(`Публикация в Facebook. Токен: ${facebookSettings.token.substring(0, 6)}..., Страница: ${facebookSettings.pageId}`, 'social-publishing');
 
+      // Обработка дополнительных изображений
+      const processedContent = this.processAdditionalImages(content, 'Facebook');
+      
       // Подготовка сообщения
-      let message = content.title ? `${content.title}\n\n` : '';
+      let message = processedContent.title ? `${processedContent.title}\n\n` : '';
       
       // Удаляем HTML-теги, но сохраняем их содержимое
-      const contentText = content.content
+      const contentText = processedContent.content
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
@@ -937,14 +964,16 @@ export class SocialPublishingService {
       message += contentText;
 
       // Добавление хэштегов
-      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
-        message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
+        message += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
       
       // Ограничиваем длину сообщения до 2200 символов (ограничение для совместимости с Instagram)
       const maxCaptionLength = 2200;
       if (message.length > maxCaptionLength) {
-        message = message.substring(0, maxCaptionLength - 3) + '...';
+        // Обрезаем с запасом в 50 символов чтобы избежать проблем с Unicode или emoji
+        const safeLimit = maxCaptionLength - 53;
+        message = message.substring(0, safeLimit) + '...';
         log(`Сообщение для Facebook обрезано до ${message.length} символов для совместимости с платформами`, 'social-publishing');
       }
 
@@ -959,10 +988,39 @@ export class SocialPublishingService {
         access_token: token
       };
 
-      // Добавляем изображение, если оно есть
-      if (content.imageUrl) {
-        log(`Добавление изображения в пост Facebook: ${content.imageUrl}`, 'social-publishing');
-        requestData.link = content.imageUrl;
+      // Собираем все изображения для публикации
+      const images = [];
+      
+      // Добавляем основное изображение, если оно есть
+      if (processedContent.imageUrl) {
+        images.push(processedContent.imageUrl);
+      }
+      
+      // Добавляем дополнительные изображения, если они есть
+      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
+        log(`Найдено ${processedContent.additionalImages.length} дополнительных изображений для Facebook`, 'social-publishing');
+        
+        // Фильтруем только валидные URL
+        const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
+        images.push(...validImages);
+        
+        log(`Добавлено ${validImages.length} дополнительных изображений в массив для Facebook`, 'social-publishing');
+      }
+      
+      log(`Подготовлено ${images.length} изображений для публикации в Facebook`, 'social-publishing');
+      
+      // Facebook в настоящий момент поддерживает только одно изображение в обычных постах через Graph API,
+      // для карусели нужно использовать другой эндпоинт и больше кода
+
+      // Добавляем изображение, если оно есть (только первое из массива)
+      if (images.length > 0) {
+        const imageUrl = images[0];
+        log(`Добавление изображения в пост Facebook: ${imageUrl}`, 'social-publishing');
+        requestData.link = imageUrl;
+        
+        if (images.length > 1) {
+          log(`Внимание: Facebook API в данной реализации поддерживает только одно изображение. Используется первое из ${images.length}`, 'social-publishing');
+        }
       }
 
       // Публикация в Facebook через Graph API
@@ -1233,6 +1291,8 @@ export class SocialPublishingService {
   ): Promise<SocialPublication> {
     try {
       log(`Публикация карусели в Instagram. Контент: ${content.id}, количество изображений: ${images.length}`, 'social-publishing');
+      log(`Входные данные для Instagram карусели: content.additionalImages=${typeof content.additionalImages} (length: ${Array.isArray(content.additionalImages) ? content.additionalImages.length : 'not array'})`, 'social-publishing');
+      log(`Длина подписи для Instagram: ${caption.length} символов`, 'social-publishing');
       
       if (images.length <= 1) {
         log(`Недостаточно изображений для карусели в Instagram (${images.length}). Нужно минимум 2 изображения.`, 'social-publishing');
