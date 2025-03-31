@@ -160,7 +160,24 @@ export class SocialPublishingService {
    * @returns Отформатированный текст сообщения
    */
   private formatTelegramMessageText(content: CampaignContent): string {
-    let messageText = content.content;
+    // Очищаем текст от неподдерживаемых HTML-тегов
+    // Telegram поддерживает только следующие HTML-теги: <b>, <i>, <u>, <s>, <a>, <code>, <pre>
+    let cleanedContent = content.content || '';
+    
+    // Заменяем <p> на перенос строки
+    cleanedContent = cleanedContent.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n\n');
+    
+    // Заменяем <div> и другие блочные элементы на перенос строки
+    cleanedContent = cleanedContent.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
+    cleanedContent = cleanedContent.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Удаляем все остальные теги, кроме поддерживаемых
+    cleanedContent = cleanedContent.replace(/<(?!b|\/b|i|\/i|u|\/u|s|\/s|a|\/a|code|\/code|pre|\/pre)[^>]*>/gi, '');
+    
+    // Удаляем двойные переносы строк
+    cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    let messageText = cleanedContent.trim();
     
     // Добавляем заголовок, если он есть
     if (content.title) {
