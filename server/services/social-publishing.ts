@@ -490,12 +490,16 @@ export class SocialPublishingService {
       const { token, groupId } = vkSettings;
       log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
+      // Обработка контента и дополнительных изображений
+      const processedContent = this.processAdditionalImages(content, 'vk');
+      log(`Обработанный контент для VK имеет ${processedContent.additionalImages ? processedContent.additionalImages.length : 0} дополнительных изображений`, 'social-publishing');
+
       // Подготовка сообщения
-      let message = content.title ? `${content.title}\n\n` : '';
+      let message = processedContent.title ? `${processedContent.title}\n\n` : '';
       
       // Преобразовываем HTML-теги в VK-разметку
       // VK использует разные API для форматирования. Мы можем только переносы строк и эмодзи сохранить
-      let contentText = content.content
+      let contentText = processedContent.content
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
@@ -506,8 +510,8 @@ export class SocialPublishingService {
       message += contentText;
 
       // Добавление хэштегов
-      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
-        message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
+        message += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
       }
 
       log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
@@ -531,99 +535,71 @@ export class SocialPublishingService {
       // Массив для хранения прикрепленных изображений (attachments)
       const attachmentsArray = [];
       
-      // Обработка основного изображения, если оно есть
-      if (content.imageUrl) {
-        log(`Контент содержит основное изображение: ${content.imageUrl}`, 'social-publishing');
-        
+      // Собираем все доступные изображения (основное и дополнительные)
+      const images = [];
+      
+      // Добавляем основное изображение, если оно есть
+      if (processedContent.imageUrl) {
+        images.push(processedContent.imageUrl);
+        log(`Добавлено основное изображение для VK: ${processedContent.imageUrl}`, 'social-publishing');
+      }
+      
+      // Добавляем дополнительные изображения, если они есть
+      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages) && processedContent.additionalImages.length > 0) {
+        for (let img of processedContent.additionalImages) {
+          if (img && typeof img === 'string' && img.trim() !== '') {
+            images.push(img);
+            log(`Добавлено дополнительное изображение для VK: ${img}`, 'social-publishing');
+          }
+        }
+      }
+      
+      log(`Всего подготовлено ${images.length} изображений для VK`, 'social-publishing');
+      
+      // Загрузка всех изображений в VK и добавление в attachments
+      for (let i = 0; i < images.length; i++) {
+        const imageUrl = images[i];
         try {
-          // Используем правильный подход для загрузки изображения в VK
-          log(`Загружаем основное изображение на сервер VK`, 'social-publishing');
+          const isMain = i === 0 && processedContent.imageUrl === imageUrl;
+          const imageType = isMain ? "основное" : "дополнительное";
+          log(`Загрузка ${imageType} изображения #${i + 1}/${images.length} на сервер VK: ${imageUrl}`, 'social-publishing');
           
           // Шаг 1: Получаем URL сервера для загрузки изображения
           const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
           
           if (!uploadUrl) {
-            log(`Не удалось получить URL для загрузки фото, публикуем без основного изображения`, 'social-publishing');
+            log(`Не удалось получить URL для загрузки фото #${i + 1}, пропускаем`, 'social-publishing');
+            continue;
+          }
+          
+          // Шаг 2: Загружаем фото на сервер VK
+          const uploadResult = await this.uploadPhotoToVk(uploadUrl, imageUrl);
+          
+          if (!uploadResult) {
+            log(`Ошибка при загрузке фото #${i + 1} на сервер VK, пропускаем`, 'social-publishing');
+            continue;
+          }
+          
+          // Шаг 3: Сохраняем фото в альбом группы
+          const photo = await this.savePhotoToVk(
+            token, 
+            cleanGroupId, 
+            uploadResult.server, 
+            uploadResult.photo, 
+            uploadResult.hash
+          );
+          
+          if (photo) {
+            // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
+            const attachment = `photo${photo.owner_id}_${photo.id}`;
+            attachmentsArray.push(attachment);
+            log(`Фото #${i + 1} успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
           } else {
-            // Шаг 2: Загружаем фото на сервер VK
-            const uploadResult = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
-            
-            if (!uploadResult) {
-              log(`Ошибка при загрузке основного фото на сервер VK, публикуем без основного изображения`, 'social-publishing');
-            } else {
-              // Шаг 3: Сохраняем фото в альбом группы
-              const photo = await this.savePhotoToVk(
-                token, 
-                cleanGroupId, 
-                uploadResult.server, 
-                uploadResult.photo, 
-                uploadResult.hash
-              );
-              
-              if (photo) {
-                // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
-                const attachment = `photo${photo.owner_id}_${photo.id}`;
-                attachmentsArray.push(attachment);
-                log(`Основное фото успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
-              } else {
-                log(`Не удалось сохранить основное фото в альбом VK, публикуем без основного изображения`, 'social-publishing');
-              }
-            }
+            log(`Не удалось сохранить фото #${i + 1} в альбом VK, пропускаем`, 'social-publishing');
           }
         } catch (error: any) {
-          log(`Ошибка при подготовке основного изображения для VK: ${error.message}`, 'social-publishing');
-          log(`Публикуем пост без основного изображения`, 'social-publishing');
-        }
-      }
-      
-      // Обработка дополнительных изображений, если они есть
-      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
-        log(`Контент содержит ${content.additionalImages.length} дополнительных изображений для VK`, 'social-publishing');
-        
-        for (let i = 0; i < content.additionalImages.length; i++) {
-          const imageUrl = content.additionalImages[i];
-          if (!imageUrl) continue;
-          
-          try {
-            log(`Обработка дополнительного изображения для VK ${i + 1}/${content.additionalImages.length}: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
-            
-            // Шаг 1: Получаем URL сервера для загрузки изображения
-            const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
-            
-            if (!uploadUrl) {
-              log(`Не удалось получить URL для загрузки дополнительного фото ${i + 1}, пропускаем`, 'social-publishing');
-              continue;
-            }
-            
-            // Шаг 2: Загружаем фото на сервер VK
-            const uploadResult = await this.uploadPhotoToVk(uploadUrl, imageUrl);
-            
-            if (!uploadResult) {
-              log(`Ошибка при загрузке дополнительного фото ${i + 1} на сервер VK, пропускаем`, 'social-publishing');
-              continue;
-            }
-            
-            // Шаг 3: Сохраняем фото в альбом группы
-            const photo = await this.savePhotoToVk(
-              token, 
-              cleanGroupId, 
-              uploadResult.server, 
-              uploadResult.photo, 
-              uploadResult.hash
-            );
-            
-            if (photo) {
-              // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
-              const attachment = `photo${photo.owner_id}_${photo.id}`;
-              attachmentsArray.push(attachment);
-              log(`Дополнительное фото ${i + 1} успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
-            } else {
-              log(`Не удалось сохранить дополнительное фото ${i + 1} в альбом VK, пропускаем`, 'social-publishing');
-            }
-          } catch (error: any) {
-            log(`Ошибка при подготовке дополнительного изображения ${i + 1} для VK: ${error.message}`, 'social-publishing');
-            log(`Пропускаем дополнительное изображение ${i + 1}`, 'social-publishing');
-          }
+          log(`Ошибка при подготовке изображения #${i + 1} для VK: ${error.message}`, 'social-publishing');
+          log(`Пропускаем изображение #${i + 1}`, 'social-publishing');
         }
       }
       
@@ -767,6 +743,20 @@ export class SocialPublishingService {
       // Добавление хэштегов
       if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
         caption += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+      
+      // Ограничиваем длину подписи до 2200 символов (ограничение Instagram)
+      // ТОЛЬКО если у нас несколько изображений
+      const maxInstagramCaptionLength = 2200;
+      const hasMultipleImages = processedContent.additionalImages && 
+                               Array.isArray(processedContent.additionalImages) && 
+                               processedContent.additionalImages.length > 0;
+      
+      if (hasMultipleImages && caption.length > maxInstagramCaptionLength) {
+        caption = caption.substring(0, maxInstagramCaptionLength - 3) + '...';
+        log(`Подпись для Instagram обрезана до ${caption.length} символов, т.к. публикуется несколько изображений`, 'social-publishing');
+      } else if (caption.length > maxInstagramCaptionLength) {
+        log(`Публикация в Instagram с одиночным изображением. Подпись длиной ${caption.length} символов не обрезается`, 'social-publishing');
       }
 
       log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
@@ -949,6 +939,13 @@ export class SocialPublishingService {
       // Добавление хэштегов
       if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
         message += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+      
+      // Ограничиваем длину сообщения до 2200 символов (ограничение для совместимости с Instagram)
+      const maxCaptionLength = 2200;
+      if (message.length > maxCaptionLength) {
+        message = message.substring(0, maxCaptionLength - 3) + '...';
+        log(`Сообщение для Facebook обрезано до ${message.length} символов для совместимости с платформами`, 'social-publishing');
       }
 
       log(`Подготовлено сообщение для Facebook: ${message.substring(0, 50)}...`, 'social-publishing');
