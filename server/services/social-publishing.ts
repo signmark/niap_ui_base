@@ -883,8 +883,12 @@ export class SocialPublishingService {
       const postId = publishResponse.data.id;
       log(`Медиа успешно опубликовано в Instagram, ID: ${postId}`, 'social-publishing');
 
+      // Преобразуем ID в короткий код для URL
+      const shortCode = this.convertInstagramIdToShortCode(postId);
+      log(`Преобразован ID Instagram ${postId} в короткий код: ${shortCode}`, 'social-publishing');
+
       // Формируем URL публикации
-      const postUrl = `https://www.instagram.com/p/${postId}/`;
+      const postUrl = `https://www.instagram.com/p/${shortCode}/`;
 
       return {
         platform: 'instagram',
@@ -1464,8 +1468,12 @@ export class SocialPublishingService {
       const postId = publishResponse.data.id;
       log(`Карусель успешно опубликована в Instagram, ID: ${postId}`, 'social-publishing');
       
+      // Преобразуем ID в короткий код для URL
+      const shortCode = this.convertInstagramIdToShortCode(postId);
+      log(`Преобразован ID Instagram ${postId} в короткий код: ${shortCode}`, 'social-publishing');
+      
       // Формируем URL публикации
-      const postUrl = `https://www.instagram.com/p/${postId}/`;
+      const postUrl = `https://www.instagram.com/p/${shortCode}/`;
       
       return {
         platform: 'instagram',
@@ -1633,6 +1641,39 @@ export class SocialPublishingService {
         error: `Ошибка при публикации карусели в Facebook: ${error.message}`,
         userId: content.userId
       };
+    }
+  }
+
+  /**
+   * Преобразует числовой ID Instagram в короткий код для URL
+   * Instagram использует кодирование base64url для формирования коротких кодов
+   * @param id Числовой ID публикации
+   * @returns Короткий код для использования в URL
+   */
+  private convertInstagramIdToShortCode(id: string): string {
+    try {
+      // Преобразуем string ID в BigInt
+      const numId = BigInt(id);
+      
+      // Алфавит для кодирования (base64url)
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      
+      // Кодируем
+      let shortCode = '';
+      let n = numId;
+      
+      while (n > 0) {
+        const remainder = Number(n % BigInt(64));
+        n = n / BigInt(64);
+        shortCode = alphabet[remainder] + shortCode;
+      }
+      
+      log(`Преобразован ID Instagram ${id} в короткий код ${shortCode}`, 'social-publishing');
+      return shortCode;
+    } catch (error) {
+      // Если возникла ошибка в преобразовании, возвращаем оригинальный ID
+      log(`Ошибка при преобразовании ID Instagram в короткий код: ${error}`, 'social-publishing');
+      return id;
     }
   }
 
