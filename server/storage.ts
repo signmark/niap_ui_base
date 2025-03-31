@@ -936,7 +936,8 @@ export class DatabaseStorage implements IStorage {
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
-        keywords: item.keywords || [] // Добавляем ключевые слова при возвращении результата
+        keywords: item.keywords || [], // Добавляем ключевые слова при возвращении результата
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
     } catch (error) {
       console.error('Error creating campaign content in Directus:', error);
@@ -990,6 +991,11 @@ export class DatabaseStorage implements IStorage {
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
+      // Добавляем обработку дополнительных изображений
+      if (updates.additionalImages !== undefined) {
+        console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);
+        directusUpdates.additional_images = Array.isArray(updates.additionalImages) ? updates.additionalImages : [];
+      }
       
       // Обработка ключевых слов (keywords)
       if (updates.keywords !== undefined) {
@@ -1017,7 +1023,8 @@ export class DatabaseStorage implements IStorage {
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
-        keywords: item.keywords || [] // Добавляем возврат ключевых слов
+        keywords: item.keywords || [], // Добавляем возврат ключевых слов
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
     } catch (error) {
       console.error('Error updating campaign content in Directus:', error);
@@ -1117,7 +1124,8 @@ export class DatabaseStorage implements IStorage {
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
-        keywords: item.keywords || [] // Добавляем ключевые слова
+        keywords: item.keywords || [], // Добавляем ключевые слова
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       }));
       
       return content;
