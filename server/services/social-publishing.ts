@@ -79,12 +79,21 @@ export class SocialPublishingService {
         try {
           // Пробуем с подробным логированием, чтобы выявить причину ошибки
           log(`Отправка запроса в Telegram API на URL: ${telegramApiUrl}/sendMediaGroup`, 'social-publishing');
-          log(`Параметры запроса: chat_id=${chatId}, media=${JSON.stringify(media)}`, 'social-publishing');
+          
+          // Преобразуем все URL изображений в https, если они не такие
+          const secureMedia = media.map(item => {
+            if (item.media && typeof item.media === 'string' && item.media.startsWith('http:')) {
+              return { ...item, media: item.media.replace('http:', 'https:') };
+            }
+            return item;
+          });
+          
+          log(`Параметры запроса: chat_id=${chatId}, media=${JSON.stringify(secureMedia)}`, 'social-publishing');
           
           // В Telegram API media должен быть массивом объектов, а не строкой
           result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, {
             chat_id: chatId,
-            media: media
+            media: secureMedia
           });
           
           log(`Получен ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
@@ -97,9 +106,16 @@ export class SocialPublishingService {
           
           // Если не получилось отправить группу, пробуем отправить первое изображение с текстом
           log(`Пробуем альтернативный вариант - отправка одного изображения с текстом`, 'social-publishing');
+          // Преобразуем URL в https, если он не такой
+          const secureFirstImageUrl = allImages[0].startsWith('http:') 
+            ? allImages[0].replace('http:', 'https:') 
+            : allImages[0];
+              
+          log(`Отправка первого изображения с текстом: ${secureFirstImageUrl}`, 'social-publishing');
+          
           result = await axios.post(`${telegramApiUrl}/sendPhoto`, {
             chat_id: chatId,
-            photo: allImages[0],
+            photo: secureFirstImageUrl,
             caption: messageText,
             parse_mode: 'HTML'
           });
@@ -107,13 +123,23 @@ export class SocialPublishingService {
           // Если остались дополнительные изображения, отправляем их по одному без текста
           for (let i = 1; i < allImages.length; i++) {
             try {
+              // Преобразуем URL в https, если он не такой
+              const secureImageUrl = allImages[i].startsWith('http:') 
+                ? allImages[i].replace('http:', 'https:') 
+                : allImages[i];
+              
+              log(`Отправка дополнительного изображения ${i}: ${secureImageUrl}`, 'social-publishing');
+              
               await axios.post(`${telegramApiUrl}/sendPhoto`, {
                 chat_id: chatId,
-                photo: allImages[i]
+                photo: secureImageUrl
               });
               log(`Отправлено дополнительное изображение ${i}`, 'social-publishing');
             } catch (photoError: any) {
               log(`Ошибка при отправке дополнительного изображения ${i}: ${photoError.message}`, 'social-publishing');
+              if (photoError.response) {
+                log(`Детали ошибки отправки изображения ${i}: ${JSON.stringify(photoError.response.data)}`, 'social-publishing');
+              }
             }
           }
         }
