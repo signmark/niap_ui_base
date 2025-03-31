@@ -20,6 +20,15 @@ export class SocialPublishingService {
     content: CampaignContent,
     telegramSettings: { token: string; chatId: string }
   ): Promise<SocialPublication> {
+    log(`Начинаем публикацию контента ${content.id} в Telegram`, 'social-publishing');
+    log(`Настройки Telegram: chatId=${telegramSettings.chatId}`, 'social-publishing');
+    log(`Контент для публикации в Telegram: ${JSON.stringify({
+      id: content.id,
+      title: content.title,
+      hasMainImage: !!content.imageUrl,
+      hasAdditionalImages: Array.isArray(content.additionalImages) && content.additionalImages.length > 0,
+      additionalImagesCount: Array.isArray(content.additionalImages) ? content.additionalImages.length : 0,
+    })}`, 'social-publishing');
     try {
       if (!telegramSettings.token || !telegramSettings.chatId) {
         log(`Отсутствуют настройки Telegram API для публикации контента ${content.id}`, 'social-publishing');
@@ -80,21 +89,36 @@ export class SocialPublishingService {
           // Пробуем с подробным логированием, чтобы выявить причину ошибки
           log(`Отправка запроса в Telegram API на URL: ${telegramApiUrl}/sendMediaGroup`, 'social-publishing');
           
-          // Преобразуем все URL изображений в https, если они не такие
+          // Преобразуем все URL изображений в https, если они не такие, и проверяем наличие media
           const secureMedia = media.map(item => {
-            if (item.media && typeof item.media === 'string' && item.media.startsWith('http:')) {
+            if (!item.media) {
+              log(`Ошибка: элемент media не содержит URL: ${JSON.stringify(item)}`, 'social-publishing');
+              return item;
+            }
+            
+            if (typeof item.media === 'string' && item.media.startsWith('http:')) {
               return { ...item, media: item.media.replace('http:', 'https:') };
             }
+            
             return item;
-          });
+          }).filter(item => item.media); // Убираем элементы без URL
+          
+          if (secureMedia.length === 0) {
+            throw new Error('Нет валидных URL изображений для отправки в Telegram');
+          }
           
           log(`Параметры запроса: chat_id=${chatId}, media=${JSON.stringify(secureMedia)}`, 'social-publishing');
           
-          // В Telegram API media должен быть массивом объектов, а не строкой
-          result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, {
+          // Создаем тело запроса для дополнительной проверки
+          const requestBody = {
             chat_id: chatId,
             media: secureMedia
-          });
+          };
+          
+          log(`Тело запроса sendMediaGroup: ${JSON.stringify(requestBody)}`, 'social-publishing');
+          
+          // В Telegram API media должен быть массивом объектов, а не строкой
+          result = await axios.post(`${telegramApiUrl}/sendMediaGroup`, requestBody);
           
           log(`Получен ответ от Telegram API: ${JSON.stringify(result.data)}`, 'social-publishing');
         } catch (mediaGroupError: any) {
