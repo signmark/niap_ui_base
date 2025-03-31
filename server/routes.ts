@@ -6965,6 +6965,7 @@ https://t.me/channelname/ - description`;
             content: item.content,
             contentType: item.content_type,
             imageUrl: item.image_url,
+            additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [],
             videoUrl: item.video_url,
             prompt: item.prompt,
             keywords: keywords,
