@@ -7655,6 +7655,7 @@ https://t.me/channelname/ - description`;
           content: content.content || '',
           imageUrl: content.image_url || null,
           videoUrl: content.video_url || null,
+          additionalImages: content.additional_images || [], // Добавляем поле дополнительных изображений
           contentType: content.content_type || 'text',
           hashtags: content.hashtags || [],
           keywords: content.keywords || [],
