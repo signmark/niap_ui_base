@@ -879,7 +879,7 @@ export class SocialPublishingService {
         postId: postId,
         postUrl: postUrl,
         error: null,
-        userId: content.userId
+        userId: processedContent.userId
       };
     } catch (error: any) {
       log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
@@ -891,7 +891,7 @@ export class SocialPublishingService {
         status: 'failed',
         publishedAt: null,
         error: `Ошибка при публикации в Instagram: ${error.message}`,
-        userId: processedContent.userId
+        userId: content.userId
       };
     }
   }
