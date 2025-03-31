@@ -7,18 +7,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
 
 // Импортируем функции для работы с медиа
 import { createProxyImageUrl, createVideoThumbnailUrl, createStreamVideoUrl, isVideoUrl } from "../utils/media";
-import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video, Loader2, CheckCircle2 } from "lucide-react";
+import { ThumbsUp, MessageSquare, Eye, Share2, BookmarkPlus, Bookmark, BookmarkCheck, ExternalLink, User, Video, Loader2 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
 import { handleInstagramVideoError } from "./instagram-error-handler";
 import { TrendTopic } from "../lib/interfaces";
-import { MediaAnalysisButton } from "./MediaAnalysisButton";
 
 interface MediaData {
   images: string[];
@@ -43,27 +40,6 @@ export function TrendDetailDialog({
   // Нет необходимости в отслеживании индекса изображения, т.к. показываем только первое
   const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
   const [videoLoadError, setVideoLoadError] = React.useState(false);
-  const { toast } = useToast();
-  
-  // Вспомогательная функция для безопасного отображения данных
-  const safeRender = (item: any): string => {
-    if (typeof item === 'string') {
-      return item;
-    } else if (typeof item === 'object' && item !== null) {
-      // Приоритет для поля text, которое добавляется сервером при обработке
-      if ('text' in item) {
-        return item.text;
-      } 
-      // Обработка объектов с полями name и quantity
-      else if ('name' in item) {
-        return item.quantity ? `${item.name} (${item.quantity})` : item.name;
-      }
-      // Для других объектов - преобразуем в JSON строку
-      return JSON.stringify(item);
-    }
-    // Преобразуем все остальные типы в строку
-    return String(item);
-  };
   
   // Инициализируем пустую структуру для медиаданных
   let mediaData: MediaData = { 
@@ -317,25 +293,6 @@ export function TrendDetailDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          {/* Отладочная информация о состоянии видео и media_analysis */}
-          {(() => {
-            console.log("[TrendDetailDialog] hasVideo состояние:", {
-              hasVideo,
-              vkVideoInfo: !!vkVideoInfo,
-              videoThumbnailUrl: !!videoThumbnailUrl,
-              mediaDataVideos: mediaData.videos?.length || 0,
-              topicId: topic.id,
-              mediaAnalysisExists: !!topic.media_analysis,
-              existingAnalysisDetails: topic.media_analysis ? 
-                typeof topic.media_analysis === 'string' ? 
-                  'string: ' + String(topic.media_analysis).substring(0, 20) :
-                  Object.keys(topic.media_analysis || {})
-                : null
-            });
-            
-            return null; // Не отображаем ничего
-          })()}
-          
           {/* Медиа: видео или изображение */}
           {hasVideo && (
             <div className="mb-4">
@@ -440,61 +397,12 @@ export function TrendDetailDialog({
                           e.currentTarget.parentNode?.appendChild(errorContainer);
                         }}
                       />
-                      
-                      {/* Кнопка анализа видео */}
-                      {mediaData.videos && mediaData.videos.length > 0 && (
-                        <div className="absolute bottom-2 right-2 z-10">
-                          {(() => {
-                            // Добавляем расширенное логирование
-                            const hasValidAnalysis = topic.media_analysis && 
-                                                   typeof topic.media_analysis === 'object' && 
-                                                   Object.keys(topic.media_analysis).length > 0;
-                            
-                            console.log("[TrendDetailDialog] Перед рендерингом кнопки анализа видео (встроенное):", {
-                              hasMediaAnalysis: !!topic.media_analysis,
-                              mediaAnalysisType: topic.media_analysis ? typeof topic.media_analysis : 'undefined',
-                              mediaAnalysisJSONValue: topic.media_analysis ? JSON.stringify(topic.media_analysis).substring(0, 100) : 'null',
-                              hasValidAnalysis,
-                              objectKeys: topic.media_analysis && typeof topic.media_analysis === 'object' ? Object.keys(topic.media_analysis) : [],
-                              buttonTextValue: hasValidAnalysis ? "Просмотреть анализ" : "Анализировать",
-                              topicId: topic.id
-                            });
-                            
-                            // Добавляем бейдж при наличии анализа
-                            if (hasValidAnalysis) {
-                              return (
-                                <div className="absolute -top-2 -right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center z-20">
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  <span>Анализ выполнен</span>
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <MediaAnalysisButton 
-                                  mediaUrl={mediaData.videos[0]} 
-                                  trendId={topic.id}
-                                  buttonText="Анализировать" 
-                                  buttonVariant="secondary" 
-                                  existingAnalysis={topic.media_analysis}
-                                  onAnalysisComplete={() => {
-                                    console.log("[TrendDetailDialog] Вызов onAnalysisComplete в видео");
-                                    queryClient.invalidateQueries({ queryKey: ["/api/campaign-trends"] });
-                                    queryClient.refetchQueries({ queryKey: ["/api/campaign-trends"] });
-                                  }}
-                                />
-                              );
-                            }
-                          })()}
-                        </div>
-                      )}
                     </div>
                   ) : videoThumbnailUrl ? (
                     <div className="relative">
                       <img
                         src={videoThumbnailUrl}
-                        alt={topic.media_analysis && topic.media_analysis.description 
-                          ? topic.media_analysis.description 
-                          : topic.title}
+                        alt={topic.title}
                         loading="lazy"
                         className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
                         crossOrigin="anonymous"
@@ -504,44 +412,6 @@ export function TrendDetailDialog({
                           <Video className="h-8 w-8 text-white" />
                         </div>
                       </div>
-                      
-                      {/* Кнопка анализа видео */}
-                      {mediaData.videos && mediaData.videos.length > 0 && (
-                        <div className="absolute bottom-2 right-2">
-                          {(() => {
-                            // Добавляем расширенное логирование
-                            const hasValidAnalysis = topic.media_analysis && 
-                                                   typeof topic.media_analysis === 'object' && 
-                                                   Object.keys(topic.media_analysis).length > 0;
-                            
-                            // Добавляем бейдж при наличии анализа
-                            if (hasValidAnalysis) {
-                              return (
-                                <div className="absolute -top-2 -right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center z-20">
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  <span>Анализ выполнен</span>
-                                </div>
-                              );
-                            } else {
-                              // Если нет анализа, показываем кнопку
-                              return (
-                                <MediaAnalysisButton 
-                                  mediaUrl={mediaData.videos[0]} 
-                                  trendId={topic.id}
-                                  buttonText="Анализировать" 
-                                  buttonVariant="secondary" 
-                                  existingAnalysis={topic.media_analysis}
-                                  onAnalysisComplete={() => {
-                                    console.log("[TrendDetailDialog] Вызов onAnalysisComplete для видео превью");
-                                    queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
-                                    queryClient.refetchQueries({ queryKey: ['/api/campaign-trends'] });
-                                  }}
-                                />
-                              );
-                            }
-                          })()}
-                        </div>
-                      )}
                     </div>
                   ) : (
                     <div className="flex items-center justify-center bg-muted rounded-md h-[200px]">
@@ -568,107 +438,37 @@ export function TrendDetailDialog({
           {/* Если нет видео, но есть изображение, показываем его */}
           {!hasVideo && imageUrl && (
             <div className="mb-4">
-              <div className="relative">
-                <img
-                  src={imageUrl}
-                  alt={topic.media_analysis && topic.media_analysis.description 
-                    ? topic.media_analysis.description 
-                    : topic.title}
-                  loading="lazy"
-                  className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
-                    // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
-                    if (mediaData.images && mediaData.images.length > 0) {
-                      handleImageError(mediaData.images[0]);
-                    } else {
-                      // Если нет альтернативных изображений, показываем ошибку
-                      e.currentTarget.style.display = 'none';
-                      const errorContainer = document.createElement('div');
-                      errorContainer.className = "flex items-center justify-center bg-slate-100 rounded-md h-[200px] w-full";
-                      errorContainer.innerHTML = `
-                        <div class="text-center text-gray-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
-                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                            <circle cx="9" cy="9" r="2"></circle>
-                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-                          </svg>
-                          <p class="text-sm">Ошибка загрузки изображения</p>
-                          ${topic.url ? `<a href="${topic.url}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-500 hover:underline block">Открыть оригинал</a>` : ''}
-                        </div>
-                      `;
-                      e.currentTarget.parentNode?.appendChild(errorContainer);
-                    }
-                  }}
-                />
-                
-                {/* Кнопка анализа изображения или показатель результатов анализа */}
-                {mediaData.images && mediaData.images.length > 0 && (
-                  <div className="absolute bottom-2 right-2">
-                    {(() => {
-                      // Добавляем расширенное логирование
-                      // Проверяем наличие анализа медиа в разных форматах
-                      let hasValidAnalysis = false;
-                      
-                      // Проверка для объекта
-                      if (topic.media_analysis && 
-                          typeof topic.media_analysis === 'object' && 
-                          Object.keys(topic.media_analysis).length > 0) {
-                        hasValidAnalysis = true;
-                      }
-                      // Проверка для JSON строки
-                      else if (topic.media_analysis && typeof topic.media_analysis === 'string') {
-                        try {
-                          const parsedAnalysis = JSON.parse(topic.media_analysis);
-                          if (parsedAnalysis && typeof parsedAnalysis === 'object' && Object.keys(parsedAnalysis).length > 0) {
-                            hasValidAnalysis = true;
-                          }
-                        } catch (error) {
-                          console.error("[TrendDetailDialog] Ошибка при парсинге JSON строки media_analysis:", error);
-                        }
-                      }
-                      
-                      console.log("[TrendDetailDialog] Перед рендерингом кнопки анализа изображения:", {
-                        hasMediaAnalysis: !!topic.media_analysis,
-                        mediaAnalysisType: topic.media_analysis ? typeof topic.media_analysis : 'undefined',
-                        mediaAnalysisJSONValue: topic.media_analysis ? JSON.stringify(topic.media_analysis).substring(0, 100) : 'null',
-                        hasValidAnalysis,
-                        objectKeys: topic.media_analysis && typeof topic.media_analysis === 'object' ? Object.keys(topic.media_analysis) : [],
-                        buttonTextValue: hasValidAnalysis ? "Просмотреть анализ" : "Анализировать",
-                        topicId: topic.id
-                      });
-                      
-                      // Добавляем бейдж при наличии анализа
-                      if (hasValidAnalysis) {
-                        return (
-                          <div className="absolute -top-2 -right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs flex items-center z-20">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            <span>Анализ выполнен</span>
-                          </div>
-                        );
-                      } else {
-                        // Если нет анализа, показываем кнопку
-                        return (
-                          <MediaAnalysisButton 
-                            mediaUrl={mediaData.images[0]} 
-                            trendId={topic.id}
-                            buttonText="Анализировать" 
-                            buttonVariant="secondary" 
-                            existingAnalysis={topic.media_analysis}
-                            onAnalysisComplete={() => {
-                              console.log("[TrendDetailDialog] Вызов onAnalysisComplete для изображения");
-                              queryClient.invalidateQueries({ queryKey: ['/api/campaign-trends'] });
-                              queryClient.refetchQueries({ queryKey: ['/api/campaign-trends'] });
-                            }}
-                          />
-                        );
-                      }
-                    })()}
-                  </div>
-                )}
-              </div>
-              
+              <img
+                src={imageUrl}
+                alt={topic.title}
+                loading="lazy"
+                className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
+                  // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
+                  if (mediaData.images && mediaData.images.length > 0) {
+                    handleImageError(mediaData.images[0]);
+                  } else {
+                    // Если нет альтернативных изображений, показываем ошибку
+                    e.currentTarget.style.display = 'none';
+                    const errorContainer = document.createElement('div');
+                    errorContainer.className = "flex items-center justify-center bg-slate-100 rounded-md h-[200px] w-full";
+                    errorContainer.innerHTML = `
+                      <div class="text-center text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3">
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                          <circle cx="9" cy="9" r="2"></circle>
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                        </svg>
+                        <p class="text-sm">Ошибка загрузки изображения</p>
+                        ${topic.url ? `<a href="${topic.url}" target="_blank" rel="noopener noreferrer" class="text-xs mt-2 text-blue-500 hover:underline block">Открыть оригинал</a>` : ''}
+                      </div>
+                    `;
+                    e.currentTarget.parentNode?.appendChild(errorContainer);
+                  }
+                }}
+              />
               {topic.url && (
                 <div className="text-right mt-2">
                   <a
@@ -690,78 +490,6 @@ export function TrendDetailDialog({
           ) : (
             <div className="font-normal whitespace-pre-line mt-4 text-base leading-normal">{topic.title}</div>
           )}
-          
-          {/* Анализ медиаконтента - отображаем только если есть данные */}
-          {(() => {
-            // Получаем данные анализа из тренда
-            let analysisData: any = null;
-            
-            // Проверяем формат данных и парсим при необходимости
-            if (topic.media_analysis) {
-              if (typeof topic.media_analysis === 'object') {
-                analysisData = topic.media_analysis;
-              } else if (typeof topic.media_analysis === 'string') {
-                try {
-                  analysisData = JSON.parse(topic.media_analysis);
-                } catch (error) {
-                  console.error("[TrendDetailDialog] Ошибка при парсинге JSON строки media_analysis:", error);
-                }
-              }
-            }
-            
-            // Проверяем наличие данных анализа
-            if (analysisData && typeof analysisData === 'object' && Object.keys(analysisData).length > 0) {
-              return (
-                <div className="mt-6 bg-gray-50 p-4 rounded-md border border-gray-100">
-                  <h3 className="text-sm font-medium mb-2">Анализ медиаконтента</h3>
-                  
-                  <div className="space-y-2 text-sm">
-                    {analysisData.description && (
-                      <div>
-                        <span className="font-medium">Описание: </span>
-                        <span>{analysisData.description}</span>
-                      </div>
-                    )}
-                    
-                    {analysisData.objects && analysisData.objects.length > 0 && (
-                      <div>
-                        <span className="font-medium">Объекты: </span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {analysisData.objects.map((obj: any, i: number) => (
-                            <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                              {safeRender(obj)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {analysisData.mood && (
-                      <div>
-                        <span className="font-medium">Настроение: </span>
-                        <span>{analysisData.mood}</span>
-                      </div>
-                    )}
-                    
-                    {analysisData.colors && analysisData.colors.length > 0 && (
-                      <div>
-                        <span className="font-medium">Основные цвета: </span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {analysisData.colors.map((color: any, i: number) => (
-                            <span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                              {safeRender(color)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            }
-            
-            return null;
-          })()}
 
           {/* Разделитель */}
           <Separator className="my-4" />
@@ -818,11 +546,6 @@ export function TrendDetailDialog({
               )}
             </div>
           </div>
-
-          {/* Кнопка для анализа медиаконтента */}
-          {/* Удалена общая кнопка анализа медиаконтента, поскольку теперь
-             результаты анализа отображаются в карточке тренда и
-             у каждого изображения/видео есть своя кнопка анализа */}
 
           <div className="flex justify-end mt-4">
             <Button

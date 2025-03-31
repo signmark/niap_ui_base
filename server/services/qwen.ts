@@ -12,7 +12,7 @@ export interface QwenConfig {
 
 export interface QwenMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string | any[]; // Поддержка мультимодальных сообщений
+  content: string;
 }
 
 export class QwenService {
@@ -139,212 +139,6 @@ export class QwenService {
   }
   
   /**
-   * Анализирует изображение с помощью Qwen-VL и возвращает структурированную информацию
-   * @param imageUrl URL изображения для анализа
-   * @param analysisType Тип анализа: 'basic', 'detailed', 'objects', 'text', 'sentiment'
-   * @returns Структурированный результат анализа изображения
-   */
-  async analyzeImage(imageUrl: string, analysisType: 'basic' | 'detailed' | 'objects' | 'text' | 'sentiment' = 'detailed'): Promise<any> {
-    try {
-      if (!this.apiKey) {
-        throw new Error('Qwen API ключ не установлен');
-      }
-      
-      console.log(`[qwen] Начинаем анализ изображения: ${imageUrl.substring(0, 50)}...`);
-      
-      // Преобразование URL изображения в Base64, если это необходимо
-      const imageData = await this.getImageAsBase64(imageUrl);
-      
-      // Шаблоны системных сообщений для разных типов анализа
-      const systemPrompts = {
-        basic: "Опиши что изображено на этой картинке. Дай краткое общее описание.",
-        detailed: `Проанализируй изображение и предоставь детальную структурированную информацию в формате JSON со следующими полями:
-          - description: общее описание изображения
-          - objects: список основных объектов на изображении
-          - colors: основные цвета в порядке преобладания
-          - composition: описание композиции и расположения элементов
-          - text: любой текст, видимый на изображении
-          - mood: общее настроение или эмоциональный тон изображения
-          - engagement_factors: элементы, которые могут привлечь внимание аудитории
-          - recommendations: 3-5 рекомендаций для создания подобного контента`,
-        objects: "Перечисли все объекты на изображении и их примерное расположение. Представь результат как JSON-массив объектов.",
-        text: "Извлеки весь текст, видимый на изображении. Сохрани оригинальное форматирование и порядок текста.",
-        sentiment: "Проанализируй эмоциональное воздействие этого изображения. Какие эмоции оно вызывает и почему? Оцени от 1 до 10 потенциальную вовлеченность аудитории."
-      };
-      
-      // Формируем сообщения для API запроса
-      const messages = [
-        { 
-          role: 'system', 
-          content: systemPrompts[analysisType]
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Проанализируй это изображение:' },
-            { type: 'image_url', image_url: { url: imageData } }
-          ]
-        }
-      ];
-      
-      console.log(`[qwen] Отправляем запрос на анализ изображения в Qwen-VL (тип анализа: ${analysisType})`);
-      
-      // Получаем активный URL API на основе режима
-      const activeBaseUrl = this.compatModes[this.apiMode];
-      
-      // Проверяем наличие API ключа
-      if (!this.apiKey || this.apiKey.trim() === '') {
-        console.error('[qwen] Отсутствует API ключ для запроса к Qwen-VL API');
-        throw new Error('Отсутствует API ключ для сервиса Qwen. Проверьте настройки в Directus.');
-      }
-      
-      // Логируем параметры запроса
-      console.log(`[qwen] Используем модель Qwen-VL Plus для анализа изображения`);
-      console.log(`[qwen] Используем API URL: ${activeBaseUrl}/chat/completions`);
-      console.log(`[qwen] Длина API ключа: ${this.apiKey.length} символов`);
-      console.log(`[qwen] Первые 5 символов ключа: ${this.apiKey.substring(0, 5)}...`);
-      
-      try {
-        // Проверяем доступность URL изображения, прежде чем отправлять его в API
-        try {
-          // Отправляем HEAD запрос, чтобы проверить доступность изображения
-          await axios.head(imageUrl, { timeout: 10000 });
-        } catch (headError) {
-          console.error(`[qwen] Ошибка проверки доступности изображения: ${imageUrl}`, headError);
-          console.log(`[qwen] Продолжаем, так как изображение может быть доступно через GET запрос...`);
-        }
-        
-        // Отправляем запрос к Qwen-VL API с дополнительной обработкой ошибок
-        console.log(`[qwen] Выполняем POST запрос к ${activeBaseUrl}/chat/completions`);
-        const response = await axios.post(
-          `${activeBaseUrl}/chat/completions`,
-          {
-            model: 'qwen-vl-plus',  // Используем мультимодальную модель по документации Alibaba Cloud
-            messages: messages,
-            temperature: 0.2, // Низкая температура для более точных результатов
-            max_tokens: 1500, // Достаточно для подробного анализа
-            response_format: { type: 'json_object' } // Запрашиваем ответ в формате JSON
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 60000 // Увеличиваем таймаут до 60 секунд
-          }
-        );
-      
-        if (!response.data?.choices?.[0]?.message?.content) {
-          throw new Error('Некорректный ответ от Qwen-VL API');
-        }
-        
-        // Обрабатываем ответ и преобразуем его в структурированный JSON, если необходимо
-        let result = response.data.choices[0].message.content;
-        
-        // Если ответ в виде JSON-строки, преобразуем в объект
-        if (typeof result === 'string' && analysisType !== 'basic' && analysisType !== 'text') {
-          try {
-            // Извлекаем JSON из текста ответа, если он окружен другим текстом
-            const jsonMatch = result.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              result = JSON.parse(jsonMatch[0]);
-            } else {
-              result = JSON.parse(result);
-            }
-          } catch (e) {
-            console.warn('[qwen] Не удалось преобразовать ответ в JSON:', e);
-            // Оставляем как есть, если не удалось преобразовать
-          }
-        }
-        
-        console.log('[qwen] Анализ изображения успешно получен от Qwen-VL');
-        return result;
-      } catch (error) {
-        console.error('[qwen] Ошибка при анализе изображения с помощью Qwen-VL:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('[qwen] Ошибка при анализе изображения с помощью Qwen-VL:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Получает изображение по URL и преобразует его в Base64 для отправки в API
-   * @param imageUrl URL изображения
-   * @returns Строка с данными изображения в формате data URL
-   */
-  private async getImageAsBase64(imageUrl: string): Promise<string> {
-    try {
-      // Если URL уже в формате data:image
-      if (imageUrl.startsWith('data:image')) {
-        return imageUrl;
-      }
-      
-      console.log(`[qwen] Получаем изображение по URL: ${imageUrl.substring(0, 50)}...`);
-      
-      try {
-        // Получаем изображение через axios
-        const response = await axios.get(imageUrl, {
-          responseType: 'arraybuffer',
-          timeout: 30000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          }
-        });
-        
-        // Определяем тип изображения из заголовков ответа
-        const contentType = response.headers['content-type'] || 'image/jpeg';
-        
-        // Преобразуем в Base64
-        const base64 = Buffer.from(response.data).toString('base64');
-        const dataUrl = `data:${contentType};base64,${base64}`;
-        
-        console.log(`[qwen] Изображение успешно преобразовано в Base64 (длина: ${dataUrl.length} символов)`);
-        return dataUrl;
-      } catch (getError) {
-        console.error('[qwen] Ошибка при получении изображения через GET:', getError);
-        
-        // Если URL содержит прокси в нашем проекте, пробуем получить прямой URL
-        if (imageUrl.includes('/api/proxy-image')) {
-          const urlParams = new URL(imageUrl).searchParams;
-          const originalUrl = urlParams.get('url');
-          
-          if (originalUrl) {
-            console.log(`[qwen] Пробуем получить изображение по оригинальному URL: ${originalUrl.substring(0, 50)}...`);
-            
-            try {
-              // Пытаемся обратиться к оригинальному URL
-              const directResponse = await axios.get(originalUrl, {
-                responseType: 'arraybuffer',
-                timeout: 30000,
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                }
-              });
-              
-              const directContentType = directResponse.headers['content-type'] || 'image/jpeg';
-              const directBase64 = Buffer.from(directResponse.data).toString('base64');
-              const directDataUrl = `data:${directContentType};base64,${directBase64}`;
-              
-              console.log(`[qwen] Изображение успешно получено по оригинальному URL (длина: ${directDataUrl.length} символов)`);
-              return directDataUrl;
-            } catch (directError) {
-              console.error('[qwen] Ошибка при получении изображения по оригинальному URL:', directError);
-              throw new Error(`Не удалось получить изображение ни через прокси, ни напрямую: ${directError instanceof Error ? directError.message : 'неизвестная ошибка'}`);
-            }
-          }
-        }
-        
-        throw getError;
-      }
-    } catch (error) {
-      console.error('[qwen] Ошибка при получении изображения по URL:', error);
-      throw new Error(`Не удалось получить изображение по URL: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
-    }
-  }
-  
-  /**
    * Генерирует контент для социальных сетей на основе ключевых слов и трендов
    */
   async generateSocialContent(
@@ -393,90 +187,72 @@ export class QwenService {
 
 ${platformSpecifics}
 
-В тексте обязательно используй предоставленные ключевые слова органично, без искусственного вставления. Раскрой предоставленные темы актуально и интересно.`;
+В тексте обязательно используй предоставленные ключевые слова органично, без искусственного вставления. Раскрой предоставленные темы, но делай это естественно и интересно для читателя.
 
-    const userPrompt = `Ключевые слова: ${keywords.join(', ')}
-Темы: ${topics.join(', ')}
+ВАЖНО:
+- Не упоминай, что текст создан ИИ или для каких-то конкретных целей
+- Не используй клише и шаблонные фразы
+- Делай текст живым, с естественными переходами между мыслями
+- Используй активный залог вместо пассивного`;
 
-Создай пост для ${platform} по этим темам и ключевым словам.`;
+    const userContent = `Ключевые слова: ${keywords.join(', ')}
+Темы для раскрытия: ${topics.join(', ')}
 
-    const messages: QwenMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
+Создай привлекательный пост для ${platform} ${language === 'ru' ? 'на русском языке' : 'на английском языке'}.`;
 
     try {
-      const generatedContent = await this.generateText(messages, {
-        model: 'qwen-plus',
-        temperature: 0.7,
-        max_tokens: 1500
-      });
-      
-      return generatedContent;
+      return await this.generateText(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ],
+        {
+          temperature: 0.7,  // Более высокая температура для креативности
+          max_tokens: length === 'short' ? 300 : length === 'medium' ? 500 : 800
+        }
+      );
     } catch (error: any) {
-      console.error(`Ошибка при генерации контента для ${platform}:`, error);
-      throw new Error(`Не удалось сгенерировать контент: ${error.message}`);
+      console.error('Error generating social content with Qwen:', error);
+      const errorMessage = error.message || 'Неизвестная ошибка при генерации контента';
+      log(`Qwen генерация контента не удалась: ${errorMessage}`, 'qwen');
+      
+      // Форматируем сообщение об ошибке для более понятного отображения пользователю
+      if (errorMessage.includes('API ключ')) {
+        throw new Error(`Проблема с API ключом Qwen: ${errorMessage}`);
+      } else if (errorMessage.includes('подключиться')) {
+        throw new Error('Не удалось подключиться к Qwen API. Проверьте соединение или доступность сервиса.');
+      } else {
+        throw new Error(`Ошибка при генерации контента через Qwen: ${errorMessage}`);
+      }
     }
   }
-
-  /**
-   * Инициализирует сервис с API ключом пользователя
-   * @param userId ID пользователя
-   * @param authToken Токен авторизации для Directus (опционально)
-   * @returns true в случае успешной инициализации, false в случае ошибки
-   */
-  async initialize(userId: string, authToken?: string): Promise<boolean> {
-    return this.initWithUserApiKey(userId, authToken);
-  }
-
+  
   /**
    * Инициализирует сервис с API ключом пользователя из централизованного сервиса API ключей
    * @param userId ID пользователя
    * @param authToken Токен авторизации для Directus (опционально)
    * @returns true в случае успешной инициализации, false в случае ошибки
    */
-  async initWithUserApiKey(userId: string, authToken?: string): Promise<boolean> {
+  async initialize(userId: string, authToken?: string): Promise<boolean> {
     try {
-      console.log('[qwen] Initializing Qwen service with user API key for user', userId);
+      console.log('Initializing Qwen service for user', userId);
       
+      // Используем централизованную систему API ключей
       const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       
       if (apiKey) {
-        console.log('[qwen] API key found for user', userId);
+        console.log('Qwen API key successfully obtained from API Key Service');
         this.updateApiKey(apiKey);
-        log('[qwen] API key found and set for user ' + userId, 'qwen');
+        log('Qwen API key successfully obtained from API Key Service', 'qwen');
         return true;
       } else {
-        console.log('[qwen] API key not found for user', userId);
-        console.log('[qwen] Checking fallback environment variable QWEN_API_KEY');
-        
-        // Пробуем использовать ключ из переменных окружения как резервный вариант
-        const envApiKey = process.env.QWEN_API_KEY;
-        if (envApiKey && envApiKey.trim() !== '') {
-          console.log('[qwen] Using API key from environment variable QWEN_API_KEY');
-          this.updateApiKey(envApiKey);
-          log('[qwen] Using API key from environment variable QWEN_API_KEY', 'qwen');
-          return true;
-        }
-        
-        log('[qwen] API key not found in user settings or environment variables', 'qwen');
-        console.warn('[qwen] Не найден API ключ ни в настройках пользователя, ни в переменных окружения');
+        console.log('Qwen API key not found for user', userId);
+        log('Qwen API key not found in user settings', 'qwen');
         return false;
       }
     } catch (error) {
-      console.error('[qwen] Error initializing Qwen service:', error);
-      
-      // Более подробное логирование ошибки
-      if ('response' in (error as any)) {
-        const axiosError = error as any;
-        console.error('[qwen] Error details:', {
-          status: axiosError.response?.status,
-          data: axiosError.response?.data,
-          message: axiosError.message
-        });
-      }
-      
-      log(`[qwen] Error initializing Qwen service: ${error instanceof Error ? error.message : 'unknown error'}`, 'qwen');
+      console.error('Error initializing Qwen service:', error);
+      log(`Error initializing Qwen service: ${error instanceof Error ? error.message : 'unknown error'}`, 'qwen');
       return false;
     }
   }

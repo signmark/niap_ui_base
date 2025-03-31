@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video, Check, Image as ImageIcon } from "lucide-react";
+import { Loader2, Bookmark, BookmarkCheck, ImageOff, ExternalLink, ThumbsUp, Eye, MessageSquare, Calendar, Clock, Flame, Video, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -87,14 +87,6 @@ interface TrendTopic {
   
   // Дополнительное поле для описания источника
   sourceDescription?: string;
-  
-  // Поле для результатов анализа медиаконтента
-  media_analysis?: {
-    description?: string;
-    objects?: any[];
-    colors?: any[];
-    mood?: string;
-  };
 }
 
 // Используем импортированную функцию createProxyImageUrl из utils/media
@@ -172,9 +164,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
             trendScore: trend.trendScore,
             // Добавляем URL аккаунта и поста в их оригинальном snake_case формате
             accountUrl: trend.accountUrl,
-            urlPost: trend.urlPost,
-            // Добавляем данные анализа медиаконтента, если они есть
-            media_analysis: trend.media_analysis
+            urlPost: trend.urlPost
           };
           
           // Отладочный вывод для поля даты и trendScore
@@ -557,8 +547,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                     <div className="flex-shrink-0 relative">
                       <img 
                         src={previewImageUrl} 
-                        alt={trend.media_analysis && trend.media_analysis.description ? 
-                          trend.media_analysis.description : "Миниатюра поста"} 
+                        alt="Миниатюра поста" 
                         className="h-20 w-20 object-cover rounded-md"
                         loading="lazy"
                         crossOrigin="anonymous"
@@ -625,16 +614,6 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                       )}
                       {trend.title?.trim()}
                     </div>
-                    
-                    {/* Результаты анализа медиаконтента */}
-                    {trend.media_analysis && trend.media_analysis.description && (
-                      <div className="text-xs mt-1 text-primary overflow-hidden" title={trend.media_analysis.description}>
-                        <span className="inline-flex items-center gap-1.5">
-                          <ImageIcon className="h-3 w-3" />
-                          <span>{trend.media_analysis.description.split('.')[0]}.</span>
-                        </span>
-                      </div>
-                    )}
                     
                     {/* Только первая строка описания */}
                     {trend.description && (
