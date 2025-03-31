@@ -476,8 +476,27 @@ export class SocialPublishingService {
         };
       }
 
+      // Получаем список всех изображений
+      const allImages = [
+        content.imageUrl, 
+        ...(content.additionalImages && Array.isArray(content.additionalImages) ? content.additionalImages : [])
+      ].filter(Boolean) as string[];
+      
+      log(`Публикация в Instagram контента ${content.id} с ${allImages.length} изображениями`, 'social-publishing');
+
+      if (allImages.length === 0) {
+        log(`Контент ${content.id} не содержит изображений для публикации в Instagram`, 'social-publishing');
+        return {
+          status: 'failed',
+          publishedAt: null,
+          url: null,
+          error: 'Контент не содержит изображений для публикации в Instagram',
+          userId: content.userId
+        };
+      }
+
       // Имитация успешной публикации (реальная публикация требует бизнес-аккаунт Facebook и Instagram)
-      log(`Имитация публикации контента ${content.id} в Instagram`, 'social-publishing');
+      log(`Имитация публикации контента ${content.id} в Instagram с ${allImages.length} изображениями`, 'social-publishing');
       return {
         status: 'published',
         publishedAt: new Date(),
