@@ -75,17 +75,11 @@ export class SocialPublishingService {
       let response;
       const baseUrl = `https://api.telegram.org/bot${token}`;
 
-      // Проверяем доступность изображения
-      const hasImage = content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '';
+      // Собираем все доступные изображения
+      const images = [];
       
-      // Проверяем доступность видео
-      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
-      
-      // Решение о методе публикации на основе доступности медиа и типа контента
-      if (hasImage) {
-        // Отправка изображения с подписью
-        log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${content.imageUrl}`, 'social-publishing');
-        
+      // Проверяем основное изображение
+      if (content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '') {
         // Проверяем формат URL изображения для Telegram
         let photoUrl = content.imageUrl;
         
@@ -96,15 +90,61 @@ export class SocialPublishingService {
           log(`Изменен URL изображения для Telegram: ${photoUrl}`, 'social-publishing');
         }
         
-        // Ограничиваем длину подписи, так как Telegram имеет ограничение
-        const maxCaptionLength = 1024;
-        const truncatedCaption = text.length > maxCaptionLength ? 
-          text.substring(0, maxCaptionLength - 3) + '...' : 
-          text;
-
+        images.push(photoUrl);
+      }
+      
+      // Проверяем дополнительные изображения
+      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+        for (const additionalImage of content.additionalImages) {
+          if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim() !== '') {
+            // Проверяем формат URL изображения
+            let photoUrl = additionalImage;
+            
+            // Если URL не начинается с http, добавляем базовый URL сервера
+            if (photoUrl && !photoUrl.startsWith('http')) {
+              const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+              photoUrl = `${baseAppUrl}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
+              log(`Изменен URL дополнительного изображения для Telegram: ${photoUrl}`, 'social-publishing');
+            }
+            
+            images.push(photoUrl);
+          }
+        }
+      }
+      
+      // Проверяем доступность видео
+      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+      
+      // Ограничиваем длину подписи, так как Telegram имеет ограничение
+      const maxCaptionLength = 1024;
+      const truncatedCaption = text.length > maxCaptionLength ? 
+        text.substring(0, maxCaptionLength - 3) + '...' : 
+        text;
+      
+      // Решение о методе публикации на основе доступности медиа и типа контента
+      if (images.length > 1) {
+        // Отправка группы изображений (медиагруппы)
+        log(`Отправка медиагруппы в Telegram с ${images.length} изображениями`, 'social-publishing');
+        
+        // Формируем массив объектов медиа для API Telegram
+        const mediaGroup = images.map((url, index) => ({
+          type: 'photo',
+          media: url,
+          // Добавляем подпись только к первому изображению
+          ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
+        }));
+        
+        response = await axios.post(`${baseUrl}/sendMediaGroup`, {
+          chat_id: formattedChatId,
+          media: JSON.stringify(mediaGroup)
+        });
+      } else if (images.length === 1) {
+        // Отправка одиночного изображения с подписью
+        log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
+        
         response = await axios.post(`${baseUrl}/sendPhoto`, {
           chat_id: formattedChatId, 
-          photo: photoUrl,
+          photo: images[0],
           caption: truncatedCaption,
           parse_mode: 'HTML'
         });
@@ -377,26 +417,28 @@ export class SocialPublishingService {
         v: '5.131' // версия API
       };
 
-      // Обработка прикрепленного изображения, если оно есть
-      let attachments = '';
+      // Массив для хранения прикрепленных изображений (attachments)
+      const attachmentsArray = [];
+      
+      // Обработка основного изображения, если оно есть
       if (content.imageUrl) {
-        log(`Контент содержит изображение: ${content.imageUrl}`, 'social-publishing');
+        log(`Контент содержит основное изображение: ${content.imageUrl}`, 'social-publishing');
         
         try {
           // Используем правильный подход для загрузки изображения в VK
-          log(`Загружаем изображение на сервер VK`, 'social-publishing');
+          log(`Загружаем основное изображение на сервер VK`, 'social-publishing');
           
           // Шаг 1: Получаем URL сервера для загрузки изображения
           const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
           
           if (!uploadUrl) {
-            log(`Не удалось получить URL для загрузки фото, публикуем без изображения`, 'social-publishing');
+            log(`Не удалось получить URL для загрузки фото, публикуем без основного изображения`, 'social-publishing');
           } else {
             // Шаг 2: Загружаем фото на сервер VK
             const uploadResult = await this.uploadPhotoToVk(uploadUrl, content.imageUrl);
             
             if (!uploadResult) {
-              log(`Ошибка при загрузке фото на сервер VK, публикуем без изображения`, 'social-publishing');
+              log(`Ошибка при загрузке основного фото на сервер VK, публикуем без основного изображения`, 'social-publishing');
             } else {
               // Шаг 3: Сохраняем фото в альбом группы
               const photo = await this.savePhotoToVk(
@@ -410,17 +452,76 @@ export class SocialPublishingService {
               if (photo) {
                 // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
                 const attachment = `photo${photo.owner_id}_${photo.id}`;
-                requestData.attachment = attachment;
-                log(`Фото успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
+                attachmentsArray.push(attachment);
+                log(`Основное фото успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
               } else {
-                log(`Не удалось сохранить фото в альбом VK, публикуем без изображения`, 'social-publishing');
+                log(`Не удалось сохранить основное фото в альбом VK, публикуем без основного изображения`, 'social-publishing');
               }
             }
           }
         } catch (error: any) {
-          log(`Ошибка при подготовке изображения для VK: ${error.message}`, 'social-publishing');
-          log(`Публикуем пост без изображения`, 'social-publishing');
+          log(`Ошибка при подготовке основного изображения для VK: ${error.message}`, 'social-publishing');
+          log(`Публикуем пост без основного изображения`, 'social-publishing');
         }
+      }
+      
+      // Обработка дополнительных изображений, если они есть
+      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+        log(`Контент содержит ${content.additionalImages.length} дополнительных изображений`, 'social-publishing');
+        
+        for (let i = 0; i < content.additionalImages.length; i++) {
+          const imageUrl = content.additionalImages[i];
+          if (!imageUrl) continue;
+          
+          try {
+            log(`Обработка дополнительного изображения ${i + 1}/${content.additionalImages.length}: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
+            
+            // Шаг 1: Получаем URL сервера для загрузки изображения
+            const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
+            
+            if (!uploadUrl) {
+              log(`Не удалось получить URL для загрузки дополнительного фото ${i + 1}, пропускаем`, 'social-publishing');
+              continue;
+            }
+            
+            // Шаг 2: Загружаем фото на сервер VK
+            const uploadResult = await this.uploadPhotoToVk(uploadUrl, imageUrl);
+            
+            if (!uploadResult) {
+              log(`Ошибка при загрузке дополнительного фото ${i + 1} на сервер VK, пропускаем`, 'social-publishing');
+              continue;
+            }
+            
+            // Шаг 3: Сохраняем фото в альбом группы
+            const photo = await this.savePhotoToVk(
+              token, 
+              cleanGroupId, 
+              uploadResult.server, 
+              uploadResult.photo, 
+              uploadResult.hash
+            );
+            
+            if (photo) {
+              // Формируем attachment в нужном формате photo{owner_id}_{photo_id}
+              const attachment = `photo${photo.owner_id}_${photo.id}`;
+              attachmentsArray.push(attachment);
+              log(`Дополнительное фото ${i + 1} успешно загружено, добавлено в пост: ${attachment}`, 'social-publishing');
+            } else {
+              log(`Не удалось сохранить дополнительное фото ${i + 1} в альбом VK, пропускаем`, 'social-publishing');
+            }
+          } catch (error: any) {
+            log(`Ошибка при подготовке дополнительного изображения ${i + 1} для VK: ${error.message}`, 'social-publishing');
+            log(`Пропускаем дополнительное изображение ${i + 1}`, 'social-publishing');
+          }
+        }
+      }
+      
+      // Добавляем все загруженные изображения в запрос, если они есть
+      if (attachmentsArray.length > 0) {
+        requestData.attachment = attachmentsArray.join(',');
+        log(`Добавлено ${attachmentsArray.length} изображений в пост VK: ${requestData.attachment}`, 'social-publishing');
+      } else {
+        log(`Не удалось загрузить ни одного изображения для VK, публикуем пост без изображений`, 'social-publishing');
       }
 
       // Прямой запрос к VK API через form data для избежания ошибки 414 (URI Too Large)
@@ -505,7 +606,11 @@ export class SocialPublishingService {
     instagramSettings?: SocialMediaSettings['instagram']
   ): Promise<SocialPublication> {
     // Проверяем наличие настроек
-    if (!instagramSettings?.token) {
+    log(`Настройки Instagram для публикации: ${JSON.stringify(instagramSettings)}`, 'social-publishing');
+    
+    // Используем token или accessToken - любой, который есть
+    const token = instagramSettings?.token || instagramSettings?.accessToken;
+    if (!token) {
       log(`Отсутствует токен Instagram для публикации контента ${content.id}`, 'social-publishing');
       return {
         platform: 'instagram',
@@ -516,6 +621,7 @@ export class SocialPublishingService {
       };
     }
 
+    // Проверяем наличие ID бизнес-аккаунта
     if (!instagramSettings?.businessAccountId) {
       log(`Отсутствует ID бизнес-аккаунта Instagram для публикации контента ${content.id}`, 'social-publishing');
       return {
@@ -529,7 +635,7 @@ export class SocialPublishingService {
 
     try {
       log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-      log(`Публикация в Instagram. Токен: ${instagramSettings.token.substring(0, 6)}..., ID аккаунта: ${instagramSettings.businessAccountId}`, 'social-publishing');
+      log(`Публикация в Instagram. Токен: ${token.substring(0, 6)}..., ID аккаунта: ${instagramSettings.businessAccountId}`, 'social-publishing');
 
       // Подготовка описания
       let caption = content.title ? `${content.title}\n\n` : '';
@@ -551,28 +657,45 @@ export class SocialPublishingService {
 
       log(`Подготовлено описание для Instagram: ${caption.substring(0, 50)}...`, 'social-publishing');
 
-      // Инстаграм требует наличие изображения
-      if (!content.imageUrl) {
-        log(`Для публикации в Instagram необходимо изображение`, 'social-publishing');
+      // Инстаграм требует наличие хотя бы одного изображения
+      if (!content.imageUrl && (!content.additionalImages || content.additionalImages.length === 0)) {
+        log(`Для публикации в Instagram необходимо хотя бы одно изображение`, 'social-publishing');
         return {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Для публикации в Instagram необходимо изображение',
+          error: 'Для публикации в Instagram необходимо хотя бы одно изображение',
           userId: content.userId
         };
       }
 
-      // Процесс публикации через Facebook Graph API для Instagram:
-      // 1. Создаем медиа-контейнер
-      // 2. Публикуем медиа из контейнера
-
       const igBusinessId = instagramSettings.businessAccountId;
-      const token = instagramSettings.token;
-      const imageUrl = content.imageUrl;
-
+      
+      // Собираем все изображения для публикации
+      const images = [];
+      
+      // Добавляем основное изображение, если оно есть
+      if (content.imageUrl) {
+        images.push(content.imageUrl);
+      }
+      
+      // Добавляем дополнительные изображения, если они есть
+      if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+        images.push(...content.additionalImages.filter(url => url && typeof url === 'string'));
+      }
+      
+      log(`Подготовлено ${images.length} изображений для публикации в Instagram`, 'social-publishing');
+      
+      // Если у нас несколько изображений, публикуем карусель
+      if (images.length > 1) {
+        return await this.publishInstagramCarousel(content, igBusinessId, token, images, caption);
+      }
+      
+      // Если одно изображение, публикуем как обычный пост
+      const imageUrl = images[0];
+      
       // Шаг 1: Создаем медиа-контейнер
-      log(`Шаг 1: Создание медиа-контейнера для Instagram`, 'social-publishing');
+      log(`Шаг 1: Создание медиа-контейнера для Instagram (одиночное изображение)`, 'social-publishing');
       const createMediaResponse = await axios.post(
         `https://graph.facebook.com/v18.0/${igBusinessId}/media`,
         {
@@ -975,6 +1098,153 @@ export class SocialPublishingService {
    * Получает системный токен для авторизации в Directus
    * @returns Токен авторизации или null, если не удалось получить токен
    */
+  /**
+   * Публикует карусель изображений в Instagram
+   * @param content Контент для публикации
+   * @param igBusinessId ID бизнес-аккаунта Instagram
+   * @param token Токен доступа
+   * @param images Массив URL изображений для публикации
+   * @param caption Подпись к публикации
+   * @returns Результат публикации
+   */
+  private async publishInstagramCarousel(
+    content: CampaignContent,
+    igBusinessId: string, 
+    token: string,
+    images: string[],
+    caption: string
+  ): Promise<SocialPublication> {
+    try {
+      log(`Публикация карусели в Instagram. Контент: ${content.id}, количество изображений: ${images.length}`, 'social-publishing');
+      
+      // Шаг 1: Создаем дочерние медиа-контейнеры для каждого изображения
+      const childrenMediaIds = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const imageUrl = images[i];
+        log(`Создание дочернего контейнера ${i + 1}/${images.length} для изображения: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
+        
+        try {
+          const createMediaResponse = await axios.post(
+            `https://graph.facebook.com/v18.0/${igBusinessId}/media`,
+            {
+              image_url: imageUrl,
+              is_carousel_item: true,
+              access_token: token
+            },
+            {
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+          
+          if (createMediaResponse.data && createMediaResponse.data.id) {
+            childrenMediaIds.push(createMediaResponse.data.id);
+            log(`Дочерний контейнер ${i + 1} создан успешно, ID: ${createMediaResponse.data.id}`, 'social-publishing');
+          } else {
+            log(`Ошибка при создании дочернего контейнера ${i + 1}: Неверный формат ответа`, 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Ошибка при создании дочернего контейнера ${i + 1}: ${error.message}`, 'social-publishing');
+          if (error.response) {
+            log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+        }
+      }
+      
+      // Проверяем, есть ли хотя бы одно изображение для карусели
+      if (childrenMediaIds.length === 0) {
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Не удалось создать ни одного дочернего контейнера для карусели',
+          userId: content.userId
+        };
+      }
+      
+      // Шаг 2: Создаем родительский контейнер для карусели
+      log(`Создание родительского контейнера карусели с ${childrenMediaIds.length} изображениями`, 'social-publishing');
+      const createCarouselResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media`,
+        {
+          media_type: 'CAROUSEL',
+          caption: caption,
+          children: childrenMediaIds,
+          access_token: token
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      
+      if (!createCarouselResponse.data || !createCarouselResponse.data.id) {
+        log(`Ошибка при создании родительского контейнера карусели: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при создании родительского контейнера карусели',
+          userId: content.userId
+        };
+      }
+      
+      const carouselId = createCarouselResponse.data.id;
+      log(`Родительский контейнер карусели создан успешно, ID: ${carouselId}`, 'social-publishing');
+      
+      // Шаг 3: Публикуем карусель
+      log(`Публикация карусели в Instagram`, 'social-publishing');
+      const publishResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igBusinessId}/media_publish`,
+        {
+          creation_id: carouselId,
+          access_token: token
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      
+      if (!publishResponse.data || !publishResponse.data.id) {
+        log(`Ошибка при публикации карусели: Неверный формат ответа`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Ошибка при публикации карусели: Неверный формат ответа',
+          userId: content.userId
+        };
+      }
+      
+      const postId = publishResponse.data.id;
+      log(`Карусель успешно опубликована в Instagram, ID: ${postId}`, 'social-publishing');
+      
+      // Формируем URL публикации
+      const postUrl = `https://www.instagram.com/p/${postId}/`;
+      
+      return {
+        platform: 'instagram',
+        status: 'published',
+        publishedAt: new Date(),
+        postId: postId,
+        postUrl: postUrl,
+        error: null,
+        userId: content.userId
+      };
+    } catch (error: any) {
+      log(`Ошибка при публикации карусели в Instagram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации карусели в Instagram: ${error.message}`,
+        userId: content.userId
+      };
+    }
+  }
+
   private async getSystemToken(): Promise<string | null> {
     try {
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
