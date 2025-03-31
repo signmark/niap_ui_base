@@ -195,6 +195,7 @@ export const campaignContent = pgTable("campaign_content", {
   content: text("content").notNull(),  // Хранится в HTML формате для сохранения форматирования
   contentType: text("content_type").notNull(), // text, text-image, video, video-text
   imageUrl: text("image_url"),
+  additionalImages: text("additional_images").array(), // Массив URL-адресов дополнительных изображений
   videoUrl: text("video_url"),
   prompt: text("prompt"),
   keywords: text("keywords").array(),
@@ -235,6 +236,7 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     content: true,
     contentType: true,
     imageUrl: true,
+    additionalImages: true,
     videoUrl: true,
     prompt: true,
     keywords: true,

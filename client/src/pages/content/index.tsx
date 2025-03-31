@@ -223,6 +223,7 @@ export default function ContentPage() {
     content: "",
     contentType: "text",
     imageUrl: "",
+    additionalImages: [] as string[], // Массив URL-адресов дополнительных изображений
     videoUrl: "",
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
@@ -343,6 +344,7 @@ export default function ContentPage() {
             content: "",
             contentType: "text",
             imageUrl: "",
+            additionalImages: [],
             videoUrl: "",
             prompt: "", // Сохраняем поле prompt
             keywords: []
@@ -712,6 +714,7 @@ export default function ContentPage() {
       content: currentContent.content,
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
+      additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
       videoUrl: currentContent.videoUrl,
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
@@ -1347,26 +1350,86 @@ export default function ContentPage() {
               </div>
             </div>
             {(newContent.contentType === "text-image") && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="imageUrl">URL изображения</Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-1"
-                    onClick={() => setIsImageGenerationDialogOpen(true)}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Сгенерировать изображение
-                  </Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="imageUrl">Основное изображение</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => setIsImageGenerationDialogOpen(true)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Сгенерировать изображение
+                    </Button>
+                  </div>
+                  <Input
+                    id="imageUrl"
+                    placeholder="Введите URL изображения"
+                    value={newContent.imageUrl}
+                    onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                  />
                 </div>
-                <Input
-                  id="imageUrl"
-                  placeholder="Введите URL изображения"
-                  value={newContent.imageUrl}
-                  onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                />
+                
+                {/* Дополнительные изображения */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Дополнительные изображения</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        // Добавляем пустое поле для нового изображения
+                        setNewContent({
+                          ...newContent, 
+                          additionalImages: [...newContent.additionalImages, ""]
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Добавить изображение
+                    </Button>
+                  </div>
+                  
+                  {newContent.additionalImages.length > 0 ? (
+                    <div className="space-y-2">
+                      {newContent.additionalImages.map((imageUrl, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            placeholder="Введите URL изображения"
+                            value={imageUrl}
+                            onChange={(e) => {
+                              const updatedImages = [...newContent.additionalImages];
+                              updatedImages[index] = e.target.value;
+                              setNewContent({...newContent, additionalImages: updatedImages});
+                            }}
+                            className="flex-1"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => {
+                              const updatedImages = [...newContent.additionalImages];
+                              updatedImages.splice(index, 1);
+                              setNewContent({...newContent, additionalImages: updatedImages});
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Нет дополнительных изображений. Нажмите "Добавить изображение" для добавления.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
@@ -1596,33 +1659,98 @@ export default function ContentPage() {
                 </div>
               </div>
               {(currentContent.contentType === "text-image") && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="imageUrl">URL изображения</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      className="flex items-center gap-1"
-                      onClick={() => {
-                        // Открываем диалог генерации изображения для редактирования
-                        setCurrentContentSafe(currentContent);
-                        setIsImageGenerationDialogOpen(true);
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="imageUrl">Основное изображение</Label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() => {
+                          // Открываем диалог генерации изображения для редактирования
+                          setCurrentContentSafe(currentContent);
+                          setIsImageGenerationDialogOpen(true);
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Сгенерировать изображение
+                      </Button>
+                    </div>
+                    <Input
+                      id="imageUrl"
+                      placeholder="Введите URL изображения"
+                      value={currentContent.imageUrl || ""}
+                      onChange={(e) => {
+                        const updatedContent = {...currentContent, imageUrl: e.target.value};
+                        setCurrentContentSafe(updatedContent);
                       }}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Сгенерировать изображение
-                    </Button>
+                    />
                   </div>
-                  <Input
-                    id="imageUrl"
-                    placeholder="Введите URL изображения"
-                    value={currentContent.imageUrl || ""}
-                    onChange={(e) => {
-                      const updatedContent = {...currentContent, imageUrl: e.target.value};
-                      setCurrentContentSafe(updatedContent);
-                    }}
-                  />
+                  
+                  {/* Дополнительные изображения */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label>Дополнительные изображения</Label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Убедимся, что у нас есть массив дополнительных изображений
+                          const currentImages = currentContent.additionalImages || [];
+                          // Добавляем пустое поле для нового изображения
+                          const updatedContent = {
+                            ...currentContent, 
+                            additionalImages: [...currentImages, ""]
+                          };
+                          setCurrentContentSafe(updatedContent);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Добавить изображение
+                      </Button>
+                    </div>
+                    
+                    {Array.isArray(currentContent.additionalImages) && currentContent.additionalImages.length > 0 ? (
+                      <div className="space-y-2">
+                        {currentContent.additionalImages.map((imageUrl, index) => (
+                          <div key={index} className="flex gap-2 items-center">
+                            <Input
+                              placeholder="Введите URL изображения"
+                              value={imageUrl || ""}
+                              onChange={(e) => {
+                                const updatedImages = [...(currentContent.additionalImages || [])];
+                                updatedImages[index] = e.target.value;
+                                const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                setCurrentContentSafe(updatedContent);
+                              }}
+                              className="flex-1"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => {
+                                const updatedImages = [...(currentContent.additionalImages || [])];
+                                updatedImages.splice(index, 1);
+                                const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                setCurrentContentSafe(updatedContent);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Нет дополнительных изображений. Нажмите "Добавить изображение" для добавления.
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
@@ -2171,6 +2299,7 @@ export default function ContentPage() {
             {/* Медиа-контент */}
             {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
               <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
                   src={previewContent.imageUrl}
                   alt={previewContent?.title || "Content Image"}
@@ -2179,6 +2308,31 @@ export default function ContentPage() {
                     (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Image+Error";
                   }}
                 />
+              </div>
+            )}
+            
+            {/* Дополнительные изображения */}
+            {previewContent?.contentType === "text-image" && 
+             Array.isArray(previewContent?.additionalImages) && 
+             previewContent.additionalImages.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-medium mb-2">Дополнительные изображения</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {previewContent.additionalImages.map((imageUrl, index) => (
+                    imageUrl && (
+                      <div key={index} className="overflow-hidden">
+                        <img
+                          src={imageUrl}
+                          alt={`Дополнительное изображение ${index + 1}`}
+                          className="rounded-md max-h-[300px] w-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://placehold.co/400x300?text=Image+Error";
+                          }}
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
               </div>
             )}
             
