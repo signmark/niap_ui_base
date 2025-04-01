@@ -211,11 +211,6 @@ export function KeywordSelector({
         // Оптимистично обновляем локальные состояния
         setExistingKeywords(prev => [...prev, ...selectedKeywords]);
         
-        // Уведомление для пользователя
-        toast({
-          description: `Сохранено ${selectedKeywords.length} новых ключевых слов`
-        });
-        
         // Отправляем данные родительскому компоненту
         // Важно: даже если выбрано только одно ключевое слово, мы передаем его в массиве
         onSelect(selectedKeywords);
