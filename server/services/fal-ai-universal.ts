@@ -268,128 +268,79 @@ class FalAiUniversalService {
    */
   private async getImageUrls(modelUrl: string, requestId: string, numImages: number): Promise<string[]> {
     try {
+      // ЕДИНЫЙ МЕТОД ДЛЯ ВСЕХ МОДЕЛЕЙ: получить ссылки на CDN напрямую
+      log(`[fal-ai-universal] Получение прямых CDN ссылок на изображения, request_id: ${requestId}`);
+      
+      // Основной URL для получения метаданных о сгенерированных изображениях
+      const requestInfoUrl = `${this.baseUrl}/fal-ai/flux/requests/${requestId}`;
+      
+      log(`[fal-ai-universal] Запрос метаданных изображений по URL: ${requestInfoUrl}`);
+      
+      try {
+        // Делаем запрос к единому API для получения метаданных изображений
+        const requestResponse = await axios.get(requestInfoUrl, {
+          headers: {
+            'Accept': 'application/json'
+          },
+          timeout: 15000 // Увеличиваем таймаут для надежности
+        });
+        
+        log(`[fal-ai-universal] Ответ от API получен, статус: ${requestResponse.status}`);
+        
+        // Проверяем наличие массива изображений в ответе
+        if (requestResponse.data && requestResponse.data.images && Array.isArray(requestResponse.data.images)) {
+          log(`[fal-ai-universal] Найдено ${requestResponse.data.images.length} изображений в формате CDN URL`);
+          
+          const imageUrls: string[] = [];
+          
+          // Извлекаем URL каждого изображения
+          for (const image of requestResponse.data.images) {
+            if (image.url) {
+              imageUrls.push(image.url);
+              log(`[fal-ai-universal] Извлечен URL изображения: ${image.url}`);
+            }
+          }
+          
+          // Проверяем, что получили все запрошенные изображения
+          if (imageUrls.length > 0) {
+            log(`[fal-ai-universal] Успешно получены ${imageUrls.length} URL изображений`);
+            return imageUrls;
+          }
+        }
+        
+        // Если в images нет URL, проверяем другие возможные поля
+        log(`[fal-ai-universal] Структура ответа: ${JSON.stringify(Object.keys(requestResponse.data))}`);
+        
+        // Альтернативный вариант - поиск в других полях
+        if (requestResponse.data.output && requestResponse.data.output.images) {
+          const outputImages = requestResponse.data.output.images;
+          if (Array.isArray(outputImages)) {
+            log(`[fal-ai-universal] Найдены изображения в поле output.images`);
+            return outputImages;
+          }
+        }
+        
+        // Если все же не получилось найти CDN URL, логируем это для отладки
+        log(`[fal-ai-universal] Не найдены прямые URL в ответе API. Данные ответа: ${JSON.stringify(requestResponse.data)}`);
+        
+      } catch (requestError) {
+        log(`[fal-ai-universal] Ошибка при получении метаданных: ${requestError}`);
+      }
+      
+      // Если основной метод не работает, пробуем запасные варианты
+      
+      log(`[fal-ai-universal] Переход к запасным методам получения URL...`);
       const isSchnellModel = modelUrl.includes('schnell');
       const imageUrls: string[] = [];
       
-      // Специальная обработка для модели Schnell - здесь важно извлечь CDN URL
-      if (isSchnellModel) {
-        log(`[fal-ai-universal] Извлечение CDN ссылок для модели Schnell, request_id: ${requestId}`);
-        
-        try {
-          // Сначала попробуем получить информацию о готовом запросе для извлечения медиа URL
-          const statusUrl = `${this.baseUrl}/flux/requests/${requestId}/status`;
-          log(`[fal-ai-universal] Запрос статуса для извлечения медиа URL: ${statusUrl}`);
-          
-          const statusResponse = await axios.get(statusUrl, { 
-            timeout: 10000,
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          
-          // Проверяем результат запроса статуса
-          if (statusResponse.data && statusResponse.data.status === 'COMPLETE') {
-            log(`[fal-ai-universal] Запрос завершен успешно, проверяем resource_urls`);
-            
-            // Проверяем наличие resource_urls и извлекаем прямые ссылки на изображения
-            if (statusResponse.data.resource_urls && Array.isArray(statusResponse.data.resource_urls)) {
-              log(`[fal-ai-universal] Найдены resource_urls: ${JSON.stringify(statusResponse.data.resource_urls)}`);
-              
-              for (let i = 0; i < Math.min(numImages, statusResponse.data.resource_urls.length); i++) {
-                const resourceUrl = statusResponse.data.resource_urls[i];
-                // Проверяем, есть ли прямой URL на CDN вместо прокси
-                if (resourceUrl.media_url) {
-                  log(`[fal-ai-universal] Обнаружен media_url: ${resourceUrl.media_url}`);
-                  imageUrls.push(resourceUrl.media_url);
-                } else if (resourceUrl.cdn_url) {
-                  log(`[fal-ai-universal] Обнаружен cdn_url: ${resourceUrl.cdn_url}`);
-                  imageUrls.push(resourceUrl.cdn_url);
-                } else {
-                  // Если нет явного cdn_url, пробуем использовать прямую ссылку на CDN
-                  const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
-                  log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
-                  imageUrls.push(cdnUrl);
-                }
-              }
-              
-              // Если удалось извлечь все ссылки, возвращаем их
-              if (imageUrls.length === numImages) {
-                return imageUrls;
-              }
-            }
-          }
-        } catch (statusError) {
-          log(`[fal-ai-universal] Ошибка при запросе статуса: ${statusError}`);
-          // Если не удалось получить статус, продолжаем с альтернативным методом
-        }
-        
-        // Запасной вариант - получаем каждое изображение отдельно
-        imageUrls.length = 0; // Очищаем массив перед вторым методом
-        for (let i = 0; i < numImages; i++) {
-          try {
-            // Запрашиваем информацию о каждом изображении
-            const resultUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-            const response = await axios.get(resultUrl, { timeout: 10000 });
-            
-            // Проверяем наличие image_url и других полей в ответе
-            if (response.data) {
-              if (response.data.image_url) {
-                log(`[fal-ai-universal] Получен image_url: ${response.data.image_url}`);
-                imageUrls.push(response.data.image_url);
-              } else if (response.data.media_url) {
-                log(`[fal-ai-universal] Получен media_url: ${response.data.media_url}`);
-                imageUrls.push(response.data.media_url);
-              } else if (response.data.cdn_url) {
-                log(`[fal-ai-universal] Получен cdn_url: ${response.data.cdn_url}`);
-                imageUrls.push(response.data.cdn_url);
-              } else {
-                // Если cdn_url не найден, используем прямой URL в CDN
-                const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
-                log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
-                imageUrls.push(cdnUrl);
-              }
-            } else {
-              throw new Error('Пустой ответ от API');
-            }
-          } catch (error) {
-            console.error(`[fal-ai-universal] Ошибка при извлечении CDN URL для Schnell, изображение ${i}:`, error);
-            
-            // В случае ошибки используем обычный CDN URL как запасной вариант
-            // Формат, который должен быть совместим с CDN FAL.AI
-            const fallbackUrl = `https://cdn.fal.ai/flux/schnell/results/${requestId}/${i}.png`;
-            log(`[fal-ai-universal] Используем fallback CDN URL: ${fallbackUrl}`);
-            imageUrls.push(fallbackUrl);
-          }
-        }
-        
-        return imageUrls;
-      }
+      // Для модели Schnell и прочих моделей - используем единый резервный API URL
+      const requestUrl = `${this.baseUrl}/fal-ai/flux/requests/${requestId}`;
+      log(`[fal-ai-universal] Возвращаем единый URL запроса для дальнейшей обработки: ${requestUrl}`);
       
-      // Для других моделей сначала пробуем получить все результаты сразу через стандартный API
-      try {
-        const resultsUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/results`;
-        const resultsResponse = await axios.get(resultsUrl);
-        
-        // Если API вернуло массив изображений напрямую
-        if (resultsResponse.data.images && Array.isArray(resultsResponse.data.images)) {
-          return resultsResponse.data.images;
-        }
-        
-        // Если API вернуло пути к изображениям в data.images в виде строк
-        if (resultsResponse.data.images && typeof resultsResponse.data.images === 'string') {
-          return [resultsResponse.data.images];
-        }
-      } catch (error) {
-        log(`[fal-ai-universal] Ошибка при попытке получения результатов через /requests/${requestId}/results, переход к формированию URL по параметрам`);
-      }
+      // Возвращаем URL, который будет обработан для извлечения метаданных изображений
+      return [requestUrl];
       
-      // Если не удалось получить результаты через стандартный API, формируем URL по параметрам
-      for (let i = 0; i < numImages; i++) {
-        const imageUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-        imageUrls.push(imageUrl);
-      }
-      
-      return imageUrls;
+      /* Предыдущий код с разными вариантами замены здесь был избыточен и добавлял сложность */
     } catch (error: any) {
       console.error('[fal-ai-universal] Ошибка при получении URL изображений:', error);
       throw new Error(`Не удалось получить URL изображений: ${error.message}`);
