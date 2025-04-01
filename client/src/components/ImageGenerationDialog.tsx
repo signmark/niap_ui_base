@@ -551,12 +551,30 @@ export function ImageGenerationDialog({
       
       console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
       
-      // Устанавливаем увеличенный таймаут для запроса
-      const response = await api.post("/generate-image", requestData, {
-        timeout: 300000 // 5 минут таймаут
-      });
+      // Для модели Schnell добавляем специальную обработку
+      if (requestData.modelName === 'schnell') {
+        console.log("🔍 Обнаружена модель Schnell, используем специализированную обработку API");
+      }
       
-      return response.data;
+      // Устанавливаем увеличенный таймаут для запроса
+      try {
+        const response = await api.post("/generate-image", requestData, {
+          timeout: 300000 // 5 минут таймаут
+        });
+        
+        console.log(`API ответ для модели ${requestData.modelName}:`, JSON.stringify(response.data).substring(0, 200));
+        return response.data;
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Ошибка при запросе к API для модели ${requestData.modelName}:`, errorMessage);
+        
+        // Если это ошибка таймаута - выводим понятное сообщение
+        if (errorMessage.includes('timeout')) {
+          throw new Error(`Превышено время ожидания ответа от сервера при генерации изображений. Попробуйте уменьшить количество изображений или использовать другую модель.`);
+        }
+        
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('Ответ от API генерации изображений:', JSON.stringify(data).substring(0, 100) + '...');
