@@ -20,6 +20,7 @@ import AuthBypass from "@/pages/test/auth-bypass";
 import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
+import UniversalImageGenTest from "@/pages/test/universal-image-gen";
 import TestPage from "@/pages/test/index";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
       <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
       <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
+      <Route path="/test/universal-image-gen" component={() => <Layout><UniversalImageGenTest /></Layout>} />
       <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />

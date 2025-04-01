@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
+import { falAiUniversalService } from './services/fal-ai-universal';
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
@@ -56,6 +58,11 @@ app.use((req, res, next) => {
     log("Registering XMLRiver API routes...");
     registerXmlRiverRoutes(app);
     log("XMLRiver API routes registered successfully");
+    
+    // Регистрируем универсальный интерфейс для моделей FAL.AI
+    log("Registering FAL.AI Universal Image Generation routes...");
+    registerFalAiImageRoutes(app);
+    log("FAL.AI Universal Image Generation routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
