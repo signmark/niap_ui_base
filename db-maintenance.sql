@@ -196,6 +196,44 @@ CREATE TABLE IF NOT EXISTS business_questionnaire (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Создание таблицы ключевых слов кампании
+CREATE TABLE IF NOT EXISTS campaign_keywords (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL REFERENCES user_campaigns(id) ON DELETE CASCADE,
+  keyword VARCHAR(255) NOT NULL,
+  trend_score VARCHAR(20) DEFAULT '0',
+  mentions_count INT DEFAULT 0,
+  last_checked TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  date_created TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Создание уникального индекса для проверки дубликатов ключевых слов с учетом регистра
+CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_keywords_unique_keyword 
+ON campaign_keywords(campaign_id, LOWER(keyword));
+
+-- Создание триггерной функции для проверки уникальности ключевых слов
+CREATE OR REPLACE FUNCTION check_keyword_uniqueness()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM campaign_keywords 
+    WHERE campaign_id = NEW.campaign_id 
+    AND LOWER(keyword) = LOWER(NEW.keyword)
+    AND id != NEW.id
+  ) THEN
+    RAISE EXCEPTION 'Дубликат ключевого слова: "%". Такое ключевое слово уже существует в данной кампании.', NEW.keyword;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Создание триггера для проверки уникальности ключевых слов
+DROP TRIGGER IF EXISTS check_keyword_uniqueness_trigger ON campaign_keywords;
+CREATE TRIGGER check_keyword_uniqueness_trigger
+BEFORE INSERT OR UPDATE ON campaign_keywords
+FOR EACH ROW
+EXECUTE FUNCTION check_keyword_uniqueness();
+
 -- =======================================
 -- 6. ИНДЕКСЫ ДЛЯ ОПТИМИЗАЦИИ ЗАПРОСОВ
 -- =======================================
