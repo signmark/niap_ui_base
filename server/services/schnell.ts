@@ -126,11 +126,23 @@ export class SchnellService {
         // Создаем URL для каждого запрошенного изображения на основе request_id
         const imageUrls = [];
         
-        // Для Schnell достаточно использовать сам request_id как базовый URL изображения
-        const baseImageUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
-        imageUrls.push(baseImageUrl);
-        
-        log(`Created direct image URL from request_id: ${baseImageUrl}`, 'schnell');
+        // Если запросили несколько изображений (numImages > 1), создаем URL-ы с индексами
+        if (numImages > 1) {
+          log(`Generating ${numImages} CDN URLs using request_id template`, 'schnell');
+          
+          // Создаем URL-ы для каждого из запрошенных изображений по шаблону FAL.AI CDN
+          for (let i = 0; i < numImages; i++) {
+            // URL шаблон FAL CDN для Schnell модели
+            const imageUrl = `https://fal-cdn.fal.ai/result/${requestId}_${i}.jpeg`;
+            imageUrls.push(imageUrl);
+            log(`Generated image URL ${i+1}/${numImages}: ${imageUrl}`, 'schnell');
+          }
+        } else {
+          // Для одного изображения используем базовый URL с request_id
+          const baseImageUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+          imageUrls.push(baseImageUrl);
+          log(`Created direct image URL from request_id: ${baseImageUrl}`, 'schnell');
+        }
         
         return imageUrls;
       }
