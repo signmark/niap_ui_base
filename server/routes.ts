@@ -3,6 +3,7 @@ import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
+import { schnellService } from './services/schnell';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -2017,8 +2018,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Используем специальную модель Fooocus');
         model = 'fal-ai/fooocus';
       } else if (model === 'schnell') {
-        console.log('Используем специальную модель Schnell');
-        model = 'flux/schnell';
+        console.log('Используем специальную модель Schnell через выделенный сервис');
+        // Для Schnell будем использовать отдельный сервис, поэтому сейчас просто запомним выбор модели
+        // Но не меняем значение model, что позволит нам отличить эту модель в дальнейшем коде
       } else if (model === 'fast-sdxl') {
         console.log('Используем модель Fast-SDXL для быстрой генерации');
         model = 'fal-ai/fast-sdxl';
@@ -2109,167 +2111,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Делаем запрос к FAL.AI API напрямую
+      // Обработка в зависимости от выбранной модели
       try {
-        console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
-        
-        // Прямой запрос к API fal.ai
-        // Используем разные форматы URL в зависимости от модели
-        // Унифицированная логика формирования URL
-        let apiUrl = "";
-        if (model.includes('fal-ai/')) {
-          // Модель уже содержит префикс
-          apiUrl = `https://queue.fal.run/${model}`;
-        } else {
-          // Добавляем префикс
-          apiUrl = `https://queue.fal.run/fal-ai/${model}`;
-        }
-        
-        console.log(`URL запроса: ${apiUrl}`);
-        console.log(`Данные запроса: ${JSON.stringify(requestData).substring(0, 200)}`);
-        
-        const response = await axios.post(
-          apiUrl,
-          requestData,
-          {
-            headers: {
-              'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            timeout: 180000 // 3 минуты таймаут
-          }
-        );
-        
-        // Обрабатываем ответ API
-        console.log(`Статус ответа: ${response.status}`);
-        console.log(`Заголовки ответа: ${JSON.stringify(response.headers)}`);
-        console.log(`Тип данных ответа: ${typeof response.data}`);
-        
-        // Проверяем тип ответа и обрабатываем соответственно
-        // Если запрос поставлен в очередь, создаем поллинг для получения результата
-        if (response.data && response.data.status === 'IN_QUEUE' && response.data.status_url) {
-          console.log(`Запрос поставлен в очередь, ID запроса: ${response.data.request_id}`);
+        // Если выбрана модель Schnell, используем специализированный сервис
+        if (modelName === 'schnell') {
+          console.log('Используем специализированный сервис для модели Schnell');
           
-          // Функция для ожидания завершения генерации
-          const waitForResult = async (statusUrl: string): Promise<any> => {
-            console.log(`Проверяем статус по URL: ${statusUrl}`);
-            let maxAttempts = 60; // Максимальное число попыток (3 минуты при интервале в 3 секунды)
-            let attempt = 0;
-            
-            while (attempt < maxAttempts) {
-              const statusResponse = await axios.get(statusUrl, {
-                headers: {
-                  'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
-                  'Accept': 'application/json'
-                }
-              });
-              
-              const status = statusResponse.data?.status;
-              console.log(`Текущий статус: ${status}, попытка ${attempt + 1}/${maxAttempts}`);
-              
-              if (status === 'COMPLETED' && statusResponse.data.response_url) {
-                // Получаем результат
-                const resultResponse = await axios.get(statusResponse.data.response_url, {
-                  headers: {
-                    'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
-                    'Accept': 'application/json'
-                  }
-                });
-                return resultResponse.data;
-              } else if (status === 'FAILED' || status === 'CANCELED') {
-                throw new Error(`Генерация изображения не удалась: ${status}`);
-              }
-              
-              // Если все еще в обработке, ждем и продолжаем проверять
-              await new Promise(resolve => setTimeout(resolve, 3000)); // 3 секунды
-              attempt++;
-            }
-            
-            throw new Error('Время ожидания генерации изображения истекло');
+          // Инициализируем schnellService API ключом пользователя
+          schnellService.updateApiKey(falAiApiKey);
+          
+          // Подготавливаем параметры для генерации изображений
+          const schnellOptions = {
+            prompt: requestData.prompt,
+            negativePrompt: requestData.negative_prompt,
+            width: requestData.width,
+            height: requestData.height,
+            numImages: requestData.num_images,
+            stylePreset: requestData.style_preset,
+            savePrompt: savePrompt,
+            contentId: contentId,
+            campaignId: campaignId
           };
           
-          // Ожидаем результат генерации
-          const result = await waitForResult(response.data.status_url);
-          console.log(`Получен результат: ${typeof result === 'object' ? JSON.stringify(result).substring(0, 200) : 'не объект'}`);
+          console.log(`Отправляем запрос к Schnell модели с параметрами: ${JSON.stringify(schnellOptions).substring(0, 200)}`);
           
-          // Извлекаем URL изображений из результата
-          let imageUrls: string[] = [];
-          
-          if (result.images && Array.isArray(result.images)) {
-            imageUrls = result.images;
-          } else if (result.image) {
-            imageUrls = [result.image];
-          } else if (result.output && Array.isArray(result.output)) {
-            imageUrls = result.output;
-          } else {
-            console.error(`Неизвестный формат результата: ${JSON.stringify(result).substring(0, 200)}`);
-            throw new Error('Не удалось получить URL изображений из результата');
-          }
-          
-          // Сохраняем промт, если указан флаг savePrompt и есть contentId
-          if (savePrompt && contentId && requestData.prompt) {
-            try {
-              console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
-              
-              // Сохраняем промт в базу данных через storage
-              if (storage.updateCampaignContent) {
-                await storage.updateCampaignContent(contentId, {
-                  prompt: requestData.prompt
-                });
-                console.log(`Промт успешно сохранен для контента ${contentId}`);
-              } else {
-                console.warn("Метод сохранения промта не реализован в storage");
+          // Используем специализированный сервис для Schnell модели
+          try {
+            const imageUrls = await schnellService.generateImages(schnellOptions);
+            
+            console.log(`Получено ${imageUrls.length} изображений от Schnell модели`);
+            
+            // Сохраняем промт, если указан флаг savePrompt и есть contentId
+            if (savePrompt && contentId && requestData.prompt) {
+              try {
+                console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+                
+                // Сохраняем промт в базу данных через storage
+                if (storage.updateCampaignContent) {
+                  await storage.updateCampaignContent(contentId, {
+                    prompt: requestData.prompt
+                  });
+                  console.log(`Промт успешно сохранен для контента ${contentId}`);
+                } else {
+                  console.warn("Метод сохранения промта не реализован в storage");
+                }
+              } catch (promptError: any) {
+                console.error(`Ошибка при сохранении промта: ${promptError.message}`);
+                // Продолжаем выполнение даже при ошибке сохранения промта
               }
-            } catch (promptError) {
-              console.error(`Ошибка при сохранении промта: ${promptError}`);
-              // Продолжаем выполнение даже при ошибке сохранения промта
             }
+            
+            return res.json({
+              success: true,
+              data: imageUrls
+            });
+          } catch (schnellError: any) {
+            console.error(`Ошибка при генерации изображений через Schnell сервис: ${schnellError.message}`);
+            throw new Error(`Ошибка Schnell модели: ${schnellError.message}`);
           }
-          
-          return res.json({
-            success: true,
-            data: imageUrls
-          });
         } else {
-          // Если запрос обработан мгновенно (редкий случай)
-          let imageUrls: string[] = [];
+          // Для остальных моделей используем стандартную обработку через прямой API запрос
+          console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
           
-          if (response.data.images && Array.isArray(response.data.images)) {
-            imageUrls = response.data.images;
-          } else if (response.data.image) {
-            imageUrls = [response.data.image];
-          } else if (response.data.output && Array.isArray(response.data.output)) {
-            imageUrls = response.data.output;
+          // Прямой запрос к API fal.ai
+          // Используем разные форматы URL в зависимости от модели
+          // Унифицированная логика формирования URL
+          let apiUrl = "";
+          if (model.includes('fal-ai/')) {
+            // Модель уже содержит префикс
+            apiUrl = `https://queue.fal.run/${model}`;
           } else {
-            console.error(`Неизвестный формат мгновенного результата: ${JSON.stringify(response.data).substring(0, 200)}`);
-            throw new Error('Не удалось получить URL изображений из мгновенного результата');
+            // Добавляем префикс
+            apiUrl = `https://queue.fal.run/fal-ai/${model}`;
           }
           
-          // Сохраняем промт, если указан флаг savePrompt и есть contentId
-          if (savePrompt && contentId && requestData.prompt) {
-            try {
-              console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+          // Обрабатываем ответ API для стандартных моделей
+          const handleApiResponse = async (response: any) => {
+            console.log(`Статус ответа: ${response.status}`);
+            console.log(`Заголовки ответа: ${JSON.stringify(response.headers)}`);
+            console.log(`Тип данных ответа: ${typeof response.data}`);
+            
+            // Проверяем тип ответа и обрабатываем соответственно
+            // Если запрос поставлен в очередь, создаем поллинг для получения результата
+            if (response.data && response.data.status === 'IN_QUEUE' && response.data.status_url) {
+              console.log(`Запрос поставлен в очередь, ID запроса: ${response.data.request_id}`);
               
-              // Сохраняем промт в базу данных через storage
-              if (storage.updateCampaignContent) {
-                await storage.updateCampaignContent(contentId, {
-                  prompt: requestData.prompt
-                });
-                console.log(`Промт успешно сохранен для контента ${contentId}`);
+              // Функция для ожидания завершения генерации
+              const waitForResult = async (statusUrl: string): Promise<any> => {
+                console.log(`Проверяем статус по URL: ${statusUrl}`);
+                let maxAttempts = 60; // Максимальное число попыток (3 минуты при интервале в 3 секунды)
+                let attempt = 0;
+                
+                while (attempt < maxAttempts) {
+                  const statusResponse = await axios.get(statusUrl, {
+                    headers: {
+                      'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
+                      'Accept': 'application/json'
+                    }
+                  });
+                  
+                  const status = statusResponse.data?.status;
+                  console.log(`Текущий статус: ${status}, попытка ${attempt + 1}/${maxAttempts}`);
+                  
+                  if (status === 'COMPLETED' && statusResponse.data.response_url) {
+                    // Получаем результат
+                    const resultResponse = await axios.get(statusResponse.data.response_url, {
+                      headers: {
+                        'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
+                        'Accept': 'application/json'
+                      }
+                    });
+                    return resultResponse.data;
+                  } else if (status === 'FAILED' || status === 'CANCELED') {
+                    throw new Error(`Генерация изображения не удалась: ${status}`);
+                  }
+                  
+                  // Если все еще в обработке, ждем и продолжаем проверять
+                  await new Promise(resolve => setTimeout(resolve, 3000)); // 3 секунды
+                  attempt++;
+                }
+                
+                throw new Error('Время ожидания генерации изображения истекло');
+              };
+              
+              // Ожидаем результат генерации
+              const result = await waitForResult(response.data.status_url);
+              console.log(`Получен результат: ${typeof result === 'object' ? JSON.stringify(result).substring(0, 200) : 'не объект'}`);
+              
+              // Извлекаем URL изображений из результата
+              let imageUrls: string[] = [];
+              
+              if (result.images && Array.isArray(result.images)) {
+                imageUrls = result.images;
+              } else if (result.image) {
+                imageUrls = [result.image];
+              } else if (result.output && Array.isArray(result.output)) {
+                imageUrls = result.output;
               } else {
-                console.warn("Метод сохранения промта не реализован в storage");
+                console.error(`Неизвестный формат результата: ${JSON.stringify(result).substring(0, 200)}`);
+                throw new Error('Не удалось получить URL изображений из результата');
               }
-            } catch (promptError) {
-              console.error(`Ошибка при сохранении промта: ${promptError}`);
-              // Продолжаем выполнение даже при ошибке сохранения промта
+              
+              // Сохраняем промт, если указан флаг savePrompt и есть contentId
+              if (savePrompt && contentId && requestData.prompt) {
+                try {
+                  console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+                  
+                  // Сохраняем промт в базу данных через storage
+                  if (storage.updateCampaignContent) {
+                    await storage.updateCampaignContent(contentId, {
+                      prompt: requestData.prompt
+                    });
+                    console.log(`Промт успешно сохранен для контента ${contentId}`);
+                  } else {
+                    console.warn("Метод сохранения промта не реализован в storage");
+                  }
+                } catch (promptError) {
+                  console.error(`Ошибка при сохранении промта: ${promptError}`);
+                  // Продолжаем выполнение даже при ошибке сохранения промта
+                }
+              }
+              
+              return res.json({
+                success: true,
+                data: imageUrls
+              });
+            } else {
+              // Если запрос обработан мгновенно (редкий случай)
+              let imageUrls: string[] = [];
+              
+              if (response.data.images && Array.isArray(response.data.images)) {
+                imageUrls = response.data.images;
+              } else if (response.data.image) {
+                imageUrls = [response.data.image];
+              } else if (response.data.output && Array.isArray(response.data.output)) {
+                imageUrls = response.data.output;
+              } else {
+                console.error(`Неизвестный формат мгновенного результата: ${JSON.stringify(response.data).substring(0, 200)}`);
+                throw new Error('Не удалось получить URL изображений из мгновенного результата');
+              }
+              
+              // Сохраняем промт, если указан флаг savePrompt и есть contentId
+              if (savePrompt && contentId && requestData.prompt) {
+                try {
+                  console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
+                  
+                  // Сохраняем промт в базу данных через storage
+                  if (storage.updateCampaignContent) {
+                    await storage.updateCampaignContent(contentId, {
+                      prompt: requestData.prompt
+                    });
+                    console.log(`Промт успешно сохранен для контента ${contentId}`);
+                  } else {
+                    console.warn("Метод сохранения промта не реализован в storage");
+                  }
+                } catch (promptError) {
+                  console.error(`Ошибка при сохранении промта: ${promptError}`);
+                  // Продолжаем выполнение даже при ошибке сохранения промта
+                }
+              }
+              
+              return res.json({
+                success: true,
+                data: imageUrls
+              });
             }
-          }
+          };
           
-          return res.json({
-            success: true,
-            data: imageUrls
-          });
+          console.log(`URL запроса: ${apiUrl}`);
+          console.log(`Данные запроса: ${JSON.stringify(requestData).substring(0, 200)}`);
+          
+          const response = await axios.post(
+            apiUrl,
+            requestData,
+            {
+              headers: {
+                'Authorization': falAiApiKey, // falAiApiKey уже форматирован выше с префиксом "Key " при необходимости
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              timeout: 180000 // 3 минуты таймаут
+            }
+          );
+          
+          // Вызываем функцию обработки ответа
+          return handleApiResponse(response);
         }
       } catch (apiError: any) {
         console.error(`Ошибка при запросе к FAL.AI API: ${apiError.message}`);
