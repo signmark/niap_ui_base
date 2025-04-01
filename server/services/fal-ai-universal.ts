@@ -105,45 +105,33 @@ class FalAiUniversalService {
   private getModelRequestParams(params: ImageGenerationParams, modelId: string): any {
     const { prompt, negativePrompt = '', width = 1024, height = 1024, numImages = 1 } = params;
     
-    // Базовые параметры, общие для большинства моделей
+    // Базовые параметры, общие для всех моделей
     const baseParams = {
       prompt,
       negative_prompt: negativePrompt,
       width,
       height,
-      num_images: numImages
+      num_images: numImages,
+      guidance_scale: 7.5,
+      scheduler: 'K_EULER',
+      num_inference_steps: 10  // Единое значение 10 шагов для всех моделей, предотвращает ошибки в Schnell и ускоряет работу
     };
     
-    // Адаптируем параметры для конкретных моделей
+    // Адаптируем параметры для конкретных моделей, но сохраняем единое значение num_inference_steps
     switch (modelId) {
       case 'schnell':
-        return {
-          ...baseParams,
-          guidance_scale: 7.5,
-          scheduler: 'K_EULER',
-          num_inference_steps: 10  // Ограничиваем до 10 шагов для совместимости с API Schnell
-          // Удаляем специальные флаги для универсальности обработки всех моделей
-        };
+        return baseParams; // Используем базовые параметры для Schnell без изменений
       
       case 'sdxl':
-        return {
-          ...baseParams,
-          guidance_scale: 7.5,
-          scheduler: 'K_EULER',
-          num_inference_steps: 30
-        };
+        return baseParams; // Используем базовые параметры для SDXL
       
       case 'fast-sdxl':
-        return {
-          ...baseParams,
-          guidance_scale: 7.5,
-          num_inference_steps: 25
-        };
+        return baseParams; // Используем базовые параметры для Fast SDXL
       
       case 'fooocus':
         return {
           ...baseParams,
-          style_selections: ['cinematic']
+          style_selections: ['cinematic'] // Только для Fooocus добавляем специфичный параметр
         };
       
       default:
