@@ -93,6 +93,7 @@ export function ImageGenerationDialog({
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
+    // Устанавливаем fast-sdxl как модель по умолчанию, исключая Schnell из списка
     setModelType("fast-sdxl");
     setStylePreset("photographic");
     setNumImages(3);
@@ -825,7 +826,6 @@ export function ImageGenerationDialog({
             <SelectContent>
               <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
               <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Flux (Schnell)</SelectItem>
               <SelectItem value="sdxl">SDXL</SelectItem>
             </SelectContent>
           </Select>
@@ -1044,7 +1044,7 @@ export function ImageGenerationDialog({
           <div className="space-y-1">
             <Label className="text-xs font-semibold">Доступные модели FAL.AI</Label>
             <div className="grid grid-cols-1 gap-2 mt-1">
-              {['fast-sdxl', 'fooocus', 'schnell', 'sdxl', 'lcm'].map((model) => (
+              {['fast-sdxl', 'fooocus', 'sdxl', 'lcm'].map((model) => (
                 <div 
                   key={model}
                   className={`p-2 border rounded-md cursor-pointer hover:bg-gray-50 ${modelType === model ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
@@ -1056,7 +1056,6 @@ export function ImageGenerationDialog({
                       <p className="text-xs text-muted-foreground">
                         {model === 'fast-sdxl' ? 'Быстрая генерация, хорошее качество' : 
                          model === 'fooocus' ? 'Художественная, детализированная' : 
-                         model === 'schnell' ? 'Flux AI, быстрая генерация' : // Правильное описание для Flux
                          model === 'sdxl' ? 'Высокое качество, медленнее' : 
                          model === 'lcm' ? 'Самая быстрая, среднее качество' : 
                          'Стандартная модель'}
