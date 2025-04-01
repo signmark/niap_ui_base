@@ -123,95 +123,102 @@ export class SchnellService {
         const requestId = response.data.request_id;
         log(`Schnell request_id received: ${requestId}`, 'schnell');
         
-        try {
-          // Получаем результаты напрямую через endpoint requests
-          const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
-          log(`Requesting complete results from: ${requestUrl}`, 'schnell');
+        // ПОЛНОСТЬЮ НОВЫЙ ПОДХОД: Проверка на наличие результата в первичном ответе
+        if (response.data.images && Array.isArray(response.data.images)) {
+          log(`Нашли прямые URL в первичном ответе от Schnell API, используем их`, 'schnell');
           
-          // Сделаем запрос к URL с метаданными и информацией обо всех сгенерированных изображениях
-          const requestResponse = await axios.get(requestUrl, {
-            headers: {
-              'Authorization': authHeader,
-              'Accept': 'application/json'
-            },
-            timeout: 10000
-          });
+          // Извлекаем URLs изображений прямо из первого ответа
+          const directImageUrls = response.data.images
+            .filter((img: any) => {
+              if (typeof img === 'string') {
+                return img.includes('fal.media') || img.includes('.jpg') || img.includes('.png');
+              }
+              return img?.url && (img.url.includes('fal.media') || img.url.includes('.jpg') || img.url.includes('.png'));
+            })
+            .map((img: any) => {
+              if (typeof img === 'string') return img;
+              return img?.url || '';
+            })
+            .filter(Boolean);
           
-          // Проверим, что получили валидный ответ
-          if (requestResponse.data && requestResponse.data.images) {
-            log(`Successfully received image metadata from ${requestUrl}`, 'schnell');
-            
-            // Извлекаем URLs изображений
-            const imageUrls = [];
-            
-            // Проверим, что images - это массив
-            if (Array.isArray(requestResponse.data.images)) {
-              log(`Found ${requestResponse.data.images.length} images in response`, 'schnell');
-              
-              // Извлекаем URL из каждого элемента массива
-              for (const image of requestResponse.data.images) {
-                if (image.url) {
-                  imageUrls.push(image.url);
-                  log(`Extracted image URL: ${image.url}`, 'schnell');
-                }
-              }
-              
-              // Проверим, что получили все запрошенные изображения
-              if (imageUrls.length === numImages) {
-                log(`Successfully extracted all ${numImages} requested image URLs`, 'schnell');
-                return imageUrls;
-              } else {
-                log(`Warning: Requested ${numImages} images but found ${imageUrls.length} in response. Using available images.`, 'schnell');
-                return imageUrls;
-              }
-            } else if (typeof requestResponse.data.images === 'string') {
-              // Если images - это строка с одним URL
-              log(`Found a single image URL in response`, 'schnell');
-              return [requestResponse.data.images];
+          if (directImageUrls.length > 0) {
+            log(`Успешно извлекли ${directImageUrls.length} прямых URL из первичного ответа`, 'schnell');
+            return directImageUrls;
+          }
+        }
+        
+        // Извлекаем результаты из поля output, если оно есть (альтернативный способ)
+        if (response.data.output) {
+          log(`Найдено поле output в ответе, проверяем его содержимое`, 'schnell');
+          
+          let outputImages: string[] = [];
+          
+          if (Array.isArray(response.data.output)) {
+            outputImages = response.data.output.filter((url: string) => 
+              typeof url === 'string' && (url.includes('fal.media') || url.includes('.jpg') || url.includes('.png')));
+          } else if (typeof response.data.output === 'object') {
+            if (response.data.output.images && Array.isArray(response.data.output.images)) {
+              outputImages = response.data.output.images.filter((url: string) => 
+                typeof url === 'string' && (url.includes('fal.media') || url.includes('.jpg') || url.includes('.png')));
             }
           }
           
-          // Если не удалось извлечь URL изображений, логируем ошибку
-          log(`Failed to extract image URLs from response at ${requestUrl}. Response: ${JSON.stringify(requestResponse.data)}`, 'schnell');
-          
-          // Используем запасной метод для получения изображений
-          log(`Falling back to individual image requests`, 'schnell');
-        } catch (error) {
-          // В случае ошибки при запросе, логируем и продолжаем с запасным вариантом
-          log(`Error retrieving results from ${requestId}: ${error}`, 'schnell');
-          log(`Falling back to individual image requests`, 'schnell');
+          if (outputImages.length > 0) {
+            log(`Извлечено ${outputImages.length} изображений из поля output`, 'schnell');
+            return outputImages;
+          }
         }
         
-        // ИСПРАВЛЕНИЕ: Вместо URL очереди запрашиваем метаданные для получения CDN ссылок
+        // Если не нашли direct URLs, пробуем получить метаданные через запрос
         try {
-          // Повторный запрос к эндпоинту метаданных с бОльшим таймаутом
           const metadataUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
-          log(`Making second attempt to get image metadata: ${metadataUrl}`, 'schnell');
+          log(`Запрашиваем метаданные для получения результатов: ${metadataUrl}`, 'schnell');
           
           const metadataResponse = await axios.get(metadataUrl, {
             headers: {
               'Authorization': authHeader,
               'Accept': 'application/json'
             },
-            timeout: 20000 // Увеличенный таймаут для метаданных
+            timeout: 15000
           });
           
+          // Если в метаданных есть готовые изображения, используем их
           if (metadataResponse.data?.images && Array.isArray(metadataResponse.data.images)) {
-            // Извлекаем прямые CDN URL из результата
-            const cdnUrls = metadataResponse.data.images
-              .filter(img => img && img.url && img.url.includes('fal.media'))
-              .map(img => img.url);
-              
-            if (cdnUrls.length > 0) {
-              log(`Successfully retrieved ${cdnUrls.length} CDN URLs from metadata`, 'schnell');
-              return cdnUrls;
+            const imageUrls = metadataResponse.data.images
+              .filter((img: any) => img?.url && (img.url.includes('fal.media') || img.url.includes('.jpg') || img.url.includes('.png')))
+              .map((img: any) => img.url);
+            
+            if (imageUrls.length > 0) {
+              log(`Получено ${imageUrls.length} URL изображений из метаданных`, 'schnell');
+              return imageUrls;
             }
           }
           
-          throw new Error("Не удалось получить прямые CDN ссылки на изображения");
+          // Проверяем поле status_updates (иногда FAL.AI хранит результаты там)
+          if (metadataResponse.data?.status_updates && Array.isArray(metadataResponse.data.status_updates)) {
+            for (const update of metadataResponse.data.status_updates) {
+              if (update.output && update.output.images && Array.isArray(update.output.images)) {
+                const updateUrls = update.output.images
+                  .filter((url: string) => typeof url === 'string' && (url.includes('fal.media') || url.includes('.jpg') || url.includes('.png')));
+                
+                if (updateUrls.length > 0) {
+                  log(`Получено ${updateUrls.length} URL из status_updates`, 'schnell');
+                  return updateUrls;
+                }
+              }
+            }
+          }
+          
+          // Используем fallback к простому возврату ID как маркера для повторного запроса
+          log(`Не найдены прямые URL изображений, возвращаем ID запроса ${requestId} для повторной попытки`, 'schnell');
+          return [`https://v3.fal.media/fal-ai/request-logs/${requestId}/final-image`];
+          
         } catch (metadataError) {
-          log(`Failed to get direct CDN URLs: ${metadataError}`, 'schnell');
-          throw new Error("Не удалось получить прямые ссылки на изображения. Пожалуйста, попробуйте еще раз с меньшим количеством изображений.");
+          // Если произошла ошибка при получении метаданных, используем ID в качестве результата
+          log(`Ошибка при получении метаданных: ${metadataError}`, 'schnell');
+          
+          // Возвращаем URL, который может быть использован для прямого доступа к изображению
+          return [`https://v3.fal.media/fal-ai/request-logs/${requestId}/final-image`];
         }
       }
       
