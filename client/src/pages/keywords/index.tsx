@@ -308,7 +308,65 @@ export default function Keywords() {
 
       <Card>
         <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Ключевые слова кампании</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Ключевые слова кампании</h2>
+            {campaignId && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={async () => {
+                  if (!campaignId) return;
+                  
+                  try {
+                    setIsSearching(true);
+                    const authToken = localStorage.getItem('token');
+                    
+                    // Запрашиваем обновление данных о трендах через API
+                    const response = await fetch('/api/xmlriver/update-keywords-trends', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                      },
+                      body: JSON.stringify({ campaignId })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Не удалось обновить данные о трендах');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                      // Инвалидируем кеш для обновления UI
+                      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+                      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+                      
+                      toast({
+                        title: "Данные обновлены",
+                        description: result.message || `Обновлено ${result.updatedCount} ключевых слов`
+                      });
+                    } else {
+                      throw new Error(result.message || 'Ошибка обновления данных');
+                    }
+                  } catch (error) {
+                    console.error('Ошибка при обновлении данных о трендах:', error);
+                    toast({
+                      variant: "destructive",
+                      title: "Ошибка",
+                      description: error instanceof Error ? error.message : 'Не удалось обновить данные о трендах'
+                    });
+                  } finally {
+                    setIsSearching(false);
+                  }
+                }}
+                disabled={isSearching}
+              >
+                {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                Обновить метрики
+              </Button>
+            )}
+          </div>
           <KeywordTable
             keywords={keywords}
             searchResults={searchResults}

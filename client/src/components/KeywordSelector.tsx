@@ -330,8 +330,8 @@ export function KeywordSelector({
                     setIsUpdatingCompetition(true);
                     const authToken = getAuthToken();
                     
-                    // Запрашиваем обновление данных о конкуренции через новый API
-                    const response = await fetch('/api/xmlriver/update-keywords-competition', {
+                    // Запрашиваем обновление данных о трендах через API
+                    const response = await fetch('/api/xmlriver/update-keywords-trends', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -341,7 +341,7 @@ export function KeywordSelector({
                     });
                     
                     if (!response.ok) {
-                      throw new Error('Не удалось обновить данные о конкуренции');
+                      throw new Error('Не удалось обновить данные о трендах');
                     }
                     
                     const result = await response.json();
@@ -359,11 +359,11 @@ export function KeywordSelector({
                       throw new Error(result.message || 'Ошибка обновления данных');
                     }
                   } catch (error) {
-                    console.error('Ошибка при обновлении данных о конкуренции:', error);
+                    console.error('Ошибка при обновлении данных о трендах:', error);
                     toast({
                       variant: "destructive",
                       title: "Ошибка",
-                      description: error instanceof Error ? error.message : 'Не удалось обновить данные о конкуренции'
+                      description: error instanceof Error ? error.message : 'Не удалось обновить данные о трендах'
                     });
                   } finally {
                     setIsUpdatingCompetition(false);
@@ -372,7 +372,7 @@ export function KeywordSelector({
                 disabled={isUpdatingCompetition}
               >
                 {isUpdatingCompetition ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Обновить метрики
+                Обновить тренды
               </Button>
             )}
           </div>
