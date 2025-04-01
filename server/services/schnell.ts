@@ -85,7 +85,7 @@ export class SchnellService {
         height,
         num_images: numImages, // ВАЖНО! Schnell использует num_images вместо numImages
         scheduler: "K_EULER",
-        num_inference_steps: 10, // Ограничено до 10 шагов для соответствия требованиям API
+        num_inference_steps: 10, // КРИТИЧНО! Ограничено до 10 шагов для модели Schnell (требование API)
         guidance_scale: 7.0
       };
 
