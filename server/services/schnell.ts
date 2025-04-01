@@ -130,12 +130,22 @@ export class SchnellService {
         if (numImages > 1) {
           log(`Generating ${numImages} CDN URLs using request_id template`, 'schnell');
           
-          // Создаем URL-ы для каждого из запрошенных изображений по шаблону FAL.AI CDN
+          // Создаем URL-ы для каждого из запрошенных изображений по разным шаблонам FAL.AI CDN
           for (let i = 0; i < numImages; i++) {
-            // URL шаблон FAL CDN для Schnell модели
-            const imageUrl = `https://fal-cdn.fal.ai/result/${requestId}_${i}.jpeg`;
-            imageUrls.push(imageUrl);
-            log(`Generated image URL ${i+1}/${numImages}: ${imageUrl}`, 'schnell');
+            // Новый формат CDN URL с подпапкой images
+            const imageUrl1 = `https://fal-cdn.fal.ai/images/${requestId}/${i}.jpeg`;
+            imageUrls.push(imageUrl1);
+            log(`Generated image URL 1 ${i+1}/${numImages}: ${imageUrl1}`, 'schnell');
+            
+            // Второй формат CDN URL для обеспечения совместимости с разными версиями API
+            const imageUrl2 = `https://fal-cdn.fal.ai/result/${requestId}_${i}.jpeg`;
+            imageUrls.push(imageUrl2);
+            log(`Generated image URL 2 ${i+1}/${numImages}: ${imageUrl2}`, 'schnell');
+            
+            // Альтернативный формат с PNG для разных форматов изображений
+            const imageUrl3 = `https://fal-cdn.fal.ai/result/${requestId}_${i}.png`;
+            imageUrls.push(imageUrl3);
+            log(`Generated image URL 3 ${i+1}/${numImages}: ${imageUrl3}`, 'schnell');
           }
         } else {
           // Для одного изображения используем базовый URL с request_id
