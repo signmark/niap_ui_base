@@ -182,15 +182,37 @@ export class SchnellService {
           log(`Falling back to individual image requests`, 'schnell');
         }
         
-        // Запасной вариант - создаем URL для каждого запрошенного изображения
-        const imageUrls = [];
-        
-        // Прямое получение CDN URL
-        const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
-        log(`Using request URL for results: ${requestUrl}`, 'schnell');
-        imageUrls.push(requestUrl);
-        
-        return imageUrls;
+        // ИСПРАВЛЕНИЕ: Вместо URL очереди запрашиваем метаданные для получения CDN ссылок
+        try {
+          // Повторный запрос к эндпоинту метаданных с бОльшим таймаутом
+          const metadataUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+          log(`Making second attempt to get image metadata: ${metadataUrl}`, 'schnell');
+          
+          const metadataResponse = await axios.get(metadataUrl, {
+            headers: {
+              'Authorization': authHeader,
+              'Accept': 'application/json'
+            },
+            timeout: 20000 // Увеличенный таймаут для метаданных
+          });
+          
+          if (metadataResponse.data?.images && Array.isArray(metadataResponse.data.images)) {
+            // Извлекаем прямые CDN URL из результата
+            const cdnUrls = metadataResponse.data.images
+              .filter(img => img && img.url && img.url.includes('fal.media'))
+              .map(img => img.url);
+              
+            if (cdnUrls.length > 0) {
+              log(`Successfully retrieved ${cdnUrls.length} CDN URLs from metadata`, 'schnell');
+              return cdnUrls;
+            }
+          }
+          
+          throw new Error("Не удалось получить прямые CDN ссылки на изображения");
+        } catch (metadataError) {
+          log(`Failed to get direct CDN URLs: ${metadataError}`, 'schnell');
+          throw new Error("Не удалось получить прямые ссылки на изображения. Пожалуйста, попробуйте еще раз с меньшим количеством изображений.");
+        }
       }
       
       // Если request_id не найден, пробуем обработать асинхронный ответ традиционным способом
