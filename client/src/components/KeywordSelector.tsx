@@ -129,17 +129,34 @@ export function KeywordSelector({
         return;
       }
 
+      // Форматируем результаты и преобразуем данные
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
         frequency: parseInt(kw.trend) || 0,
         competition: parseInt(kw.competition) || 0,
       }));
 
-      setKeywords(formattedResults);
+      // Удаляем дубликаты по ключевому слову, оставляя версию с наибольшей частотой
+      const keywordMap = new Map<string, typeof formattedResults[0]>();
+      
+      formattedResults.forEach(item => {
+        const lowerKeyword = item.keyword.toLowerCase();
+        const existing = keywordMap.get(lowerKeyword);
+        
+        // Если такого ключевого слова еще нет или текущая частота выше
+        if (!existing || item.frequency > existing.frequency) {
+          keywordMap.set(lowerKeyword, item);
+        }
+      });
+      
+      // Преобразуем Map обратно в массив
+      const uniqueResults = Array.from(keywordMap.values());
+
+      setKeywords(uniqueResults);
       
       toast({ 
         title: "Успешно",
-        description: `Найдено ${formattedResults.length} ключевых слов` 
+        description: `Найдено ${uniqueResults.length} ключевых слов` 
       });
       
     } catch (error) {
