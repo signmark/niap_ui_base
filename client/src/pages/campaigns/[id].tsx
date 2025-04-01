@@ -427,18 +427,27 @@ export default function CampaignDetails() {
           const host = window.location.host;
           const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
           
-          // Выполняем запрос синхронно для получения данных перед обновлением кэша
-          fetch(enrichUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ keywords: newKeywords })
-          })
-          .then(response => response.json())
-          .then(enrichData => {
+          console.log("Получение данных о частоте для оптимистичного обновления:", newKeywords);
+          
+          // Выполняем запрос СИНХРОННО с await, чтобы дождаться результатов перед обновлением кэша
+          try {
+            const response = await fetch(enrichUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ keywords: newKeywords })
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Ошибка запроса: ${response.status}`);
+            }
+            
+            const enrichData = await response.json();
+            console.log("Полученные данные о частоте для оптимистичного обновления:", enrichData);
+            
             if (enrichData.success && enrichData.data) {
-              // Оптимистично обновляем кэш с реальными данными о конкуренции
+              // Обновляем кэш с реальными данными о частоте
               queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
                 // Создаем новые объекты для добавляемых ключевых слов с реальными данными
                 const newItems = enrichData.data.map((enrichedKeyword: any) => ({
@@ -450,32 +459,19 @@ export default function CampaignDetails() {
                   date_created: new Date().toISOString()
                 }));
                 
-                return [...old, ...newItems];
-              });
-            } else {
-              // Если не удалось получить данные о конкуренции, используем запасной вариант
-              console.error("Не удалось получить данные о конкуренции для оптимистичного обновления:", enrichData);
-              queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-                // Запасной вариант с средними значениями
-                const newItems = newKeywords.map(keyword => ({
-                  id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
-                  campaign_id: id,
-                  keyword: keyword,
-                  trend_score: 3500,
-                  mentions_count: 75,
-                  date_created: new Date().toISOString()
-                }));
+                console.log("Обновляем кэш с полученными данными о частоте:", newItems);
                 
                 return [...old, ...newItems];
               });
+            } else {
+              throw new Error("Ошибка в данных ответа");
             }
-          })
-          .catch(error => {
-            console.error("Ошибка при получении данных о конкуренции для оптимистичного обновления:", error);
+          } catch (fetchError) {
+            // В случае ошибки запроса используем значения по умолчанию
+            console.error("Ошибка при получении данных о частоте:", fetchError);
             
-            // В случае ошибки используем запасной вариант
+            // Оптимистично обновляем кэш со значениями по умолчанию
             queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-              // Запасной вариант с средними значениями
               const newItems = newKeywords.map(keyword => ({
                 id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
                 campaign_id: id,
@@ -487,13 +483,12 @@ export default function CampaignDetails() {
               
               return [...old, ...newItems];
             });
-          });
+          }
         } catch (error) {
           console.error("Критическая ошибка при обновлении кэша:", error);
           
-          // В случае критической ошибки используем запасной вариант
+          // В случае критической ошибки используем значения по умолчанию
           queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-            // Запасной вариант с средними значениями
             const newItems = newKeywords.map(keyword => ({
               id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
               campaign_id: id,
