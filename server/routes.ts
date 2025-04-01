@@ -4,7 +4,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { schnellService } from './services/schnell';
-import { falAiUniversalService, FalAiModel } from './services/fal-ai-universal';
+import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -1274,7 +1274,8 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Маршруты для универсальных интерфейсов FAL.AI будут добавлены позже
+  // Регистрируем универсальный интерфейс для FAL.AI
+  registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
@@ -1944,7 +1945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Маршрут для генерации изображений через FAL.AI API
+  // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
