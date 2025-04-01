@@ -632,11 +632,11 @@ export function ImageGenerationDialog({
         });
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Ошибка при генерации изображения:', error);
       
       // Определяем тип ошибки для более понятного сообщения
-      let errorMessage = error.message || "Произошла ошибка при генерации изображения";
+      let errorMessage = error?.message || "Произошла ошибка при генерации изображения";
       
       if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
         errorMessage = "Ошибка соединения с сервисом генерации изображений. Проверьте настройки сети.";
@@ -654,6 +654,8 @@ export function ImageGenerationDialog({
         errorMessage = "Проблема с DNS-разрешением при подключении к API. Используется альтернативный способ доступа.";
       } else if (errorMessage.includes('прокси') || errorMessage.includes('proxy')) {
         errorMessage = "Ошибка при использовании прокси-сервера. Команда разработки уже работает над исправлением.";
+      } else if (errorMessage.includes('422') || errorMessage.includes('Unprocessable Entity')) {
+        errorMessage = "Сервис вернул код 422 (Unprocessable Entity). В таких случаях изображения могут быть доступны по альтернативному URL.";
       }
       
       toast({
