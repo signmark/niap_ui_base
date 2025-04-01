@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
-import { registerXmlRiverRoutes } from './api/xmlriver-routes-updated';
+import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов

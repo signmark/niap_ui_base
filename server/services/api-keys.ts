@@ -235,11 +235,11 @@ export class ApiKeyService {
    * @param authToken Токен авторизации для Directus
    * @returns true в случае успеха, false в случае ошибки
    */
-  async saveApiKey(userId: string, serviceName: ApiServiceName, apiKey: string, authToken?: string): Promise<{ success: boolean, error?: string }> {
+  async saveApiKey(userId: string, serviceName: ApiServiceName, apiKey: string, authToken?: string): Promise<boolean> {
     try {
       if (!userId) {
         log(`Cannot save ${serviceName} API key: missing userId`, 'api-keys');
-        return { success: false, error: 'Missing userId' };
+        return false;
       }
       
       // Для FAL.AI - проверка и форматирование ключа при сохранении
@@ -355,7 +355,7 @@ export class ApiKeyService {
         expiresAt: Date.now() + this.cacheDuration
       };
       
-      return { success: true };
+      return true;
     } catch (error) {
       console.error(`Error saving ${serviceName} API key:`, error);
       
@@ -369,9 +369,8 @@ export class ApiKeyService {
         });
       }
       
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      log(`Error saving ${serviceName} API key: ${errorMessage}`, 'api-keys');
-      return { success: false, error: errorMessage };
+      log(`Error saving ${serviceName} API key: ${error instanceof Error ? error.message : String(error)}`, 'api-keys');
+      return false;
     }
   }
   

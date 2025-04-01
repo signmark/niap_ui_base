@@ -6690,28 +6690,12 @@ https://t.me/channelname/ - description`;
     try {
       const campaignId = req.params.campaignId;
       const authHeader = req.headers.authorization;
-      const isInternalRequest = req.headers['x-internal-request'] === 'xmlriver-service';
       
-      // Для внутренних запросов от XMLRiver сервиса не требуем авторизацию
-      // Для всех остальных запросов требуем авторизацию через токен
-      let token = '';
-      
-      if (isInternalRequest) {
-        console.log('[Keywords] Внутренний запрос от XMLRiver сервиса');
-        // Для внутренних запросов используем токен администратора
-        token = process.env.DIRECTUS_ADMIN_TOKEN || '';
-        if (!token) {
-          console.log('[Keywords] Токен администратора не найден в переменных окружения');
-        } else {
-          console.log('[Keywords] Используем токен администратора для внутреннего запроса');
-        }
-      } else if (authHeader) {
-        // Для обычных запросов с авторизацией
-        token = authHeader.replace('Bearer ', '');
-      } else {
-        // Нет ни авторизации, ни внутреннего запроса
+      if (!authHeader) {
         return res.status(401).json({ error: "Unauthorized" });
       }
+      
+      const token = authHeader.replace('Bearer ', '');
       
       try {
         console.log(`Fetching keywords for campaign ID: ${campaignId} from campaign_keywords table`);
