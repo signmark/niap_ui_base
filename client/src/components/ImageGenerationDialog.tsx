@@ -655,9 +655,28 @@ export function ImageGenerationDialog({
           // Вариант для формата fast-sdxl где images - массив объектов с url
           else if (data.data.images && Array.isArray(data.data.images)) {
             images = data.data.images.map((img: any) => {
-              if (typeof img === 'string') return img;
-              return img?.url || img?.image || '';
-            }).filter(Boolean);
+              // ИСПРАВЛЕНИЕ: Корректная обработка ответа для предотвращения ошибки "НЕИЗОБРАЖЕНИЙ"
+              if (typeof img === 'string') {
+                // Проверяем, что это прямая ссылка на изображение, а не на API
+                if (img.includes('fal.media') || img.includes('cdn') || img.includes('.jpg') || img.includes('.png')) {
+                  return img;
+                } else {
+                  console.warn('Пропускаем некорректную ссылку:', img);
+                  return null;
+                }
+              }
+              
+              // Обрабатываем объект, извлекая прямую ссылку на изображение
+              const directUrl = img?.url || img?.image || '';
+              
+              // Проверяем, что URL указывает на изображение, а не на API
+              if (directUrl && (directUrl.includes('fal.media') || directUrl.includes('cdn') || directUrl.includes('.jpg') || directUrl.includes('.png'))) {
+                return directUrl;
+              } else {
+                console.warn('Пропускаем некорректный URL объекта:', directUrl);
+                return null;
+              }
+            }).filter(Boolean); // Фильтруем null/undefined/пустые строки
           }
         }
         
