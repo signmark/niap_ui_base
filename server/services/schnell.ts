@@ -137,7 +137,11 @@ export class SchnellService {
       // Извлечение URL изображений из разных возможных структур ответа Schnell
       let images: string[] = [];
 
-      // Извлекаем URLs из всех возможных мест в структуре ответа Schnell
+      // Подробно логируем структуру ответа для более тщательной диагностики
+      log(`Detailed Schnell response structure: ${JSON.stringify(response.data).substring(0, 500)}...`, 'schnell');
+
+      // Попробуем все возможные пути к изображениям в ответе Schnell
+      // 1. Прямой массив или строка изображений
       if (response.data?.images) {
         log(`Found 'images' field in Schnell response`, 'schnell');
         if (Array.isArray(response.data.images)) {
@@ -146,6 +150,7 @@ export class SchnellService {
           images = [response.data.images];
         }
       } 
+      // 2. Поле image_urls (часто используется в новых версиях API)
       else if (response.data?.image_urls) {
         log(`Found 'image_urls' field in Schnell response`, 'schnell');
         if (Array.isArray(response.data.image_urls)) {
@@ -154,19 +159,44 @@ export class SchnellService {
           images = [response.data.image_urls];
         }
       } 
+      // 3. Поле urls (более редкий вариант)
+      else if (response.data?.urls) {
+        log(`Found 'urls' field in Schnell response`, 'schnell');
+        if (Array.isArray(response.data.urls)) {
+          images = response.data.urls;
+        } else {
+          images = [response.data.urls];
+        }
+      }
+      // 4. Поле url - для одиночного изображения
+      else if (response.data?.url) {
+        log(`Found 'url' field in Schnell response`, 'schnell');
+        images = [response.data.url];
+      }
+      // 5. Поле image - для одиночного изображения
+      else if (response.data?.image) {
+        log(`Found 'image' field in Schnell response`, 'schnell');
+        images = [response.data.image];
+      } 
+      // 6. Поле image_url - для одиночного изображения
+      else if (response.data?.image_url) {
+        log(`Found 'image_url' field in Schnell response`, 'schnell');
+        images = [response.data.image_url];
+      }
+      // 7. Поле output (сложная структура)
       else if (response.data?.output) {
         log(`Found 'output' field in Schnell response`, 'schnell');
         
         if (Array.isArray(response.data.output)) {
-          // Если output - это массив URL-ов
+          // 7.1 output - простой массив URL-ов
           images = response.data.output;
         } 
         else if (typeof response.data.output === 'string') {
-          // Если output - это строка с URL
+          // 7.2 output - это строка с URL
           images = [response.data.output];
         } 
         else if (typeof response.data.output === 'object') {
-          // Если output - это объект, ищем URL внутри него
+          // 7.3 output - это объект, ищем URL внутри него
           if (response.data.output.image_urls) {
             if (Array.isArray(response.data.output.image_urls)) {
               images = response.data.output.image_urls;
@@ -186,6 +216,74 @@ export class SchnellService {
               images = response.data.output.urls;
             } else {
               images = [response.data.output.urls];
+            }
+          }
+          else if (response.data.output.url) {
+            images = [response.data.output.url];
+          }
+          else if (response.data.output.image) {
+            images = [response.data.output.image];
+          }
+          else if (response.data.output.image_url) {
+            images = [response.data.output.image_url];
+          }
+        }
+      }
+      
+      // 8. Поиск во вложенных полях, если все еще нет результатов
+      if (images.length === 0 && typeof response.data === 'object') {
+        log(`Trying to search in nested fields of Schnell response`, 'schnell');
+        
+        // Проверяем все поля первого уровня на наличие массивов или объектов
+        for (const key in response.data) {
+          if (typeof response.data[key] === 'object') {
+            if (response.data[key]?.images) {
+              if (Array.isArray(response.data[key].images)) {
+                images = response.data[key].images;
+                log(`Found images in nested field '${key}.images'`, 'schnell');
+                break;
+              } else if (typeof response.data[key].images === 'string') {
+                images = [response.data[key].images];
+                log(`Found image in nested field '${key}.images'`, 'schnell');
+                break;
+              }
+            }
+            else if (response.data[key]?.image_urls) {
+              if (Array.isArray(response.data[key].image_urls)) {
+                images = response.data[key].image_urls;
+                log(`Found images in nested field '${key}.image_urls'`, 'schnell');
+                break;
+              } else {
+                images = [response.data[key].image_urls];
+                log(`Found image in nested field '${key}.image_urls'`, 'schnell');
+                break;
+              }
+            }
+            else if (response.data[key]?.urls) {
+              if (Array.isArray(response.data[key].urls)) {
+                images = response.data[key].urls;
+                log(`Found images in nested field '${key}.urls'`, 'schnell');
+                break;
+              } else {
+                images = [response.data[key].urls];
+                log(`Found image in nested field '${key}.urls'`, 'schnell');
+                break;
+              }
+            }
+            else if (response.data[key]?.url) {
+              images = [response.data[key].url];
+              log(`Found image in nested field '${key}.url'`, 'schnell');
+              break;
+            }
+            else if (response.data[key]?.image) {
+              images = [response.data[key].image];
+              log(`Found image in nested field '${key}.image'`, 'schnell');
+              break;
+            }
+            else if (response.data[key]?.image_url) {
+              images = [response.data[key].image_url];
+              log(`Found image in nested field '${key}.image_url'`, 'schnell');
+              break;
             }
           }
         }
@@ -226,6 +324,8 @@ export class SchnellService {
     
     // Проверяем статус каждые 3 секунды
     let resultData;
+    let errorCount = 0;
+    const maxErrors = 3;  // Максимальное количество последовательных ошибок
     
     while ((Date.now() - startTime) / 1000 < maxWaitTime) {
       try {
@@ -237,6 +337,9 @@ export class SchnellService {
           }
         });
         
+        // Сбрасываем счетчик ошибок при успешном запросе
+        errorCount = 0;
+        
         log(`Schnell status check: ${statusResponse.data?.status}`, 'schnell');
         
         // Если запрос в очереди или обрабатывается, ждем
@@ -246,20 +349,64 @@ export class SchnellService {
           continue;
         }
         
-        // Если запрос завершен, получаем результат
+        // Если запрос завершен, пробуем получить результат с обработкой ошибки 422
         if (statusResponse.data?.status === "COMPLETED") {
           log(`Schnell generation completed, fetching result`, 'schnell');
           
-          const resultResponse = await axios.get(statusResponse.data.response_url || statusResponse.data.result_url, {
-            headers: {
-              'Authorization': authHeader,
-              'Accept': 'application/json'
+          try {
+            // Проверяем наличие URL результата
+            const resultUrl = statusResponse.data.response_url || statusResponse.data.result_url;
+            
+            if (!resultUrl) {
+              // Если URL отсутствует, возможно, сам статусный ответ содержит результат
+              log(`No result URL found in COMPLETED status, trying to extract results directly from status response`, 'schnell');
+              
+              // Проверяем наличие прямых результатов в ответе статуса
+              if (statusResponse.data.output || statusResponse.data.images || statusResponse.data.image_urls) {
+                resultData = statusResponse.data;
+                log(`Successfully extracted result directly from status response`, 'schnell');
+                break;
+              }
+              
+              // Если в статусном ответе нет ни URL, ни прямых результатов
+              throw new Error("Missing result URL and direct results in COMPLETED status");
             }
-          });
-          
-          resultData = resultResponse.data;
-          log(`Schnell result retrieved, response structure: ${Object.keys(resultData).join(', ')}`, 'schnell');
-          break;
+            
+            // Получаем результат по URL
+            const resultResponse = await axios.get(resultUrl, {
+              headers: {
+                'Authorization': authHeader,
+                'Accept': 'application/json'
+              }
+            });
+            
+            resultData = resultResponse.data;
+            log(`Schnell result retrieved, response structure: ${Object.keys(resultData).join(', ')}`, 'schnell');
+            break;
+            
+          } catch (resultError: any) {
+            // Если получили ошибку 422 при запросе результата, возможно, результат уже в статусном ответе
+            if (resultError.response && resultError.response.status === 422) {
+              log(`Got 422 error when fetching result, trying to extract results directly from status response`, 'schnell');
+              
+              // Пробуем извлечь результат напрямую из статусного ответа
+              if (statusResponse.data.output || statusResponse.data.images || statusResponse.data.image_urls) {
+                resultData = statusResponse.data;
+                log(`Successfully extracted result directly from status response after 422 error`, 'schnell');
+                break;
+              }
+              
+              // Если у нас 422 и нет прямых результатов в статусном ответе, логируем полный ответ для отладки
+              log(`Cannot extract results directly from status response after 422 error. Full status response: ${JSON.stringify(statusResponse.data)}`, 'schnell');
+              
+              // Ожидаем и продолжаем опрос
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              continue;
+            }
+            
+            // Для других ошибок бросаем исключение
+            throw resultError;
+          }
         }
         
         // Если статус не успешный, бросаем ошибку
@@ -272,7 +419,20 @@ export class SchnellService {
         await new Promise(resolve => setTimeout(resolve, 3000));
         
       } catch (error: any) {
-        log(`Error checking Schnell status: ${error.message}`, 'schnell');
+        errorCount++;
+        log(`Error checking Schnell status (${errorCount}/${maxErrors}): ${error.message}`, 'schnell');
+        
+        // Если превысили количество последовательных ошибок
+        if (errorCount >= maxErrors) {
+          // Только для определенных типов ошибок мы продолжаем попытки
+          const isNetworkError = !error.response && error.request;
+          const isServerError = error.response && error.response.status >= 500;
+          
+          if (!isNetworkError && !isServerError) {
+            throw new Error(`Too many consecutive errors when checking Schnell status: ${error.message}`);
+          }
+        }
+        
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
