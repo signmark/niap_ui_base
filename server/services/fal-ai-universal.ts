@@ -123,7 +123,8 @@ class FalAiUniversalService {
           scheduler: 'K_EULER',
           num_inference_steps: 25,
           // Дополнительные параметры специфичные для Schnell модели
-          use_api_path: true  // Флаг указывающий на то, что нужно использовать путь /api/
+          use_api_path: true,  // Флаг указывающий на то, что нужно использовать путь /api/
+          direct_urls: true     // Флаг для получения прямых URL изображений без прокси
         };
       
       case 'sdxl':
@@ -291,8 +292,29 @@ class FalAiUniversalService {
         // Формируем URL изображений по шаблону для модели Schnell
         const imageUrls: string[] = [];
         for (let i = 0; i < numImages; i++) {
+          // Пробуем сначала получить прямые URL через CDN
+          try {
+            // Запрашиваем из API напрямую
+            const resultsUrl = `${this.baseUrl}/${schnellModelUrl}/results?request_id=${requestId}&image_idx=${i}`;
+            const response = await axios.get(resultsUrl, { 
+              responseType: 'json',
+              timeout: 10000
+            });
+            
+            // Пытаемся получить URL прямо из ответа, если доступен
+            if (response.data?.cdn_url) {
+              const cdnUrl = response.data.cdn_url;
+              log(`[fal-ai-universal] Получен прямой CDN URL для изображения Schnell: ${cdnUrl}`);
+              imageUrls.push(cdnUrl);
+              continue; // Переходим к следующему изображению
+            }
+          } catch (error) {
+            log(`[fal-ai-universal] Не удалось получить CDN URL, использую прокси URL для изображения ${i}`);
+          }
+          
+          // Стандартный прокси URL как запасной вариант
           const imageUrl = `${this.baseUrl}/${schnellModelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-          log(`[fal-ai-universal] URL для Schnell модели: ${imageUrl}`);
+          log(`[fal-ai-universal] URL для Schnell модели (прокси): ${imageUrl}`);
           imageUrls.push(imageUrl);
         }
         
