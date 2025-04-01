@@ -209,16 +209,15 @@ export class SchnellService {
             }
           }
           
-          // Используем fallback к простому возврату ID как маркера для повторного запроса
-          log(`Не найдены прямые URL изображений, возвращаем ID запроса ${requestId} для повторной попытки`, 'schnell');
-          return [`https://v3.fal.media/fal-ai/request-logs/${requestId}/final-image`];
-          
+          // При отсутствии прямых URL нужно выдать понятную ошибку
+          log(`Не найдены прямые URL изображений в ответе API для запроса ${requestId}. Это критическая ошибка.`, 'schnell');
+          throw new Error(`Не удалось получить прямые URL изображений от FAL.AI API (ID запроса: ${requestId})`);
         } catch (metadataError) {
-          // Если произошла ошибка при получении метаданных, используем ID в качестве результата
+          // Если произошла ошибка при получении метаданных, необходимо сообщить об этом
           log(`Ошибка при получении метаданных: ${metadataError}`, 'schnell');
           
-          // Возвращаем URL, который может быть использован для прямого доступа к изображению
-          return [`https://v3.fal.media/fal-ai/request-logs/${requestId}/final-image`];
+          // Вместо возврата некорректных URL, выбрасываем исключение для правильной обработки ошибки
+          throw new Error(`Ошибка получения метаданных от FAL.AI API: ${metadataError.message || metadataError}`); 
         }
       }
       
