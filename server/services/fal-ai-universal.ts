@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiKeysService } from '../api-keys-service';
+import { apiKeyService } from './api-keys';
 import { log } from '../vite';
 
 /**
@@ -69,7 +69,7 @@ class FalAiUniversalService {
       }
 
       // Получаем API ключ пользователя через сервис API ключей
-      const apiKey = await apiKeysService.getUserApiKey('fal_ai', token);
+      const apiKey = await apiKeyService.getApiKey('fal_ai', token);
       
       if (!apiKey) {
         throw new Error('API ключ FAL.AI не найден в настройках пользователя');
