@@ -104,6 +104,58 @@ export class XmlRiverClient {
    * @param token Токен авторизации Directus
    * @returns Массив данных о ключевых словах или null в случае ошибки
    */
+  /**
+   * Поиск ключевых слов для UI
+   * @param query Поисковый запрос
+   * @returns Результаты поиска ключевых слов в формате для UI
+   */
+  async searchKeywords(query: string): Promise<any> {
+    try {
+      const requestId = Date.now().toString();
+      log(`[${requestId}] Поиск ключевых слов для UI: ${query}`, 'xmlriver');
+      
+      // Используем предустановленные ключи
+      const hardcodedKey = {"user":"16797","key":"f7947eff83104621deb713275fe3260bfde4f001"};
+      
+      // Выполняем запрос к XMLRiver API
+      const items = await this.getKeywordsWithFixedCredentials(
+        query, 
+        hardcodedKey.user, 
+        hardcodedKey.key, 
+        requestId
+      );
+      
+      if (!items) {
+        return {
+          success: false,
+          error: 'Ошибка при получении данных о ключевых словах',
+          keywords: []
+        };
+      }
+      
+      // Преобразуем данные в формат для UI
+      const keywords = items.map(item => {
+        const frequency = parseInt(item.number.replace(/\s/g, '')) || 0;
+        return {
+          keyword: item.phrase,
+          frequency
+        };
+      });
+      
+      return {
+        success: true,
+        keywords
+      };
+    } catch (error) {
+      log(`Ошибка при поиске ключевых слов: ${error instanceof Error ? error.message : 'Unknown error'}`, 'xmlriver');
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка',
+        keywords: []
+      };
+    }
+  }
+  
   async getKeywords(query: string, userId: string, token?: string): Promise<any[] | null> {
     try {
       const requestId = Date.now().toString();
