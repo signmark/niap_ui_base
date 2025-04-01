@@ -297,117 +297,57 @@ export default function CampaignDetails() {
     }
   });
 
-  // Мутация для добавления ключевых слов
+  // Мутация для добавления ключевых слов с их метриками
   const { mutate: addKeywords } = useMutation({
-    mutationFn: async (keywords: string[]) => {
-      console.log("Добавление ключевых слов:", keywords);
+    mutationFn: async (keywordsInput: string[] | { keyword: string; frequency?: number; competition?: number }[]) => {
+      let newKeywords: { keyword: string; frequency?: number; competition?: number }[] = [];
       
-      // Сначала получаем существующие ключевые слова для проверки на дубликаты
-      const response = await directusApi.get('/items/campaign_keywords', {
-        params: {
-          filter: {
-            campaign_id: { _eq: id }
-          },
-          fields: ['keyword']
+      // Проверяем тип входных данных и конвертируем в нужный формат
+      if (Array.isArray(keywordsInput) && keywordsInput.length > 0) {
+        if (typeof keywordsInput[0] === 'string') {
+          // Если простой массив строк, преобразуем его в массив объектов с метриками по умолчанию
+          newKeywords = (keywordsInput as string[]).map(keyword => ({
+            keyword,
+            frequency: 3500, // Значение по умолчанию
+            competition: 75  // Значение по умолчанию
+          }));
+        } else {
+          // Если уже массив объектов с метриками, используем его напрямую
+          newKeywords = keywordsInput as { keyword: string; frequency?: number; competition?: number }[];
         }
-      });
-      
-      const existingKeywords = response.data?.data?.map((item: any) => item.keyword) || [];
-      console.log("Существующие ключевые слова:", existingKeywords);
-      
-      // Фильтруем входящие ключевые слова, чтобы не добавлять дубликаты
-      const newKeywords = keywords.filter(keyword => !existingKeywords.includes(keyword));
-      console.log("Новые ключевые слова для добавления:", newKeywords);
-      
-      if (newKeywords.length === 0) {
-        console.log("Нет новых ключевых слов для добавления");
-        toast({
-          description: "Все указанные ключевые слова уже добавлены",
-          variant: "default"
-        });
-        return [];
       }
       
-      // Сначала получаем реальные данные о конкуренции для ключевых слов
-      console.log("Получение данных о конкуренции для ключевых слов:", newKeywords);
+      console.log("Добавление ключевых слов с метриками:", newKeywords);
+      
+      // Сразу добавляем ключевые слова с имеющимися данными о частоте
+      // Больше не нужно обогащать данные через XMLRiver API
+      const promises = newKeywords.map(item => 
+        directusApi.post('/items/campaign_keywords', {
+          campaign_id: id,
+          keyword: item.keyword,
+          trend_score: item.frequency || 3500, // Используем существующую частоту или значение по умолчанию
+          mentions_count: item.competition || 75, // Используем существующую конкуренцию или значение по умолчанию
+          last_checked: new Date().toISOString()
+        })
+      );
       
       try {
-        // Запрашиваем обогащенные данные о ключевых словах через новый API
-        const protocol = window.location.protocol;
-        const host = window.location.host;
-        const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
-        
-        const enrichResponse = await fetch(enrichUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ keywords: newKeywords })
-        });
-        
-        if (!enrichResponse.ok) {
-          throw new Error('Не удалось получить данные о конкуренции для ключевых слов');
-        }
-        
-        const enrichData = await enrichResponse.json();
-        console.log("Получены обогащенные данные о ключевых словах:", enrichData);
-        
-        if (enrichData.success && enrichData.data) {
-          // Используем полученные данные для добавления ключевых слов
-          const promises = enrichData.data.map((enrichedKeyword: any) => 
-            directusApi.post('/items/campaign_keywords', {
-              campaign_id: id,
-              keyword: enrichedKeyword.keyword,
-              trend_score: enrichedKeyword.frequency || 3500, // Используем полученную частоту или значение по умолчанию
-              mentions_count: enrichedKeyword.competition || 75, // Используем полученную конкуренцию или значение по умолчанию
-              last_checked: new Date().toISOString() // Current timestamp
-            })
-          );
-          
-          const results = await Promise.all(promises);
-          return { 
-            added: newKeywords.length, 
-            newKeywords, 
-            results,
-            enrichedData: enrichData.data // Возвращаем обогащенные данные для оптимистичного обновления
-          };
-        } else {
-          // В случае ошибки используем значения по умолчанию
-          console.error("Ошибка обогащения данных о ключевых словах:", enrichData);
-          
-          const promises = newKeywords.map(keyword => 
-            directusApi.post('/items/campaign_keywords', {
-              campaign_id: id,
-              keyword: keyword,
-              trend_score: 3500, // Значение по умолчанию
-              mentions_count: 75, // Значение по умолчанию
-              last_checked: new Date().toISOString()
-            })
-          );
-          
-          const results = await Promise.all(promises);
-          return { added: newKeywords.length, newKeywords, results };
-        }
-      } catch (error) {
-        console.error("Ошибка при получении данных о конкуренции:", error);
-        
-        // В случае ошибки используем значения по умолчанию
-        const promises = newKeywords.map(keyword => 
-          directusApi.post('/items/campaign_keywords', {
-            campaign_id: id,
-            keyword: keyword,
-            trend_score: 3500, // Значение по умолчанию
-            mentions_count: 75, // Значение по умолчанию
-            last_checked: new Date().toISOString()
-          })
-        );
-        
+        // Отправляем запросы на добавление ключевых слов в Directus
         const results = await Promise.all(promises);
-        return { added: newKeywords.length, newKeywords, results };
+        
+        // Возвращаем результат немедленно
+        return { 
+          added: newKeywords.length, 
+          newKeywords: newKeywords.map(k => k.keyword), 
+          results
+        };
+      } catch (error) {
+        console.error("Ошибка при добавлении ключевых слов:", error);
+        throw error; // Пробрасываем ошибку для обработки в onError
       }
     },
     // Оптимистичное обновление UI
-    onMutate: async (keywords) => {
+    onMutate: async (keywordsInput: string[] | { keyword: string; frequency?: number; competition?: number }[]) => {
       // Отменяем запросы на получение ключевых слов
       await queryClient.cancelQueries({ queryKey: ["/api/keywords", id] });
       
@@ -417,85 +357,59 @@ export default function CampaignDetails() {
       // Получаем текущие ключевые слова для фильтрации только новых
       const currentKeywords = ((previousKeywords as any[]) || []).map(k => k.keyword);
       
-      // Фильтруем, чтобы не добавлять уже существующие
-      const newKeywords = keywords.filter(k => !currentKeywords.includes(k));
+      // Конвертируем входные данные в стандартный формат
+      let newKeywords: { keyword: string; frequency?: number; competition?: number }[] = [];
+      
+      if (Array.isArray(keywordsInput) && keywordsInput.length > 0) {
+        if (typeof keywordsInput[0] === 'string') {
+          // Если простой массив строк, фильтруем их и преобразуем
+          const stringKeywords = keywordsInput as string[];
+          const filteredKeywords = stringKeywords.filter(k => !currentKeywords.includes(k));
+          
+          newKeywords = filteredKeywords.map(keyword => ({
+            keyword,
+            frequency: 3500, // Значение по умолчанию
+            competition: 75  // Значение по умолчанию
+          }));
+        } else {
+          // Если массив объектов с метриками, фильтруем их
+          const objectKeywords = keywordsInput as { keyword: string; frequency?: number; competition?: number }[];
+          newKeywords = objectKeywords.filter(item => !currentKeywords.includes(item.keyword));
+        }
+      }
       
       if (newKeywords.length > 0) {
         try {
           // Оптимистично обновляем кэш сразу, не дожидаясь API-запроса
           // Это ускорит взаимодействие с интерфейсом
           queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-            const newItems = newKeywords.map(keyword => ({
+            const newItems = newKeywords.map(item => ({
               id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
               campaign_id: id,
-              keyword: keyword,
-              trend_score: 3500, // Временное значение, которое будет заменено
-              mentions_count: 75, // Временное значение, которое будет заменено
+              keyword: item.keyword,
+              trend_score: item.frequency || 3500, // Используем существующее значение или по умолчанию
+              mentions_count: item.competition || 75, // Используем существующее значение или по умолчанию
               date_created: new Date().toISOString()
             }));
             
-            console.log("Оптимистичное обновление кэша с временными данными:", newItems);
+            console.log("Оптимистичное обновление кэша с данными:", newItems);
             return [...old, ...newItems];
           });
           
-          // Запускаем асинхронное обогащение данных без await
-          // Это позволит интерфейсу не блокироваться
-          const protocol = window.location.protocol;
-          const host = window.location.host;
-          const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
+          // Больше не запускаем асинхронное обогащение данных,
+          // так как мы уже используем значения, которые были получены ранее
           
-          console.log("Асинхронное получение данных о частоте:", newKeywords);
-          
-          fetch(enrichUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ keywords: newKeywords })
-          })
-          .then(response => {
-            if (!response.ok) throw new Error(`Ошибка запроса: ${response.status}`);
-            return response.json();
-          })
-          .then(enrichData => {
-            console.log("Получены обогащенные данные о ключевых словах:", enrichData);
-            
-            if (enrichData.success && enrichData.data) {
-              // Обновляем кэш с реальными данными о частоте
-              queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-                if (!old) return old;
-                
-                // Фильтруем и обновляем существующие записи с временными данными
-                return old.map(item => {
-                  // Если это одно из новых добавленных ключевых слов
-                  const enrichedData = enrichData.data.find((e: any) => e.keyword === item.keyword);
-                  if (enrichedData) {
-                    return {
-                      ...item,
-                      trend_score: enrichedData.frequency || item.trend_score,
-                      mentions_count: enrichedData.competition || item.mentions_count
-                    };
-                  }
-                  return item;
-                });
-              });
-            }
-          })
-          .catch(fetchError => {
-            console.error("Ошибка при асинхронном получении данных о частоте:", fetchError);
-            // Ничего не делаем с ошибками, т.к. оптимистичное обновление уже произошло
-          });
         } catch (error) {
           console.error("Критическая ошибка при обновлении кэша:", error);
           
           // В случае критической ошибки используем значения по умолчанию
           queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-            const newItems = newKeywords.map(keyword => ({
+            const newItems = newKeywords.map(item => ({
               id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
               campaign_id: id,
-              keyword: keyword,
-              trend_score: 3500,
-              mentions_count: 75,
+              keyword: item.keyword,
+              trend_score: item.frequency || 3500,
+              mentions_count: item.competition || 75,
               date_created: new Date().toISOString()
             }));
             
@@ -505,7 +419,11 @@ export default function CampaignDetails() {
       }
       
       // Возвращаем контекст для возможного отката
-      return { previousKeywords, newKeywordsCount: newKeywords.length };
+      return { 
+        previousKeywords, 
+        newKeywordsCount: newKeywords.length,
+        newKeywords: newKeywords.map(k => k.keyword)
+      };
     },
     onSuccess: (result) => {
       // Обновляем данные с сервера, чтобы получить правильные ID и другие поля
@@ -708,27 +626,44 @@ export default function CampaignDetails() {
                 onSelect={(keywords) => {
                   console.log("onSelect вызван с keywords:", keywords);
                   
-                  if (keywords.length === 1) {
-                    // Проверяем, если это одиночное слово и оно передано для удаления
-                    // (это происходит при клике на бейдж)
-                    const existingKeywords = keywordList?.map(k => k.keyword) || [];
-                    if (existingKeywords.includes(keywords[0])) {
-                      console.log("Удаляем существующее ключевое слово:", keywords[0]);
-                      // Это существующее ключевое слово, значит его нужно удалить
-                      removeKeyword(keywords[0]);
-                      return; // Важно выйти после удаления, чтобы не попасть в ветку добавления ключевых слов
-                    } else {
-                      console.log("Добавляем одиночное ключевое слово:", keywords[0]);
-                      // Если это новое одиночное слово из списка "Сохранить выбранные", добавляем его
-                      // Это происходит при нажатии кнопки в KeywordSelector
-                      addKeywords(keywords);
-                      return; // Выходим после добавления
+                  // Проверяем тип входных данных
+                  const isStringArray = Array.isArray(keywords) && 
+                    keywords.length > 0 && 
+                    typeof keywords[0] === 'string';
+                  
+                  const isObjectArray = Array.isArray(keywords) && 
+                    keywords.length > 0 && 
+                    typeof keywords[0] === 'object' && 
+                    keywords[0] !== null &&
+                    'keyword' in keywords[0];
+                  
+                  if (isStringArray) {
+                    // Если передан массив строк
+                    const keywordStrings = keywords as string[];
+                    
+                    if (keywordStrings.length === 1) {
+                      // Проверяем, если это одиночное слово и оно передано для удаления
+                      // (это происходит при клике на бейдж)
+                      const existingKeywords = keywordList?.map(k => k.keyword) || [];
+                      if (existingKeywords.includes(keywordStrings[0])) {
+                        console.log("Удаляем существующее ключевое слово:", keywordStrings[0]);
+                        // Это существующее ключевое слово, значит его нужно удалить
+                        removeKeyword(keywordStrings[0]);
+                        return; // Важно выйти после удаления, чтобы не попасть в ветку добавления
+                      } else {
+                        console.log("Добавляем одиночное ключевое слово:", keywordStrings[0]);
+                        // Добавляем новое ключевое слово
+                        addKeywords(keywordStrings);
+                        return; // Выходим после добавления
+                      }
+                    } else if (keywordStrings.length > 1) {
+                      // Пакетное добавление нескольких ключевых слов в виде строк
+                      addKeywords(keywordStrings);
                     }
-                    // Если это новое одиночное слово, мы его НЕ добавляем автоматически -
-                    // добавление происходит только при явном вызове
-                  } else if (keywords.length > 1) {
-                    // Пакетное добавление нескольких ключевых слов
-                    // Это происходит при нажатии на кнопку "Сохранить выбранные"
+                  } else if (isObjectArray) {
+                    // Если передан массив объектов с метриками
+                    console.log("Добавляем ключевые слова с метриками:", keywords);
+                    // Используем напрямую массив объектов
                     addKeywords(keywords);
                   }
                 }}

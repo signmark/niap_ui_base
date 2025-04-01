@@ -17,7 +17,7 @@ interface Keyword {
 }
 
 interface KeywordSelectorProps {
-  onSelect: (keywords: string[]) => void;
+  onSelect: (keywords: string[] | Keyword[]) => void;
   selectedKeywords?: string[];
   campaignId?: string;
   label?: string;
@@ -192,32 +192,30 @@ export function KeywordSelector({
     // Не вызываем onSelect, сохранение будет происходить только по кнопке "Сохранить выбранные"
   };
   
-  // Функция для сохранения всех выбранных ключевых слов
+  // Функция для сохранения всех выбранных ключевых слов с их метриками
   const handleSaveSelected = () => {
     if (keywords.length > 0) {
-      // Отправляем только те ключевые слова, которые ещё не существуют в существующих ключевых словах
-      const selectedKeywords = keywords
+      // Получаем только выбранные ключевые слова с полными данными о частоте и конкуренции
+      const selectedKeywordsWithMetrics = keywords
         .filter(item => selectedItems.includes(item.keyword))
-        .map(item => item.keyword)
-        // Фильтруем, чтобы не добавлять повторно существующие ключевые слова
-        .filter(keyword => !existingKeywords.includes(keyword));
+        .filter(item => !existingKeywords.includes(item.keyword)); // Фильтруем, чтобы не добавлять дубликаты
       
-      console.log("Выбранные ключевые слова для сохранения:", selectedKeywords);
+      // Получаем только строковые значения ключевых слов для обновления UI
+      const selectedKeywordStrings = selectedKeywordsWithMetrics.map(item => item.keyword);
       
-      if (selectedKeywords.length > 0) {
+      console.log("Выбранные ключевые слова с метриками для сохранения:", selectedKeywordsWithMetrics);
+      
+      if (selectedKeywordsWithMetrics.length > 0) {
         // Оптимистично обновляем локальные состояния
-        setExistingKeywords(prev => [...prev, ...selectedKeywords]);
+        setExistingKeywords(prev => [...prev, ...selectedKeywordStrings]);
         
-        // Отправляем данные родительскому компоненту
-        // Важно: даже если выбрано только одно ключевое слово, мы передаем его в массиве
-        onSelect(selectedKeywords);
+        // Отправляем полные данные родительскому компоненту
+        // Передаем объекты с метриками вместо простых строк
+        onSelect(selectedKeywordsWithMetrics);
         
         // Очищаем результаты после сохранения
         setKeywords([]);
         setSearchTerm('');
-        
-        // Инвалидируем оба ключа кеша, если у нас есть доступ к queryClient
-        // Код инвалидации обычно находится в родительском компоненте (onSelect обработчике)
       } else {
         // Все выбранные ключевые слова уже существуют
         toast({
