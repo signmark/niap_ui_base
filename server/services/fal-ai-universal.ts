@@ -121,7 +121,9 @@ class FalAiUniversalService {
           ...baseParams,
           guidance_scale: 7.5,
           scheduler: 'K_EULER',
-          num_inference_steps: 25
+          num_inference_steps: 25,
+          // Дополнительные параметры специфичные для Schnell модели
+          use_api_path: true  // Флаг указывающий на то, что нужно использовать путь /api/
         };
       
       case 'sdxl':
@@ -168,8 +170,18 @@ class FalAiUniversalService {
       
       log(`[fal-ai-universal] Запуск генерации через модель ${model}`);
       
+      // Проверяем, нужно ли использовать /api/ путь (для Schnell)
+      let actualModelUrl = modelUrl;
+      if (requestParams.use_api_path && model === 'schnell') {
+        actualModelUrl = modelUrl.replace('schnell', 'schnell/api');
+        log(`[fal-ai-universal] Использование специального пути API для Schnell: ${actualModelUrl}`);
+        // Удаляем служебный параметр, чтобы не отправлять его в API
+        delete requestParams.use_api_path;
+      }
+      
       // Отправляем запрос на генерацию
-      const requestUrl = `${this.baseUrl}/${modelUrl}`;
+      const requestUrl = `${this.baseUrl}/${actualModelUrl}`;
+      log(`[fal-ai-universal] URL запроса: ${requestUrl}`);
       const requestResponse = await axios.post(requestUrl, requestParams, {
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +198,9 @@ class FalAiUniversalService {
       log(`[fal-ai-universal] Запрос поставлен в очередь, ID: ${requestId}`);
       
       // Ожидаем завершения генерации
-      const imageUrls = await this.waitForResults(modelUrl, requestId, params.numImages || 1);
+      // Для проверки статуса и получения результатов используем actualModelUrl если это модель Schnell
+      const checkModelUrl = model === 'schnell' ? actualModelUrl : modelUrl;
+      const imageUrls = await this.waitForResults(checkModelUrl, requestId, params.numImages || 1);
       
       log(`[fal-ai-universal] Успешно получено ${imageUrls.length} изображений`);
       
@@ -213,7 +227,13 @@ class FalAiUniversalService {
       
       try {
         // Проверяем статус запроса
-        const statusUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/status`;
+        // Для модели Schnell используем специальный путь к API
+        const isSchnellModel = modelUrl.includes('schnell/api');
+        const statusUrl = isSchnellModel 
+          ? `${this.baseUrl}/${modelUrl.replace('/api', '')}/requests/${requestId}/status`
+          : `${this.baseUrl}/${modelUrl}/requests/${requestId}/status`;
+        
+        log(`[fal-ai-universal] Проверка статуса по URL: ${statusUrl}`);
         const statusResponse = await axios.get(statusUrl);
         
         const status = statusResponse.data.status;
@@ -260,21 +280,26 @@ class FalAiUniversalService {
    */
   private async getImageUrls(modelUrl: string, requestId: string, numImages: number): Promise<string[]> {
     try {
-      // Для модели schnell мы пропускаем запрос результатов из-за ошибки 404
-      // и сразу формируем URL для получения изображений
-      if (modelUrl.includes('schnell')) {
-        log('[fal-ai-universal] Определена модель Schnell, генерация прямых URL для изображений');
+      // Определяем, имеем ли дело с моделью Schnell
+      const isSchnellModel = modelUrl.includes('schnell');
+      
+      // Для модели Schnell используем прямой путь без /requests/
+      if (isSchnellModel) {
+        // Schnell требует использования другого пути для API
+        const schnellModelUrl = modelUrl.replace('schnell', 'schnell/api');
         
+        // Формируем URL изображений по шаблону для модели Schnell
         const imageUrls: string[] = [];
         for (let i = 0; i < numImages; i++) {
-          const imageUrl = `https://run.fal.ai/fal-ai/flux/schnell/results?request_id=${requestId}&image_idx=${i}`;
+          const imageUrl = `${this.baseUrl}/${schnellModelUrl}/results?request_id=${requestId}&image_idx=${i}`;
+          log(`[fal-ai-universal] URL для Schnell модели: ${imageUrl}`);
           imageUrls.push(imageUrl);
         }
         
         return imageUrls;
       }
       
-      // Для других моделей пробуем получить все результаты сразу
+      // Для других моделей сначала пробуем получить все результаты сразу
       try {
         const resultsUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/results`;
         const resultsResponse = await axios.get(resultsUrl);
