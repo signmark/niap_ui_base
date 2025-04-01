@@ -88,6 +88,9 @@ export class SchnellService {
       };
 
       log(`Schnell request data: ${JSON.stringify(requestData)}`, 'schnell');
+      
+      // Дополнительное логирование для проверки значения numImages
+      log(`Request Schnell to generate ${numImages} image(s)`, 'schnell');
 
       // Формируем заголовки запроса
       let authHeader = this.apiKey;
@@ -101,13 +104,13 @@ export class SchnellService {
         'Accept': 'application/json'
       };
 
-      // Отправка запроса к API
+      // Отправка запроса к API с увеличенным таймаутом для генерации нескольких изображений
       const response = await axios.post(
         this.baseUrl,
         requestData,
         {
           headers,
-          timeout: 300000 // 5 минут таймаут
+          timeout: 300000 // 5 минут таймаут для обработки нескольких изображений
         }
       );
 
@@ -297,12 +300,28 @@ export class SchnellService {
 
       log(`Successfully extracted ${images.length} images from Schnell response`, 'schnell');
       
+      // Проверяем, получили ли мы ожидаемое количество изображений
+      if (images.length !== numImages) {
+        log(`Warning: Requested ${numImages} images but received ${images.length} images`, 'schnell');
+      }
+      
+      // Обрезаем массив изображений до запрошенного количества, если получили больше
+      if (images.length > numImages) {
+        log(`Trimming extra images: received ${images.length}, keeping the requested ${numImages}`, 'schnell');
+        images = images.slice(0, numImages);
+      }
+      
       return images;
     } catch (error: any) {
       log(`Error generating images with Schnell: ${error.message}`, 'schnell');
       
       if (error.response) {
         log(`Schnell API error details: status=${error.response.status}, message=${error.response.statusText}`, 'schnell');
+        
+        // Дополнительное логирование для диагностики ошибок API
+        if (error.response.data) {
+          log(`Schnell API error response data: ${JSON.stringify(error.response.data)}`, 'schnell');
+        }
       }
       
       throw new Error(`Failed to generate images with Schnell: ${error.message}`);
@@ -316,8 +335,8 @@ export class SchnellService {
    * @returns Результат запроса
    */
   private async waitForResult(statusUrl: string, authHeader: string): Promise<any> {
-    // Максимальное время ожидания - 2 минуты
-    const maxWaitTime = 120; // секунд
+    // Увеличиваем максимальное время ожидания до 5 минут из-за генерации нескольких изображений
+    const maxWaitTime = 300; // секунд (5 минут)
     const startTime = Date.now();
     
     log(`Waiting for Schnell result, polling URL: ${statusUrl}`, 'schnell');
@@ -325,7 +344,7 @@ export class SchnellService {
     // Проверяем статус каждые 3 секунды
     let resultData;
     let errorCount = 0;
-    const maxErrors = 3;  // Максимальное количество последовательных ошибок
+    const maxErrors = 5;  // Увеличиваем количество допустимых последовательных ошибок
     
     while ((Date.now() - startTime) / 1000 < maxWaitTime) {
       try {

@@ -554,8 +554,11 @@ export function ImageGenerationDialog({
         
         console.log('Структура данных изображений:', JSON.stringify(data.data, null, 2).substring(0, 500));
         
+        // Дополнительное логирование запрошенного количества изображений
+        console.log(`Запрошено ${numImages} изображений от модели ${modelType}`);
+        
         if (data.data?.images && Array.isArray(data.data.images)) {
-          console.log('Обнаружен массив images в ответе API');
+          console.log(`Обнаружен массив images в ответе API с ${data.data.images.length} элементами`);
           // Формат с вложенным массивом images
           // Обрабатываем оба варианта: массив URL-строк и массив объектов
           images = data.data.images.map((img: any) => {
