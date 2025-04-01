@@ -377,7 +377,24 @@ export function ImageGenerationDialog({
   // Мутация для генерации изображения
   const { mutate: generateImage, isPending } = useMutation({
     mutationFn: async () => {
-      let requestData = {};
+      let requestData: {
+        prompt?: string;
+        negativePrompt?: string;
+        originalPrompt?: string;
+        originalContent?: string;
+        width?: number;
+        height?: number;
+        campaignId?: string;
+        contentId?: string;
+        modelName?: string;
+        numImages?: number;
+        stylePreset?: string;
+        savePrompt?: boolean;
+        modelParams?: {
+          use_api_path?: boolean;
+          direct_urls?: boolean;
+        };
+      } = {};
       
       if (activeTab === "prompt" || activeTab === "models") {
         // Прямая генерация по промпту (работает одинаково для обеих вкладок)
@@ -554,6 +571,11 @@ export function ImageGenerationDialog({
       // Для модели Schnell добавляем специальную обработку
       if (requestData.modelName === 'schnell') {
         console.log("🔍 Обнаружена модель Schnell, используем специализированную обработку API");
+        // Добавляем специальную обработку ошибок и проксирование для этой модели
+        requestData.modelParams = {
+          use_api_path: true,  // Явно указываем использовать /api/ в пути
+          direct_urls: true    // Флаг для получения прямых URL изображений
+        };
       }
       
       // Устанавливаем увеличенный таймаут для запроса
