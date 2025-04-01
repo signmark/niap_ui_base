@@ -12,7 +12,9 @@ import {
   type CampaignTrendTopic,
   type InsertCampaignTrendTopic,
   type BusinessQuestionnaire,
-  type InsertBusinessQuestionnaire
+  type InsertBusinessQuestionnaire,
+  type CampaignKeyword,
+  type InsertCampaignKeyword
 } from "@shared/schema";
 
 // Тип для информации о токене пользователя
@@ -56,6 +58,12 @@ export interface IStorage {
   getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
   createBusinessQuestionnaire(questionnaire: InsertBusinessQuestionnaire): Promise<BusinessQuestionnaire>;
   updateBusinessQuestionnaire(id: string, updates: Partial<InsertBusinessQuestionnaire>): Promise<BusinessQuestionnaire>;
+  
+  // Campaign Keywords
+  getCampaignKeywords(campaignId: string): Promise<CampaignKeyword[]>;
+  createCampaignKeyword(keyword: InsertCampaignKeyword): Promise<CampaignKeyword>;
+  deleteCampaignKeyword(id: string): Promise<void>;
+  updateCampaignKeyword(id: string, updates: Partial<InsertCampaignKeyword>): Promise<CampaignKeyword>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1384,6 +1392,238 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error getting business questionnaire by ID from Directus:', error);
       return null;
+    }
+  }
+}
+
+  // Campaign Keywords методы
+  async getCampaignKeywords(campaignId: string): Promise<CampaignKeyword[]> {
+    console.log('Getting campaign keywords for campaign:', campaignId);
+    try {
+      // Необходимо получить userId из campaignId для авторизации
+      const campaignIdNum = parseInt(campaignId, 10);
+      let userId: string | null = null;
+      
+      if (!isNaN(campaignIdNum)) {
+        const campaign = await this.getCampaign(campaignIdNum);
+        if (campaign) {
+          userId = campaign.userId;
+        }
+      }
+      
+      if (!userId) {
+        console.error('Cannot determine user ID for getting campaign keywords');
+        return [];
+      }
+      
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        console.error('No auth token found for user', userId);
+        return [];
+      }
+      
+      // Мы используем нашу собственную таблицу в PostgreSQL
+      // SQL-запрос будет выполнен через API или напрямую через клиент БД
+      const { data } = await directusApi.get('/custom/campaign_keywords', {
+        params: {
+          campaign_id: campaignId
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      // Преобразуем данные из формата ответа в тип CampaignKeyword
+      const keywords = (data || []).map((item: any) => ({
+        id: item.id,
+        campaignId: item.campaign_id,
+        keyword: item.keyword,
+        trendScore: item.trend_score,
+        mentionsCount: item.mentions_count,
+        lastChecked: new Date(item.last_checked),
+        dateCreated: new Date(item.date_created)
+      }));
+      
+      console.log(`Found ${keywords.length} keywords for campaign ${campaignId}`);
+      return keywords;
+    } catch (error) {
+      console.error('Error getting campaign keywords:', error);
+      return [];
+    }
+  }
+
+  async createCampaignKeyword(keyword: InsertCampaignKeyword): Promise<CampaignKeyword> {
+    console.log('Creating campaign keyword:', keyword);
+    try {
+      // Необходимо получить userId из campaignId для авторизации
+      const campaignIdStr = String(keyword.campaignId);
+      const campaignIdNum = parseInt(campaignIdStr, 10);
+      let userId: string | null = null;
+      
+      if (!isNaN(campaignIdNum)) {
+        const campaign = await this.getCampaign(campaignIdNum);
+        if (campaign) {
+          userId = campaign.userId;
+        }
+      }
+      
+      if (!userId) {
+        console.error('Cannot determine user ID for creating campaign keyword');
+        throw new Error('User ID required for authentication');
+      }
+      
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        throw new Error('No auth token found for user');
+      }
+      
+      // Мы используем нашу собственную таблицу в PostgreSQL
+      // SQL-запрос будет выполнен через API или напрямую через клиент БД
+      const { data } = await directusApi.post('/custom/campaign_keywords', {
+        campaign_id: keyword.campaignId,
+        keyword: keyword.keyword,
+        trend_score: keyword.trendScore || "0",
+        mentions_count: keyword.mentionsCount || 0
+      }, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      // Преобразуем полученный ответ в тип CampaignKeyword
+      return {
+        id: data.id,
+        campaignId: data.campaign_id,
+        keyword: data.keyword,
+        trendScore: data.trend_score,
+        mentionsCount: data.mentions_count,
+        lastChecked: new Date(data.last_checked),
+        dateCreated: new Date(data.date_created)
+      };
+    } catch (error) {
+      console.error('Error creating campaign keyword:', error);
+      
+      // Проверяем, содержит ли ошибка информацию о дубликате ключевого слова
+      const errorMessage = (error as any)?.response?.data?.error || (error as Error).message;
+      if (errorMessage && (errorMessage.includes('Дубликат ключевого слова') || errorMessage.includes('duplicate'))) {
+        throw new Error(`Дубликат ключевого слова: "${keyword.keyword}". Такое ключевое слово уже существует в данной кампании.`);
+      }
+      
+      throw new Error('Failed to create campaign keyword');
+    }
+  }
+
+  async deleteCampaignKeyword(id: string): Promise<void> {
+    console.log('Deleting campaign keyword with ID:', id);
+    try {
+      // Сначала получаем keyword для определения campaignId и userId
+      const { data } = await directusApi.get(`/custom/campaign_keywords/${id}`);
+      if (!data) {
+        throw new Error('Keyword not found');
+      }
+      
+      const campaignId = data.campaign_id;
+      
+      // Получаем userId из campaign
+      const campaignIdNum = parseInt(campaignId, 10);
+      let userId: string | null = null;
+      
+      if (!isNaN(campaignIdNum)) {
+        const campaign = await this.getCampaign(campaignIdNum);
+        if (campaign) {
+          userId = campaign.userId;
+        }
+      }
+      
+      if (!userId) {
+        console.error('Cannot determine user ID for deleting campaign keyword');
+        throw new Error('User ID required for authentication');
+      }
+      
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        throw new Error('No auth token found for user');
+      }
+      
+      // Удаляем ключевое слово из таблицы
+      await directusApi.delete(`/custom/campaign_keywords/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      console.log(`Successfully deleted campaign keyword with ID ${id}`);
+    } catch (error) {
+      console.error('Error deleting campaign keyword:', error);
+      throw new Error('Failed to delete campaign keyword');
+    }
+  }
+
+  async updateCampaignKeyword(id: string, updates: Partial<InsertCampaignKeyword>): Promise<CampaignKeyword> {
+    console.log('Updating campaign keyword:', id, updates);
+    try {
+      // Сначала получаем keyword для определения campaignId и userId
+      const { data: keywordData } = await directusApi.get(`/custom/campaign_keywords/${id}`);
+      if (!keywordData) {
+        throw new Error('Keyword not found');
+      }
+      
+      const campaignId = keywordData.campaign_id;
+      
+      // Получаем userId из campaign
+      const campaignIdNum = parseInt(campaignId, 10);
+      let userId: string | null = null;
+      
+      if (!isNaN(campaignIdNum)) {
+        const campaign = await this.getCampaign(campaignIdNum);
+        if (campaign) {
+          userId = campaign.userId;
+        }
+      }
+      
+      if (!userId) {
+        console.error('Cannot determine user ID for updating campaign keyword');
+        throw new Error('User ID required for authentication');
+      }
+      
+      const authToken = await this.getAuthToken(userId);
+      if (!authToken) {
+        throw new Error('No auth token found for user');
+      }
+      
+      // Подготавливаем объект обновления
+      const updateData: any = {};
+      if (updates.keyword !== undefined) updateData.keyword = updates.keyword;
+      if (updates.trendScore !== undefined) updateData.trend_score = updates.trendScore;
+      if (updates.mentionsCount !== undefined) updateData.mentions_count = updates.mentionsCount;
+      
+      // Обновляем ключевое слово
+      const { data } = await directusApi.patch(`/custom/campaign_keywords/${id}`, updateData, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      // Преобразуем полученный ответ в тип CampaignKeyword
+      return {
+        id: data.id,
+        campaignId: data.campaign_id,
+        keyword: data.keyword,
+        trendScore: data.trend_score,
+        mentionsCount: data.mentions_count,
+        lastChecked: new Date(data.last_checked),
+        dateCreated: new Date(data.date_created)
+      };
+    } catch (error) {
+      console.error('Error updating campaign keyword:', error);
+      
+      // Проверяем, содержит ли ошибка информацию о дубликате ключевого слова
+      const errorMessage = (error as any)?.response?.data?.error || (error as Error).message;
+      if (errorMessage && (errorMessage.includes('Дубликат ключевого слова') || errorMessage.includes('duplicate'))) {
+        throw new Error(`Дубликат ключевого слова. Такое ключевое слово уже существует в данной кампании.`);
+      }
+      
+      throw new Error('Failed to update campaign keyword');
     }
   }
 }

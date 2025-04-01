@@ -193,7 +193,10 @@ import {
   insertContentSourceSchema, 
   insertCampaignContentSchema,
   insertCampaignTrendTopicSchema,
-  InsertCampaignContent
+  InsertCampaignContent,
+  insertCampaignKeywordSchema,
+  InsertCampaignKeyword,
+  CampaignKeyword
 } from "@shared/schema";
 import * as crypto from 'crypto';
 
