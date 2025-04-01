@@ -422,68 +422,69 @@ export default function CampaignDetails() {
       
       if (newKeywords.length > 0) {
         try {
-          // Получаем данные о конкуренции для оптимистичного обновления
+          // Оптимистично обновляем кэш сразу, не дожидаясь API-запроса
+          // Это ускорит взаимодействие с интерфейсом
+          queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+            const newItems = newKeywords.map(keyword => ({
+              id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+              campaign_id: id,
+              keyword: keyword,
+              trend_score: 3500, // Временное значение, которое будет заменено
+              mentions_count: 75, // Временное значение, которое будет заменено
+              date_created: new Date().toISOString()
+            }));
+            
+            console.log("Оптимистичное обновление кэша с временными данными:", newItems);
+            return [...old, ...newItems];
+          });
+          
+          // Запускаем асинхронное обогащение данных без await
+          // Это позволит интерфейсу не блокироваться
           const protocol = window.location.protocol;
           const host = window.location.host;
           const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
           
-          console.log("Получение данных о частоте для оптимистичного обновления:", newKeywords);
+          console.log("Асинхронное получение данных о частоте:", newKeywords);
           
-          // Выполняем запрос СИНХРОННО с await, чтобы дождаться результатов перед обновлением кэша
-          try {
-            const response = await fetch(enrichUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ keywords: newKeywords })
-            });
-            
-            if (!response.ok) {
-              throw new Error(`Ошибка запроса: ${response.status}`);
-            }
-            
-            const enrichData = await response.json();
-            console.log("Полученные данные о частоте для оптимистичного обновления:", enrichData);
+          fetch(enrichUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ keywords: newKeywords })
+          })
+          .then(response => {
+            if (!response.ok) throw new Error(`Ошибка запроса: ${response.status}`);
+            return response.json();
+          })
+          .then(enrichData => {
+            console.log("Получены обогащенные данные о ключевых словах:", enrichData);
             
             if (enrichData.success && enrichData.data) {
               // Обновляем кэш с реальными данными о частоте
               queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-                // Создаем новые объекты для добавляемых ключевых слов с реальными данными
-                const newItems = enrichData.data.map((enrichedKeyword: any) => ({
-                  id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
-                  campaign_id: id,
-                  keyword: enrichedKeyword.keyword,
-                  trend_score: enrichedKeyword.frequency || 3500,
-                  mentions_count: enrichedKeyword.competition || 75,
-                  date_created: new Date().toISOString()
-                }));
+                if (!old) return old;
                 
-                console.log("Обновляем кэш с полученными данными о частоте:", newItems);
-                
-                return [...old, ...newItems];
+                // Фильтруем и обновляем существующие записи с временными данными
+                return old.map(item => {
+                  // Если это одно из новых добавленных ключевых слов
+                  const enrichedData = enrichData.data.find((e: any) => e.keyword === item.keyword);
+                  if (enrichedData) {
+                    return {
+                      ...item,
+                      trend_score: enrichedData.frequency || item.trend_score,
+                      mentions_count: enrichedData.competition || item.mentions_count
+                    };
+                  }
+                  return item;
+                });
               });
-            } else {
-              throw new Error("Ошибка в данных ответа");
             }
-          } catch (fetchError) {
-            // В случае ошибки запроса используем значения по умолчанию
-            console.error("Ошибка при получении данных о частоте:", fetchError);
-            
-            // Оптимистично обновляем кэш со значениями по умолчанию
-            queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-              const newItems = newKeywords.map(keyword => ({
-                id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
-                campaign_id: id,
-                keyword: keyword,
-                trend_score: 3500,
-                mentions_count: 75,
-                date_created: new Date().toISOString()
-              }));
-              
-              return [...old, ...newItems];
-            });
-          }
+          })
+          .catch(fetchError => {
+            console.error("Ошибка при асинхронном получении данных о частоте:", fetchError);
+            // Ничего не делаем с ошибками, т.к. оптимистичное обновление уже произошло
+          });
         } catch (error) {
           console.error("Критическая ошибка при обновлении кэша:", error);
           
