@@ -260,18 +260,36 @@ class FalAiUniversalService {
    */
   private async getImageUrls(modelUrl: string, requestId: string, numImages: number): Promise<string[]> {
     try {
-      // Для некоторых моделей можно получить все результаты сразу
-      const resultsUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/results`;
-      const resultsResponse = await axios.get(resultsUrl);
-      
-      // Если API вернуло массив изображений напрямую
-      if (resultsResponse.data.images && Array.isArray(resultsResponse.data.images)) {
-        return resultsResponse.data.images;
+      // Для модели schnell мы пропускаем запрос результатов из-за ошибки 404
+      // и сразу формируем URL для получения изображений
+      if (modelUrl.includes('schnell')) {
+        log('[fal-ai-universal] Определена модель Schnell, генерация прямых URL для изображений');
+        
+        const imageUrls: string[] = [];
+        for (let i = 0; i < numImages; i++) {
+          const imageUrl = `https://run.fal.ai/fal-ai/flux/schnell/results?request_id=${requestId}&image_idx=${i}`;
+          imageUrls.push(imageUrl);
+        }
+        
+        return imageUrls;
       }
       
-      // Если API вернуло пути к изображениям в data.images в виде строк
-      if (resultsResponse.data.images && typeof resultsResponse.data.images === 'string') {
-        return [resultsResponse.data.images];
+      // Для других моделей пробуем получить все результаты сразу
+      try {
+        const resultsUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/results`;
+        const resultsResponse = await axios.get(resultsUrl);
+        
+        // Если API вернуло массив изображений напрямую
+        if (resultsResponse.data.images && Array.isArray(resultsResponse.data.images)) {
+          return resultsResponse.data.images;
+        }
+        
+        // Если API вернуло пути к изображениям в data.images в виде строк
+        if (resultsResponse.data.images && typeof resultsResponse.data.images === 'string') {
+          return [resultsResponse.data.images];
+        }
+      } catch (error) {
+        log(`[fal-ai-universal] Ошибка при попытке получения результатов через /requests/${requestId}/results, переход к формированию URL по параметрам`);
       }
       
       // Универсальный путь для всех моделей - получаем изображения по отдельности
