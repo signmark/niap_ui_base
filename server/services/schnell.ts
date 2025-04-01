@@ -405,9 +405,12 @@ export class SchnellService {
             log(`Schnell result retrieved, response structure: ${Object.keys(resultData).join(', ')}`, 'schnell');
             break;
             
-          } catch (resultError: any) {
+          } catch (resultError: unknown) {
+            // Типизируем ошибку для доступа к свойствам
+            const typedError = resultError as any;
+            
             // Если получили ошибку 422 при запросе результата, возможно, результат уже в статусном ответе
-            if (resultError.response && resultError.response.status === 422) {
+            if (typedError.response && typedError.response.status === 422) {
               log(`Got 422 error when fetching result, trying to extract results directly from status response`, 'schnell');
               
               // Пробуем извлечь результат напрямую из статусного ответа
@@ -450,10 +453,17 @@ export class SchnellService {
                 // Schnell (также как и другие модели) сохраняет изображения в их CDN с предсказуемыми URL
                 const generatedUrls = [];
                 
-                // Создаем 5 различных URL с разными номерами для множественных изображений
-                for (let i = 0; i < 5; i++) {
+                // Получаем запрошенное количество изображений из statusResponse или используем числовое значение
+                const numRequested = statusResponse.data.num_images || parseInt(String(statusResponse.data.request_id).split('_').pop() || '3', 10) || 3;
+                log(`Generating CDN URLs for ${numRequested} images using request_id ${requestId}`, 'schnell');
+                
+                // Создаем URL с разными номерами для каждого запрошенного изображения
+                for (let i = 0; i < numRequested; i++) {
                   // Это шаблон FAL CDN URL, который обычно работает для Schnell модели
                   generatedUrls.push(`https://fal-cdn.fal.ai/result/${requestId}_${i}.jpeg`);
+                  
+                  // Добавляем альтернативные форматы для повышения вероятности успешного получения
+                  generatedUrls.push(`https://fal-cdn.fal.ai/result/${requestId}_${i}.png`);
                 }
                 
                 log(`Generated CDN URLs based on request_id: ${generatedUrls.join(', ').substring(0, 100)}...`, 'schnell');
@@ -486,9 +496,10 @@ export class SchnellService {
         log(`Unknown Schnell status: ${statusResponse.data?.status}, continuing to poll`, 'schnell');
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         errorCount++;
-        log(`Error checking Schnell status (${errorCount}/${maxErrors}): ${error.message}`, 'schnell');
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        log(`Error checking Schnell status (${errorCount}/${maxErrors}): ${errorMessage}`, 'schnell');
         
         // Если превысили количество последовательных ошибок
         if (errorCount >= maxErrors) {

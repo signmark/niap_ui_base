@@ -198,7 +198,7 @@ export function ImageGenerationDialog({
         } else {
           throw new Error("Не удалось сгенерировать промт");
         }
-      } catch (error) {
+      } catch (error: unknown) {
         // Обработка ошибки происходит в onError
         throw error;
       }
@@ -217,13 +217,14 @@ export function ImageGenerationDialog({
         description: "Промт сгенерирован на основе текста"
       });
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
       console.error("Ошибка при генерации промта:", error);
       
       toast({
         variant: "destructive",
         title: "Ошибка генерации промта",
-        description: error.message || "Произошла ошибка при генерации промта"
+        description: errorMessage || "Произошла ошибка при генерации промта"
       });
     }
   });
@@ -283,8 +284,9 @@ export function ImageGenerationDialog({
         .trim();
       
       return cleanedText;
-    } catch (error) {
-      console.error('Ошибка при очистке HTML:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Ошибка при очистке HTML:', errorMessage);
       // В случае ошибки, просто удаляем все теги
       return html.replace(/<[^>]*>/g, '');
     }
@@ -317,8 +319,9 @@ export function ImageGenerationDialog({
         console.warn('Не удалось перевести промт, используем очищенный текст');
         return cleanedText;
       }
-    } catch (error) {
-      console.error('Ошибка при переводе промта:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Ошибка при переводе промта:', errorMessage);
       // В случае ошибки используем очищенный текст без HTML
       return stripHtml(text);
     }
@@ -357,12 +360,14 @@ export function ImageGenerationDialog({
           console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
           return false;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('❌ Ошибка при сохранении промта:', error);
+        // Типизированный доступ к ошибке
+        const errorObject = error as any;
         console.error('Детали ошибки:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
+          message: errorObject.message || 'Неизвестная ошибка',
+          response: errorObject.response?.data,
+          status: errorObject.response?.status
         });
         return false;
       }
@@ -509,8 +514,9 @@ export function ImageGenerationDialog({
                 prompt: translatedContent // Используем переведенный текст как промт
               };
             }
-          } catch (error) {
-            console.error("Ошибка при генерации промта через DeepSeek:", error);
+          } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Ошибка при генерации промта через DeepSeek:", errorMessage);
             
             // В случае ошибки используем традиционный метод
             // Переводим контент на английский для улучшения качества генерации
@@ -632,11 +638,11 @@ export function ImageGenerationDialog({
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Ошибка при генерации изображения:', error);
       
       // Определяем тип ошибки для более понятного сообщения
-      let errorMessage = error?.message || "Произошла ошибка при генерации изображения";
+      let errorMessage = error instanceof Error ? error.message : "Произошла ошибка при генерации изображения";
       
       if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
         errorMessage = "Ошибка соединения с сервисом генерации изображений. Проверьте настройки сети.";
@@ -970,11 +976,25 @@ export function ImageGenerationDialog({
                 className={`relative rounded-md overflow-hidden border-2 cursor-pointer ${selectedImageIndex === index ? 'border-primary' : 'border-transparent'}`}
                 onClick={() => handleSelectImage(index)}
               >
-                <img 
-                  src={imageUrl} 
-                  alt={`Изображение ${index + 1}`} 
-                  className="w-full h-auto object-cover aspect-square"
-                />
+                <div className="w-full aspect-square bg-gray-100 flex items-center justify-center relative">
+                  <img 
+                    src={imageUrl} 
+                    alt={`Изображение ${index + 1}`} 
+                    className="w-full h-auto object-cover aspect-square"
+                    onError={(e) => {
+                      console.log(`Ошибка загрузки изображения ${index + 1}: ${imageUrl}`);
+                      // Показываем индикатор ошибки
+                      e.currentTarget.style.display = 'none';
+                      // Устанавливаем фон блока как индикатор ошибки
+                      e.currentTarget.parentElement!.classList.add('bg-red-50');
+                      // Добавляем сообщение об ошибке
+                      const errorDiv = document.createElement('div');
+                      errorDiv.className = 'absolute inset-0 flex items-center justify-center text-xs text-red-500 p-2 text-center';
+                      errorDiv.innerHTML = `Не удалось загрузить изображение<br/>Идентификатор: ${index + 1}`;
+                      e.currentTarget.parentElement!.appendChild(errorDiv);
+                    }}
+                  />
+                </div>
               </div>
             ))}
           </div>
