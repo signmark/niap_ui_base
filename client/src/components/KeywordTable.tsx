@@ -72,7 +72,6 @@ export function KeywordTable({
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,7 +85,6 @@ export function KeywordTable({
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend}</TableCell>
-                  <TableCell>{keyword.competition}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -103,7 +101,6 @@ export function KeywordTable({
               <TableRow>
                 <TableHead>Ключевое слово</TableHead>
                 <TableHead>Тренд</TableHead>
-                <TableHead>Конкуренция</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -112,7 +109,6 @@ export function KeywordTable({
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
-                  <TableCell>{keyword.mentions_count}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
