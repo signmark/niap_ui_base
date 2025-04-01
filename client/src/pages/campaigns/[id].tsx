@@ -328,19 +328,83 @@ export default function CampaignDetails() {
         return [];
       }
       
-      // Добавляем только новые ключевые слова
-      const promises = newKeywords.map(keyword => 
-        directusApi.post('/items/campaign_keywords', {
-          campaign_id: id,
-          keyword: keyword,
-          trend_score: 3500, // Среднее значение для новых слов, будет обновлено при анализе
-          mentions_count: 75, // Среднее значение для новых слов, будет обновлено при анализе 
-          last_checked: new Date().toISOString() // Current timestamp
-        })
-      );
+      // Сначала получаем реальные данные о конкуренции для ключевых слов
+      console.log("Получение данных о конкуренции для ключевых слов:", newKeywords);
       
-      const results = await Promise.all(promises);
-      return { added: newKeywords.length, newKeywords, results };
+      try {
+        // Запрашиваем обогащенные данные о ключевых словах через новый API
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
+        
+        const enrichResponse = await fetch(enrichUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ keywords: newKeywords })
+        });
+        
+        if (!enrichResponse.ok) {
+          throw new Error('Не удалось получить данные о конкуренции для ключевых слов');
+        }
+        
+        const enrichData = await enrichResponse.json();
+        console.log("Получены обогащенные данные о ключевых словах:", enrichData);
+        
+        if (enrichData.success && enrichData.data) {
+          // Используем полученные данные для добавления ключевых слов
+          const promises = enrichData.data.map((enrichedKeyword: any) => 
+            directusApi.post('/items/campaign_keywords', {
+              campaign_id: id,
+              keyword: enrichedKeyword.keyword,
+              trend_score: enrichedKeyword.frequency || 3500, // Используем полученную частоту или значение по умолчанию
+              mentions_count: enrichedKeyword.competition || 75, // Используем полученную конкуренцию или значение по умолчанию
+              last_checked: new Date().toISOString() // Current timestamp
+            })
+          );
+          
+          const results = await Promise.all(promises);
+          return { 
+            added: newKeywords.length, 
+            newKeywords, 
+            results,
+            enrichedData: enrichData.data // Возвращаем обогащенные данные для оптимистичного обновления
+          };
+        } else {
+          // В случае ошибки используем значения по умолчанию
+          console.error("Ошибка обогащения данных о ключевых словах:", enrichData);
+          
+          const promises = newKeywords.map(keyword => 
+            directusApi.post('/items/campaign_keywords', {
+              campaign_id: id,
+              keyword: keyword,
+              trend_score: 3500, // Значение по умолчанию
+              mentions_count: 75, // Значение по умолчанию
+              last_checked: new Date().toISOString()
+            })
+          );
+          
+          const results = await Promise.all(promises);
+          return { added: newKeywords.length, newKeywords, results };
+        }
+      } catch (error) {
+        console.error("Ошибка при получении данных о конкуренции:", error);
+        
+        // В случае ошибки используем значения по умолчанию
+        const promises = newKeywords.map(keyword => 
+          directusApi.post('/items/campaign_keywords', {
+            campaign_id: id,
+            keyword: keyword,
+            trend_score: 3500, // Значение по умолчанию
+            mentions_count: 75, // Значение по умолчанию
+            last_checked: new Date().toISOString()
+          })
+        );
+        
+        const results = await Promise.all(promises);
+        return { added: newKeywords.length, newKeywords, results };
+      }
     },
     // Оптимистичное обновление UI
     onMutate: async (keywords) => {
@@ -357,20 +421,91 @@ export default function CampaignDetails() {
       const newKeywords = keywords.filter(k => !currentKeywords.includes(k));
       
       if (newKeywords.length > 0) {
-        // Оптимистично обновляем кэш
-        queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
-          // Создаем новые объекты для добавляемых ключевых слов
-          const newItems = newKeywords.map(keyword => ({
-            id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
-            campaign_id: id,
-            keyword: keyword,
-            trend_score: Math.floor(Math.random() * 1000) + 3000,
-            mentions_count: Math.floor(Math.random() * 100) + 50,
-            date_created: new Date().toISOString()
-          }));
+        try {
+          // Получаем данные о конкуренции для оптимистичного обновления
+          const protocol = window.location.protocol;
+          const host = window.location.host;
+          const enrichUrl = `${protocol}//${host}/api/xmlriver/enrich-keywords`;
           
-          return [...old, ...newItems];
-        });
+          // Выполняем запрос синхронно для получения данных перед обновлением кэша
+          fetch(enrichUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ keywords: newKeywords })
+          })
+          .then(response => response.json())
+          .then(enrichData => {
+            if (enrichData.success && enrichData.data) {
+              // Оптимистично обновляем кэш с реальными данными о конкуренции
+              queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+                // Создаем новые объекты для добавляемых ключевых слов с реальными данными
+                const newItems = enrichData.data.map((enrichedKeyword: any) => ({
+                  id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+                  campaign_id: id,
+                  keyword: enrichedKeyword.keyword,
+                  trend_score: enrichedKeyword.frequency || 3500,
+                  mentions_count: enrichedKeyword.competition || 75,
+                  date_created: new Date().toISOString()
+                }));
+                
+                return [...old, ...newItems];
+              });
+            } else {
+              // Если не удалось получить данные о конкуренции, используем запасной вариант
+              console.error("Не удалось получить данные о конкуренции для оптимистичного обновления:", enrichData);
+              queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+                // Запасной вариант с средними значениями
+                const newItems = newKeywords.map(keyword => ({
+                  id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+                  campaign_id: id,
+                  keyword: keyword,
+                  trend_score: 3500,
+                  mentions_count: 75,
+                  date_created: new Date().toISOString()
+                }));
+                
+                return [...old, ...newItems];
+              });
+            }
+          })
+          .catch(error => {
+            console.error("Ошибка при получении данных о конкуренции для оптимистичного обновления:", error);
+            
+            // В случае ошибки используем запасной вариант
+            queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+              // Запасной вариант с средними значениями
+              const newItems = newKeywords.map(keyword => ({
+                id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+                campaign_id: id,
+                keyword: keyword,
+                trend_score: 3500,
+                mentions_count: 75,
+                date_created: new Date().toISOString()
+              }));
+              
+              return [...old, ...newItems];
+            });
+          });
+        } catch (error) {
+          console.error("Критическая ошибка при обновлении кэша:", error);
+          
+          // В случае критической ошибки используем запасной вариант
+          queryClient.setQueryData(["/api/keywords", id], (old: any[] = []) => {
+            // Запасной вариант с средними значениями
+            const newItems = newKeywords.map(keyword => ({
+              id: `temp-${Date.now()}-${Math.random()}`, // Временный ID
+              campaign_id: id,
+              keyword: keyword,
+              trend_score: 3500,
+              mentions_count: 75,
+              date_created: new Date().toISOString()
+            }));
+            
+            return [...old, ...newItems];
+          });
+        }
       }
       
       // Возвращаем контекст для возможного отката
