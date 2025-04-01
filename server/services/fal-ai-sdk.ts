@@ -154,11 +154,11 @@ export class FalAiSdkService {
 
   /**
    * Сгенерировать изображение
-   * @param input Данные для генерации
    * @param modelId ID модели (например, 'flux/schnell', 'fal-ai/fast-sdxl', 'fal-ai/fooocus')
+   * @param input Данные для генерации
    * @returns Результат генерации
    */
-  async generateImage(input: any, modelId: string = 'fal-ai/fast-sdxl'): Promise<any> {
+  async generateImage(modelId: string, input: any): Promise<any> {
     if (!this.apiKey || !this.client) {
       throw new Error('Клиент не инициализирован. Необходим API ключ.');
     }
@@ -197,6 +197,47 @@ export class FalAiSdkService {
       console.log(`🔴 НАЧИНАЕТСЯ С 'Key ': ${authHeader.startsWith('Key ') ? 'ДА' : 'НЕТ'}`);
       console.log(`🔴 СОДЕРЖИТ ':': ${authHeader.includes(':') ? 'ДА' : 'НЕТ'}`);
       
+      // Проверяем и исправляем параметры для совместимости с API
+      
+      // Преобразуем numImages в num_images, если необходимо
+      if (input.numImages && !input.num_images) {
+        console.log('🔄 Преобразование параметра numImages в num_images для совместимости с API');
+        input.num_images = input.numImages;
+        // Удаляем numImages чтобы избежать путаницы
+        delete input.numImages;
+      }
+      
+      // Проверяем, что num_images - это число
+      if (input.num_images && typeof input.num_images === 'string') {
+        input.num_images = parseInt(input.num_images, 10);
+      }
+      
+      // Гарантируем, что у нас всегда есть num_images и оно не меньше 1
+      if (!input.num_images || input.num_images < 1) {
+        input.num_images = 1;
+      }
+      
+      // Проверяем параметры ширины и высоты
+      if (input.width && typeof input.width === 'string') {
+        input.width = parseInt(input.width, 10);
+      }
+      
+      if (input.height && typeof input.height === 'string') {
+        input.height = parseInt(input.height, 10);
+      }
+      
+      // Убедимся, что высота и ширина имеют допустимые значения
+      if (!input.width || input.width < 512) {
+        console.log('⚠️ Корректировка ширины изображения: установлено минимальное значение 512');
+        input.width = 512;
+      }
+      
+      if (!input.height || input.height < 512) {
+        console.log('⚠️ Корректировка высоты изображения: установлено минимальное значение 512');
+        input.height = 512;
+      }
+      
+      console.log(`📊 Параметры запроса: ${input.num_images || 1} изображений, размер ${input.width}x${input.height}`);
         
       const requestConfig = {
         url: `https://queue.fal.run/${sanitizedModelId}`,
