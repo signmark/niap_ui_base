@@ -242,6 +242,18 @@ Return only the translated text, no explanations or comments.`;
       } else if (model === 'flux' || model === 'schnell') {
         // Endpoint и параметры для Flux (Schnell) - используем прямой URL
         apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
+        // Добавляем параметры запроса для модели Schnell
+        requestData = {
+          prompt: processedPrompt,
+          negative_prompt: negativePrompt || "",
+          width: width,
+          height: height,
+          num_images: numImages, // ВАЖНО! Используем num_images вместо numImages
+          scheduler: "K_EULER",
+          num_inference_steps: 25,
+          guidance_scale: 7.0
+        };
+        console.log('Параметры для модели Schnell:', JSON.stringify(requestData));
       } else if (model === 'stable-diffusion-v35-medium') {
         // Endpoint для Stable Diffusion v3.5 Medium - используем прямой URL
         apiUrl = 'https://queue.fal.run/fal-ai/stable-diffusion-v35-medium';
