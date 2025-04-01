@@ -168,15 +168,10 @@ export class FalAiSdkService {
 
     try {
       // Формируем конфигурацию для запроса
-      // Для модели flux/schnell используем специальный формат URL
-      const isSchnellModel = modelId.includes('flux/schnell') || modelId === 'schnell';
-      
+      // Все модели обрабатываем одинаково без специальных правил для Schnell
       // Определяем корректный modelId
       let sanitizedModelId;
-      if (isSchnellModel) {
-        sanitizedModelId = 'flux/schnell';
-        console.log(`🚀 Используем специальную модель Schnell: ${sanitizedModelId}`);
-      } else if (modelId.includes('fal-ai/')) {
+      if (modelId.includes('fal-ai/')) {
         sanitizedModelId = modelId;
       } else {
         sanitizedModelId = `fal-ai/${modelId}`;
@@ -212,32 +207,13 @@ export class FalAiSdkService {
       
       // Проверяем и исправляем параметры для совместимости с API
       
-      // Особая обработка для модели Schnell
-      if (isSchnellModel) {
-        console.log('🔄 Специальная обработка параметров для модели Schnell');
-        
-        // Для Schnell нужно использовать параметр num_images вместо numImages
-        if (input.numImages !== undefined && input.num_images === undefined) {
-          console.log(`🔄 Преобразование параметра numImages (${input.numImages}) в num_images для Schnell`);
-          input.num_images = parseInt(input.numImages, 10);
-          
-          // Проверяем валидность num_images для Schnell (от 1 до 5)
-          if (input.num_images < 1 || input.num_images > 5) {
-            console.log(`⚠️ Некорректное значение num_images (${input.num_images}) для Schnell, устанавливаем значение 1`);
-            input.num_images = 1;
-          }
-          
-          // Удаляем numImages чтобы избежать путаницы
-          delete input.numImages;
-        }
-      } else {
-        // Преобразуем numImages в num_images для других моделей, если необходимо
-        if (input.numImages && !input.num_images) {
-          console.log('🔄 Преобразование параметра numImages в num_images для совместимости с API');
-          input.num_images = input.numImages;
-          // Удаляем numImages чтобы избежать путаницы
-          delete input.numImages;
-        }
+      // Унифицированная обработка параметров для всех моделей
+      // Преобразуем numImages в num_images для всех моделей одинаково
+      if (input.numImages && !input.num_images) {
+        console.log('🔄 Преобразование параметра numImages в num_images для совместимости с API');
+        input.num_images = input.numImages;
+        // Удаляем numImages чтобы избежать путаницы
+        delete input.numImages;
       }
       
       // Проверяем, что num_images - это число
@@ -272,13 +248,9 @@ export class FalAiSdkService {
       
       console.log(`📊 Параметры запроса: ${input.num_images || 1} изображений, размер ${input.width}x${input.height}`);
       
-      // Формируем URL в зависимости от модели
+      // Формируем URL в зависимости от модели - унифицированная обработка
       let apiUrl;
-      if (isSchnellModel) {
-        // Для модели Schnell используем специальный формат URL
-        apiUrl = `https://queue.fal.run/flux/schnell`;
-        console.log(`🚀 Используем специальный URL для Schnell: ${apiUrl}`);
-      } else if (sanitizedModelId.includes('/')) {
+      if (sanitizedModelId.includes('/')) {
         // Для моделей вида 'fal-ai/fast-sdxl' или других с путями
         apiUrl = `https://queue.fal.run/${sanitizedModelId}`;
       } else {
@@ -291,7 +263,7 @@ export class FalAiSdkService {
       console.log(`📦 Параметры запроса: ${JSON.stringify({
         ...input,
         num_images: input.num_images || 1,
-        model: isSchnellModel ? 'flux/schnell' : sanitizedModelId
+        model: sanitizedModelId
       }).substring(0, 200)}...`);
         
       const requestConfig = {
