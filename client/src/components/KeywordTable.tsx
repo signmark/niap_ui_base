@@ -152,12 +152,20 @@ export function KeywordTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedSearchResults.map((keyword, index) => (
-                <TableRow key={index}>
+              {sortedSearchResults.map((keyword) => (
+                <TableRow key={keyword.keyword}>
                   <TableCell>
                     <Checkbox
                       checked={keyword.selected}
-                      onCheckedChange={() => onKeywordToggle?.(index)}
+                      onCheckedChange={() => {
+                        // Находим оригинальный индекс в исходном массиве searchResults
+                        const originalIndex = searchResults.findIndex(
+                          kw => kw.keyword === keyword.keyword
+                        );
+                        if (originalIndex !== -1) {
+                          onKeywordToggle?.(originalIndex);
+                        }
+                      }}
                     />
                   </TableCell>
                   <TableCell>{keyword.keyword}</TableCell>
