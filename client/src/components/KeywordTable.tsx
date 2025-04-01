@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState } from "react";
+
+type SortField = 'keyword' | 'frequency';
+type SortDirection = 'asc' | 'desc';
 
 interface KeywordTableProps {
   keywords: any[];
@@ -30,6 +34,59 @@ export function KeywordTable({
   onSaveSelected
 }: KeywordTableProps) {
   console.log("KeywordTable props:", { keywords, searchResults });
+  
+  // Состояние для сортировки результатов поиска
+  const [searchSortField, setSearchSortField] = useState<SortField>('keyword');
+  const [searchSortDirection, setSearchSortDirection] = useState<SortDirection>('asc');
+  
+  // Состояние для сортировки добавленных ключевых слов
+  const [keywordsSortField, setKeywordsSortField] = useState<SortField>('keyword');
+  const [keywordsSortDirection, setKeywordsSortDirection] = useState<SortDirection>('asc');
+  
+  // Функции для переключения сортировки
+  const toggleSearchSort = (field: SortField) => {
+    if (searchSortField === field) {
+      setSearchSortDirection(searchSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSearchSortField(field);
+      setSearchSortDirection('asc');
+    }
+  };
+  
+  const toggleKeywordsSort = (field: SortField) => {
+    if (keywordsSortField === field) {
+      setKeywordsSortDirection(keywordsSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setKeywordsSortField(field);
+      setKeywordsSortDirection('asc');
+    }
+  };
+  
+  // Сортировка результатов поиска
+  const sortedSearchResults = [...searchResults].sort((a, b) => {
+    if (searchSortField === 'keyword') {
+      return searchSortDirection === 'asc' 
+        ? a.keyword.localeCompare(b.keyword) 
+        : b.keyword.localeCompare(a.keyword);
+    } else { // frequency
+      const freqA = a.trend || 0;
+      const freqB = b.trend || 0;
+      return searchSortDirection === 'asc' ? freqA - freqB : freqB - freqA;
+    }
+  });
+  
+  // Сортировка добавленных ключевых слов
+  const sortedKeywords = [...keywords].sort((a, b) => {
+    if (keywordsSortField === 'keyword') {
+      return keywordsSortDirection === 'asc' 
+        ? a.keyword.localeCompare(b.keyword) 
+        : b.keyword.localeCompare(a.keyword);
+    } else { // frequency
+      const freqA = a.trend_score || 0;
+      const freqB = b.trend_score || 0;
+      return keywordsSortDirection === 'asc' ? freqA - freqB : freqB - freqA;
+    }
+  });
 
   if (isLoading) {
     return (
@@ -70,12 +127,32 @@ export function KeywordTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Частота</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSearchSort('keyword')}>
+                  <div className="flex items-center">
+                    Ключевое слово
+                    {searchSortField === 'keyword' && (
+                      searchSortDirection === 'asc' 
+                        ? <ArrowUp className="ml-2 h-4 w-4" /> 
+                        : <ArrowDown className="ml-2 h-4 w-4" />
+                    )}
+                    {searchSortField !== 'keyword' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSearchSort('frequency')}>
+                  <div className="flex items-center">
+                    Частота
+                    {searchSortField === 'frequency' && (
+                      searchSortDirection === 'asc' 
+                        ? <ArrowUp className="ml-2 h-4 w-4" /> 
+                        : <ArrowDown className="ml-2 h-4 w-4" />
+                    )}
+                    {searchSortField !== 'frequency' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchResults.map((keyword, index) => (
+              {sortedSearchResults.map((keyword, index) => (
                 <TableRow key={index}>
                   <TableCell>
                     <Checkbox
@@ -99,13 +176,33 @@ export function KeywordTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ключевое слово</TableHead>
-                <TableHead>Частота</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleKeywordsSort('keyword')}>
+                  <div className="flex items-center">
+                    Ключевое слово
+                    {keywordsSortField === 'keyword' && (
+                      keywordsSortDirection === 'asc' 
+                        ? <ArrowUp className="ml-2 h-4 w-4" /> 
+                        : <ArrowDown className="ml-2 h-4 w-4" />
+                    )}
+                    {keywordsSortField !== 'keyword' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleKeywordsSort('frequency')}>
+                  <div className="flex items-center">
+                    Частота
+                    {keywordsSortField === 'frequency' && (
+                      keywordsSortDirection === 'asc' 
+                        ? <ArrowUp className="ml-2 h-4 w-4" /> 
+                        : <ArrowDown className="ml-2 h-4 w-4" />
+                    )}
+                    {keywordsSortField !== 'frequency' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+                  </div>
+                </TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {keywords.map((keyword) => (
+              {sortedKeywords.map((keyword) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
                   <TableCell>{keyword.trend_score}</TableCell>
