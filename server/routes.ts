@@ -8626,16 +8626,22 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         if (prompt) {
           // Базовая генерация по промпту с использованием Schnell модели
           console.log('Генерация изображения по промпту:', prompt.substring(0, 50) + '...');
-          const result = await falAiSdk.generateImage('fal-ai/flux/schnell', {
+          console.log(`Запрошено ${numImages} изображений размером ${width}x${height}`);
+          
+          // Создаем объект с параметрами запроса
+          const requestParams = {
             prompt: prompt,
             negative_prompt: negativePrompt || 'text, words, letters, logos, watermarks, low quality, blurry, grainy',
-            width: width,
-            height: height,
-            num_images: numImages,
+            width: parseInt(String(width), 10),
+            height: parseInt(String(height), 10),
+            num_images: parseInt(String(numImages), 10),
             scheduler: "K_EULER",
             num_inference_steps: 25,
             guidance_scale: 7.0
-          });
+          };
+          
+          console.log('Параметры запроса для Schnell:', JSON.stringify(requestParams));
+          const result = await falAiSdk.generateImage('fal-ai/flux/schnell', requestParams);
           
           if (result.images && Array.isArray(result.images)) {
             generatedImages = result.images;
@@ -9157,21 +9163,24 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         }
         
         // Параметры для генерации
-        const data = {
+        console.log(`Подготовка запроса Schnell, запрошено ${numImages || 1} изображений размером ${width || 1024}x${height || 1024}`);
+        
+        // Создаем объект с параметрами запроса
+        const requestParams = {
           prompt: prompt,
           negative_prompt: negativePrompt || "",
-          width: width || 1024,
-          height: height || 1024,
-          num_images: numImages || 1
-        };
-        
-        // Выполняем запрос через SDK
-        const responseData = await falAiSdk.generateImage("fal-ai/flux/schnell", {
-          ...data,
+          width: parseInt(String(width || 1024), 10),
+          height: parseInt(String(height || 1024), 10),
+          num_images: parseInt(String(numImages || 1), 10),
           scheduler: "K_EULER",
           num_inference_steps: 25,
           guidance_scale: 7.0
-        });
+        };
+        
+        console.log('Параметры запроса для Schnell:', JSON.stringify(requestParams));
+        
+        // Выполняем запрос через SDK
+        const responseData = await falAiSdk.generateImage("fal-ai/flux/schnell", requestParams);
         
         console.log("[FAL.AI API] Изображение успешно сгенерировано:", 
           responseData && responseData.images ? `Получено ${responseData.images.length} изображений` : "Пустой ответ");
