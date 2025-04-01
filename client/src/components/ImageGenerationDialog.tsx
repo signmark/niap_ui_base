@@ -817,7 +817,7 @@ export function ImageGenerationDialog({
             <SelectContent>
               <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
               <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Fast SDXL (Schnell)</SelectItem>
+              <SelectItem value="schnell">Flux (Schnell)</SelectItem>
               <SelectItem value="sdxl">SDXL</SelectItem>
             </SelectContent>
           </Select>
@@ -1048,7 +1048,7 @@ export function ImageGenerationDialog({
                       <p className="text-xs text-muted-foreground">
                         {model === 'fast-sdxl' ? 'Быстрая генерация, хорошее качество' : 
                          model === 'fooocus' ? 'Художественная, детализированная' : 
-                         model === 'schnell' ? 'Быстрая генерация, хорошее качество' : // Стандартизировано с fast-sdxl
+                         model === 'schnell' ? 'Flux AI, быстрая генерация' : // Правильное описание для Flux
                          model === 'sdxl' ? 'Высокое качество, медленнее' : 
                          model === 'lcm' ? 'Самая быстрая, среднее качество' : 
                          'Стандартная модель'}
