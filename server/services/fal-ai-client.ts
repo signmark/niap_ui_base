@@ -129,15 +129,8 @@ export class FalAiClient {
     } = options;
     
     // Формируем эндпоинт в зависимости от модели
-    let endpoint = 'fal-ai/fast-sdxl';
-    
-    if (model === 'sdxl') {
-      endpoint = 'fal-ai/sdxl';
-    } else if (model === 'fooocus') {
-      endpoint = 'fal-ai/fooocus';
-    } else if (model === 'schnell') {
-      endpoint = 'flux/schnell';
-    }
+    // Все модели используют универсальный шаблон fal-ai/{model}
+    let endpoint = `fal-ai/${model || 'fast-sdxl'}`;
     
     // Формируем данные запроса
     const requestData = {
