@@ -573,12 +573,20 @@ export function ImageGenerationDialog({
         direct_urls: true     // Для всех моделей запрашиваем прямые CDN URL изображений
       };
       
-      console.log(`🔍 Модель: ${requestData.modelName}, используем универсальный интерфейс FAL.AI`);
+      // Получаем userId из localStorage для логирования
+      // userId уже будет добавлен в запрос через интерцептор в api.ts
+      const userId = localStorage.getItem('user_id');
+      
+      console.log(`🔍 Модель: ${requestData.modelName}, используем универсальный интерфейс FAL.AI с userId=${userId}`);
       
       // Устанавливаем увеличенный таймаут для запроса
       try {
         const response = await api.post("/generate-image", requestData, {
-          timeout: 300000 // 5 минут таймаут
+          timeout: 300000, // 5 минут таймаут
+          headers: {
+            // Дополнительно передаем userId в заголовке
+            'x-user-id': userId || ''
+          }
         });
         
         console.log(`API ответ для модели ${requestData.modelName}:`, JSON.stringify(response.data).substring(0, 200));

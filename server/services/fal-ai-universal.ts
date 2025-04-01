@@ -244,8 +244,13 @@ class FalAiUniversalService {
     // Формируем URL для запроса
     let apiUrl = '';
     
-    // Единый формат URL для всех моделей включая Schnell
-    apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+    // Schnell - это Flux, поэтому используем специальный endpoint
+    if (model === 'schnell') {
+      apiUrl = 'https://queue.fal.run/fal-ai/flux';
+    } else {
+      // Стандартный формат URL для остальных моделей
+      apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+    }
     
     console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
     

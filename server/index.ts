@@ -46,6 +46,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware для извлечения userId из заголовка и сохранения в req.userId
+app.use((req, res, next) => {
+  const userId = req.headers['x-user-id'] as string;
+  if (userId) {
+    (req as any).userId = userId;
+  }
+  next();
+});
+
 (async () => {
   try {
     log("Starting server initialization...");
