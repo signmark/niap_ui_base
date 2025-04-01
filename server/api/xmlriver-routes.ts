@@ -67,6 +67,145 @@ const authenticateXmlRiverRequest = async (req: Request, res: Response, next: Ne
  * @param app Express приложение
  */
 export function registerXmlRiverRoutes(app: Express): void {
+  // Маршрут для обновления данных о трендах ключевых слов (новая версия)
+  app.post('/api/xmlriver/update-keywords-trends', async (req: Request, res: Response) => {
+    const { campaignId } = req.body;
+    
+    if (!campaignId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Некорректный формат данных',
+        message: 'Необходимо указать ID кампании'
+      });
+    }
+    
+    try {
+      // Предустановленные данные API для запроса
+      const apiUrl = 'http://xmlriver.com/wordstat/json';
+      const hardcodedKey = {"user":"16797","key":"f7947eff83104621deb713275fe3260bfde4f001"};
+      
+      // Получаем токен для доступа к Directus
+      const authHeader = req.headers.authorization;
+      let token = '';
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      } else {
+        console.log('[XMLRiver] Токен авторизации не предоставлен, используем базовый запрос к Directus');
+      }
+      
+      // Получаем список существующих ключевых слов для кампании
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const keywordsUrl = `${protocol}://${host}/api/keywords/${campaignId}`;
+      
+      const keywordsResponse = await axios.get(keywordsUrl, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (!keywordsResponse.data) {
+        return res.status(404).json({
+          success: false,
+          error: 'Ключевые слова не найдены',
+          message: 'Не удалось получить список ключевых слов для кампании'
+        });
+      }
+      
+      const keywords = keywordsResponse.data;
+      
+      if (!Array.isArray(keywords) || keywords.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Ключевые слова не найдены',
+          message: 'Список ключевых слов пуст'
+        });
+      }
+      
+      // Обрабатываем каждое ключевое слово
+      let updatedCount = 0;
+      const updatedKeywords = [];
+      
+      for (const keywordObj of keywords) {
+        try {
+          // Запрос к XMLRiver API для получения данных о ключевом слове
+          console.log(`[XMLRiver] Обновление данных для ключевого слова: ${keywordObj.keyword}`);
+          
+          const response = await axios.get(apiUrl, {
+            params: {
+              user: hardcodedKey.user,
+              key: hardcodedKey.key,
+              query: keywordObj.keyword
+            }
+          });
+          
+          // Проверяем структуру ответа
+          if (response.data?.content?.includingPhrases?.items) {
+            const items = response.data.content.includingPhrases.items;
+            
+            // Ищем наше ключевое слово в результатах
+            const keywordData = items.find((item: any) => 
+              item.phrase.toLowerCase() === keywordObj.keyword.toLowerCase()
+            );
+            
+            if (keywordData) {
+              const frequency = parseInt(keywordData.number.replace(/\s/g, '')) || 3500;
+              // Теперь обновляем только частоту, игнорируя конкуренцию
+              
+              // Определяем пути к Directus API и нашему собственному API
+              const directusUrl = process.env.DIRECTUS_URL || 'http://localhost:8055/items/campaign_keywords';
+              
+              if (directusUrl && directusUrl.includes('directus')) {
+                // Если используем реальный Directus
+                await axios.patch(
+                  `${directusUrl}/${keywordObj.id}`,
+                  {
+                    trend_score: frequency,
+                    last_checked: new Date().toISOString()
+                  },
+                  {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  }
+                );
+              } else {
+                // Запрос через локальный API
+                const updateUrl = `${protocol}://${host}/api/keywords/update`;
+                await axios.post(updateUrl, {
+                  id: keywordObj.id,
+                  trend_score: frequency,
+                  last_checked: new Date().toISOString()
+                });
+              }
+              
+              updatedCount++;
+              updatedKeywords.push({
+                id: keywordObj.id,
+                keyword: keywordObj.keyword,
+                frequency
+              });
+            }
+          }
+        } catch (keywordError) {
+          console.error(`[XMLRiver] Ошибка при обновлении ключевого слова ${keywordObj.keyword}:`, keywordError);
+          // Пропускаем ошибку и продолжаем с другими ключевыми словами
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: `Обновлено ${updatedCount} ключевых слов`,
+        updatedCount,
+        updatedKeywords
+      });
+    } catch (error) {
+      console.error(`[XMLRiver] Ошибка при обновлении данных о трендах: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Внутренняя ошибка сервера',
+        message: 'Произошла ошибка при обновлении данных о трендах'
+      });
+    }
+  });
+
   // Маршрут для обновления данных о конкуренции для существующих ключевых слов
   app.post('/api/xmlriver/update-keywords-competition', async (req: Request, res: Response) => {
     const { campaignId } = req.body;

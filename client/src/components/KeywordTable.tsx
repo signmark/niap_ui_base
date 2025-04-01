@@ -71,7 +71,7 @@ export function KeywordTable({
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
+                <TableHead>Частота</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -100,7 +100,7 @@ export function KeywordTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Ключевое слово</TableHead>
-                <TableHead>Тренд</TableHead>
+                <TableHead>Частота</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
