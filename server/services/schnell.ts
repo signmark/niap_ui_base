@@ -18,6 +18,7 @@ interface SchnellGenerationOptions {
   savePrompt?: boolean;
   campaignId?: string;
   contentId?: string;
+  userId?: string;
 }
 
 export class SchnellService {
@@ -60,6 +61,12 @@ export class SchnellService {
    */
   async generateImages(options: SchnellGenerationOptions): Promise<string[]> {
     try {
+      // Если указан userId, но нет API-ключа, попробуем инициализировать сервис
+      if (!this.apiKey && options.userId) {
+        log(`Schnell API key not set, initializing with userId: ${options.userId}`, 'schnell');
+        await this.initialize(options.userId);
+      }
+      
       if (!this.apiKey) {
         throw new Error('Schnell API key is not set');
       }
@@ -176,13 +183,64 @@ export class SchnellService {
         const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
         log(`Стандартный URL для получения результата: ${requestUrl}`, 'schnell');
         
-        // Возвращаем правильный URL для получения результата
-        log(`Возвращаем стандартный URL для получения результата от FAL.AI API`, 'schnell');
-        return [requestUrl];
-        
-        // Если все остальные методы не сработали, выдаем понятную ошибку
-        log(`Не удалось получить или сгенерировать URL изображений для запроса ${requestId}`, 'schnell');
-        throw new Error(`Не удалось получить URL изображений от FAL.AI API (ID запроса: ${requestId})`); 
+        // Вместо возврата URL запроса, получаем результаты запроса и извлекаем URL изображений
+        log(`Выполняем дополнительный запрос для получения прямых URL изображений`, 'schnell');
+        try {
+          const requestResponse = await axios.get(requestUrl, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          log(`Получен ответ от конечной точки запроса, статус: ${requestResponse.status}`, 'schnell');
+          
+          // Проверяем наличие изображений в ответе
+          if (requestResponse.data && requestResponse.data.images && Array.isArray(requestResponse.data.images)) {
+            log(`Найдены изображения в ответе: ${requestResponse.data.images.length} шт.`, 'schnell');
+            
+            // Извлекаем URL изображений
+            const directImageUrls = requestResponse.data.images
+              .filter((img: any) => {
+                if (typeof img === 'string') {
+                  return img.includes('fal.media') || img.includes('.jpg') || img.includes('.png');
+                }
+                return img?.url && (img.url.includes('fal.media') || img.url.includes('.jpg') || img.url.includes('.png'));
+              })
+              .map((img: any) => {
+                if (typeof img === 'string') return img;
+                return img?.url || '';
+              })
+              .filter(Boolean);
+              
+            if (directImageUrls.length > 0) {
+              log(`Успешно извлечены прямые URL изображений: ${directImageUrls.join(', ')}`, 'schnell');
+              return directImageUrls;
+            }
+          }
+          
+          // Если не нашли изображения в обычном формате, проверяем другие поля
+          if (requestResponse.data && requestResponse.data.output) {
+            log(`Найдено поле output в ответе`, 'schnell');
+            
+            if (Array.isArray(requestResponse.data.output)) {
+              const outputUrls = requestResponse.data.output.filter((url: string) => 
+                typeof url === 'string' && (url.includes('fal.media') || url.includes('.jpg') || url.includes('.png')));
+              
+              if (outputUrls.length > 0) {
+                log(`Извлечены URL из поля output: ${outputUrls.join(', ')}`, 'schnell');
+                return outputUrls;
+              }
+            }
+          }
+          
+          // Если до сих пор не нашли URL, возвращаем сам URL запроса для совместимости
+          log(`Не удалось извлечь прямые URL изображений, возвращаем URL запроса`, 'schnell');
+          return [requestUrl];
+        } catch (error) {
+          log(`Ошибка при получении результатов запроса: ${error}`, 'schnell');
+          // В случае ошибки, возвращаем URL запроса как запасной вариант
+          return [requestUrl];
+        } 
       }
       
       // Если request_id не найден, пробуем обработать асинхронный ответ традиционным способом

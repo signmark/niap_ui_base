@@ -13,6 +13,7 @@ interface ImageGenerationParams {
   numImages?: number;
   model?: string;
   token?: string;
+  userId?: string;
 }
 
 /**
@@ -60,16 +61,17 @@ class FalAiUniversalService {
   /**
    * Получает API ключ для FAL.AI из настроек пользователя
    * @param token Пользовательский токен для получения API ключа
+   * @param userId ID пользователя (опционально, если есть в токене)
    * @returns API ключ
    */
-  private async getFalAiApiKey(token?: string): Promise<string> {
+  private async getFalAiApiKey(token?: string, userId?: string): Promise<string> {
     try {
       if (!token) {
         throw new Error('Токен авторизации не предоставлен');
       }
 
       // Получаем API ключ пользователя через сервис API ключей
-      const apiKey = await apiKeyService.getApiKey('fal_ai', token);
+      const apiKey = await apiKeyService.getApiKey(userId || 'current', 'fal_ai', token);
       
       if (!apiKey) {
         throw new Error('API ключ FAL.AI не найден в настройках пользователя');
@@ -145,11 +147,14 @@ class FalAiUniversalService {
    * @returns Массив URL изображений
    */
   async generateImages(params: ImageGenerationParams): Promise<string[]> {
-    const { model = 'sdxl', token } = params;
+    const { model = 'sdxl', token, userId } = params;
     
     try {
+      // Логирование информации о запросе
+      log(`[fal-ai-universal] Запуск генерации изображения: модель=${model}, userId=${userId || 'не указан'}`);
+      
       // Получаем API ключ FAL.AI
-      const apiKey = await this.getFalAiApiKey(token);
+      const apiKey = await this.getFalAiApiKey(token, userId);
       
       // Получаем URL и параметры для выбранной модели
       const modelUrl = this.getModelUrl(model);
@@ -274,41 +279,196 @@ class FalAiUniversalService {
       
       log(`[fal-ai-universal] Ответ от API получен, статус: ${requestResponse.status}`);
       
-      // Проверяем наличие массива изображений в ответе
-      if (requestResponse.data && requestResponse.data.images && Array.isArray(requestResponse.data.images)) {
-        log(`[fal-ai-universal] Найдено ${requestResponse.data.images.length} изображений в ответе`);
-        
-        const imageUrls: string[] = [];
-        
-        // Извлекаем URL каждого изображения
-        for (const image of requestResponse.data.images) {
-          if (image.url) {
-            imageUrls.push(image.url);
-            log(`[fal-ai-universal] Извлечен URL изображения: ${image.url}`);
-          }
-        }
-        
-        // Проверяем, что получили изображения
-        if (imageUrls.length > 0) {
-          log(`[fal-ai-universal] Успешно получены ${imageUrls.length} URL изображений`);
-          return imageUrls;
-        }
+      // Используем универсальный извлекатель прямых URL
+      const imageUrls = this.extractDirectImageUrlsFromResponse(requestResponse.data);
+      
+      if (imageUrls.length > 0) {
+        log(`[fal-ai-universal] Успешно извлечены ${imageUrls.length} прямых URL изображений`);
+        return imageUrls;
       }
       
-      log(`[fal-ai-universal] Стандартное поле images не найдено или не содержит URL-ы`);
-      
-      // Если не нашли изображения в стандартном формате, подробно логируем структуру ответа
-      if (requestResponse.data) {
-        log(`[fal-ai-universal] Структура ответа: ${JSON.stringify(Object.keys(requestResponse.data))}`);
-        log(`[fal-ai-universal] Данные ответа: ${JSON.stringify(requestResponse.data).substring(0, 500)}...`);
-      }
-      
-      // Генерируем ошибку с детальной информацией
-      throw new Error(`Не удалось извлечь URL изображений из ответа. Ответ не содержит массив images с URL.`);
+      // Если не удалось найти прямые URL, генерируем ошибку
+      throw new Error(`Не удалось извлечь прямые URL изображений из ответа API`);
     } catch (error: any) {
       console.error('[fal-ai-universal] Ошибка при получении URL изображений:', error);
       throw new Error(`Не удалось получить URL изображений: ${error.message}`);
     }
+  }
+  
+  /**
+   * Извлекает прямые URL изображений из ответа API
+   * @param responseData Данные ответа от API
+   * @returns Массив прямых URL изображений
+   */
+  private extractDirectImageUrlsFromResponse(responseData: any): string[] {
+    log(`[fal-ai-universal] Извлечение прямых URL изображений из ответа API`);
+    
+    // Если responseData - строка, а не объект, пытаемся разобрать её как JSON
+    let data = responseData;
+    if (typeof responseData === 'string') {
+      try {
+        data = JSON.parse(responseData);
+      } catch (e) {
+        // Если это не JSON, просто используем исходную строку
+        data = responseData;
+      }
+    }
+    
+    // Логируем структуру ответа для отладки
+    if (typeof data === 'object' && data !== null) {
+      log(`[fal-ai-universal] Структура ответа: ${JSON.stringify(Object.keys(data))}`);
+    }
+    
+    const directImageUrls: string[] = [];
+    
+    // Последовательно проверяем все возможные места хранения URL изображений
+    
+    // 1. Вариант: images как массив объектов с полем url
+    if (data && data.images && Array.isArray(data.images)) {
+      log(`[fal-ai-universal] Найдено поле images с ${data.images.length} элементами`);
+      
+      for (const image of data.images) {
+        if (typeof image === 'string') {
+          if (this.isValidImageUrl(image)) {
+            directImageUrls.push(image);
+            log(`[fal-ai-universal] Добавлен прямой URL изображения (строка в images): ${image}`);
+          }
+        } else if (image && typeof image === 'object') {
+          if (image.url && this.isValidImageUrl(image.url)) {
+            directImageUrls.push(image.url);
+            log(`[fal-ai-universal] Добавлен прямой URL изображения (объект в images): ${image.url}`);
+          }
+        }
+      }
+    }
+    
+    // 2. Вариант: image_urls как массив строк
+    if (data && data.image_urls && Array.isArray(data.image_urls)) {
+      log(`[fal-ai-universal] Найдено поле image_urls с ${data.image_urls.length} элементами`);
+      
+      for (const url of data.image_urls) {
+        if (typeof url === 'string' && this.isValidImageUrl(url)) {
+          directImageUrls.push(url);
+          log(`[fal-ai-universal] Добавлен прямой URL изображения (из image_urls): ${url}`);
+        }
+      }
+    }
+    
+    // 3. Вариант: output как массив URL или как объект
+    if (data && data.output) {
+      log(`[fal-ai-universal] Найдено поле output: ${typeof data.output}`);
+      
+      if (Array.isArray(data.output)) {
+        for (const item of data.output) {
+          if (typeof item === 'string' && this.isValidImageUrl(item)) {
+            directImageUrls.push(item);
+            log(`[fal-ai-universal] Добавлен прямой URL изображения (из output массива): ${item}`);
+          }
+        }
+      } else if (typeof data.output === 'object' && data.output !== null) {
+        // Проверяем вложенные поля в output
+        if (data.output.images) {
+          const outputImages = Array.isArray(data.output.images) 
+            ? data.output.images 
+            : [data.output.images];
+            
+          for (const img of outputImages) {
+            if (typeof img === 'string' && this.isValidImageUrl(img)) {
+              directImageUrls.push(img);
+              log(`[fal-ai-universal] Добавлен прямой URL изображения (из output.images): ${img}`);
+            }
+          }
+        }
+        
+        if (data.output.image_urls) {
+          const outputImageUrls = Array.isArray(data.output.image_urls) 
+            ? data.output.image_urls 
+            : [data.output.image_urls];
+            
+          for (const url of outputImageUrls) {
+            if (typeof url === 'string' && this.isValidImageUrl(url)) {
+              directImageUrls.push(url);
+              log(`[fal-ai-universal] Добавлен прямой URL изображения (из output.image_urls): ${url}`);
+            }
+          }
+        }
+      }
+    }
+    
+    // Проверяем, нашли ли мы какие-либо URL
+    if (directImageUrls.length === 0) {
+      log(`[fal-ai-universal] Не найдено прямых URL изображений в стандартных полях, выполняем расширенный поиск`);
+      
+      // Расширенный поиск по всем полям и подполям
+      this.recursiveSearchForImageUrls(data, directImageUrls);
+    }
+    
+    // Возвращаем уникальные URL - ручная фильтрация для поддержки старой версии JavaScript
+    const uniqueUrls: string[] = [];
+    for (const url of directImageUrls) {
+      if (!uniqueUrls.includes(url)) {
+        uniqueUrls.push(url);
+      }
+    }
+    
+    log(`[fal-ai-universal] Найдено ${uniqueUrls.length} уникальных прямых URL изображений`);
+    
+    return uniqueUrls;
+  }
+  
+  /**
+   * Рекурсивно ищет URL изображений во всех полях и подполях объекта
+   * @param obj Объект для поиска
+   * @param foundUrls Массив для сохранения найденных URL
+   */
+  private recursiveSearchForImageUrls(obj: any, foundUrls: string[]): void {
+    if (!obj || typeof obj !== 'object') return;
+    
+    // Перебираем все поля объекта
+    for (const key in obj) {
+      const value = obj[key];
+      
+      // Проверяем, является ли значение строкой с URL изображения
+      if (typeof value === 'string' && this.isValidImageUrl(value)) {
+        foundUrls.push(value);
+        log(`[fal-ai-universal] Найден URL изображения в поле ${key}: ${value}`);
+      }
+      // Проверяем массивы строк
+      else if (Array.isArray(value)) {
+        for (const item of value) {
+          if (typeof item === 'string' && this.isValidImageUrl(item)) {
+            foundUrls.push(item);
+            log(`[fal-ai-universal] Найден URL изображения в массиве ${key}: ${item}`);
+          } else if (typeof item === 'object' && item !== null) {
+            // Рекурсивно ищем в объектах внутри массива
+            this.recursiveSearchForImageUrls(item, foundUrls);
+          }
+        }
+      }
+      // Рекурсивно ищем в дочерних объектах
+      else if (typeof value === 'object' && value !== null) {
+        this.recursiveSearchForImageUrls(value, foundUrls);
+      }
+    }
+  }
+  
+  /**
+   * Проверяет, является ли строка действительным URL изображения
+   * @param url URL для проверки
+   * @returns true если это действительный URL изображения
+   */
+  private isValidImageUrl(url: string): boolean {
+    // Проверяем наличие доменов изображений и/или расширений файлов изображений
+    const isImageUrl = url.includes('fal.media') || 
+                      url.includes('.jpg') || 
+                      url.includes('.jpeg') || 
+                      url.includes('.png') ||
+                      url.includes('.webp') ||
+                      url.includes('image/') ||
+                      url.includes('/images/') ||
+                      url.includes('storage.googleapis.com');
+                      
+    return isImageUrl;
   }
 
   /**
