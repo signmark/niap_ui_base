@@ -106,7 +106,7 @@ export class SchnellService {
         'Accept': 'application/json'
       };
 
-      // Отправка запроса к API с увеличенным таймаутом для генерации нескольких изображений
+      // Отправка запроса к API согласно документации
       const response = await axios.post(
         this.baseUrl,
         requestData,
@@ -118,7 +118,24 @@ export class SchnellService {
 
       log(`Schnell API response status: ${response.status}`, 'schnell');
       
-      // Обработка асинхронного ответа, если запрос поставлен в очередь
+      // Извлекаем request_id из ответа
+      if (response.data && response.data.request_id) {
+        const requestId = response.data.request_id;
+        log(`Schnell request_id received: ${requestId}`, 'schnell');
+        
+        // Создаем URL для каждого запрошенного изображения на основе request_id
+        const imageUrls = [];
+        
+        // Для Schnell достаточно использовать сам request_id как базовый URL изображения
+        const baseImageUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+        imageUrls.push(baseImageUrl);
+        
+        log(`Created direct image URL from request_id: ${baseImageUrl}`, 'schnell');
+        
+        return imageUrls;
+      }
+      
+      // Если request_id не найден, пробуем обработать асинхронный ответ традиционным способом
       if (response.data && response.data.status === "IN_QUEUE") {
         log(`Schnell request queued, polling for results`, 'schnell');
         
@@ -314,19 +331,22 @@ export class SchnellService {
       }
       
       return images;
-    } catch (error: any) {
-      log(`Error generating images with Schnell: ${error.message}`, 'schnell');
+    } catch (error: unknown) {
+      const typedError = error as any;
+      const errorMessage = typedError instanceof Error ? typedError.message : String(typedError);
       
-      if (error.response) {
-        log(`Schnell API error details: status=${error.response.status}, message=${error.response.statusText}`, 'schnell');
+      log(`Error generating images with Schnell: ${errorMessage}`, 'schnell');
+      
+      if (typedError.response) {
+        log(`Schnell API error details: status=${typedError.response.status}, message=${typedError.response.statusText}`, 'schnell');
         
         // Дополнительное логирование для диагностики ошибок API
-        if (error.response.data) {
-          log(`Schnell API error response data: ${JSON.stringify(error.response.data)}`, 'schnell');
+        if (typedError.response.data) {
+          log(`Schnell API error response data: ${JSON.stringify(typedError.response.data)}`, 'schnell');
         }
       }
       
-      throw new Error(`Failed to generate images with Schnell: ${error.message}`);
+      throw new Error(`Failed to generate images with Schnell: ${errorMessage}`);
     }
   }
 
@@ -503,12 +523,15 @@ export class SchnellService {
         
         // Если превысили количество последовательных ошибок
         if (errorCount >= maxErrors) {
+          // Типизируем ошибку для доступа к свойствам
+          const typedError = error as any;
+          
           // Только для определенных типов ошибок мы продолжаем попытки
-          const isNetworkError = !error.response && error.request;
-          const isServerError = error.response && error.response.status >= 500;
+          const isNetworkError = !typedError.response && typedError.request;
+          const isServerError = typedError.response && typedError.response.status >= 500;
           
           if (!isNetworkError && !isServerError) {
-            throw new Error(`Too many consecutive errors when checking Schnell status: ${error.message}`);
+            throw new Error(`Too many consecutive errors when checking Schnell status: ${errorMessage}`);
           }
         }
         
@@ -546,8 +569,9 @@ export class SchnellService {
       log(`Schnell service initialized successfully for user ${userId}`, 'schnell');
       
       return true;
-    } catch (error: any) {
-      log(`Error initializing Schnell service: ${error.message}`, 'schnell');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log(`Error initializing Schnell service: ${errorMessage}`, 'schnell');
       return false;
     }
   }
