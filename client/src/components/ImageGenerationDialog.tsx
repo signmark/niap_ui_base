@@ -863,10 +863,9 @@ export function ImageGenerationDialog({
           console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
         }
       }} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-2">
+        <TabsList className="grid grid-cols-2 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="text">На основе текста</TabsTrigger>
-          <TabsTrigger value="models">Тест моделей</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}
@@ -1020,93 +1019,7 @@ export function ImageGenerationDialog({
           )}
         </TabsContent>
 
-        {/* Содержимое вкладки тестирования моделей */}
-        <TabsContent value="models" className="space-y-2">
-          <div className="space-y-2">
-            <Label>Запрос (промпт) для тестирования моделей</Label>
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Опишите, какое изображение вы хотите получить..."
-              className="min-h-[100px]"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Негативный запрос (чего избегать)</Label>
-            <Input
-              value={negativePrompt}
-              onChange={(e) => setNegativePrompt(e.target.value)}
-              placeholder="bad quality, blurry, distorted, etc."
-            />
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Доступные модели FAL.AI</Label>
-            <div className="grid grid-cols-1 gap-2 mt-1">
-              {['fast-sdxl', 'fooocus', 'schnell', 'lcm'].map((model) => (
-                <div 
-                  key={model}
-                  className={`p-2 border rounded-md cursor-pointer hover:bg-gray-50 ${modelType === model ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
-                  onClick={() => setModelType(model)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{model.charAt(0).toUpperCase() + model.slice(1)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {model === 'fast-sdxl' ? 'Быстрая генерация, хорошее качество' : 
-                         model === 'fooocus' ? 'Художественная, детализированная' : 
-                         model === 'schnell' ? 'Flux AI, быстрая генерация' : 
-                         model === 'lcm' ? 'Самая быстрая, среднее качество' : 
-                         'Стандартная модель'}
-                      </p>
-                    </div>
-                    <div>
-                      <div className={`h-4 w-4 rounded-full ${modelType === model ? 'bg-primary' : 'bg-gray-200'}`} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-xs">Количество изображений</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                value={numImages}
-                onChange={(e) => setNumImages(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-16 h-8 text-sm"
-              />
-              <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
-            </div>
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-xs">Размер изображения</Label>
-            <RadioGroup value={imageSize} onValueChange={setImageSize} className="flex space-x-2">
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="1024x1024" id="size-square" />
-                <label htmlFor="size-square" className="text-xs">1024×1024</label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="1024x768" id="size-landscape" />
-                <label htmlFor="size-landscape" className="text-xs">1024×768</label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="768x1024" id="size-portrait" />
-                <label htmlFor="size-portrait" className="text-xs">768×1024</label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="text-xs text-muted-foreground mt-2 p-2 border rounded-md bg-yellow-50 border-yellow-200">
-            <p>Режим тестирования позволяет сравнить работу разных моделей генерации изображений. Выберите модель и нажмите кнопку "Сгенерировать изображение".</p>
-          </div>
-        </TabsContent>
+
       </Tabs>
       
       {/* Кнопка генерации */}
@@ -1115,8 +1028,7 @@ export function ImageGenerationDialog({
         disabled={
           isPending || 
           (activeTab === "prompt" && !prompt) || 
-          (activeTab === "text" && (!generatedPrompt || !content)) ||
-          (activeTab === "models" && !prompt)
+          (activeTab === "text" && (!generatedPrompt || !content))
         }
         className="w-full"
       >
