@@ -86,7 +86,7 @@ export function KeywordList({ campaignId }: KeywordListProps) {
       <div className="border rounded-lg">
         <div className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 font-medium border-b">
           <div>Ключевое слово</div>
-          <div>Тренд</div>
+          <div>Частота</div>
           <div></div>
         </div>
 

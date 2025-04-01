@@ -5,7 +5,7 @@ import { KeywordTable } from "@/components/KeywordTable";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, RefreshCw } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 import { useCampaignStore } from "@/lib/campaignStore"; // Используем общее хранилище
@@ -362,7 +362,7 @@ export default function Keywords() {
                 }}
                 disabled={isSearching}
               >
-                {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Обновить метрики
               </Button>
             )}
