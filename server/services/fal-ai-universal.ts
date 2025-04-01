@@ -121,10 +121,8 @@ class FalAiUniversalService {
           ...baseParams,
           guidance_scale: 7.5,
           scheduler: 'K_EULER',
-          num_inference_steps: 25,
-          // Дополнительные параметры специфичные для Schnell модели
-          use_api_path: true,  // Флаг указывающий на то, что нужно использовать путь /api/
-          direct_urls: true     // Флаг для получения прямых URL изображений без прокси
+          num_inference_steps: 25
+          // Удаляем специальные флаги для универсальности обработки всех моделей
         };
       
       case 'sdxl':
@@ -171,14 +169,8 @@ class FalAiUniversalService {
       
       log(`[fal-ai-universal] Запуск генерации через модель ${model}`);
       
-      // Проверяем, нужно ли использовать /api/ путь (для Schnell)
-      let actualModelUrl = modelUrl;
-      if (requestParams.use_api_path && model === 'schnell') {
-        actualModelUrl = modelUrl.replace('schnell', 'schnell/api');
-        log(`[fal-ai-universal] Использование специального пути API для Schnell: ${actualModelUrl}`);
-        // Удаляем служебный параметр, чтобы не отправлять его в API
-        delete requestParams.use_api_path;
-      }
+      // Используем единый подход для всех моделей - без специальных путей
+      const actualModelUrl = modelUrl;
       
       // Отправляем запрос на генерацию
       const requestUrl = `${this.baseUrl}/${actualModelUrl}`;
@@ -198,9 +190,8 @@ class FalAiUniversalService {
       
       log(`[fal-ai-universal] Запрос поставлен в очередь, ID: ${requestId}`);
       
-      // Ожидаем завершения генерации
-      // Для проверки статуса и получения результатов используем actualModelUrl если это модель Schnell
-      const checkModelUrl = model === 'schnell' ? actualModelUrl : modelUrl;
+      // Ожидаем завершения генерации - используем единый подход для всех моделей
+      const checkModelUrl = modelUrl;
       const imageUrls = await this.waitForResults(checkModelUrl, requestId, params.numImages || 1);
       
       log(`[fal-ai-universal] Успешно получено ${imageUrls.length} изображений`);
@@ -227,12 +218,8 @@ class FalAiUniversalService {
       attempts++;
       
       try {
-        // Проверяем статус запроса
-        // Для модели Schnell используем специальный путь к API
-        const isSchnellModel = modelUrl.includes('schnell/api');
-        const statusUrl = isSchnellModel 
-          ? `${this.baseUrl}/${modelUrl.replace('/api', '')}/requests/${requestId}/status`
-          : `${this.baseUrl}/${modelUrl}/requests/${requestId}/status`;
+        // Проверяем статус запроса - единый формат для всех моделей
+        const statusUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/status`;
         
         log(`[fal-ai-universal] Проверка статуса по URL: ${statusUrl}`);
         const statusResponse = await axios.get(statusUrl);
@@ -281,45 +268,7 @@ class FalAiUniversalService {
    */
   private async getImageUrls(modelUrl: string, requestId: string, numImages: number): Promise<string[]> {
     try {
-      // Определяем, имеем ли дело с моделью Schnell
-      const isSchnellModel = modelUrl.includes('schnell');
-      
-      // Для модели Schnell используем прямой путь без /requests/
-      if (isSchnellModel) {
-        // Schnell требует использования другого пути для API
-        const schnellModelUrl = modelUrl.replace('schnell', 'schnell/api');
-        
-        // Формируем URL изображений по шаблону для модели Schnell
-        const imageUrls: string[] = [];
-        for (let i = 0; i < numImages; i++) {
-          // Пробуем сначала получить прямые URL через CDN
-          try {
-            // Запрашиваем из API напрямую
-            const resultsUrl = `${this.baseUrl}/${schnellModelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-            const response = await axios.get(resultsUrl, { 
-              responseType: 'json',
-              timeout: 10000
-            });
-            
-            // Пытаемся получить URL прямо из ответа, если доступен
-            if (response.data?.cdn_url) {
-              const cdnUrl = response.data.cdn_url;
-              log(`[fal-ai-universal] Получен прямой CDN URL для изображения Schnell: ${cdnUrl}`);
-              imageUrls.push(cdnUrl);
-              continue; // Переходим к следующему изображению
-            }
-          } catch (error) {
-            log(`[fal-ai-universal] Не удалось получить CDN URL, использую прокси URL для изображения ${i}`);
-          }
-          
-          // Стандартный прокси URL как запасной вариант
-          const imageUrl = `${this.baseUrl}/${schnellModelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-          log(`[fal-ai-universal] URL для Schnell модели (прокси): ${imageUrl}`);
-          imageUrls.push(imageUrl);
-        }
-        
-        return imageUrls;
-      }
+      // Единый подход для всех моделей - используем общий формат URL без специфики для Schnell
       
       // Для других моделей сначала пробуем получить все результаты сразу
       try {
