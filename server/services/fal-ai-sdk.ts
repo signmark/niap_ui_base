@@ -167,8 +167,21 @@ export class FalAiSdkService {
     console.log('Входные данные:', JSON.stringify(input).substring(0, 200));
 
     try {
-      // Формируем конфигурацию для запроса - автоматически добавляем префикс 'fal-ai/', если его нет
-      const sanitizedModelId = modelId.includes('fal-ai') ? modelId : `fal-ai/${modelId}`;
+      // Формируем конфигурацию для запроса
+      // Для модели flux/schnell используем специальный формат URL
+      const isSchnellModel = modelId.includes('flux/schnell') || modelId === 'schnell';
+      
+      // Определяем корректный modelId
+      let sanitizedModelId;
+      if (isSchnellModel) {
+        sanitizedModelId = 'flux/schnell';
+        console.log(`🚀 Используем специальную модель Schnell: ${sanitizedModelId}`);
+      } else if (modelId.includes('fal-ai/')) {
+        sanitizedModelId = modelId;
+      } else {
+        sanitizedModelId = `fal-ai/${modelId}`;
+      }
+      
       // Используем ключ в точно таком же формате, как он хранится в Directus
       // Расширенное логирование для отладки вызова FAL.AI
       console.log(`DEBUG FAL.AI GENERATE IMAGE: Текущий API ключ длиной ${this.apiKey.length} символов`);
@@ -199,12 +212,32 @@ export class FalAiSdkService {
       
       // Проверяем и исправляем параметры для совместимости с API
       
-      // Преобразуем numImages в num_images, если необходимо
-      if (input.numImages && !input.num_images) {
-        console.log('🔄 Преобразование параметра numImages в num_images для совместимости с API');
-        input.num_images = input.numImages;
-        // Удаляем numImages чтобы избежать путаницы
-        delete input.numImages;
+      // Особая обработка для модели Schnell
+      if (isSchnellModel) {
+        console.log('🔄 Специальная обработка параметров для модели Schnell');
+        
+        // Для Schnell нужно использовать параметр num_images вместо numImages
+        if (input.numImages !== undefined && input.num_images === undefined) {
+          console.log(`🔄 Преобразование параметра numImages (${input.numImages}) в num_images для Schnell`);
+          input.num_images = parseInt(input.numImages, 10);
+          
+          // Проверяем валидность num_images для Schnell (от 1 до 5)
+          if (input.num_images < 1 || input.num_images > 5) {
+            console.log(`⚠️ Некорректное значение num_images (${input.num_images}) для Schnell, устанавливаем значение 1`);
+            input.num_images = 1;
+          }
+          
+          // Удаляем numImages чтобы избежать путаницы
+          delete input.numImages;
+        }
+      } else {
+        // Преобразуем numImages в num_images для других моделей, если необходимо
+        if (input.numImages && !input.num_images) {
+          console.log('🔄 Преобразование параметра numImages в num_images для совместимости с API');
+          input.num_images = input.numImages;
+          // Удаляем numImages чтобы избежать путаницы
+          delete input.numImages;
+        }
       }
       
       // Проверяем, что num_images - это число
@@ -238,9 +271,31 @@ export class FalAiSdkService {
       }
       
       console.log(`📊 Параметры запроса: ${input.num_images || 1} изображений, размер ${input.width}x${input.height}`);
+      
+      // Формируем URL в зависимости от модели
+      let apiUrl;
+      if (isSchnellModel) {
+        // Для модели Schnell используем специальный формат URL
+        apiUrl = `https://queue.fal.run/flux/schnell`;
+        console.log(`🚀 Используем специальный URL для Schnell: ${apiUrl}`);
+      } else if (sanitizedModelId.includes('/')) {
+        // Для моделей вида 'fal-ai/fast-sdxl' или других с путями
+        apiUrl = `https://queue.fal.run/${sanitizedModelId}`;
+      } else {
+        // Для остальных моделей добавляем стандартный префикс fal-ai
+        apiUrl = `https://queue.fal.run/fal-ai/${sanitizedModelId}`;
+      }
+      
+      // Детальное логирование запроса
+      console.log(`🌐 URL запроса: ${apiUrl}`);
+      console.log(`📦 Параметры запроса: ${JSON.stringify({
+        ...input,
+        num_images: input.num_images || 1,
+        model: isSchnellModel ? 'flux/schnell' : sanitizedModelId
+      }).substring(0, 200)}...`);
         
       const requestConfig = {
-        url: `https://queue.fal.run/${sanitizedModelId}`,
+        url: apiUrl,
         method: 'POST',
         headers: {
           'Authorization': authHeader,
