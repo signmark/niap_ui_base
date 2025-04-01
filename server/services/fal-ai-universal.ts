@@ -268,9 +268,44 @@ class FalAiUniversalService {
    */
   private async getImageUrls(modelUrl: string, requestId: string, numImages: number): Promise<string[]> {
     try {
-      // Единый подход для всех моделей - используем общий формат URL без специфики для Schnell
+      const isSchnellModel = modelUrl.includes('schnell');
+      const imageUrls: string[] = [];
       
-      // Для других моделей сначала пробуем получить все результаты сразу
+      // Специальная обработка для модели Schnell - здесь важно извлечь CDN URL
+      if (isSchnellModel) {
+        log(`[fal-ai-universal] Извлечение CDN ссылок для модели Schnell, request_id: ${requestId}`);
+        
+        // Для Schnell модели получаем каждое изображение отдельно, чтобы извлечь cdn_url
+        for (let i = 0; i < numImages; i++) {
+          try {
+            // Запрашиваем информацию о каждом изображении, чтобы получить cdn_url
+            const resultUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
+            const response = await axios.get(resultUrl, { timeout: 10000 });
+            
+            // Извлекаем CDN URL если он есть в ответе
+            if (response.data && response.data.cdn_url) {
+              log(`[fal-ai-universal] Получен CDN URL для Schnell модели: ${response.data.cdn_url}`);
+              imageUrls.push(response.data.cdn_url);
+            } else {
+              // Если cdn_url не найден, используем прямой URL в CDN (формат похож на у других моделей)
+              const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
+              log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
+              imageUrls.push(cdnUrl);
+            }
+          } catch (error) {
+            console.error(`[fal-ai-universal] Ошибка при извлечении CDN URL для Schnell, изображение ${i}:`, error);
+            
+            // В случае ошибки используем прокси URL как запасной вариант
+            const fallbackUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
+            log(`[fal-ai-universal] Используем прокси URL как запасной вариант: ${fallbackUrl}`);
+            imageUrls.push(fallbackUrl);
+          }
+        }
+        
+        return imageUrls;
+      }
+      
+      // Для других моделей сначала пробуем получить все результаты сразу через стандартный API
       try {
         const resultsUrl = `${this.baseUrl}/${modelUrl}/requests/${requestId}/results`;
         const resultsResponse = await axios.get(resultsUrl);
@@ -288,9 +323,7 @@ class FalAiUniversalService {
         log(`[fal-ai-universal] Ошибка при попытке получения результатов через /requests/${requestId}/results, переход к формированию URL по параметрам`);
       }
       
-      // Универсальный путь для всех моделей - получаем изображения по отдельности
-      const imageUrls: string[] = [];
-      
+      // Если не удалось получить результаты через стандартный API, формируем URL по параметрам
       for (let i = 0; i < numImages; i++) {
         const imageUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
         imageUrls.push(imageUrl);
