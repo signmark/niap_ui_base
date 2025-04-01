@@ -22,7 +22,6 @@ interface KeywordSelectorProps {
   campaignId?: string;
   label?: string;
   placeholder?: string;
-  showUpdateMetricsButton?: boolean;
 }
 
 export function KeywordSelector({
@@ -31,7 +30,6 @@ export function KeywordSelector({
   campaignId,
   label = 'Ключевые слова',
   placeholder = 'Введите ключевое слово или фразу',
-  showUpdateMetricsButton = true,
 }: KeywordSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [keywords, setKeywords] = useState<Keyword[]>([]);
@@ -42,7 +40,6 @@ export function KeywordSelector({
   const { toast } = useToast();
   const [existingKeywords, setExistingKeywords] = useState<string[]>([]);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
-  const [isUpdatingCompetition, setIsUpdatingCompetition] = useState(false);
   const { getAuthToken } = useAuthStore();
   const queryClient = useQueryClient();
 
@@ -315,62 +312,6 @@ export function KeywordSelector({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <div className="text-sm font-medium">Выбранные ключевые слова:</div>
-            {campaignId && showUpdateMetricsButton && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={async () => {
-                  if (!campaignId) return;
-                  
-                  try {
-                    setIsUpdatingCompetition(true);
-                    const authToken = getAuthToken();
-                    
-                    // Запрашиваем обновление метрик через API
-                    const response = await fetch('/api/xmlriver/update-keywords-trends', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authToken ? `Bearer ${authToken}` : ''
-                      },
-                      body: JSON.stringify({ campaignId })
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error('Не удалось обновить данные о метриках');
-                    }
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                      // Инвалидируем кеш для обновления UI
-                      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
-                      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
-                      
-                      toast({
-                        title: "Данные обновлены",
-                        description: result.message || `Обновлено ${result.updatedCount} ключевых слов`
-                      });
-                    } else {
-                      throw new Error(result.message || 'Ошибка обновления данных');
-                    }
-                  } catch (error) {
-                    console.error('Ошибка при обновлении метрик:', error);
-                    toast({
-                      variant: "destructive",
-                      title: "Ошибка",
-                      description: error instanceof Error ? error.message : 'Не удалось обновить метрики'
-                    });
-                  } finally {
-                    setIsUpdatingCompetition(false);
-                  }
-                }}
-                disabled={isUpdatingCompetition}
-              >
-                {isUpdatingCompetition ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Обновить метрики
-              </Button>
-            )}
           </div>
           
           <div className="flex flex-wrap gap-2">
