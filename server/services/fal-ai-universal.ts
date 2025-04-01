@@ -271,76 +271,52 @@ class FalAiUniversalService {
       // ЕДИНЫЙ МЕТОД ДЛЯ ВСЕХ МОДЕЛЕЙ: получить ссылки на CDN напрямую
       log(`[fal-ai-universal] Получение прямых CDN ссылок на изображения, request_id: ${requestId}`);
       
-      // Основной URL для получения метаданных о сгенерированных изображениях
+      // Основной URL для получения метаданных о сгенерированных изображениях - единый для всех моделей
       const requestInfoUrl = `${this.baseUrl}/fal-ai/flux/requests/${requestId}`;
       
       log(`[fal-ai-universal] Запрос метаданных изображений по URL: ${requestInfoUrl}`);
       
-      try {
-        // Делаем запрос к единому API для получения метаданных изображений
-        const requestResponse = await axios.get(requestInfoUrl, {
-          headers: {
-            'Accept': 'application/json'
-          },
-          timeout: 15000 // Увеличиваем таймаут для надежности
-        });
+      // Делаем запрос к единому API для получения метаданных изображений
+      const requestResponse = await axios.get(requestInfoUrl, {
+        headers: {
+          'Accept': 'application/json'
+        },
+        timeout: 15000 // Увеличиваем таймаут для надежности
+      });
+      
+      log(`[fal-ai-universal] Ответ от API получен, статус: ${requestResponse.status}`);
+      
+      // Проверяем наличие массива изображений в ответе
+      if (requestResponse.data && requestResponse.data.images && Array.isArray(requestResponse.data.images)) {
+        log(`[fal-ai-universal] Найдено ${requestResponse.data.images.length} изображений в ответе`);
         
-        log(`[fal-ai-universal] Ответ от API получен, статус: ${requestResponse.status}`);
+        const imageUrls: string[] = [];
         
-        // Проверяем наличие массива изображений в ответе
-        if (requestResponse.data && requestResponse.data.images && Array.isArray(requestResponse.data.images)) {
-          log(`[fal-ai-universal] Найдено ${requestResponse.data.images.length} изображений в формате CDN URL`);
-          
-          const imageUrls: string[] = [];
-          
-          // Извлекаем URL каждого изображения
-          for (const image of requestResponse.data.images) {
-            if (image.url) {
-              imageUrls.push(image.url);
-              log(`[fal-ai-universal] Извлечен URL изображения: ${image.url}`);
-            }
-          }
-          
-          // Проверяем, что получили все запрошенные изображения
-          if (imageUrls.length > 0) {
-            log(`[fal-ai-universal] Успешно получены ${imageUrls.length} URL изображений`);
-            return imageUrls;
+        // Извлекаем URL каждого изображения
+        for (const image of requestResponse.data.images) {
+          if (image.url) {
+            imageUrls.push(image.url);
+            log(`[fal-ai-universal] Извлечен URL изображения: ${image.url}`);
           }
         }
         
-        // Если в images нет URL, проверяем другие возможные поля
-        log(`[fal-ai-universal] Структура ответа: ${JSON.stringify(Object.keys(requestResponse.data))}`);
-        
-        // Альтернативный вариант - поиск в других полях
-        if (requestResponse.data.output && requestResponse.data.output.images) {
-          const outputImages = requestResponse.data.output.images;
-          if (Array.isArray(outputImages)) {
-            log(`[fal-ai-universal] Найдены изображения в поле output.images`);
-            return outputImages;
-          }
+        // Проверяем, что получили изображения
+        if (imageUrls.length > 0) {
+          log(`[fal-ai-universal] Успешно получены ${imageUrls.length} URL изображений`);
+          return imageUrls;
         }
-        
-        // Если все же не получилось найти CDN URL, логируем это для отладки
-        log(`[fal-ai-universal] Не найдены прямые URL в ответе API. Данные ответа: ${JSON.stringify(requestResponse.data)}`);
-        
-      } catch (requestError) {
-        log(`[fal-ai-universal] Ошибка при получении метаданных: ${requestError}`);
       }
       
-      // Если основной метод не работает, пробуем запасные варианты
+      log(`[fal-ai-universal] Стандартное поле images не найдено или не содержит URL-ы`);
       
-      log(`[fal-ai-universal] Переход к запасным методам получения URL...`);
-      const isSchnellModel = modelUrl.includes('schnell');
-      const imageUrls: string[] = [];
+      // Если не нашли изображения в стандартном формате, подробно логируем структуру ответа
+      if (requestResponse.data) {
+        log(`[fal-ai-universal] Структура ответа: ${JSON.stringify(Object.keys(requestResponse.data))}`);
+        log(`[fal-ai-universal] Данные ответа: ${JSON.stringify(requestResponse.data).substring(0, 500)}...`);
+      }
       
-      // Для модели Schnell и прочих моделей - используем единый резервный API URL
-      const requestUrl = `${this.baseUrl}/fal-ai/flux/requests/${requestId}`;
-      log(`[fal-ai-universal] Возвращаем единый URL запроса для дальнейшей обработки: ${requestUrl}`);
-      
-      // Возвращаем URL, который будет обработан для извлечения метаданных изображений
-      return [requestUrl];
-      
-      /* Предыдущий код с разными вариантами замены здесь был избыточен и добавлял сложность */
+      // Генерируем ошибку с детальной информацией
+      throw new Error(`Не удалось извлечь URL изображений из ответа. Ответ не содержит массив images с URL.`);
     } catch (error: any) {
       console.error('[fal-ai-universal] Ошибка при получении URL изображений:', error);
       throw new Error(`Не удалось получить URL изображений: ${error.message}`);
