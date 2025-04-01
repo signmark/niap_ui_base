@@ -1,17 +1,17 @@
 import React from 'react';
 import { ImageGenerationTester } from '@/components/ImageGenerationTester';
 
-const UniversalImageGenTest: React.FC = () => {
+export default function UniversalImageGenPage() {
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-6">Тестирование универсального API генерации изображений</h1>
-      <p className="text-gray-500 mb-4">
-        Этот интерфейс позволяет тестировать новый универсальный API для работы со всеми моделями FAL.AI.
-        Просто введите промпт, выберите нужные параметры и модель, а затем нажмите кнопку генерации.
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Универсальная генерация изображений FAL.AI</h1>
+      <p className="text-gray-600 mb-6">
+        Тестирование универсального интерфейса для генерации изображений с использованием различных моделей FAL.AI
       </p>
-      <ImageGenerationTester />
-    </>
+      
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <ImageGenerationTester />
+      </div>
+    </div>
   );
-};
-
-export default UniversalImageGenTest;
+}

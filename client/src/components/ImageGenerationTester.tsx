@@ -3,221 +3,245 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import axios from 'axios';
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent } from "@/components/ui/card";
+import { apiRequest } from '@/lib/queryClient';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-// Компонент для тестирования API генерации изображений с использованием разных моделей FAL.AI
 export function ImageGenerationTester() {
-  const [prompt, setPrompt] = useState('A beautiful landscape in the style of Thomas Kinkade');
-  const [negativePrompt, setNegativePrompt] = useState('Ugly, distorted, low quality');
+  const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(1024);
   const [numImages, setNumImages] = useState(1);
-  const [model, setModel] = useState('fast-sdxl');
-
-  const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  
+  const [model, setModel] = useState('sdxl');
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<string[]>([]);
+  const [models, setModels] = useState<{id: string, name: string, description: string}[]>([]);
   const { toast } = useToast();
 
-  const generateImages = async () => {
-    setLoading(true);
-    setError(null);
-    setImages([]);
-    
-    try {
-      const result = await axios.post('/api/generate-universal-image', {
-        prompt,
-        negativePrompt,
-        width,
-        height,
-        numImages,
-        model
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+  // Загружаем список доступных моделей
+  React.useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await apiRequest('/api/fal-ai-models');
+        if (response.success && response.models) {
+          setModels(response.models);
         }
-      });
-      
-      if (result.data.success) {
-        setImages(result.data.data);
+      } catch (error) {
+        console.error('Ошибка при получении списка моделей:', error);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  // Функция проверки статуса API
+  const checkApiStatus = async () => {
+    try {
+      const response = await apiRequest('/api/fal-ai-status');
+      if (response.success) {
         toast({
-          title: "Изображения успешно сгенерированы",
-          description: `Получено ${result.data.data.length} изображений с использованием модели ${model}`,
-        });
-      } else {
-        setError(result.data.error || 'Неизвестная ошибка при генерации изображений');
-        toast({
-          title: "Ошибка",
-          description: result.data.error || 'Неизвестная ошибка при генерации изображений',
-          variant: "destructive"
+          title: 'Статус API',
+          description: response.status.available 
+            ? 'API FAL.AI доступно и работает' 
+            : 'API FAL.AI недоступно: ' + response.status.message,
         });
       }
-    } catch (err: any) {
-      console.error('Error generating images:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Ошибка при генерации изображений';
-      setError(errorMessage);
+    } catch (error) {
       toast({
-        title: "Ошибка",
-        description: errorMessage,
-        variant: "destructive"
+        title: 'Ошибка',
+        description: 'Не удалось проверить статус API',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Функция генерации изображений
+  const generateImages = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Необходимо ввести промпт для генерации изображения',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setResults([]);
+
+    try {
+      const response = await apiRequest('/api/generate-universal-image', {
+        method: 'POST',
+        body: {
+          prompt,
+          negativePrompt,
+          width,
+          height,
+          numImages,
+          model
+        }
+      });
+
+      if (response.success && response.data) {
+        setResults(response.data);
+        toast({
+          title: 'Успех',
+          description: `Сгенерировано ${response.data.length} изображений`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.error || 'Не удалось сгенерировать изображения',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось сгенерировать изображения',
+        variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6 p-4 max-w-3xl mx-auto">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">Тестирование универсального API генерации изображений</h2>
-        <p className="text-gray-500">Этот компонент позволяет тестировать API генерации изображений с использованием разных моделей FAL.AI</p>
-      </div>
-
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="model">Модель для генерации</Label>
-          <Select value={model} onValueChange={setModel}>
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите модель" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fast-sdxl">Fast SDXL (быстрая)</SelectItem>
-              <SelectItem value="sdxl">SDXL (высокое качество)</SelectItem>
-              <SelectItem value="schnell">Schnell (самая быстрая)</SelectItem>
-              <SelectItem value="fooocus">Fooocus (расширенные возможности)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="prompt">Промпт</Label>
-          <Textarea
-            id="prompt"
-            placeholder="Опишите изображение, которое хотите сгенерировать"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="negativePrompt">Негативный промпт</Label>
-          <Textarea
-            id="negativePrompt"
-            placeholder="Опишите, чего НЕ должно быть на изображении"
-            value={negativePrompt}
-            onChange={(e) => setNegativePrompt(e.target.value)}
-            rows={2}
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
+    <div className="max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="width">Ширина</Label>
-            <Input
-              id="width"
-              type="number"
-              value={width}
-              onChange={(e) => setWidth(parseInt(e.target.value) || 512)}
-              min={256}
-              max={2048}
-              step={64}
+            <Label htmlFor="model">Модель</Label>
+            <Select value={model} onValueChange={setModel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите модель" />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    <div>
+                      <span className="font-medium">{m.name}</span>
+                      <p className="text-xs text-gray-500">{m.description}</p>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Промпт</Label>
+            <Textarea 
+              id="prompt"
+              placeholder="Подробно опишите, какое изображение вы хотите сгенерировать..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={5}
             />
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="height">Высота</Label>
-            <Input
-              id="height"
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(parseInt(e.target.value) || 512)}
-              min={256}
-              max={2048}
-              step={64}
+            <Label htmlFor="negativePrompt">Отрицательный промпт</Label>
+            <Textarea 
+              id="negativePrompt"
+              placeholder="Опишите, что вы НЕ хотите видеть на изображении..."
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              rows={3}
             />
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="numImages">Количество изображений</Label>
-            <Input
-              id="numImages"
-              type="number"
-              value={numImages}
-              onChange={(e) => setNumImages(parseInt(e.target.value) || 1)}
-              min={1}
-              max={4}
-              step={1}
+            <Label>Количество изображений: {numImages}</Label>
+            <Slider 
+              value={[numImages]} 
+              min={1} 
+              max={4} 
+              step={1} 
+              onValueChange={(values) => setNumImages(values[0])} 
             />
           </div>
-        </div>
 
-        <Button 
-          className="mt-4" 
-          onClick={generateImages} 
-          disabled={loading || !prompt.trim()}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Генерация...
-            </>
-          ) : "Сгенерировать изображения"}
-        </Button>
-
-        {error && (
-          <div className="text-red-500 p-3 border border-red-300 bg-red-50 rounded-md">
-            <p className="font-semibold">Ошибка:</p>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {images.length > 0 && (
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold">Результаты генерации:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {images.map((imageUrl, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <img 
-                    src={imageUrl} 
-                    alt={`Generated image ${index + 1}`} 
-                    className="w-full h-auto object-cover"
-                    onError={(e) => {
-                      // Если изображение не загрузилось, показываем сообщение об ошибке
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const errorDiv = document.createElement('div');
-                      errorDiv.className = 'p-4 text-red-500';
-                      errorDiv.textContent = 'Ошибка загрузки изображения';
-                      target.parentNode?.appendChild(errorDiv);
-                    }}
-                  />
-                  <div className="p-3 bg-gray-50 text-sm">
-                    <p className="font-medium">Изображение {index + 1}</p>
-                    <p className="text-gray-500 truncate text-xs">{imageUrl}</p>
-                    <a 
-                      href={imageUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline text-xs"
-                    >
-                      Открыть в новой вкладке
-                    </a>
-                  </div>
-                </Card>
-              ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="width">Ширина: {width}px</Label>
+              <Slider 
+                value={[width]} 
+                min={512} 
+                max={1024} 
+                step={64} 
+                onValueChange={(values) => setWidth(values[0])} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="height">Высота: {height}px</Label>
+              <Slider 
+                value={[height]} 
+                min={512} 
+                max={1024} 
+                step={64} 
+                onValueChange={(values) => setHeight(values[0])} 
+              />
             </div>
           </div>
-        )}
+
+          <div className="flex space-x-2 pt-2">
+            <Button onClick={generateImages} disabled={isLoading} className="flex-1">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Генерация...
+                </>
+              ) : (
+                'Сгенерировать'
+              )}
+            </Button>
+            <Button variant="outline" onClick={checkApiStatus}>
+              Проверить API
+            </Button>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <h3 className="text-lg font-medium mb-4">Результаты ({results.length})</h3>
+          {isLoading && (
+            <div className="flex items-center justify-center h-48">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {results.map((url, index) => (
+              <Card key={index} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <img 
+                    src={url} 
+                    alt={`Сгенерированное изображение ${index + 1}`} 
+                    className="w-full h-auto object-contain"
+                    onError={(e) => {
+                      // Обработка ошибки загрузки изображения
+                      e.currentTarget.src = '/images/image-error.svg';
+                      e.currentTarget.alt = 'Ошибка загрузки изображения';
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {results.length > 0 && (
+            <div className="mt-4">
+              <Label className="text-sm text-gray-500">
+                Совет: кликните правой кнопкой мыши на изображение и выберите "Сохранить изображение как..." для сохранения
+              </Label>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-export default ImageGenerationTester;
