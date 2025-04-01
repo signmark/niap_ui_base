@@ -707,7 +707,8 @@ export default function CampaignDetails() {
             <div>
               {/* Запрос на получение ключевых слов */}
               <KeywordSelector 
-                campaignId={id} 
+                campaignId={id}
+                showUpdateMetricsButton={false}
                 onSelect={(keywords) => {
                   console.log("onSelect вызван с keywords:", keywords);
                   

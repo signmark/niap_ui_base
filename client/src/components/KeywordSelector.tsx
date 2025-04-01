@@ -22,6 +22,7 @@ interface KeywordSelectorProps {
   campaignId?: string;
   label?: string;
   placeholder?: string;
+  showUpdateMetricsButton?: boolean;
 }
 
 export function KeywordSelector({
@@ -30,6 +31,7 @@ export function KeywordSelector({
   campaignId,
   label = 'Ключевые слова',
   placeholder = 'Введите ключевое слово или фразу',
+  showUpdateMetricsButton = true,
 }: KeywordSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [keywords, setKeywords] = useState<Keyword[]>([]);
@@ -318,7 +320,7 @@ export function KeywordSelector({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <div className="text-sm font-medium">Выбранные ключевые слова:</div>
-            {campaignId && (
+            {campaignId && showUpdateMetricsButton && (
               <Button 
                 size="sm" 
                 variant="outline"
