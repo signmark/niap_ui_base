@@ -121,7 +121,7 @@ class FalAiUniversalService {
           ...baseParams,
           guidance_scale: 7.5,
           scheduler: 'K_EULER',
-          num_inference_steps: 25
+          num_inference_steps: 12  // Ограничиваем до 12 шагов для совместимости с API Schnell
           // Удаляем специальные флаги для универсальности обработки всех моделей
         };
       
