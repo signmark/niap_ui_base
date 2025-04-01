@@ -130,45 +130,14 @@ export class SchnellService {
         if (numImages > 1) {
           log(`Generating ${numImages} result URLs using standard FAL.AI pattern`, 'schnell');
           
-          // Создаем URL для получения результатов генерации
-          // Согласно документации FAL.AI, правильный путь для получения результатов:
-          // https://fal.run/fal-ai/flux/schnell/requests/{requestId}
-          const baseResultUrl = `https://fal.run/fal-ai/flux/schnell/requests/${requestId}`;
-          log(`Created base result URL: ${baseResultUrl}`, 'schnell');
+          // ВАЖНО: Для модели Schnell мы не используем запрос /requests/{requestId},
+          // так как это может вызвать ошибку 404 даже когда изображения готовы.
+          // Вместо этого сразу используем URL для прямого доступа к изображениям.
           
-          // Запрашиваем результаты генерации по правильному URL
-          try {
-            const resultResponse = await axios.get(baseResultUrl, {
-              headers: {
-                'Authorization': authHeader,
-                'Accept': 'application/json'
-              }
-            });
-            
-            log(`Got result response from ${baseResultUrl}`, 'schnell');
-            log(`Result response status: ${resultResponse.status}`, 'schnell');
-            
-            // Проверяем, есть ли в ответе поле output.images
-            if (resultResponse.data?.output?.images && Array.isArray(resultResponse.data.output.images)) {
-              // Если да, используем URLs из него
-              const outputImages = resultResponse.data.output.images;
-              log(`Found ${outputImages.length} images in output.images`, 'schnell');
-              return outputImages.slice(0, numImages); // Возвращаем только запрошенное количество
-            }
-            
-            // Иначе пробуем найти изображения в output.image_urls
-            if (resultResponse.data?.output?.image_urls && Array.isArray(resultResponse.data.output.image_urls)) {
-              const outputImageUrls = resultResponse.data.output.image_urls;
-              log(`Found ${outputImageUrls.length} images in output.image_urls`, 'schnell');
-              return outputImageUrls.slice(0, numImages);
-            }
-            
-            // Если оба пути не сработали, возвращаемся к построению URL по шаблону
-            log(`Could not find direct image URLs in result response, falling back to URL pattern`, 'schnell');
-          } catch (error) {
-            log(`Error fetching result from ${baseResultUrl}: ${error}`, 'schnell');
-            log(`Falling back to URL pattern approach`, 'schnell');
-          }
+          log(`Skipping base result request and going directly to image URLs`, 'schnell');
+          
+          // Мы не делаем GET запрос к /requests/{requestId}, так как он может быть недоступен для Schnell
+          // Создаем URL-ы для каждого из запрошенных изображений напрямую по спецификации FAL.AI
           
           // Создаем URL-ы для каждого из запрошенных изображений строго по спецификации FAL.AI
           // Согласно документации, правильный путь:
