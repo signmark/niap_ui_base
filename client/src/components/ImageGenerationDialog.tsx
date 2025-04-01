@@ -817,7 +817,8 @@ export function ImageGenerationDialog({
             <SelectContent>
               <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
               <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Schnell</SelectItem>
+              <SelectItem value="schnell">Fast SDXL (Schnell)</SelectItem>
+              <SelectItem value="sdxl">SDXL</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1047,7 +1048,7 @@ export function ImageGenerationDialog({
                       <p className="text-xs text-muted-foreground">
                         {model === 'fast-sdxl' ? 'Быстрая генерация, хорошее качество' : 
                          model === 'fooocus' ? 'Художественная, детализированная' : 
-                         model === 'schnell' ? 'Быстрая (экспериментальная)' : 
+                         model === 'schnell' ? 'Быстрая генерация, хорошее качество' : // Стандартизировано с fast-sdxl
                          model === 'sdxl' ? 'Высокое качество, медленнее' : 
                          model === 'lcm' ? 'Самая быстрая, среднее качество' : 
                          'Стандартная модель'}
@@ -1157,9 +1158,8 @@ export function ImageGenerationDialog({
                           
                           // Если удалось извлечь параметры, пробуем альтернативный формат URL
                           if (requestId && imageIdx !== null) {
-                            const modelPath = url.pathname.includes('schnell') 
-                              ? 'schnell/api' 
-                              : url.pathname.split('/')[2]; // Извлекаем имя модели из пути
+                            // Извлекаем имя модели из пути для всех моделей одинаковым образом
+                            const modelPath = url.pathname.split('/')[2];
                             
                             // Создаем прямую ссылку на CDN
                             const cdnUrl = `https://cdn.fal.ai/${modelPath}/results-direct/${requestId}/${imageIdx}`;

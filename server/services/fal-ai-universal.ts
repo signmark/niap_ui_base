@@ -34,22 +34,16 @@ class FalAiUniversalService {
    * @returns Нормализованное название модели
    */
   private normalizeModelName(modelName: string | FalAiModelName = 'fast-sdxl'): string {
-    switch (modelName) {
-      case 'schnell':
-        return 'flux/schnell';
-      case 'fast-sdxl':
-        return 'fast-sdxl';
-      case 'sdxl':
-        return 'sdxl';
-      case 'fooocus':
-        return 'fooocus';
-      default:
-        // Проверяем, содержит ли уже путь к модели
-        if (modelName.includes('/')) {
-          return modelName; // Уже полный путь вида 'fal-ai/...'
-        }
-        return modelName; // Используем как есть
+    // ВАЖНО: Все модели, включая Schnell, обрабатываются одинаково
+    // без специальной обработки для отдельных моделей
+    
+    // Проверяем, содержит ли уже путь к модели
+    if (typeof modelName === 'string' && modelName.includes('/')) {
+      return modelName; // Уже полный путь
     }
+    
+    // Возвращаем название модели как есть без специальных преобразований
+    return modelName;
   }
 
   /**
@@ -246,20 +240,23 @@ class FalAiUniversalService {
     
     // Определяем модель и формируем URL запроса
     const model = this.normalizeModelName(options.model);
-    const apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+    
+    // Формируем URL для запроса
+    let apiUrl = '';
+    
+    // Единый формат URL для всех моделей включая Schnell
+    apiUrl = `https://queue.fal.run/fal-ai/${model}`;
     
     console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
     
-    // Подготавливаем данные запроса
-    const requestData = {
+    // Подготавливаем данные запроса - единые для всех моделей
+    let requestData: any = {
       prompt: options.prompt,
       negative_prompt: options.negativePrompt || '',
       width: options.width || 1024,
       height: options.height || 1024,
       num_images: options.numImages || 1,
-      num_inference_steps: 10, // Фиксированное значение для всех моделей
-      scheduler: model.includes('schnell') ? 'K_EULER' : undefined, // Опционально для Schnell
-      guidance_scale: model.includes('schnell') ? 7.0 : undefined    // Опционально для Schnell
+      num_inference_steps: 10 // Фиксированное значение для всех моделей без исключений
     };
     
     // Настраиваем заголовки запроса

@@ -3,8 +3,9 @@ import { perplexityService } from './services/perplexity';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
-import { schnellService } from './services/schnell';
+// Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
+import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -1357,9 +1358,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🧪 [FAL.AI TEST] Итоговый заголовок: ${authHeader1.substring(0, 15)}...`);
       
       try {
-        // Сначала попробуем модель flux/schnell
+        // Сначала попробуем универсальную модель (flux/fast-sdxl)
         try {
-          await axios.post('https://queue.fal.run/fal-ai/flux/schnell', {
+          await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
             prompt: "Test image",
             negative_prompt: "",
             width: 512,
@@ -1372,18 +1373,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             timeout: 15000
           });
-          console.log('🧪 [FAL.AI TEST] Модель flux/schnell работает!');
+          console.log('🧪 [FAL.AI TEST] Модель fast-sdxl работает!');
           return res.json({
             success: true,
             message: "API ключ FAL.AI работает корректно с префиксом Key!",
             api_key_format: "Правильный формат",
             auth_header: `${authHeader1.substring(0, 15)}...`,
-            tested_model: "flux/schnell"
+            tested_model: "fast-sdxl"
           });
-        } catch (schnellError) {
-          console.log(`🧪 [FAL.AI TEST] Ошибка с моделью flux/schnell: ${schnellError.message}`);
+        } catch (firstModelError) {
+          console.log(`🧪 [FAL.AI TEST] Ошибка с моделью fast-sdxl: ${firstModelError.message}`);
           
-          // Если ошибка с первой моделью, пробуем вторую модель (fast-sdxl)
+          // Если ошибка с первой моделью, пробуем вторую модель (sdxl)
           try {
             await axios.post('https://queue.fal.run/fal-ai/fast-sdxl', {
               prompt: "Test image",
@@ -1406,10 +1407,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               auth_header: `${authHeader1.substring(0, 15)}...`,
               tested_model: "fast-sdxl"
             });
-          } catch (sdxlError) {
+          } catch (secondModelError) {
             // Если обе модели вызвали ошибку, логируем и продолжаем нормальный поток
-            console.log(`🧪 [FAL.AI TEST] Ошибка с моделью fast-sdxl: ${sdxlError.message}`);
-            throw sdxlError; // Перебрасываем вторую ошибку для обработки в блоке catch
+            console.log(`🧪 [FAL.AI TEST] Ошибка с моделью fast-sdxl: ${secondModelError.message}`);
+            throw secondModelError; // Перебрасываем вторую ошибку для обработки в блоке catch
           }
         }
       } catch (error: any) {
@@ -2016,17 +2017,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Определяем используемую модель и данные для запроса
       let model = modelName || 'fast-sdxl'; // По умолчанию используем fast-sdxl (быстрая версия)
       
-      // Особая обработка для специальных моделей
+      // Особая обработка для различных моделей
       if (model === 'fooocus') {
-        console.log('Используем специальную модель Fooocus');
-        model = 'fal-ai/fooocus';
-      } else if (model === 'schnell') {
-        console.log('Используем специальную модель Schnell через выделенный сервис');
-        // Для Schnell будем использовать отдельный сервис, поэтому сейчас просто запомним выбор модели
-        // Но не меняем значение model, что позволит нам отличить эту модель в дальнейшем коде
+        console.log('Используем модель Fooocus');
+        model = 'fooocus';
       } else if (model === 'fast-sdxl') {
         console.log('Используем модель Fast-SDXL для быстрой генерации');
-        model = 'fal-ai/fast-sdxl';
+        model = 'fast-sdxl';
+      } else if (model === 'schnell') {
+        console.log('Используем модель Schnell через универсальный интерфейс');
+        model = 'schnell';
+      } else {
+        // Используем универсальный интерфейс для всех остальных моделей
+        console.log('Используем универсальную модель через общий интерфейс');
+        // По умолчанию используем fast-sdxl
+        model = 'fast-sdxl';
       }
       
       if (prompt) {
@@ -2116,37 +2121,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Обработка в зависимости от выбранной модели
       try {
-        // Если выбрана модель Schnell, используем специализированный сервис
-        if (modelName === 'schnell') {
-          console.log('Используем специализированный сервис для модели Schnell');
+        // Используем универсальный интерфейс для всех моделей FAL.AI
+        console.log(`Используем универсальный сервис для модели ${modelName || 'fast-sdxl'}`);
+        
+        // Подготавливаем общие параметры для генерации изображений
+        const generateOptions = {
+          prompt: requestData.prompt,
+          negativePrompt: requestData.negative_prompt,
+          width: requestData.width,
+          height: requestData.height,
+          numImages: requestData.num_images,
+          model: modelName || 'fast-sdxl',
+          userId: userId,
+          token: falAiApiKey,
+          contentId: contentId
+        };
+        
+        console.log(`Отправляем запрос к FAL.AI через универсальный интерфейс: ${JSON.stringify(generateOptions).substring(0, 200)}`);
+        
+        // Используем универсальный сервис для всех моделей FAL.AI
+        try {
+          const imageUrls = await falAiUniversalService.generateImages(generateOptions);
           
-          // Инициализируем schnellService API ключом пользователя
-          schnellService.updateApiKey(falAiApiKey);
+          console.log(`Получено ${imageUrls.length} изображений через универсальный интерфейс`);
           
-          // Подготавливаем параметры для генерации изображений
-          const schnellOptions = {
-            prompt: requestData.prompt,
-            negativePrompt: requestData.negative_prompt,
-            width: requestData.width,
-            height: requestData.height,
-            numImages: requestData.num_images,
-            stylePreset: requestData.style_preset,
-            savePrompt: savePrompt,
-            contentId: contentId,
-            campaignId: campaignId
-          };
-          
-          console.log(`Отправляем запрос к Schnell модели с параметрами: ${JSON.stringify(schnellOptions).substring(0, 200)}`);
-          
-          // Используем специализированный сервис для Schnell модели
-          try {
-            const imageUrls = await schnellService.generateImages(schnellOptions);
-            
-            console.log(`Получено ${imageUrls.length} изображений от Schnell модели`);
-            
-            // Сохраняем промт, если указан флаг savePrompt и есть contentId
-            if (savePrompt && contentId && requestData.prompt) {
-              try {
+          // Сохраняем промт, если указан флаг savePrompt и есть contentId
+          if (savePrompt && contentId && requestData.prompt) {
+            try {
                 console.log(`Сохраняем промт для контента ${contentId}: "${requestData.prompt.substring(0, 50)}..."`);
                 
                 // Сохраняем промт в базу данных через storage
@@ -2168,11 +2169,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               success: true,
               data: imageUrls
             });
-          } catch (schnellError: any) {
-            console.error(`Ошибка при генерации изображений через Schnell сервис: ${schnellError.message}`);
-            throw new Error(`Ошибка Schnell модели: ${schnellError.message}`);
+          } catch (generationError: any) {
+            console.error(`Ошибка при генерации изображений через универсальный интерфейс: ${generationError.message}`);
+            throw new Error(`Ошибка генерации изображения: ${generationError.message}`);
           }
-        } else {
+        // СТАРЫЙ КОД ЗАКОММЕНТИРОВАН (НЕ ИСПОЛЬЗУЕТСЯ)
+        if (false) { // этот код никогда не выполнится
           // Для остальных моделей используем стандартную обработку через прямой API запрос
           console.log(`Отправляем запрос к FAL.AI API, модель: ${model}`);
           
@@ -8709,14 +8711,18 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
             guidance_scale: 7.0
           };
           
-          console.log('Параметры запроса для Schnell:', JSON.stringify(requestParams));
-          const result = await falAiSdk.generateImage('fal-ai/flux/schnell', requestParams);
+          console.log('Параметры запроса через универсальный интерфейс:', JSON.stringify(requestParams));
+          const result = await falAiUniversalService.generateImages({
+            prompt: requestParams.prompt, 
+            negativePrompt: requestParams.negative_prompt,
+            model: 'flux/schnell',
+            numImages: 1,
+            width: requestParams.width,
+            height: requestParams.height
+          });
           
-          if (result.images && Array.isArray(result.images)) {
-            generatedImages = result.images;
-          } else {
-            throw new Error('Неожиданный формат ответа от API');
-          }
+          // falAiUniversalService.generateImages возвращает массив URL строк напрямую
+      generatedImages = result;
         } 
         else if (businessData) {
           // Генерация на основе бизнес-данных
@@ -9246,10 +9252,20 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
           guidance_scale: 7.0
         };
         
-        console.log('Параметры запроса для Schnell:', JSON.stringify(requestParams));
+        console.log('Параметры запроса через универсальный интерфейс:', JSON.stringify(requestParams));
         
-        // Выполняем запрос через SDK
-        const responseData = await falAiSdk.generateImage("fal-ai/flux/schnell", requestParams);
+        // Выполняем запрос через универсальный сервис
+        const imageUrls = await falAiUniversalService.generateImages({
+          prompt: requestParams.prompt,
+          negativePrompt: requestParams.negative_prompt,
+          width: requestParams.width,
+          height: requestParams.height,
+          numImages: 1,
+          model: 'flux/schnell'
+        });
+        
+        // Формируем ответ, совместимый с прежней структурой
+        const responseData = { images: imageUrls };
         
         console.log("[FAL.AI API] Изображение успешно сгенерировано:", 
           responseData && responseData.images ? `Получено ${responseData.images.length} изображений` : "Пустой ответ");
@@ -9283,7 +9299,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         } else if (statusCode === 401 || statusCode === 403) {
           errorMessage = "Ошибка авторизации в FAL.AI API. Проверьте API ключ.";
         } else if (statusCode === 404) {
-          errorMessage = "Эндпоинт 'fal-ai/flux/schnell' не найден в FAL.AI API.";
+          errorMessage = "Указанный эндпоинт не найден в FAL.AI API.";
         } else if (statusCode >= 500) {
           errorMessage = "Внутренняя ошибка сервера FAL.AI API. Попробуйте повторить запрос позже.";
         }
