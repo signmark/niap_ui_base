@@ -12,7 +12,6 @@ import { useQueryClient } from '@tanstack/react-query';
 interface Keyword {
   keyword: string;
   frequency?: number;
-  trend?: number;
   competition?: number;
   source?: string;
 }
@@ -133,7 +132,7 @@ export function KeywordSelector({
 
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: parseInt(kw.trend) || 0,
+        frequency: parseInt(kw.trend) || 0,
         competition: parseInt(kw.competition) || 0,
       }));
 
@@ -330,7 +329,7 @@ export function KeywordSelector({
                     setIsUpdatingCompetition(true);
                     const authToken = getAuthToken();
                     
-                    // Запрашиваем обновление данных о трендах через API
+                    // Запрашиваем обновление метрик через API
                     const response = await fetch('/api/xmlriver/update-keywords-trends', {
                       method: 'POST',
                       headers: {
@@ -341,7 +340,7 @@ export function KeywordSelector({
                     });
                     
                     if (!response.ok) {
-                      throw new Error('Не удалось обновить данные о трендах');
+                      throw new Error('Не удалось обновить данные о метриках');
                     }
                     
                     const result = await response.json();
@@ -359,11 +358,11 @@ export function KeywordSelector({
                       throw new Error(result.message || 'Ошибка обновления данных');
                     }
                   } catch (error) {
-                    console.error('Ошибка при обновлении данных о трендах:', error);
+                    console.error('Ошибка при обновлении метрик:', error);
                     toast({
                       variant: "destructive",
                       title: "Ошибка",
-                      description: error instanceof Error ? error.message : 'Не удалось обновить данные о трендах'
+                      description: error instanceof Error ? error.message : 'Не удалось обновить метрики'
                     });
                   } finally {
                     setIsUpdatingCompetition(false);
@@ -372,7 +371,7 @@ export function KeywordSelector({
                 disabled={isUpdatingCompetition}
               >
                 {isUpdatingCompetition ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Обновить тренды
+                Обновить метрики
               </Button>
             )}
           </div>
@@ -407,7 +406,7 @@ export function KeywordSelector({
                 {keywords.map((item, index) => (
                   <tr key={index} className={selectedItems.includes(item.keyword) ? 'bg-primary/10' : ''}>
                     <td className="px-4 py-2 whitespace-nowrap text-sm">{item.keyword}</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.trend || 0)}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.frequency || 0)}</td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm">
                       <div className="flex items-center justify-center">
                         <Checkbox 
