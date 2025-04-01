@@ -332,3 +332,27 @@ export interface KeywordSearchResult {
   trendScore: number;
   mentionsCount: number;
 }
+
+// Таблица для хранения ключевых слов кампании
+export const campaignKeywords = pgTable("campaign_keywords", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  campaignId: uuid("campaign_id").notNull(),
+  keyword: text("keyword").notNull(),
+  trendScore: text("trend_score").default("0"),
+  mentionsCount: integer("mentions_count").default(0),
+  lastChecked: timestamp("last_checked").defaultNow(),
+  dateCreated: timestamp("date_created").defaultNow()
+});
+
+// Schema для создания ключевых слов кампании
+export const insertCampaignKeywordSchema = createInsertSchema(campaignKeywords)
+  .pick({
+    campaignId: true,
+    keyword: true,
+    trendScore: true,
+    mentionsCount: true
+  });
+
+// Тип ключевых слов кампании
+export type CampaignKeyword = typeof campaignKeywords.$inferSelect;
+export type InsertCampaignKeyword = z.infer<typeof insertCampaignKeywordSchema>;
