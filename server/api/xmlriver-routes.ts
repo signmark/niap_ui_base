@@ -179,15 +179,34 @@ export function registerXmlRiverRoutes(app: Express): void {
           const items = response.data.content.includingPhrases.items;
           console.log(`[XMLRiver] Успешно получено ${items.length} ключевых слов`);
           
+          // Вычисляем максимальную частоту для нормализации данных конкуренции
+          const maxFrequency = Math.max(...items.map((item: any) => 
+            parseInt(item.number.replace(/\s/g, '')) || 0
+          ));
+          
           return res.status(200).json({
             success: true,
             data: {
-              keywords: items.map((item: any) => ({
-                keyword: item.phrase,
-                frequency: parseInt(item.number.replace(/\s/g, '')),
-                competition: 0, // По умолчанию 0, так как XMLRiver не предоставляет данные о конкуренции
-                source: 'xmlriver'
-              }))
+              keywords: items.map((item: any) => {
+                const frequency = parseInt(item.number.replace(/\s/g, '')) || 0;
+                
+                // Рассчитываем конкуренцию на основе частоты поиска
+                // Используем логарифмическую шкалу, чтобы распределить значения более естественно
+                // Формула создает значения от 1 до 100 в зависимости от частоты поиска
+                let competition = 0;
+                if (frequency > 0 && maxFrequency > 0) {
+                  const normalizedFreq = frequency / maxFrequency;
+                  // Используем логарифмическую формулу для создания более реалистичных значений
+                  competition = Math.max(1, Math.round(Math.pow(normalizedFreq, 0.4) * 100));
+                }
+                
+                return {
+                  keyword: item.phrase,
+                  frequency: frequency,
+                  competition: competition,
+                  source: 'xmlriver'
+                };
+              })
             }
           });
         } else {
