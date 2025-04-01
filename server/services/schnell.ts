@@ -169,56 +169,20 @@ export class SchnellService {
           }
         }
         
-        // Если не нашли direct URLs, пробуем получить метаданные через запрос
-        try {
-          const metadataUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
-          log(`Запрашиваем метаданные для получения результатов: ${metadataUrl}`, 'schnell');
-          
-          const metadataResponse = await axios.get(metadataUrl, {
-            headers: {
-              'Authorization': authHeader,
-              'Accept': 'application/json'
-            },
-            timeout: 15000
-          });
-          
-          // Если в метаданных есть готовые изображения, используем их
-          if (metadataResponse.data?.images && Array.isArray(metadataResponse.data.images)) {
-            const imageUrls = metadataResponse.data.images
-              .filter((img: any) => img?.url && (img.url.includes('fal.media') || img.url.includes('.jpg') || img.url.includes('.png')))
-              .map((img: any) => img.url);
-            
-            if (imageUrls.length > 0) {
-              log(`Получено ${imageUrls.length} URL изображений из метаданных`, 'schnell');
-              return imageUrls;
-            }
-          }
-          
-          // Проверяем поле status_updates (иногда FAL.AI хранит результаты там)
-          if (metadataResponse.data?.status_updates && Array.isArray(metadataResponse.data.status_updates)) {
-            for (const update of metadataResponse.data.status_updates) {
-              if (update.output && update.output.images && Array.isArray(update.output.images)) {
-                const updateUrls = update.output.images
-                  .filter((url: string) => typeof url === 'string' && (url.includes('fal.media') || url.includes('.jpg') || url.includes('.png')));
-                
-                if (updateUrls.length > 0) {
-                  log(`Получено ${updateUrls.length} URL из status_updates`, 'schnell');
-                  return updateUrls;
-                }
-              }
-            }
-          }
-          
-          // При отсутствии прямых URL нужно выдать понятную ошибку
-          log(`Не найдены прямые URL изображений в ответе API для запроса ${requestId}. Это критическая ошибка.`, 'schnell');
-          throw new Error(`Не удалось получить прямые URL изображений от FAL.AI API (ID запроса: ${requestId})`);
-        } catch (metadataError) {
-          // Если произошла ошибка при получении метаданных, необходимо сообщить об этом
-          log(`Ошибка при получении метаданных: ${metadataError}`, 'schnell');
-          
-          // Вместо возврата некорректных URL, выбрасываем исключение для правильной обработки ошибки
-          throw new Error(`Ошибка получения метаданных от FAL.AI API: ${metadataError.message || metadataError}`); 
-        }
+        // Используем правильный URL формат для результатов модели Schnell (flux)
+        log(`Используем стандартный формат URL для получения результата запроса с ID ${requestId}`, 'schnell');
+        
+        // Правильный URL-формат для результатов (по информации от пользователя)
+        const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+        log(`Стандартный URL для получения результата: ${requestUrl}`, 'schnell');
+        
+        // Возвращаем правильный URL для получения результата
+        log(`Возвращаем стандартный URL для получения результата от FAL.AI API`, 'schnell');
+        return [requestUrl];
+        
+        // Если все остальные методы не сработали, выдаем понятную ошибку
+        log(`Не удалось получить или сгенерировать URL изображений для запроса ${requestId}`, 'schnell');
+        throw new Error(`Не удалось получить URL изображений от FAL.AI API (ID запроса: ${requestId})`); 
       }
       
       // Если request_id не найден, пробуем обработать асинхронный ответ традиционным способом
@@ -550,36 +514,23 @@ export class SchnellService {
               // Если у нас 422 и нет прямых результатов в статусном ответе, логируем полный ответ для отладки
               log(`Cannot extract results directly from status response after 422 error. Full status response: ${JSON.stringify(statusResponse.data)}`, 'schnell');
               
-              // Пытаемся использовать request_id напрямую, но генерируем и проверяем CDN ссылки
+              // Используем request_id для создания стандартного URL FAL.AI
               if (statusResponse.data.request_id) {
                 const requestId = statusResponse.data.request_id;
-                log(`Attempting to use direct request_id ${requestId} for image URLs`, 'schnell');
+                log(`Используем request_id ${requestId} для создания URL в формате https://queue.fal.run/fal-ai/flux/...`, 'schnell');
                 
-                // При ошибке 422 с моделью Schnell, мы можем создать URL-ы на основе шаблонов CDN FAL.AI
-                // Schnell (также как и другие модели) сохраняет изображения в их CDN с предсказуемыми URL
-                const generatedUrls = [];
+                // Создаем стандартный URL для API FAL.AI
+                const standardUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+                log(`Создаем стандартный URL запроса: ${standardUrl}`, 'schnell');
                 
-                // Получаем запрошенное количество изображений из statusResponse или используем числовое значение
-                const numRequested = statusResponse.data.num_images || parseInt(String(statusResponse.data.request_id).split('_').pop() || '3', 10) || 3;
-                log(`Generating CDN URLs for ${numRequested} images using request_id ${requestId}`, 'schnell');
-                
-                // Создаем URL с разными номерами для каждого запрошенного изображения
-                for (let i = 0; i < numRequested; i++) {
-                  // Это шаблон FAL CDN URL, который обычно работает для Schnell модели
-                  generatedUrls.push(`https://fal-cdn.fal.ai/result/${requestId}_${i}.jpeg`);
-                  
-                  // Добавляем альтернативные форматы для повышения вероятности успешного получения
-                  generatedUrls.push(`https://fal-cdn.fal.ai/result/${requestId}_${i}.png`);
-                }
-                
-                log(`Generated CDN URLs based on request_id: ${generatedUrls.join(', ').substring(0, 100)}...`, 'schnell');
-                
-                // Создаем структуру данных с массивом предполагаемых URL
+                // Создаем структуру данных с прямым URL запроса
                 resultData = {
-                  images: generatedUrls
+                  images: [standardUrl]
                 };
                 
-                log(`Created result data with ${generatedUrls.length} potential CDN URLs for request_id ${requestId}`, 'schnell');
+                log(`Используем стандартный URL запроса вместо CDN ссылок: ${standardUrl}`, 'schnell');
+                
+                log(`Создана структура данных со стандартным URL запроса для request_id ${requestId}`, 'schnell');
                 break;
               }
               
