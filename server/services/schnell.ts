@@ -123,38 +123,72 @@ export class SchnellService {
         const requestId = response.data.request_id;
         log(`Schnell request_id received: ${requestId}`, 'schnell');
         
-        // Создаем URL для каждого запрошенного изображения на основе request_id
+        try {
+          // Получаем результаты напрямую через endpoint requests
+          const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+          log(`Requesting complete results from: ${requestUrl}`, 'schnell');
+          
+          // Сделаем запрос к URL с метаданными и информацией обо всех сгенерированных изображениях
+          const requestResponse = await axios.get(requestUrl, {
+            headers: {
+              'Authorization': authHeader,
+              'Accept': 'application/json'
+            },
+            timeout: 10000
+          });
+          
+          // Проверим, что получили валидный ответ
+          if (requestResponse.data && requestResponse.data.images) {
+            log(`Successfully received image metadata from ${requestUrl}`, 'schnell');
+            
+            // Извлекаем URLs изображений
+            const imageUrls = [];
+            
+            // Проверим, что images - это массив
+            if (Array.isArray(requestResponse.data.images)) {
+              log(`Found ${requestResponse.data.images.length} images in response`, 'schnell');
+              
+              // Извлекаем URL из каждого элемента массива
+              for (const image of requestResponse.data.images) {
+                if (image.url) {
+                  imageUrls.push(image.url);
+                  log(`Extracted image URL: ${image.url}`, 'schnell');
+                }
+              }
+              
+              // Проверим, что получили все запрошенные изображения
+              if (imageUrls.length === numImages) {
+                log(`Successfully extracted all ${numImages} requested image URLs`, 'schnell');
+                return imageUrls;
+              } else {
+                log(`Warning: Requested ${numImages} images but found ${imageUrls.length} in response. Using available images.`, 'schnell');
+                return imageUrls;
+              }
+            } else if (typeof requestResponse.data.images === 'string') {
+              // Если images - это строка с одним URL
+              log(`Found a single image URL in response`, 'schnell');
+              return [requestResponse.data.images];
+            }
+          }
+          
+          // Если не удалось извлечь URL изображений, логируем ошибку
+          log(`Failed to extract image URLs from response at ${requestUrl}. Response: ${JSON.stringify(requestResponse.data)}`, 'schnell');
+          
+          // Используем запасной метод для получения изображений
+          log(`Falling back to individual image requests`, 'schnell');
+        } catch (error) {
+          // В случае ошибки при запросе, логируем и продолжаем с запасным вариантом
+          log(`Error retrieving results from ${requestId}: ${error}`, 'schnell');
+          log(`Falling back to individual image requests`, 'schnell');
+        }
+        
+        // Запасной вариант - создаем URL для каждого запрошенного изображения
         const imageUrls = [];
         
-        // Если запросили несколько изображений (numImages > 1), создаем URL-ы с индексами
-        if (numImages > 1) {
-          log(`Generating ${numImages} result URLs using standard FAL.AI pattern`, 'schnell');
-          
-          // ВАЖНО: Для модели Schnell мы не используем запрос /requests/{requestId},
-          // так как это может вызвать ошибку 404 даже когда изображения готовы.
-          // Вместо этого сразу используем URL для прямого доступа к изображениям.
-          
-          log(`Skipping base result request and going directly to image URLs`, 'schnell');
-          
-          // Мы не делаем GET запрос к /requests/{requestId}, так как он может быть недоступен для Schnell
-          // Создаем URL-ы для каждого из запрошенных изображений напрямую по спецификации FAL.AI
-          
-          // Создаем URL-ы для каждого из запрошенных изображений строго по спецификации FAL.AI
-          // Согласно документации, правильный путь:
-          // https://run.fal.ai/fal-ai/flux/schnell/results?request_id={requestId}&image_idx={i}
-          for (let i = 0; i < numImages; i++) {
-            const officialImageUrl = `https://run.fal.ai/fal-ai/flux/schnell/results?request_id=${requestId}&image_idx=${i}`;
-            imageUrls.push(officialImageUrl);
-            log(`Generated official image URL ${i+1}/${numImages}: ${officialImageUrl}`, 'schnell');
-          }
-        } else {
-          // Для одного изображения используем официальный URL результата
-          // Согласно документации FAL.AI, правильный путь для получения результатов одного изображения:
-          // https://run.fal.ai/fal-ai/flux/schnell/results?request_id={requestId}&image_idx=0
-          const officialImageUrl = `https://run.fal.ai/fal-ai/flux/schnell/results?request_id=${requestId}&image_idx=0`;
-          imageUrls.push(officialImageUrl);
-          log(`Created official image URL for single image: ${officialImageUrl}`, 'schnell');
-        }
+        // Прямое получение CDN URL
+        const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+        log(`Using request URL for results: ${requestUrl}`, 'schnell');
+        imageUrls.push(requestUrl);
         
         return imageUrls;
       }
