@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/lib/store';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Keyword {
   keyword: string;
@@ -40,7 +41,9 @@ export function KeywordSelector({
   const { toast } = useToast();
   const [existingKeywords, setExistingKeywords] = useState<string[]>([]);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const [isUpdatingCompetition, setIsUpdatingCompetition] = useState(false);
   const { getAuthToken } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const loadExistingKeywords = async () => {
     if (!campaignId) return;
@@ -314,7 +317,66 @@ export function KeywordSelector({
 
       {selectedItems.length > 0 && (
         <div className="space-y-2">
-          <div className="text-sm font-medium">Выбранные ключевые слова:</div>
+          <div className="flex justify-between items-center">
+            <div className="text-sm font-medium">Выбранные ключевые слова:</div>
+            {campaignId && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={async () => {
+                  if (!campaignId) return;
+                  
+                  try {
+                    setIsUpdatingCompetition(true);
+                    const authToken = getAuthToken();
+                    
+                    // Запрашиваем обновление данных о конкуренции через новый API
+                    const response = await fetch('/api/xmlriver/update-keywords-competition', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken ? `Bearer ${authToken}` : ''
+                      },
+                      body: JSON.stringify({ campaignId })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Не удалось обновить данные о конкуренции');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                      // Инвалидируем кеш для обновления UI
+                      queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+                      queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
+                      
+                      toast({
+                        title: "Данные обновлены",
+                        description: result.message || `Обновлено ${result.updatedCount} ключевых слов`
+                      });
+                    } else {
+                      throw new Error(result.message || 'Ошибка обновления данных');
+                    }
+                  } catch (error) {
+                    console.error('Ошибка при обновлении данных о конкуренции:', error);
+                    toast({
+                      variant: "destructive",
+                      title: "Ошибка",
+                      description: error instanceof Error ? error.message : 'Не удалось обновить данные о конкуренции'
+                    });
+                  } finally {
+                    setIsUpdatingCompetition(false);
+                  }
+                }}
+                disabled={isUpdatingCompetition}
+              >
+                {isUpdatingCompetition ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Обновить метрики
+              </Button>
+            )}
+          </div>
+          
           <div className="flex flex-wrap gap-2">
             {selectedItems.map((keyword) => (
               <Badge 
@@ -326,8 +388,6 @@ export function KeywordSelector({
               </Badge>
             ))}
           </div>
-          
-
         </div>
       )}
 
