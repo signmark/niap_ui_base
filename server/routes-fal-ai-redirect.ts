@@ -7,6 +7,7 @@ import { Express, Request, Response } from 'express';
 import { log } from './vite';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { storage } from './storage';
+import axios from 'axios';
 
 /**
  * Регистрирует маршруты для перенаправления запросов к универсальному интерфейсу
@@ -15,19 +16,60 @@ import { storage } from './storage';
 export function registerFalAiRedirectRoutes(app: Express) {
   // Middleware для извлечения userId из запроса
   const extractUserId = (req: Request): string | undefined => {
-    return (req as any).userId;
+    // Выводим все заголовки и ищем x-user-id для отладки
+    console.log("DEBUG Headers:", Object.keys(req.headers).join(", "));
+    
+    // Проверяем все варианты заголовка x-user-id (с разными регистрами)
+    const userIdHeader = 
+      req.headers['x-user-id'] || 
+      req.headers['X-User-Id'] || 
+      req.headers['X-USER-ID'] ||
+      req.headers['x-userid'];
+      
+    // Также проверяем в body.userId, если есть
+    const bodyUserId = req.body?.userId;
+    
+    // Затем свойство userId, установленное middleware
+    const propUserId = (req as any).userId;
+    
+    console.log(`DEBUG UserId sources: header=${userIdHeader}, body=${bodyUserId}, prop=${propUserId}`);
+    
+    return userIdHeader as string || bodyUserId || propUserId;
   };
 
   // Прокси-маршрут для перенаправления обычных запросов к универсальному интерфейсу, 
   // заменяет оригинальный маршрут /api/generate-image
   app.post('/api/generate-image', async (req: Request, res: Response) => {
     try {
-      const { prompt, negativePrompt, width, height, numImages, modelName, savePrompt, contentId } = req.body;
+      // Детальный вывод всех заголовков запроса
+      console.log("Headers for /api/generate-image:", JSON.stringify(req.headers));
+      
+      const { prompt, negativePrompt, width, height, numImages, modelName, savePrompt, contentId, userId: bodyUserId } = req.body;
       
       // Получаем userId и токен из запроса
-      const userId = extractUserId(req);
+      let userId = extractUserId(req) || bodyUserId;
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '');
+      
+      // Если userId не найден, но есть токен, попробуем получить userId из токена
+      if (!userId && token) {
+        try {
+          console.log("Attempting to extract userId from token...");
+          // Можно использовать /api/auth/me эндпоинт для получения userId из токена
+          const response = await axios.get(`${req.protocol}://${req.get('host')}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.data && response.data.user && response.data.user.id) {
+            userId = response.data.user.id;
+            console.log(`Successfully extracted userId from token: ${userId}`);
+          }
+        } catch (error) {
+          console.log("Failed to extract userId from token:", error);
+        }
+      }
+      
+      console.log(`DEBUG Auth: userId=${userId}, authHeader exists: ${!!authHeader}, token exists: ${!!token}`);
       
       log(`[fal-ai-redirect] Получен запрос на универсальную генерацию изображения, модель: ${modelName}`);
       
