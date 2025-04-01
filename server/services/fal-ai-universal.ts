@@ -246,7 +246,7 @@ class FalAiUniversalService {
     
     // Schnell - это Flux, поэтому используем специальный endpoint
     if (model === 'schnell') {
-      apiUrl = 'https://queue.fal.run/fal-ai/flux';
+      apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
     } else {
       // Стандартный формат URL для остальных моделей
       apiUrl = `https://queue.fal.run/fal-ai/${model}`;
