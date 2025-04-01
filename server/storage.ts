@@ -1394,8 +1394,7 @@ export class DatabaseStorage implements IStorage {
       return null;
     }
   }
-}
-
+  
   // Campaign Keywords методы
   async getCampaignKeywords(campaignId: string): Promise<CampaignKeyword[]> {
     console.log('Getting campaign keywords for campaign:', campaignId);
