@@ -1121,9 +1121,40 @@ export function ImageGenerationDialog({
                     src={imageUrl} 
                     alt={`Изображение ${index + 1}`} 
                     className="w-full h-auto object-cover aspect-square"
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
                     onError={(e) => {
                       console.log(`Ошибка загрузки изображения ${index + 1}: ${imageUrl}`);
-                      // Показываем индикатор ошибки
+                      
+                      // Попробуем альтернативный источник для изображений от FAL.AI
+                      if (imageUrl.includes('fal.ai') || imageUrl.includes('fal.run')) {
+                        // Экстрактим request_id и image_idx из URL, если возможно
+                        try {
+                          const url = new URL(imageUrl);
+                          const requestId = url.searchParams.get('request_id');
+                          const imageIdx = url.searchParams.get('image_idx');
+                          
+                          // Если удалось извлечь параметры, пробуем альтернативный формат URL
+                          if (requestId && imageIdx !== null) {
+                            const modelPath = url.pathname.includes('schnell') 
+                              ? 'schnell/api' 
+                              : url.pathname.split('/')[2]; // Извлекаем имя модели из пути
+                            
+                            // Создаем прямую ссылку на CDN
+                            const cdnUrl = `https://cdn.fal.ai/${modelPath}/results-direct/${requestId}/${imageIdx}`;
+                            console.log(`Пробуем альтернативный CDN URL: ${cdnUrl}`);
+                            
+                            // Заменяем источник изображения
+                            e.currentTarget.src = cdnUrl;
+                            return; // Выходим, чтобы не показывать ошибку сразу
+                          }
+                        } catch (err) {
+                          console.error('Ошибка при попытке преобразования URL:', err);
+                        }
+                      }
+                      
+                      // Если не удалось или не FAL.AI URL, показываем индикатор ошибки
                       e.currentTarget.style.display = 'none';
                       // Устанавливаем фон блока как индикатор ошибки
                       e.currentTarget.parentElement!.classList.add('bg-red-50');
