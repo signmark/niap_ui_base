@@ -275,29 +275,89 @@ class FalAiUniversalService {
       if (isSchnellModel) {
         log(`[fal-ai-universal] Извлечение CDN ссылок для модели Schnell, request_id: ${requestId}`);
         
-        // Для Schnell модели получаем каждое изображение отдельно, чтобы извлечь cdn_url
+        try {
+          // Сначала попробуем получить информацию о готовом запросе для извлечения медиа URL
+          const statusUrl = `${this.baseUrl}/flux/requests/${requestId}/status`;
+          log(`[fal-ai-universal] Запрос статуса для извлечения медиа URL: ${statusUrl}`);
+          
+          const statusResponse = await axios.get(statusUrl, { 
+            timeout: 10000,
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          // Проверяем результат запроса статуса
+          if (statusResponse.data && statusResponse.data.status === 'COMPLETE') {
+            log(`[fal-ai-universal] Запрос завершен успешно, проверяем resource_urls`);
+            
+            // Проверяем наличие resource_urls и извлекаем прямые ссылки на изображения
+            if (statusResponse.data.resource_urls && Array.isArray(statusResponse.data.resource_urls)) {
+              log(`[fal-ai-universal] Найдены resource_urls: ${JSON.stringify(statusResponse.data.resource_urls)}`);
+              
+              for (let i = 0; i < Math.min(numImages, statusResponse.data.resource_urls.length); i++) {
+                const resourceUrl = statusResponse.data.resource_urls[i];
+                // Проверяем, есть ли прямой URL на CDN вместо прокси
+                if (resourceUrl.media_url) {
+                  log(`[fal-ai-universal] Обнаружен media_url: ${resourceUrl.media_url}`);
+                  imageUrls.push(resourceUrl.media_url);
+                } else if (resourceUrl.cdn_url) {
+                  log(`[fal-ai-universal] Обнаружен cdn_url: ${resourceUrl.cdn_url}`);
+                  imageUrls.push(resourceUrl.cdn_url);
+                } else {
+                  // Если нет явного cdn_url, пробуем использовать прямую ссылку на CDN
+                  const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
+                  log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
+                  imageUrls.push(cdnUrl);
+                }
+              }
+              
+              // Если удалось извлечь все ссылки, возвращаем их
+              if (imageUrls.length === numImages) {
+                return imageUrls;
+              }
+            }
+          }
+        } catch (statusError) {
+          log(`[fal-ai-universal] Ошибка при запросе статуса: ${statusError}`);
+          // Если не удалось получить статус, продолжаем с альтернативным методом
+        }
+        
+        // Запасной вариант - получаем каждое изображение отдельно
+        imageUrls.length = 0; // Очищаем массив перед вторым методом
         for (let i = 0; i < numImages; i++) {
           try {
-            // Запрашиваем информацию о каждом изображении, чтобы получить cdn_url
+            // Запрашиваем информацию о каждом изображении
             const resultUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
             const response = await axios.get(resultUrl, { timeout: 10000 });
             
-            // Извлекаем CDN URL если он есть в ответе
-            if (response.data && response.data.cdn_url) {
-              log(`[fal-ai-universal] Получен CDN URL для Schnell модели: ${response.data.cdn_url}`);
-              imageUrls.push(response.data.cdn_url);
+            // Проверяем наличие image_url и других полей в ответе
+            if (response.data) {
+              if (response.data.image_url) {
+                log(`[fal-ai-universal] Получен image_url: ${response.data.image_url}`);
+                imageUrls.push(response.data.image_url);
+              } else if (response.data.media_url) {
+                log(`[fal-ai-universal] Получен media_url: ${response.data.media_url}`);
+                imageUrls.push(response.data.media_url);
+              } else if (response.data.cdn_url) {
+                log(`[fal-ai-universal] Получен cdn_url: ${response.data.cdn_url}`);
+                imageUrls.push(response.data.cdn_url);
+              } else {
+                // Если cdn_url не найден, используем прямой URL в CDN
+                const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
+                log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
+                imageUrls.push(cdnUrl);
+              }
             } else {
-              // Если cdn_url не найден, используем прямой URL в CDN (формат похож на у других моделей)
-              const cdnUrl = `https://cdn.fal.ai/schnell/results-direct/${requestId}/${i}`;
-              log(`[fal-ai-universal] Используем альтернативный CDN URL: ${cdnUrl}`);
-              imageUrls.push(cdnUrl);
+              throw new Error('Пустой ответ от API');
             }
           } catch (error) {
             console.error(`[fal-ai-universal] Ошибка при извлечении CDN URL для Schnell, изображение ${i}:`, error);
             
-            // В случае ошибки используем прокси URL как запасной вариант
-            const fallbackUrl = `${this.baseUrl}/${modelUrl}/results?request_id=${requestId}&image_idx=${i}`;
-            log(`[fal-ai-universal] Используем прокси URL как запасной вариант: ${fallbackUrl}`);
+            // В случае ошибки используем обычный CDN URL как запасной вариант
+            // Формат, который должен быть совместим с CDN FAL.AI
+            const fallbackUrl = `https://cdn.fal.ai/flux/schnell/results/${requestId}/${i}.png`;
+            log(`[fal-ai-universal] Используем fallback CDN URL: ${fallbackUrl}`);
             imageUrls.push(fallbackUrl);
           }
         }
