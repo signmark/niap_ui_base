@@ -300,580 +300,7 @@ export class SocialPublishingService {
    * @param baseUrl Базовый URL Telegram API
    * @returns Ответ от Telegram API
    */
-  private async uploadTelegramImageFromUrl(
-    imageUrl: string, 
-    chatId: string, 
-    caption: string, 
-    token: string,
-    baseUrl: string
-  ): Promise<any> {
-    try {
-      // ШАГ 1: Логирование входных параметров
-      log(`🔴 [TG: ШАГ 1] НАЧАЛО процесса отправки изображения в Telegram`, 'social-publishing');
-      log(`🔴 [TG: ШАГ 1] Исходный URL изображения: ${imageUrl}`, 'social-publishing');
-      log(`🔴 [TG: ШАГ 1] ID чата Telegram: ${chatId}`, 'social-publishing');
-      log(`🔴 [TG: ШАГ 1] Длина подписи: ${caption.length} символов`, 'social-publishing');
-      log(`🔴 [TG: ШАГ 1] Токен (первые 8 символов): ${token.substring(0, 8)}...`, 'social-publishing');
-      log(`🔴 [TG: ШАГ 1] URL API Telegram: ${baseUrl}`, 'social-publishing');
-      
-      // ШАГ 2: Обработка изображения через прокси
-      log(`🟠 [TG: ШАГ 2] Обработка URL изображения...`, 'social-publishing');
-      
-      // ВСЕГДА используем проксированный URL для скачивания
-      // Применяем универсальную функцию обработки URL
-      const proxyImageUrl = this.processImageUrl(imageUrl, 'telegram');
-      log(`🟠 [TG: ШАГ 2] Сформирован URL для скачивания: ${proxyImageUrl}`, 'social-publishing');
-      
-      // ШАГ 3: Проксированный URL уже готов к использованию
-      log(`🟡 [TG: ШАГ 3] Прокси URL готов к использованию, дальнейшей обработки не требуется`, 'social-publishing');
-      
-      // ШАГ 4: Скачивание изображения
-      log(`🟢 [TG: ШАГ 4] Начинаем скачивание изображения с URL: ${proxyImageUrl}`, 'social-publishing');
-      
-      // Задаем заголовки для скачивания
-      const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache'
-      };
-      
-      log(`🟢 [TG: ШАГ 4] Используем следующие HTTP заголовки для скачивания: ${JSON.stringify(headers)}`, 'social-publishing');
-      
-      // Скачиваем изображение
-      let imageResponse;
-      try {
-        log(`🟢 [TG: ШАГ 4] Выполняем HTTP GET запрос для скачивания...`, 'social-publishing');
-        imageResponse = await axios({
-          method: 'get',
-          url: proxyImageUrl,
-          responseType: 'arraybuffer',
-          headers: headers,
-          timeout: 30000, // 30 секунд таймаут
-          maxContentLength: 50 * 1024 * 1024, // 50 MB
-          validateStatus: function (status) {
-            return status >= 200 && status < 500;
-          }
-        });
-        
-        log(`🟢 [TG: ШАГ 4] HTTP GET запрос выполнен, статус: ${imageResponse.status}`, 'social-publishing');
-      } catch (downloadError: any) {
-        log(`🟢 [TG: ШАГ 4] КРИТИЧЕСКАЯ ОШИБКА при скачивании: ${downloadError.message}`, 'social-publishing');
-        throw new Error(`Не удалось скачать изображение: ${downloadError.message}`);
-      }
-      
-      // Проверяем успешность загрузки
-      log(`🟢 [TG: ШАГ 4] Проверяем статус HTTP ответа: ${imageResponse.status}`, 'social-publishing');
-      if (imageResponse.status >= 400) {
-        log(`🟢 [TG: ШАГ 4] ОШИБКА: Получен HTTP статус ${imageResponse.status}`, 'social-publishing');
-        throw new Error(`Не удалось загрузить изображение, статус HTTP: ${imageResponse.status}`);
-      }
-      
-      // Проверяем размер скачанных данных
-      const dataSize = imageResponse.data.length;
-      log(`🟢 [TG: ШАГ 4] Размер скачанных данных: ${dataSize} байт`, 'social-publishing');
-      
-      if (dataSize === 0) {
-        log(`🟢 [TG: ШАГ 4] ОШИБКА: Скачан пустой файл (0 байт)`, 'social-publishing');
-        throw new Error('Скачанный файл имеет нулевой размер');
-      }
-      
-      if (dataSize < 100) {
-        log(`🟢 [TG: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Очень маленький размер файла (${dataSize} байт)`, 'social-publishing');
-      }
-      
-      // ШАГ 5: Сохранение во временный файл
-      log(`🔵 [TG: ШАГ 5] Сохраняем скачанные данные во временный файл...`, 'social-publishing');
-      
-      // Создаем временную директорию, если её нет
-      const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
-      try {
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-          log(`🔵 [TG: ШАГ 5] Создана временная директория: ${tempDir}`, 'social-publishing');
-        } else {
-          log(`🔵 [TG: ШАГ 5] Временная директория уже существует: ${tempDir}`, 'social-publishing');
-        }
-      } catch (mkdirError: any) {
-        log(`🔵 [TG: ШАГ 5] ОШИБКА при создании временной директории: ${mkdirError.message}`, 'social-publishing');
-        log(`🔵 [TG: ШАГ 5] Используем корневую временную директорию`, 'social-publishing');
-      }
-    
-      // Генерируем уникальное имя файла
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 10);
-      const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
-      
-      // Сохраняем изображение во временный файл
-      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
-      log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
-      
-      // Создаем FormData для отправки файла
-      const formData = new FormData();
-      formData.append('chat_id', chatId);
-      formData.append('caption', caption);
-      formData.append('parse_mode', 'HTML');
-      
-      // Добавляем файл изображения в форму
-      const fileStream = fs.createReadStream(tempFilePath);
-      formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
-      
-      log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
-      
-      try {
-        // Отправляем запрос в Telegram API
-        const response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
-          headers: {
-            ...formData.getHeaders(),
-            'Accept': 'application/json'
-          },
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-          timeout: 30000 // увеличиваем таймаут до 30 секунд
-        });
-        
-        log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
-        return response.data;
-      } catch (uploadError: any) {
-        log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
-        if (uploadError.response) {
-          log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
-        }
-        throw uploadError;
-      } finally {
-        // Закрываем стрим чтения файла
-        fileStream.destroy();
-        
-        // Удаляем временный файл
-        try {
-          fs.unlinkSync(tempFilePath);
-          log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
-        } catch (deleteError: any) {
-          log(`⚠️ Ошибка при удалении временного файла: ${deleteError.message}`, 'social-publishing');
-        }
-      }
-    } catch (error: any) {
-      log(`❌ Общая ошибка в процессе загрузки изображения в Telegram: ${error.message}`, 'social-publishing');
-      throw error;
-    }
-  }
 
-  /**
-   * Получает системный токен для администраторской аутентификации
-   * @returns Админский токен для запросов к системным ресурсам
-   */
-  private async getSystemToken(): Promise<string | null> {
-    try {
-      // Здесь должна быть логика получения токена администратора
-      // Обычно это реализуется через DirectusAuthManager или аналогичный сервис
-      return null;
-    } catch (error: any) {
-      log(`⚠️ Ошибка при получении системного токена: ${error.message}`, 'social-publishing');
-      return null;
-    }
-  }
-
-  async publishToTelegram(
-    content: CampaignContent,
-    telegramSettings?: SocialMediaSettings['telegram']
-  ): Promise<SocialPublication> {
-    log(`▶️ Начата публикация в Telegram. Контент ID: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-    log(`▶️ Настройки для публикации в Telegram: chatId=${telegramSettings?.chatId?.substring(0, 6)}..., token=${telegramSettings?.token?.substring(0, 6)}...`, 'social-publishing');
-    
-    if (!telegramSettings?.token || !telegramSettings?.chatId) {
-      log(`❌ ОШИБКА: Отсутствуют настройки для Telegram (token=${!!telegramSettings?.token}, chatId=${!!telegramSettings?.chatId})`, 'social-publishing');
-      return {
-        platform: 'telegram',
-        status: 'failed',
-        publishedAt: null,
-        error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
-      };
-    }
-
-    try {
-      const { token, chatId } = telegramSettings;
-      log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
-      log(`Telegram публикация - тип additionalImages в контенте: ${typeof content.additionalImages}, значение: ${content.additionalImages ? 
-        (typeof content.additionalImages === 'string' ? content.additionalImages : JSON.stringify(content.additionalImages).substring(0, 100)) 
-        : 'null'}`, 'social-publishing');
-
-      // Обработка дополнительных изображений
-      const processedContent = this.processAdditionalImages(content, 'Telegram');
-
-      // Правильное форматирование ID чата
-      let formattedChatId = chatId;
-      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-        formattedChatId = `-100${chatId}`;
-        log(`Переформатирован ID чата для Telegram: ${formattedChatId}`, 'social-publishing');
-      }
-
-      // Подготовка сообщения с сохранением HTML-форматирования
-      let text = processedContent.title ? `<b>${processedContent.title}</b>\n\n` : '';
-      
-      // Форматируем контент для Telegram с сохранением HTML-тегов и структуры текста
-      const formattedContent = this.formatHtmlContent(processedContent.content, 'telegram');
-      
-      text += formattedContent;
-
-      // Добавление хэштегов
-      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
-        text += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-      }
-      
-      log(`Подготовлено сообщение для Telegram: ${text.substring(0, 50)}...`, 'social-publishing');
-
-      // Разные методы API в зависимости от типа контента
-      let response;
-      const baseUrl = `https://api.telegram.org/bot${token}`;
-
-      // Собираем все доступные изображения
-      const images = [];
-      
-      // Проверяем основное изображение с обработкой URL
-      if (processedContent.imageUrl && typeof processedContent.imageUrl === 'string' && processedContent.imageUrl.trim() !== '') {
-        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'telegram');
-        images.push(processedImageUrl);
-        log(`Добавлено основное изображение для Telegram: ${processedImageUrl}`, 'social-publishing');
-      }
-      
-      // Добавляем дополнительные изображения с обработкой URL
-      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
-        for (const additionalImage of processedContent.additionalImages) {
-          if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim() !== '') {
-            const processedImg = this.processImageUrl(additionalImage, 'telegram');
-            images.push(processedImg);
-            log(`Добавлено дополнительное изображение для Telegram: ${processedImg}`, 'social-publishing');
-          }
-        }
-        
-        log(`Всего подготовлено ${images.length} изображений для Telegram`, 'social-publishing');
-      }
-      
-      // Проверяем доступность видео и обрабатываем URL
-      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
-      let processedVideoUrl = hasVideo ? this.processImageUrl(content.videoUrl as string, 'telegram') : '';
-      
-      // Для отладки логируем важные переменные
-      log(`📊 Контент для публикации: тип=${content.contentType}, imageUrl=${Boolean(content.imageUrl)}, videoUrl=${Boolean(content.videoUrl)}`, 'social-publishing');
-      
-      // Ограничиваем длину подписи, так как Telegram имеет ограничение
-      const maxCaptionLength = 1024;
-      const truncatedCaption = text.length > maxCaptionLength ? 
-        text.substring(0, maxCaptionLength - 3) + '...' : 
-        text;
-      
-      // Решение о методе публикации на основе доступности медиа и типа контента
-      if (images.length > 1) {
-        // Отправка группы изображений (медиагруппы) через sendMediaGroup
-        log(`Отправка медиагруппы в Telegram с ${images.length} изображениями через API sendMediaGroup`, 'social-publishing');
-        
-        // Формируем массив объектов медиа для API Telegram
-        const mediaGroup = images.map((url, index) => ({
-          type: 'photo',
-          media: url,
-          // Добавляем подпись только к первому изображению
-          ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
-        }));
-        
-        log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
-        
-        // Отправляем медиагруппу в теле запроса (формат JSON)
-        const requestBody = {
-          chat_id: formattedChatId,
-          media: mediaGroup
-        };
-        
-        log(`Отправляем запрос к Telegram API (sendMediaGroup): ${JSON.stringify(requestBody)}`, 'social-publishing');
-        
-        response = await axios.post(`${baseUrl}/sendMediaGroup`, requestBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } else if (images.length === 1) {
-        // Отправка одиночного изображения с подписью
-        log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
-        
-        // ВСЕГДА используем локальную загрузку файлов для отправки в Telegram
-      // Это гарантирует, что изображения будут загружены и отправлены как multipart/form-data,
-      // а не как URL, что решает проблему с изображениями, которые не могут быть загружены Telegram напрямую
-      log(`📥 Всегда используем локальную загрузку файла для отправки в Telegram: ${images[0].substring(0, 100)}`, 'social-publishing');
-      
-      try {
-          // Загружаем изображение локально и отправляем через FormData
-          const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
-          log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
-          response = { data: uploadResult };
-          
-          // Сразу переходим к следующему шагу
-          log(`✓ Локальная загрузка и отправка изображения выполнена успешно, URL: ${images[0].substring(0, 50)}...`, 'social-publishing');
-      } catch (directUploadError: any) {
-          log(`❌ [TELEGRAM] Ошибка при загрузке и отправке изображения: ${directUploadError.message}`, 'social-publishing');
-          
-          if (directUploadError.response) {
-              log(`📄 [TELEGRAM] Данные ответа при ошибке: ${JSON.stringify(directUploadError.response.data || {})}`, 'social-publishing');
-              log(`🔢 [TELEGRAM] Статус ошибки: ${directUploadError.response.status}`, 'social-publishing');
-              log(`🔤 [TELEGRAM] Заголовки ответа: ${JSON.stringify(directUploadError.response.headers || {})}`, 'social-publishing');
-          }
-          
-          // Пробуем отправить через URL параметр
-          try {
-            log(`⚠️ [TELEGRAM] Пробуем отправить через URL-метод API (plan B): ${images[0].substring(0, 100)}...`, 'social-publishing');
-            
-            // Проверка URL на валидность
-            let photoUrl = images[0];
-            try {
-              // Убедимся, что URL валидный и публично доступный
-              const parsedUrl = new URL(photoUrl);
-              log(`🔍 [TELEGRAM] Анализ URL: протокол=${parsedUrl.protocol}, хост=${parsedUrl.hostname}`, 'social-publishing');
-              
-              // Если URL использует не HTTP/HTTPS протокол, пробуем подправить
-              if (!parsedUrl.protocol.startsWith('http')) {
-                photoUrl = `https://${parsedUrl.hostname}${parsedUrl.pathname}${parsedUrl.search}`;
-                log(`🔄 [TELEGRAM] Скорректирован URL: ${photoUrl}`, 'social-publishing');
-              }
-            } catch (urlError: any) {
-              log(`⚠️ [TELEGRAM] Ошибка при парсинге URL: ${urlError.message}`, 'social-publishing');
-            }
-            
-            const params = new URLSearchParams({
-              chat_id: formattedChatId,
-              photo: photoUrl,
-              caption: truncatedCaption,
-              parse_mode: 'HTML'
-            });
-            
-            log(`🔄 [TELEGRAM] Отправка через URL метод с параметрами: ${params.toString().substring(0, 200)}...`, 'social-publishing');
-            
-            // Отправляем с дополнительными заголовками и увеличенным таймаутом
-            response = await axios.post(`${baseUrl}/sendPhoto`, params, {
-              headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'TelegramBot/1.0',
-                'Accept': 'application/json'
-              },
-              timeout: 60000 // 60 секунд
-            });
-            
-            log(`✅ [TELEGRAM] Успешная отправка через URL-метод: ${JSON.stringify(response.data)}`, 'social-publishing');
-          } catch (urlError: any) {
-            log(`❌ [TELEGRAM] Ошибка и при URL-методе: ${urlError.message}`, 'social-publishing');
-            
-            if (urlError.response) {
-              log(`📡 [TELEGRAM] URL-метод статус: ${urlError.response.status}`, 'social-publishing');
-              log(`📄 [TELEGRAM] URL-метод данные: ${JSON.stringify(urlError.response.data || {})}`, 'social-publishing');
-            }
-            
-            // Последняя попытка отправить только текст (plan C)
-            try {
-              log(`🔄 [TELEGRAM] Последняя попытка (plan C) - отправка только текста без изображений`, 'social-publishing');
-              const textMessageBody = {
-                chat_id: formattedChatId,
-                text: truncatedCaption,
-                parse_mode: 'HTML'
-              };
-              
-              response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
-                headers: { 'Content-Type': 'application/json' }
-              });
-              
-              log(`✅ [TELEGRAM] FALLBACK: Текстовое сообщение успешно отправлено после ошибок с изображением`, 'social-publishing');
-            } catch (textError: any) {
-              log(`❌ [TELEGRAM] КРИТИЧЕСКАЯ ОШИБКА: Также не удалось отправить текстовое сообщение: ${textError.message}`, 'social-publishing');
-              throw directUploadError; // Возвращаем оригинальную ошибку с изображением
-            }
-          }
-        }
-      }
-      
-      try {
-        if (hasVideo) {
-        // Отправка видео с подписью (с обработанным URL)
-        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
-        
-        try {
-          // Для видео тоже используем локальную загрузку, аналогично изображениям
-          log(`📥 Используем локальную загрузку файла для отправки видео в Telegram: ${processedVideoUrl.substring(0, 100)}`, 'social-publishing');
-          
-          // Скачиваем видео
-          const videoResponse = await axios({
-            method: 'get',
-            url: processedVideoUrl,
-            responseType: 'arraybuffer'
-          });
-          
-          // Создаем временный файл на сервере
-          const timestamp = Date.now();
-          const tempFilePath = path.join(os.tmpdir(), `telegram_video_${timestamp}.mp4`);
-          log(`Создаем временный файл для видео: ${tempFilePath}`, 'social-publishing');
-          
-          // Сохраняем видео во временный файл
-          fs.writeFileSync(tempFilePath, Buffer.from(videoResponse.data));
-          
-          // Подготавливаем multipart/form-data форму
-          const formData = new FormData();
-          formData.append('chat_id', formattedChatId);
-          formData.append('caption', truncatedCaption);
-          formData.append('parse_mode', 'HTML');
-          
-          // Добавляем файл видео в форму
-          const fileStream = fs.createReadStream(tempFilePath);
-          formData.append('video', fileStream, { filename: `video_${timestamp}.mp4` });
-          
-          log(`📤 Отправляем видео файл в Telegram API через multipart/form-data`, 'social-publishing');
-          
-          try {
-            // Отправляем запрос в Telegram API
-            const videoResponse = await axios.post(`${baseUrl}/sendVideo`, formData, {
-              headers: {
-                ...formData.getHeaders(),
-                'Accept': 'application/json'
-              },
-              maxContentLength: Infinity,
-              maxBodyLength: Infinity,
-              timeout: 60000 // увеличиваем таймаут до 60 секунд для видео
-            });
-            
-            log(`✅ Успешный ответ от Telegram API при отправке видео: ${JSON.stringify(videoResponse.data)}`, 'social-publishing');
-            response = { data: videoResponse.data };
-          } catch (uploadError: any) {
-            log(`❌ Ошибка при отправке видео в Telegram API: ${uploadError.message}`, 'social-publishing');
-            if (uploadError.response) {
-              log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
-            }
-            throw uploadError;
-          } finally {
-            // Закрываем стрим чтения файла
-            fileStream.destroy();
-            
-            // Удаляем временный файл
-            try {
-              fs.unlinkSync(tempFilePath);
-              log(`🗑️ Временный файл видео удален: ${tempFilePath}`, 'social-publishing');
-            } catch (deleteError: any) {
-              log(`⚠️ Ошибка при удалении временного файла видео: ${deleteError.message}`, 'social-publishing');
-            }
-          }
-        } catch (videoError: any) {
-          log(`⚠️ Ошибка при локальной загрузке видео, пробуем отправить через URL: ${videoError.message}`, 'social-publishing');
-          
-          // Если не удалось локально загрузить и отправить, пробуем через URL (старый способ)
-          const videoRequestBody = {
-            chat_id: formattedChatId,
-            video: processedVideoUrl,
-            caption: truncatedCaption,
-            parse_mode: 'HTML'
-          };
-          
-          log(`Отправляем запрос видео к Telegram API через URL: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
-          
-          response = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-      } 
-      
-      if (content.contentType === 'text' || !content.contentType) {
-        // Отправка текстового сообщения (по умолчанию)
-        log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
-        const messageRequestBody = {
-          chat_id: formattedChatId,
-          text,
-          parse_mode: 'HTML'
-        };
-        
-        log(`Отправляем текстовый запрос к Telegram API: ${JSON.stringify(messageRequestBody)}`, 'social-publishing');
-        
-        response = await axios.post(`${baseUrl}/sendMessage`, messageRequestBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      
-      // Если до сих пор не отправлено, пробуем неподдерживаемый формат как текст
-      if (!response) {
-        // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
-        log(`Для типа контента ${content.contentType} не найдены медиа или другие обработчики. Отправляем как текст`, 'social-publishing');
-        try {
-          const fallbackMessageBody = {
-            chat_id: formattedChatId,
-            text,
-            parse_mode: 'HTML'
-          };
-          
-          log(`Отправляем fallback-текстовый запрос к Telegram API: ${JSON.stringify(fallbackMessageBody)}`, 'social-publishing');
-          
-          response = await axios.post(`${baseUrl}/sendMessage`, fallbackMessageBody, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-        } catch (error: any) {
-          log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
-          return {
-            platform: 'telegram',
-            status: 'failed',
-            publishedAt: null,
-            error: `Неподдерживаемый тип контента: ${content.contentType}`
-          };
-        }
-      }
-
-      log(`Получен ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
-
-      // Обработка успешного ответа
-      if (response.data.ok) {
-        // Для множественных сообщений (медиагруппы) - результат это массив сообщений
-        if (Array.isArray(response.data.result)) {
-          const messages = response.data.result;
-          log(`Успешная публикация группы в Telegram. Количество сообщений: ${messages.length}`, 'social-publishing');
-          
-          // Берем ID первого сообщения в группе для ссылки
-          const firstMessageId = messages[0].message_id;
-          return {
-            platform: 'telegram',
-            status: 'published',
-            publishedAt: new Date(),
-            postId: firstMessageId.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`,
-            userId: content.userId // Добавляем userId из контента
-          };
-        } else {
-          // Для одиночного сообщения
-          const message = response.data.result;
-          log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
-          return {
-            platform: 'telegram',
-            status: 'published',
-            publishedAt: new Date(),
-            postId: message.message_id.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
-            userId: content.userId // Добавляем userId из контента
-          };
-        }
-      } else {
-        log(`Ошибка в ответе Telegram API: ${response.data.description}`, 'social-publishing');
-        return {
-          platform: 'telegram',
-          status: 'failed',
-          publishedAt: null,
-          error: `Telegram API вернул ошибку: ${response.data.description}`,
-          userId: content.userId // Добавляем userId из контента
-        };
-      }
-    } catch (error: any) {
-      log(`Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
-      if (error.response) {
-        log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
-      }
-      return {
-        platform: 'telegram',
-        status: 'failed',
-        publishedAt: null,
-        error: `Ошибка при публикации в Telegram: ${error.message}`,
-        userId: content.userId // Добавляем userId из контента
-      };
-    }
-  }
-
-  /**
-   * Получает URL для загрузки фотографии в VK
    * @param token Токен доступа VK
    * @param groupId ID группы
    * @returns URL для загрузки фото или null в случае ошибки
@@ -1119,100 +546,7 @@ export class SocialPublishingService {
    * @param vkSettings Настройки VK API
    * @returns Результат публикации
    */
-  async publishToVk(
-    content: CampaignContent,
-    vkSettings?: SocialMediaSettings['vk']
-  ): Promise<SocialPublication> {
-    if (!vkSettings?.token || !vkSettings?.groupId) {
-      return {
-        platform: 'vk',
-        status: 'failed',
-        publishedAt: null,
-        error: 'Отсутствуют настройки для VK (токен или ID группы)'
-      };
-    }
 
-    try {
-      const { token, groupId } = vkSettings;
-      log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
-
-      // Обработка контента и дополнительных изображений
-      const processedContent = this.processAdditionalImages(content, 'vk');
-      log(`VK публикация - обрабатываем контент: ${content.id}, тип данных additionalImages: ${typeof content.additionalImages}`, 'social-publishing');
-      log(`Обработанный контент для VK имеет ${processedContent.additionalImages ? processedContent.additionalImages.length : 0} дополнительных изображений`, 'social-publishing');
-
-      // Подготовка сообщения
-      let message = processedContent.title ? `${processedContent.title}\n\n` : '';
-      
-      // Форматируем контент для VK с сохранением структуры и смыслового форматирования
-      const formattedContent = this.formatHtmlContent(processedContent.content, 'vk');
-      
-      message += formattedContent;
-
-      // Добавление хэштегов
-      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
-        message += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
-      }
-
-      log(`Подготовлено сообщение для VK: ${message.substring(0, 50)}...`, 'social-publishing');
-
-      // Обработка ID группы - удаляем префикс "club" если он есть
-      let cleanGroupId = groupId;
-      if (cleanGroupId.startsWith('club')) {
-        cleanGroupId = cleanGroupId.replace('club', '');
-        log(`Очищен ID группы от префикса 'club': ${cleanGroupId}`, 'social-publishing');
-      }
-      
-      // Параметры для запроса публикации
-      const requestData: any = {
-        owner_id: `-${cleanGroupId}`, // Отрицательный ID для групп/сообществ
-        from_group: 1, // Публикация от имени группы
-        message: message,
-        access_token: token,
-        v: '5.131' // версия API
-      };
-
-      // Массив для хранения прикрепленных изображений (attachments)
-      const attachmentsArray = [];
-      
-      // Собираем все доступные изображения (основное и дополнительные)
-      const images = [];
-      
-      // Добавляем основное изображение с обработкой URL
-      if (processedContent.imageUrl) {
-        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'vk');
-        images.push(processedImageUrl);
-        log(`Добавлено основное изображение для VK: ${processedImageUrl}`, 'social-publishing');
-      }
-      
-      // Добавляем дополнительные изображения с обработкой URL
-      if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages) && processedContent.additionalImages.length > 0) {
-        for (let img of processedContent.additionalImages) {
-          if (img && typeof img === 'string' && img.trim() !== '') {
-            const processedImg = this.processImageUrl(img, 'vk');
-            images.push(processedImg);
-            log(`Добавлено дополнительное изображение для VK: ${processedImg}`, 'social-publishing');
-          }
-        }
-      }
-      
-      log(`Всего подготовлено ${images.length} изображений для VK`, 'social-publishing');
-      
-      // Загрузка всех изображений в VK и добавление в attachments
-      for (let i = 0; i < images.length; i++) {
-        const imageUrl = images[i];
-        try {
-          const isMain = i === 0 && processedContent.imageUrl === imageUrl;
-          const imageType = isMain ? "основное" : "дополнительное";
-          log(`Загрузка ${imageType} изображения #${i + 1}/${images.length} на сервер VK: ${imageUrl}`, 'social-publishing');
-          
-          // Шаг 1: Получаем URL сервера для загрузки изображения
-          const uploadUrl = await this.getVkPhotoUploadUrl(token, cleanGroupId);
-          
-          if (!uploadUrl) {
-            log(`Не удалось получить URL для загрузки фото #${i + 1}, пропускаем`, 'social-publishing');
-            continue;
-          }
           
           // Шаг 2: Загружаем фото на сервер VK
           const uploadResult = await this.uploadPhotoToVk(uploadUrl, imageUrl);
@@ -2383,4 +1717,847 @@ export class SocialPublishingService {
 
 }
 
-export const socialPublishingService = new SocialPublishingService();
+export const socialPublishingService = new SocialPublishingService();  /**
+   * Загружает изображение из URL и отправляет его в Telegram
+   * @param imageUrl URL изображения для загрузки
+   * @param chatId ID чата для отправки
+   * @param caption Текст подписи к изображению
+   * @param token Токен Telegram API
+   * @param baseUrl Базовый URL Telegram API
+   * @returns Ответ от Telegram API
+   */
+  private async uploadTelegramImageFromUrl(
+    imageUrl: string,
+    chatId: string,
+    caption: string,
+    token: string,
+    baseUrl = 'https://api.telegram.org/bot'
+  ): Promise<any> {
+    try {
+      log(`📥 [TG] НАЧАЛО ЗАГРУЗКИ ИЗОБРАЖЕНИЯ В TELEGRAM`, 'social-publishing');
+      log(`🔵 [TG: ШАГ 1] Подготовка URL для загрузки: ${imageUrl.substring(0, 100)}...`, 'social-publishing');
+      
+      // ШАГ 2: Скачивание изображения из указанного URL
+      log(`🟠 [TG: ШАГ 2] Скачиваем изображение напрямую: ${imageUrl.substring(0, 100)}...`, 'social-publishing');
+      
+      // Настройка запроса для скачивания файла с правильными заголовками
+      const imageResponse = await axios.get(imageUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000, // увеличиваем таймаут до 30 секунд
+        headers: {
+          'Accept': 'image/*',
+          'User-Agent': 'Mozilla/5.0 SMM Planner Bot'
+        }
+      });
+      
+      log(`🟢 [TG: ШАГ 3] Получен ответ от сервера изображений, тип данных: ${typeof imageResponse.data}`, 'social-publishing');
+      
+      // Проверка типа полученных данных
+      if (!imageResponse.data || !(imageResponse.data instanceof Buffer || imageResponse.data instanceof ArrayBuffer)) {
+        log(`🔴 [TG: ШАГ 3] ОШИБКА: Неверный тип данных в ответе: ${typeof imageResponse.data}`, 'social-publishing');
+        throw new Error(`Неверный тип данных при скачивании изображения: ${typeof imageResponse.data}`);
+      }
+      
+      // Проверяем размер скачанных данных
+      const dataSize = imageResponse.data.length;
+      log(`🟢 [TG: ШАГ 4] Размер скачанных данных: ${dataSize} байт`, 'social-publishing');
+      
+      if (dataSize === 0) {
+        log(`🟢 [TG: ШАГ 4] ОШИБКА: Скачан пустой файл (0 байт)`, 'social-publishing');
+        throw new Error('Скачанный файл имеет нулевой размер');
+      }
+      
+      if (dataSize < 100) {
+        log(`🟢 [TG: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Очень маленький размер файла (${dataSize} байт)`, 'social-publishing');
+      }
+      
+      // ШАГ 5: Сохранение во временный файл
+      log(`🔵 [TG: ШАГ 5] Сохраняем скачанные данные во временный файл...`, 'social-publishing');
+      
+      // Создаем временную директорию, если её нет
+      const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
+      try {
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+          log(`🔵 [TG: ШАГ 5] Создана временная директория: ${tempDir}`, 'social-publishing');
+        } else {
+          log(`🔵 [TG: ШАГ 5] Временная директория уже существует: ${tempDir}`, 'social-publishing');
+        }
+      } catch (mkdirError: any) {
+        log(`🔵 [TG: ШАГ 5] ОШИБКА при создании временной директории: ${mkdirError.message}`, 'social-publishing');
+        log(`🔵 [TG: ШАГ 5] Используем корневую временную директорию`, 'social-publishing');
+      }
+    
+      // Генерируем уникальное имя файла
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 10);
+      const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
+      
+      // Сохраняем изображение во временный файл
+      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+      log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
+      
+      // Создаем FormData для отправки файла
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
+      
+      // Добавляем файл изображения в форму
+      const fileStream = fs.createReadStream(tempFilePath);
+      formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
+      
+      log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
+      
+      try {
+        // Отправляем запрос в Telegram API
+        const response = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Accept': 'application/json'
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 30000 // увеличиваем таймаут до 30 секунд
+        });
+        
+        log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return response.data;
+      } catch (uploadError: any) {
+        log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
+        if (uploadError.response) {
+          log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+        }
+        throw uploadError;
+      } finally {
+        // Закрываем стрим чтения файла
+        fileStream.destroy();
+        
+        // Удаляем временный файл
+        try {
+          fs.unlinkSync(tempFilePath);
+          log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
+        } catch (unlinkError: any) {
+          log(`⚠️ Ошибка при удалении временного файла: ${unlinkError.message}`, 'social-publishing');
+        }
+      }
+    } catch (error: any) {
+      log(`❌ ОШИБКА при загрузке изображения в Telegram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`📄 Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Публикует контент в Telegram
+   * @param content Контент для публикации
+   * @param telegramSettings Настройки Telegram API
+   * @returns Результат публикации
+   */
+  async publishToTelegram(
+    content: CampaignContent,
+    telegramSettings?: SocialMediaSettings['telegram']
+  ): Promise<SocialPublication> {
+    log(`▶️ Начата публикация в Telegram. Контент ID: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+    log(`▶️ Настройки для публикации в Telegram: chatId=${telegramSettings?.chatId ? telegramSettings.chatId.substring(0, 6) + '...' : 'не задан'}, token=${telegramSettings?.token ? telegramSettings.token.substring(0, 6) + '...' : 'не задан'}`, 'social-publishing');
+    
+    if (!telegramSettings?.token || !telegramSettings?.chatId) {
+      log(`❌ ОШИБКА: Отсутствуют настройки для Telegram (token=${!!telegramSettings?.token}, chatId=${!!telegramSettings?.chatId})`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
+      };
+    }
+
+    try {
+      const { token, chatId } = telegramSettings;
+      log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+
+      // Обрабатываем поле additionalImages в контенте
+      content = this.processAdditionalImages(content, 'telegram');
+      
+      // Форматируем HTML-контент для Telegram с сохранением структуры
+      const formattedText = this.formatHtmlContent(content.content, 'telegram');
+      log(`Форматированный текст для Telegram: длина ${formattedText.length} символов`, 'social-publishing');
+      
+      // Публикация в зависимости от типа контента
+      if (content.contentType === 'text') {
+        log(`Публикация текстового контента в Telegram (ID: ${content.id})`, 'social-publishing');
+        
+        // Базовый URL для API Telegram
+        const baseUrl = 'https://api.telegram.org/bot';
+        
+        // Отправляем текстовый контент с форматированием HTML
+        const response = await axios.post(`${baseUrl}${token}/sendMessage`, {
+          chat_id: chatId,
+          text: formattedText,
+          parse_mode: 'HTML',
+          disable_web_page_preview: false // Разрешаем предпросмотр веб-страниц в ссылках
+        });
+        
+        log(`Успешная публикация в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+        
+        // Получаем URL поста из ответа API
+        const messageId = response.data.result.message_id;
+        // Формируем URL поста в Telegram (формат t.me/c/channelid/messageid)
+        const postUrl = chatId.startsWith('@')
+          ? `https://t.me/${chatId.substring(1)}`
+          : chatId.startsWith('-100')
+            ? `https://t.me/c/${chatId.substring(4)}/${messageId}`
+            : null;
+            
+        log(`URL поста в Telegram: ${postUrl}`, 'social-publishing');
+        
+        return {
+          platform: 'telegram',
+          status: 'published',
+          publishedAt: new Date(),
+          publishedUrl: postUrl,
+          postId: messageId?.toString() || null
+        };
+      } 
+      else if (content.contentType === 'image') {
+        log(`Публикация изображения в Telegram (ID: ${content.id})`, 'social-publishing');
+        
+        // Проверка наличия изображения
+        if (!content.imageUrl) {
+          log(`Ошибка: Отсутствует URL изображения для публикации в Telegram`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Отсутствует URL изображения'
+          };
+        }
+        
+        // Обрабатываем URL изображения для проксирования через наш сервер
+        const processedImageUrl = this.processImageUrl(content.imageUrl, 'telegram');
+        log(`Обработанный URL изображения для Telegram: ${processedImageUrl}`, 'social-publishing');
+        
+        // Базовый URL для API Telegram
+        const baseUrl = 'https://api.telegram.org/bot';
+        
+        try {
+          // Отправляем изображение с подписью
+          const response = await this.uploadTelegramImageFromUrl(
+            processedImageUrl,
+            chatId,
+            formattedText, // Используем форматированный HTML-текст как подпись
+            token,
+            baseUrl
+          );
+          
+          log(`Успешная публикация изображения в Telegram: ${JSON.stringify(response)}`, 'social-publishing');
+          
+          // Получаем данные о публикации из ответа API
+          const messageId = response.result.message_id;
+          
+          // Формируем URL поста в Telegram (формат t.me/c/channelid/messageid)
+          const postUrl = chatId.startsWith('@')
+            ? `https://t.me/${chatId.substring(1)}`
+            : chatId.startsWith('-100')
+              ? `https://t.me/c/${chatId.substring(4)}/${messageId}`
+              : null;
+              
+          log(`URL поста с изображением в Telegram: ${postUrl}`, 'social-publishing');
+          
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date(),
+            publishedUrl: postUrl,
+            postId: messageId?.toString() || null
+          };
+        } catch (uploadError: any) {
+          log(`Ошибка при загрузке изображения в Telegram: ${uploadError.message}`, 'social-publishing');
+          
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка загрузки изображения: ${uploadError.message}`
+          };
+        }
+      }
+      else if (content.contentType === 'carousel') {
+        log(`Публикация карусели в Telegram (ID: ${content.id})`, 'social-publishing');
+        
+        // Проверяем наличие основного изображения или дополнительных изображений
+        if (!content.imageUrl && (!content.additionalImages || content.additionalImages.length === 0)) {
+          log(`Ошибка: Отсутствуют изображения для карусели в Telegram`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Отсутствуют изображения для карусели'
+          };
+        }
+        
+        // Собираем все URL изображений
+        const imageUrls: string[] = [];
+        
+        // Добавляем основное изображение, если оно есть
+        if (content.imageUrl) {
+          imageUrls.push(this.processImageUrl(content.imageUrl, 'telegram'));
+        }
+        
+        // Добавляем дополнительные изображения
+        if (content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+          content.additionalImages.forEach((imgUrl) => {
+            if (typeof imgUrl === 'string' && imgUrl.trim()) {
+              imageUrls.push(this.processImageUrl(imgUrl, 'telegram'));
+            } else if (typeof imgUrl === 'object' && imgUrl.url) {
+              imageUrls.push(this.processImageUrl(imgUrl.url, 'telegram'));
+            }
+          });
+        }
+        
+        log(`Всего изображений для карусели в Telegram: ${imageUrls.length}`, 'social-publishing');
+        
+        if (imageUrls.length === 0) {
+          log(`Ошибка: После обработки не найдено валидных URL изображений для карусели`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Нет валидных URL изображений для карусели'
+          };
+        }
+        
+        // Для Telegram карусель отправляется как группа изображений через sendMediaGroup
+        // Формируем массив медиа-объектов
+        const mediaObjects = imageUrls.map((url, index) => {
+          return {
+            type: 'photo',
+            media: url,
+            caption: index === 0 ? formattedText : '', // Подпись только для первого изображения
+            parse_mode: 'HTML'
+          };
+        });
+        
+        log(`Медиа-объекты для Telegram: ${JSON.stringify(mediaObjects)}`, 'social-publishing');
+        
+        // Создаем временные файлы для каждого изображения
+        const tempFiles: string[] = [];
+        const mediaItems = [];
+        
+        try {
+          // Создаем временную директорию
+          const tempDir = path.join(os.tmpdir(), 'telegram_carousel');
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+          
+          // Скачиваем каждое изображение во временный файл
+          for (let i = 0; i < imageUrls.length; i++) {
+            const url = imageUrls[i];
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(2, 10);
+            const tempFilePath = path.join(tempDir, `telegram_carousel_${i}_${timestamp}_${randomString}.jpg`);
+            
+            // Скачиваем изображение
+            log(`Скачивание изображения ${i+1}/${imageUrls.length} для карусели: ${url.substring(0, 100)}...`, 'social-publishing');
+            const response = await axios.get(url, {
+              responseType: 'arraybuffer',
+              timeout: 30000,
+              headers: {
+                'Accept': 'image/*',
+                'User-Agent': 'Mozilla/5.0 SMM Planner Bot'
+              }
+            });
+            
+            // Проверяем размер
+            const dataSize = response.data.length;
+            if (dataSize === 0) {
+              log(`ОШИБКА: Скачан пустой файл (0 байт) для изображения ${i+1}`, 'social-publishing');
+              continue; // Пропускаем это изображение
+            }
+            
+            // Сохраняем файл
+            fs.writeFileSync(tempFilePath, Buffer.from(response.data));
+            log(`Сохранено изображение ${i+1} во временный файл: ${tempFilePath}`, 'social-publishing');
+            tempFiles.push(tempFilePath);
+            
+            // Создаем FormData для каждого изображения
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            
+            // Первое изображение с подписью, остальные без
+            if (i === 0) {
+              formData.append('caption', formattedText);
+              formData.append('parse_mode', 'HTML');
+            }
+            
+            // Добавляем файл
+            const fileStream = fs.createReadStream(tempFilePath);
+            formData.append('photo', fileStream, { filename: `image_${timestamp}_${i}.jpg` });
+            
+            // Отправляем изображение в Telegram
+            try {
+              const baseUrl = 'https://api.telegram.org/bot';
+              const uploadResponse = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
+                headers: {
+                  ...formData.getHeaders(),
+                  'Accept': 'application/json'
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                timeout: 30000
+              });
+              
+              fileStream.destroy(); // Закрываем стрим
+              
+              log(`Успешно отправлено изображение ${i+1} в Telegram`, 'social-publishing');
+              
+              // Добавляем полученное медиа-ID в массив для формирования группы
+              mediaItems.push({
+                index: i,
+                messageId: uploadResponse.data.result.message_id
+              });
+            } catch (uploadError: any) {
+              fileStream.destroy(); // Обязательно закрываем стрим при ошибке
+              log(`Ошибка при отправке изображения ${i+1} в Telegram: ${uploadError.message}`, 'social-publishing');
+              if (uploadError.response) {
+                log(`Данные ошибки: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+              }
+            }
+          }
+          
+          // Удаляем временные файлы
+          tempFiles.forEach(file => {
+            try {
+              fs.unlinkSync(file);
+              log(`Удален временный файл: ${file}`, 'social-publishing');
+            } catch (unlinkError) {
+              log(`Ошибка при удалении временного файла: ${unlinkError}`, 'social-publishing');
+            }
+          });
+          
+          // Проверяем, успешно ли загружены какие-либо изображения
+          if (mediaItems.length === 0) {
+            log(`Ошибка: Не удалось отправить ни одно изображение для карусели`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Не удалось отправить ни одно изображение для карусели'
+            };
+          }
+          
+          // Сортируем медиа-элементы по индексу
+          mediaItems.sort((a, b) => a.index - b.index);
+          
+          // Формируем URL первого поста для возврата
+          // Формируем URL поста в Telegram (формат t.me/c/channelid/messageid)
+          const firstMessageId = mediaItems[0]?.messageId;
+          const postUrl = chatId.startsWith('@')
+            ? `https://t.me/${chatId.substring(1)}`
+            : chatId.startsWith('-100')
+              ? `https://t.me/c/${chatId.substring(4)}/${firstMessageId}`
+              : null;
+              
+          log(`URL первого изображения карусели в Telegram: ${postUrl}`, 'social-publishing');
+          
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date(),
+            publishedUrl: postUrl,
+            postId: firstMessageId?.toString() || null
+          };
+          
+        } catch (carouselError: any) {
+          log(`Ошибка при публикации карусели в Telegram: ${carouselError.message}`, 'social-publishing');
+          
+          // Удаляем все временные файлы
+          tempFiles.forEach(file => {
+            try {
+              if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+              }
+            } catch (e) {
+              // Игнорируем ошибки при очистке
+            }
+          });
+          
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка публикации карусели: ${carouselError.message}`
+          };
+        }
+      }
+      
+      // Если тип контента не поддерживается
+      log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Неподдерживаемый тип контента: ${content.contentType}`
+      };
+    } catch (error: any) {
+      log(`Общая ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
+      
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка публикации: ${error.message}`
+      };
+    }
+  }  /**
+   * Публикует контент в ВКонтакте
+   * @param content Контент для публикации
+   * @param vkSettings Настройки VK API
+   * @returns Результат публикации
+   */
+  async publishToVk(
+    content: CampaignContent,
+    vkSettings?: SocialMediaSettings['vk']
+  ): Promise<SocialPublication> {
+    log(`▶️ Начата публикация в VK. Контент ID: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+    log(`▶️ Настройки для публикации в VK: groupId=${vkSettings?.groupId}, token=${vkSettings?.token?.substring(0, 6)}...`, 'social-publishing');
+    
+    if (!vkSettings?.token || !vkSettings?.groupId) {
+      log(`❌ ОШИБКА: Отсутствуют настройки для VK (token=${!!vkSettings?.token}, groupId=${!!vkSettings?.groupId})`, 'social-publishing');
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для VK (токен или ID группы)'
+      };
+    }
+
+    try {
+      const { token, groupId } = vkSettings;
+      log(`Публикация в VK. Группа: ${groupId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
+
+      // Обработка контента и дополнительных изображений
+      content = this.processAdditionalImages(content, 'vk');
+      log(`VK публикация - обрабатываем контент: ${content.id}, тип данных additionalImages: ${typeof content.additionalImages}`, 'social-publishing');
+      log(`Обработанный контент для VK имеет ${content.additionalImages ? content.additionalImages.length : 0} дополнительных изображений`, 'social-publishing');
+      
+      // Форматируем текст для VK
+      const formattedText = this.formatHtmlContent(content.content, 'vk');
+      log(`Форматированный текст для VK: длина ${formattedText.length} символов`, 'social-publishing');
+      
+      // Создаем временную директорию для файлов
+      const tempDir = path.join(os.tmpdir(), 'vk_uploads');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      // Массив для хранения путей к временным файлам (для последующего удаления)
+      const tempFiles: string[] = [];
+      
+      // Публикация в зависимости от типа контента
+      if (content.contentType === 'text') {
+        log(`Публикация текстового контента в VK (ID: ${content.id})`, 'social-publishing');
+        
+        try {
+          // Для текстового контента просто публикуем на стене группы
+          const response = await axios.post('https://api.vk.com/method/wall.post', {
+            owner_id: -parseInt(groupId), // Минус для групп
+            from_group: 1,
+            message: formattedText,
+            v: '5.131', // Версия API VK
+            access_token: token
+          });
+          
+          log(`Успешная публикация текста в VK: ${JSON.stringify(response.data)}`, 'social-publishing');
+          
+          // Проверяем ответ от API
+          if (response.data.response && response.data.response.post_id) {
+            const postId = response.data.response.post_id;
+            const postUrl = `https://vk.com/wall-${groupId}_${postId}`;
+            
+            return {
+              platform: 'vk',
+              status: 'published',
+              publishedAt: new Date(),
+              publishedUrl: postUrl,
+              postId: postId.toString()
+            };
+          } else {
+            log(`Ошибка при публикации текста в VK: неожиданный формат ответа`, 'social-publishing');
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Неожиданный формат ответа API'
+            };
+          }
+        } catch (error: any) {
+          log(`Ошибка при публикации текста в VK: ${error.message}`, 'social-publishing');
+          if (error.response) {
+            log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+          
+          return {
+            platform: 'vk',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка публикации текста: ${error.message}`
+          };
+        }
+      } 
+      else if (content.contentType === 'image' || content.contentType === 'carousel') {
+        log(`Публикация ${content.contentType === 'image' ? 'изображения' : 'карусели'} в VK (ID: ${content.id})`, 'social-publishing');
+        
+        // Собираем все URL изображений
+        const imageUrls: string[] = [];
+        
+        // Добавляем основное изображение, если оно есть
+        if (content.imageUrl) {
+          const processedUrl = this.processImageUrl(content.imageUrl, 'vk');
+          imageUrls.push(processedUrl);
+          log(`Добавлено основное изображение для VK: ${processedUrl.substring(0, 100)}...`, 'social-publishing');
+        }
+        
+        // Добавляем дополнительные изображения для карусели
+        if (content.contentType === 'carousel' && content.additionalImages && Array.isArray(content.additionalImages)) {
+          content.additionalImages.forEach((imgUrl, index) => {
+            if (typeof imgUrl === 'string' && imgUrl.trim()) {
+              const processedUrl = this.processImageUrl(imgUrl, 'vk');
+              imageUrls.push(processedUrl);
+              log(`Добавлено дополнительное изображение #${index + 1} для VK: ${processedUrl.substring(0, 100)}...`, 'social-publishing');
+            } else if (typeof imgUrl === 'object' && imgUrl.url) {
+              const processedUrl = this.processImageUrl(imgUrl.url, 'vk');
+              imageUrls.push(processedUrl);
+              log(`Добавлено дополнительное изображение (объект) #${index + 1} для VK: ${processedUrl.substring(0, 100)}...`, 'social-publishing');
+            }
+          });
+        }
+        
+        if (imageUrls.length === 0) {
+          log(`Ошибка: Не найдено валидных URL изображений для публикации в VK`, 'social-publishing');
+          return {
+            platform: 'vk',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Отсутствуют URL изображений для публикации'
+          };
+        }
+        
+        try {
+          // Шаг 1: Получаем URL для загрузки фотографий на сервер VK
+          log(`Шаг 1: Получаем URL для загрузки фотографий в VK`, 'social-publishing');
+          const uploadUrlResponse = await axios.get('https://api.vk.com/method/photos.getWallUploadServer', {
+            params: {
+              group_id: groupId,
+              v: '5.131',
+              access_token: token
+            }
+          });
+          
+          if (!uploadUrlResponse.data.response || !uploadUrlResponse.data.response.upload_url) {
+            log(`Ошибка: Не удалось получить URL для загрузки фотографий в VK`, 'social-publishing');
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Не удалось получить URL для загрузки фотографий'
+            };
+          }
+          
+          const uploadUrl = uploadUrlResponse.data.response.upload_url;
+          log(`Получен URL для загрузки фотографий: ${uploadUrl}`, 'social-publishing');
+          
+          // Шаг 2: Загружаем каждое изображение на сервер и сохраняем в стене группы
+          const photoAttachments: string[] = [];
+          
+          for (let i = 0; i < imageUrls.length; i++) {
+            const url = imageUrls[i];
+            log(`Загрузка изображения ${i + 1}/${imageUrls.length} в VK: ${url.substring(0, 100)}...`, 'social-publishing');
+            
+            // Шаг 2.1: Скачиваем изображение во временный файл
+            try {
+              // Генерируем уникальное имя файла
+              const timestamp = Date.now();
+              const randomString = Math.random().toString(36).substring(2, 10);
+              const tempFilePath = path.join(tempDir, `vk_${timestamp}_${randomString}.jpg`);
+              tempFiles.push(tempFilePath); // Добавляем в список для последующего удаления
+              
+              // Скачиваем изображение
+              const response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 30000,
+                headers: {
+                  'Accept': 'image/*',
+                  'User-Agent': 'Mozilla/5.0 SMM Planner Bot'
+                }
+              });
+              
+              // Проверяем размер данных
+              const dataSize = response.data.length;
+              if (dataSize === 0) {
+                log(`ОШИБКА: Скачан пустой файл (0 байт) для изображения ${i+1} в VK`, 'social-publishing');
+                continue; // Пропускаем это изображение
+              }
+              
+              // Сохраняем во временный файл
+              fs.writeFileSync(tempFilePath, Buffer.from(response.data));
+              log(`Сохранено изображение ${i+1} во временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
+              
+              // Шаг 2.2: Загружаем изображение на сервер VK
+              const formData = new FormData();
+              formData.append('photo', fs.createReadStream(tempFilePath), { filename: `image_${timestamp}.jpg` });
+              
+              const uploadResponse = await axios.post(uploadUrl, formData, {
+                headers: {
+                  ...formData.getHeaders(),
+                  'Accept': 'application/json'
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                timeout: 30000
+              });
+              
+              log(`Ответ сервера VK на загрузку изображения: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+              
+              if (!uploadResponse.data.photo || !uploadResponse.data.server || !uploadResponse.data.hash) {
+                log(`Ошибка: Неполный ответ от сервера загрузки VK для изображения ${i+1}`, 'social-publishing');
+                continue;
+              }
+              
+              // Шаг 2.3: Сохраняем фотографию в стене группы
+              const saveResponse = await axios.post('https://api.vk.com/method/photos.saveWallPhoto', {
+                group_id: groupId,
+                photo: uploadResponse.data.photo,
+                server: uploadResponse.data.server,
+                hash: uploadResponse.data.hash,
+                v: '5.131',
+                access_token: token
+              });
+              
+              log(`Ответ на сохранение фотографии в VK: ${JSON.stringify(saveResponse.data)}`, 'social-publishing');
+              
+              if (saveResponse.data.response && saveResponse.data.response.length > 0) {
+                const photoObj = saveResponse.data.response[0];
+                const photoAttachment = `photo${photoObj.owner_id}_${photoObj.id}`;
+                photoAttachments.push(photoAttachment);
+                log(`Добавлено фото-вложение: ${photoAttachment}`, 'social-publishing');
+              } else {
+                log(`Ошибка: Не удалось сохранить фотографию в VK для изображения ${i+1}`, 'social-publishing');
+              }
+              
+            } catch (uploadError: any) {
+              log(`Ошибка при загрузке изображения ${i+1} в VK: ${uploadError.message}`, 'social-publishing');
+              if (uploadError.response) {
+                log(`Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+              }
+            }
+          }
+          
+          // Удаляем все временные файлы
+          tempFiles.forEach(file => {
+            try {
+              if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+                log(`Удален временный файл: ${file}`, 'social-publishing');
+              }
+            } catch (unlinkError: any) {
+              log(`Ошибка при удалении временного файла: ${unlinkError.message}`, 'social-publishing');
+            }
+          });
+          
+          // Проверяем, есть ли фотографии для публикации
+          if (photoAttachments.length === 0) {
+            log(`Ошибка: Не удалось загрузить ни одно изображение в VK`, 'social-publishing');
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Не удалось загрузить ни одно изображение'
+            };
+          }
+          
+          // Шаг 3: Публикуем пост с текстом и вложениями
+          const attachmentsString = photoAttachments.join(',');
+          log(`Строка вложений для публикации в VK: ${attachmentsString}`, 'social-publishing');
+          
+          const postResponse = await axios.post('https://api.vk.com/method/wall.post', {
+            owner_id: -parseInt(groupId), // Минус для групп
+            from_group: 1,
+            message: formattedText,
+            attachments: attachmentsString,
+            v: '5.131',
+            access_token: token
+          });
+          
+          log(`Ответ на публикацию поста в VK: ${JSON.stringify(postResponse.data)}`, 'social-publishing');
+          
+          if (postResponse.data.response && postResponse.data.response.post_id) {
+            const postId = postResponse.data.response.post_id;
+            const postUrl = `https://vk.com/wall-${groupId}_${postId}`;
+            
+            return {
+              platform: 'vk',
+              status: 'published',
+              publishedAt: new Date(),
+              publishedUrl: postUrl,
+              postId: postId.toString()
+            };
+          } else {
+            log(`Ошибка при публикации поста в VK: неожиданный формат ответа`, 'social-publishing');
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Неожиданный формат ответа API при публикации поста'
+            };
+          }
+          
+        } catch (error: any) {
+          // Удаляем все временные файлы при ошибке
+          tempFiles.forEach(file => {
+            try {
+              if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+              }
+            } catch (e) {
+              // Игнорируем ошибки при очистке
+            }
+          });
+          
+          log(`Общая ошибка при публикации в VK: ${error.message}`, 'social-publishing');
+          if (error.response) {
+            log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+          
+          return {
+            platform: 'vk',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка публикации: ${error.message}`
+          };
+        }
+      }
+      
+      // Если тип контента не поддерживается
+      log(`Неподдерживаемый тип контента для VK: ${content.contentType}`, 'social-publishing');
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: `Неподдерживаемый тип контента: ${content.contentType}`
+      };
+      
+    } catch (error: any) {
+      log(`Общая ошибка при публикации в VK: ${error.message}`, 'social-publishing');
+      
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка публикации: ${error.message}`
+      };
+    }
+  }
