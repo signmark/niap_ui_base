@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -16,18 +15,10 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Image, RefreshCw, Sparkles, Pencil, Upload, X } from "lucide-react";
+import { Loader2, Image, RefreshCw, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
-import ImageUploader from "./ImageUploader";
 
-/**
- * ОТКЛЮЧЕНО: Извлечение ключевых слов больше не используется
- * Это предотвращает утечку данных между постами и нежелательное вмешательство в контент
- */
-/**
- * Функция отключена: мы не извлекаем ключевые слова автоматически
- * Это нужно чтобы избежать передачи данных между разными постами
- */
+// Функция-заглушка для извлечения ключевых слов
 async function extractKeywordsFromText(text: string): Promise<string[]> {
   console.log("Автоматическое извлечение ключевых слов отключено");
   return []; // Всегда возвращаем пустой массив
@@ -59,29 +50,44 @@ export function ImageGenerationDialog({
 }: ImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
   
-  // Инициализируем состояние с пустыми значениями, мы обновим их в useEffect
+  // Инициализируем состояние с пустыми значениями
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageSize, setImageSize] = useState<string>("1024x1024");
   const [content, setContent] = useState("");
-  const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
+  
+  // Дополнительные настройки
+  const [modelType, setModelType] = useState<string>("fast-sdxl"); 
+  const [stylePreset, setStylePreset] = useState<string>("photographic");
+  const [numImages, setNumImages] = useState<number>(3); 
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
+  const [savePrompt, setSavePrompt] = useState<boolean>(true);
   
   // Обработчик выбора изображения
   const handleSelectImage = (index: number) => {
     setSelectedImageIndex(index);
   };
   
-  /* Определение confirmSelection перемещено ниже */
-  const [modelType, setModelType] = useState<string>("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
-  const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
-  const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
-  const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
-  const [savePrompt, setSavePrompt] = useState<boolean>(true); // Флаг для сохранения промта в БД
-  
-  // Состояние для загруженного изображения
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  // Функция для подтверждения выбора изображения
+  const confirmSelection = () => {
+    if (selectedImageIndex >= 0 && selectedImageIndex < generatedImages.length) {
+      const selectedImage = generatedImages[selectedImageIndex];
+      
+      if (onImageGenerated) {
+        // Предоставляем URL выбранного изображения и промт (для сохранения)
+        onImageGenerated(selectedImage, savePrompt ? (generatedPrompt || prompt) : undefined);
+        
+        toast({
+          title: "Изображение выбрано",
+          description: "Изображение успешно добавлено к публикации"
+        });
+        
+        onClose();
+      }
+    }
+  };
   
   // При монтировании компонента и при изменении входных параметров сбрасываем и инициализируем значения
   useEffect(() => {
@@ -91,80 +97,47 @@ export function ImageGenerationDialog({
       return html.replace(/<[^>]*>/g, '');
     };
     
-    console.log("🔄 Сброс состояния ImageGenerationDialog при открытии", { 
-      contentId, 
-      hasInitialPrompt: !!initialPrompt, 
-      hasInitialContent: !!initialContent 
-    });
-    
-    // Полный сброс всех состояний
+    // Сброс всех состояний
     setNegativePrompt("");
     setImageSize("1024x1024");
     setContent("");
-    setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
-    setUploadedImageUrl("");
-    // Устанавливаем fast-sdxl как модель по умолчанию, исключая Schnell из списка
     setModelType("fast-sdxl");
     setStylePreset("photographic");
     setNumImages(3);
     setSavePrompt(true);
     
-    // Обработка промта по приоритетам:
-    // 1. Если это редактирование существующего контента (contentId) и есть промт, используем его
-    // 2. Если это новый контент, всегда начинаем с пустого промта
-    // 3. Если есть контент, подготавливаем его для возможной генерации промта
-    
+    // Обработка промта по приоритетам
     if (contentId && initialPrompt) {
       // Редактирование с сохраненным промтом - используем его
       const cleanPrompt = simpleCleanHtml(initialPrompt);
       setPrompt(cleanPrompt);
       setGeneratedPrompt(cleanPrompt);
-      console.log('Использован сохраненный промт из БД:', cleanPrompt.substring(0, 100) + '...');
     } else {
-      // Либо новый контент, либо редактирование без промта - в любом случае сбрасываем
+      // Сбрасываем промт
       setPrompt("");
       setGeneratedPrompt("");
-      
-      if (!contentId) {
-        console.log('Создание нового контента - промт сброшен');
-      } else if (initialContent) {
-        console.log('Редактирование без промта - подготовлен контент для генерации нового промта');
-      } else {
-        console.log('Сброс промта - новый пустой промт для нового редактирования');
-      }
     }
     
     if (initialContent) {
       // Очищаем теги из начального контента
       const cleanedContent = simpleCleanHtml(initialContent);
       setContent(cleanedContent);
-      console.log('Установлен контент для текущего поста:', cleanedContent.substring(0, 100) + '...');
     } else {
-      // Сбрасываем контент если его нет
       setContent("");
     }
     
     // Выбираем активную вкладку в зависимости от данных
     if (initialPrompt) {
-      // Если есть промт, переключаемся на вкладку прямого промта
       setActiveTab("prompt");
-      console.log('Выбрана вкладка прямого промта, так как есть сохраненный промт');
-      
-      // Дополнительный лог для отладки
-      console.log(`Используем готовый промт из текущего поста: contentId=${contentId}`);
     } else if (initialContent) {
-      // Если нет промта, но есть контент
-      setActiveTab("social"); // Переключаемся на вкладку социальных сетей
-      console.log('Выбрана вкладка для генерации на основе текста');
+      setActiveTab("text");
     } else {
-      // Если вообще нет данных
-      setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
-      console.log('Выбрана вкладка прямого промта (по умолчанию)');
+      setActiveTab("prompt");
     }
     
-  }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от всех важных параметров
+  }, [contentId, initialContent, initialPrompt]);
   
   const { toast } = useToast();
   
@@ -181,29 +154,22 @@ export function ImageGenerationDialog({
         throw new Error("Необходимо ввести текст для генерации промта");
       }
       
-      console.log("Генерация промта на основе текста через DeepSeek (оптимизированный метод)");
-      
       try {
         // Очищаем текст перед отправкой на генерацию промта
-        // Очистка от HTML-тегов произойдёт через stripHtml
         const cleanedText = stripHtml(content);
-        console.log("Очищенный текст перед отправкой:", cleanedText);
         
-        // Пытаемся извлечь ключевые слова из очищенного текста, если функция доступна
+        // Пытаемся извлечь ключевые слова из очищенного текста
         let keywords: string[] = [];
-        if (typeof extractKeywordsFromText === 'function') {
-          try {
-            keywords = await extractKeywordsFromText(cleanedText) || [];
-          } catch (e) {
-            console.log("Автоматическое извлечение ключевых слов отключено");
-          }
+        try {
+          keywords = await extractKeywordsFromText(cleanedText) || [];
+        } catch (e) {
+          console.log("Автоматическое извлечение ключевых слов отключено");
         }
         
-        // Генерируем промт через DeepSeek напрямую из русского текста
-        // DeepSeek сам переведет и преобразует текст в промт для изображения
+        // Генерируем промт через API
         const response = await api.post("/generate-image-prompt", {
-          content: cleanedText, // Отправляем оригинальный русский текст
-          keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
+          content: cleanedText,
+          keywords: keywords || []
         });
         
         if (response.data?.success && response.data?.prompt) {
@@ -212,17 +178,12 @@ export function ImageGenerationDialog({
           throw new Error("Не удалось сгенерировать промт");
         }
       } catch (error: unknown) {
-        // Обработка ошибки происходит в onError
         throw error;
       }
     },
     onSuccess: (promptText) => {
-      console.log("Промт успешно сгенерирован:", promptText);
-      
-      // Сохраняем сгенерированный промт для отображения
+      // Сохраняем сгенерированный промт и устанавливаем его в поле запроса
       setGeneratedPrompt(promptText);
-      
-      // Автоматически устанавливаем промт и в поле произвольного запроса
       setPrompt(promptText);
       
       toast({
@@ -232,7 +193,6 @@ export function ImageGenerationDialog({
     },
     onError: (error: unknown) => {
       const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
-      console.error("Ошибка при генерации промта:", error);
       
       toast({
         variant: "destructive",
@@ -242,146 +202,65 @@ export function ImageGenerationDialog({
     }
   });
 
-  // Функция для очистки HTML-тегов из текста с сохранением базового форматирования
+  // Функция для очистки HTML-тегов из текста
   const stripHtml = (html: string): string => {
     if (!html || typeof html !== 'string') return '';
     
     try {
-      // Преобразуем некоторые теги в текстовые эквиваленты перед удалением
+      // Преобразуем некоторые теги в текстовые эквиваленты
       let processedHtml = html
-        // Параграфы превращаем в текст с переносами строк
         .replace(/<p.*?>(.*?)<\/p>/gi, '$1\n\n')
-        // Заголовки
         .replace(/<h[1-6].*?>(.*?)<\/h[1-6]>/gi, '$1\n\n')
-        // Переносы строк
         .replace(/<br\s*\/?>/gi, '\n')
-        // Списки
         .replace(/<li.*?>(.*?)<\/li>/gi, '• $1\n')
-        // Ссылки преобразуем в текст (если есть текст ссылки, используем его, иначе URI)
         .replace(/<a\s+[^>]*href=['"]([^'"]*)['"]\s*[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
           return text && text.trim() ? `${text.trim()} (${url})` : url;
         });
       
-      // Удаляем остальные HTML-теги простой регуляркой
+      // Удаляем остальные HTML-теги
       processedHtml = processedHtml.replace(/<[^>]*>/g, '');
       
-      // Декодируем HTML-сущности
+      // Базовая очистка HTML-сущностей
       processedHtml = processedHtml
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, '\'')
-        .replace(/&ndash;/g, '–')
-        .replace(/&mdash;/g, '—')
-        .replace(/&laquo;/g, '«')
-        .replace(/&raquo;/g, '»');
+        .replace(/&#39;/g, '\'');
       
-      // Создаем временный div элемент для обработки оставшихся HTML-сущностей
-      // Это будет работать только в браузере
+      // Дополнительная очистка через DOM
       let plainText = processedHtml;
       try {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = processedHtml;
         plainText = tempDiv.textContent || tempDiv.innerText || processedHtml;
       } catch (e) {
-        console.warn('Не удалось создать DOM-элемент для декодирования HTML:', e);
+        console.warn('Не удалось создать DOM-элемент для декодирования HTML');
       }
       
-      // Сохраняем эмодзи и основное форматирование, но удаляем лишние пробелы
-      const cleanedText = plainText
-        .replace(/\n\s+/g, '\n')           // Удаляем пробелы после переносов строк
-        .replace(/\n{3,}/g, '\n\n')        // Ограничиваем количество переносов строк до 2
-        .replace(/\s{2,}/g, ' ')           // Заменяем множественные пробелы на один
-        .trim();
-      
-      return cleanedText;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Ошибка при очистке HTML:', errorMessage);
-      // В случае ошибки, просто удаляем все теги
+      return plainText.trim();
+    } catch (error) {
+      console.error('Ошибка при очистке HTML');
       return html.replace(/<[^>]*>/g, '');
     }
   };
   
-  // Функция для перевода промта на английский
-  const translateToEnglish = async (text: string): Promise<string> => {
-    try {
-      // Проверяем, что текст не пустой
-      if (!text.trim()) return text;
-      
-      // Очищаем текст от HTML-тегов перед дальнейшей обработкой
-      const cleanedText = stripHtml(text);
-      console.log('Очищенный текст от HTML:', cleanedText);
-      
-      // Если текст уже на английском, возвращаем как есть
-      const englishPattern = /^[a-zA-Z0-9\s.,!?;:'"()\-_\[\]@#$%^&*+=<>/\\|{}~`]+$/;
-      if (englishPattern.test(cleanedText)) {
-        console.log('Текст уже на английском, перевод не требуется');
-        return cleanedText;
-      }
-      
-      console.log('Переводим промт на английский для улучшения качества генерации');
-      const response = await api.post('/translate-to-english', { text: cleanedText });
-      
-      if (response.data?.success && response.data?.translatedText) {
-        console.log('Промт переведен:', response.data.translatedText);
-        return response.data.translatedText;
-      } else {
-        console.warn('Не удалось перевести промт, используем очищенный текст');
-        return cleanedText;
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Ошибка при переводе промта:', errorMessage);
-      // В случае ошибки используем очищенный текст без HTML
-      return stripHtml(text);
-    }
-  };
-
-  // Мутация для сохранения промта отдельно от генерации (чтобы избежать ошибок)
+  // Мутация для сохранения промта
   const { mutate: savePromptToDb } = useMutation({
     mutationFn: async (promptText: string) => {
       if (!contentId) {
-        console.warn('Невозможно сохранить промт: contentId не указан');
         return false;
       }
       
-      console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
-      
       try {
-        // Добавляем детальное логирование запроса
-        console.log('Отправляем запрос PATCH к /campaign-content/' + contentId);
-        console.log('Данные запроса:', { prompt: promptText });
-        
         const response = await api.patch(`/campaign-content/${contentId}`, {
           prompt: promptText
         });
         
-        // Добавляем детальное логирование ответа
-        console.log('Ответ от сервера:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: response.data
-        });
-        
-        if (response.data && response.status === 200) {
-          console.log('✅ Промт успешно сохранен в базе данных');
-          return true;
-        } else {
-          console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
-          return false;
-        }
-      } catch (error: unknown) {
-        console.error('❌ Ошибка при сохранении промта:', error);
-        // Типизированный доступ к ошибке
-        const errorObject = error as any;
-        console.error('Детали ошибки:', {
-          message: errorObject.message || 'Неизвестная ошибка',
-          response: errorObject.response?.data,
-          status: errorObject.response?.status
-        });
+        return response.status === 200;
+      } catch (error) {
+        console.error('Ошибка при сохранении промта:', error);
         return false;
       }
     }
@@ -393,8 +272,6 @@ export function ImageGenerationDialog({
       let requestData: {
         prompt?: string;
         negativePrompt?: string;
-        originalPrompt?: string;
-        originalContent?: string;
         width?: number;
         height?: number;
         campaignId?: string;
@@ -403,356 +280,115 @@ export function ImageGenerationDialog({
         numImages?: number;
         stylePreset?: string;
         savePrompt?: boolean;
-        modelParams?: {
-          use_api_path?: boolean;
-          direct_urls?: boolean;
-        };
       } = {};
       
-      if (activeTab === "prompt" || activeTab === "models") {
-        // Прямая генерация по промпту (работает одинаково для обеих вкладок)
-        const { width, height } = getImageDimensions();
-
-        // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем (только для вкладки prompt)
-        if (activeTab === "prompt" && savePrompt && contentId && prompt) {
-          console.log('Сначала сохраняем промт в БД, а потом генерируем изображение');
-          await savePromptToDb(prompt);
+      // Получаем размеры изображения
+      const dimensions = getImageDimensions();
+      
+      if (activeTab === "prompt") {
+        // Используем прямой промт
+        if (!prompt) {
+          throw new Error("Необходимо ввести запрос (промт)");
         }
-        
-        // Переводим промт на английский для улучшения качества генерации
-        const translatedPrompt = await translateToEnglish(prompt);
-        const translatedNegativePrompt = negativePrompt ? await translateToEnglish(negativePrompt) : negativePrompt;
-        
-        console.log(`ОТПРАВЛЯЕМ английский промт через модель ${modelType}:`, translatedPrompt);
         
         requestData = {
-          prompt: translatedPrompt, // <-- Отправляем переведенный промт на английском
-          negativePrompt: translatedNegativePrompt,
-          originalPrompt: prompt, // Сохраняем оригинальный промт для отладки
-          width,
-          height,
+          prompt,
+          negativePrompt,
+          ...dimensions,
           campaignId,
-          contentId, // Добавляем contentId для привязки к конкретному контенту (может быть null для вкладки тестирования)
+          contentId,
           modelName: modelType,
-          numImages: numImages, // Используем выбранное пользователем значение
+          numImages,
           stylePreset,
-          savePrompt: activeTab === "prompt" ? false : false // Отключаем флаг сохранения на сервере для тестирования моделей
+          savePrompt
         };
-        
-        // Дополнительное логирование для вкладки тестирования моделей
-        if (activeTab === "models") {
-          console.log(`Тестирование модели ${modelType} с параметрами:`, {
-            numImages,
-            imageSize: `${width}x${height}`,
-            hasNegativePrompt: !!negativePrompt
-          });
-        }
-      // Единственным другим активным табом является "text",
-      // который заменяет собой предыдущие табы social и business
       } else if (activeTab === "text") {
-        // Генерация для контента на основе текста
+        // Используем сгенерированный промт на основе текста
         if (!content) {
           throw new Error("Необходимо ввести текст для генерации");
         }
         
-        // Если у нас уже есть сгенерированный промт, используем его напрямую
-        if (generatedPrompt) {
-          console.log("Используем ранее сгенерированный промт:", generatedPrompt.substring(0, 100) + "...");
-          
-          // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-          if (savePrompt && contentId && generatedPrompt) {
-            console.log('Сначала сохраняем текстовый промт в БД, а потом генерируем изображение');
-            await savePromptToDb(generatedPrompt);
-          }
-          
-          requestData = {
-            prompt: generatedPrompt,
-            originalContent: content,
-            campaignId,
-            contentId,
-            modelName: modelType,
-            stylePreset,
-            numImages,
-            savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
-          };
-        } else {
-          // Если промт еще не был сгенерирован
-          console.log("Генерация нового промта на основе текста через DeepSeek");
-          
+        // Если у нас уже есть сгенерированный промт, используем его
+        // В противном случае, генерируем промт перед созданием изображения
+        if (!generatedPrompt) {
           try {
-            // Очищаем текст от HTML-тегов перед генерацией промта
-            const cleanedText = stripHtml(content);
-            console.log("Очищенный текст перед отправкой в DeepSeek (оптимизированный метод):", cleanedText);
-            
-            // Пытаемся извлечь ключевые слова из очищенного текста
-            let keywords: string[] = [];
-            if (typeof extractKeywordsFromText === 'function') {
-              try {
-                keywords = await extractKeywordsFromText(cleanedText) || [];
-              } catch (e) {
-                console.log("Автоматическое извлечение ключевых слов отключено");
-              }
-            }
-            
-            // Генерируем промт через DeepSeek напрямую из русского текста
-            // DeepSeek сам переведет и преобразует текст в промт для изображения
-            const response = await api.post("/generate-image-prompt", {
-              content: cleanedText, // Отправляем оригинальный русский текст
-              keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
+            const genPrompt = await new Promise<string>((resolve, reject) => {
+              generateTextPrompt(
+                undefined,
+                {
+                  onSuccess: (data) => resolve(data),
+                  onError: (error) => reject(error)
+                }
+              );
             });
             
-            if (response.data?.success && response.data?.prompt) {
-              console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
-              
-              // Сохраняем сгенерированный промт для отображения
-              setGeneratedPrompt(response.data.prompt);
-              
-              // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-              if (savePrompt && contentId && response.data.prompt) {
-                console.log('Сначала сохраняем DeepSeek-промт в БД, а потом генерируем изображение');
-                await savePromptToDb(response.data.prompt);
-              }
-              
-              // Используем полученный промт для генерации изображения
-              // DeepSeek уже возвращает промт на английском, поэтому перевод не нужен
-              requestData = {
-                prompt: response.data.prompt,
-                originalContent: content, // Сохраняем оригинальный контент для отладки
-                campaignId,
-                contentId, // Добавляем contentId для привязки к конкретному контенту
-                modelName: modelType,
-                stylePreset,
-                numImages, // Добавляем параметр количества изображений
-                savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
-              };
-            } else {
-              // Если DeepSeek не сработал, используем старый метод с переводом
-              console.warn("Не удалось сгенерировать промт через DeepSeek, используем традиционный метод");
-              
-              // Переводим контент на английский для улучшения качества генерации
-              const translatedContent = await translateToEnglish(content);
-              
-              // Устанавливаем переведенный текст как промт для отображения в интерфейсе
-              setGeneratedPrompt(translatedContent);
-              
-              // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-              if (savePrompt && contentId && translatedContent) {
-                console.log('Сначала сохраняем резервный переведенный промт в БД, а потом генерируем изображение');
-                await savePromptToDb(translatedContent);
-              }
-              
-              requestData = {
-                originalContent: content, // Сохраняем оригинальный контент для отладки
-                campaignId,
-                contentId, // Добавляем contentId для привязки к конкретному контенту
-                modelName: modelType,
-                stylePreset,
-                numImages, // Добавляем параметр количества изображений
-                savePrompt: false, // Отключаем флаг сохранения на сервере, так как мы уже сохранили
-                prompt: translatedContent // Используем переведенный текст как промт
-              };
+            if (!genPrompt) {
+              throw new Error("Не удалось сгенерировать промт");
             }
-          } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.error("Ошибка при генерации промта через DeepSeek:", errorMessage);
-            
-            // В случае ошибки используем традиционный метод
-            // Переводим контент на английский для улучшения качества генерации
-            const translatedContent = await translateToEnglish(content);
-            
-            // Устанавливаем переведенный текст как промт для отображения в интерфейсе
-            setGeneratedPrompt(translatedContent);
             
             requestData = {
-              originalContent: content, // Сохраняем оригинальный контент для отладки
+              prompt: genPrompt,
+              negativePrompt,
+              ...dimensions,
               campaignId,
-              contentId, // Добавляем contentId для привязки к конкретному контенту
+              contentId,
               modelName: modelType,
+              numImages,
               stylePreset,
-              numImages, // Добавляем параметр количества изображений
-              savePrompt: true, // Всегда сохраняем промт в случае ошибки
-              prompt: translatedContent // Используем переведенный текст как промт
+              savePrompt
             };
+          } catch (error) {
+            throw new Error("Не удалось сгенерировать промт для изображения");
           }
+        } else {
+          // Используем существующий сгенерированный промт
+          requestData = {
+            prompt: generatedPrompt,
+            negativePrompt,
+            ...dimensions,
+            campaignId,
+            contentId,
+            modelName: modelType, 
+            numImages,
+            stylePreset,
+            savePrompt
+          };
         }
       }
       
-      console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
-      
-      // Для всех моделей используем одинаковую универсальную обработку
-      // Устанавливаем общие параметры для всех моделей
-      requestData.modelParams = {
-        use_api_path: true,   // Для всех моделей используем /api/ в пути
-        direct_urls: true     // Для всех моделей запрашиваем прямые CDN URL изображений
-      };
-      
-      // Получаем userId из localStorage для логирования
-      // userId уже будет добавлен в запрос через интерцептор в api.ts
-      const userId = localStorage.getItem('user_id');
-      
-      console.log(`🔍 Модель: ${requestData.modelName}, используем универсальный интерфейс FAL.AI с userId=${userId}`);
-      
-      // Устанавливаем увеличенный таймаут для запроса
-      try {
-        const response = await api.post("/generate-image", requestData, {
-          timeout: 300000, // 5 минут таймаут
-          headers: {
-            // Дополнительно передаем userId в заголовке
-            'x-user-id': userId || ''
-          }
-        });
-        
-        console.log(`API ответ для модели ${requestData.modelName}:`, JSON.stringify(response.data).substring(0, 200));
-        return response.data;
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`Ошибка при запросе к API для модели ${requestData.modelName}:`, errorMessage);
-        
-        // Если это ошибка таймаута - выводим понятное сообщение
-        if (errorMessage.includes('timeout')) {
-          throw new Error(`Превышено время ожидания ответа от сервера при генерации изображений. Попробуйте уменьшить количество изображений или использовать другую модель.`);
+      // Если промт уже создан и его нужно сохранить, сохраняем промт перед генерацией
+      if (savePrompt && contentId && requestData.prompt) {
+        try {
+          await savePromptToDb(requestData.prompt);
+        } catch (error) {
+          console.error("Ошибка при сохранении промта:", error);
+          // Продолжаем генерацию изображения даже если сохранение промта не удалось
         }
-        
-        throw error;
+      }
+      
+      // Генерируем изображение через универсальный API
+      const response = await api.post("/fal-ai-universal/generate", requestData);
+      
+      if (response.data?.success && Array.isArray(response.data.images)) {
+        return response.data.images;
+      } else {
+        throw new Error(response.data?.error || "Не удалось сгенерировать изображения");
       }
     },
-    onSuccess: (data) => {
-      console.log('Ответ от API генерации изображений:', JSON.stringify(data).substring(0, 100) + '...');
-      
-      console.log('Структура ответа:', JSON.stringify(data, null, 2).substring(0, 200));
-      
-      if (data.success) {
-        // Обработка разных форматов ответа от API
-        let images: string[] = [];
-        
-        console.log('Структура данных изображений:', JSON.stringify(data.data, null, 2).substring(0, 500));
-        
-        // Дополнительное логирование запрошенного количества изображений
-        console.log(`Запрошено ${numImages} изображений от модели ${modelType}`);
-        
-        if (data.data?.images && Array.isArray(data.data.images)) {
-          console.log(`Обнаружен массив images в ответе API с ${data.data.images.length} элементами`);
-          // Формат с вложенным массивом images
-          // Обрабатываем оба варианта: массив URL-строк и массив объектов с полем url
-          images = data.data.images.map((img: any) => {
-            if (typeof img === 'string') return img;
-            // Если объект, то ищем поле url (стандартный формат FAL.AI)
-            if (img && typeof img === 'object') {
-              const imageUrl = img.url || img.image || '';
-              console.log(`Извлечен URL изображения из объекта: ${imageUrl.substring(0, 50)}...`);
-              return imageUrl;
-            }
-            return '';
-          }).filter(Boolean);
-          
-          console.log(`Извлечено ${images.length} URL изображений из массива images`);
-        }
-        else if (Array.isArray(data.data)) {
-          console.log('Обнаружен массив в корне ответа API');
-          // Прямой массив URL-ов или объектов изображений
-          images = data.data.map((img: any) => {
-            if (typeof img === 'string') return img;
-            // Проверяем наличие полей url или image в объекте
-            if (img && typeof img === 'object') {
-              return img.url || img.image || '';
-            }
-            return '';
-          }).filter(Boolean);
-        }
-        else if (typeof data.data === 'string') {
-          console.log('Обнаружена строка в корне ответа API');
-          // Один URL в виде строки
-          images = [data.data];
-        }
-        else if (data.data && typeof data.data === 'object') {
-          console.log('Обнаружен объект в корне ответа API:', Object.keys(data.data));
-          // Проверяем разные варианты структуры объекта
-          
-          // Вариант где сам data.data содержит поля url или image
-          if (data.data.url || data.data.image) {
-            const imgUrl = data.data.url || data.data.image;
-            if (imgUrl) images = [imgUrl];
-          }
-          // Вариант для формата fast-sdxl где images - массив объектов с url
-          else if (data.data.images && Array.isArray(data.data.images)) {
-            images = data.data.images.map((img: any) => {
-              // ИСПРАВЛЕНИЕ: Корректная обработка ответа для предотвращения ошибки "НЕИЗОБРАЖЕНИЙ"
-              if (typeof img === 'string') {
-                // Проверяем, что это прямая ссылка на изображение, а не на API
-                if (img.includes('fal.media') || img.includes('cdn') || img.includes('.jpg') || img.includes('.png')) {
-                  return img;
-                } else {
-                  console.warn('Пропускаем некорректную ссылку:', img);
-                  return null;
-                }
-              }
-              
-              // Обрабатываем объект, извлекая прямую ссылку на изображение
-              const directUrl = img?.url || img?.image || '';
-              
-              // Проверяем, что URL указывает на изображение, а не на API
-              if (directUrl && (directUrl.includes('fal.media') || directUrl.includes('cdn') || directUrl.includes('.jpg') || directUrl.includes('.png'))) {
-                return directUrl;
-              } else {
-                console.warn('Пропускаем некорректный URL объекта:', directUrl);
-                return null;
-              }
-            }).filter(Boolean); // Фильтруем null/undefined/пустые строки
-          }
-        }
-        
-        console.log('Извлеченные URL изображений:', images);
-        
-        if (images.length > 0) {
-          setGeneratedImages(images);
-          setSelectedImageIndex(-1); // Сбрасываем выбор изображения
-          
-          toast({
-            title: "Успешно",
-            description: `Сгенерировано ${images.length} ${images.length === 1 ? 'изображение' : 'изображений'}`
-          });
-        } else {
-          console.error('Не удалось найти изображения в ответе:', data);
-          toast({
-            variant: "destructive",
-            title: "Ошибка при обработке результата",
-            description: "Не удалось найти URL изображений в ответе сервера"
-          });
-        }
-      } else {
-        console.error('Неожиданный формат ответа от API:', data);
-        toast({
-          variant: "destructive",
-          title: "Ошибка при обработке результата",
-          description: "Получен неожиданный формат данных от сервера"
-        });
+    onSuccess: (images) => {
+      setGeneratedImages(images);
+      // Если есть только одно изображение, выбираем его автоматически
+      if (images.length === 1) {
+        setSelectedImageIndex(0);
       }
+      
+      toast({
+        title: "Успешно",
+        description: `Создано ${images.length} изображений`
+      });
     },
     onError: (error: unknown) => {
-      console.error('Ошибка при генерации изображения:', error);
-      
-      // Определяем тип ошибки для более понятного сообщения
-      let errorMessage = error instanceof Error ? error.message : "Произошла ошибка при генерации изображения";
-      
-      if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
-        errorMessage = "Ошибка соединения с сервисом генерации изображений. Проверьте настройки сети.";
-      } else if (errorMessage.includes('timeout')) {
-        errorMessage = "Превышено время ожидания ответа от сервиса. Попробуйте позже.";
-      } else if (errorMessage.includes('API ключ не настроен') || errorMessage.includes('API ключ для FAL.AI не настроен')) {
-        errorMessage = "API ключ для FAL.AI не настроен. Перейдите в настройки для добавления ключа.";
-      } else if (errorMessage.includes('DeepSeek API') || errorMessage.includes('API ключ не найден')) {
-        errorMessage = "API ключ для DeepSeek не настроен. Перейдите в настройки пользователя для добавления ключа.";
-      } else if (errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized') || errorMessage.includes('Неверный API ключ')) {
-        errorMessage = "Отсутствует или неверный ключ API. Проверьте настройки в разделе API ключей.";
-      } else if (errorMessage.includes('rejectUnauthorized') || errorMessage.includes('certificate')) {
-        errorMessage = "Проблема с SSL-сертификатом при подключении к API. Идет работа через альтернативный метод.";
-      } else if (errorMessage.includes('DNS')) {
-        errorMessage = "Проблема с DNS-разрешением при подключении к API. Используется альтернативный способ доступа.";
-      } else if (errorMessage.includes('прокси') || errorMessage.includes('proxy')) {
-        errorMessage = "Ошибка при использовании прокси-сервера. Команда разработки уже работает над исправлением.";
-      } else if (errorMessage.includes('422') || errorMessage.includes('Unprocessable Entity')) {
-        errorMessage = "Сервис вернул код 422 (Unprocessable Entity). В таких случаях изображения могут быть доступны по альтернативному URL.";
-      }
+      const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
       
       toast({
         variant: "destructive",
@@ -761,113 +397,60 @@ export function ImageGenerationDialog({
       });
     }
   });
-  
-  /* Использована функция handleSelectImage, объявленная выше */
-  
-  // Функция для подтверждения выбора изображения
-  const confirmSelection = () => {
-    if (selectedImageIndex >= 0) {
-      if (onImageGenerated) {
-        // Определяем, какой промт использовался для генерации изображения
-        // В зависимости от активной вкладки это может быть prompt или generatedPrompt
-        let finalPrompt = "";
-        
-        if (activeTab === "prompt" || activeTab === "models") {
-          // Если использовали вкладку с прямым вводом промта или вкладку тестирования моделей
-          finalPrompt = prompt;
-        } else if (activeTab === "text" && generatedPrompt) {
-          // Если использовали вкладку генерации на основе текста
-          finalPrompt = generatedPrompt;
-        }
-        
-        // Если по какой-то причине промт пустой, используем тот который был передан изначально
-        if (!finalPrompt && initialPrompt) {
-          finalPrompt = initialPrompt;
-        }
-        
-        console.log(`Возвращаем изображение с промтом: ${finalPrompt.substring(0, 50)}...`);
-        
-        // Возвращаем и URL изображения, и промт использованный для его генерации
-        onImageGenerated(generatedImages[selectedImageIndex], finalPrompt);
-      }
-      onClose();
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Выберите изображение",
-        description: "Пожалуйста, выберите одно из сгенерированных изображений"
-      });
-    }
-  };
 
   return (
-    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
-        <DialogDescription className="text-xs text-muted-foreground mt-1">
-          Создавайте изображения на основе текста или произвольного запроса. Для достижения лучших результатов добавляйте детали и стилевые особенности в запрос.
-        </DialogDescription>
       </DialogHeader>
       
-      {/* Общие настройки для всех вкладок */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="space-y-1">
-          <Label className="text-xs flex justify-between items-center">
-            <span>Модель генерации</span>
-            <span className="text-xs text-muted-foreground">
-              {modelType === 'fast-sdxl' ? '(быстрая)' : 
-               modelType === 'fooocus' ? '(художественная)' : 
-               '(детализированная)'}
-            </span>
-          </Label>
-          <Select value={modelType} onValueChange={(value) => setModelType(value)}>
-            <SelectTrigger className="h-8">
+      <p className="text-sm text-muted-foreground">
+        Создавайте изображения на основе текста или произвольного запроса. Для достижения лучших
+        результатов добавляйте детали и стилевые особенности в запрос.
+      </p>
+      
+      <div className="flex items-center gap-4 my-2">
+        <div className="space-y-1 flex-1">
+          <Label>Модель генерации</Label>
+          <Select value={modelType} onValueChange={setModelType}>
+            <SelectTrigger>
               <SelectValue placeholder="Выберите модель" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
-              <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Flux (Schnell)</SelectItem>
+              <SelectItem value="fast-sdxl">(быстрая) Fast SDXL</SelectItem>
+              <SelectItem value="fooocus">Fooocus (высокое качество)</SelectItem>
             </SelectContent>
           </Select>
         </div>
-
-        <div className="space-y-1">
-          <Label className="text-xs flex justify-between items-center">
-            <span>Размер изображения</span>
-            <span className="text-xs text-muted-foreground">
-              {imageSize === '1024x1024' ? '(квадрат)' : 
-               imageSize === '1024x768' ? '(альбомная)' : 
-               imageSize === '768x1024' ? '(портретная)' : ''}
-            </span>
-          </Label>
-          <Select value={imageSize} onValueChange={(value) => setImageSize(value)}>
-            <SelectTrigger className="h-8">
+        
+        <div className="space-y-1 flex-1">
+          <Label>Размер изображения</Label>
+          <Select value={imageSize} onValueChange={setImageSize}>
+            <SelectTrigger>
               <SelectValue placeholder="Выберите размер" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1024x1024">1024x1024 (квадрат)</SelectItem>
-              <SelectItem value="1024x768">1024x768 (альбомная)</SelectItem>
-              <SelectItem value="768x1024">768x1024 (портретная)</SelectItem>
+              <SelectItem value="1024x1024">(квадрат) 1024x1024</SelectItem>
+              <SelectItem value="1152x896">(альбом) 1152x896</SelectItem>
+              <SelectItem value="896x1152">(портрет) 896x1152</SelectItem>
+              <SelectItem value="1216x832">(широкий) 1216x832</SelectItem>
+              <SelectItem value="832x1216">(высокий) 832x1216</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-
+      
       <Tabs value={activeTab} onValueChange={(value) => {
-        // При переключении вкладок нужно сохранять промт для всех вкладок
         setActiveTab(value);
         
-        // При переключении на вкладку произвольного запроса, если есть сгенерированный промт, устанавливаем его
-        if (value === "prompt" && generatedPrompt && !prompt) {
+        // При переключении на вкладку промпта, устанавливаем сгенерированный промт
+        if (value === "prompt" && generatedPrompt) {
           setPrompt(generatedPrompt);
-          console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
         }
       }} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-2">
+        <TabsList className="grid grid-cols-2 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="text">На основе текста</TabsTrigger>
-          <TabsTrigger value="upload">Загрузить изображение</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}
@@ -976,8 +559,6 @@ export function ImageGenerationDialog({
             </div>
           </div>
           
-          {/* Платформы социальных сетей убраны, так как они не влияют на генерацию изображений */}
-          
           <div className="space-y-1">
             <Label className="text-xs">Количество изображений</Label>
             <div className="flex items-center space-x-2">
@@ -1020,181 +601,30 @@ export function ImageGenerationDialog({
             </div>
           )}
         </TabsContent>
-        
-        {/* Содержимое вкладки для загрузки изображений */}
-        <TabsContent value="upload" className="space-y-2">
-          <div className="space-y-1">
-            <Label>Основное изображение</Label>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 relative">
-                <Input
-                  value={uploadedImageUrl}
-                  onChange={(e) => setUploadedImageUrl(e.target.value)}
-                  placeholder="https://v3.fal.media/files/monkey_dXl4Le6gy3w490nyaz24.png"
-                  className="pr-10"
-                />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <label htmlFor="url-image-upload" className="cursor-pointer">
-                    <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                    <span className="sr-only">Загрузить файл</span>
-                  </label>
-                  <input 
-                    type="file" 
-                    id="url-image-upload" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // Загружаем файл через компонент ImageUploader
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        api.post('/upload', formData, {
-                          headers: {
-                            'Content-Type': 'multipart/form-data'
-                          }
-                        }).then(response => {
-                          if (response.data?.url) {
-                            setUploadedImageUrl(response.data.url);
-                            toast({
-                              title: "Изображение загружено",
-                              description: "URL изображения добавлен в поле"
-                            });
-                          }
-                        }).catch(error => {
-                          console.error("Ошибка загрузки файла:", error);
-                          toast({
-                            variant: "destructive",
-                            title: "Ошибка загрузки",
-                            description: "Не удалось загрузить изображение"
-                          });
-                        });
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (onImageGenerated && uploadedImageUrl) {
-                    onImageGenerated(uploadedImageUrl);
-                    onClose();
-                  }
-                }}
-                disabled={!uploadedImageUrl}
-              >
-                <Image className="h-4 w-4 mr-1" />
-                Использовать
-              </Button>
-            </div>
-            
-            <div className="my-2">
-              <Label>Загрузить изображение</Label>
-              <ImageUploader 
-                onImageUploaded={(imageUrl: string) => {
-                  console.log("Изображение загружено:", imageUrl);
-                  setUploadedImageUrl(imageUrl);
-                  
-                  // Если это основное изображение, можно использовать его сразу
-                  if (onImageGenerated) {
-                    onImageGenerated(imageUrl);
-                    toast({
-                      title: "Изображение загружено",
-                      description: "Изображение успешно добавлено к публикации"
-                    });
-                    onClose();
-                  }
-                }}
-                label="Загрузить изображение"
-              />
-            </div>
-            
-            <div className="mt-6">
-              <div className="flex justify-between items-center mb-2">
-                <Label>Дополнительные изображения</Label>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    // Здесь можно добавить логику для добавления дополнительных изображений
-                    // Например, открыть модальное окно или добавить еще один компонент загрузки
-                    toast({
-                      title: "Информация",
-                      description: "Функция добавления дополнительных изображений находится в разработке"
-                    });
-                  }}
-                >
-                  <Upload className="h-3 w-3 mr-1" />
-                  Добавить изображение
-                </Button>
-              </div>
-              
-              <div className="flex gap-2 items-center border p-2 rounded-md">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Введите URL изображения"
-                    className="pr-10"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <label htmlFor="additional-image-upload" className="cursor-pointer">
-                      <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                      <span className="sr-only">Загрузить файл</span>
-                    </label>
-                    <input 
-                      type="file" 
-                      id="additional-image-upload" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Здесь будет логика для загрузки дополнительных изображений
-                          toast({
-                            title: "Информация",
-                            description: "Функция загрузки дополнительных изображений в разработке"
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-
       </Tabs>
       
-      {/* Кнопка генерации (скрываем для вкладки загрузки) */}
-      {activeTab !== "upload" && (
-        <Button 
-          onClick={() => generateImage()} 
-          disabled={
-            isPending || 
-            (activeTab === "prompt" && !prompt) || 
-            (activeTab === "text" && (!generatedPrompt || !content))
-          }
-          className="w-full"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Генерация...
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Сгенерировать изображение
-            </>
-          )}
-        </Button>
-      )}
+      {/* Кнопка генерации */}
+      <Button 
+        onClick={() => generateImage()} 
+        disabled={
+          isPending || 
+          (activeTab === "prompt" && !prompt) || 
+          (activeTab === "text" && (!generatedPrompt || !content))
+        }
+        className="w-full"
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Генерация...
+          </>
+        ) : (
+          <>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Сгенерировать изображение
+          </>
+        )}
+      </Button>
       
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
@@ -1220,35 +650,25 @@ export function ImageGenerationDialog({
                       
                       // Попробуем альтернативный источник для изображений от FAL.AI
                       if (imageUrl.includes('fal.ai') || imageUrl.includes('fal.run')) {
-                        // Экстрактим request_id и image_idx из URL, если возможно
                         try {
                           const url = new URL(imageUrl);
                           const requestId = url.searchParams.get('request_id');
                           const imageIdx = url.searchParams.get('image_idx');
                           
-                          // Если удалось извлечь параметры, пробуем альтернативный формат URL
                           if (requestId && imageIdx !== null) {
-                            // Извлекаем имя модели из пути для всех моделей одинаковым образом
                             const modelPath = url.pathname.split('/')[2];
-                            
-                            // Создаем прямую ссылку на CDN
                             const cdnUrl = `https://cdn.fal.ai/${modelPath}/results-direct/${requestId}/${imageIdx}`;
-                            console.log(`Пробуем альтернативный CDN URL: ${cdnUrl}`);
-                            
-                            // Заменяем источник изображения
                             e.currentTarget.src = cdnUrl;
-                            return; // Выходим, чтобы не показывать ошибку сразу
+                            return;
                           }
                         } catch (err) {
                           console.error('Ошибка при попытке преобразования URL:', err);
                         }
                       }
                       
-                      // Если не удалось или не FAL.AI URL, показываем индикатор ошибки
+                      // Если не удалось, показываем ошибку
                       e.currentTarget.style.display = 'none';
-                      // Устанавливаем фон блока как индикатор ошибки
                       e.currentTarget.parentElement!.classList.add('bg-red-50');
-                      // Добавляем сообщение об ошибке
                       const errorDiv = document.createElement('div');
                       errorDiv.className = 'absolute inset-0 flex items-center justify-center text-xs text-red-500 p-2 text-center';
                       errorDiv.innerHTML = `Не удалось загрузить изображение<br/>Идентификатор: ${index + 1}`;

@@ -165,18 +165,36 @@ api.interceptors.response.use(
  */
 export const uploadImage = async (file: File) => {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('file', file);
 
   try {
-    const response = await api.post('/upload-image', formData, {
+    // Сначала пробуем новый универсальный маршрут
+    const response = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    
+    // Если ответ успешный, возвращаем данные
     return response.data;
   } catch (error) {
-    console.error('Ошибка при загрузке изображения:', error);
-    throw error;
+    console.error('Ошибка при загрузке через универсальный маршрут, пробуем резервный:', error);
+    
+    // Если не удалось - пробуем старый маршрут для обратной совместимости
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await api.post('/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (fallbackError) {
+      console.error('Ошибка при загрузке изображения:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
 

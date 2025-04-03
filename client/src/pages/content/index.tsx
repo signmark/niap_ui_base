@@ -9,7 +9,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
 } from "lucide-react";
 import {
   AlertDialog,
@@ -131,10 +131,10 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map(k => {
+          processedKeywords = content.keywords.map((k: any) => {
             // Проверяем, является ли k объектом с полем keyword
             if (k && typeof k === 'object' && 'keyword' in k) {
-              return k.keyword;
+              return k.keyword as string;
             }
             // Если это простой объект без специфической структуры
             if (k && typeof k === 'object') {
@@ -149,9 +149,9 @@ export default function ContentPage() {
             // Пытаемся разобрать JSON строку
             const parsed = JSON.parse(content.keywords);
             if (Array.isArray(parsed)) {
-              processedKeywords = parsed.map(k => {
+              processedKeywords = parsed.map((k: any) => {
                 if (k && typeof k === 'object' && 'keyword' in k) {
-                  return k.keyword;
+                  return k.keyword as string;
                 }
                 return typeof k === 'string' ? k : String(k);
               });
@@ -1189,7 +1189,7 @@ export default function ContentPage() {
                                 {/* Content title */}
                                 {content.title && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{typeof content.title === 'string' ? content.title : String(content.title)}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">{String(content.title)}</h3>
                                   </div>
                                 )}
                                 
@@ -1365,12 +1365,61 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <Input
-                    id="imageUrl"
-                    placeholder="Введите URL изображения"
-                    value={newContent.imageUrl}
-                    onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="imageUrl"
+                      placeholder="Введите URL изображения"
+                      value={newContent.imageUrl}
+                      onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                      className="pr-10"
+                    />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <label htmlFor="main-image-upload" className="cursor-pointer">
+                        <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                        <span className="sr-only">Загрузить файл</span>
+                      </label>
+                      <input 
+                        type="file" 
+                        id="main-image-upload" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Формируем данные для загрузки
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            
+                            // Используем API для загрузки файла
+                            fetch('/upload', {
+                              method: 'POST',
+                              body: formData,
+                              headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                              }
+                            }).then(async (response) => {
+                              const responseData = await response.json();
+                              if (responseData?.url) {
+                                // Устанавливаем полученный URL в состояние
+                                setNewContent({...newContent, imageUrl: responseData.url});
+                                toast({
+                                  title: "Изображение загружено",
+                                  description: "URL изображения добавлен в поле"
+                                });
+                              }
+                            }).catch((error: Error) => {
+                              console.error("Ошибка загрузки файла:", error);
+                              toast({
+                                variant: "destructive",
+                                title: "Ошибка загрузки",
+                                description: "Не удалось загрузить изображение"
+                              });
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Дополнительные изображения */}

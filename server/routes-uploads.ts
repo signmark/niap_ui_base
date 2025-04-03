@@ -88,10 +88,85 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
 }
 
 /**
+ * Функция для загрузки файла в Directus через API с более простым интерфейсом
+ * @param file Файл из multer
+ * @param token Токен авторизации (может быть null)
+ */
+async function uploadFileToDirectus(file: Express.Multer.File, token: string | null) {
+  if (!token) {
+    throw new Error('Требуется авторизация');
+  }
+
+  try {
+    // Генерируем уникальное имя файла с сохранением расширения
+    const fileExt = path.extname(file.originalname) || '.jpg';
+    const uniqueFilename = `${uuidv4()}${fileExt}`;
+    
+    // Загружаем файл в Directus
+    const fileInfo = await uploadToDirectus(
+      file.buffer, 
+      uniqueFilename, 
+      file.mimetype,
+      token
+    );
+    
+    log(`[uploads] Файл успешно загружен в Directus через универсальный маршрут: ${fileInfo.id}`);
+    
+    return {
+      success: true,
+      data: fileInfo,
+      url: fileInfo.url || '',
+      fileId: fileInfo.id || '',
+      originalName: file.originalname,
+      size: file.size,
+      mimetype: file.mimetype
+    };
+  } catch (error: any) {
+    log(`[uploads] Ошибка при загрузке файла через универсальный маршрут: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
  * Регистрирует маршруты для загрузки файлов
  */
 export function registerUploadRoutes(app: Express) {
-  // Эндпоинт для загрузки одного изображения
+  // Универсальный маршрут для загрузки файлов изображений
+  app.post('/upload', authenticateUser, upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Файл не загружен'
+        });
+      }
+      
+      // Отправляем файл в Directus
+      const uploadedFile = await uploadFileToDirectus(req.file, getAuthTokenFromRequest(req));
+      
+      if (!uploadedFile) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось загрузить файл в Directus'
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        url: uploadedFile.url || uploadedFile.data?.url || '',
+        fileId: uploadedFile.fileId || uploadedFile.data?.id || ''
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      log(`[uploads] Ошибка загрузки файла: ${errorMessage}`);
+      return res.status(500).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
+  
+  // Эндпоинт для загрузки одного изображения (старый маршрут, для совместимости)
   app.post('/api/upload-image', authenticateUser, upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
