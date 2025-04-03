@@ -158,6 +158,36 @@ const directusApiManager = new DirectusApiManager();
 // Экспортируем базовый Axios инстанс для обратной совместимости
 export const directusApi = directusApiManager.instance;
 
+// Функция для получения токена админа (используется для доступа к файлам)
+export async function getAdminToken(): Promise<string | null> {
+  try {
+    const email = process.env.DIRECTUS_ADMIN_EMAIL;
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+    
+    if (!email || !password) {
+      log('Отсутствуют учетные данные администратора Directus', 'directus');
+      return null;
+    }
+    
+    log('Попытка получить токен администратора для доступа к файлам', 'directus');
+    
+    const response = await directusApi.post('/auth/login', {
+      email: email,
+      password: password
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      log('Успешно получен токен администратора', 'directus');
+      return response.data.data.access_token;
+    }
+    
+    return null;
+  } catch (error: any) {
+    log(`Ошибка при получении токена администратора: ${error.message}`, 'directus');
+    return null;
+  }
+}
+
 // Экспортируем менеджер для расширенных возможностей
 export { directusApiManager };
 
