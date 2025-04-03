@@ -24,64 +24,105 @@ export class SocialPublishingService {
    * @param platform Название платформы для логирования
    * @returns Полный URL изображения, готовый для использования API социальных сетей
    */
+  /**
+   * Обрабатывает URL изображения для проксирования и подготовки к отправке в социальные сети
+   * ВАЖНО: Эта функция должна всегда возвращать прямой URL к изображению,
+   * который можно использовать для скачивания без ограничений CORS/авторизации
+   * @param imageUrl Исходный URL изображения
+   * @param platform Название платформы для логирования
+   * @returns URL для прямого скачивания изображения через наш прокси-сервер
+   */
   private processImageUrl(imageUrl: string, platform: string): string {
     if (!imageUrl) return '';
     
-    log(`▶️ Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
+    log(`🛡️ [${platform}] НАЧАЛО обработки URL изображения: ${imageUrl}`, 'social-publishing');
     
     // Базовый URL сервера для относительных путей
     const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
     
     // Проверяем случай, когда в URL уже есть наш собственный прокси (во избежание двойного проксирования)
-    if (imageUrl.includes('/api/proxy-file') || imageUrl.includes('/api/proxy-media')) {
-      log(`✅ URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
-      return imageUrl;
+    if (imageUrl.includes('/api/proxy-file')) {
+      log(`✅ [${platform}] URL уже содержит прокси /api/proxy-file, используем как есть: ${imageUrl}`, 'social-publishing');
+      
+      // Добавляем кэшбастинг для гарантии уникальности запроса
+      const cacheBuster = `_t=${Date.now()}`;
+      const separator = imageUrl.includes('?') ? '&' : '?';
+      return `${imageUrl}${separator}${cacheBuster}`;
+    }
+    
+    if (imageUrl.includes('/api/proxy-media')) {
+      log(`✅ [${platform}] URL уже содержит прокси /api/proxy-media, используем как есть: ${imageUrl}`, 'social-publishing');
+      
+      // Добавляем кэшбастинг для гарантии уникальности запроса
+      const cacheBuster = `_t=${Date.now()}`;
+      const separator = imageUrl.includes('?') ? '&' : '?';
+      return `${imageUrl}${separator}${cacheBuster}`;
+    }
+    
+    // Извлекаем оригинальный URL из прокси, если он там присутствует
+    if (imageUrl.includes('url=')) {
+      try {
+        const encodedPart = imageUrl.split('url=')[1].split('&')[0];
+        const originalUrl = decodeURIComponent(encodedPart);
+        log(`🔍 [${platform}] Извлечен оригинальный URL из параметра: ${originalUrl}`, 'social-publishing');
+        
+        // Продолжаем с оригинальным URL для дальнейшей обработки (для предотвращения каскадного проксирования)
+        imageUrl = originalUrl;
+      } catch (error: any) {
+        log(`⚠️ [${platform}] Ошибка при извлечении URL из параметра: ${error.message}`, 'social-publishing');
+        // Продолжаем с исходным URL
+      }
     }
     
     // Если URL содержит Directus URL
     if (imageUrl.includes('directus.nplanner.ru')) {
-      // Формируем URL через прокси-файл для доступа к ресурсу
+      // Формируем URL через прокси-файл для доступа к ресурсу с кэшбастингом
       const encodedUrl = encodeURIComponent(imageUrl);
-      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
-      log(`🔄 Обнаружен Directus URL для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      const timestamp = Date.now();
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&platform=${platform}&_t=${timestamp}`;
+      log(`🔄 [${platform}] Обнаружен Directus URL, создан прокси URL: ${proxyUrl}`, 'social-publishing');
       return proxyUrl;
     }
     
     // Проверка на чистый UUID (без путей)
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (uuidPattern.test(imageUrl)) {
-      // Формируем полный URL для Directus и затем проксируем его
+      // Формируем полный URL для Directus и затем проксируем его с кэшбастингом
       const directusUrl = `https://directus.nplanner.ru/assets/${imageUrl}`;
       const encodedUrl = encodeURIComponent(directusUrl);
-      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
-      log(`🔄 Обнаружен чистый UUID для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      const timestamp = Date.now();
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&platform=${platform}&_t=${timestamp}`;
+      log(`🔄 [${platform}] Обнаружен UUID, создан прокси URL: ${proxyUrl}`, 'social-publishing');
       return proxyUrl;
     }
     
     // Если URL уже абсолютный (начинается с http/https)
     if (imageUrl.startsWith('http')) {
-      // Всегда используем прокси для внешних URL для обхода CORS и других ограничений
+      // Всегда используем прокси для внешних URL для обхода CORS и других ограничений с кэшбастингом
       const encodedUrl = encodeURIComponent(imageUrl);
-      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
-      log(`🔄 Обнаружен внешний URL для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      const timestamp = Date.now();
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&platform=${platform}&_t=${timestamp}`;
+      log(`🔄 [${platform}] Обнаружен внешний URL, создан прокси URL: ${proxyUrl}`, 'social-publishing');
       return proxyUrl;
     }
     
     // Проверяем, является ли путь относительным (начинается с /)
     if (imageUrl.startsWith('/')) {
-      // Формируем полный URL с базовым урлом сервера и проксируем его
+      // Формируем полный URL с базовым урлом сервера и проксируем его с кэшбастингом
       const fullUrl = `${baseAppUrl}${imageUrl}`;
       const encodedUrl = encodeURIComponent(fullUrl);
-      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
-      log(`🔄 Относительный путь преобразован в прокси URL для ${platform}: ${proxyUrl}`, 'social-publishing');
+      const timestamp = Date.now();
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&platform=${platform}&_t=${timestamp}`;
+      log(`🔄 [${platform}] Относительный путь со /, создан прокси URL: ${proxyUrl}`, 'social-publishing');
       return proxyUrl;
     }
     
     // Для всех остальных случаев предполагаем, что это относительный путь без начального слеша
     const fullUrl = `${baseAppUrl}/${imageUrl}`;
     const encodedUrl = encodeURIComponent(fullUrl);
-    const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
-    log(`🔄 Относительный путь без / преобразован в прокси URL для ${platform}: ${proxyUrl}`, 'social-publishing');
+    const timestamp = Date.now();
+    const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&platform=${platform}&_t=${timestamp}`;
+    log(`🔄 [${platform}] Относительный путь без /, создан прокси URL: ${proxyUrl}`, 'social-publishing');
     return proxyUrl;
   }
 
@@ -275,45 +316,19 @@ export class SocialPublishingService {
       log(`🔴 [TG: ШАГ 1] Токен (первые 8 символов): ${token.substring(0, 8)}...`, 'social-publishing');
       log(`🔴 [TG: ШАГ 1] URL API Telegram: ${baseUrl}`, 'social-publishing');
       
-      // ШАГ 2: Обработка URL, если он проксируется
+      // ШАГ 2: Обработка изображения через прокси
       log(`🟠 [TG: ШАГ 2] Обработка URL изображения...`, 'social-publishing');
-      let actualImageUrl = imageUrl;
       
-      if (actualImageUrl.includes('/api/proxy-media?url=')) {
-        try {
-          log(`🟠 [TG: ШАГ 2] URL содержит прокси, извлекаем оригинальный URL...`, 'social-publishing');
-          const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
-          actualImageUrl = decodeURIComponent(encodedUrl);
-          log(`🟠 [TG: ШАГ 2] Извлечен оригинальный URL из прокси: ${actualImageUrl}`, 'social-publishing');
-        } catch (error: any) {
-          log(`🟠 [TG: ШАГ 2] ОШИБКА при декодировании URL из прокси: ${error.message || error}`, 'social-publishing');
-          log(`🟠 [TG: ШАГ 2] Продолжаем с исходным URL: ${actualImageUrl}`, 'social-publishing');
-        }
-      } else {
-        log(`🟠 [TG: ШАГ 2] URL не содержит прокси, используем как есть`, 'social-publishing');
-      }
+      // ВСЕГДА используем проксированный URL для скачивания
+      // Применяем универсальную функцию обработки URL
+      const proxyImageUrl = this.processImageUrl(imageUrl, 'telegram');
+      log(`🟠 [TG: ШАГ 2] Сформирован URL для скачивания: ${proxyImageUrl}`, 'social-publishing');
       
-      // ШАГ 3: Проверка и нормализация URL
-      log(`🟡 [TG: ШАГ 3] Проверка и нормализация URL...`, 'social-publishing');
-      const isExternalUrl = actualImageUrl.startsWith('http') || actualImageUrl.startsWith('https');
-      log(`🟡 [TG: ШАГ 3] URL является ${isExternalUrl ? 'внешним' : 'локальным'}: ${actualImageUrl}`, 'social-publishing');
-      
-      if (!isExternalUrl) {
-        log(`🟡 [TG: ШАГ 3] Локальный путь обнаружен, преобразуем в полный URL...`, 'social-publishing');
-        // Для локальных путей формируем полный URL
-        const appUrl = process.env.APP_URL || 'https://planner-app.com';
-        
-        if (!actualImageUrl.startsWith('/')) {
-          actualImageUrl = `${appUrl}/${actualImageUrl}`;
-        } else {
-          actualImageUrl = `${appUrl}${actualImageUrl}`;
-        }
-        
-        log(`🟡 [TG: ШАГ 3] Локальный путь преобразован в полный URL: ${actualImageUrl}`, 'social-publishing');
-      }
+      // ШАГ 3: Проксированный URL уже готов к использованию
+      log(`🟡 [TG: ШАГ 3] Прокси URL готов к использованию, дальнейшей обработки не требуется`, 'social-publishing');
       
       // ШАГ 4: Скачивание изображения
-      log(`🟢 [TG: ШАГ 4] Начинаем скачивание изображения с URL: ${actualImageUrl}`, 'social-publishing');
+      log(`🟢 [TG: ШАГ 4] Начинаем скачивание изображения с URL: ${proxyImageUrl}`, 'social-publishing');
       
       // Задаем заголовки для скачивания
       const headers = {
@@ -331,7 +346,7 @@ export class SocialPublishingService {
         log(`🟢 [TG: ШАГ 4] Выполняем HTTP GET запрос для скачивания...`, 'social-publishing');
         imageResponse = await axios({
           method: 'get',
-          url: actualImageUrl,
+          url: proxyImageUrl,
           responseType: 'arraybuffer',
           headers: headers,
           timeout: 30000, // 30 секунд таймаут
@@ -384,58 +399,62 @@ export class SocialPublishingService {
         log(`🔵 [TG: ШАГ 5] Используем корневую временную директорию`, 'social-publishing');
       }
     
-    // Генерируем уникальное имя файла
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 10);
-    const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
-    
-    // Сохраняем изображение во временный файл
-    fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
-    log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
-    
-    // Создаем FormData для отправки файла
-    const formData = new FormData();
-    formData.append('chat_id', chatId);
-    formData.append('caption', caption);
-    formData.append('parse_mode', 'HTML');
-    
-    // Добавляем файл изображения в форму
-    const fileStream = fs.createReadStream(tempFilePath);
-    formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
-    
-    log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
-    
-    try {
-      // Отправляем запрос в Telegram API
-      const response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          'Accept': 'application/json'
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 30000 // увеличиваем таймаут до 30 секунд
-      });
+      // Генерируем уникальное имя файла
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 10);
+      const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
       
-      log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
-      return response.data;
-    } catch (uploadError: any) {
-      log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
-      if (uploadError.response) {
-        log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
-      }
-      throw uploadError;
-    } finally {
-      // Закрываем стрим чтения файла
-      fileStream.destroy();
+      // Сохраняем изображение во временный файл
+      fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+      log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
       
-      // Удаляем временный файл
+      // Создаем FormData для отправки файла
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
+      
+      // Добавляем файл изображения в форму
+      const fileStream = fs.createReadStream(tempFilePath);
+      formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
+      
+      log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
+      
       try {
-        fs.unlinkSync(tempFilePath);
-        log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
-      } catch (deleteError: any) {
-        log(`⚠️ Ошибка при удалении временного файла: ${deleteError.message}`, 'social-publishing');
+        // Отправляем запрос в Telegram API
+        const response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Accept': 'application/json'
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 30000 // увеличиваем таймаут до 30 секунд
+        });
+        
+        log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return response.data;
+      } catch (uploadError: any) {
+        log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
+        if (uploadError.response) {
+          log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+        }
+        throw uploadError;
+      } finally {
+        // Закрываем стрим чтения файла
+        fileStream.destroy();
+        
+        // Удаляем временный файл
+        try {
+          fs.unlinkSync(tempFilePath);
+          log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
+        } catch (deleteError: any) {
+          log(`⚠️ Ошибка при удалении временного файла: ${deleteError.message}`, 'social-publishing');
+        }
       }
+    } catch (error: any) {
+      log(`❌ Общая ошибка в процессе загрузки изображения в Telegram: ${error.message}`, 'social-publishing');
+      throw error;
     }
   }
 
@@ -663,12 +682,11 @@ export class SocialPublishingService {
               throw directUploadError; // Возвращаем оригинальную ошибку с изображением
             }
           }
-          }
+        }
       }
-          // Закрываем тег try-catch для обработки ошибок при локальной загрузке файлов
-      } 
       
-      if (hasVideo) {
+      try {
+        if (hasVideo) {
         // Отправка видео с подписью (с обработанным URL)
         log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
         
@@ -769,7 +787,9 @@ export class SocialPublishingService {
           headers: { 'Content-Type': 'application/json' }
         });
       }
+      }
       
+      try {
       // Если до сих пор не отправлено, пробуем неподдерживаемый формат как текст
       if (!response) {
         // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
@@ -838,6 +858,10 @@ export class SocialPublishingService {
           error: `Telegram API вернул ошибку: ${response.data.description}`,
           userId: content.userId // Добавляем userId из контента
         };
+      }
+      } catch (innerError: any) {
+        log(`Внутренняя ошибка при обработке ответа Telegram API: ${innerError.message}`, 'social-publishing');
+        throw innerError; // Пробрасываем ошибку во внешний обработчик
       }
     } catch (error: any) {
       log(`Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
