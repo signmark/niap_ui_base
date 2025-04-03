@@ -2576,10 +2576,16 @@ export default function ContentPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
-                  src={previewContent.imageUrl}
+                  src={previewContent.imageUrl && previewContent.imageUrl.includes('directus.nplanner.ru') 
+                      ? `/api/proxy-file?url=${encodeURIComponent(previewContent.imageUrl)}&_t=${Date.now()}` 
+                      : previewContent.imageUrl}
                   alt={previewContent?.title || "Content Image"}
                   className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
                   onError={(e) => {
+                    console.error("Error loading image in preview:", previewContent.imageUrl);
                     (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Image+Error";
                   }}
                 />
@@ -2597,10 +2603,16 @@ export default function ContentPage() {
                     imageUrl && (
                       <div key={index} className="overflow-hidden">
                         <img
-                          src={imageUrl}
+                          src={imageUrl && imageUrl.includes('directus.nplanner.ru') 
+                              ? `/api/proxy-file?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}` 
+                              : imageUrl}
                           alt={`Дополнительное изображение ${index + 1}`}
                           className="rounded-md max-h-[300px] w-full object-cover"
+                          crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
                           onError={(e) => {
+                            console.error("Error loading additional image in preview:", imageUrl);
                             (e.target as HTMLImageElement).src = "https://placehold.co/400x300?text=Image+Error";
                           }}
                         />

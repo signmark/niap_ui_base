@@ -639,7 +639,9 @@ export function ImageGenerationDialog({
               >
                 <div className="w-full aspect-square bg-gray-100 flex items-center justify-center relative">
                   <img 
-                    src={imageUrl} 
+                    src={imageUrl && imageUrl.includes('directus.nplanner.ru') 
+                        ? `/api/proxy-file?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}` 
+                        : imageUrl}
                     alt={`Изображение ${index + 1}`} 
                     className="w-full h-auto object-cover aspect-square"
                     crossOrigin="anonymous"
