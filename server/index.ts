@@ -74,6 +74,11 @@ app.use((req, res, next) => {
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
     
+    // Регистрируем маршруты для загрузки файлов
+    log("Registering File Upload routes...");
+    registerUploadRoutes(app);
+    log("File Upload routes registered successfully");
+    
     console.log("Route registration completed");
     log("Routes registered successfully");
 
