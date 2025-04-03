@@ -1,208 +1,208 @@
 import axios from 'axios';
-import { log } from '../utils/logger';
+import { log } from '../logger';
+import { CampaignContent, SocialMediaSettings, SocialPublication } from '@shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import FormData from 'form-data';
-import { directusApiManager } from '../directus';
-import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '../../shared/types';
+import { TelegramPublisher } from '../../standalone-telegram-publisher';
 
-// Добавляем код для загрузки изображений с Directus с авторизацией
-export async function downloadDirectusImage(imageUrl: string): Promise<{ buffer: Buffer; contentType: string }> {
-  log(`📥 Начинаю загрузку изображения с Directus: ${imageUrl.substring(0, 50)}...`, 'directus-download');
+/**
+ * Исправленный класс для публикации в социальные сети с акцентом на Telegram
+ * Решает проблему авторизации при загрузке изображений из Directus
+ */
+export class SocialPublishingServiceFixed {
+  // Создаем экземпляр TelegramPublisher с параметрами по умолчанию
+  private telegramPublisher: any;
   
-  try {
-    // Подготавливаем заголовки с авторизацией
-    const headers: Record<string, string> = {
-      'Accept': 'image/*',
-      'User-Agent': 'Mozilla/5.0 SMM Planner Bot',
-      'Cache-Control': 'no-cache'
-    };
+  constructor() {
+    // Инициализируем TelegramPublisher
+    try {
+      this.telegramPublisher = new TelegramPublisher();
+      log('✅ TelegramPublisher успешно инициализирован', 'social-publishing');
+    } catch (error: any) {
+      log(`❌ Ошибка при инициализации TelegramPublisher: ${error.message}`, 'social-publishing');
+    }
+  }
+  
+  /**
+   * Публикация в Telegram с использованием TelegramPublisher
+   * Обрабатывает авторизацию при скачивании изображений из Directus
+   */
+  async publishToTelegram(
+    content: CampaignContent,
+    telegramSettings?: SocialMediaSettings['telegram']
+  ): Promise<SocialPublication> {
+    log(`📱 Публикация в Telegram: ${content.id}`, 'social-publishing');
     
-    // Проверяем, является ли URL от Directus
-    if (imageUrl.includes('directus.nplanner.ru')) {
-      // Получаем токены всех пользователей (возьмем первый действующий)
-      let directusToken = null;
+    // Проверка входных данных
+    if (!telegramSettings) {
+      log(`❌ Отсутствуют настройки Telegram для ${content.id}`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки Telegram',
+        userId: null
+      };
+    }
+    
+    if (!telegramSettings.token) {
+      log(`❌ Отсутствует токен бота Telegram для ${content.id}`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует токен бота Telegram',
+        userId: null
+      };
+    }
+    
+    if (!telegramSettings.chatId) {
+      log(`❌ Отсутствует ID чата Telegram для ${content.id}`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует ID чата Telegram',
+        userId: null
+      };
+    }
+    
+    // Получаем настройки
+    const token = telegramSettings.token;
+    const chatId = telegramSettings.chatId;
+    
+    try {
+      log(`🔄 Подготовка контента для публикации в Telegram: ${content.id}`, 'social-publishing');
       
-      // Перебираем все ключи в кеше токенов
-      const userIds = Object.keys(directusApiManager['authTokenCache'] || {});
-      
-      for (const userId of userIds) {
-        const cachedToken = directusApiManager.getCachedToken(userId);
-        if (cachedToken) {
-          directusToken = cachedToken.token;
-          log(`✅ Найден действующий токен Directus для пользователя ${userId}`, 'directus-download');
-          break;
-        }
+      // Обработка содержимого с форматированием
+      let text = '';
+      if (content.title) {
+        text += `<b>${content.title}</b>\n\n`;
       }
       
-      // Если токен не найден в кеше, пробуем получить админский токен
-      if (!directusToken) {
+      if (content.content) {
+        text += content.content;
+      }
+      
+      // Добавление хэштегов
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        text += '\n\n' + content.hashtags.map(tag => `#${tag.replace(/\s+/g, '_')}`).join(' ');
+      }
+      
+      log(`📝 Подготовлен текст для Telegram (${text.length} символов)`, 'social-publishing');
+      
+      // Ограничение длины текста для Telegram
+      const MAX_TELEGRAM_CAPTION = 1024;
+      const formattedText = text.length > MAX_TELEGRAM_CAPTION 
+        ? text.substring(0, MAX_TELEGRAM_CAPTION - 3) + '...' 
+        : text;
+      
+      if (text.length > MAX_TELEGRAM_CAPTION) {
+        log(`⚠️ Текст был сокращен с ${text.length} до ${MAX_TELEGRAM_CAPTION} символов`, 'social-publishing');
+      }
+      
+      // Получаем URL изображения
+      let processedImageUrl = content.imageUrl;
+      
+      if (!processedImageUrl) {
+        log(`⚠️ Отсутствует изображение для публикации в Telegram`, 'social-publishing');
+        
+        // Отправляем только текст, если нет изображения
         try {
-          const adminToken = await directusApiManager['getAdminToken']();
-          if (adminToken) {
-            directusToken = adminToken;
-            log(`✅ Получен новый админский токен Directus`, 'directus-download');
-          }
-        } catch (adminTokenError) {
-          log(`⚠️ Не удалось получить админский токен: ${adminTokenError}`, 'directus-download');
+          const textOnlyResponse = await this.sendTelegramTextMessage(
+            chatId,
+            formattedText,
+            token
+          );
+          
+          log(`✅ Успешно опубликован текст в Telegram, message_id: ${textOnlyResponse.result.message_id}`, 'social-publishing');
+          
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date().toISOString(),
+            postId: textOnlyResponse.result.message_id.toString(),
+            postUrl: null,
+            error: null,
+            userId: chatId
+          };
+        } catch (textError: any) {
+          log(`❌ Ошибка при публикации текста в Telegram: ${textError.message}`, 'social-publishing');
+          
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка при публикации текста: ${textError.message}`,
+            userId: chatId
+          };
         }
       }
       
-      // Если у нас есть токен, добавляем его в заголовки
-      if (directusToken) {
-        headers['Authorization'] = `Bearer ${directusToken}`;
-        log(`🔑 Добавлен токен авторизации в запрос к Directus`, 'directus-download');
+      // Отправляем изображение через TelegramPublisher
+      log(`🚀 Отправка изображения в Telegram через TelegramPublisher: ${processedImageUrl.substring(0, 70)}...`, 'social-publishing');
+      
+      const response = await this.telegramPublisher.sendDirectusImageToTelegram(
+        processedImageUrl,
+        chatId,
+        formattedText,
+        token
+      );
+      
+      if (response && response.ok) {
+        log(`✅ Успешно опубликован пост с изображением в Telegram, message_id: ${response.result.message_id}`, 'social-publishing');
+        
+        return {
+          platform: 'telegram',
+          status: 'published',
+          publishedAt: new Date().toISOString(),
+          postId: response.result.message_id.toString(),
+          postUrl: null,
+          error: null,
+          userId: chatId
+        };
       } else {
-        log(`⚠️ Не найден действующий токен Directus для авторизации`, 'directus-download');
+        throw new Error(`Telegram API вернул ошибку: ${JSON.stringify(response)}`);
       }
+      
+    } catch (error: any) {
+      log(`❌ Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
+      
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации: ${error.message}`,
+        userId: chatId
+      };
     }
-    
-    // Скачиваем изображение с заголовками авторизации
-    log(`🔄 Выполняем запрос для скачивания изображения`, 'directus-download');
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-      timeout: 60000, // 60 секунд таймаут
-      headers: headers
-    });
-    
-    // Проверяем, что получили данные
-    if (!response.data || response.data.length === 0) {
-      throw new Error('Получен пустой ответ от сервера');
-    }
-    
-    // Определяем тип контента
-    const contentType = response.headers['content-type'] || 'image/jpeg';
-    
-    log(`✅ Изображение успешно загружено: ${response.data.length} байт, тип: ${contentType}`, 'directus-download');
-    
-    return {
-      buffer: Buffer.from(response.data),
-      contentType: contentType
-    };
-  } catch (error: any) {
-    log(`❌ Ошибка при загрузке изображения: ${error.message}`, 'directus-download');
-    if (error.response) {
-      log(`📊 Код ответа: ${error.response.status}`, 'directus-download');
-    }
-    throw error;
-  }
-}
-
-// Функция для отправки изображения в Telegram
-export async function uploadImageToTelegram(
-  imageBuffer: Buffer, 
-  contentType: string,
-  chatId: string,
-  caption: string,
-  token: string,
-  baseUrl = 'https://api.telegram.org/bot'
-): Promise<any> {
-  // Создаем временную директорию
-  const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
   }
   
-  // Генерируем уникальное имя для временного файла
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const fileExtension = contentType.includes('png') ? 'png' : 'jpg';
-  const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.${fileExtension}`);
-  
-  try {
-    // Сохраняем буфер во временный файл
-    fs.writeFileSync(tempFilePath, imageBuffer);
-    log(`💾 Изображение сохранено во временный файл: ${tempFilePath} (${fs.statSync(tempFilePath).size} байт)`, 'telegram-upload');
+  /**
+   * Отправляет текстовое сообщение в Telegram
+   * @param chatId ID чата Telegram для отправки
+   * @param text Текст сообщения (поддерживает HTML)
+   * @param token Токен бота Telegram
+   * @returns Результат отправки
+   */
+  private async sendTelegramTextMessage(chatId: string, text: string, token: string): Promise<any> {
+    const baseUrl = 'https://api.telegram.org/bot';
     
-    // Создаем FormData для отправки изображения
-    const formData = new FormData();
-    
-    // Добавляем основные параметры
-    formData.append('chat_id', chatId);
-    
-    // Если есть подпись, добавляем её и формат разметки
-    if (caption) {
-      formData.append('caption', caption);
-      formData.append('parse_mode', 'HTML');
+    try {
+      const response = await axios.post(`${baseUrl}${token}/sendMessage`, {
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      log(`❌ Ошибка при отправке текстового сообщения в Telegram: ${error.message}`, 'social-publishing');
+      throw error;
     }
-    
-    // Добавляем файл изображения
-    const fileStream = fs.createReadStream(tempFilePath);
-    formData.append('photo', fileStream, { 
-      filename: `image_${timestamp}.${fileExtension}`,
-      contentType: contentType
-    });
-    
-    // Отправляем запрос в Telegram API
-    log(`🚀 Отправка изображения в Telegram чат: ${chatId}`, 'telegram-upload');
-    console.time('⏱️ Время отправки в Telegram');
-    
-    const uploadResponse = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
-      headers: {
-        ...formData.getHeaders(),
-        'Accept': 'application/json'
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      timeout: 60000 // 60 секунд таймаут
-    });
-    
-    console.timeEnd('⏱️ Время отправки в Telegram');
-    
-    // Закрываем поток чтения файла
-    fileStream.destroy();
-    
-    // Удаляем временный файл
-    fs.unlinkSync(tempFilePath);
-    log(`🗑️ Временный файл удален: ${tempFilePath}`, 'telegram-upload');
-    
-    // Проверяем успешность отправки
-    if (uploadResponse.data && uploadResponse.data.ok) {
-      log(`✅ Изображение успешно отправлено в Telegram: message_id=${uploadResponse.data.result.message_id}`, 'telegram-upload');
-      return uploadResponse.data;
-    } else {
-      log(`❌ Ошибка при отправке изображения в Telegram: ${JSON.stringify(uploadResponse.data)}`, 'telegram-upload');
-      throw new Error(`API вернул ошибку: ${JSON.stringify(uploadResponse.data)}`);
-    }
-  } catch (error: any) {
-    // Если временный файл был создан, удаляем его
-    if (fs.existsSync(tempFilePath)) {
-      try {
-        fs.unlinkSync(tempFilePath);
-        log(`🗑️ Временный файл удален после ошибки: ${tempFilePath}`, 'telegram-upload');
-      } catch (e) {
-        // Игнорируем ошибки при очистке
-      }
-    }
-    
-    // Логируем и пробрасываем ошибку выше
-    log(`❌ Ошибка при отправке изображения в Telegram: ${error.message}`, 'telegram-upload');
-    if (error.response) {
-      log(`📊 Код ответа: ${error.response.status}`, 'telegram-upload');
-      log(`📝 Данные ответа: ${JSON.stringify(error.response.data)}`, 'telegram-upload');
-    }
-    throw error;
-  }
-}
-
-// Полный процесс отправки изображения из Directus в Telegram
-export async function sendDirectusImageToTelegram(
-  imageUrl: string, 
-  chatId: string, 
-  caption: string, 
-  token: string
-): Promise<any> {
-  try {
-    // Шаг 1: Загружаем изображение с авторизацией
-    const { buffer, contentType } = await downloadDirectusImage(imageUrl);
-    
-    // Шаг 2: Отправляем изображение в Telegram
-    const result = await uploadImageToTelegram(buffer, contentType, chatId, caption, token);
-    
-    return result;
-  } catch (error: any) {
-    log(`❌ Ошибка в процессе отправки изображения из Directus в Telegram: ${error.message}`, 'social-publishing');
-    throw error;
   }
 }
