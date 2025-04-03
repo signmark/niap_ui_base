@@ -13,7 +13,48 @@ dotenv.config();
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "-1002302366310";
 const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://directus.nplanner.ru";
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || ""; // Токен для авторизации в Directus
+// Используем учетные данные администратора, предоставленные пользователем
+const DIRECTUS_ADMIN_EMAIL = "lbrspb@gmail.com";
+const DIRECTUS_ADMIN_PASSWORD = "qtpZ3dh7";
+let DIRECTUS_TOKEN = null; // Токен будет получен автоматически
+
+// Функция для получения токена Directus
+async function getDirectusToken() {
+  try {
+    console.log("🔑 Получение свежего токена Directus...");
+    
+    if (!DIRECTUS_ADMIN_EMAIL || !DIRECTUS_ADMIN_PASSWORD) {
+      console.error("❌ Отсутствуют учетные данные Directus (DIRECTUS_ADMIN_EMAIL/DIRECTUS_ADMIN_PASSWORD)");
+      return null;
+    }
+    
+    console.log(`📧 Логин: ${DIRECTUS_ADMIN_EMAIL}`);
+    console.log(`🔑 Пароль: ${'*'.repeat(DIRECTUS_ADMIN_PASSWORD.length)}`);
+    
+    const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
+      email: DIRECTUS_ADMIN_EMAIL,
+      password: DIRECTUS_ADMIN_PASSWORD
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      console.log("✅ Токен Directus успешно получен");
+      console.log(`📝 Токен: ${response.data.data.access_token.substring(0, 15)}...`);
+      return response.data.data.access_token;
+    } else {
+      console.error("❌ Не удалось получить токен из ответа API");
+      return null;
+    }
+  } catch (error) {
+    console.error(`❌ Ошибка при получении токена: ${error.message}`);
+    
+    if (error.response) {
+      console.error(`Статус ошибки: ${error.response.status}`);
+      console.error(`Данные ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    return null;
+  }
+}
 
 // Универсальная функция для отправки изображения в Telegram
 async function sendDirectusImageToTelegram(imageUrl, chatId, caption, token) {
@@ -125,9 +166,16 @@ async function testSend() {
       return;
     }
     
-    // Тестовое изображение
-    const imageUrl = process.argv[2] || "https://picsum.photos/300/200";
-    const caption = "Тестовое сообщение через улучшенный интерфейс";
+    // Получаем свежий токен Directus
+    DIRECTUS_TOKEN = await getDirectusToken();
+    if (!DIRECTUS_TOKEN) {
+      console.error("❌ Не удалось получить токен Directus. Проверьте учетные данные.");
+      return;
+    }
+    
+    // Заданное изображение от пользователя
+    const imageUrl = "https://directus.nplanner.ru/assets/eace6579-bc8e-4ea5-b36a-1025ba4464fd";
+    const caption = "Тестирование отправки изображения из Directus";
     
     console.log(`🧪 Запуск тестовой отправки изображения: ${imageUrl}`);
     const result = await sendDirectusImageToTelegram(
