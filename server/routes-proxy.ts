@@ -137,15 +137,17 @@ export function registerProxyRoutes(app: Express) {
   app.get('/api/proxy-media', async (req: Request, res: Response) => {
     try {
       const mediaUrl = req.query.url as string;
+      const platform = req.query.platform as string | undefined;
+      
       if (!mediaUrl) {
         return res.status(400).json({ error: 'Не указан URL медиа-файла' });
       }
       
-      log(`Запрос на доступ к внешнему медиа через прокси: ${mediaUrl}`, 'proxy');
+      log(`Запрос на доступ к внешнему медиа через прокси для платформы ${platform || 'не указана'}: ${mediaUrl}`, 'proxy');
       
-      // Добавляем необходимые заголовки для доступа к ресурсам социальных сетей
+      // Базовые заголовки для запроса в зависимости от платформы
       const headers: Record<string, string> = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'Referer': 'https://nplanner.replit.app/',
@@ -153,21 +155,45 @@ export function registerProxyRoutes(app: Express) {
         'Cache-Control': 'no-cache'
       };
       
-      // Для ресурсов Instagram/Facebook/VK могут потребоваться дополнительные заголовки
-      if (
-        mediaUrl.includes('instagram.') || 
-        mediaUrl.includes('fbcdn.net') || 
-        mediaUrl.includes('cdninstagram.com') || 
-        mediaUrl.includes('scontent.') || 
-        mediaUrl.includes('vk.com')
-      ) {
+      // Специфичные настройки для разных платформ
+      if (platform === 'vk') {
+        // Для VK добавляем дополнительные заголовки
+        headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+        headers['Referer'] = 'https://vk.com/';
+        headers['Origin'] = 'https://vk.com';
+        headers['Accept'] = '*/*';
+        log(`Добавлены специальные заголовки для VK`, 'proxy');
+      } else if (platform === 'telegram') {
+        // Для Telegram
+        headers['User-Agent'] = 'TelegramBot (like TwitterBot)';
+        headers['Referer'] = 'https://t.me/';
+        headers['Accept'] = '*/*';
+        log(`Добавлены специальные заголовки для Telegram`, 'proxy');
+      } else if (platform === 'instagram' || platform === 'facebook') {
+        // Для Instagram/Facebook
+        headers['User-Agent'] = 'Instagram 123.0.0.21.114 (iPhone; CPU iPhone OS 11_4 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15';
+        headers['Referer'] = 'https://www.instagram.com/';
+        headers['Origin'] = 'https://www.instagram.com';
+        log(`Добавлены специальные заголовки для Instagram/Facebook`, 'proxy');
+      }
+      
+      // Для определенных доменов требуется авторизация и особая обработка
+      const protectedDomains = [
+        'instagram.', 'fbcdn.net', 'cdninstagram.com', 'scontent.', 'tgcnt.ru',
+        'vk.com', 'static.tgstat.ru', 'pbs.twimg.com', 'sitestat.ru', 's.TG',
+        't.me', 'telegram.org', 'telesco.pe'
+      ];
+      
+      const needsAuth = protectedDomains.some(domain => mediaUrl.includes(domain));
+      
+      if (needsAuth) {
         // Пытаемся получить токен администратора Directus
         try {
           // Получаем админский токен
           const adminSession = await directusAuthManager.getAdminSession();
           
           if (adminSession && adminSession.token) {
-            log(`Добавлен токен администратора для запроса к социальным сетям`, 'proxy');
+            log(`Добавлен токен администратора для запроса к защищенной платформе ${platform || '(не указана)'}`, 'proxy');
             // Устанавливаем заголовок авторизации и cookie для доступа
             headers['Authorization'] = `Bearer ${adminSession.token}`;
             headers['Cookie'] = `token=${adminSession.token.substring(0, 10)}...`;
