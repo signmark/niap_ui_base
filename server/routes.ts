@@ -7,8 +7,8 @@ import { qwenService } from './services/qwen';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { testFalApiConnection } from './services/fal-api-tester';
-import { socialPublishingService } from './services/social-publishing';
-import { socialPublishingService as socialPublishingServiceFixed } from './services/social-publishing-fix';
+import { socialPublishingService as socialPublishingServiceOld } from './services/social-publishing';
+import { socialPublishingService } from './services/updated-social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
@@ -7758,7 +7758,7 @@ https://t.me/channelname/ - description`;
                 chatId: userSettings.telegram.chatId,
                 token: userSettings.telegram.token?.substring(0, 8) + '...'
               })}`);
-              result = await socialPublishingService.publishToTelegram(campaignContent, userSettings.telegram);
+              result = await socialPublishingService.publishToPlatform(campaignContent, 'telegram', userSettings);
             } else if (platform === 'vk' && userSettings.vk) {
               // Публикация в VK
               console.log(`🔵 Запуск публикации в VK для контента ${contentId}`);
@@ -7766,13 +7766,13 @@ https://t.me/channelname/ - description`;
                 groupId: userSettings.vk.groupId,
                 token: userSettings.vk.token?.substring(0, 8) + '...'
               })}`);  
-              result = await socialPublishingService.publishToVk(campaignContent, userSettings.vk);
+              result = await socialPublishingService.publishToPlatform(campaignContent, 'vk', userSettings);
             } else if (platform === 'facebook' && userSettings.facebook) {
               // Публикация в Facebook (не реализована)
-              result = await socialPublishingService.publishToFacebook(campaignContent, userSettings.facebook);
+              result = await socialPublishingService.publishToPlatform(campaignContent, 'facebook', userSettings);
             } else if (platform === 'instagram' && userSettings.instagram) {
               // Публикация в Instagram (не реализована)
-              result = await socialPublishingService.publishToInstagram(campaignContent, userSettings.instagram);
+              result = await socialPublishingService.publishToPlatform(campaignContent, 'instagram', userSettings);
             } else {
               result = {
                 platform: platform as any,
