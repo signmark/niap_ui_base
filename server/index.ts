@@ -7,6 +7,14 @@ import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import path from 'path';
+import * as fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Получаем путь к текущему файлу и директории в ES модуле
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
@@ -78,6 +86,18 @@ app.use((req, res, next) => {
     log("Registering File Upload routes...");
     registerUploadRoutes(app);
     log("File Upload routes registered successfully");
+    
+    // Маршрут для доступа к локально сохраненным файлам
+    const uploadDir = path.join(__dirname, '../uploads');
+    
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+      log(`Created uploads directory: ${uploadDir}`);
+    }
+    
+    // Статический маршрут для доступа к файлам
+    app.use('/uploads', express.static(uploadDir));
+    log(`Serving locally stored files from ${uploadDir}`);
     
     console.log("Route registration completed");
     log("Routes registered successfully");
