@@ -4,7 +4,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
-import { getProxiedFileUrl } from '../../shared/utils/url-helpers';
+
+// Хелпер для получения URL через прокси, если это URL Directus
+function getProxiedFileUrl(fileUrl: string): string {
+  if (!fileUrl) return '';
+  
+  // Если это локальный URL (начинается с /) - оставляем как есть
+  if (fileUrl.startsWith('/uploads/')) {
+    return fileUrl;
+  }
+  
+  // Если это уже прокси-URL - оставляем как есть
+  if (fileUrl.includes('/api/proxy-file')) {
+    return fileUrl;
+  }
+  
+  // Проверяем, это URL Directus?
+  const isDirectusUrl = fileUrl.includes('directus.nplanner.ru') || 
+                       fileUrl.includes('assets.directus') || 
+                       fileUrl.includes('assets/');
+  
+  // Если это URL Directus - формируем прокси-URL
+  if (isDirectusUrl) {
+    return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
+  }
+  
+  // Иначе возвращаем URL как есть
+  return fileUrl;
+}
 
 interface ImageUploaderProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -258,10 +285,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             >
               <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
                 <img 
-                  src={file.url} 
+                  src={file.status === 'uploading' ? file.url : getProxiedFileUrl(file.url)} 
                   alt={file.name}
                   className="object-cover w-full h-full"
                   onError={(e) => {
+                    console.error('Ошибка загрузки изображения:', file.url);
                     (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMWYxZjEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEycHgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTk5OTkiPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+PC9zdmc+';
                   }}
                 />
