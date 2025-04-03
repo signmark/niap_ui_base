@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
 
-// Хелпер для получения URL через прокси, если это URL Directus
+// Хелпер для получения URL изображения из Directus
 function getProxiedFileUrl(fileUrl: string): string {
   if (!fileUrl) return '';
   
@@ -14,24 +14,14 @@ function getProxiedFileUrl(fileUrl: string): string {
     return fileUrl;
   }
   
-  // Если это уже прокси-URL - оставляем как есть
-  if (fileUrl.includes('/api/proxy-file')) {
+  // Если это уже полный URL Directus - используем как есть
+  if (fileUrl.startsWith('https://directus.nplanner.ru/assets/')) {
     return fileUrl;
   }
   
-  // Если URL уже содержит полный путь к Directus - используем его напрямую
-  if (fileUrl.includes('directus.nplanner.ru/assets/')) {
-    return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
-  }
-  
-  // Если это UUID (возможно ответ от API) - преобразуем в полный URL к Directus
+  // Если это UUID (часто возвращается API) - формируем полный URL к Directus
   if (fileUrl.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i)) {
-    return `/api/proxy-file?url=${encodeURIComponent(`https://directus.nplanner.ru/assets/${fileUrl}`)}`;
-  }
-  
-  // Если это путь с assets/ - добавляем базовый URL
-  if (fileUrl.startsWith('assets/')) {
-    return `/api/proxy-file?url=${encodeURIComponent(`https://directus.nplanner.ru/${fileUrl}`)}`;
+    return `https://directus.nplanner.ru/assets/${fileUrl}`;
   }
   
   // Иначе возвращаем URL как есть
