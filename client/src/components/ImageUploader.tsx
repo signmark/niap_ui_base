@@ -6,17 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
 
 // Хелпер для формирования URL изображения из Directus
-function getProxiedFileUrl(fileUrl: string): string {
+function getDirectusFileUrl(fileUrl: string): string {
   if (!fileUrl) return '';
   
   // Если это UUID (наиболее частый случай) - формируем полный URL Directus
   if (fileUrl.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i)) {
     return `https://directus.nplanner.ru/assets/${fileUrl}`;
-  }
-  
-  // Если это уже полный URL с нужным путем - оставляем как есть
-  if (fileUrl.indexOf('https://directus.nplanner.ru/assets/') === 0) {
-    return fileUrl;
   }
   
   // Любые другие URL просто возвращаем как есть
@@ -275,7 +270,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             >
               <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
                 <img 
-                  src={file.status === 'uploading' ? file.url : getProxiedFileUrl(file.url)} 
+                  src={file.status === 'uploading' ? file.url : getDirectusFileUrl(file.url)} 
                   alt={file.name}
                   className="object-cover w-full h-full"
                   onError={(e) => {
