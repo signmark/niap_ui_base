@@ -60,6 +60,19 @@ export function registerProxyRoutes(app: Express) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log(`Ошибка при проксировании файла: ${errorMessage}`, 'proxy');
       
+      // Проверяем на ошибку доступа
+      const axiosError = error as any;
+      if (axiosError.response && axiosError.response.status === 403) {
+        const fileIdParam = req.params.fileId; // Получаем ID файла из параметров запроса
+        log(`Ошибка доступа 403 при запросе к файлу по ID: ${fileIdParam}`, 'proxy');
+        
+        // Перенаправляем на изображение-заглушку вместо ошибки
+        if (!res.headersSent) {
+          res.redirect('https://placehold.co/400x225?text=Access+Denied');
+          return;
+        }
+      }
+      
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
         res.status(500).json({ error: 'Ошибка при получении файла' });
@@ -122,6 +135,19 @@ export function registerProxyRoutes(app: Express) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log(`Ошибка при проксировании файла по URL: ${errorMessage}`, 'proxy');
+      
+      // Проверяем на ошибку доступа
+      const axiosError = error as any;
+      if (axiosError.response && axiosError.response.status === 403) {
+        const fileUrlParam = req.query.url as string; // Получаем URL файла из параметров запроса
+        log(`Ошибка доступа 403 при запросе к файлу по URL: ${fileUrlParam}`, 'proxy');
+        
+        // Перенаправляем на изображение-заглушку вместо ошибки
+        if (!res.headersSent) {
+          res.redirect('https://placehold.co/400x225?text=Access+Denied');
+          return;
+        }
+      }
       
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
@@ -243,6 +269,19 @@ export function registerProxyRoutes(app: Express) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log(`Ошибка при проксировании внешнего медиа: ${errorMessage}`, 'proxy');
+      
+      // Проверяем на ошибку доступа
+      const axiosError = error as any;
+      if (axiosError.response && axiosError.response.status === 403) {
+        const mediaUrlParam = req.query.url as string;
+        log(`Ошибка доступа 403 при запросе к медиа по URL: ${mediaUrlParam}`, 'proxy');
+        
+        // Перенаправляем на изображение-заглушку вместо ошибки
+        if (!res.headersSent) {
+          res.redirect('https://placehold.co/400x225?text=Access+Denied');
+          return;
+        }
+      }
       
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
