@@ -34,16 +34,28 @@ export class SocialPublishingService {
     
     // Если URL уже абсолютный
     if (imageUrl.startsWith('http')) {
-      // Проверяем Directus URL (содержит assets/UUID)
-      const uuidInUrlPattern = /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
-      const match = imageUrl.match(uuidInUrlPattern);
+      // Проверяем случай, когда в URL уже есть наш собственный прокси (во избежание двойного проксирования)
+      if (imageUrl.includes('/api/proxy-file/') || imageUrl.includes('/api/proxy-media?url=')) {
+        log(`URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
+        return imageUrl;
+      }
       
-      if (match && match[1]) {
-        // Если нашли UUID в URL, переформируем URL для использования прокси
-        const uuid = match[1];
-        const proxyUrl = `${baseAppUrl}/api/proxy-file/${uuid}`;
-        log(`Обнаружен Directus URL с UUID в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
-        return proxyUrl;
+      // Проверяем Directus URL (содержит assets/UUID)
+      const directusPatterns = [
+        /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,  // Стандартный формат
+        /\/assets\/(directus-[a-z0-9-]+)/i,  // Формат с префиксом directus
+        /\/uploads\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i  // Альтернативный формат в uploads
+      ];
+      
+      for (const pattern of directusPatterns) {
+        const match = imageUrl.match(pattern);
+        if (match && match[1]) {
+          // Если нашли совпадение в URL, переформируем URL для использования прокси
+          const fileId = match[1];
+          const proxyUrl = `${baseAppUrl}/api/proxy-file/${fileId}`;
+          log(`Обнаружен Directus URL с ID в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+          return proxyUrl;
+        }
       }
       
       // Проверяем URL для FAL.AI (если используются их модели генерации изображений)
@@ -52,19 +64,30 @@ export class SocialPublishingService {
         return imageUrl;
       }
       
-      // Проверяем ссылки на внешние медиа платформы, которые могут требовать аутентификации
-      if (
-        imageUrl.includes('instagram.') || 
-        imageUrl.includes('fbcdn.net') || 
-        imageUrl.includes('cdninstagram.com') || 
-        imageUrl.includes('scontent.') || 
-        imageUrl.includes('vk.com')
-      ) {
+      // Проверяем наличие защищенных доменов в URL
+      const protectedDomains = [
+        'instagram.', 'fbcdn.net', 'cdninstagram.com', 'scontent.', 'tgcnt.ru',
+        'vk.com', 'static.tgstat.ru', 'pbs.twimg.com', 'sitestat.ru', 's.TG',
+        // Добавляем домены, которые могут быть заблокированы в России
+        't.me', 'telegram.org', 'telesco.pe'
+      ];
+      
+      const needsProxy = protectedDomains.some(domain => imageUrl.includes(domain));
+      
+      if (needsProxy) {
         // Для внешних ресурсов, требующих аутентификации, проксируем через наш сервер
-        log(`Обнаружен URL с внешней платформы для ${platform}, используем прокси для доступа`, 'social-publishing');
-        // Кодируем полный URL для передачи в прокси
+        log(`Обнаружен URL с защищенной платформы для ${platform}, используем прокси для доступа: ${imageUrl}`, 'social-publishing');
+        
+        // Особый кейс для VK - использование прямых URL
+        if (platform === 'vk' && imageUrl.startsWith('https://vk.com/')) {
+          log(`Обнаружен URL VK при публикации в VK, используем прокси с особыми параметрами`, 'social-publishing');
+          const encodedUrl = encodeURIComponent(imageUrl);
+          return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}&platform=vk`;
+        }
+        
+        // Кодируем полный URL для передачи в прокси с указанием платформы
         const encodedUrl = encodeURIComponent(imageUrl);
-        return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}`;
+        return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}&platform=${platform}`;
       }
       
       // Для всех остальных абсолютных URL используем их как есть
@@ -79,8 +102,13 @@ export class SocialPublishingService {
       const fullUrl = `${baseAppUrl}/api/proxy-file/${imageUrl}`;
       log(`Обнаружен UUID изображения Directus для ${platform}, создан прокси URL: ${fullUrl}`, 'social-publishing');
       return fullUrl;
+    } else if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('/assets/')) {
+      // Это локальный файл в директории uploads или assets, добавляем базовый URL
+      const fullUrl = `${baseAppUrl}${imageUrl}`;
+      log(`Преобразован внутренний URL в абсолютный для ${platform}: ${fullUrl}`, 'social-publishing');
+      return fullUrl;
     } else {
-      // Это локальный файл, добавляем базовый URL
+      // Это просто локальный файл, добавляем базовый URL
       const fullUrl = `${baseAppUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
       log(`Преобразован относительный URL в абсолютный для ${platform}: ${fullUrl}`, 'social-publishing');
       return fullUrl;
