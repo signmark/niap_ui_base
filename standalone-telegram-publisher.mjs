@@ -274,7 +274,19 @@ class TelegramPublisher {
       // Отправляем запрос в Telegram API
       this.log(`🚀 Отправка изображения в Telegram чат: ${chatId}`);
       
+      // Проверяем, валидный ли chatId (должен быть числом или строкой с числом)
+      if (chatId.startsWith('-100') && chatId.length > 4) {
+        // Для групповых чатов, начинающихся с -100, нужно убрать это префикс
+        const cleanedChatId = chatId.substring(4);
+        if (/^\d+$/.test(cleanedChatId)) {
+          this.log(`ℹ️ Обнаружен групповой чат с префиксом -100. Используем ID: ${cleanedChatId}`);
+          chatId = cleanedChatId;
+        }
+      }
+      
       const baseUrl = 'https://api.telegram.org/bot';
+      this.log(`🔍 Полный URL для запроса: ${baseUrl}${token.substring(0, 8)}...}/sendPhoto с chat_id=${chatId}`);
+      
       const response = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
         headers: {
           ...formData.getHeaders(),
@@ -338,16 +350,91 @@ class TelegramPublisher {
     try {
       this.log('🧪 Начинаем процесс отправки изображения в Telegram');
       
-      // Шаг 1: Скачиваем изображение с авторизацией
-      const { buffer, contentType } = await this.downloadImage(imageUrl);
+      // Проверяем ID чата
+      this.log(`📊 Анализ chat_id: ${chatId}`);
       
-      // Шаг 2: Отправляем изображение в Telegram
-      const result = await this.sendImageToTelegram(buffer, contentType, chatId, caption, token);
+      // Проверка и преобразование chatId
+      let processedChatId = chatId;
       
-      return result;
-    } catch (error) {
-      this.log(`❌ Ошибка в процессе отправки изображения: ${error.message}`, 'error');
-      throw error;
+      // Если chatId начинается с -100 и это числовой ID группы
+      if (chatId && chatId.startsWith('-100') && chatId.length > 4) {
+        const cleanedChatId = chatId.substring(4);
+        if (/^\d+$/.test(cleanedChatId)) {
+          this.log(`📊 Обнаружен групповой ID чата с префиксом -100. Попробуем использовать форматы: ${chatId} или ${cleanedChatId}`);
+          processedChatId = cleanedChatId; // Пробуем без префикса -100
+        }
+      }
+      
+      try {
+        // Шаг 1: Скачиваем изображение с авторизацией
+        this.log(`📥 Скачивание изображения для отправки в Telegram`);
+        const { buffer, contentType } = await this.downloadImage(imageUrl);
+        
+        // Шаг 2: Пробуем отправить изображение с обработанным ID чата
+        try {
+          this.log(`🚀 Попытка отправки с ID чата: ${processedChatId}`);
+          const result = await this.sendImageToTelegram(buffer, contentType, processedChatId, caption, token);
+          return result;
+        } catch (chatError) {
+          // Если это ошибка с обработанным ID, и исходный ID отличался, пробуем с исходным
+          if (processedChatId !== chatId) {
+            this.log(`⚠️ Ошибка при отправке с обработанным ID чата (${processedChatId}): ${chatError.message}`, 'warn');
+            this.log(`🔄 Повторная попытка с оригинальным ID чата: ${chatId}`);
+            
+            // Пробуем отправить с исходным ID
+            const result = await this.sendImageToTelegram(buffer, contentType, chatId, caption, token);
+            return result;
+          }
+          
+          // Если ID не обрабатывался или обе попытки не удались, проверяем код ошибки
+          if (chatError.response && chatError.response.status === 400) {
+            this.log(`🔍 Ошибка 400 от API Telegram: ${JSON.stringify(chatError.response.data || {})}`, 'error');
+            
+            // Возвращаем пользовательское сообщение об ошибке вместо общего исключения
+            return {
+              ok: false,
+              description: `Ошибка API Telegram: ${chatError.response.data?.description || 'Неверный запрос'}`,
+              error_code: chatError.response.data?.error_code || 400,
+              parameters: chatError.response.data?.parameters || {}
+            };
+          }
+          
+          // Пробрасываем ошибку дальше
+          throw chatError;
+        }
+      } catch (error) {
+        this.log(`❌ Ошибка при подготовке и отправке изображения: ${error.message}`, 'error');
+        
+        // Проверяем, есть ли информация о типе ошибки
+        if (error.response) {
+          this.log(`📊 HTTP статус ошибки: ${error.response.status}`, 'error');
+          this.log(`📄 Ответ сервера: ${JSON.stringify(error.response.data || {})}`, 'error');
+          
+          // Возвращаем информативное сообщение об ошибке
+          return {
+            ok: false,
+            description: `Ошибка HTTP ${error.response.status}: ${error.response.data?.description || error.message}`,
+            error_code: error.response.status,
+            parameters: error.response.data?.parameters || {}
+          };
+        }
+        
+        // Для других типов ошибок
+        return {
+          ok: false,
+          description: `Ошибка при отправке изображения: ${error.message}`,
+          error_code: error.code || 500
+        };
+      }
+    } catch (fatalError) {
+      this.log(`💥 Критическая ошибка в процессе отправки изображения: ${fatalError.message}`, 'error');
+      
+      // Возвращаем стандартный формат ответа для обработки на уровне API
+      return {
+        ok: false,
+        description: `Критическая ошибка: ${fatalError.message}`,
+        error_code: fatalError.code || 500
+      };
     }
   }
 }

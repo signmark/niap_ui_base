@@ -699,7 +699,7 @@ class SocialPublishingService {
       console.log('Полный результат отправки Telegram:', JSON.stringify(result));
       
       if (result && result.ok === true) {
-        console.log('Успешная публикация в Telegram, message_id:', result.result?.message_id);
+        console.log('✅ Успешная публикация в Telegram, message_id:', result.result?.message_id);
         return {
           platform: 'telegram',
           status: 'published',
@@ -710,12 +710,57 @@ class SocialPublishingService {
           postUrl: null // В Telegram нет прямой ссылки на сообщение
         };
       } else {
-        console.error('Ошибка публикации в Telegram:', result?.description || 'Неизвестная ошибка');
+        console.error('❌ Ошибка публикации в Telegram:', 
+          result?.description || (result?.error_code ? `Код ${result.error_code}` : 'Неизвестная ошибка'));
+        
+        // Дополнительная проверка на формат chat_id - попробуем исправить и повторить запрос
+        if (result?.error_code === 400 && telegramSettings.chatId && 
+            telegramSettings.chatId.startsWith('-100') && telegramSettings.chatId.length > 4) {
+          
+          // Пробуем отправить с исправленным ID чата (без префикса -100)
+          const cleanedChatId = telegramSettings.chatId.substring(4);
+          console.log(`🔄 Повторная попытка с ID чата без префикса -100: "${cleanedChatId}"`);
+          
+          let retryResult;
+          if (imageUrl) {
+            // Повторная отправка с изображением
+            retryResult = await this.uploadTelegramImageFromUrl(
+              imageUrl,
+              cleanedChatId,
+              formattedText,
+              telegramSettings.token
+            );
+          } else {
+            // Повторная отправка текста
+            const apiUrl = `https://api.telegram.org/bot${telegramSettings.token}/sendMessage`;
+            const response = await axios.post(apiUrl, {
+              chat_id: cleanedChatId,
+              text: formattedText,
+              parse_mode: 'HTML'
+            });
+            retryResult = response.data;
+          }
+          
+          if (retryResult && retryResult.ok === true) {
+            console.log('🎉 Успешная публикация в Telegram с исправленным chat_id, message_id:', 
+              retryResult.result?.message_id);
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              error: null,
+              userId: cleanedChatId, // Запоминаем исправленный ID для будущих публикаций
+              postId: retryResult.result?.message_id?.toString() || null,
+              postUrl: null
+            };
+          }
+        }
+        
         return {
           platform: 'telegram',
           status: 'error',
           publishedAt: null,
-          error: result?.description || 'Неизвестная ошибка при публикации в Telegram',
+          error: result?.description || (result?.error_code ? `Код ошибки: ${result.error_code}` : 'Неизвестная ошибка при публикации в Telegram'),
           userId: telegramSettings.chatId
         };
       }
