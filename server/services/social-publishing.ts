@@ -27,7 +27,7 @@ export class SocialPublishingService {
   private processImageUrl(imageUrl: string, platform: string): string {
     if (!imageUrl) return '';
     
-    log(`Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
+    log(`▶️ Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
     
     // Базовый URL сервера для относительных путей
     const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
@@ -36,7 +36,7 @@ export class SocialPublishingService {
     if (imageUrl.startsWith('http')) {
       // Проверяем случай, когда в URL уже есть наш собственный прокси (во избежание двойного проксирования)
       if (imageUrl.includes('/api/proxy-file/') || imageUrl.includes('/api/proxy-media?url=')) {
-        log(`URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
+        log(`✅ URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
         return imageUrl;
       }
       
@@ -47,20 +47,31 @@ export class SocialPublishingService {
         /\/uploads\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i  // Альтернативный формат в uploads
       ];
       
+      // Подробно логируем текущий URL для анализа
+      log(`🔎 Анализ URL для ${platform}. Проверка на содержание путей Directus: ${imageUrl}`, 'social-publishing');
+      
       for (const pattern of directusPatterns) {
         const match = imageUrl.match(pattern);
         if (match && match[1]) {
           // Если нашли совпадение в URL, переформируем URL для использования прокси
           const fileId = match[1];
           const proxyUrl = `${baseAppUrl}/api/proxy-file/${fileId}`;
-          log(`Обнаружен Directus URL с ID в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+          log(`🔄 Обнаружен Directus URL с ID ${fileId} в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
           return proxyUrl;
         }
       }
       
+      // Проверка на чистый UUID (без путей)
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidPattern.test(imageUrl)) {
+        const proxyUrl = `${baseAppUrl}/api/proxy-file/${imageUrl}`;
+        log(`🔄 Обнаружен чистый UUID для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+        return proxyUrl;
+      }
+      
       // Проверяем URL для FAL.AI (если используются их модели генерации изображений)
       if (imageUrl.includes('fal.media') || imageUrl.includes('fal.ai')) {
-        log(`Обнаружен URL от FAL.AI для ${platform}, используем прямую ссылку`, 'social-publishing');
+        log(`✅ Обнаружен URL от FAL.AI для ${platform}, используем прямую ссылку`, 'social-publishing');
         return imageUrl;
       }
       
@@ -278,7 +289,11 @@ export class SocialPublishingService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
+    log(`▶️ Начата публикация в Telegram. Контент ID: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
+    log(`▶️ Настройки для публикации в Telegram: chatId=${telegramSettings?.chatId?.substring(0, 6)}..., token=${telegramSettings?.token?.substring(0, 6)}...`, 'social-publishing');
+    
     if (!telegramSettings?.token || !telegramSettings?.chatId) {
+      log(`❌ ОШИБКА: Отсутствуют настройки для Telegram (token=${!!telegramSettings?.token}, chatId=${!!telegramSettings?.chatId})`, 'social-publishing');
       return {
         platform: 'telegram',
         status: 'failed',

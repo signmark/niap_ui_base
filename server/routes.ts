@@ -7664,6 +7664,9 @@ https://t.me/channelname/ - description`;
         // Фильтруем только запрошенные платформы или используем все настроенные
         const platformsToPublish = platforms || Object.keys(content.social_platforms);
         
+        console.log(`📣 Запрос на публикацию контента ${contentId}. Запрошены платформы:`, platforms);
+        console.log(`📣 Будет опубликовано на платформах:`, platformsToPublish);
+        
         // Обновляем статус на "publishing" для выбранных платформ
         const updatedSocialPlatforms = { ...content.social_platforms };
         
@@ -7749,9 +7752,19 @@ https://t.me/channelname/ - description`;
             let result;
             if (platform === 'telegram' && userSettings.telegram) {
               // Публикация в Telegram
+              console.log(`🔵 Запуск публикации в Telegram для контента ${contentId}`);
+              console.log(`🔵 Настройки Telegram: ${JSON.stringify({
+                chatId: userSettings.telegram.chatId,
+                token: userSettings.telegram.token?.substring(0, 8) + '...'
+              })}`);
               result = await socialPublishingService.publishToTelegram(campaignContent, userSettings.telegram);
             } else if (platform === 'vk' && userSettings.vk) {
               // Публикация в VK
+              console.log(`🔵 Запуск публикации в VK для контента ${contentId}`);
+              console.log(`🔵 Настройки VK: ${JSON.stringify({
+                groupId: userSettings.vk.groupId,
+                token: userSettings.vk.token?.substring(0, 8) + '...'
+              })}`);  
               result = await socialPublishingService.publishToVk(campaignContent, userSettings.vk);
             } else if (platform === 'facebook' && userSettings.facebook) {
               // Публикация в Facebook (не реализована)
