@@ -307,83 +307,123 @@ export class SocialPublishingService {
     token: string,
     baseUrl: string
   ): Promise<any> {
-    log(`🔄 Загружаем изображение с URL: ${imageUrl}`, 'social-publishing');
-    
-    // Отправляем в лог токен, который используем (без раскрытия полного токена)
-    log(`🔑 Используем токен Telegram для загрузки: ${token.substring(0, 10)}...`, 'social-publishing');
-    log(`📱 ID чата Telegram: ${chatId}`, 'social-publishing');
-    
-    // Проверяем наличие proxy в URL и декодируем его, если есть
-    let actualImageUrl = imageUrl;
-    if (actualImageUrl.includes('/api/proxy-media?url=')) {
-      try {
-        const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
-        actualImageUrl = decodeURIComponent(encodedUrl);
-        log(`🔄 Декодирован URL из прокси: ${actualImageUrl}`, 'social-publishing');
-      } catch (error) {
-        log(`⚠️ Ошибка при декодировании URL из прокси: ${error}`, 'social-publishing');
-        // Если декодирование не удалось, продолжаем с исходным URL
-        log(`⚠️ Продолжаем с исходным URL: ${actualImageUrl}`, 'social-publishing');
+    try {
+      // ШАГ 1: Логирование входных параметров
+      log(`🔴 [TG: ШАГ 1] НАЧАЛО процесса отправки изображения в Telegram`, 'social-publishing');
+      log(`🔴 [TG: ШАГ 1] Исходный URL изображения: ${imageUrl}`, 'social-publishing');
+      log(`🔴 [TG: ШАГ 1] ID чата Telegram: ${chatId}`, 'social-publishing');
+      log(`🔴 [TG: ШАГ 1] Длина подписи: ${caption.length} символов`, 'social-publishing');
+      log(`🔴 [TG: ШАГ 1] Токен (первые 8 символов): ${token.substring(0, 8)}...`, 'social-publishing');
+      log(`🔴 [TG: ШАГ 1] URL API Telegram: ${baseUrl}`, 'social-publishing');
+      
+      // ШАГ 2: Обработка URL, если он проксируется
+      log(`🟠 [TG: ШАГ 2] Обработка URL изображения...`, 'social-publishing');
+      let actualImageUrl = imageUrl;
+      
+      if (actualImageUrl.includes('/api/proxy-media?url=')) {
+        try {
+          log(`🟠 [TG: ШАГ 2] URL содержит прокси, извлекаем оригинальный URL...`, 'social-publishing');
+          const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
+          actualImageUrl = decodeURIComponent(encodedUrl);
+          log(`🟠 [TG: ШАГ 2] Извлечен оригинальный URL из прокси: ${actualImageUrl}`, 'social-publishing');
+        } catch (error: any) {
+          log(`🟠 [TG: ШАГ 2] ОШИБКА при декодировании URL из прокси: ${error.message || error}`, 'social-publishing');
+          log(`🟠 [TG: ШАГ 2] Продолжаем с исходным URL: ${actualImageUrl}`, 'social-publishing');
+        }
+      } else {
+        log(`🟠 [TG: ШАГ 2] URL не содержит прокси, используем как есть`, 'social-publishing');
       }
-    }
-    
-    log(`📥 Фактический URL для загрузки изображения: ${actualImageUrl}`, 'social-publishing');
-    
-    // Определяем, является ли URL изображения внешним или местным
-    const isExternalUrl = actualImageUrl.startsWith('http') || actualImageUrl.startsWith('https');
-    log(`🌐 Проверка URL изображения: ${isExternalUrl ? 'внешний URL' : 'локальный путь'} - ${actualImageUrl}`, 'social-publishing');
-    
-    // Для локальных путей проверяем наличие файла
-    if (!isExternalUrl && !actualImageUrl.startsWith('/')) {
-      // Преобразуем в абсолютный путь
-      const baseUrl = process.env.APP_URL || 'https://planner-app.com';
-      actualImageUrl = `${baseUrl}/${actualImageUrl}`;
-      log(`🔄 Преобразован локальный путь в абсолютный URL: ${actualImageUrl}`, 'social-publishing');
-    }
-    
-    // Стратегия загрузки файла с усиленной защитой от сбоев и подробным логированием
-    log(`📥 Загрузка изображения с URL: ${actualImageUrl}`, 'social-publishing');
-    
-    // Загружаем изображение с расширенными заголовками
-    const imageResponse = await axios.get(actualImageUrl, { 
-      responseType: 'arraybuffer',
-      // Добавляем заголовки для работы с защищенными ресурсами
-      headers: {
+      
+      // ШАГ 3: Проверка и нормализация URL
+      log(`🟡 [TG: ШАГ 3] Проверка и нормализация URL...`, 'social-publishing');
+      const isExternalUrl = actualImageUrl.startsWith('http') || actualImageUrl.startsWith('https');
+      log(`🟡 [TG: ШАГ 3] URL является ${isExternalUrl ? 'внешним' : 'локальным'}: ${actualImageUrl}`, 'social-publishing');
+      
+      if (!isExternalUrl) {
+        log(`🟡 [TG: ШАГ 3] Локальный путь обнаружен, преобразуем в полный URL...`, 'social-publishing');
+        // Для локальных путей формируем полный URL
+        const appUrl = process.env.APP_URL || 'https://planner-app.com';
+        
+        if (!actualImageUrl.startsWith('/')) {
+          actualImageUrl = `${appUrl}/${actualImageUrl}`;
+        } else {
+          actualImageUrl = `${appUrl}${actualImageUrl}`;
+        }
+        
+        log(`🟡 [TG: ШАГ 3] Локальный путь преобразован в полный URL: ${actualImageUrl}`, 'social-publishing');
+      }
+      
+      // ШАГ 4: Скачивание изображения
+      log(`🟢 [TG: ШАГ 4] Начинаем скачивание изображения с URL: ${actualImageUrl}`, 'social-publishing');
+      
+      // Задаем заголовки для скачивания
+      const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': 'https://planner-app.com/',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Origin': 'https://planner-app.com'
-      },
-      // Игнорируем ошибки SSL для работы со всеми серверами
-      validateStatus: function (status) {
-        return status >= 200 && status < 500; // Принимаем статусы 2xx и 3xx, 4xx
-      },
-      // Увеличиваем таймаут для загрузки больших файлов
-      timeout: 30000
-    });
-    
-    // Проверяем успешность загрузки
-    if (imageResponse.status >= 400) {
-      log(`❌ Ошибка загрузки изображения, статус: ${imageResponse.status}`, 'social-publishing');
-      throw new Error(`Не удалось загрузить изображение, статус: ${imageResponse.status}`);
-    }
-    
-    log(`✅ Изображение успешно загружено, размер: ${imageResponse.data.length} байт, статус: ${imageResponse.status}`, 'social-publishing');
-    
-    // Проверяем размер изображения
-    if (imageResponse.data.length < 100) {
-      log(`⚠️ Внимание: размер загруженного изображения слишком мал (${imageResponse.data.length} байт), возможно загружены не данные изображения`, 'social-publishing');
-    }
-    
-    // Создаем временную директорию, если её нет
-    const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-      log(`📁 Создана временная директория: ${tempDir}`, 'social-publishing');
-    }
+        'Cache-Control': 'no-cache'
+      };
+      
+      log(`🟢 [TG: ШАГ 4] Используем следующие HTTP заголовки для скачивания: ${JSON.stringify(headers)}`, 'social-publishing');
+      
+      // Скачиваем изображение
+      let imageResponse;
+      try {
+        log(`🟢 [TG: ШАГ 4] Выполняем HTTP GET запрос для скачивания...`, 'social-publishing');
+        imageResponse = await axios({
+          method: 'get',
+          url: actualImageUrl,
+          responseType: 'arraybuffer',
+          headers: headers,
+          timeout: 30000, // 30 секунд таймаут
+          maxContentLength: 50 * 1024 * 1024, // 50 MB
+          validateStatus: function (status) {
+            return status >= 200 && status < 500;
+          }
+        });
+        
+        log(`🟢 [TG: ШАГ 4] HTTP GET запрос выполнен, статус: ${imageResponse.status}`, 'social-publishing');
+      } catch (downloadError: any) {
+        log(`🟢 [TG: ШАГ 4] КРИТИЧЕСКАЯ ОШИБКА при скачивании: ${downloadError.message}`, 'social-publishing');
+        throw new Error(`Не удалось скачать изображение: ${downloadError.message}`);
+      }
+      
+      // Проверяем успешность загрузки
+      log(`🟢 [TG: ШАГ 4] Проверяем статус HTTP ответа: ${imageResponse.status}`, 'social-publishing');
+      if (imageResponse.status >= 400) {
+        log(`🟢 [TG: ШАГ 4] ОШИБКА: Получен HTTP статус ${imageResponse.status}`, 'social-publishing');
+        throw new Error(`Не удалось загрузить изображение, статус HTTP: ${imageResponse.status}`);
+      }
+      
+      // Проверяем размер скачанных данных
+      const dataSize = imageResponse.data.length;
+      log(`🟢 [TG: ШАГ 4] Размер скачанных данных: ${dataSize} байт`, 'social-publishing');
+      
+      if (dataSize === 0) {
+        log(`🟢 [TG: ШАГ 4] ОШИБКА: Скачан пустой файл (0 байт)`, 'social-publishing');
+        throw new Error('Скачанный файл имеет нулевой размер');
+      }
+      
+      if (dataSize < 100) {
+        log(`🟢 [TG: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Очень маленький размер файла (${dataSize} байт)`, 'social-publishing');
+      }
+      
+      // ШАГ 5: Сохранение во временный файл
+      log(`🔵 [TG: ШАГ 5] Сохраняем скачанные данные во временный файл...`, 'social-publishing');
+      
+      // Создаем временную директорию, если её нет
+      const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
+      try {
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+          log(`🔵 [TG: ШАГ 5] Создана временная директория: ${tempDir}`, 'social-publishing');
+        } else {
+          log(`🔵 [TG: ШАГ 5] Временная директория уже существует: ${tempDir}`, 'social-publishing');
+        }
+      } catch (mkdirError: any) {
+        log(`🔵 [TG: ШАГ 5] ОШИБКА при создании временной директории: ${mkdirError.message}`, 'social-publishing');
+        log(`🔵 [TG: ШАГ 5] Используем корневую временную директорию`, 'social-publishing');
+      }
     
     // Генерируем уникальное имя файла
     const timestamp = Date.now();
@@ -434,8 +474,8 @@ export class SocialPublishingService {
       try {
         fs.unlinkSync(tempFilePath);
         log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
-      } catch (deleteError) {
-        log(`⚠️ Ошибка при удалении временного файла: ${deleteError}`, 'social-publishing');
+      } catch (deleteError: any) {
+        log(`⚠️ Ошибка при удалении временного файла: ${deleteError.message}`, 'social-publishing');
       }
     }
   }
@@ -449,8 +489,8 @@ export class SocialPublishingService {
       // Здесь должна быть логика получения токена администратора
       // Обычно это реализуется через DirectusAuthManager или аналогичный сервис
       return null;
-    } catch (error) {
-      log(`⚠️ Ошибка при получении системного токена: ${(error as Error).message}`, 'social-publishing');
+    } catch (error: any) {
+      log(`⚠️ Ошибка при получении системного токена: ${error.message}`, 'social-publishing');
       return null;
     }
   }
@@ -589,30 +629,81 @@ export class SocialPublishingService {
           // Сразу переходим к следующему шагу
           log(`✓ Локальная загрузка и отправка изображения выполнена успешно, URL: ${images[0].substring(0, 50)}...`, 'social-publishing');
       } catch (directUploadError: any) {
-          log(`❌ Ошибка при загрузке и отправке изображения: ${directUploadError.message}`, 'social-publishing');
+          log(`❌ [TELEGRAM] Ошибка при загрузке и отправке изображения: ${directUploadError.message}`, 'social-publishing');
           
           if (directUploadError.response) {
-              log(`📄 Данные ответа при ошибке: ${JSON.stringify(directUploadError.response.data || {})}`, 'social-publishing');
-              log(`🔢 Статус ошибки: ${directUploadError.response.status}`, 'social-publishing');
+              log(`📄 [TELEGRAM] Данные ответа при ошибке: ${JSON.stringify(directUploadError.response.data || {})}`, 'social-publishing');
+              log(`🔢 [TELEGRAM] Статус ошибки: ${directUploadError.response.status}`, 'social-publishing');
+              log(`🔤 [TELEGRAM] Заголовки ответа: ${JSON.stringify(directUploadError.response.headers || {})}`, 'social-publishing');
           }
-      
-          // Последняя попытка отправить только текст
+          
+          // Пробуем отправить через URL параметр
           try {
-            log(`🔄 Попытка отправки только текста без изображений после ошибки загрузки`, 'social-publishing');
-            const textMessageBody = {
-              chat_id: formattedChatId,
-              text: truncatedCaption,
-              parse_mode: 'HTML'
-            };
+            log(`⚠️ [TELEGRAM] Пробуем отправить через URL-метод API (plan B): ${images[0].substring(0, 100)}...`, 'social-publishing');
             
-            response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
-              headers: { 'Content-Type': 'application/json' }
+            // Проверка URL на валидность
+            let photoUrl = images[0];
+            try {
+              // Убедимся, что URL валидный и публично доступный
+              const parsedUrl = new URL(photoUrl);
+              log(`🔍 [TELEGRAM] Анализ URL: протокол=${parsedUrl.protocol}, хост=${parsedUrl.hostname}`, 'social-publishing');
+              
+              // Если URL использует не HTTP/HTTPS протокол, пробуем подправить
+              if (!parsedUrl.protocol.startsWith('http')) {
+                photoUrl = `https://${parsedUrl.hostname}${parsedUrl.pathname}${parsedUrl.search}`;
+                log(`🔄 [TELEGRAM] Скорректирован URL: ${photoUrl}`, 'social-publishing');
+              }
+            } catch (urlError: any) {
+              log(`⚠️ [TELEGRAM] Ошибка при парсинге URL: ${urlError.message}`, 'social-publishing');
+            }
+            
+            const params = new URLSearchParams({
+              chat_id: formattedChatId,
+              photo: photoUrl,
+              caption: truncatedCaption,
+              parse_mode: 'HTML'
             });
             
-            log(`✅ Текстовое сообщение успешно отправлено после ошибки с изображением`, 'social-publishing');
-          } catch (textError: any) {
-            log(`❌ Также не удалось отправить текстовое сообщение: ${textError}`, 'social-publishing');
-            throw directUploadError; // Возвращаем оригинальную ошибку с изображением
+            log(`🔄 [TELEGRAM] Отправка через URL метод с параметрами: ${params.toString().substring(0, 200)}...`, 'social-publishing');
+            
+            // Отправляем с дополнительными заголовками и увеличенным таймаутом
+            response = await axios.post(`${baseUrl}/sendPhoto`, params, {
+              headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'TelegramBot/1.0',
+                'Accept': 'application/json'
+              },
+              timeout: 60000 // 60 секунд
+            });
+            
+            log(`✅ [TELEGRAM] Успешная отправка через URL-метод: ${JSON.stringify(response.data)}`, 'social-publishing');
+          } catch (urlError: any) {
+            log(`❌ [TELEGRAM] Ошибка и при URL-методе: ${urlError.message}`, 'social-publishing');
+            
+            if (urlError.response) {
+              log(`📡 [TELEGRAM] URL-метод статус: ${urlError.response.status}`, 'social-publishing');
+              log(`📄 [TELEGRAM] URL-метод данные: ${JSON.stringify(urlError.response.data || {})}`, 'social-publishing');
+            }
+            
+            // Последняя попытка отправить только текст (plan C)
+            try {
+              log(`🔄 [TELEGRAM] Последняя попытка (plan C) - отправка только текста без изображений`, 'social-publishing');
+              const textMessageBody = {
+                chat_id: formattedChatId,
+                text: truncatedCaption,
+                parse_mode: 'HTML'
+              };
+              
+              response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              log(`✅ [TELEGRAM] FALLBACK: Текстовое сообщение успешно отправлено после ошибок с изображением`, 'social-publishing');
+            } catch (textError: any) {
+              log(`❌ [TELEGRAM] КРИТИЧЕСКАЯ ОШИБКА: Также не удалось отправить текстовое сообщение: ${textError.message}`, 'social-publishing');
+              throw directUploadError; // Возвращаем оригинальную ошибку с изображением
+            }
+          }
           }
       }
           // Закрываем тег try-catch для обработки ошибок при локальной загрузке файлов
@@ -681,8 +772,8 @@ export class SocialPublishingService {
             try {
               fs.unlinkSync(tempFilePath);
               log(`🗑️ Временный файл видео удален: ${tempFilePath}`, 'social-publishing');
-            } catch (deleteError) {
-              log(`⚠️ Ошибка при удалении временного файла видео: ${deleteError}`, 'social-publishing');
+            } catch (deleteError: any) {
+              log(`⚠️ Ошибка при удалении временного файла видео: ${deleteError.message}`, 'social-publishing');
             }
           }
         } catch (videoError: any) {
@@ -736,7 +827,7 @@ export class SocialPublishingService {
           response = await axios.post(`${baseUrl}/sendMessage`, fallbackMessageBody, {
             headers: { 'Content-Type': 'application/json' }
           });
-        } catch (error) {
+        } catch (error: any) {
           log(`Неподдерживаемый тип контента для Telegram: ${content.contentType}`, 'social-publishing');
           return {
             platform: 'telegram',
@@ -850,49 +941,152 @@ export class SocialPublishingService {
    */
   private async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
     try {
-      log(`Начало загрузки изображения в VK с URL: ${imageUrl}`, 'social-publishing');
+      log(`🔴 [ВК: ШАГ 1] Начало загрузки изображения в VK с URL: ${imageUrl}`, 'social-publishing');
       
       // Обработка URL изображения с использованием универсального метода
       const fullImageUrl = this.processImageUrl(imageUrl, 'vk');
-      log(`Обработан URL изображения для VK: ${fullImageUrl}`, 'social-publishing');
+      log(`🔴 [ВК: ШАГ 1] Обработан URL изображения для VK: ${fullImageUrl}`, 'social-publishing');
       
-      // Скачиваем изображение
-      log(`Скачивание изображения с окончательного URL: ${fullImageUrl}`, 'social-publishing');
-      const imageResponse = await axios({
-        method: 'get',
-        url: fullImageUrl,
-        responseType: 'arraybuffer'
-      });
+      // Скачиваем изображение с расширенными заголовками и обработкой ошибок
+      log(`🟠 [ВК: ШАГ 2] Скачивание изображения с URL: ${fullImageUrl}`, 'social-publishing');
+      
+      // Задаем заголовки для скачивания
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache'
+      };
+      
+      let imageResponse;
+      try {
+        log(`🟠 [ВК: ШАГ 2] Выполняем HTTP GET запрос для скачивания...`, 'social-publishing');
+        imageResponse = await axios({
+          method: 'get',
+          url: fullImageUrl,
+          responseType: 'arraybuffer',
+          headers: headers,
+          timeout: 30000, // 30 секунд таймаут
+          maxContentLength: 50 * 1024 * 1024, // 50 MB
+          validateStatus: function (status) {
+            return status >= 200 && status < 500;
+          }
+        });
+        
+        log(`🟠 [ВК: ШАГ 2] HTTP GET запрос выполнен, статус: ${imageResponse.status}`, 'social-publishing');
+      } catch (downloadError: any) {
+        log(`🟠 [ВК: ШАГ 2] КРИТИЧЕСКАЯ ОШИБКА при скачивании: ${downloadError.message}`, 'social-publishing');
+        throw new Error(`Не удалось скачать изображение: ${downloadError.message}`);
+      }
+      
+      // Проверяем успешность загрузки
+      if (imageResponse.status >= 400) {
+        log(`🟠 [ВК: ШАГ 2] ОШИБКА: Получен HTTP статус ${imageResponse.status}`, 'social-publishing');
+        throw new Error(`Не удалось загрузить изображение, статус HTTP: ${imageResponse.status}`);
+      }
+      
+      // Проверяем размер скачанных данных
+      const dataSize = imageResponse.data.length;
+      log(`🟠 [ВК: ШАГ 2] Размер скачанных данных: ${dataSize} байт`, 'social-publishing');
+      
+      if (dataSize === 0) {
+        log(`🟠 [ВК: ШАГ 2] ОШИБКА: Скачан пустой файл (0 байт)`, 'social-publishing');
+        throw new Error('Скачанный файл имеет нулевой размер');
+      }
+      
+      if (dataSize < 100) {
+        log(`🟠 [ВК: ШАГ 2] ПРЕДУПРЕЖДЕНИЕ: Очень маленький размер файла (${dataSize} байт)`, 'social-publishing');
+      }
 
-      // Создаем временный файл на сервере
-      const tempFilePath = path.join(os.tmpdir(), `vk_upload_${Date.now()}.jpg`);
-      log(`Создаем временный файл: ${tempFilePath}`, 'social-publishing');
+      // Создаем временную директорию для VK, если её нет
+      const tempDir = path.join(os.tmpdir(), 'vk_uploads');
+      try {
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+          log(`🟡 [ВК: ШАГ 3] Создана временная директория: ${tempDir}`, 'social-publishing');
+        } else {
+          log(`🟡 [ВК: ШАГ 3] Временная директория уже существует: ${tempDir}`, 'social-publishing');
+        }
+      } catch (mkdirError: any) {
+        log(`🟡 [ВК: ШАГ 3] ОШИБКА при создании временной директории: ${mkdirError.message}`, 'social-publishing');
+        log(`🟡 [ВК: ШАГ 3] Используем корневую временную директорию`, 'social-publishing');
+      }
+      
+      // Генерируем уникальное имя файла
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 10);
+      const tempFilePath = path.join(tempDir, `vk_upload_${timestamp}_${randomString}.jpg`);
       
       // Сохраняем изображение во временный файл
       fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
       
+      // Проверяем, что файл действительно создан и имеет размер
+      const fileStats = fs.statSync(tempFilePath);
+      log(`🟡 [ВК: ШАГ 3] Создан временный файл: ${tempFilePath}, размер: ${fileStats.size} байт`, 'social-publishing');
+      
+      if (fileStats.size === 0) {
+        log(`🟡 [ВК: ШАГ 3] ОШИБКА: Временный файл имеет нулевой размер`, 'social-publishing');
+        throw new Error('Созданный временный файл имеет нулевой размер');
+      }
+      
       // Создаем форму для загрузки файла
+      log(`🟢 [ВК: ШАГ 4] Подготовка формы для отправки файла на сервер ВК`, 'social-publishing');
       const formData = new FormData();
-      formData.append('photo', fs.createReadStream(tempFilePath));
+      const fileStream = fs.createReadStream(tempFilePath);
+      formData.append('photo', fileStream, { filename: `photo_${timestamp}.jpg` });
       
       // Выполняем запрос на загрузку на сервер ВК
-      log(`Загрузка файла на сервер ВК по URL: ${uploadUrl}`, 'social-publishing');
+      log(`🟢 [ВК: ШАГ 4] Отправка файла на сервер ВК по URL: ${uploadUrl}`, 'social-publishing');
       
-      const uploadResponse = await axios.post(uploadUrl, formData, {
-        headers: formData.getHeaders()
-      });
-      
-      // Удаляем временный файл после загрузки
-      fs.unlinkSync(tempFilePath);
-      log(`Временный файл удален: ${tempFilePath}`, 'social-publishing');
-      
-      log(`Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
-      return uploadResponse.data;
-    } catch (error: any) {
-      log(`Ошибка при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
-      if (error.response) {
-        log(`Данные ответа при ошибке загрузки: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      try {
+        const uploadResponse = await axios.post(uploadUrl, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Accept': 'application/json'
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 60000 // 60 секунд таймаут для отправки
+        });
+        
+        log(`🟢 [ВК: ШАГ 4] Получен ответ от сервера ВК со статусом: ${uploadResponse.status}`, 'social-publishing');
+        log(`🟢 [ВК: ШАГ 4] Ответ от сервера загрузки VK: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+        
+        // Закрываем стрим чтения файла
+        fileStream.destroy();
+        
+        // Удаляем временный файл после успешной загрузки
+        try {
+          fs.unlinkSync(tempFilePath);
+          log(`🟢 [ВК: ШАГ 4] Временный файл удален: ${tempFilePath}`, 'social-publishing');
+        } catch (deleteError: any) {
+          log(`🟢 [ВК: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Не удалось удалить временный файл: ${deleteError.message}`, 'social-publishing');
+        }
+        
+        return uploadResponse.data;
+      } catch (uploadError: any) {
+        // Закрываем стрим чтения файла при ошибке
+        fileStream.destroy();
+        
+        // Удаляем временный файл при ошибке
+        try {
+          fs.unlinkSync(tempFilePath);
+          log(`🟢 [ВК: ШАГ 4] Временный файл удален при ошибке: ${tempFilePath}`, 'social-publishing');
+        } catch (deleteError: any) {
+          log(`🟢 [ВК: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Не удалось удалить временный файл при ошибке: ${deleteError.message}`, 'social-publishing');
+        }
+        
+        log(`🟢 [ВК: ШАГ 4] ОШИБКА при отправке файла на сервер ВК: ${uploadError.message}`, 'social-publishing');
+        
+        if (uploadError.response) {
+          log(`🟢 [ВК: ШАГ 4] Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data || {})}`, 'social-publishing');
+          log(`🟢 [ВК: ШАГ 4] Статус ошибки: ${uploadError.response.status}`, 'social-publishing');
+        }
+        
+        throw uploadError;
       }
+    } catch (error: any) {
+      log(`❌ ОСНОВНАЯ ОШИБКА при загрузке фото на сервер VK: ${error.message}`, 'social-publishing');
       return null;
     }
   }
@@ -1698,8 +1892,8 @@ export class SocialPublishingService {
             content = response.data.data;
             log(`Контент получен напрямую через API: ${contentId}`, 'social-publishing');
           }
-        } catch (error) {
-          log(`Ошибка при получении контента через API: ${(error as any).message}`, 'social-publishing');
+        } catch (error: any) {
+          log(`Ошибка при получении контента через API: ${error.message}`, 'social-publishing');
         }
       }
       
@@ -1772,8 +1966,8 @@ export class SocialPublishingService {
           
           log(`Статус контента ${contentId} успешно обновлен через API: ${allPublished ? 'published' : 'scheduled'}`, 'social-publishing');
           return { ...content, socialPlatforms, publishedAt: firstPublishedAt };
-        } catch (error) {
-          log(`Ошибка при обновлении статуса через API: ${(error as any).message}`, 'social-publishing');
+        } catch (error: any) {
+          log(`Ошибка при обновлении статуса через API: ${error.message}`, 'social-publishing');
           return null;
         }
       }
@@ -2203,9 +2397,9 @@ export class SocialPublishingService {
       
       log(`Преобразован ID Instagram ${id} в короткий код ${shortCode}`, 'social-publishing');
       return shortCode;
-    } catch (error) {
+    } catch (error: any) {
       // Если возникла ошибка в преобразовании, возвращаем фиксированный короткий код
-      log(`Ошибка при преобразовании ID Instagram в короткий код: ${error}`, 'social-publishing');
+      log(`Ошибка при преобразовании ID Instagram в короткий код: ${error.message || error}`, 'social-publishing');
       return 'Cx1AbCdEfG'; // Фиксированный короткий код в случае ошибки
     }
   }

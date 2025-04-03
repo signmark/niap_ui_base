@@ -1216,7 +1216,7 @@ export default function ContentPage() {
                                       <div className="flex flex-wrap gap-1 mt-2">
                                         {content.keywords.slice(0, 3).map((keyword, index) => (
                                           <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                            {keyword}
+                                            {typeof keyword === 'string' ? keyword : String(keyword)}
                                           </Badge>
                                         ))}
                                         {content.keywords.length > 3 && (
