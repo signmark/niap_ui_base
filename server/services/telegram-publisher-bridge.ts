@@ -49,8 +49,8 @@ export async function getTelegramPublisher(options: TelegramPublisherOptions = {
   try {
     console.log('[TelegramPublisherBridge] Loading TelegramPublisher module...');
     
-    // Проверяем наличие файла standalone-telegram-publisher.js в корне проекта
-    const modulePath = path.join(process.cwd(), 'standalone-telegram-publisher.js');
+    // Проверяем наличие файла standalone-telegram-publisher.mjs в корне проекта
+    const modulePath = path.join(process.cwd(), 'standalone-telegram-publisher.mjs');
     
     if (!fs.existsSync(modulePath)) {
       throw new Error(`Файл TelegramPublisher не найден по пути: ${modulePath}`);
@@ -59,7 +59,7 @@ export async function getTelegramPublisher(options: TelegramPublisherOptions = {
     console.log(`[TelegramPublisherBridge] Файл найден: ${modulePath}`);
     
     // Динамический импорт модуля
-    const { default: TelegramPublisher } = await import('../../standalone-telegram-publisher.js');
+    const { default: TelegramPublisher } = await import('../../standalone-telegram-publisher.mjs');
     
     if (!TelegramPublisher) {
       throw new Error('Failed to import TelegramPublisher class from module');
