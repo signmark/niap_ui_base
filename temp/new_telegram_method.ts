@@ -18,6 +18,17 @@
       log(`📥 [TG] НАЧАЛО ЗАГРУЗКИ ИЗОБРАЖЕНИЯ В TELEGRAM`, 'social-publishing');
       log(`🔵 [TG: ШАГ 1] Подготовка URL для загрузки: ${imageUrl.substring(0, 100)}...`, 'social-publishing');
       
+      // Создаем временную директорию для файла
+      const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      // Генерируем уникальное имя файла
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 10);
+      const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
+      
       // ШАГ 2: Скачивание изображения из указанного URL
       log(`🟠 [TG: ШАГ 2] Скачиваем изображение напрямую: ${imageUrl.substring(0, 100)}...`, 'social-publishing');
       
@@ -31,106 +42,69 @@
         }
       });
       
-      log(`🟢 [TG: ШАГ 3] Получен ответ от сервера изображений, тип данных: ${typeof imageResponse.data}`, 'social-publishing');
-      
-      // Проверка типа полученных данных
-      if (!imageResponse.data || !(imageResponse.data instanceof Buffer || imageResponse.data instanceof ArrayBuffer)) {
-        log(`🔴 [TG: ШАГ 3] ОШИБКА: Неверный тип данных в ответе: ${typeof imageResponse.data}`, 'social-publishing');
-        throw new Error(`Неверный тип данных при скачивании изображения: ${typeof imageResponse.data}`);
-      }
-      
       // Проверяем размер скачанных данных
       const dataSize = imageResponse.data.length;
-      log(`🟢 [TG: ШАГ 4] Размер скачанных данных: ${dataSize} байт`, 'social-publishing');
-      
       if (dataSize === 0) {
-        log(`🟢 [TG: ШАГ 4] ОШИБКА: Скачан пустой файл (0 байт)`, 'social-publishing');
-        throw new Error('Скачанный файл имеет нулевой размер');
+        throw new Error('Скачан пустой файл (0 байт)');
       }
       
-      if (dataSize < 100) {
-        log(`🟢 [TG: ШАГ 4] ПРЕДУПРЕЖДЕНИЕ: Очень маленький размер файла (${dataSize} байт)`, 'social-publishing');
-      }
-      
-      // ШАГ 5: Сохранение во временный файл
-      log(`🔵 [TG: ШАГ 5] Сохраняем скачанные данные во временный файл...`, 'social-publishing');
-      
-      // Создаем временную директорию, если её нет
-      const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
-      try {
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-          log(`🔵 [TG: ШАГ 5] Создана временная директория: ${tempDir}`, 'social-publishing');
-        } else {
-          log(`🔵 [TG: ШАГ 5] Временная директория уже существует: ${tempDir}`, 'social-publishing');
-        }
-      } catch (mkdirError: any) {
-        log(`🔵 [TG: ШАГ 5] ОШИБКА при создании временной директории: ${mkdirError.message}`, 'social-publishing');
-        log(`🔵 [TG: ШАГ 5] Используем корневую временную директорию`, 'social-publishing');
-      }
-    
-      // Генерируем уникальное имя файла
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 10);
-      const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
+      log(`🟢 [TG: ШАГ 2] Скачано ${dataSize} байт данных`, 'social-publishing');
       
       // Сохраняем изображение во временный файл
       fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
-      log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
+      log(`🟣 [TG: ШАГ 3] Сохранено во временный файл: ${tempFilePath}`, 'social-publishing');
       
-      // Создаем FormData для отправки файла
+      // ШАГ 4: Подготовка FormData для отправки в Telegram
+      log(`🔵 [TG: ШАГ 4] Подготовка FormData для отправки в Telegram`, 'social-publishing');
       const formData = new FormData();
       formData.append('chat_id', chatId);
-      formData.append('caption', caption);
-      formData.append('parse_mode', 'HTML');
       
-      // Добавляем файл изображения в форму
+      if (caption) {
+        formData.append('caption', caption);
+        formData.append('parse_mode', 'HTML');
+      }
+      
+      // Добавляем файл в FormData
       const fileStream = fs.createReadStream(tempFilePath);
       formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
       
-      log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
+      // ШАГ 5: Отправка файла в Telegram
+      log(`🟠 [TG: ШАГ 5] Отправка файла в Telegram API`, 'social-publishing');
+      const response = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          'Accept': 'application/json'
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 30000
+      });
       
+      // Закрываем файловый поток
+      fileStream.destroy();
+      
+      // Удаляем временный файл
       try {
-        // Отправляем запрос в Telegram API
-        const response = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
-          headers: {
-            ...formData.getHeaders(),
-            'Accept': 'application/json'
-          },
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-          timeout: 30000 // увеличиваем таймаут до 30 секунд
-        });
-        
-        log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
-        return response.data;
-      } catch (uploadError: any) {
-        log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
-        if (uploadError.response) {
-          log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
-        }
-        throw uploadError;
-      } finally {
-        // Закрываем стрим чтения файла
-        fileStream.destroy();
-        
-        // Удаляем временный файл
-        try {
-          fs.unlinkSync(tempFilePath);
-          log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
-        } catch (unlinkError: any) {
-          log(`⚠️ Ошибка при удалении временного файла: ${unlinkError.message}`, 'social-publishing');
-        }
+        fs.unlinkSync(tempFilePath);
+        log(`🧹 [TG] Удален временный файл: ${tempFilePath}`, 'social-publishing');
+      } catch (unlinkError) {
+        log(`⚠️ [TG] Ошибка при удалении временного файла: ${unlinkError}`, 'social-publishing');
       }
+      
+      log(`✅ [TG] УСПЕХ: Изображение успешно отправлено в Telegram`, 'social-publishing');
+      return response.data;
+      
     } catch (error: any) {
-      log(`❌ ОШИБКА при загрузке изображения в Telegram: ${error.message}`, 'social-publishing');
+      log(`❌ [TG] ОШИБКА при загрузке изображения в Telegram: ${error.message}`, 'social-publishing');
+      
       if (error.response) {
-        log(`📄 Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+        log(`📡 [TG] Ответ сервера при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
       }
+      
       throw error;
     }
   }
-
+  
   /**
    * Публикует контент в Telegram
    * @param content Контент для публикации
@@ -142,7 +116,7 @@
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
     log(`▶️ Начата публикация в Telegram. Контент ID: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-    log(`▶️ Настройки для публикации в Telegram: chatId=${telegramSettings?.chatId?.substring(0, 6)}..., token=${telegramSettings?.token?.substring(0, 6)}...`, 'social-publishing');
+    log(`▶️ Настройки для публикации в Telegram: chatId=${telegramSettings?.chatId ? telegramSettings.chatId.substring(0, 6) + '...' : 'не задан'}, token=${telegramSettings?.token ? telegramSettings.token.substring(0, 6) + '...' : 'не задан'}`, 'social-publishing');
     
     if (!telegramSettings?.token || !telegramSettings?.chatId) {
       log(`❌ ОШИБКА: Отсутствуют настройки для Telegram (token=${!!telegramSettings?.token}, chatId=${!!telegramSettings?.chatId})`, 'social-publishing');
@@ -310,22 +284,9 @@
           };
         }
         
-        // Для Telegram карусель отправляется как группа изображений через sendMediaGroup
-        // Формируем массив медиа-объектов
-        const mediaObjects = imageUrls.map((url, index) => {
-          return {
-            type: 'photo',
-            media: url,
-            caption: index === 0 ? formattedText : '', // Подпись только для первого изображения
-            parse_mode: 'HTML'
-          };
-        });
-        
-        log(`Медиа-объекты для Telegram: ${JSON.stringify(mediaObjects)}`, 'social-publishing');
-        
         // Создаем временные файлы для каждого изображения
         const tempFiles: string[] = [];
-        const mediaItems = [];
+        const mediaItems: {index: number, messageId: number}[] = [];
         
         try {
           // Создаем временную директорию
@@ -334,78 +295,82 @@
             fs.mkdirSync(tempDir, { recursive: true });
           }
           
-          // Скачиваем каждое изображение во временный файл
+          // Скачиваем каждое изображение во временный файл и отправляем отдельно
           for (let i = 0; i < imageUrls.length; i++) {
             const url = imageUrls[i];
             const timestamp = Date.now();
             const randomString = Math.random().toString(36).substring(2, 10);
             const tempFilePath = path.join(tempDir, `telegram_carousel_${i}_${timestamp}_${randomString}.jpg`);
             
-            // Скачиваем изображение
-            log(`Скачивание изображения ${i+1}/${imageUrls.length} для карусели: ${url.substring(0, 100)}...`, 'social-publishing');
-            const response = await axios.get(url, {
-              responseType: 'arraybuffer',
-              timeout: 30000,
-              headers: {
-                'Accept': 'image/*',
-                'User-Agent': 'Mozilla/5.0 SMM Planner Bot'
-              }
-            });
-            
-            // Проверяем размер
-            const dataSize = response.data.length;
-            if (dataSize === 0) {
-              log(`ОШИБКА: Скачан пустой файл (0 байт) для изображения ${i+1}`, 'social-publishing');
-              continue; // Пропускаем это изображение
-            }
-            
-            // Сохраняем файл
-            fs.writeFileSync(tempFilePath, Buffer.from(response.data));
-            log(`Сохранено изображение ${i+1} во временный файл: ${tempFilePath}`, 'social-publishing');
-            tempFiles.push(tempFilePath);
-            
-            // Создаем FormData для каждого изображения
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            
-            // Первое изображение с подписью, остальные без
-            if (i === 0) {
-              formData.append('caption', formattedText);
-              formData.append('parse_mode', 'HTML');
-            }
-            
-            // Добавляем файл
-            const fileStream = fs.createReadStream(tempFilePath);
-            formData.append('photo', fileStream, { filename: `image_${timestamp}_${i}.jpg` });
-            
-            // Отправляем изображение в Telegram
             try {
-              const baseUrl = 'https://api.telegram.org/bot';
-              const uploadResponse = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
+              // Скачиваем изображение
+              log(`Скачивание изображения ${i+1}/${imageUrls.length} для карусели: ${url.substring(0, 100)}...`, 'social-publishing');
+              const response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 30000,
                 headers: {
-                  ...formData.getHeaders(),
-                  'Accept': 'application/json'
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity,
-                timeout: 30000
+                  'Accept': 'image/*',
+                  'User-Agent': 'Mozilla/5.0 SMM Planner Bot'
+                }
               });
               
-              fileStream.destroy(); // Закрываем стрим
-              
-              log(`Успешно отправлено изображение ${i+1} в Telegram`, 'social-publishing');
-              
-              // Добавляем полученное медиа-ID в массив для формирования группы
-              mediaItems.push({
-                index: i,
-                messageId: uploadResponse.data.result.message_id
-              });
-            } catch (uploadError: any) {
-              fileStream.destroy(); // Обязательно закрываем стрим при ошибке
-              log(`Ошибка при отправке изображения ${i+1} в Telegram: ${uploadError.message}`, 'social-publishing');
-              if (uploadError.response) {
-                log(`Данные ошибки: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+              // Проверяем размер
+              const dataSize = response.data.length;
+              if (dataSize === 0) {
+                log(`ОШИБКА: Скачан пустой файл (0 байт) для изображения ${i+1}`, 'social-publishing');
+                continue; // Пропускаем это изображение
               }
+              
+              // Сохраняем файл
+              fs.writeFileSync(tempFilePath, Buffer.from(response.data));
+              log(`Сохранено изображение ${i+1} во временный файл: ${tempFilePath}`, 'social-publishing');
+              tempFiles.push(tempFilePath);
+              
+              // Создаем FormData для каждого изображения
+              const formData = new FormData();
+              formData.append('chat_id', chatId);
+              
+              // Первое изображение с подписью, остальные без
+              if (i === 0) {
+                formData.append('caption', formattedText);
+                formData.append('parse_mode', 'HTML');
+              }
+              
+              // Добавляем файл
+              const fileStream = fs.createReadStream(tempFilePath);
+              formData.append('photo', fileStream, { filename: `image_${timestamp}_${i}.jpg` });
+              
+              // Отправляем изображение в Telegram
+              try {
+                const baseUrl = 'https://api.telegram.org/bot';
+                const uploadResponse = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
+                  headers: {
+                    ...formData.getHeaders(),
+                    'Accept': 'application/json'
+                  },
+                  maxContentLength: Infinity,
+                  maxBodyLength: Infinity,
+                  timeout: 30000
+                });
+                
+                fileStream.destroy(); // Закрываем стрим
+                
+                log(`Успешно отправлено изображение ${i+1} в Telegram`, 'social-publishing');
+                
+                // Добавляем полученное медиа-ID в массив для формирования группы
+                mediaItems.push({
+                  index: i,
+                  messageId: uploadResponse.data.result.message_id
+                });
+              } catch (uploadError: any) {
+                fileStream.destroy(); // Обязательно закрываем стрим при ошибке
+                log(`Ошибка при отправке изображения ${i+1} в Telegram: ${uploadError.message}`, 'social-publishing');
+                if (uploadError.response) {
+                  log(`Данные ошибки: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+                }
+              }
+            } catch (downloadError: any) {
+              log(`Ошибка при скачивании изображения ${i+1} для карусели: ${downloadError.message}`, 'social-publishing');
             }
           }
           
@@ -453,8 +418,6 @@
           };
           
         } catch (carouselError: any) {
-          log(`Ошибка при публикации карусели в Telegram: ${carouselError.message}`, 'social-publishing');
-          
           // Удаляем все временные файлы
           tempFiles.forEach(file => {
             try {
@@ -465,6 +428,8 @@
               // Игнорируем ошибки при очистке
             }
           });
+          
+          log(`Ошибка при публикации карусели в Telegram: ${carouselError.message}`, 'social-publishing');
           
           return {
             platform: 'telegram',
