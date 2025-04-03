@@ -6,82 +6,68 @@ import dotenv from 'dotenv';
 // Загружаем переменные окружения
 dotenv.config();
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const DIRECTUS_EMAIL = process.env.DIRECTUS_EMAIL;
 const DIRECTUS_PASSWORD = process.env.DIRECTUS_PASSWORD;
+const DIRECTUS_URL = 'https://directus.nplanner.ru';
 
 async function getDirectusToken() {
   try {
-    if (!DIRECTUS_EMAIL || !DIRECTUS_PASSWORD) {
-      console.error('⚠️ Не найдены учетные данные Directus в переменных окружения DIRECTUS_EMAIL и DIRECTUS_PASSWORD');
-      process.exit(1);
-    }
-
-    console.log(`Авторизация в Directus (${DIRECTUS_URL})...`);
+    console.log(`🔐 Получаем токен авторизации Directus...`);
+    console.log(`📧 Email: ${DIRECTUS_EMAIL}`);
+    console.log(`🔑 Password: ${'*'.repeat(DIRECTUS_PASSWORD?.length || 8)}`);
     
-    const authResponse = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-      email: DIRECTUS_EMAIL,
-      password: DIRECTUS_PASSWORD
-    });
-
-    const { data } = authResponse;
+    const response = await axios.post(
+      `${DIRECTUS_URL}/auth/login`, 
+      {
+        email: DIRECTUS_EMAIL,
+        password: DIRECTUS_PASSWORD
+      }
+    );
     
-    if (data.data && data.data.access_token) {
-      console.log('✅ Успешная авторизация в Directus!');
-      
-      // Сохраняем токен в .env файл
-      const tokenLine = `DIRECTUS_TOKEN=${data.data.access_token}`;
-      
-      // Проверяем, существует ли .env файл
-      let envContent = '';
-      try {
-        envContent = fs.readFileSync('.env', 'utf8');
-      } catch (err) {
-        // Файл не существует, создаем новый
-        envContent = '';
-      }
-      
-      // Проверяем, содержит ли файл уже строку с DIRECTUS_TOKEN
-      if (envContent.includes('DIRECTUS_TOKEN=')) {
-        // Заменяем существующий токен
-        envContent = envContent.replace(/DIRECTUS_TOKEN=.*/g, tokenLine);
-      } else {
-        // Добавляем новый токен в конец файла
-        envContent += `\n${tokenLine}`;
-      }
-      
-      // Записываем файл
-      fs.writeFileSync('.env', envContent);
-      
-      console.log(`✅ Токен сохранен в .env файл`);
-      console.log(`Токен: ${data.data.access_token.substring(0, 20)}...`);
-      
-      return data.data.access_token;
+    const { access_token, refresh_token } = response.data.data;
+    
+    console.log(`✅ Токен успешно получен!`);
+    console.log(`📝 Access token: ${access_token.substring(0, 15)}...`);
+    console.log(`🔄 Refresh token: ${refresh_token.substring(0, 15)}...`);
+    
+    // Сохраняем токен в .env файл
+    let envContent = fs.readFileSync('.env', 'utf8');
+    
+    // Проверяем, есть ли уже переменная DIRECTUS_TOKEN
+    if (envContent.includes('DIRECTUS_TOKEN=')) {
+      // Обновляем существующую переменную
+      envContent = envContent.replace(
+        /DIRECTUS_TOKEN=.*/,
+        `DIRECTUS_TOKEN=${access_token}`
+      );
     } else {
-      console.error('❌ Ошибка авторизации: Токен не получен в ответе');
-      console.error('Данные ответа:', JSON.stringify(data));
-      return null;
+      // Добавляем новую переменную
+      envContent += `\nDIRECTUS_TOKEN=${access_token}`;
     }
+    
+    // Записываем обновленные переменные в .env файл
+    fs.writeFileSync('.env', envContent);
+    console.log(`💾 Токен сохранен в .env файл`);
+    
+    return access_token;
   } catch (error) {
-    console.error('❌ Ошибка авторизации в Directus:', error.message);
+    console.error(`❌ Ошибка при получении токена:`);
     if (error.response) {
-      console.error('Данные ответа:', JSON.stringify(error.response.data));
+      console.error(`📊 Статус ответа: ${error.response.status}`);
+      console.error(`📝 Данные ответа:`, error.response.data);
+    } else {
+      console.error(error.message);
     }
-    return null;
+    throw error;
   }
 }
 
 // Запускаем функцию получения токена
 getDirectusToken()
   .then(token => {
-    if (token) {
-      console.log('Авторизация выполнена успешно');
-    } else {
-      console.error('Не удалось получить токен');
-      process.exit(1);
-    }
+    console.log(`🎉 Операция завершена успешно!`);
   })
   .catch(err => {
-    console.error('Произошла ошибка:', err);
+    console.error(`❌ Ошибка при выполнении: ${err}`);
     process.exit(1);
   });
