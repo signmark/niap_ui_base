@@ -605,7 +605,9 @@ export class SocialPublishingService {
             }
           }
         }
-      } else if (hasVideo) {
+      } 
+      
+      if (hasVideo) {
         // Отправка видео с подписью (с обработанным URL)
         log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
         const videoRequestBody = {
@@ -620,7 +622,9 @@ export class SocialPublishingService {
         response = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
           headers: { 'Content-Type': 'application/json' }
         });
-      } else if (content.contentType === 'text' || !content.contentType) {
+      } 
+      
+      if (content.contentType === 'text' || !content.contentType) {
         // Отправка текстового сообщения (по умолчанию)
         log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
         const messageRequestBody = {
@@ -634,9 +638,12 @@ export class SocialPublishingService {
         response = await axios.post(`${baseUrl}/sendMessage`, messageRequestBody, {
           headers: { 'Content-Type': 'application/json' }
         });
-      } else {
+      }
+      
+      // Если до сих пор не отправлено, пробуем неподдерживаемый формат как текст
+      if (!response) {
         // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
-        log(`Для типа контента ${content.contentType} не найдены медиа. Отправляем как текст`, 'social-publishing');
+        log(`Для типа контента ${content.contentType} не найдены медиа или другие обработчики. Отправляем как текст`, 'social-publishing');
         try {
           const fallbackMessageBody = {
             chat_id: formattedChatId,
@@ -2123,35 +2130,6 @@ export class SocialPublishingService {
     }
   }
 
-  private async getSystemToken(): Promise<string | null> {
-    try {
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      
-      if (!email || !password) {
-        log(`Отсутствуют учетные данные администратора Directus в переменных окружения`, 'social-publishing');
-        return null;
-      }
-      
-      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
-      
-      const response = await axios.post(`${directusUrl}/auth/login`, {
-        email,
-        password
-      });
-      
-      if (response.data && response.data.data && response.data.data.access_token) {
-        log(`Успешно получен токен администратора Directus`, 'social-publishing');
-        return response.data.data.access_token;
-      }
-      
-      log(`Не удалось получить токен администратора Directus: Неверный формат ответа`, 'social-publishing');
-      return null;
-    } catch (error: any) {
-      log(`Ошибка при получении токена администратора Directus: ${error.message}`, 'social-publishing');
-      return null;
-    }
-  }
 }
 
 export const socialPublishingService = new SocialPublishingService();
