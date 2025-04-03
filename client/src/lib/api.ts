@@ -217,6 +217,19 @@ export const uploadImage = async (file: File) => {
     }
     
     console.log('uploadImage: Ответ сервера:', data);
+    
+    // Проверяем, содержит ли ответ от Directus данные со структурой, которую вы указали
+    if (data && data.data && data.data.id) {
+      console.log('uploadImage: Обнаружены данные Directus API', data.data);
+      // Правильный формат URL: https://directus.nplanner.ru/assets/{UUID}
+      const directusFileUrl = `https://directus.nplanner.ru/assets/${data.data.id}`;
+      
+      // Обновляем data для возврата
+      data.fileUrl = directusFileUrl;
+      
+      console.log('uploadImage: Сформирован URL файла Directus:', directusFileUrl);
+    }
+    
     return data;
   } catch (error: any) {
     console.error('Ошибка при загрузке через универсальный маршрут, пробуем резервный:', error);
@@ -343,6 +356,25 @@ export const uploadMultipleImages = async (files: File[]) => {
       throw new Error('Некорректный формат ответа от сервера');
     }
     console.log('uploadMultipleImages: Ответ сервера:', data);
+    
+    // Обработка ответа Directus для множественной загрузки
+    if (data && data.files && Array.isArray(data.files)) {
+      // Проходим по всем файлам и корректируем URL
+      const processedFiles = data.files.map((file: any) => {
+        // Проверяем, содержит ли файл структуру ответа Directus
+        if (file && file.fileInfo && file.fileInfo.id) {
+          console.log('uploadMultipleImages: Обнаружен формат Directus API для файла', file.fileInfo.id);
+          // Формируем правильный URL для изображений Directus
+          file.fileUrl = `https://directus.nplanner.ru/assets/${file.fileInfo.id}`;
+          console.log('uploadMultipleImages: Сформирован URL файла:', file.fileUrl);
+        }
+        return file;
+      });
+      
+      // Обновляем файлы в ответе
+      data.files = processedFiles;
+    }
+    
     return data;
   } catch (error: any) {
     console.error('Ошибка при загрузке изображений:', error);
