@@ -1235,7 +1235,11 @@ export default function ContentPage() {
                                         src={content.imageUrl} 
                                         alt={content.title || "Content Image"} 
                                         className="rounded-md w-full h-full object-cover"
+                                        crossOrigin="anonymous"
+                                        referrerPolicy="no-referrer"
+                                        loading="lazy"
                                         onError={(e) => {
+                                          console.error("Error loading image:", content.imageUrl);
                                           (e.target as HTMLImageElement).src = "https://placehold.co/400x225?text=Image+Error";
                                         }}
                                       />
