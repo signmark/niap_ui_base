@@ -14,6 +14,31 @@ import { directusApiManager } from './directus';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+/**
+ * Безопасное логирование объектов (с обработкой циклических ссылок)
+ * @param obj Объект для логирования
+ * @returns Безопасная строка для логирования
+ */
+function safeStringify(obj: any): string {
+  try {
+    // Обработка циклических ссылок
+    const cache: any[] = [];
+    const str = JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        // Обнаружение циклических ссылок
+        if (cache.indexOf(value) !== -1) {
+          return '[Циклическая ссылка]';
+        }
+        cache.push(value);
+      }
+      return value;
+    }, 2);
+    return str || String(obj);
+  } catch (error) {
+    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
+  }
+}
+
 // Получаем путь к текущему файлу и директории в ES модуле
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -127,7 +152,7 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
       log(`[uploads] Ошибка при проверке доступа к Directus: ${userError.message}`);
       if (userError.response) {
         log(`[uploads] Статус ошибки: ${userError.response.status}`);
-        log(`[uploads] Данные ошибки: ${JSON.stringify(userError.response.data)}`);
+        log(`[uploads] Данные ошибки: ${safeStringify(userError.response.data)}`);
       }
       
       // Если получили 401, выбрасываем ошибку, чтобы прервать загрузку
@@ -189,7 +214,7 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
       }
 
       if (!response || !response.data || !response.data.data) {
-        log(`[uploads] Некорректный ответ от Directus API: ${JSON.stringify(response?.data || 'нет данных')}`);
+        log(`[uploads] Некорректный ответ от Directus API: ${safeStringify(response?.data || 'нет данных')}`);
         throw new Error('Некорректный ответ от Directus API');
       }
 
@@ -201,7 +226,7 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
       // Логируем детали ошибки, если доступны
       if (directusError.response) {
         log(`[uploads] Статус ошибки Directus: ${directusError.response.status}`);
-        log(`[uploads] Данные ошибки Directus: ${JSON.stringify(directusError.response.data)}`);
+        log(`[uploads] Данные ошибки Directus: ${safeStringify(directusError.response.data)}`);
       }
       
       // Если Directus сервис файлов недоступен, используем локальное сохранение
@@ -268,7 +293,7 @@ async function uploadFileToDirectus(file: Express.Multer.File, token: string | n
     // Логируем детали ошибки
     if (error.response) {
       log(`[uploads] Статус ошибки: ${error.response.status}`);
-      log(`[uploads] Данные ошибки: ${JSON.stringify(error.response.data)}`);
+      log(`[uploads] Данные ошибки: ${safeStringify(error.response.data)}`);
     }
     
     throw error;
@@ -347,7 +372,7 @@ export function registerUploadRoutes(app: Express) {
       } catch (uploadError: any) {
         log(`[uploads] Ошибка при загрузке в Directus: ${uploadError.message}`);
         if (uploadError.response) {
-          log(`[uploads] Ответ сервера Directus: ${JSON.stringify(uploadError.response.data)}`);
+          log(`[uploads] Ответ сервера Directus: ${safeStringify(uploadError.response.data)}`);
         }
         throw uploadError; // Пробрасываем ошибку для обработки в catch блоке
       }
@@ -358,7 +383,7 @@ export function registerUploadRoutes(app: Express) {
       // Более подробное логирование
       if (error.response) {
         log(`[uploads] Статус ошибки Axios: ${error.response.status}`);
-        log(`[uploads] Данные ошибки Axios: ${JSON.stringify(error.response.data)}`);
+        log(`[uploads] Данные ошибки Axios: ${safeStringify(error.response.data)}`);
       }
       
       return res.status(500).json({
@@ -594,7 +619,7 @@ export function registerUploadRoutes(app: Express) {
       // Добавляем подробный вывод о запросе и ошибке
       if (axios.isAxiosError(error) && error.response) {
         log(`[uploads] Статус ошибки: ${error.response.status}`);
-        log(`[uploads] Данные ошибки: ${JSON.stringify(error.response.data)}`);
+        log(`[uploads] Данные ошибки: ${safeStringify(error.response.data)}`);
       }
       
       // Если файл не найден, возвращаем изображение-заглушку

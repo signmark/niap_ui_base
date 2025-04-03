@@ -9,6 +9,31 @@ import * as path from 'path';
 import * as os from 'os';
 import FormData from 'form-data';
 
+/**
+ * Безопасное логирование объектов (с обработкой циклических ссылок)
+ * @param obj Объект для логирования
+ * @returns Безопасная строка для логирования
+ */
+function safeStringify(obj: any): string {
+  try {
+    // Обработка циклических ссылок
+    const cache: any[] = [];
+    const str = JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        // Обнаружение циклических ссылок
+        if (cache.indexOf(value) !== -1) {
+          return '[Циклическая ссылка]';
+        }
+        cache.push(value);
+      }
+      return value;
+    }, 2);
+    return str || String(obj);
+  } catch (error) {
+    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
+  }
+}
+
 interface TelegramPublisherOptions {
   verbose?: boolean;
   directusEmail?: string;
@@ -28,7 +53,7 @@ class TelegramPublisher {
       directusUrl: options.directusUrl || process.env.DIRECTUS_URL || 'https://db.nplanner.ru'
     };
     
-    this.log('TelegramPublisher инициализирован с параметрами:', JSON.stringify({
+    this.log('TelegramPublisher инициализирован с параметрами:', safeStringify({
       verbose: this.options.verbose,
       directusUrl: this.options.directusUrl,
       hasCredentials: !!(this.options.directusEmail && this.options.directusPassword)
@@ -86,7 +111,7 @@ class TelegramPublisher {
         return null;
       }
     } catch (error) {
-      this.log('Ошибка при получении токена Directus:', error);
+      this.log('Ошибка при получении токена Directus:', safeStringify(error));
       return null;
     }
   }
@@ -124,7 +149,7 @@ class TelegramPublisher {
         contentType
       };
     } catch (error) {
-      this.log('Ошибка при скачивании изображения:', error);
+      this.log('Ошибка при скачивании изображения:', safeStringify(error));
       return null;
     }
   }
@@ -178,10 +203,10 @@ class TelegramPublisher {
       
       return response.data;
     } catch (error) {
-      this.log('Ошибка при отправке изображения в Telegram:', error);
+      this.log('Ошибка при отправке изображения в Telegram:', safeStringify(error));
       return {
         ok: false,
-        description: `Ошибка при отправке изображения: ${error.message || error}`
+        description: `Ошибка при отправке изображения: ${error.message || safeStringify(error)}`
       };
     }
   }
@@ -197,6 +222,18 @@ class TelegramPublisher {
   ): Promise<any> {
     try {
       this.log(`Начинаем процесс отправки изображения в Telegram: ${imageUrl} -> ${chatId}`);
+      
+      // Проверяем, не является ли URL placeholder-изображением
+      if (imageUrl.includes('placehold.co') || 
+          imageUrl.includes('placeholder') || 
+          imageUrl.includes('Image+Error') ||
+          imageUrl.includes('НЕИЗОБРАЖЕНИЙ')) {
+        this.log(`Обнаружено placeholder-изображение: ${imageUrl}. Публикация отменена.`);
+        return {
+          ok: false,
+          description: 'Обнаружено placeholder-изображение. Публикация отменена.'
+        };
+      }
       
       // Скачиваем изображение
       const imageInfo = await this.downloadImage(imageUrl);
@@ -219,10 +256,10 @@ class TelegramPublisher {
       
       return result;
     } catch (error) {
-      this.log('Ошибка в процессе отправки изображения:', error);
+      this.log('Ошибка в процессе отправки изображения:', safeStringify(error));
       return {
         ok: false,
-        description: `Глобальная ошибка: ${error.message || error}`
+        description: `Глобальная ошибка: ${error.message || safeStringify(error)}`
       };
     }
   }
