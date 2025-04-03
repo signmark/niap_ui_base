@@ -412,24 +412,57 @@ export class SocialPublishingService {
           if (images[0].startsWith('http')) {
             log(`Telegram отклонил URL изображения. Попытка загрузки изображения локально и повторная отправка`, 'social-publishing');
             try {
-              // Создаем FormData для мультипарт загрузки файла
+              log(`Загружаем изображение с URL: ${images[0]}`, 'social-publishing');
+              
+              // Загружаем изображение и сохраняем во временный файл
+              const imageResponse = await axios.get(images[0], { 
+                responseType: 'arraybuffer',
+                // Добавляем заголовки для некоторых защищенных источников
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                  'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+                  'Accept-Encoding': 'gzip, deflate, br',
+                  'Referer': 'https://planner-app.com/'
+                }
+              });
+              
+              log(`Изображение успешно загружено, размер: ${imageResponse.data.length} байт`, 'social-publishing');
+              
+              // Сохраняем во временный файл
+              const tempFilePath = path.join(os.tmpdir(), `telegram_upload_${Date.now()}.jpg`);
+              fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+              
+              log(`Создан временный файл: ${tempFilePath}`, 'social-publishing');
+              
+              // Создаем FormData для отправки файла
               const formData = new FormData();
               formData.append('chat_id', formattedChatId);
               formData.append('caption', truncatedCaption);
               formData.append('parse_mode', 'HTML');
-
-              // Загружаем изображение и добавляем как файл
-              const imageResponse = await axios.get(images[0], { responseType: 'arraybuffer' });
-              const imageBuffer = Buffer.from(imageResponse.data, 'binary');
-              formData.append('photo', imageBuffer, 'image.jpg');
-
+              formData.append('photo', fs.createReadStream(tempFilePath));
+              
+              log(`Отправляем файл в Telegram через multipart/form-data`, 'social-publishing');
+              
               // Отправляем запрос с мультипарт формой
               response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
                 headers: formData.getHeaders()
               });
+              
+              // Удаляем временный файл
+              fs.unlinkSync(tempFilePath);
+              log(`Временный файл удален: ${tempFilePath}`, 'social-publishing');
+              
               log(`Успешный ответ от Telegram API после локальной загрузки: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
-            } catch (retryError) {
-              log(`Повторная попытка загрузки изображения также не удалась: ${retryError}`, 'social-publishing');
+            } catch (retryError: any) {
+              const retryErrorData = (retryError as any).response?.data 
+                ? JSON.stringify((retryError as any).response.data) 
+                : String(retryError);
+              log(`Повторная попытка загрузки изображения также не удалась: ${retryErrorData}`, 'social-publishing');
+              
+              if (retryError.response) {
+                log(`Данные ответа при ошибке повторной загрузки: ${JSON.stringify(retryError.response.data)}`, 'social-publishing');
+              }
+              
               throw retryError; // Пробрасываем исключение дальше
             }
           } else {
