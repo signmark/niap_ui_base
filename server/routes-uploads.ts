@@ -514,20 +514,45 @@ export function registerUploadRoutes(app: Express) {
     try {
       log(`[uploads] Запрошен прокси для файла: ${fileUrl}`);
       
+      // Проверяем, является ли это UUID Directus
+      const uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i;
+      const match = fileUrl.match(uuidRegex);
+      
+      let finalUrl = fileUrl;
+      
+      // Если это UUID Directus, добавляем расширение .jpg для правильного MIME-типа
+      if (match && fileUrl.includes('directus.nplanner.ru/assets/')) {
+        const uuid = match[0];
+        if (!fileUrl.includes('.')) {
+          finalUrl = `https://directus.nplanner.ru/assets/${uuid}.jpg`;
+          log(`[uploads] Преобразован URL Directus с добавлением расширения: ${finalUrl}`);
+        }
+      }
+      
       // Получаем файл из Directus и передаем его клиенту
       const response = await axios({
-        url: fileUrl,
+        url: finalUrl,
         method: 'GET',
         responseType: 'stream',
         headers: {
-          'Accept': 'image/*'
+          'Accept': 'image/*',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        // Добавляем случайный параметр для избежания кеширования
+        params: {
+          '_nocache': Date.now()
         }
       });
 
       // Устанавливаем соответствующие заголовки
       if (response.headers['content-type']) {
         res.setHeader('Content-Type', response.headers['content-type']);
+      } else {
+        // Если не определен content-type, устанавливаем image/jpeg
+        res.setHeader('Content-Type', 'image/jpeg');
       }
+      
       if (response.headers['content-length']) {
         res.setHeader('Content-Length', response.headers['content-length']);
       }
@@ -535,12 +560,20 @@ export function registerUploadRoutes(app: Express) {
       // Устанавливаем заголовки CORS
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET');
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Кэширование на 1 год
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       
       // Передаем данные клиенту
       response.data.pipe(res);
     } catch (error: any) {
       log(`[uploads] Ошибка прокси файла: ${error.message}`);
+      
+      // Если файл не найден, возвращаем изображение-заглушку
+      if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
+        return res.redirect('https://placehold.co/400x225?text=Image+Not+Found');
+      }
+      
       return res.status(500).json({
         success: false,
         error: `Ошибка доступа к файлу: ${error.message}`

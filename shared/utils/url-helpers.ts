@@ -20,35 +20,29 @@ export function getProxiedFileUrl(fileUrl: string): string {
     return fileUrl;
   }
   
-  // Если URL содержит Directus UUID (с расширением или без)
+  // Для всех URL Directus, содержащих UUID, используем наш прокси для решения CORS
   const uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i;
   const match = fileUrl.match(uuidRegex);
   
-  if (match) {
-    const uuid = match[0];
-    
-    // Проверяем, есть ли в строке расширение файла после UUID
-    const hasExtension = /\.[a-z0-9]{3,4}$/i.test(fileUrl);
-    
-    // Если расширение уже есть в URL, используем его, иначе добавляем .jpg
-    if (hasExtension) {
-      // Извлекаем расширение из исходного URL
-      const extension = fileUrl.substring(fileUrl.lastIndexOf('.'));
-      return `https://directus.nplanner.ru/assets/${uuid}${extension}`;
-    } else {
-      // Добавляем расширение .jpg, чтобы Directus корректно определил MIME-тип
-      return `https://directus.nplanner.ru/assets/${uuid}.jpg`;
-    }
+  if (match && (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('assets/') || fileUrl.includes('assets?'))) {
+    console.log('Используем прокси для URL Directus с UUID:', fileUrl);
+    return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
   }
   
-  // Проверяем, это URL Directus в старом формате?
+  // Проверяем, это URL Directus в любом формате?
   const isDirectusUrl = fileUrl.includes('directus.nplanner.ru') || 
                        fileUrl.includes('assets.directus') || 
                        fileUrl.includes('files.directus');
   
-  // Если это URL Directus, но не в новом формате - используем прокси
+  // Для любого URL Directus используем прокси
   if (isDirectusUrl) {
-    console.log('Используем прокси для старого формата URL Directus:', fileUrl);
+    console.log('Используем прокси для формата URL Directus:', fileUrl);
+    return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
+  }
+  
+  // Если URL начинается с https://v3.fal.media/ - это сгенерированное изображение, используем прокси
+  if (fileUrl.startsWith('https://v3.fal.media/') || fileUrl.startsWith('https://fal.media/')) {
+    console.log('Используем прокси для fal.media URL:', fileUrl);
     return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
   }
   
