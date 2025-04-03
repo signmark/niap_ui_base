@@ -1187,11 +1187,11 @@ export default function ContentPage() {
                                 </div>
                                 
                                 {/* Content title */}
-                                {content.title && typeof content.title === 'string' && (
+                                {content.title && typeof content.title === 'string' ? (
                                   <div className="mb-1.5">
                                     <h3 className="text-base font-medium line-clamp-1">{content.title}</h3>
                                   </div>
-                                )}
+                                ) : null}
                                 
                                 {/* Content preview */}
                                 <div className="flex gap-3">
@@ -1232,8 +1232,10 @@ export default function ContentPage() {
                                   {content.contentType === "text-image" && content.imageUrl && (
                                     <div className="w-20 h-20 flex-shrink-0">
                                       <img 
-                                        src={content.imageUrl} 
-                                        alt={content.title || "Content Image"} 
+                                        src={content.imageUrl.includes('directus.nplanner.ru') 
+                                            ? `/api/proxy-file?url=${encodeURIComponent(content.imageUrl)}&_t=${Date.now()}` 
+                                            : content.imageUrl} 
+                                        alt={typeof content.title === 'string' ? content.title : "Content Image"} 
                                         className="rounded-md w-full h-full object-cover"
                                         crossOrigin="anonymous"
                                         referrerPolicy="no-referrer"

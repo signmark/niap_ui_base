@@ -5,13 +5,19 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
 
-// Хелпер для формирования URL изображения из Directus
+// Хелпер для формирования URL изображения из Directus через прокси
 function getDirectusFileUrl(fileUrl: string): string {
   if (!fileUrl) return '';
   
-  // Если это UUID (наиболее частый случай) - формируем полный URL Directus
+  // Если это UUID (наиболее частый случай) - формируем URL через прокси
   if (fileUrl.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i)) {
-    return `https://directus.nplanner.ru/assets/${fileUrl}`;
+    const directusUrl = `https://directus.nplanner.ru/assets/${fileUrl}`;
+    return `/api/proxy-file?url=${encodeURIComponent(directusUrl)}&_t=${Date.now()}`;
+  }
+  
+  // Если URL содержит directus.nplanner.ru - используем прокси
+  if (fileUrl.includes('directus.nplanner.ru')) {
+    return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}&_t=${Date.now()}`;
   }
   
   // Любые другие URL просто возвращаем как есть
