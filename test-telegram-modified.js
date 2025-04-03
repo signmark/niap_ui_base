@@ -13,9 +13,9 @@ dotenv.config();
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "-1002302366310";
 const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://directus.nplanner.ru";
-// Используем учетные данные администратора, предоставленные пользователем
-const DIRECTUS_ADMIN_EMAIL = "lbrspb@gmail.com";
-const DIRECTUS_ADMIN_PASSWORD = "qtpZ3dh7";
+// Используем учетные данные администратора из переменных окружения
+const DIRECTUS_ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || "lbrspb@gmail.com";
+const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || "QtpZ3dh7"; // Заменено на правильный пароль
 let DIRECTUS_TOKEN = null; // Токен будет получен автоматически
 
 // Функция для получения токена Directus
@@ -173,9 +173,18 @@ async function testSend() {
       return;
     }
     
-    // Заданное изображение от пользователя
-    const imageUrl = "https://directus.nplanner.ru/assets/eace6579-bc8e-4ea5-b36a-1025ba4464fd";
-    const caption = "Тестирование отправки изображения из Directus";
+    // Проверяем оба варианта
+    // Заданное изображение от пользователя (FAL.AI)
+    const falImageUrl = "https://v3.fal.media/files/tiger/OS8x6yWeWM9btdYXQULiR.png";
+    const falCaption = "Тестирование отправки изображения (fal.media)";
+    
+    // Заданное изображение из Directus 
+    const directusImageUrl = "https://v3.fal.media/files/panda/LUK2_nS9G0VxxC20qz9rs.jpeg";
+    const directusCaption = "Тестирование отправки изображения (panda)";
+    
+    // Выбираем изображение для тестирования
+    const imageUrl = directusImageUrl;
+    const caption = directusCaption;
     
     console.log(`🧪 Запуск тестовой отправки изображения: ${imageUrl}`);
     const result = await sendDirectusImageToTelegram(
