@@ -190,13 +190,32 @@ export const uploadImage = async (file: File) => {
       }
     });
     
+    let responseText = '';
+    try {
+      responseText = await response.text();
+    } catch (textError) {
+      console.error('Не удалось получить текст ответа:', textError);
+    }
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Ошибка сервера: ${response.status} ${response.statusText}`, errorText);
+      console.error(`Ошибка сервера: ${response.status} ${response.statusText}`, responseText);
       throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
     }
     
-    const data = await response.json();
+    // Проверяем, не вернулся ли HTML вместо JSON
+    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      console.error('Получен HTML вместо JSON:', responseText.substring(0, 200) + '...');
+      throw new Error('Сервер вернул HTML вместо JSON. Возможно, проблема с авторизацией или маршрутизацией.');
+    }
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.error('Ошибка парсинга JSON:', jsonError, 'Ответ сервера:', responseText.substring(0, 200) + '...');
+      throw new Error('Некорректный формат ответа от сервера');
+    }
+    
     console.log('uploadImage: Ответ сервера:', data);
     return data;
   } catch (error: any) {
@@ -221,13 +240,31 @@ export const uploadImage = async (file: File) => {
         }
       });
       
+      let backupResponseText = '';
+      try {
+        backupResponseText = await backupResponse.text();
+      } catch (textError) {
+        console.error('Не удалось получить текст ответа резервного маршрута:', textError);
+      }
+      
       if (!backupResponse.ok) {
-        const errorText = await backupResponse.text();
-        console.error(`Ошибка резервного сервера: ${backupResponse.status} ${backupResponse.statusText}`, errorText);
+        console.error(`Ошибка резервного сервера: ${backupResponse.status} ${backupResponse.statusText}`, backupResponseText);
         throw new Error(`Ошибка резервного сервера: ${backupResponse.status} ${backupResponse.statusText}`);
       }
       
-      const backupData = await backupResponse.json();
+      // Проверяем, не вернулся ли HTML вместо JSON
+      if (backupResponseText.trim().startsWith('<!DOCTYPE') || backupResponseText.trim().startsWith('<html')) {
+        console.error('Получен HTML вместо JSON (резервный маршрут):', backupResponseText.substring(0, 200) + '...');
+        throw new Error('Сервер вернул HTML вместо JSON. Возможно, проблема с авторизацией или маршрутизацией.');
+      }
+      
+      let backupData;
+      try {
+        backupData = JSON.parse(backupResponseText);
+      } catch (jsonError) {
+        console.error('Ошибка парсинга JSON (резервный маршрут):', jsonError, 'Ответ сервера:', backupResponseText.substring(0, 200) + '...');
+        throw new Error('Некорректный формат ответа от сервера при использовании резервного маршрута');
+      }
       console.log('uploadImage: Ответ резервного сервера:', backupData);
       return backupData;
     } catch (fallbackError: any) {
@@ -280,11 +317,31 @@ export const uploadMultipleImages = async (files: File[]) => {
       }
     });
     
+    let responseText = '';
+    try {
+      responseText = await response.text();
+    } catch (textError) {
+      console.error('Не удалось получить текст ответа:', textError);
+    }
+    
     if (!response.ok) {
+      console.error(`Ошибка сервера: ${response.status} ${response.statusText}`, responseText);
       throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
     }
     
-    const data = await response.json();
+    // Проверяем, не вернулся ли HTML вместо JSON
+    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      console.error('Получен HTML вместо JSON:', responseText.substring(0, 200) + '...');
+      throw new Error('Сервер вернул HTML вместо JSON. Возможно, проблема с авторизацией или маршрутизацией.');
+    }
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.error('Ошибка парсинга JSON:', jsonError, 'Ответ сервера:', responseText.substring(0, 200) + '...');
+      throw new Error('Некорректный формат ответа от сервера');
+    }
     console.log('uploadMultipleImages: Ответ сервера:', data);
     return data;
   } catch (error: any) {

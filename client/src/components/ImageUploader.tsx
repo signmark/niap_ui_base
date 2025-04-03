@@ -77,54 +77,108 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     try {
       if (multiple) {
+        console.log('Начинаем загрузку нескольких изображений...');
         const response = await uploadMultipleImages(Array.from(files));
-        if (response.success) {
+        console.log('Получен ответ от сервера при загрузке нескольких изображений:', response);
+        
+        if (response && response.success) {
           // Обновляем статус загрузок
-          const updatedUploads = tempUploads.map((upload, index) => ({
-            ...upload,
-            url: response.files[index].fileUrl,
-            progress: 100,
-            status: 'success' as const
-          }));
+          const updatedUploads = tempUploads.map((upload, index) => {
+            // Проверяем, что response.files и response.files[index] существуют
+            if (response.files && response.files[index] && response.files[index].fileUrl) {
+              return {
+                ...upload,
+                url: response.files[index].fileUrl,
+                progress: 100,
+                status: 'success' as const
+              };
+            } else {
+              // Если данные о файле отсутствуют, помечаем как ошибку
+              console.error(`Отсутствуют данные о файле с индексом ${index} в ответе сервера:`, response);
+              return {
+                ...upload,
+                progress: 100,
+                status: 'error' as const,
+                error: 'Отсутствуют данные о загруженном файле в ответе сервера'
+              };
+            }
+          });
           
           setUploads(updatedUploads);
           
-          // Вызываем callback для множественной загрузки
-          if (onMultipleImagesUploaded) {
-            const urls = response.files.map((file: any) => file.fileUrl);
-            onMultipleImagesUploaded(urls);
-          } else if (onImageUploaded) {
-            // Если callback для множественной загрузки не предоставлен, вызываем обычный callback с первым URL
-            onImageUploaded(response.files[0].fileUrl);
-          }
+          // Извлекаем URLs из ответа для callback-функций, с проверкой на существование
+          const validFiles = response.files && Array.isArray(response.files) 
+            ? response.files.filter((file: any) => file && file.fileUrl)
+            : [];
+            
+          const validUrls = validFiles.map((file: any) => file.fileUrl);
+          console.log('Извлечено URL-адресов:', validUrls.length);
           
-          toast({
-            title: 'Загрузка завершена',
-            description: `Успешно загружено ${files.length} изображений`,
-            variant: 'default'
-          });
+          // Вызываем callback для множественной загрузки только если есть валидные URL
+          if (validUrls.length > 0) {
+            if (onMultipleImagesUploaded) {
+              console.log('Вызываем callback для множественной загрузки с URL:', validUrls);
+              onMultipleImagesUploaded(validUrls);
+            } else if (onImageUploaded) {
+              // Если callback для множественной загрузки не предоставлен, вызываем обычный callback с первым URL
+              console.log('Вызываем callback для одиночной загрузки с первым URL:', validUrls[0]);
+              onImageUploaded(validUrls[0]);
+            }
+            
+            toast({
+              title: 'Загрузка завершена',
+              description: `Успешно загружено ${validUrls.length} из ${files.length} изображений`,
+              variant: 'default'
+            });
+          } else {
+            console.error('Не получено валидных URL-адресов в ответе сервера:', response);
+            toast({
+              title: 'Проблема с загрузкой',
+              description: 'Файлы были загружены, но сервер не вернул URL-адреса. Попробуйте другой метод загрузки.',
+              variant: 'destructive'
+            });
+          }
+        } else {
+          console.error('Ответ сервера не содержит признака успеха или некорректен:', response);
+          throw new Error('Некорректный формат ответа от сервера');
         }
       } else {
         // Загружаем один файл
+        console.log('Начинаем загрузку одного изображения...');
         const response = await uploadImage(files[0]);
-        if (response.success) {
+        console.log('Получен ответ от сервера при загрузке одного изображения:', response);
+        
+        if (response && response.success) {
+          // Проверяем наличие URL в ответе
+          if (!response.url && !response.fileUrl) {
+            console.error('В ответе сервера отсутствует URL для загруженного файла:', response);
+            throw new Error('Сервер не вернул URL для загруженного файла');
+          }
+          
+          // Используем URL из ответа, выбирая из доступных полей
+          const fileUrl = response.url || response.fileUrl;
+          
           // Обновляем статус загрузки
           setUploads([{
             id: tempUploads[0].id,
-            url: response.fileUrl,
+            url: fileUrl,
             name: files[0].name,
             progress: 100,
             status: 'success'
           }]);
           
           // Вызываем callback
-          onImageUploaded(response.fileUrl);
+          console.log('Вызываем callback с URL:', fileUrl);
+          onImageUploaded(fileUrl);
           
           toast({
             title: 'Загрузка завершена',
             description: 'Изображение успешно загружено',
             variant: 'default'
           });
+        } else {
+          console.error('Ответ сервера не содержит признака успеха или некорректен:', response);
+          throw new Error('Некорректный формат ответа от сервера');
         }
       }
     } catch (error: any) {
