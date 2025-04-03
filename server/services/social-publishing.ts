@@ -13,6 +13,81 @@ import FormData from 'form-data';
 export class SocialPublishingService {
 
   /**
+   * Форматирует HTML контент с сохранением абзацев и переносов строк
+   * @param htmlContent Исходный HTML-контент с форматированием
+   * @param platform Платформа для которой выполняется форматирование (влияет на поддерживаемые теги)
+   * @returns Отформатированный текст с сохранением структуры
+   */
+  private formatHtmlContent(htmlContent: string, platform: 'telegram' | 'vk' | 'facebook' | 'instagram'): string {
+    if (!htmlContent) return '';
+    
+    log(`Форматирование HTML-контента для платформы ${platform}`, 'social-publishing');
+    
+    // Базовые преобразования общие для всех платформ
+    // Заменяем div, p, br на переносы строк 
+    let formattedText = htmlContent
+      .replace(/<br\s*\/?>/g, '\n')  // <br> -> новая строка
+      .replace(/<\/p>\s*<p>/g, '\n\n')  // Между параграфами - двойной перенос
+      .replace(/<p[^>]*>/g, '')  // Открывающие теги <p> убираем
+      .replace(/<\/p>/g, '\n')  // Закрывающие </p> заменяем на перенос строки
+      .replace(/<div[^>]*>/g, '')  // Открывающие <div> убираем
+      .replace(/<\/div>/g, '\n')  // Закрывающие </div> заменяем на перенос
+      .replace(/<h[1-6][^>]*>/g, '**')  // Открывающие <h1>-<h6> заменяем на маркер жирного текста
+      .replace(/<\/h[1-6]>/g, '**\n\n');  // Закрывающие </h1>-</h6> заменяем на маркер жирного текста и двойной перенос
+    
+    // Платформо-зависимая обработка форматирования
+    if (platform === 'telegram') {
+      // Telegram поддерживает базовые HTML-теги
+      formattedText = formattedText
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<b>(.*?)<\/b>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<i>(.*?)<\/i>/g, '<i>$1</i>')
+        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
+        .replace(/<s>(.*?)<\/s>/g, '<s>$1</s>')
+        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); // Преобразуем временные маркеры в теги
+    } else if (platform === 'vk') {
+      // VK не поддерживает HTML-форматирование, но можно сохранить смысловое оформление
+      formattedText = formattedText
+        .replace(/<strong>(.*?)<\/strong>/g, '*$1*')
+        .replace(/<b>(.*?)<\/b>/g, '*$1*')
+        .replace(/<em>(.*?)<\/em>/g, '_$1_')
+        .replace(/<i>(.*?)<\/i>/g, '_$1_')
+        .replace(/<u>(.*?)<\/u>/g, '$1')  // Подчеркивание не поддерживается, сохраняем только текст
+        .replace(/<s>(.*?)<\/s>/g, '$1')  // Зачеркивание не поддерживается, сохраняем только текст
+        .replace(/<strike>(.*?)<\/strike>/g, '$1')
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '$2 ($1)')  // Ссылки как текст с URL в скобках
+        .replace(/\*\*(.*?)\*\*/g, '*$1*');  // Преобразуем временные маркеры в формат жирного текста
+    } else if (platform === 'instagram' || platform === 'facebook') {
+      // Instagram/Facebook не поддерживают форматирование, но сохраняем смысловую структуру
+      formattedText = formattedText
+        .replace(/<strong>(.*?)<\/strong>/g, '*$1*')
+        .replace(/<b>(.*?)<\/b>/g, '*$1*')
+        .replace(/<em>(.*?)<\/em>/g, '_$1_')
+        .replace(/<i>(.*?)<\/i>/g, '_$1_')
+        .replace(/<u>(.*?)<\/u>/g, '$1')
+        .replace(/<s>(.*?)<\/s>/g, '$1')
+        .replace(/<strike>(.*?)<\/strike>/g, '$1')
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '$2')  // Для Instagram сохраняем только текст, без URL
+        .replace(/\*\*(.*?)\*\*/g, '*$1*');
+    }
+    
+    // Удаляем все оставшиеся HTML-теги, но сохраняем их содержимое
+    formattedText = formattedText.replace(/<\/?[^>]+(>|$)/g, '');
+    
+    // Нормализация переносов строк и структуры текста
+    formattedText = formattedText
+      .replace(/\n{3,}/g, '\n\n')  // Больше двух переносов подряд -> двойной перенос
+      .trim();  // Удаляем лишние пробелы в начале и конце
+    
+    log(`Форматирование контента для ${platform} завершено, длина результата: ${formattedText.length} символов`, 'social-publishing');
+    
+    return formattedText;
+  }
+
+  /**
    * Обрабатывает поле дополнительных изображений в контенте, проверяя и преобразуя его при необходимости
    * @param content Контент, содержащий дополнительные изображения
    * @param platform Название социальной платформы (для логирования)
@@ -123,25 +198,10 @@ export class SocialPublishingService {
       // Подготовка сообщения с сохранением HTML-форматирования
       let text = processedContent.title ? `<b>${processedContent.title}</b>\n\n` : '';
       
-      // Telegram поддерживает только ограниченный набор HTML-тегов
-      // Нужно преобразовать HTML-теги к поддерживаемому Telegram формату
-      let contentText = processedContent.content
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
-        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
-        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
-        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+      // Форматируем контент для Telegram с сохранением HTML-тегов и структуры текста
+      const formattedContent = this.formatHtmlContent(processedContent.content, 'telegram');
       
-      // Удаляем все оставшиеся неподдерживаемые HTML-теги
-      // Вместо сложного regex, который может создавать невалидные HTML-теги,
-      // полностью удаляем все HTML-теги для безопасности, затем добавляем базовое форматирование
-      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
-      
-      text += contentText;
+      text += formattedContent;
 
       // Добавление хэштегов
       if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
@@ -520,17 +580,10 @@ export class SocialPublishingService {
       // Подготовка сообщения
       let message = processedContent.title ? `${processedContent.title}\n\n` : '';
       
-      // Преобразовываем HTML-теги в VK-разметку
-      // VK использует разные API для форматирования. Мы можем только переносы строк и эмодзи сохранить
-      let contentText = processedContent.content
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n');
+      // Форматируем контент для VK с сохранением структуры и смыслового форматирования
+      const formattedContent = this.formatHtmlContent(processedContent.content, 'vk');
       
-      // Убираем все HTML-теги, но сохраняем их содержимое
-      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
-      message += contentText;
+      message += formattedContent;
 
       // Добавление хэштегов
       if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
