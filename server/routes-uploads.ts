@@ -488,6 +488,53 @@ export function registerUploadRoutes(app: Express) {
     }
   });
 
+  // Прокси для файлов Directus, чтобы решить проблемы с CORS и доступом 403
+  app.get('/api/proxy-file', async (req: Request, res: Response) => {
+    const fileUrl = req.query.url as string;
+    if (!fileUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL файла не указан'
+      });
+    }
+
+    try {
+      log(`[uploads] Запрошен прокси для файла: ${fileUrl}`);
+      
+      // Получаем файл из Directus и передаем его клиенту
+      const response = await axios({
+        url: fileUrl,
+        method: 'GET',
+        responseType: 'stream',
+        headers: {
+          'Accept': 'image/*'
+        }
+      });
+
+      // Устанавливаем соответствующие заголовки
+      if (response.headers['content-type']) {
+        res.setHeader('Content-Type', response.headers['content-type']);
+      }
+      if (response.headers['content-length']) {
+        res.setHeader('Content-Length', response.headers['content-length']);
+      }
+      
+      // Устанавливаем заголовки CORS
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Кэширование на 1 год
+      
+      // Передаем данные клиенту
+      response.data.pipe(res);
+    } catch (error: any) {
+      log(`[uploads] Ошибка прокси файла: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка доступа к файлу: ${error.message}`
+      });
+    }
+  });
+
   // Добавим обработчик ошибок для multer
   app.use((err: any, req: Request, res: Response, next: Function) => {
     if (err instanceof multer.MulterError) {
