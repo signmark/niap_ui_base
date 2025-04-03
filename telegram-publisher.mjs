@@ -1,136 +1,173 @@
 /**
- * Самостоятельный ESM модуль для публикации изображений в Telegram
+ * Самостоятельный класс для публикации изображений в Telegram
  * с поддержкой авторизации при доступе к Directus
+ * 
+ * Для работы скрипта нужно установить в Node.js среде:
+ * - axios
+ * - form-data
+ * 
+ * Использование:
+ * const publisher = new TelegramPublisher();
+ * await publisher.sendDirectusImageToTelegram(imageUrl, chatId, caption, token);
  */
 
-import { config } from 'dotenv';
 import axios from 'axios';
+import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import os from 'os';
-import FormData from 'form-data';
-import { fileURLToPath } from 'url';
+import { createWriteStream } from 'fs';
 
-// Инициализация dotenv
-config();
-
-// Базовые настройки
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-const DIRECTUS_EMAIL = process.env.DIRECTUS_EMAIL;
-const DIRECTUS_PASSWORD = process.env.DIRECTUS_PASSWORD;
-
-export class TelegramPublisher {
-  constructor() {
+export default class TelegramPublisher {
+  constructor(options = {}) {
+    this.verbose = options.verbose || false;
+    this.directusEmail = options.directusEmail || process.env.DIRECTUS_EMAIL;
+    this.directusPassword = options.directusPassword || process.env.DIRECTUS_PASSWORD;
+    this.directusUrl = options.directusUrl || process.env.DIRECTUS_URL || 'http://localhost:8055';
+    
     this.directusToken = null;
     this.tokenExpiration = null;
+    
+    this.log('TelegramPublisher инициализирован');
   }
-  
+
+  /**
+   * Выводит сообщение в консоль, если включен режим подробного логирования
+   * @param {string} message Сообщение для логирования
+   * @param {string} level Уровень логирования (log, warn, error)
+   */
+  log(message, level = 'log') {
+    if (this.verbose || level === 'error') {
+      console[level](`[TelegramPublisher] ${message}`);
+    }
+  }
+
   /**
    * Проверяет, не истек ли срок действия токена
    * @returns {boolean} true если токен действителен, false если истек или не установлен
    */
   isTokenValid() {
-    return this.directusToken && this.tokenExpiration && Date.now() < this.tokenExpiration;
+    if (!this.directusToken || !this.tokenExpiration) {
+      return false;
+    }
+    
+    // Проверяем, не истек ли срок действия токена (с запасом в 60 секунд)
+    return this.tokenExpiration > Date.now() + 60000;
   }
-  
+
   /**
    * Получает токен авторизации Directus
    * @returns {Promise<string|null>} Токен авторизации или null в случае ошибки
    */
   async getDirectusToken() {
-    console.log('🔄 Получение токена авторизации Directus...');
-    
-    // Если у нас уже есть действующий токен, возвращаем его
-    if (this.isTokenValid()) {
-      console.log('✅ Используем существующий токен Directus');
-      return this.directusToken;
-    }
-    
     try {
-      const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-        email: DIRECTUS_EMAIL,
-        password: DIRECTUS_PASSWORD
+      // Если у нас уже есть действующий токен, возвращаем его
+      if (this.isTokenValid()) {
+        this.log('Используем существующий токен Directus');
+        return this.directusToken;
+      }
+      
+      if (!this.directusEmail || !this.directusPassword) {
+        this.log('Отсутствуют учетные данные Directus', 'error');
+        return null;
+      }
+      
+      this.log(`Получение токена Directus для ${this.directusEmail}...`);
+      
+      const response = await axios.post(`${this.directusUrl}/auth/login`, {
+        email: this.directusEmail,
+        password: this.directusPassword
       });
       
       if (response.data && response.data.data && response.data.data.access_token) {
         this.directusToken = response.data.data.access_token;
-        // Устанавливаем срок действия токена (обычно 1 час)
-        this.tokenExpiration = Date.now() + (response.data.data.expires * 1000 || 3600000);
         
-        console.log('✅ Токен Directus успешно получен и сохранен');
+        // Устанавливаем срок истечения токена (обычно 15 минут)
+        // Если в ответе есть expires, используем его, иначе устанавливаем 15 минут
+        const expiresIn = response.data.data.expires || 900000; // 15 минут в миллисекундах
+        this.tokenExpiration = Date.now() + expiresIn;
+        
+        this.log(`Токен Directus получен, действителен до ${new Date(this.tokenExpiration).toISOString()}`);
         return this.directusToken;
       } else {
-        console.error('❌ Ошибка получения токена Directus: неожиданный формат ответа');
+        this.log('Не удалось получить токен Directus: неверный формат ответа', 'error');
         return null;
       }
     } catch (error) {
-      console.error('❌ Ошибка при авторизации в Directus:', error.message);
+      this.log(`Ошибка при получении токена Directus: ${error.message}`, 'error');
       return null;
     }
   }
-  
+
+  /**
+   * Генерирует путь к временному файлу
+   * @param {string} extension Расширение файла
+   * @returns {string} Путь к временному файлу
+   */
+  generateTempFilePath(extension = 'jpg') {
+    const timestamp = Date.now();
+    const randomString = crypto.randomBytes(8).toString('hex');
+    return path.join(os.tmpdir(), `telegram_${timestamp}_${randomString}.${extension}`);
+  }
+
   /**
    * Скачивает изображение с авторизацией (если это URL Directus)
    * @param {string} imageUrl URL изображения для скачивания
    * @returns {Promise<Object>} Объект с буфером изображения и типом контента
    */
   async downloadImage(imageUrl) {
-    console.log(`📥 Скачивание изображения: ${imageUrl.substring(0, 50)}...`);
-    
     try {
-      // Подготавливаем заголовки с авторизацией
-      const headers = {
-        'Accept': 'image/*',
-        'User-Agent': 'Mozilla/5.0 SMM Planner Bot',
-        'Cache-Control': 'no-cache'
-      };
+      this.log(`Скачивание изображения: ${imageUrl}`);
       
-      // Если это URL Directus, добавляем токен авторизации
-      if (imageUrl.includes('directus.nplanner.ru')) {
+      // Проверяем, является ли URL ссылкой на Directus
+      const isDirectusUrl = imageUrl.includes(this.directusUrl) || 
+                           imageUrl.includes('/assets/') || 
+                           !imageUrl.startsWith('http');
+      
+      let headers = {};
+      
+      // Если это URL Directus, добавляем заголовок авторизации
+      if (isDirectusUrl) {
         const token = await this.getDirectusToken();
-        
         if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          console.log('🔑 Добавлен токен авторизации для Directus');
-        } else {
-          console.warn('⚠️ Не удалось получить токен Directus, продолжаем без авторизации');
+          headers.Authorization = `Bearer ${token}`;
+          this.log('Используем токен авторизации для доступа к изображению Directus');
         }
       }
       
+      // Создаем временный файл для сохранения изображения
+      const tempFilePath = this.generateTempFilePath();
+      
       // Скачиваем изображение
-      console.time('⏱️ Скачивание изображения');
-      const response = await axios.get(imageUrl, {
-        responseType: 'arraybuffer',
-        timeout: 60000, // 60 секунд таймаут
-        headers: headers
+      const response = await axios({
+        url: imageUrl,
+        method: 'GET',
+        responseType: 'stream',
+        headers
       });
-      console.timeEnd('⏱️ Скачивание изображения');
       
-      // Проверяем, что получили данные
-      if (!response.data || response.data.length === 0) {
-        throw new Error('Получен пустой ответ от сервера');
-      }
+      const contentType = response.headers['content-type'];
+      const writer = createWriteStream(tempFilePath);
       
-      // Определяем тип контента
-      const contentType = response.headers['content-type'] || 'image/jpeg';
+      await new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+      });
       
-      console.log(`✅ Изображение успешно загружено: ${response.data.length} байт, тип: ${contentType}`);
+      // Читаем изображение в буфер
+      const buffer = fs.readFileSync(tempFilePath);
       
-      return {
-        buffer: Buffer.from(response.data),
-        contentType: contentType
-      };
+      this.log(`Изображение скачано успешно: ${buffer.length} байт, тип: ${contentType}`);
+      
+      return { buffer, contentType, tempFilePath };
     } catch (error) {
-      console.error('❌ Ошибка при скачивании изображения:', error.message);
-      
-      if (error.response) {
-        console.error('Статус ответа:', error.response.status);
-      }
-      
+      this.log(`Ошибка при скачивании изображения: ${error.message}`, 'error');
       throw error;
     }
   }
-  
+
   /**
    * Отправляет изображение в Telegram
    * @param {Buffer} imageBuffer Буфер с данными изображения
@@ -138,105 +175,71 @@ export class TelegramPublisher {
    * @param {string} chatId ID чата Telegram для отправки
    * @param {string} caption Подпись к изображению
    * @param {string} token Токен бота Telegram
+   * @param {string|null} tempFilePath Путь к временному файлу изображения, если есть
    * @returns {Promise<Object>} Результат отправки
    */
-  async sendImageToTelegram(imageBuffer, contentType, chatId, caption, token) {
-    console.log('🔄 Подготовка к отправке изображения в Telegram...');
-    
-    // Создаем временную директорию
-    const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-    
-    // Генерируем уникальное имя для временного файла
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 10);
-    const fileExtension = contentType.includes('png') ? 'png' : 'jpg';
-    const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.${fileExtension}`);
+  async sendImageToTelegram(imageBuffer, contentType, chatId, caption, token, tempFilePath = null) {
+    let localTempFile = tempFilePath;
     
     try {
-      // Сохраняем буфер во временный файл
-      fs.writeFileSync(tempFilePath, imageBuffer);
-      console.log(`💾 Изображение сохранено во временный файл: ${tempFilePath} (${fs.statSync(tempFilePath).size} байт)`);
+      this.log(`Отправка изображения в Telegram для чата ${chatId}, размер: ${imageBuffer.length} байт`);
       
-      // Создаем FormData для отправки изображения
-      const formData = new FormData();
-      
-      // Добавляем основные параметры
-      formData.append('chat_id', chatId);
-      
-      // Если есть подпись, добавляем её и формат разметки
-      if (caption) {
-        formData.append('caption', caption);
-        formData.append('parse_mode', 'HTML');
+      // Если не предоставлен путь к временному файлу, создаем новый
+      if (!localTempFile) {
+        localTempFile = this.generateTempFilePath();
+        fs.writeFileSync(localTempFile, imageBuffer);
+        this.log(`Создан временный файл: ${localTempFile}`);
       }
       
-      // Добавляем файл изображения
-      const fileStream = fs.createReadStream(tempFilePath);
-      formData.append('photo', fileStream, { 
-        filename: `image_${timestamp}.${fileExtension}`,
-        contentType: contentType
+      // Создаем форму для отправки
+      const form = new FormData();
+      form.append('chat_id', chatId);
+      
+      if (caption) {
+        form.append('caption', caption);
+        form.append('parse_mode', 'HTML');
+      }
+      
+      // Добавляем файл с изображением
+      form.append('photo', fs.createReadStream(localTempFile), {
+        filename: path.basename(localTempFile),
+        contentType: contentType || 'image/jpeg'
       });
       
       // Отправляем запрос в Telegram API
-      console.log(`🚀 Отправка изображения в Telegram чат: ${chatId}`);
-      console.time('⏱️ Время отправки в Telegram');
+      const response = await axios.post(
+        `https://api.telegram.org/bot${token}/sendPhoto`,
+        form,
+        {
+          headers: {
+            ...form.getHeaders()
+          }
+        }
+      );
       
-      const baseUrl = 'https://api.telegram.org/bot';
-      const uploadResponse = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          'Accept': 'application/json'
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 60000 // 60 секунд таймаут
-      });
+      this.log(`Изображение успешно отправлено в Telegram, ID сообщения: ${response.data?.result?.message_id}`);
       
-      console.timeEnd('⏱️ Время отправки в Telegram');
-      
-      // Закрываем поток чтения файла
-      fileStream.destroy();
-      
-      // Удаляем временный файл
-      try {
-        fs.unlinkSync(tempFilePath);
-        console.log(`🗑️ Временный файл удален: ${tempFilePath}`);
-      } catch (unlinkError) {
-        console.warn(`⚠️ Не удалось удалить временный файл: ${unlinkError}`);
-      }
-      
-      // Проверяем успешность отправки
-      if (uploadResponse.data && uploadResponse.data.ok) {
-        console.log(`✅ Изображение успешно отправлено в Telegram: message_id=${uploadResponse.data.result.message_id}`);
-        return uploadResponse.data;
-      } else {
-        console.error(`❌ Ошибка при отправке изображения в Telegram: ${JSON.stringify(uploadResponse.data)}`);
-        throw new Error(`API вернул ошибку: ${JSON.stringify(uploadResponse.data)}`);
-      }
+      return response.data;
     } catch (error) {
-      // Если временный файл был создан, удаляем его
-      if (fs.existsSync(tempFilePath)) {
+      this.log(`Ошибка при отправке изображения в Telegram: ${error.message}`, 'error');
+      return {
+        ok: false,
+        description: error.message,
+        error: error
+      };
+    } finally {
+      // Удаляем временный файл
+      if (localTempFile) {
         try {
-          fs.unlinkSync(tempFilePath);
-          console.log(`🗑️ Временный файл удален после ошибки: ${tempFilePath}`);
-        } catch (e) {
-          // Игнорируем ошибки при очистке
+          fs.unlinkSync(localTempFile);
+          this.log(`Временный файл удален: ${localTempFile}`);
+        } catch (unlinkError) {
+          this.log(`Не удалось удалить временный файл: ${unlinkError.message}`, 'warn');
         }
       }
-      
-      console.error('❌ Ошибка при отправке изображения в Telegram:', error.message);
-      
-      if (error.response) {
-        console.error('Статус ответа:', error.response.status);
-        console.error('Данные ответа:', JSON.stringify(error.response.data));
-      }
-      
-      throw error;
     }
   }
-  
+
   /**
    * Полный процесс отправки изображения из Directus в Telegram
    * @param {string} imageUrl URL изображения (может быть ссылкой на Directus)
@@ -247,57 +250,18 @@ export class TelegramPublisher {
    */
   async sendDirectusImageToTelegram(imageUrl, chatId, caption, token) {
     try {
-      console.log('🧪 Начинаем процесс отправки изображения из Directus в Telegram');
+      // Скачиваем изображение
+      const { buffer, contentType, tempFilePath } = await this.downloadImage(imageUrl);
       
-      // Шаг 1: Скачиваем изображение с авторизацией
-      const { buffer, contentType } = await this.downloadImage(imageUrl);
-      
-      // Шаг 2: Отправляем изображение в Telegram
-      const result = await this.sendImageToTelegram(buffer, contentType, chatId, caption, token);
-      
-      return result;
+      // Отправляем изображение в Telegram
+      return await this.sendImageToTelegram(buffer, contentType, chatId, caption, token, tempFilePath);
     } catch (error) {
-      console.error('❌ Ошибка в процессе отправки изображения:', error.message);
-      throw error;
+      this.log(`Ошибка при отправке изображения из Directus в Telegram: ${error.message}`, 'error');
+      return {
+        ok: false,
+        description: error.message,
+        error: error
+      };
     }
   }
-}
-
-// Если скрипт запущен напрямую, запускаем тестовый пример
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  // Параметры для тестирования
-  const IMAGE_URL = process.env.TEST_IMAGE_URL || 'https://directus.nplanner.ru/assets/3b34be64-9579-4b1d-b4e2-98d3de5c2a14'; 
-  const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-  const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-  
-  // Функция для запуска теста
-  async function runTest() {
-    if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
-      console.error('❌ Отсутствуют необходимые параметры TELEGRAM_TOKEN или TELEGRAM_CHAT_ID');
-      return;
-    }
-    
-    const publisher = new TelegramPublisher();
-    
-    try {
-      console.log(`📤 Отправляем изображение: ${IMAGE_URL} в Telegram чат: ${TELEGRAM_CHAT_ID}`);
-      
-      const result = await publisher.sendDirectusImageToTelegram(
-        IMAGE_URL,
-        TELEGRAM_CHAT_ID,
-        'Тестовое изображение с <b>авторизацией</b> Directus 🚀 [ESM версия]',
-        TELEGRAM_TOKEN
-      );
-      
-      console.log('✅ Изображение успешно отправлено!');
-      console.log(`🆔 ID сообщения: ${result.result.message_id}`);
-    } catch (error) {
-      console.error('❌ Ошибка при тестировании:', error.message);
-    }
-  }
-  
-  // Запускаем тест
-  runTest().catch(err => {
-    console.error('❌ Неожиданная ошибка:', err);
-  });
 }
