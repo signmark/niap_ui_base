@@ -121,48 +121,99 @@ class TelegramPublisher {
         'Cache-Control': 'no-cache'
       };
       
-      // Если URL от Directus, добавляем авторизацию
-      if (imageUrl.includes('directus')) {
-        const token = await this.getDirectusToken();
+      // Определяем, является ли URL ссылкой на Directus
+      const isDirectusUrl = imageUrl.includes('directus') || imageUrl.includes('/assets/');
+      
+      // Если это Directus URL, используем прокси-сервис для загрузки с авторизацией
+      if (isDirectusUrl) {
+        this.log('🔄 Обнаружена ссылка на Directus, используем прокси-сервис...');
         
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          this.log('🔑 Добавлен токен авторизации для Directus');
+        // Проверка и преобразование URL для прокси
+        const originalUrl = imageUrl;
+        let proxyUrl = imageUrl;
+        
+        // Если URL уже содержит домен Directus, используем его как есть
+        if (imageUrl.includes('https://') || imageUrl.includes('http://')) {
+          // Создаем URL для прокси-сервиса
+          const baseUrl = process.env.API_BASE_URL || 'http://localhost:5000';
+          proxyUrl = `${baseUrl}/api/proxy-file?url=${encodeURIComponent(imageUrl)}`;
         } else {
-          this.log('⚠️ Не удалось получить токен Directus, продолжаем без авторизации', 'warn');
+          // Если URL - относительный путь или ID, преобразуем его в полный URL Directus
+          const directusUrl = this.directusUrl || 'https://directus.nplanner.ru';
+          
+          // Если URL начинается с /assets/, добавляем только домен
+          if (imageUrl.startsWith('/assets/')) {
+            const fullDirectusUrl = `${directusUrl}${imageUrl}`;
+            // Создаем URL для прокси-сервиса
+            const baseUrl = process.env.API_BASE_URL || 'http://localhost:5000';
+            proxyUrl = `${baseUrl}/api/proxy-file?url=${encodeURIComponent(fullDirectusUrl)}`;
+          } else {
+            // Иначе предполагаем, что это ID ассета
+            const fullDirectusUrl = `${directusUrl}/assets/${imageUrl}`;
+            // Создаем URL для прокси-сервиса
+            const baseUrl = process.env.API_BASE_URL || 'http://localhost:5000';
+            proxyUrl = `${baseUrl}/api/proxy-file?url=${encodeURIComponent(fullDirectusUrl)}`;
+          }
         }
+        
+        this.log(`🔄 Преобразовано в прокси URL: ${proxyUrl}`);
+        
+        // Используем прокси для загрузки с авторизацией
+        const response = await axios.get(proxyUrl, {
+          responseType: 'arraybuffer',
+          timeout: 60000 // 60 секунд таймаут
+        });
+        
+        // Проверяем полученные данные
+        const dataSize = response.data.length;
+        if (dataSize === 0) {
+          throw new Error('Получен пустой ответ от прокси-сервера');
+        }
+        
+        // Определяем тип контента
+        const contentType = response.headers['content-type'] || 'image/jpeg';
+        
+        this.log(`✅ Изображение успешно загружено через прокси: ${dataSize} байт, тип: ${contentType}`);
+        
+        return {
+          buffer: Buffer.from(response.data),
+          contentType: contentType
+        };
+      } else {
+        // Если URL не от Directus, используем прямую загрузку
+        this.log('🔄 Обычная ссылка, загружаем напрямую...');
+        
+        // Выполняем запрос для скачивания
+        const response = await axios.get(imageUrl, {
+          responseType: 'arraybuffer',
+          timeout: 60000, // 60 секунд таймаут
+          headers: headers
+        });
+        
+        // Проверяем полученные данные
+        const dataSize = response.data.length;
+        if (dataSize === 0) {
+          throw new Error('Получен пустой ответ от сервера');
+        }
+        
+        // Определяем тип контента
+        const contentType = response.headers['content-type'] || 'image/jpeg';
+        
+        this.log(`✅ Изображение успешно загружено: ${dataSize} байт, тип: ${contentType}`);
+        
+        return {
+          buffer: Buffer.from(response.data),
+          contentType: contentType
+        };
       }
-      
-      // Выполняем запрос для скачивания
-      const response = await axios.get(imageUrl, {
-        responseType: 'arraybuffer',
-        timeout: 60000, // 60 секунд таймаут
-        headers: headers
-      });
-      
-      // Проверяем полученные данные
-      const dataSize = response.data.length;
-      if (dataSize === 0) {
-        throw new Error('Получен пустой ответ от сервера');
-      }
-      
-      // Определяем тип контента
-      const contentType = response.headers['content-type'] || 'image/jpeg';
-      
-      this.log(`✅ Изображение успешно загружено: ${dataSize} байт, тип: ${contentType}`);
-      
-      return {
-        buffer: Buffer.from(response.data),
-        contentType: contentType
-      };
     } catch (error) {
       this.log(`❌ Ошибка при скачивании изображения: ${error.message}`, 'error');
       
       if (error.response) {
         this.log(`📊 Статус ответа: ${error.response.status}`, 'error');
         
-        if (error.response.status === 401) {
-          this.log('🔒 Ошибка авторизации (401 Unauthorized). Проверьте токен Directus.', 'error');
+        if (error.response.status === 401 || error.response.status === 403) {
+          this.log('🔒 Ошибка авторизации (401/403). Используйте прокси-сервис для доступа к файлам Directus.', 'error');
         }
       }
       
