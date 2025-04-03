@@ -1,6 +1,31 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { log } from './vite';
 
+/**
+ * Безопасное логирование объектов (с обработкой циклических ссылок)
+ * @param obj Объект для логирования
+ * @returns Безопасная строка для логирования
+ */
+function safeStringify(obj: any): string {
+  try {
+    // Обработка циклических ссылок
+    const cache: any[] = [];
+    const str = JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        // Обнаружение циклических ссылок
+        if (cache.indexOf(value) !== -1) {
+          return '[Циклическая ссылка]';
+        }
+        cache.push(value);
+      }
+      return value;
+    }, 2);
+    return str || String(obj);
+  } catch (error) {
+    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
+  }
+}
+
 // Создаем кэш для хранения токенов авторизации
 interface AuthTokenCache {
   [userId: string]: {
@@ -30,7 +55,8 @@ class DirectusApiManager {
     this.axiosInstance.interceptors.response.use(
       response => response,
       error => {
-        console.error('Directus API Error:', {
+        // Используем safeStringify для безопасного логирования ошибок
+        console.error('Directus API Error:', safeStringify({
           status: error.response?.status,
           data: error.response?.data,
           config: {
@@ -38,11 +64,11 @@ class DirectusApiManager {
             method: error.config?.method,
             params: error.config?.params
           }
-        });
+        }));
         
         // Детальная информация об ошибке для отладки
         if (error.response?.status === 401) {
-          console.error('Directus API error details:', {
+          console.error('Directus API error details:', safeStringify({
             status: error.response.status,
             data: error.response.data,
             config: {
@@ -50,7 +76,7 @@ class DirectusApiManager {
               method: error.config.method,
               params: error.config.params
             }
-          });
+          }));
           log('Ошибка авторизации при запросе к Directus API', 'directus');
         }
         
