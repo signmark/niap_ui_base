@@ -421,64 +421,7 @@ export function registerUploadRoutes(app: Express) {
     }
   });
 
-  // Дополнительный маршрут для совместимости с клиентским кодом
-  app.post('/api/upload', authenticateUser, upload.single('file'), async (req: Request, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: 'Файл не загружен'
-        });
-      }
-
-      const token = getAuthTokenFromRequest(req);
-      if (!token) {
-        return res.status(401).json({
-          success: false,
-          error: 'Требуется авторизация'
-        });
-      }
-
-      // Получаем информацию о пользователе через Directus API
-      const userData = await directusApiManager.getUserInfo(token);
-      if (!userData) {
-        return res.status(401).json({
-          success: false,
-          error: 'Не удалось получить информацию о пользователе'
-        });
-      }
-
-      // Генерируем уникальное имя файла с сохранением расширения
-      const fileExt = path.extname(req.file.originalname) || '.jpg';
-      const uniqueFilename = `${uuidv4()}${fileExt}`;
-
-      // Загружаем файл в Directus
-      const fileInfo = await uploadToDirectus(
-        req.file.buffer, 
-        uniqueFilename, 
-        req.file.mimetype,
-        token
-      );
-
-      log(`[uploads] Файл успешно загружен в Directus через маршрут /upload: ${fileInfo.id}`);
-
-      return res.json({
-        success: true,
-        fileInfo: fileInfo,
-        fileUrl: fileInfo.url,
-        url: fileInfo.url, // Дополнительное поле для совместимости
-        originalName: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype
-      });
-    } catch (error: any) {
-      log(`[uploads] Ошибка при загрузке файла через маршрут /upload: ${error.message}`);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Произошла ошибка при загрузке файла'
-      });
-    }
-  });
+  // Дополнительный маршрут для /api/upload удален, чтобы избежать дублирования
 
   // Эндпоинт для загрузки нескольких изображений
   app.post('/api/upload-multiple-images', authenticateUser, upload.array('images', 10), async (req: Request, res: Response) => {
