@@ -33,19 +33,55 @@ class SocialPublishingService {
    */
   private async initTelegramPublisher() {
     try {
+      // Проверяем, есть ли доступ к переменным окружения для Directus
+      const directusEmail = process.env.DIRECTUS_EMAIL;
+      const directusPassword = process.env.DIRECTUS_PASSWORD;
+      const directusUrl = process.env.DIRECTUS_URL || 'https://db.nplanner.ru';
+      
+      if (!directusEmail || !directusPassword) {
+        console.error('КРИТИЧЕСКАЯ ОШИБКА: Отсутствуют учетные данные Directus в переменных окружения!');
+        console.error('Необходимы DIRECTUS_EMAIL и DIRECTUS_PASSWORD для работы с изображениями Directus');
+      }
+      
+      // Инициализируем только один раз
       if (!this.telegramPublisherCache) {
         console.log('Инициализация Telegram Publisher');
+        console.log(`Используем Directus URL: ${directusUrl}`);
+        console.log(`Наличие учетных данных Directus: ${!!directusEmail && !!directusPassword}`);
+        
+        this.telegramPublisherCache = await getTelegramPublisher({
+          verbose: true,
+          directusEmail,
+          directusPassword,
+          directusUrl
+        });
+        
+        console.log('Telegram Publisher успешно инициализирован');
+      } else {
+        console.log('Используем существующий экземпляр Telegram Publisher');
+      }
+      
+      return this.telegramPublisherCache;
+    } catch (error) {
+      console.error('КРИТИЧЕСКАЯ ОШИБКА при инициализации Telegram Publisher:', error);
+      
+      // Пробуем переинициализировать в случае ошибки
+      console.log('Попытка переинициализации Telegram Publisher...');
+      this.telegramPublisherCache = null;
+      
+      try {
         this.telegramPublisherCache = await getTelegramPublisher({
           verbose: true,
           directusEmail: process.env.DIRECTUS_EMAIL,
           directusPassword: process.env.DIRECTUS_PASSWORD,
           directusUrl: process.env.DIRECTUS_URL || 'https://db.nplanner.ru'
         });
+        console.log('Повторная инициализация Telegram Publisher успешна');
+        return this.telegramPublisherCache;
+      } catch (retryError) {
+        console.error('Повторная инициализация Telegram Publisher не удалась:', retryError);
+        throw new Error(`Невозможно инициализировать Telegram Publisher: ${error.message || 'Неизвестная ошибка'}`);
       }
-      return this.telegramPublisherCache;
-    } catch (error) {
-      console.error('Ошибка при инициализации Telegram Publisher:', error);
-      throw error;
     }
   }
 
@@ -468,7 +504,7 @@ class SocialPublishingService {
 
   /**
    * Отправляет изображение в Telegram
-   * Исправленная версия с поддержкой загрузки из Directus
+   * Исправленная версия с поддержкой загрузки из Directus и расширенной диагностикой
    * @param {string} imageUrl URL изображения
    * @param {string} chatId ID чата Telegram
    * @param {string} caption Подпись к изображению
@@ -482,8 +518,64 @@ class SocialPublishingService {
     token: string
   ): Promise<any> {
     try {
-      console.log(`Отправка изображения в Telegram: ${imageUrl} -> ${chatId}`);
+      // Проверяем исходные параметры
+      if (!imageUrl) {
+        console.error('ОШИБКА: Пустой URL изображения для отправки в Telegram');
+        return {
+          ok: false,
+          description: 'Ошибка: URL изображения не указан',
+          error: 'IMAGE_URL_EMPTY'
+        };
+      }
+      
+      if (!chatId) {
+        console.error('ОШИБКА: Пустой ID чата Telegram');
+        return {
+          ok: false,
+          description: 'Ошибка: ID чата не указан',
+          error: 'CHAT_ID_EMPTY'
+        };
+      }
+      
+      if (!token) {
+        console.error('ОШИБКА: Пустой токен бота Telegram');
+        return {
+          ok: false,
+          description: 'Ошибка: Токен бота не указан',
+          error: 'TOKEN_EMPTY'
+        };
+      }
+      
+      // Проверяем, не является ли URL заглушкой или ошибочным URL
+      if (
+        imageUrl.includes('НЕИЗОБРАЖЕНИЕ') || 
+        imageUrl.includes('queue.fal.ai') ||
+        imageUrl.includes('placeholder') ||
+        imageUrl.includes('error-image')
+      ) {
+        console.error(`ОШИБКА: Обнаружен некорректный URL изображения: ${imageUrl}`);
+        return {
+          ok: false,
+          description: 'Ошибка: Некорректный URL изображения (обнаружен шаблон ошибки)',
+          error: 'INVALID_IMAGE_URL'
+        };
+      }
+      
+      console.log(`ДИАГНОСТИКА: Отправка изображения в Telegram ${imageUrl.substring(0, 50)}... -> чат ${chatId}`);
+      console.log(`Длина текста подписи: ${caption.length} символов`);
+      
+      // Инициализируем TelegramPublisher
       const telegramPublisher = await this.initTelegramPublisher();
+      if (!telegramPublisher) {
+        console.error('КРИТИЧЕСКАЯ ОШИБКА: Не удалось инициализировать Telegram Publisher');
+        return {
+          ok: false,
+          description: 'Ошибка: Не удалось инициализировать сервис отправки в Telegram',
+          error: 'PUBLISHER_INIT_FAILED'
+        };
+      }
+      
+      console.log('ДИАГНОСТИКА: Telegram Publisher успешно инициализирован, попытка отправки...');
       
       // Используем метод из Telegram Publisher для отправки изображения
       const result = await telegramPublisher.sendDirectusImageToTelegram(
@@ -493,14 +585,48 @@ class SocialPublishingService {
         token
       );
       
-      console.log('Результат отправки изображения в Telegram:', JSON.stringify(result));
+      // Проверяем результат
+      if (!result) {
+        console.error('ОШИБКА: Пустой результат от Telegram Publisher');
+        return {
+          ok: false,
+          description: 'Ошибка: Отсутствует ответ от сервиса отправки',
+          error: 'EMPTY_RESULT'
+        };
+      }
+      
+      if (result.ok === true) {
+        console.log('УСПЕХ: Изображение успешно отправлено в Telegram');
+        console.log(`Идентификатор сообщения: ${result.result?.message_id}`);
+      } else {
+        console.error(`ОШИБКА: Telegram API вернул ошибку: ${result.description || 'Нет описания'}`);
+      }
+      
+      console.log('Полный результат отправки изображения в Telegram:', 
+        typeof result === 'object' ? JSON.stringify(result, null, 2) : result);
+      
       return result;
     } catch (error) {
-      console.error('Ошибка при отправке изображения в Telegram:', error);
+      console.error('КРИТИЧЕСКАЯ ОШИБКА при отправке изображения в Telegram:', error);
+      
+      // Попытка безопасно сериализовать ошибку
+      let errorMessage = 'Неизвестная ошибка';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (typeof error === 'object') {
+        try {
+          errorMessage = JSON.stringify(error);
+        } catch (jsonError) {
+          errorMessage = 'Ошибка не может быть сериализована';
+        }
+      }
+      
       return {
         ok: false,
-        description: `Ошибка при отправке изображения: ${error}`,
-        error
+        description: `Ошибка при отправке изображения: ${errorMessage}`,
+        error: errorMessage
       };
     }
   }
@@ -557,8 +683,11 @@ class SocialPublishingService {
         result = response.data;
       }
 
-      // Проверяем результат
-      if (result && result.ok) {
+      // Проверяем результат с дополнительной диагностикой
+      console.log('Полный результат отправки Telegram:', JSON.stringify(result));
+      
+      if (result && result.ok === true) {
+        console.log('Успешная публикация в Telegram, message_id:', result.result?.message_id);
         return {
           platform: 'telegram',
           status: 'published',
@@ -569,6 +698,7 @@ class SocialPublishingService {
           postUrl: null // В Telegram нет прямой ссылки на сообщение
         };
       } else {
+        console.error('Ошибка публикации в Telegram:', result?.description || 'Неизвестная ошибка');
         return {
           platform: 'telegram',
           status: 'error',
@@ -647,17 +777,80 @@ class SocialPublishingService {
   }
 
   /**
-   * Добавляет HTML-форматирование для Telegram
+   * Добавляет HTML-форматирование для Telegram с сохранением абзацев и переносов строк
+   * @param text Исходный текст
+   * @returns Текст с HTML-форматированием для Telegram
    */
   private addHtmlFormatting(text: string): string {
-    // В Telegram для HTML формата используются следующие теги:
-    // <b>bold</b>, <i>italic</i>, <code>mono</code>, <pre>pre</pre>
-    // <a href="http://example.com/">link</a>
+    if (!text) return '';
     
-    // Сохраняем существующие переносы строк
-    let formattedText = text.replace(/\n/g, '\n');
-    
-    return formattedText;
+    try {
+      // В Telegram для HTML формата используются следующие теги:
+      // <b>bold</b>, <i>italic</i>, <u>underline</u>, <s>strikethrough</s>
+      // <code>mono</code>, <pre>pre</pre>, <a href="http://example.com/">link</a>
+      
+      // 1. Экранируем спец. символы HTML, кроме тех, что уже в тегах форматирования
+      const escapedText = this.escapeHtmlSpecialChars(text);
+      
+      // 2. Улучшенная обработка переносов строк и абзацев для Telegram
+      // - Двойной перенос строк (пустая строка между абзацами) заменяем на два переноса
+      // - Одиночные переносы строк оставляем как есть
+      let formattedText = escapedText.replace(/\n\s*\n/g, '\n\n');
+      
+      // 3. Заменяем URL на гиперссылки для Telegram
+      // Регулярное выражение для выделения URL в тексте
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      formattedText = formattedText.replace(urlRegex, '<a href="$1">$1</a>');
+      
+      // 4. Разбиваем текст на абзацы и добавляем форматирование первой строки каждого абзаца как заголовка
+      // (если пользователь хочет особо выделить начало абзаца)
+      if (formattedText.includes('\n\n')) {
+        const paragraphs = formattedText.split('\n\n');
+        for (let i = 0; i < paragraphs.length; i++) {
+          const paragraph = paragraphs[i];
+          const lines = paragraph.split('\n');
+          
+          // Если первая строка абзаца начинается с '#', форматируем как заголовок
+          if (lines[0].startsWith('#')) {
+            lines[0] = '<b>' + lines[0].substring(1).trim() + '</b>';
+            paragraphs[i] = lines.join('\n');
+          }
+        }
+        formattedText = paragraphs.join('\n\n');
+      }
+      
+      // 5. Обработка выделений:
+      // *курсив* -> <i>курсив</i>
+      formattedText = formattedText.replace(/\*([^*\n]+)\*/g, '<i>$1</i>');
+      
+      // **жирный** -> <b>жирный</b>
+      formattedText = formattedText.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+      
+      // __подчеркнутый__ -> <u>подчеркнутый</u>
+      formattedText = formattedText.replace(/\_\_([^_\n]+)\_\_/g, '<u>$1</u>');
+      
+      // ~~зачеркнутый~~ -> <s>зачеркнутый</s>
+      formattedText = formattedText.replace(/\~\~([^~\n]+)\~\~/g, '<s>$1</s>');
+      
+      return formattedText;
+    } catch (error) {
+      console.error('Ошибка при форматировании текста для Telegram:', error);
+      return text; // В случае ошибки возвращаем исходный текст
+    }
+  }
+  
+  /**
+   * Экранирует специальные символы HTML
+   * @param text Исходный текст
+   * @returns Текст с экранированными символами
+   */
+  private escapeHtmlSpecialChars(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   async publishToInstagram(
