@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
+import { getProxiedFileUrl } from '../../shared/utils/url-helpers';
 
 interface ImageUploaderProps {
   onImageUploaded: (imageUrl: string) => void;
