@@ -1026,12 +1026,54 @@ export function ImageGenerationDialog({
           <div className="space-y-1">
             <Label>Основное изображение</Label>
             <div className="flex items-center gap-2 mb-4">
-              <Input
-                value={uploadedImageUrl}
-                onChange={(e) => setUploadedImageUrl(e.target.value)}
-                placeholder="https://v3.fal.media/files/monkey_dXl4Le6gy3w490nyaz24.png"
-                className="flex-1"
-              />
+              <div className="flex-1 relative">
+                <Input
+                  value={uploadedImageUrl}
+                  onChange={(e) => setUploadedImageUrl(e.target.value)}
+                  placeholder="https://v3.fal.media/files/monkey_dXl4Le6gy3w490nyaz24.png"
+                  className="pr-10"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <label htmlFor="url-image-upload" className="cursor-pointer">
+                    <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                    <span className="sr-only">Загрузить файл</span>
+                  </label>
+                  <input 
+                    type="file" 
+                    id="url-image-upload" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // Загружаем файл через компонент ImageUploader
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        api.post('/upload', formData, {
+                          headers: {
+                            'Content-Type': 'multipart/form-data'
+                          }
+                        }).then(response => {
+                          if (response.data?.url) {
+                            setUploadedImageUrl(response.data.url);
+                            toast({
+                              title: "Изображение загружено",
+                              description: "URL изображения добавлен в поле"
+                            });
+                          }
+                        }).catch(error => {
+                          console.error("Ошибка загрузки файла:", error);
+                          toast({
+                            variant: "destructive",
+                            title: "Ошибка загрузки",
+                            description: "Не удалось загрузить изображение"
+                          });
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              </div>
               <Button 
                 variant="outline"
                 size="sm"
@@ -1051,7 +1093,7 @@ export function ImageGenerationDialog({
             <div className="my-2">
               <Label>Загрузить изображение</Label>
               <ImageUploader 
-                onImageUploaded={(imageUrl) => {
+                onImageUploaded={(imageUrl: string) => {
                   console.log("Изображение загружено:", imageUrl);
                   setUploadedImageUrl(imageUrl);
                   
@@ -1090,12 +1132,36 @@ export function ImageGenerationDialog({
               </div>
               
               <div className="flex gap-2 items-center border p-2 rounded-md">
-                <Input
-                  placeholder="Введите URL изображения"
-                  className="flex-1"
-                />
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Введите URL изображения"
+                    className="pr-10"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <label htmlFor="additional-image-upload" className="cursor-pointer">
+                      <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                      <span className="sr-only">Загрузить файл</span>
+                    </label>
+                    <input 
+                      type="file" 
+                      id="additional-image-upload" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Здесь будет логика для загрузки дополнительных изображений
+                          toast({
+                            title: "Информация",
+                            description: "Функция загрузки дополнительных изображений в разработке"
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  {X && <X className="h-4 w-4" />}
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
