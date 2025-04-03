@@ -32,98 +32,57 @@ export class SocialPublishingService {
     // Базовый URL сервера для относительных путей
     const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
     
-    // Если URL уже абсолютный
-    if (imageUrl.startsWith('http')) {
-      // Проверяем случай, когда в URL уже есть наш собственный прокси (во избежание двойного проксирования)
-      if (imageUrl.includes('/api/proxy-file/') || imageUrl.includes('/api/proxy-media?url=')) {
-        log(`✅ URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
-        return imageUrl;
-      }
-      
-      // Проверяем Directus URL (содержит assets/UUID)
-      const directusPatterns = [
-        /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,  // Стандартный формат
-        /\/assets\/(directus-[a-z0-9-]+)/i,  // Формат с префиксом directus
-        /\/uploads\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i  // Альтернативный формат в uploads
-      ];
-      
-      // Подробно логируем текущий URL для анализа
-      log(`🔎 Анализ URL для ${platform}. Проверка на содержание путей Directus: ${imageUrl}`, 'social-publishing');
-      
-      for (const pattern of directusPatterns) {
-        const match = imageUrl.match(pattern);
-        if (match && match[1]) {
-          // Если нашли совпадение в URL, переформируем URL для использования прокси
-          const fileId = match[1];
-          const proxyUrl = `${baseAppUrl}/api/proxy-file/${fileId}`;
-          log(`🔄 Обнаружен Directus URL с ID ${fileId} в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
-          return proxyUrl;
-        }
-      }
-      
-      // Проверка на чистый UUID (без путей)
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (uuidPattern.test(imageUrl)) {
-        const proxyUrl = `${baseAppUrl}/api/proxy-file/${imageUrl}`;
-        log(`🔄 Обнаружен чистый UUID для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
-        return proxyUrl;
-      }
-      
-      // Проверяем URL для FAL.AI (если используются их модели генерации изображений)
-      if (imageUrl.includes('fal.media') || imageUrl.includes('fal.ai')) {
-        log(`✅ Обнаружен URL от FAL.AI для ${platform}, используем прямую ссылку`, 'social-publishing');
-        return imageUrl;
-      }
-      
-      // Проверяем наличие защищенных доменов в URL
-      const protectedDomains = [
-        'instagram.', 'fbcdn.net', 'cdninstagram.com', 'scontent.', 'tgcnt.ru',
-        'vk.com', 'static.tgstat.ru', 'pbs.twimg.com', 'sitestat.ru', 's.TG',
-        // Добавляем домены, которые могут быть заблокированы в России
-        't.me', 'telegram.org', 'telesco.pe'
-      ];
-      
-      const needsProxy = protectedDomains.some(domain => imageUrl.includes(domain));
-      
-      if (needsProxy) {
-        // Для внешних ресурсов, требующих аутентификации, проксируем через наш сервер
-        log(`Обнаружен URL с защищенной платформы для ${platform}, используем прокси для доступа: ${imageUrl}`, 'social-publishing');
-        
-        // Особый кейс для VK - использование прямых URL
-        if (platform === 'vk' && imageUrl.startsWith('https://vk.com/')) {
-          log(`Обнаружен URL VK при публикации в VK, используем прокси с особыми параметрами`, 'social-publishing');
-          const encodedUrl = encodeURIComponent(imageUrl);
-          return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}&platform=vk`;
-        }
-        
-        // Кодируем полный URL для передачи в прокси с указанием платформы
-        const encodedUrl = encodeURIComponent(imageUrl);
-        return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}&platform=${platform}`;
-      }
-      
-      // Для всех остальных абсолютных URL используем их как есть
+    // Проверяем случай, когда в URL уже есть наш собственный прокси (во избежание двойного проксирования)
+    if (imageUrl.includes('/api/proxy-file') || imageUrl.includes('/api/proxy-media')) {
+      log(`✅ URL уже содержит прокси, используем как есть для ${platform}: ${imageUrl}`, 'social-publishing');
       return imageUrl;
     }
     
-    // Проверка, является ли это UUID для Directus
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
-    if (uuidPattern.test(imageUrl)) {
-      // Это Directus UUID, создаем правильный URL через прокси
-      const fullUrl = `${baseAppUrl}/api/proxy-file/${imageUrl}`;
-      log(`Обнаружен UUID изображения Directus для ${platform}, создан прокси URL: ${fullUrl}`, 'social-publishing');
-      return fullUrl;
-    } else if (imageUrl.startsWith('/uploads/') || imageUrl.startsWith('/assets/')) {
-      // Это локальный файл в директории uploads или assets, добавляем базовый URL
-      const fullUrl = `${baseAppUrl}${imageUrl}`;
-      log(`Преобразован внутренний URL в абсолютный для ${platform}: ${fullUrl}`, 'social-publishing');
-      return fullUrl;
-    } else {
-      // Это просто локальный файл, добавляем базовый URL
-      const fullUrl = `${baseAppUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
-      log(`Преобразован относительный URL в абсолютный для ${platform}: ${fullUrl}`, 'social-publishing');
-      return fullUrl;
+    // Если URL содержит Directus URL
+    if (imageUrl.includes('directus.nplanner.ru')) {
+      // Формируем URL через прокси-файл для доступа к ресурсу
+      const encodedUrl = encodeURIComponent(imageUrl);
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
+      log(`🔄 Обнаружен Directus URL для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      return proxyUrl;
     }
+    
+    // Проверка на чистый UUID (без путей)
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidPattern.test(imageUrl)) {
+      // Формируем полный URL для Directus и затем проксируем его
+      const directusUrl = `https://directus.nplanner.ru/assets/${imageUrl}`;
+      const encodedUrl = encodeURIComponent(directusUrl);
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
+      log(`🔄 Обнаружен чистый UUID для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      return proxyUrl;
+    }
+    
+    // Если URL уже абсолютный (начинается с http/https)
+    if (imageUrl.startsWith('http')) {
+      // Всегда используем прокси для внешних URL для обхода CORS и других ограничений
+      const encodedUrl = encodeURIComponent(imageUrl);
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
+      log(`🔄 Обнаружен внешний URL для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
+      return proxyUrl;
+    }
+    
+    // Проверяем, является ли путь относительным (начинается с /)
+    if (imageUrl.startsWith('/')) {
+      // Формируем полный URL с базовым урлом сервера и проксируем его
+      const fullUrl = `${baseAppUrl}${imageUrl}`;
+      const encodedUrl = encodeURIComponent(fullUrl);
+      const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
+      log(`🔄 Относительный путь преобразован в прокси URL для ${platform}: ${proxyUrl}`, 'social-publishing');
+      return proxyUrl;
+    }
+    
+    // Для всех остальных случаев предполагаем, что это относительный путь без начального слеша
+    const fullUrl = `${baseAppUrl}/${imageUrl}`;
+    const encodedUrl = encodeURIComponent(fullUrl);
+    const proxyUrl = `${baseAppUrl}/api/proxy-file?url=${encodedUrl}&_t=${Date.now()}`;
+    log(`🔄 Относительный путь без / преобразован в прокси URL для ${platform}: ${proxyUrl}`, 'social-publishing');
+    return proxyUrl;
   }
 
   private formatHtmlContent(htmlContent: string, platform: 'telegram' | 'vk' | 'facebook' | 'instagram'): string {
