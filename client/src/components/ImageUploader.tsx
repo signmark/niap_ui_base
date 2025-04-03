@@ -19,14 +19,19 @@ function getProxiedFileUrl(fileUrl: string): string {
     return fileUrl;
   }
   
-  // Проверяем, это URL Directus?
-  const isDirectusUrl = fileUrl.includes('directus.nplanner.ru') || 
-                       fileUrl.includes('assets.directus') || 
-                       fileUrl.includes('assets/');
-  
-  // Если это URL Directus - формируем прокси-URL
-  if (isDirectusUrl) {
+  // Если URL уже содержит полный путь к Directus - используем его напрямую
+  if (fileUrl.includes('directus.nplanner.ru/assets/')) {
     return `/api/proxy-file?url=${encodeURIComponent(fileUrl)}`;
+  }
+  
+  // Если это UUID (возможно ответ от API) - преобразуем в полный URL к Directus
+  if (fileUrl.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i)) {
+    return `/api/proxy-file?url=${encodeURIComponent(`https://directus.nplanner.ru/assets/${fileUrl}`)}`;
+  }
+  
+  // Если это путь с assets/ - добавляем базовый URL
+  if (fileUrl.startsWith('assets/')) {
+    return `/api/proxy-file?url=${encodeURIComponent(`https://directus.nplanner.ru/${fileUrl}`)}`;
   }
   
   // Иначе возвращаем URL как есть
