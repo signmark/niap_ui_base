@@ -171,10 +171,10 @@ export class DirectusAuthManager {
     
     // Проверим токен у других компонентов, которые могут его кэшировать
     try {
-      // Импортировать directusApiManager здесь нельзя из-за циклических зависимостей
-      // Проверим, есть ли переменная в global пространстве имен
-      if (global['directusApiManager'] && global['directusApiManager'].getCachedToken) {
-        const cachedToken = global['directusApiManager'].getCachedToken(userId);
+      // Проверяем, можем ли мы получить токен напрямую из directusApiManager
+      // Используем импортированный экземпляр вместо глобального, чтобы избежать ошибок типизации
+      if (directusApiManager && typeof directusApiManager.getCachedToken === 'function') {
+        const cachedToken = directusApiManager.getCachedToken(userId);
         if (cachedToken) {
           log(`Found token in directusApiManager cache for user ${userId}`, this.logPrefix);
           
