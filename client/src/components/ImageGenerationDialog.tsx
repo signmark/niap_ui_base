@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Image, RefreshCw, Sparkles, Pencil, Upload } from "lucide-react";
+import { Loader2, Image, RefreshCw, Sparkles, Pencil, Upload, X } from "lucide-react";
 import { api } from "@/lib/api";
 import ImageUploader from "./ImageUploader";
 
@@ -67,6 +67,13 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
+  
+  // Обработчик выбора изображения
+  const handleSelectImage = (index: number) => {
+    setSelectedImageIndex(index);
+  };
+  
+  /* Определение confirmSelection перемещено ниже */
   const [modelType, setModelType] = useState<string>("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
@@ -755,20 +762,9 @@ export function ImageGenerationDialog({
     }
   });
   
-  // Выбор изображения и закрытие диалога
-  const handleSelectImage = (index: number) => {
-    if (index >= 0 && index < generatedImages.length) {
-      setSelectedImageIndex(index);
-      
-      // При выборе изображения передаем также текущий промт, если он есть
-      if (onImageGenerated) {
-        const currentPrompt = generatedPrompt || prompt;
-        onImageGenerated(generatedImages[index], currentPrompt);
-      }
-    }
-  };
+  /* Использована функция handleSelectImage, объявленная выше */
   
-  // Функция для подтверждения выбора
+  // Функция для подтверждения выбора изображения
   const confirmSelection = () => {
     if (selectedImageIndex >= 0) {
       if (onImageGenerated) {
@@ -1024,32 +1020,115 @@ export function ImageGenerationDialog({
             </div>
           )}
         </TabsContent>
+        
+        {/* Содержимое вкладки для загрузки изображений */}
+        <TabsContent value="upload" className="space-y-2">
+          <div className="space-y-1">
+            <Label>Основное изображение</Label>
+            <div className="flex items-center gap-2 mb-4">
+              <Input
+                value={uploadedImageUrl}
+                onChange={(e) => setUploadedImageUrl(e.target.value)}
+                placeholder="https://v3.fal.media/files/monkey_dXl4Le6gy3w490nyaz24.png"
+                className="flex-1"
+              />
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (onImageGenerated && uploadedImageUrl) {
+                    onImageGenerated(uploadedImageUrl);
+                    onClose();
+                  }
+                }}
+                disabled={!uploadedImageUrl}
+              >
+                <Image className="h-4 w-4 mr-1" />
+                Использовать
+              </Button>
+            </div>
+            
+            <div className="my-2">
+              <Label>Загрузить изображение</Label>
+              <ImageUploader 
+                onImageUploaded={(imageUrl) => {
+                  console.log("Изображение загружено:", imageUrl);
+                  setUploadedImageUrl(imageUrl);
+                  
+                  // Если это основное изображение, можно использовать его сразу
+                  if (onImageGenerated) {
+                    onImageGenerated(imageUrl);
+                    toast({
+                      title: "Изображение загружено",
+                      description: "Изображение успешно добавлено к публикации"
+                    });
+                    onClose();
+                  }
+                }}
+                label="Загрузить изображение"
+              />
+            </div>
+            
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2">
+                <Label>Дополнительные изображения</Label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // Здесь можно добавить логику для добавления дополнительных изображений
+                    // Например, открыть модальное окно или добавить еще один компонент загрузки
+                    toast({
+                      title: "Информация",
+                      description: "Функция добавления дополнительных изображений находится в разработке"
+                    });
+                  }}
+                >
+                  <Upload className="h-3 w-3 mr-1" />
+                  Добавить изображение
+                </Button>
+              </div>
+              
+              <div className="flex gap-2 items-center border p-2 rounded-md">
+                <Input
+                  placeholder="Введите URL изображения"
+                  className="flex-1"
+                />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  {X && <X className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
 
 
       </Tabs>
       
-      {/* Кнопка генерации */}
-      <Button 
-        onClick={() => generateImage()} 
-        disabled={
-          isPending || 
-          (activeTab === "prompt" && !prompt) || 
-          (activeTab === "text" && (!generatedPrompt || !content))
-        }
-        className="w-full"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Генерация...
-          </>
-        ) : (
-          <>
-            <Sparkles className="mr-2 h-4 w-4" />
-            Сгенерировать изображение
-          </>
-        )}
-      </Button>
+      {/* Кнопка генерации (скрываем для вкладки загрузки) */}
+      {activeTab !== "upload" && (
+        <Button 
+          onClick={() => generateImage()} 
+          disabled={
+            isPending || 
+            (activeTab === "prompt" && !prompt) || 
+            (activeTab === "text" && (!generatedPrompt || !content))
+          }
+          className="w-full"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Генерация...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Сгенерировать изображение
+            </>
+          )}
+        </Button>
+      )}
       
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
