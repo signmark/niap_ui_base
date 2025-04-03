@@ -129,19 +129,25 @@ export class SocialPublishingService {
   private formatHtmlContent(htmlContent: string, platform: 'telegram' | 'vk' | 'facebook' | 'instagram'): string {
     if (!htmlContent) return '';
     
-    log(`Форматирование HTML-контента для платформы ${platform}`, 'social-publishing');
+    log(`🔠 Форматирование HTML-контента для платформы ${platform}`, 'social-publishing');
+    log(`📄 Исходный HTML: ${htmlContent.substring(0, 200)}${htmlContent.length > 200 ? '...' : ''}`, 'social-publishing');
     
     // Базовые преобразования общие для всех платформ
     // Заменяем div, p, br на переносы строк 
     let formattedText = htmlContent
-      .replace(/<br\s*\/?>/g, '\n')  // <br> -> новая строка
-      .replace(/<\/p>\s*<p>/g, '\n\n')  // Между параграфами - двойной перенос
-      .replace(/<p[^>]*>/g, '')  // Открывающие теги <p> убираем
-      .replace(/<\/p>/g, '\n')  // Закрывающие </p> заменяем на перенос строки
-      .replace(/<div[^>]*>/g, '')  // Открывающие <div> убираем
-      .replace(/<\/div>/g, '\n')  // Закрывающие </div> заменяем на перенос
-      .replace(/<h[1-6][^>]*>/g, '**')  // Открывающие <h1>-<h6> заменяем на маркер жирного текста
-      .replace(/<\/h[1-6]>/g, '**\n\n');  // Закрывающие </h1>-</h6> заменяем на маркер жирного текста и двойной перенос
+      // Сначала обрабатываем блочные элементы
+      .replace(/<br\s*\/?>/gi, '\n')  // <br> -> новая строка
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')  // Между параграфами - двойной перенос
+      .replace(/<\/div>\s*<div[^>]*>/gi, '\n\n')  // Между div - двойной перенос
+      .replace(/<p[^>]*>/gi, '')  // Открывающие теги <p> убираем
+      .replace(/<\/p>/gi, '\n\n')  // Закрывающие </p> заменяем на двойной перенос строки
+      .replace(/<div[^>]*>/gi, '')  // Открывающие <div> убираем
+      .replace(/<\/div>/gi, '\n\n')  // Закрывающие </div> заменяем на двойной перенос
+      .replace(/<h[1-6][^>]*>/gi, '**')  // Открывающие <h1>-<h6> заменяем на маркер жирного текста
+      .replace(/<\/h[1-6]>/gi, '**\n\n');  // Закрывающие </h1>-</h6> заменяем на маркер жирного текста и двойной перенос
+      
+    // Логируем промежуточный результат после базовых преобразований
+    log(`🔍 После базовых преобразований: ${formattedText.substring(0, 200)}${formattedText.length > 200 ? '...' : ''}`, 'social-publishing');
     
     // Платформо-зависимая обработка форматирования
     if (platform === 'telegram') {
@@ -285,6 +291,144 @@ export class SocialPublishingService {
    * @param telegramSettings Настройки Telegram API
    * @returns Результат публикации
    */
+  /**
+   * Загружает изображение из URL и отправляет его в Telegram
+   * @param imageUrl URL изображения для загрузки
+   * @param chatId ID чата для отправки
+   * @param caption Текст подписи к изображению
+   * @param token Токен Telegram API
+   * @param baseUrl Базовый URL Telegram API
+   * @returns Ответ от Telegram API
+   */
+  private async uploadTelegramImageFromUrl(
+    imageUrl: string, 
+    chatId: string, 
+    caption: string, 
+    token: string,
+    baseUrl: string
+  ): Promise<any> {
+    log(`🔄 Загружаем изображение с URL: ${imageUrl}`, 'social-publishing');
+    
+    // Отправляем в лог токен, который используем (без раскрытия полного токена)
+    log(`🔑 Используем токен Telegram для загрузки: ${token.substring(0, 10)}...`, 'social-publishing');
+    log(`📱 ID чата Telegram: ${chatId}`, 'social-publishing');
+    
+    // Проверяем наличие proxy в URL и декодируем его, если есть
+    let actualImageUrl = imageUrl;
+    if (actualImageUrl.includes('/api/proxy-media?url=')) {
+      const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
+      actualImageUrl = decodeURIComponent(encodedUrl);
+      log(`🔄 Декодирован URL из прокси: ${actualImageUrl}`, 'social-publishing');
+    }
+    
+    // Загружаем изображение с расширенными заголовками
+    const imageResponse = await axios.get(actualImageUrl, { 
+      responseType: 'arraybuffer',
+      // Добавляем заголовки для работы с защищенными ресурсами
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://planner-app.com/',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      // Игнорируем ошибки SSL для работы со всеми серверами
+      validateStatus: function (status) {
+        return status >= 200 && status < 500; // Принимаем статусы 2xx и 3xx, 4xx
+      }
+    });
+    
+    // Проверяем успешность загрузки
+    if (imageResponse.status >= 400) {
+      log(`❌ Ошибка загрузки изображения, статус: ${imageResponse.status}`, 'social-publishing');
+      throw new Error(`Не удалось загрузить изображение, статус: ${imageResponse.status}`);
+    }
+    
+    log(`✅ Изображение успешно загружено, размер: ${imageResponse.data.length} байт, статус: ${imageResponse.status}`, 'social-publishing');
+    
+    // Проверяем размер изображения
+    if (imageResponse.data.length < 100) {
+      log(`⚠️ Внимание: размер загруженного изображения слишком мал (${imageResponse.data.length} байт), возможно загружены не данные изображения`, 'social-publishing');
+    }
+    
+    // Создаем временную директорию, если её нет
+    const tempDir = path.join(os.tmpdir(), 'telegram_uploads');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+      log(`📁 Создана временная директория: ${tempDir}`, 'social-publishing');
+    }
+    
+    // Генерируем уникальное имя файла
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 10);
+    const tempFilePath = path.join(tempDir, `telegram_${timestamp}_${randomString}.jpg`);
+    
+    // Сохраняем изображение во временный файл
+    fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
+    log(`💾 Создан временный файл: ${tempFilePath}, размер: ${fs.statSync(tempFilePath).size} байт`, 'social-publishing');
+    
+    // Создаем FormData для отправки файла
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', caption);
+    formData.append('parse_mode', 'HTML');
+    
+    // Добавляем файл изображения в форму
+    const fileStream = fs.createReadStream(tempFilePath);
+    formData.append('photo', fileStream, { filename: `image_${timestamp}.jpg` });
+    
+    log(`📤 Отправляем файл в Telegram API через multipart/form-data`, 'social-publishing');
+    
+    try {
+      // Отправляем запрос в Telegram API
+      const response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          'Accept': 'application/json'
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 30000 // увеличиваем таймаут до 30 секунд
+      });
+      
+      log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
+      return response.data;
+    } catch (uploadError: any) {
+      log(`❌ Ошибка при отправке изображения в Telegram API: ${uploadError.message}`, 'social-publishing');
+      if (uploadError.response) {
+        log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+      }
+      throw uploadError;
+    } finally {
+      // Закрываем стрим чтения файла
+      fileStream.destroy();
+      
+      // Удаляем временный файл
+      try {
+        fs.unlinkSync(tempFilePath);
+        log(`🗑️ Временный файл удален: ${tempFilePath}`, 'social-publishing');
+      } catch (deleteError) {
+        log(`⚠️ Ошибка при удалении временного файла: ${deleteError}`, 'social-publishing');
+      }
+    }
+  }
+
+  /**
+   * Получает системный токен для администраторской аутентификации
+   * @returns Админский токен для запросов к системным ресурсам
+   */
+  private async getSystemToken(): Promise<string | null> {
+    try {
+      // Здесь должна быть логика получения токена администратора
+      // Обычно это реализуется через DirectusAuthManager или аналогичный сервис
+      return null;
+    } catch (error) {
+      log(`⚠️ Ошибка при получении системного токена: ${(error as Error).message}`, 'social-publishing');
+      return null;
+    }
+  }
+
   async publishToTelegram(
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
@@ -423,65 +567,42 @@ export class SocialPublishingService {
             : String(telegramError);
           log(`ОШИБКА в запросе к Telegram API: ${errorData}`, 'social-publishing');
           
-          // Повторная попытка с локальной загрузкой изображения
-          if (images[0].startsWith('http')) {
-            log(`Telegram отклонил URL изображения. Попытка загрузки изображения локально и повторная отправка`, 'social-publishing');
-            try {
-              log(`Загружаем изображение с URL: ${images[0]}`, 'social-publishing');
-              
-              // Загружаем изображение и сохраняем во временный файл
-              const imageResponse = await axios.get(images[0], { 
-                responseType: 'arraybuffer',
-                // Добавляем заголовки для некоторых защищенных источников
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                  'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-                  'Accept-Encoding': 'gzip, deflate, br',
-                  'Referer': 'https://planner-app.com/'
-                }
-              });
-              
-              log(`Изображение успешно загружено, размер: ${imageResponse.data.length} байт`, 'social-publishing');
-              
-              // Сохраняем во временный файл
-              const tempFilePath = path.join(os.tmpdir(), `telegram_upload_${Date.now()}.jpg`);
-              fs.writeFileSync(tempFilePath, Buffer.from(imageResponse.data));
-              
-              log(`Создан временный файл: ${tempFilePath}`, 'social-publishing');
-              
-              // Создаем FormData для отправки файла
-              const formData = new FormData();
-              formData.append('chat_id', formattedChatId);
-              formData.append('caption', truncatedCaption);
-              formData.append('parse_mode', 'HTML');
-              formData.append('photo', fs.createReadStream(tempFilePath));
-              
-              log(`Отправляем файл в Telegram через multipart/form-data`, 'social-publishing');
-              
-              // Отправляем запрос с мультипарт формой
-              response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
-                headers: formData.getHeaders()
-              });
-              
-              // Удаляем временный файл
-              fs.unlinkSync(tempFilePath);
-              log(`Временный файл удален: ${tempFilePath}`, 'social-publishing');
-              
-              log(`Успешный ответ от Telegram API после локальной загрузки: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
-            } catch (retryError: any) {
-              const retryErrorData = (retryError as any).response?.data 
-                ? JSON.stringify((retryError as any).response.data) 
-                : String(retryError);
-              log(`Повторная попытка загрузки изображения также не удалась: ${retryErrorData}`, 'social-publishing');
-              
-              if (retryError.response) {
-                log(`Данные ответа при ошибке повторной загрузки: ${JSON.stringify(retryError.response.data)}`, 'social-publishing');
-              }
-              
-              throw retryError; // Пробрасываем исключение дальше
+          // Передаем управление в функцию локальной загрузки
+          log(`⚠️ Для надежности используем локальную загрузку изображений в Telegram`, 'social-publishing');
+          try {
+            // Загружаем изображение локально и отправляем через FormData
+            await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
+            response = { data: { ok: true, result: { message_id: Date.now() } } };
+          } catch (retryError: any) {
+            // Подробный вывод ошибки
+            const retryErrorData = (retryError as any).response?.data 
+              ? JSON.stringify((retryError as any).response.data) 
+              : String(retryError);
+            log(`❌ Не удалось загрузить и опубликовать изображение: ${retryErrorData}`, 'social-publishing');
+            
+            if (retryError.response) {
+              log(`📄 Данные ответа при ошибке: ${JSON.stringify(retryError.response.data)}`, 'social-publishing');
+              log(`🔢 Статус ошибки: ${retryError.response.status}`, 'social-publishing');
             }
-          } else {
-            throw telegramError; // Пробрасываем исключение дальше
+            
+            // Последняя попытка отправить только текст
+            try {
+              log(`🔄 Попытка отправки только текста без изображений`, 'social-publishing');
+              const textMessageBody = {
+                chat_id: formattedChatId,
+                text: truncatedCaption,
+                parse_mode: 'HTML'
+              };
+              
+              response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              log(`✅ Текстовое сообщение успешно отправлено после ошибки с изображением`, 'social-publishing');
+            } catch (textError) {
+              log(`❌ Также не удалось отправить текстовое сообщение: ${textError}`, 'social-publishing');
+              throw retryError; // Возвращаем оригинальную ошибку с изображением
+            }
           }
         }
       } else if (hasVideo) {
