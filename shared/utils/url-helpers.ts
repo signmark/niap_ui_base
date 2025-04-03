@@ -26,8 +26,19 @@ export function getProxiedFileUrl(fileUrl: string): string {
   
   if (match) {
     const uuid = match[0];
-    // Формируем прямой URL к файлу Directus
-    return `https://directus.nplanner.ru/assets/${uuid}`;
+    
+    // Проверяем, есть ли в строке расширение файла после UUID
+    const hasExtension = /\.[a-z0-9]{3,4}$/i.test(fileUrl);
+    
+    // Если расширение уже есть в URL, используем его, иначе добавляем .jpg
+    if (hasExtension) {
+      // Извлекаем расширение из исходного URL
+      const extension = fileUrl.substring(fileUrl.lastIndexOf('.'));
+      return `https://directus.nplanner.ru/assets/${uuid}${extension}`;
+    } else {
+      // Добавляем расширение .jpg, чтобы Directus корректно определил MIME-тип
+      return `https://directus.nplanner.ru/assets/${uuid}.jpg`;
+    }
   }
   
   // Проверяем, это URL Directus в старом формате?
