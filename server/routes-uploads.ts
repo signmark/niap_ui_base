@@ -66,13 +66,17 @@ const authenticateUser = (req: Request, res: Response, next: Function) => {
  */
 async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: string, token: string) {
   try {
+    log(`[uploads] Подготовка загрузки файла в Directus: ${fileName}, тип: ${mimeType}`);
+    
     const formData = new FormData();
     formData.append('file', fileData, {
       filename: fileName,
       contentType: mimeType
     });
 
-    const directusUrl = process.env.DIRECTUS_URL || 'https://n8n.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    log(`[uploads] Отправка запроса на ${directusUrl}/files с токеном авторизации`);
+    
     const response = await axios.post(`${directusUrl}/files`, formData, {
       headers: {
         ...formData.getHeaders(),
@@ -80,10 +84,23 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
       }
     });
 
+    if (!response.data || !response.data.data) {
+      log(`[uploads] Некорректный ответ от Directus API: ${JSON.stringify(response.data)}`);
+      throw new Error('Некорректный ответ от Directus API');
+    }
+
+    log(`[uploads] Файл успешно загружен в Directus. ID: ${response.data.data.id}`);
     return response.data.data;
   } catch (error: any) {
     log(`[uploads] Ошибка при загрузке файла в Directus: ${error.message}`);
-    throw new Error(`Ошибка при загрузке файла в Directus: ${error.message}`);
+    
+    // Логируем детали ошибки, если доступны
+    if (error.response) {
+      log(`[uploads] Статус ошибки: ${error.response.status}`);
+      log(`[uploads] Данные ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    throw error;
   }
 }
 
@@ -134,31 +151,80 @@ export function registerUploadRoutes(app: Express) {
   // Универсальный маршрут для загрузки файлов изображений
   app.post('/upload', authenticateUser, upload.single('file'), async (req: Request, res: Response) => {
     try {
+      log(`[uploads] Начинаем обработку загрузки файла...`);
+      
       if (!req.file) {
+        log(`[uploads] Файл не был загружен в запросе`);
         return res.status(400).json({
           success: false,
           error: 'Файл не загружен'
         });
       }
       
-      // Отправляем файл в Directus
-      const uploadedFile = await uploadFileToDirectus(req.file, getAuthTokenFromRequest(req));
+      log(`[uploads] Файл получен: ${req.file.originalname}, размер: ${req.file.size}, тип: ${req.file.mimetype}`);
       
-      if (!uploadedFile) {
-        return res.status(500).json({
+      const token = getAuthTokenFromRequest(req);
+      if (!token) {
+        log(`[uploads] Токен авторизации отсутствует в запросе`);
+        return res.status(401).json({
           success: false,
-          error: 'Не удалось загрузить файл в Directus'
+          error: 'Требуется авторизация'
         });
       }
       
-      return res.status(200).json({
-        success: true,
-        url: uploadedFile.url || uploadedFile.data?.url || '',
-        fileId: uploadedFile.fileId || uploadedFile.data?.id || ''
-      });
-    } catch (error) {
+      log(`[uploads] Токен авторизации получен, длина: ${token.length}`);
+      
+      // Проверяем токен, запрашивая информацию о пользователе
+      const userData = await directusApiManager.getUserInfo(token);
+      if (!userData) {
+        log(`[uploads] Не удалось проверить токен авторизации`);
+        return res.status(401).json({
+          success: false, 
+          error: 'Недействительный токен авторизации'
+        });
+      }
+      
+      log(`[uploads] Токен авторизации проверен, пользователь: ${userData.id}`);
+      
+      // Генерируем уникальное имя файла с сохранением расширения
+      const fileExt = path.extname(req.file.originalname) || '.jpg';
+      const uniqueFilename = `${uuidv4()}${fileExt}`;
+      
+      log(`[uploads] Генерируем уникальное имя файла: ${uniqueFilename}`);
+      
+      try {
+        // Загружаем файл в Directus
+        const fileInfo = await uploadToDirectus(
+          req.file.buffer, 
+          uniqueFilename, 
+          req.file.mimetype,
+          token
+        );
+        
+        log(`[uploads] Файл успешно загружен в Directus: ${fileInfo.id} с URL ${fileInfo.url || 'URL не получен'}`);
+        
+        return res.status(200).json({
+          success: true,
+          url: fileInfo.url || '',
+          fileId: fileInfo.id || ''
+        });
+      } catch (uploadError: any) {
+        log(`[uploads] Ошибка при загрузке в Directus: ${uploadError.message}`);
+        if (uploadError.response) {
+          log(`[uploads] Ответ сервера Directus: ${JSON.stringify(uploadError.response.data)}`);
+        }
+        throw uploadError; // Пробрасываем ошибку для обработки в catch блоке
+      }
+    } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       log(`[uploads] Ошибка загрузки файла: ${errorMessage}`);
+      
+      // Более подробное логирование
+      if (error.response) {
+        log(`[uploads] Статус ошибки Axios: ${error.response.status}`);
+        log(`[uploads] Данные ошибки Axios: ${JSON.stringify(error.response.data)}`);
+      }
+      
       return res.status(500).json({
         success: false,
         error: errorMessage
