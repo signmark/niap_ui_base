@@ -334,9 +334,14 @@ export function registerUploadRoutes(app: Express) {
         
         log(`[uploads] Файл успешно загружен в Directus: ${fileInfo.id} с URL ${fileInfo.url || 'URL не получен'}`);
         
+        // Формируем полный URL для Directus для прямого доступа к файлу
+        const directusUrl = `https://directus.nplanner.ru/assets/${fileInfo.id}`;
+        log(`[uploads] Сформирован URL для доступа к файлу Directus: ${directusUrl}`);
+        
         return res.status(200).json({
           success: true,
-          url: fileInfo.url || '',
+          url: directusUrl,
+          fileUrl: directusUrl,  // Дублируем для совместимости с разными клиентскими компонентами
           fileId: fileInfo.id || ''
         });
       } catch (uploadError: any) {
@@ -404,10 +409,14 @@ export function registerUploadRoutes(app: Express) {
 
       log(`[uploads] Файл успешно загружен в Directus: ${fileInfo.id}`);
 
+      // Формируем правильный URL для файла в Directus
+      const directusUrl = `https://directus.nplanner.ru/assets/${fileInfo.id}`;
+      log(`[uploads] Сформирован URL для доступа к файлу Directus: ${directusUrl}`);
+
       return res.json({
         success: true,
         fileInfo: fileInfo,
-        fileUrl: fileInfo.url,
+        fileUrl: directusUrl,
         originalName: req.file.originalname,
         size: req.file.size,
         mimetype: req.file.mimetype
@@ -463,9 +472,13 @@ export function registerUploadRoutes(app: Express) {
           token
         );
 
+        // Формируем правильный URL для файла в Directus
+        const directusUrl = `https://directus.nplanner.ru/assets/${fileInfo.id}`;
+        log(`[uploads] Сформирован URL для доступа к файлу Directus: ${directusUrl}`);
+        
         return {
           fileInfo: fileInfo,
-          fileUrl: fileInfo.url,
+          fileUrl: directusUrl,
           originalName: file.originalname,
           size: file.size,
           mimetype: file.mimetype
