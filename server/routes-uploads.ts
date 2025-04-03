@@ -547,19 +547,47 @@ export function registerUploadRoutes(app: Express) {
       let authToken = null;
       
       // Если URL содержит directus.nplanner.ru - получаем токен администратора для доступа
-      if (fileUrl.includes('directus.nplanner.ru')) {
-        // Импортируем функцию для получения токена администратора
-        const { getAdminToken } = await import('./directus');
-        authToken = await getAdminToken();
+      if (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('/assets/')) {
+        // Попытка 1: Используем directusApiManager
+        try {
+          const { directusApiManager } = await import('../directus');
+          authToken = await directusApiManager.getAdminToken();
+          log(`[uploads] Получен токен администратора через directusApiManager`);
+        } catch (tokenError) {
+          log(`[uploads] Ошибка получения токена через directusApiManager: ${(tokenError as Error).message}`);
+          // Продолжаем и пробуем другие методы
+        }
+        
+        // Попытка 2: Используем directusCrud, если первая попытка не удалась
+        if (!authToken) {
+          try {
+            const { directusCrud } = await import('../services/directus-crud');
+            authToken = await directusCrud.getAdminToken();
+            log(`[uploads] Получен токен администратора через directusCrud`);
+          } catch (tokenError) {
+            log(`[uploads] Ошибка получения токена через directusCrud: ${(tokenError as Error).message}`);
+          }
+        }
+        
+        // Попытка 3: Используем прямой метод getAdminToken, если предыдущие попытки не удались
+        if (!authToken) {
+          try {
+            const { getAdminToken } = await import('../directus');
+            authToken = await getAdminToken();
+            log(`[uploads] Получен токен администратора через прямой getAdminToken`);
+          } catch (tokenError) {
+            log(`[uploads] Ошибка получения токена через прямой getAdminToken: ${(tokenError as Error).message}`);
+          }
+        }
         
         if (!authToken) {
-          log(`[uploads] Не удалось получить токен администратора для доступа к файлу`);
+          log(`[uploads] КРИТИЧЕСКАЯ ОШИБКА: Не удалось получить токен администратора никаким методом!`);
         } else {
-          log(`[uploads] Получен токен администратора для доступа к файлу`);
+          log(`[uploads] Успешно получен токен администратора одним из методов`);
         }
         
         // Если это UUID Directus, добавляем расширение .jpg для правильного MIME-типа
-        if (match && fileUrl.includes('/assets/')) {
+        if (match && (fileUrl.includes('/assets/') || fileUrl.includes('directus.nplanner.ru'))) {
           const uuid = match[0];
           if (!fileUrl.includes('.')) {
             finalUrl = `https://directus.nplanner.ru/assets/${uuid}.jpg`;
@@ -568,58 +596,89 @@ export function registerUploadRoutes(app: Express) {
         }
       }
       
-      // Настраиваем заголовки запроса
-      const headers: Record<string, string> = {
-        'Accept': 'image/*',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      };
-      
-      // Если это запрос к Directus и у нас есть токен администратора - добавляем его в заголовки
-      if (authToken && fileUrl.includes('directus.nplanner.ru')) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      // Получаем файл из источника и передаем его клиенту
-      const response = await axios({
+      // Добавляем дополнительные опции для стабильного соединения
+      const axiosOptions = {
         url: finalUrl,
         method: 'GET',
-        responseType: 'stream',
-        headers: headers,
+        responseType: 'arraybuffer' as const, // Используем arraybuffer вместо stream для более стабильного получения
+        maxContentLength: 20 * 1024 * 1024, // 20 MB
+        timeout: 15000,
+        maxRedirects: 5,
+        validateStatus: (status: number) => status < 500, // Не считаем 4xx ошибками, обработаем их отдельно
         // Добавляем случайный параметр для избежания кеширования
         params: {
           '_nocache': Date.now()
+        },
+        headers: {
+          'Accept': 'image/*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
-      });
-
-      // Устанавливаем соответствующие заголовки
-      if (response.headers['content-type']) {
-        res.setHeader('Content-Type', response.headers['content-type']);
-      } else {
-        // Если не определен content-type, устанавливаем image/jpeg
-        res.setHeader('Content-Type', 'image/jpeg');
+      };
+      
+      // Если есть токен и это URL Directus - добавляем токен в заголовки
+      if (authToken && (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('/assets/'))) {
+        axiosOptions.headers['Authorization'] = `Bearer ${authToken}`;
+        log(`[uploads] Добавлен заголовок авторизации для Directus`);
       }
       
-      if (response.headers['content-length']) {
-        res.setHeader('Content-Length', response.headers['content-length']);
+      log(`[uploads] Отправка запроса к: ${finalUrl}`);
+      const response = await axios(axiosOptions);
+      
+      // Если статус 403 или 401, пробуем запросить файл еще раз с обновленным токеном
+      if (response.status === 403 || response.status === 401) {
+        log(`[uploads] Получен отказ в доступе (${response.status}), попытка обновить токен...`);
+        
+        // Пробуем обновить токен
+        try {
+          const { directusAuth } = await import('../services/directus-auth-manager');
+          await directusAuth.refreshTokenManually();
+          const newToken = await directusAuth.getToken();
+          
+          if (newToken) {
+            log(`[uploads] Получен новый токен, повторная попытка доступа к файлу`);
+            axiosOptions.headers['Authorization'] = `Bearer ${newToken}`;
+            const retryResponse = await axios(axiosOptions);
+            
+            // Если статус снова 403/401, сдаемся
+            if (retryResponse.status === 403 || retryResponse.status === 401) {
+              throw new Error(`Отказ в доступе (${retryResponse.status}) даже с обновленным токеном`);
+            } else {
+              log(`[uploads] Успешно получен доступ к файлу со второй попытки`);
+              // Продолжаем обработку с успешным ответом
+              return handleSuccessfulResponse(retryResponse, res);
+            }
+          } else {
+            throw new Error('Не удалось получить новый токен');
+          }
+        } catch (refreshError) {
+          log(`[uploads] Ошибка при обновлении токена: ${(refreshError as Error).message}`);
+          throw new Error(`Не удалось обновить токен: ${(refreshError as Error).message}`);
+        }
       }
       
-      // Устанавливаем заголовки CORS
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+      // Обработка успешного ответа
+      return handleSuccessfulResponse(response, res);
       
-      // Передаем данные клиенту
-      response.data.pipe(res);
     } catch (error: any) {
       log(`[uploads] Ошибка прокси файла: ${error.message}`);
       
       // Добавляем подробный вывод о запросе и ошибке
       if (axios.isAxiosError(error) && error.response) {
         log(`[uploads] Статус ошибки: ${error.response.status}`);
-        log(`[uploads] Данные ошибки: ${safeStringify(error.response.data)}`);
+        
+        // Безопасно логируем данные ошибки
+        try {
+          const errorData = error.response.data;
+          if (typeof errorData === 'object') {
+            log(`[uploads] Данные ошибки: ${JSON.stringify(errorData)}`);
+          } else {
+            log(`[uploads] Данные ошибки: ${String(errorData)}`);
+          }
+        } catch (jsonError) {
+          log(`[uploads] Невозможно сериализовать данные ошибки: ${(jsonError as Error).message}`);
+        }
       }
       
       // Если файл не найден, возвращаем изображение-заглушку
@@ -633,6 +692,47 @@ export function registerUploadRoutes(app: Express) {
       });
     }
   });
+  
+  // Вспомогательная функция для обработки успешного ответа от сервера
+  function handleSuccessfulResponse(response: any, res: Response) {
+    // Устанавливаем соответствующие заголовки, обрабатывая их более надежно
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
+    
+    // Устанавливаем заголовки CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Проверяем тип данных ответа и отправляем соответствующим образом
+    if (Buffer.isBuffer(response.data)) {
+      // Если это буфер, отправляем как есть
+      res.end(response.data);
+    } else if (typeof response.data === 'object' && response.data.pipe && typeof response.data.pipe === 'function') {
+      // Если это поток, передаем его
+      response.data.pipe(res);
+    } else {
+      // В других случаях пытаемся преобразовать и отправить
+      try {
+        const buffer = Buffer.from(response.data);
+        res.end(buffer);
+      } catch (conversionError) {
+        log(`[uploads] Ошибка при преобразовании данных ответа: ${(conversionError as Error).message}`);
+        res.status(500).json({
+          success: false,
+          error: 'Ошибка формата данных ответа'
+        });
+      }
+    }
+    
+    return; // Явное завершение функции
+  }
 
   // Добавим обработчик ошибок для multer
   app.use((err: any, req: Request, res: Response, next: Function) => {
