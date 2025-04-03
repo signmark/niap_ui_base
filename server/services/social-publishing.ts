@@ -572,21 +572,48 @@ export class SocialPublishingService {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
         
-        const photoRequestBody = {
-          chat_id: formattedChatId, 
-          photo: images[0],
-          caption: truncatedCaption,
-          parse_mode: 'HTML'
-        };
+        // Проверка формата URL для прямой отправки - Telegram принимает только публичные URL
+        // Проверяем, доступен ли URL для прямой отправки в Telegram
+        const isDirectSendable = images[0].startsWith('http') && 
+                                !images[0].includes('localhost') && 
+                                !images[0].includes('127.0.0.1') &&
+                                !images[0].includes('internal') &&
+                                !images[0].includes('/api/proxy');
         
-        log(`Отправляем запрос фото к Telegram API: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
+        log(`🔍 Проверка URL для прямой отправки в Telegram: ${isDirectSendable ? 'подходит' : 'не подходит для прямой отправки'} - ${images[0].substring(0, 100)}`, 'social-publishing');
         
-        log(`Отправляем фото в Telegram, URL: ${images[0].substring(0, 100)}`, 'social-publishing');
-        try {
-          response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-          log(`Успешный ответ от Telegram API: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
+        // Для URL, которые не подходят для прямой отправки, сразу используем uploadTelegramImageFromUrl
+        if (!isDirectSendable) {
+            log(`⚠️ URL не подходит для прямой отправки в Telegram API, используем локальную загрузку: ${images[0].substring(0, 100)}`, 'social-publishing');
+            try {
+                // Загружаем изображение локально и отправляем через FormData
+                const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
+                log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
+                response = { data: uploadResult };
+                
+                // Сразу переходим к следующему шагу
+                log(`Прямая загрузка изображения выполнена успешно, URL: ${images[0].substring(0, 50)}...`, 'social-publishing');
+            } catch (directUploadError: any) {
+                log(`❌ Ошибка при прямой загрузке изображения: ${directUploadError.message}`, 'social-publishing');
+                throw directUploadError; // Передаем ошибку выше для обработки
+            }
+        } else {
+            // Для URL, которые подходят для прямой отправки через API, используем стандартный метод
+            const photoRequestBody = {
+              chat_id: formattedChatId, 
+              photo: images[0],
+              caption: truncatedCaption,
+              parse_mode: 'HTML'
+            };
+            
+            log(`📤 Отправляем запрос фото к Telegram API напрямую: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
+            log(`🔗 Отправляем фото в Telegram, URL: ${images[0].substring(0, 100)}`, 'social-publishing');
+            
+            try {
+              response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
         } catch (telegramError) {
           const errorData = (telegramError as any).response?.data 
             ? JSON.stringify((telegramError as any).response.data) 
