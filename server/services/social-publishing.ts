@@ -787,9 +787,7 @@ export class SocialPublishingService {
           headers: { 'Content-Type': 'application/json' }
         });
       }
-      }
       
-      try {
       // Если до сих пор не отправлено, пробуем неподдерживаемый формат как текст
       if (!response) {
         // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
@@ -858,10 +856,6 @@ export class SocialPublishingService {
           error: `Telegram API вернул ошибку: ${response.data.description}`,
           userId: content.userId // Добавляем userId из контента
         };
-      }
-      } catch (innerError: any) {
-        log(`Внутренняя ошибка при обработке ответа Telegram API: ${innerError.message}`, 'social-publishing');
-        throw innerError; // Пробрасываем ошибку во внешний обработчик
       }
     } catch (error: any) {
       log(`Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
