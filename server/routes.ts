@@ -8,8 +8,7 @@ import { falAiUniversalService, FalAiModelName } from './services/fal-ai-univers
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
-import { SocialPublishingServiceFixed } from './services/social-publishing-fix';
-import socialTestRoutes from './routes-social-test';
+import { socialPublishingService as socialPublishingServiceFixed } from './services/social-publishing-fix';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";

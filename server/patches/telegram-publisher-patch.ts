@@ -1,127 +1,234 @@
 /**
- * Патч для интеграции класса TelegramPublisher в основной проект
- * Предоставляет функции для загрузки изображений из Directus с авторизацией
- * и отправки их в Telegram
+ * Патч для публикации изображений в Telegram
+ * с поддержкой авторизации при доступе к Directus
  */
 
-// Импортируем типы для TelegramPublisher
-import type { 
-  TelegramPublisherType, 
-  TelegramPublisherInstance, 
-  TelegramPublisherOptions,
-  TelegramResponse
-} from '../types/telegram-publisher';
+import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import * as crypto from 'crypto';
+import FormData from 'form-data';
+import { DownloadImageResult, TelegramSendResponse } from '../types/telegram-publisher';
 
-// Пытаемся импортировать класс TelegramPublisher из mjs-модуля
-let TelegramPublisher: TelegramPublisherType | null = null;
+// Кэш для хранения токена Directus
+interface DirectusTokenCache {
+  token: string | null;
+  expiration: number | null;
+}
+
+// Инициализация кэша токена
+const tokenCache: DirectusTokenCache = {
+  token: null,
+  expiration: null
+};
 
 /**
- * Получает экземпляр TelegramPublisher для работы с Telegram API
- * Если модуль не удалось загрузить, возвращает заглушку
- * @returns Экземпляр TelegramPublisher или заглушка
+ * Проверяет, не истек ли срок действия токена
+ * @returns {boolean} true если токен действителен, false если истек или не установлен
  */
-export async function getTelegramPublisher(): Promise<TelegramPublisherInstance> {
-  if (TelegramPublisher === null) {
-    try {
-      // Динамически импортируем модуль
-      const importedModule = await import('../../telegram-publisher.mjs');
-      TelegramPublisher = importedModule.default;
-      
-      if (!TelegramPublisher) {
-        console.error('[TelegramPublisherPatch] Модуль импортирован, но класс TelegramPublisher не найден');
-        return createTelegramPublisherStub();
-      }
-      
-      console.log('[TelegramPublisherPatch] Класс TelegramPublisher успешно импортирован');
-    } catch (error) {
-      console.error('[TelegramPublisherPatch] Ошибка при импорте TelegramPublisher:', error);
-      return createTelegramPublisherStub();
-    }
+export function isTokenValid(): boolean {
+  if (!tokenCache.token || !tokenCache.expiration) {
+    return false;
   }
   
+  // Проверяем, истек ли срок действия токена (с запасом в 15 минут)
+  const now = Date.now();
+  const expirationWithBuffer = tokenCache.expiration - 15 * 60 * 1000; // 15 минут в мс
+  
+  return now < expirationWithBuffer;
+}
+
+/**
+ * Получает токен авторизации Directus
+ * @returns {Promise<string|null>} Токен авторизации или null в случае ошибки
+ */
+export async function getDirectusToken(): Promise<string | null> {
   try {
-    // Получаем учетные данные Directus из переменных окружения
-    const directusEmail = process.env.DIRECTUS_EMAIL;
-    const directusPassword = process.env.DIRECTUS_PASSWORD;
-    const directusUrl = process.env.DIRECTUS_URL || 'http://localhost:8055';
+    // Проверяем, действителен ли существующий токен
+    if (isTokenValid()) {
+      return tokenCache.token;
+    }
     
-    // Создаем экземпляр TelegramPublisher с нужными настройками
-    const options: TelegramPublisherOptions = {
-      verbose: true, // Включаем подробное логирование
-      directusEmail,
-      directusPassword,
-      directusUrl
-    };
+    // Получаем данные для авторизации из переменных окружения
+    const email = process.env.DIRECTUS_EMAIL;
+    const password = process.env.DIRECTUS_PASSWORD;
+    const directusUrl = process.env.DIRECTUS_URL || 'https://db.nplanner.ru';
     
-    return new TelegramPublisher(options);
+    if (!email || !password) {
+      console.error('Не заданы учетные данные Directus в переменных окружения');
+      return null;
+    }
+    
+    // Выполняем запрос для получения токена
+    const response = await axios.post(`${directusUrl}/auth/login`, {
+      email,
+      password
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      // Сохраняем токен и вычисляем срок его действия
+      tokenCache.token = response.data.data.access_token;
+      
+      // Стандартный срок действия токена Directus - 15 минут
+      // Устанавливаем срок действия на 60 минут от текущего времени
+      tokenCache.expiration = Date.now() + 60 * 60 * 1000; // 60 минут в мс
+      
+      return tokenCache.token;
+    } else {
+      console.error('Некорректный ответ при авторизации в Directus:', response.data);
+      return null;
+    }
   } catch (error) {
-    console.error('[TelegramPublisherPatch] Ошибка при создании экземпляра TelegramPublisher:', error);
-    return createTelegramPublisherStub();
+    console.error('Ошибка при получении токена Directus:', error);
+    return null;
   }
 }
 
 /**
- * Отправляет изображение из Directus в Telegram
- * Удобная обертка для sendDirectusImageToTelegram
+ * Генерирует путь к временному файлу
+ * @param {string} extension Расширение файла
+ * @returns {string} Путь к временному файлу
  */
-export async function sendDirectusImageToTelegram(imageUrl, chatId, caption, token): Promise<TelegramResponse> {
-  const publisher = await getTelegramPublisher();
-  return publisher.sendDirectusImageToTelegram(imageUrl, chatId, caption, token);
+export function generateTempFilePath(extension = 'jpg'): string {
+  const tempDir = os.tmpdir();
+  const randomName = `telegram-image-${crypto.randomBytes(8).toString('hex')}.${extension}`;
+  return path.join(tempDir, randomName);
 }
 
 /**
  * Скачивает изображение с авторизацией (если это URL Directus)
+ * @param {string} imageUrl URL изображения для скачивания
+ * @returns {Promise<Object>} Объект с буфером изображения и типом контента
  */
-export async function downloadImage(imageUrl): Promise<{ buffer: Buffer, contentType: string }> {
-  const publisher = await getTelegramPublisher();
-  return publisher.downloadImage(imageUrl);
+export async function downloadImage(imageUrl: string): Promise<DownloadImageResult> {
+  try {
+    let headers = {};
+    const directusUrl = process.env.DIRECTUS_URL || 'https://db.nplanner.ru';
+    
+    // Если URL изображения содержит домен Directus, добавляем токен авторизации
+    if (imageUrl.includes(directusUrl) || imageUrl.includes('db.nplanner.ru')) {
+      const token = await getDirectusToken();
+      if (token) {
+        headers = {
+          'Authorization': `Bearer ${token}`
+        };
+      }
+    }
+    
+    // Запрашиваем изображение
+    const response = await axios.get(imageUrl, {
+      headers,
+      responseType: 'arraybuffer'
+    });
+    
+    // Создаем временный файл для хранения изображения
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    const extension = contentType.split('/')[1] || 'jpg';
+    const tempFilePath = generateTempFilePath(extension);
+    
+    // Сохраняем буфер во временный файл
+    fs.writeFileSync(tempFilePath, response.data);
+    
+    return {
+      buffer: response.data,
+      contentType,
+      tempFilePath
+    };
+  } catch (error) {
+    console.error('Ошибка при скачивании изображения:', error);
+    throw new Error(`Ошибка при скачивании изображения: ${error}`);
+  }
 }
 
 /**
  * Отправляет изображение в Telegram
+ * @param {Buffer} imageBuffer Буфер с данными изображения
+ * @param {string} contentType MIME-тип изображения
+ * @param {string} chatId ID чата Telegram для отправки
+ * @param {string} caption Подпись к изображению
+ * @param {string} token Токен бота Telegram
+ * @param {string|null} tempFilePath Путь к временному файлу изображения, если есть
+ * @returns {Promise<Object>} Результат отправки
  */
-export async function sendImageToTelegram(imageBuffer, contentType, chatId, caption, token): Promise<TelegramResponse> {
-  const publisher = await getTelegramPublisher();
-  return publisher.sendImageToTelegram(imageBuffer, contentType, chatId, caption, token);
+export async function sendImageToTelegram(
+  imageBuffer: Buffer, 
+  contentType: string, 
+  chatId: string, 
+  caption: string, 
+  token: string,
+  tempFilePath: string
+): Promise<TelegramSendResponse> {
+  try {
+    const form = new FormData();
+    
+    // Добавляем параметры в форму
+    form.append('chat_id', chatId);
+    
+    if (caption) {
+      form.append('caption', caption);
+      form.append('parse_mode', 'HTML');
+    }
+    
+    // Добавляем файл изображения
+    form.append('photo', fs.createReadStream(tempFilePath));
+    
+    // Отправляем запрос в Telegram API
+    const response = await axios.post(
+      `https://api.telegram.org/bot${token}/sendPhoto`,
+      form,
+      {
+        headers: {
+          ...form.getHeaders()
+        }
+      }
+    );
+    
+    return {
+      ok: response.data.ok,
+      result: response.data.result,
+      description: response.data.description
+    };
+  } catch (error) {
+    console.error('Ошибка при отправке изображения в Telegram:', error);
+    return {
+      ok: false,
+      description: `Ошибка при отправке изображения: ${error}`,
+      error
+    };
+  } finally {
+    // Удаляем временный файл, если он был создан
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      try {
+        fs.unlinkSync(tempFilePath);
+      } catch (error) {
+        console.warn('Не удалось удалить временный файл:', tempFilePath, error);
+      }
+    }
+  }
 }
 
 /**
- * Создает заглушку для TelegramPublisher на случай ошибки импорта
- * Все методы логируют ошибку и возвращают промисы с ошибками
+ * Полный процесс отправки изображения из Directus в Telegram
+ * @param {string} imageUrl URL изображения (может быть ссылкой на Directus)
+ * @param {string} chatId ID чата Telegram
+ * @param {string} caption Подпись к изображению (поддерживает HTML)
+ * @param {string} token Токен бота Telegram
+ * @returns {Promise<Object>} Результат отправки
  */
-function createTelegramPublisherStub(): TelegramPublisherInstance {
-  const errorResponse: TelegramResponse = {
-    ok: false,
-    description: 'TelegramPublisher не доступен. Проверьте наличие файла telegram-publisher.mjs в корневой директории проекта'
-  };
-  
-  return {
-    log(message, level = 'error') {
-      console[level](`[TelegramPublisherStub] ${message}`);
-    },
+export async function sendDirectusImageToTelegram(imageUrl: string, chatId: string, caption: string, token: string): Promise<TelegramSendResponse> {
+  try {
+    // Скачиваем изображение
+    const { buffer, contentType, tempFilePath } = await downloadImage(imageUrl);
     
-    isTokenValid() {
-      return false;
-    },
-    
-    async getDirectusToken() {
-      console.error('[TelegramPublisherStub] Попытка получить токен Directus из заглушки');
-      return null;
-    },
-    
-    async downloadImage(imageUrl) {
-      console.error('[TelegramPublisherStub] Попытка скачать изображение из заглушки:', imageUrl);
-      throw new Error('TelegramPublisher не доступен');
-    },
-    
-    async sendImageToTelegram(imageBuffer, contentType, chatId, caption, token) {
-      console.error('[TelegramPublisherStub] Попытка отправить изображение из заглушки');
-      return errorResponse;
-    },
-    
-    async sendDirectusImageToTelegram(imageUrl, chatId, caption, token) {
-      console.error('[TelegramPublisherStub] Попытка отправить изображение из Directus из заглушки:', imageUrl);
-      return errorResponse;
-    }
-  };
+    // Отправляем изображение в Telegram
+    return await sendImageToTelegram(buffer, contentType, chatId, caption, token, tempFilePath);
+  } catch (error) {
+    console.error('Ошибка при отправке изображения в Telegram:', error);
+    return {
+      ok: false,
+      description: `Ошибка при отправке изображения: ${error}`,
+      error
+    };
+  }
 }
