@@ -175,41 +175,71 @@ export const uploadImage = async (file: File) => {
   }
 
   try {
-    console.log('uploadImage: Отправка файла на /api/upload, размер:', file.size, 'тип:', file.type);
-    // Сначала пробуем новый универсальный маршрут
-    const response = await axios.post('/api/upload', formData, {
+    console.log('uploadImage: Отправка файла на /api/upload через fetch, размер:', file.size, 'тип:', file.type);
+    
+    // Используем fetch вместо axios, так как это может обойти некоторые проблемы с сетью
+    const url = `${api.defaults.baseURL}/upload`;
+    console.log(`uploadImage: URL запроса: ${url}`);
+    
+    // Fetch не устанавливает автоматически Content-Type для FormData, позволяя браузеру установить правильный заголовок с boundary
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
       }
     });
     
-    console.log('uploadImage: Ответ сервера:', response.data);
-    // Если ответ успешный, возвращаем данные
-    return response.data;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Ошибка сервера: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('uploadImage: Ответ сервера:', data);
+    return data;
   } catch (error: any) {
     console.error('Ошибка при загрузке через универсальный маршрут, пробуем резервный:', error);
-    // Логируем дополнительные детали ошибки
-    if (error.response) {
-      console.error('Статус:', error.response.status);
-      console.error('Данные:', error.response.data);
-      console.error('Заголовки:', error.response.headers);
-    }
+    console.error('Детали ошибки:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    });
     
     // Если не удалось - пробуем старый маршрут для обратной совместимости
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      console.log('uploadImage: Пробуем резервный маршрут /api/upload-image через fetch');
+      const backupFormData = new FormData();
+      backupFormData.append('image', file);
       
-      const response = await api.post('/upload-image', formData, {
+      const backupResponse = await fetch(`${api.defaults.baseURL}/upload-image`, {
+        method: 'POST',
+        body: backupFormData,
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Authorization': `Bearer ${token}`
         }
       });
-      return response.data;
-    } catch (fallbackError) {
-      console.error('Ошибка при загрузке изображения:', fallbackError);
-      throw fallbackError;
+      
+      if (!backupResponse.ok) {
+        const errorText = await backupResponse.text();
+        console.error(`Ошибка резервного сервера: ${backupResponse.status} ${backupResponse.statusText}`, errorText);
+        throw new Error(`Ошибка резервного сервера: ${backupResponse.status} ${backupResponse.statusText}`);
+      }
+      
+      const backupData = await backupResponse.json();
+      console.log('uploadImage: Ответ резервного сервера:', backupData);
+      return backupData;
+    } catch (fallbackError: any) {
+      console.error('Ошибка при загрузке изображения через резервный маршрут:', fallbackError);
+      console.error('Детали ошибки резервного маршрута:', {
+        message: fallbackError.message,
+        name: fallbackError.name,
+        stack: fallbackError.stack,
+      });
+      
+      // Если все методы загрузки не работают, возвращаем информативную ошибку
+      throw new Error(`Не удалось загрузить изображение. Ошибка: ${fallbackError.message}. Directus сервис файлов недоступен. Пожалуйста, попробуйте позже или используйте внешнюю ссылку.`);
     }
   }
 };

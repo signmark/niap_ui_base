@@ -14,10 +14,6 @@ import { directusApiManager } from './directus';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Получаем путь к текущему файлу и директории в ES модуле
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 // Настраиваем временное хранилище для multer (файлы будут храниться в памяти)
 const storage = multer.memoryStorage();
 
@@ -62,7 +58,18 @@ const authenticateUser = (req: Request, res: Response, next: Function) => {
   next();
 };
 
+/**
+ * Загружает файл в Directus через API
+ * @param fileData Данные файла
+ * @param fileName Имя файла
+ * @param mimeType MIME-тип файла
+ * @param token Токен авторизации Directus
+ * @returns Объект с информацией о загруженном файле
+ */
 // Директория для хранения загруженных файлов
+// Получаем путь к текущему файлу и директории в ES модуле
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const uploadDir = path.join(__dirname, '../uploads');
 
 // Создаем директорию для загрузок, если она не существует
