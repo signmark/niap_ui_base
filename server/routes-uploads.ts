@@ -548,20 +548,20 @@ export function registerUploadRoutes(app: Express) {
       
       // Если URL содержит directus.nplanner.ru - получаем токен администратора для доступа
       if (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('/assets/')) {
-        // Попытка 1: Используем directusApiManager
+        // Попытка 1: Используем глобальную функцию getAdminToken из ./directus
         try {
-          const { directusApiManager } = await import('../directus');
-          authToken = await directusApiManager.getAdminToken();
-          log(`[uploads] Получен токен администратора через directusApiManager`);
+          const { getAdminToken } = await import('./directus');
+          authToken = await getAdminToken();
+          log(`[uploads] Получен токен администратора через глобальную функцию getAdminToken`);
         } catch (tokenError) {
-          log(`[uploads] Ошибка получения токена через directusApiManager: ${(tokenError as Error).message}`);
+          log(`[uploads] Ошибка получения токена через глобальную функцию getAdminToken: ${(tokenError as Error).message}`);
           // Продолжаем и пробуем другие методы
         }
         
         // Попытка 2: Используем directusCrud, если первая попытка не удалась
         if (!authToken) {
           try {
-            const { directusCrud } = await import('../services/directus-crud');
+            const { directusCrud } = await import('./services/directus-crud');
             authToken = await directusCrud.getAdminToken();
             log(`[uploads] Получен токен администратора через directusCrud`);
           } catch (tokenError) {
@@ -569,14 +569,14 @@ export function registerUploadRoutes(app: Express) {
           }
         }
         
-        // Попытка 3: Используем прямой метод getAdminToken, если предыдущие попытки не удались
+        // Попытка 3: Используем прямой метод получения токена, если предыдущие попытки не удались
         if (!authToken) {
           try {
-            const { getAdminToken } = await import('../directus');
-            authToken = await getAdminToken();
-            log(`[uploads] Получен токен администратора через прямой getAdminToken`);
+            const { getAdminTokenDirect } = await import('./directus');
+            authToken = await getAdminTokenDirect();
+            log(`[uploads] Получен токен администратора через getAdminTokenDirect`);
           } catch (tokenError) {
-            log(`[uploads] Ошибка получения токена через прямой getAdminToken: ${(tokenError as Error).message}`);
+            log(`[uploads] Ошибка получения токена через getAdminTokenDirect: ${(tokenError as Error).message}`);
           }
         }
         
@@ -597,6 +597,20 @@ export function registerUploadRoutes(app: Express) {
       }
       
       // Добавляем дополнительные опции для стабильного соединения
+      // Создаем конфигурацию для запроса
+      const headers: Record<string, string> = {
+        'Accept': 'image/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+      
+      // Если есть токен и это URL Directus - добавляем токен в заголовки
+      if (authToken && (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('/assets/'))) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        log(`[uploads] Добавлен заголовок авторизации для Directus`);
+      }
+      
       const axiosOptions = {
         url: finalUrl,
         method: 'GET',
@@ -609,19 +623,8 @@ export function registerUploadRoutes(app: Express) {
         params: {
           '_nocache': Date.now()
         },
-        headers: {
-          'Accept': 'image/*',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+        headers
       };
-      
-      // Если есть токен и это URL Directus - добавляем токен в заголовки
-      if (authToken && (fileUrl.includes('directus.nplanner.ru') || fileUrl.includes('/assets/'))) {
-        axiosOptions.headers['Authorization'] = `Bearer ${authToken}`;
-        log(`[uploads] Добавлен заголовок авторизации для Directus`);
-      }
       
       log(`[uploads] Отправка запроса к: ${finalUrl}`);
       const response = await axios(axiosOptions);
@@ -630,16 +633,23 @@ export function registerUploadRoutes(app: Express) {
       if (response.status === 403 || response.status === 401) {
         log(`[uploads] Получен отказ в доступе (${response.status}), попытка обновить токен...`);
         
-        // Пробуем обновить токен
+        // Пробуем получить новый токен администратора напрямую
         try {
-          const { directusAuth } = await import('../services/directus-auth-manager');
-          await directusAuth.refreshTokenManually();
-          const newToken = await directusAuth.getToken();
+          // Пытаемся получить новый токен напрямую
+          const { getAdminTokenDirect } = await import('./directus');
+          const newToken = await getAdminTokenDirect();
           
           if (newToken) {
-            log(`[uploads] Получен новый токен, повторная попытка доступа к файлу`);
-            axiosOptions.headers['Authorization'] = `Bearer ${newToken}`;
-            const retryResponse = await axios(axiosOptions);
+            log(`[uploads] Получен новый токен администратора, повторная попытка доступа к файлу`);
+            const newHeaders = { ...headers };
+            newHeaders['Authorization'] = `Bearer ${newToken}`;
+            
+            const retryOptions = {
+              ...axiosOptions,
+              headers: newHeaders
+            };
+            
+            const retryResponse = await axios(retryOptions);
             
             // Если статус снова 403/401, сдаемся
             if (retryResponse.status === 403 || retryResponse.status === 401) {
@@ -650,11 +660,11 @@ export function registerUploadRoutes(app: Express) {
               return handleSuccessfulResponse(retryResponse, res);
             }
           } else {
-            throw new Error('Не удалось получить новый токен');
+            throw new Error('Не удалось получить новый токен администратора');
           }
         } catch (refreshError) {
-          log(`[uploads] Ошибка при обновлении токена: ${(refreshError as Error).message}`);
-          throw new Error(`Не удалось обновить токен: ${(refreshError as Error).message}`);
+          log(`[uploads] Ошибка при получении нового токена: ${(refreshError as Error).message}`);
+          throw new Error(`Не удалось получить новый токен: ${(refreshError as Error).message}`);
         }
       }
       

@@ -214,6 +214,41 @@ export async function getAdminToken(): Promise<string | null> {
   }
 }
 
+// Добавляем отдельную экспортируемую функцию для прямого получения токена администратора 
+export async function getAdminTokenDirect(): Promise<string | null> {
+  try {
+    log('[directus] Получение прямого токена администратора через API');
+    
+    // Проверяем, есть ли учетные данные в переменных окружения
+    const email = process.env.DIRECTUS_EMAIL;
+    const password = process.env.DIRECTUS_PASSWORD;
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    if (!email || !password) {
+      log('[directus] Отсутствуют учетные данные в переменных окружения');
+      return null;
+    }
+    
+    // Отправляем запрос на авторизацию
+    const response = await axios.post(`${directusUrl}/auth/login`, {
+      email,
+      password
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      const token = response.data.data.access_token;
+      log('[directus] Успешно получен токен администратора напрямую');
+      return token;
+    } else {
+      log('[directus] Ответ не содержит токен администратора');
+      return null;
+    }
+  } catch (error) {
+    log(`[directus] Ошибка при получении прямого токена администратора: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+};
+
 // Экспортируем менеджер для расширенных возможностей
 export { directusApiManager };
 

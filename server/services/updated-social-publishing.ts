@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { CampaignContent } from '../types/campaignContent';
 import { SocialMediaSettings, SocialPlatform, SocialPublication } from '../types/socialMedia';
-import { getTelegramPublisher } from '../patches/telegram-publisher-interface';
+import { getTelegramPublisher } from './telegram-publisher-bridge';
 import { directusApiManager } from '../directus';
 import { storage } from '../storage';
 import { directusCrud } from '../services/directus-crud';
@@ -513,15 +513,35 @@ class SocialPublishingService {
    * @param {string} token Токен бота Telegram
    * @returns {Promise<Object>} Результат отправки
    */
+  /**
+   * Загружает изображение из URL и отправляет его в Telegram
+   * Совершенно новая реализация с прямой загрузкой через FormData
+   * @param imageUrl URL изображения 
+   * @param chatId ID чата Telegram
+   * @param caption Текст подписи к изображению
+   * @param token Токен бота Telegram
+   * @returns Результат API Telegram
+   */
+  /**
+   * Загружает изображение из URL и отправляет его в Telegram
+   * с использованием специализированного класса TelegramPublisher
+   * @param imageUrl URL изображения для загрузки
+   * @param chatId ID чата для отправки
+   * @param caption Текст подписи к изображению
+   * @param token Токен Telegram API
+   * @returns Ответ от Telegram API
+   */
   public async uploadTelegramImageFromUrl(
     imageUrl: string,
     chatId: string,
     caption: string,
     token: string
   ): Promise<any> {
-    try {
-      console.log('[TELEGRAM] Начинаем отправку изображения:', imageUrl);
+    console.log('[TELEGRAM] Начало загрузки и отправки изображения в Telegram через TelegramPublisher...');
+    console.log(`[TELEGRAM] URL изображения: ${imageUrl.substring(0, 50)}...`);
+    console.log(`[TELEGRAM] ID чата: ${chatId}`);
     
+    try {
       // Проверяем исходные параметры
       if (!imageUrl) {
         console.error('ОШИБКА: Пустой URL изображения для отправки в Telegram');
@@ -565,120 +585,19 @@ class SocialPublishingService {
         };
       }
       
-      console.log(`[TELEGRAM] Отправка изображения в Telegram ${imageUrl.substring(0, 50)}... -> чат ${chatId}`);
-      console.log(`[TELEGRAM] Длина текста подписи: ${caption.length} символов`);
-      
-      // Создаем временный каталог для загрузки
-      const tempDir = path.join(os.tmpdir(), 'telegram_upload');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-      
-      const tempFile = path.join(tempDir, `telegram_upload_${Date.now()}.jpg`);
-      console.log(`[TELEGRAM] Используем временный файл: ${tempFile}`);
-      
-      // Определяем, нужна ли авторизация Directus
-      const isDirectusUrl = imageUrl.includes("directus") || imageUrl.includes("/assets/");
-      const headers: Record<string, string> = {
-        'Accept': 'image/*',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Cache-Control': 'no-cache'
-      };
-      
-      // Получаем токен Directus только если нужен
-      if (isDirectusUrl) {
-        console.log('[TELEGRAM] Требуется авторизация Directus');
-        try {
-          // Пробуем сначала через DirectusApiManager
-          const directusToken = await directusApiManager.getAdminToken();
-          if (directusToken) {
-            console.log('[TELEGRAM] Добавлен токен авторизации через DirectusApiManager');
-            headers['Authorization'] = `Bearer ${directusToken}`;
-          } else {
-            // Если не сработало, используем DirectusCrud
-            const adminToken = await directusCrud.getAdminToken();
-            if (adminToken) {
-              console.log('[TELEGRAM] Добавлен токен авторизации через DirectusCrud');
-              headers['Authorization'] = `Bearer ${adminToken}`;
-            } else {
-              console.warn('[TELEGRAM] Не удалось получить токен для Directus');
-            }
-          }
-        } catch (authError) {
-          console.error('[TELEGRAM] Ошибка при получении токена Directus:', authError);
-        }
-      }
+      // Инициализируем TelegramPublisher через наш мост
+      console.log('[TELEGRAM] Инициализация TelegramPublisher через мост...');
       
       try {
-        // Скачиваем изображение
-        console.log('[TELEGRAM] Скачиваем изображение...');
-        const imageResponse = await axios.get(imageUrl, {
-          responseType: 'arraybuffer',
-          timeout: 15000,
-          headers: headers
-        });
-        
-        // Проверяем, что скачался не пустой файл
-        const dataSize = imageResponse.data.length;
-        if (dataSize === 0) {
-          throw new Error('[TELEGRAM] Скачан пустой файл (0 байт)');
-        }
-        
-        console.log(`[TELEGRAM] Скачано ${dataSize} байт`);
-        
-        // Сохраняем во временный файл
-        fs.writeFileSync(tempFile, Buffer.from(imageResponse.data));
-        console.log(`[TELEGRAM] Изображение сохранено: ${tempFile}`);
-        
-        // Создаем FormData для отправки
-        const form = new FormData();
-        form.append('chat_id', chatId);
-        form.append('caption', caption || 'Изображение');
-        form.append('parse_mode', 'HTML');
-        
-        // Добавляем файл как поток
-        const fileStream = fs.createReadStream(tempFile);
-        form.append('photo', fileStream, { filename: `image_${Date.now()}.jpg` });
-        
-        // Отправляем запрос в Telegram
-        console.log("[TELEGRAM] Отправляем в Telegram API...");
-        const telegramUrl = `https://api.telegram.org/bot${token}/sendPhoto`;
-        
-        const result = await axios.post(
-          telegramUrl,
-          form,
-          {
-            headers: {
-              ...form.getHeaders()
-            },
-            timeout: 20000,
-            maxBodyLength: 20 * 1024 * 1024 // 20MB
-          }
-        );
-        
-        // Закрываем поток файла
-        fileStream.destroy();
-        
-        // Удаляем временный файл
-        try {
-          fs.unlinkSync(tempFile);
-          console.log(`[TELEGRAM] Временный файл удален: ${tempFile}`);
-        } catch (err) {
-          console.error(`[TELEGRAM] Ошибка при удалении файла: ${err.message}`);
-        }
-        
-        console.log("[TELEGRAM] Изображение успешно отправлено в Telegram");
-        return result.data;
-      } catch (downloadError) {
-        console.error(`[TELEGRAM] Ошибка при скачивании/отправке: ${downloadError.message}`);
-        
-        // Попытка использования TelegramPublisher в качестве запасного варианта
-        console.log('[TELEGRAM] Попытка использования TelegramPublisher в качестве запасного варианта...');
+        // Используем наш новый мост для отправки изображения
         const telegramPublisher = await this.initTelegramPublisher();
         if (!telegramPublisher) {
           throw new Error('Не удалось инициализировать TelegramPublisher');
         }
         
+        console.log('[TELEGRAM] TelegramPublisher успешно инициализирован, отправляем изображение...');
+        
+        // Отправляем изображение через TelegramPublisher
         const result = await telegramPublisher.sendDirectusImageToTelegram(
           imageUrl,
           chatId,
@@ -686,14 +605,21 @@ class SocialPublishingService {
           token
         );
         
-        if (!result || result.ok !== true) {
-          throw new Error(`TelegramPublisher вернул ошибку: ${result?.description || 'нет описания'}`);
-        }
-        
+        console.log('[TELEGRAM] Изображение успешно отправлено через TelegramPublisher');
         return result;
+      } catch (error: any) {
+        console.error('[TELEGRAM] Ошибка при работе с TelegramPublisher:', error.message);
+        
+        // Возвращаем информацию об ошибке в стандартном формате
+        return {
+          ok: false,
+          description: `Ошибка отправки изображения через TelegramPublisher: ${error.message}`,
+          error: 'TELEGRAM_PUBLISHER_ERROR'
+        };
       }
-    } catch (error) {
-      console.error('КРИТИЧЕСКАЯ ОШИБКА при отправке изображения в Telegram:', error);
+    } catch (error: any) {
+      console.error('[TELEGRAM] КРИТИЧЕСКАЯ ОШИБКА при отправке изображения:', error.message);
+      console.error('[TELEGRAM] Стек вызовов:', error.stack);
       
       // Попытка безопасно сериализовать ошибку
       let errorMessage = 'Неизвестная ошибка';
