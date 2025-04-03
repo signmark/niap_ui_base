@@ -316,10 +316,33 @@ export class SocialPublishingService {
     // Проверяем наличие proxy в URL и декодируем его, если есть
     let actualImageUrl = imageUrl;
     if (actualImageUrl.includes('/api/proxy-media?url=')) {
-      const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
-      actualImageUrl = decodeURIComponent(encodedUrl);
-      log(`🔄 Декодирован URL из прокси: ${actualImageUrl}`, 'social-publishing');
+      try {
+        const encodedUrl = actualImageUrl.split('/api/proxy-media?url=')[1].split('&')[0];
+        actualImageUrl = decodeURIComponent(encodedUrl);
+        log(`🔄 Декодирован URL из прокси: ${actualImageUrl}`, 'social-publishing');
+      } catch (error) {
+        log(`⚠️ Ошибка при декодировании URL из прокси: ${error}`, 'social-publishing');
+        // Если декодирование не удалось, продолжаем с исходным URL
+        log(`⚠️ Продолжаем с исходным URL: ${actualImageUrl}`, 'social-publishing');
+      }
     }
+    
+    log(`📥 Фактический URL для загрузки изображения: ${actualImageUrl}`, 'social-publishing');
+    
+    // Определяем, является ли URL изображения внешним или местным
+    const isExternalUrl = actualImageUrl.startsWith('http') || actualImageUrl.startsWith('https');
+    log(`🌐 Проверка URL изображения: ${isExternalUrl ? 'внешний URL' : 'локальный путь'} - ${actualImageUrl}`, 'social-publishing');
+    
+    // Для локальных путей проверяем наличие файла
+    if (!isExternalUrl && !actualImageUrl.startsWith('/')) {
+      // Преобразуем в абсолютный путь
+      const baseUrl = process.env.APP_URL || 'https://planner-app.com';
+      actualImageUrl = `${baseUrl}/${actualImageUrl}`;
+      log(`🔄 Преобразован локальный путь в абсолютный URL: ${actualImageUrl}`, 'social-publishing');
+    }
+    
+    // Стратегия загрузки файла с усиленной защитой от сбоев и подробным логированием
+    log(`📥 Загрузка изображения с URL: ${actualImageUrl}`, 'social-publishing');
     
     // Загружаем изображение с расширенными заголовками
     const imageResponse = await axios.get(actualImageUrl, { 
@@ -331,12 +354,15 @@ export class SocialPublishingService {
         'Accept-Encoding': 'gzip, deflate, br',
         'Referer': 'https://planner-app.com/',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
+        'Origin': 'https://planner-app.com'
       },
       // Игнорируем ошибки SSL для работы со всеми серверами
       validateStatus: function (status) {
         return status >= 200 && status < 500; // Принимаем статусы 2xx и 3xx, 4xx
-      }
+      },
+      // Увеличиваем таймаут для загрузки больших файлов
+      timeout: 30000
     });
     
     // Проверяем успешность загрузки
@@ -571,8 +597,9 @@ export class SocialPublishingService {
           log(`⚠️ Для надежности используем локальную загрузку изображений в Telegram`, 'social-publishing');
           try {
             // Загружаем изображение локально и отправляем через FormData
-            await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
-            response = { data: { ok: true, result: { message_id: Date.now() } } };
+            const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
+            log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
+            response = { data: uploadResult };
           } catch (retryError: any) {
             // Подробный вывод ошибки
             const retryErrorData = (retryError as any).response?.data 
