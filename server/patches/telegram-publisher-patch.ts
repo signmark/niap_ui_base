@@ -1,178 +1,127 @@
 /**
- * Патч для метода publishToTelegram в классе SocialPublishingService
- * Решает проблему с авторизацией при скачивании изображений из Directus
- * и отправке в Telegram
+ * Патч для интеграции класса TelegramPublisher в основной проект
+ * Предоставляет функции для загрузки изображений из Directus с авторизацией
+ * и отправки их в Telegram
  */
 
-// Импортируем TelegramPublisher и другие необходимые модули
-import { log } from '../logger';
-import { TelegramPublisherType } from '../types/telegram-publisher';
+// Импортируем типы для TelegramPublisher
+import type { 
+  TelegramPublisherType, 
+  TelegramPublisherInstance, 
+  TelegramPublisherOptions,
+  TelegramResponse
+} from '../types/telegram-publisher';
 
-// Обрабатываем ошибку с CommonJS и ESM модулями
-let TelegramPublisher: TelegramPublisherType;
-try {
-  // Пытаемся импортировать как ESM модуль
-  const importPath = '../../telegram-publisher.mjs';
-  TelegramPublisher = require(importPath).TelegramPublisher;
-} catch (error) {
-  // Если это не удается, пробуем импортировать как CommonJS
-  try {
-    TelegramPublisher = require('../../standalone-telegram-publisher');
-  } catch (innerError) {
-    log(`❌ Ошибка при импорте TelegramPublisher: ${innerError.message}`, 'telegram-patch');
-    throw new Error('Не удалось импортировать TelegramPublisher');
-  }
-}
+// Пытаемся импортировать класс TelegramPublisher из mjs-модуля
+let TelegramPublisher: TelegramPublisherType | null = null;
 
 /**
- * Патч для метода publishToTelegram класса SocialPublishingService
- * Использует отдельный класс TelegramPublisher с авторизацией Directus
- * 
- * @param {any} originalThis ссылка на экземпляр SocialPublishingService (this)
- * @param {any} content контент для публикации
- * @param {any} telegramSettings настройки Telegram
- * @returns {Promise<any>} результат публикации
+ * Получает экземпляр TelegramPublisher для работы с Telegram API
+ * Если модуль не удалось загрузить, возвращает заглушку
+ * @returns Экземпляр TelegramPublisher или заглушка
  */
-export async function patchedPublishToTelegram(originalThis: any, content: any, telegramSettings: any): Promise<any> {
-  log(`📱 Публикация в Telegram: ${content.id}`, 'social-publishing');
-  
-  // Проверка входных данных
-  if (!telegramSettings) {
-    log(`❌ Отсутствуют настройки Telegram для ${content.id}`, 'social-publishing');
-    return {
-      platform: 'telegram',
-      status: 'failed',
-      publishedAt: null,
-      error: 'Отсутствуют настройки Telegram',
-      userId: null
-    };
-  }
-  
-  if (!telegramSettings.token) {
-    log(`❌ Отсутствует токен бота Telegram для ${content.id}`, 'social-publishing');
-    return {
-      platform: 'telegram',
-      status: 'failed',
-      publishedAt: null,
-      error: 'Отсутствует токен бота Telegram',
-      userId: null
-    };
-  }
-  
-  if (!telegramSettings.chatId) {
-    log(`❌ Отсутствует ID чата Telegram для ${content.id}`, 'social-publishing');
-    return {
-      platform: 'telegram',
-      status: 'failed',
-      publishedAt: null,
-      error: 'Отсутствует ID чата Telegram',
-      userId: null
-    };
-  }
-  
-  // Получаем настройки
-  const token = telegramSettings.token;
-  const chatId = telegramSettings.chatId;
-  
-  try {
-    log(`🔄 Подготовка контента для публикации в Telegram: ${content.id}`, 'social-publishing');
-    
-    // Обрабатываем текст с помощью оригинального метода
-    const processedContent = await originalThis.processContentForPublishing(content, 'telegram');
-    
-    // Форматируем текст для Telegram (с сохранением форматирования и эмодзи)
-    const formattedText = await originalThis.formatTextForTelegram(processedContent.text);
-    
-    log(`📝 Подготовлен текст для Telegram (${formattedText.length} символов)`, 'social-publishing');
-    
-    // Получаем URL изображения
-    const processedImageUrl = processedContent.imageUrl;
-    
-    if (!processedImageUrl) {
-      log(`⚠️ Отсутствует изображение для публикации в Telegram`, 'social-publishing');
+export async function getTelegramPublisher(): Promise<TelegramPublisherInstance> {
+  if (TelegramPublisher === null) {
+    try {
+      // Динамически импортируем модуль
+      const importedModule = await import('../../telegram-publisher.mjs');
+      TelegramPublisher = importedModule.default;
       
-      // Отправляем только текст, если нет изображения
-      try {
-        const textOnlyResponse = await originalThis.sendTelegramTextMessage(
-          chatId,
-          formattedText,
-          token
-        );
-        
-        log(`✅ Успешно опубликован текст в Telegram, message_id: ${textOnlyResponse.result.message_id}`, 'social-publishing');
-        
-        return {
-          platform: 'telegram',
-          status: 'published',
-          publishedAt: new Date().toISOString(),
-          postId: textOnlyResponse.result.message_id.toString(),
-          postUrl: null,
-          error: null,
-          userId: chatId
-        };
-      } catch (textError: any) {
-        log(`❌ Ошибка при публикации текста в Telegram: ${textError.message}`, 'social-publishing');
-        
-        return {
-          platform: 'telegram',
-          status: 'failed',
-          publishedAt: null,
-          error: `Ошибка при публикации текста: ${textError.message}`,
-          userId: chatId
-        };
+      if (!TelegramPublisher) {
+        console.error('[TelegramPublisherPatch] Модуль импортирован, но класс TelegramPublisher не найден');
+        return createTelegramPublisherStub();
       }
-    }
-    
-    // Создаем экземпляр TelegramPublisher
-    const telegramPublisher = new TelegramPublisher();
-    
-    // Отправляем изображение через отдельный класс вместо метода uploadTelegramImageFromUrl
-    log(`🚀 Отправка изображения в Telegram через TelegramPublisher: ${processedImageUrl.substring(0, 70)}...`, 'social-publishing');
-    
-    const response = await telegramPublisher.sendDirectusImageToTelegram(
-      processedImageUrl,
-      chatId,
-      formattedText,
-      token
-    );
-    
-    if (response && response.ok) {
-      log(`✅ Успешно опубликован пост с изображением в Telegram, message_id: ${response.result.message_id}`, 'social-publishing');
       
-      return {
-        platform: 'telegram',
-        status: 'published',
-        publishedAt: new Date().toISOString(),
-        postId: response.result.message_id.toString(),
-        postUrl: null,
-        error: null,
-        userId: chatId
-      };
-    } else {
-      throw new Error(`Telegram API вернул ошибку: ${JSON.stringify(response)}`);
+      console.log('[TelegramPublisherPatch] Класс TelegramPublisher успешно импортирован');
+    } catch (error) {
+      console.error('[TelegramPublisherPatch] Ошибка при импорте TelegramPublisher:', error);
+      return createTelegramPublisherStub();
     }
+  }
+  
+  try {
+    // Получаем учетные данные Directus из переменных окружения
+    const directusEmail = process.env.DIRECTUS_EMAIL;
+    const directusPassword = process.env.DIRECTUS_PASSWORD;
+    const directusUrl = process.env.DIRECTUS_URL || 'http://localhost:8055';
     
-  } catch (error: any) {
-    log(`❌ Ошибка при публикации в Telegram: ${error.message}`, 'social-publishing');
-    
-    return {
-      platform: 'telegram',
-      status: 'failed',
-      publishedAt: null,
-      error: `Ошибка при публикации: ${error.message}`,
-      userId: chatId
+    // Создаем экземпляр TelegramPublisher с нужными настройками
+    const options: TelegramPublisherOptions = {
+      verbose: true, // Включаем подробное логирование
+      directusEmail,
+      directusPassword,
+      directusUrl
     };
+    
+    return new TelegramPublisher(options);
+  } catch (error) {
+    console.error('[TelegramPublisherPatch] Ошибка при создании экземпляра TelegramPublisher:', error);
+    return createTelegramPublisherStub();
   }
 }
 
 /**
- * Инструкция по применению:
- * 
- * Импортируйте патч в файле social-publishing.ts:
- * import { patchedPublishToTelegram } from './patches/telegram-publisher-patch';
- * 
- * И замените вызов метода на:
- * async publishToTelegram(content: CampaignContent, telegramSettings: SocialMediaSettings): Promise<SocialPublication> {
- *   return patchedPublishToTelegram(this, content, telegramSettings);
- * }
+ * Отправляет изображение из Directus в Telegram
+ * Удобная обертка для sendDirectusImageToTelegram
  */
+export async function sendDirectusImageToTelegram(imageUrl, chatId, caption, token): Promise<TelegramResponse> {
+  const publisher = await getTelegramPublisher();
+  return publisher.sendDirectusImageToTelegram(imageUrl, chatId, caption, token);
+}
+
+/**
+ * Скачивает изображение с авторизацией (если это URL Directus)
+ */
+export async function downloadImage(imageUrl): Promise<{ buffer: Buffer, contentType: string }> {
+  const publisher = await getTelegramPublisher();
+  return publisher.downloadImage(imageUrl);
+}
+
+/**
+ * Отправляет изображение в Telegram
+ */
+export async function sendImageToTelegram(imageBuffer, contentType, chatId, caption, token): Promise<TelegramResponse> {
+  const publisher = await getTelegramPublisher();
+  return publisher.sendImageToTelegram(imageBuffer, contentType, chatId, caption, token);
+}
+
+/**
+ * Создает заглушку для TelegramPublisher на случай ошибки импорта
+ * Все методы логируют ошибку и возвращают промисы с ошибками
+ */
+function createTelegramPublisherStub(): TelegramPublisherInstance {
+  const errorResponse: TelegramResponse = {
+    ok: false,
+    description: 'TelegramPublisher не доступен. Проверьте наличие файла telegram-publisher.mjs в корневой директории проекта'
+  };
+  
+  return {
+    log(message, level = 'error') {
+      console[level](`[TelegramPublisherStub] ${message}`);
+    },
+    
+    isTokenValid() {
+      return false;
+    },
+    
+    async getDirectusToken() {
+      console.error('[TelegramPublisherStub] Попытка получить токен Directus из заглушки');
+      return null;
+    },
+    
+    async downloadImage(imageUrl) {
+      console.error('[TelegramPublisherStub] Попытка скачать изображение из заглушки:', imageUrl);
+      throw new Error('TelegramPublisher не доступен');
+    },
+    
+    async sendImageToTelegram(imageBuffer, contentType, chatId, caption, token) {
+      console.error('[TelegramPublisherStub] Попытка отправить изображение из заглушки');
+      return errorResponse;
+    },
+    
+    async sendDirectusImageToTelegram(imageUrl, chatId, caption, token) {
+      console.error('[TelegramPublisherStub] Попытка отправить изображение из Directus из заглушки:', imageUrl);
+      return errorResponse;
+    }
+  };
+}
