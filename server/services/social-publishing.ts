@@ -536,6 +536,9 @@ export class SocialPublishingService {
       const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
       let processedVideoUrl = hasVideo ? this.processImageUrl(content.videoUrl as string, 'telegram') : '';
       
+      // Для отладки логируем важные переменные
+      log(`📊 Контент для публикации: тип=${content.contentType}, imageUrl=${Boolean(content.imageUrl)}, videoUrl=${Boolean(content.videoUrl)}`, 'social-publishing');
+      
       // Ограничиваем длину подписи, так как Telegram имеет ограничение
       const maxCaptionLength = 1024;
       const truncatedCaption = text.length > maxCaptionLength ? 
@@ -572,110 +575,133 @@ export class SocialPublishingService {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
         
-        // Проверка формата URL для прямой отправки - Telegram принимает только публичные URL
-        // Проверяем, доступен ли URL для прямой отправки в Telegram
-        const isDirectSendable = images[0].startsWith('http') && 
-                                !images[0].includes('localhost') && 
-                                !images[0].includes('127.0.0.1') &&
-                                !images[0].includes('internal') &&
-                                !images[0].includes('/api/proxy');
-        
-        log(`🔍 Проверка URL для прямой отправки в Telegram: ${isDirectSendable ? 'подходит' : 'не подходит для прямой отправки'} - ${images[0].substring(0, 100)}`, 'social-publishing');
-        
-        // Для URL, которые не подходят для прямой отправки, сразу используем uploadTelegramImageFromUrl
-        if (!isDirectSendable) {
-            log(`⚠️ URL не подходит для прямой отправки в Telegram API, используем локальную загрузку: ${images[0].substring(0, 100)}`, 'social-publishing');
-            try {
-                // Загружаем изображение локально и отправляем через FormData
-                const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
-                log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
-                response = { data: uploadResult };
-                
-                // Сразу переходим к следующему шагу
-                log(`Прямая загрузка изображения выполнена успешно, URL: ${images[0].substring(0, 50)}...`, 'social-publishing');
-            } catch (directUploadError: any) {
-                log(`❌ Ошибка при прямой загрузке изображения: ${directUploadError.message}`, 'social-publishing');
-                throw directUploadError; // Передаем ошибку выше для обработки
-            }
-        } else {
-            // Для URL, которые подходят для прямой отправки через API, используем стандартный метод
-            const photoRequestBody = {
-              chat_id: formattedChatId, 
-              photo: images[0],
-              caption: truncatedCaption,
+        // ВСЕГДА используем локальную загрузку файлов для отправки в Telegram
+      // Это гарантирует, что изображения будут загружены и отправлены как multipart/form-data,
+      // а не как URL, что решает проблему с изображениями, которые не могут быть загружены Telegram напрямую
+      log(`📥 Всегда используем локальную загрузку файла для отправки в Telegram: ${images[0].substring(0, 100)}`, 'social-publishing');
+      
+      try {
+          // Загружаем изображение локально и отправляем через FormData
+          const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
+          log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
+          response = { data: uploadResult };
+          
+          // Сразу переходим к следующему шагу
+          log(`✓ Локальная загрузка и отправка изображения выполнена успешно, URL: ${images[0].substring(0, 50)}...`, 'social-publishing');
+      } catch (directUploadError: any) {
+          log(`❌ Ошибка при загрузке и отправке изображения: ${directUploadError.message}`, 'social-publishing');
+          
+          if (directUploadError.response) {
+              log(`📄 Данные ответа при ошибке: ${JSON.stringify(directUploadError.response.data || {})}`, 'social-publishing');
+              log(`🔢 Статус ошибки: ${directUploadError.response.status}`, 'social-publishing');
+          }
+      
+          // Последняя попытка отправить только текст
+          try {
+            log(`🔄 Попытка отправки только текста без изображений после ошибки загрузки`, 'social-publishing');
+            const textMessageBody = {
+              chat_id: formattedChatId,
+              text: truncatedCaption,
               parse_mode: 'HTML'
             };
             
-            log(`📤 Отправляем запрос фото к Telegram API напрямую: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
-            log(`🔗 Отправляем фото в Telegram, URL: ${images[0].substring(0, 100)}`, 'social-publishing');
+            response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+              headers: { 'Content-Type': 'application/json' }
+            });
             
-            try {
-              response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
-                headers: { 'Content-Type': 'application/json' }
-              });
-              log(`✅ Успешный ответ от Telegram API: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
-        } catch (telegramError) {
-          const errorData = (telegramError as any).response?.data 
-            ? JSON.stringify((telegramError as any).response.data) 
-            : String(telegramError);
-          log(`ОШИБКА в запросе к Telegram API: ${errorData}`, 'social-publishing');
-          
-          // Передаем управление в функцию локальной загрузки
-          log(`⚠️ Для надежности используем локальную загрузку изображений в Telegram`, 'social-publishing');
-          try {
-            // Загружаем изображение локально и отправляем через FormData
-            const uploadResult = await this.uploadTelegramImageFromUrl(images[0], formattedChatId, truncatedCaption, token, baseUrl);
-            log(`✅ Успешная загрузка через локальный метод: ${JSON.stringify(uploadResult)}`, 'social-publishing');
-            response = { data: uploadResult };
-          } catch (retryError: any) {
-            // Подробный вывод ошибки
-            const retryErrorData = (retryError as any).response?.data 
-              ? JSON.stringify((retryError as any).response.data) 
-              : String(retryError);
-            log(`❌ Не удалось загрузить и опубликовать изображение: ${retryErrorData}`, 'social-publishing');
-            
-            if (retryError.response) {
-              log(`📄 Данные ответа при ошибке: ${JSON.stringify(retryError.response.data)}`, 'social-publishing');
-              log(`🔢 Статус ошибки: ${retryError.response.status}`, 'social-publishing');
-            }
-            
-            // Последняя попытка отправить только текст
-            try {
-              log(`🔄 Попытка отправки только текста без изображений`, 'social-publishing');
-              const textMessageBody = {
-                chat_id: formattedChatId,
-                text: truncatedCaption,
-                parse_mode: 'HTML'
-              };
-              
-              response = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
-                headers: { 'Content-Type': 'application/json' }
-              });
-              
-              log(`✅ Текстовое сообщение успешно отправлено после ошибки с изображением`, 'social-publishing');
-            } catch (textError) {
-              log(`❌ Также не удалось отправить текстовое сообщение: ${textError}`, 'social-publishing');
-              throw retryError; // Возвращаем оригинальную ошибку с изображением
-            }
+            log(`✅ Текстовое сообщение успешно отправлено после ошибки с изображением`, 'social-publishing');
+          } catch (textError: any) {
+            log(`❌ Также не удалось отправить текстовое сообщение: ${textError}`, 'social-publishing');
+            throw directUploadError; // Возвращаем оригинальную ошибку с изображением
           }
-        }
+      }
+          // Закрываем тег try-catch для обработки ошибок при локальной загрузке файлов
       } 
       
       if (hasVideo) {
         // Отправка видео с подписью (с обработанным URL)
         log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
-        const videoRequestBody = {
-          chat_id: formattedChatId,
-          video: processedVideoUrl,
-          caption: text,
-          parse_mode: 'HTML'
-        };
         
-        log(`Отправляем запрос видео к Telegram API: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
-        
-        response = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        try {
+          // Для видео тоже используем локальную загрузку, аналогично изображениям
+          log(`📥 Используем локальную загрузку файла для отправки видео в Telegram: ${processedVideoUrl.substring(0, 100)}`, 'social-publishing');
+          
+          // Скачиваем видео
+          const videoResponse = await axios({
+            method: 'get',
+            url: processedVideoUrl,
+            responseType: 'arraybuffer'
+          });
+          
+          // Создаем временный файл на сервере
+          const timestamp = Date.now();
+          const tempFilePath = path.join(os.tmpdir(), `telegram_video_${timestamp}.mp4`);
+          log(`Создаем временный файл для видео: ${tempFilePath}`, 'social-publishing');
+          
+          // Сохраняем видео во временный файл
+          fs.writeFileSync(tempFilePath, Buffer.from(videoResponse.data));
+          
+          // Подготавливаем multipart/form-data форму
+          const formData = new FormData();
+          formData.append('chat_id', formattedChatId);
+          formData.append('caption', truncatedCaption);
+          formData.append('parse_mode', 'HTML');
+          
+          // Добавляем файл видео в форму
+          const fileStream = fs.createReadStream(tempFilePath);
+          formData.append('video', fileStream, { filename: `video_${timestamp}.mp4` });
+          
+          log(`📤 Отправляем видео файл в Telegram API через multipart/form-data`, 'social-publishing');
+          
+          try {
+            // Отправляем запрос в Telegram API
+            const videoResponse = await axios.post(`${baseUrl}/sendVideo`, formData, {
+              headers: {
+                ...formData.getHeaders(),
+                'Accept': 'application/json'
+              },
+              maxContentLength: Infinity,
+              maxBodyLength: Infinity,
+              timeout: 60000 // увеличиваем таймаут до 60 секунд для видео
+            });
+            
+            log(`✅ Успешный ответ от Telegram API при отправке видео: ${JSON.stringify(videoResponse.data)}`, 'social-publishing');
+            response = { data: videoResponse.data };
+          } catch (uploadError: any) {
+            log(`❌ Ошибка при отправке видео в Telegram API: ${uploadError.message}`, 'social-publishing');
+            if (uploadError.response) {
+              log(`📄 Данные ответа при ошибке: ${JSON.stringify(uploadError.response.data)}`, 'social-publishing');
+            }
+            throw uploadError;
+          } finally {
+            // Закрываем стрим чтения файла
+            fileStream.destroy();
+            
+            // Удаляем временный файл
+            try {
+              fs.unlinkSync(tempFilePath);
+              log(`🗑️ Временный файл видео удален: ${tempFilePath}`, 'social-publishing');
+            } catch (deleteError) {
+              log(`⚠️ Ошибка при удалении временного файла видео: ${deleteError}`, 'social-publishing');
+            }
+          }
+        } catch (videoError: any) {
+          log(`⚠️ Ошибка при локальной загрузке видео, пробуем отправить через URL: ${videoError.message}`, 'social-publishing');
+          
+          // Если не удалось локально загрузить и отправить, пробуем через URL (старый способ)
+          const videoRequestBody = {
+            chat_id: formattedChatId,
+            video: processedVideoUrl,
+            caption: truncatedCaption,
+            parse_mode: 'HTML'
+          };
+          
+          log(`Отправляем запрос видео к Telegram API через URL: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
+          
+          response = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
       } 
       
       if (content.contentType === 'text' || !content.contentType) {
