@@ -806,15 +806,10 @@ export class SocialPublishingService {
       // Подготовка описания
       let caption = processedContent.title ? `${processedContent.title}\n\n` : '';
       
-      // Удаляем HTML-теги, но сохраняем их содержимое
-      const contentText = processedContent.content
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
-        .replace(/<\/?[^>]+(>|$)/g, '');
+      // Форматируем контент для Instagram с сохранением структуры текста
+      const formattedContent = this.formatHtmlContent(processedContent.content, 'instagram');
       
-      caption += contentText;
+      caption += formattedContent;
 
       // Добавление хэштегов
       if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
@@ -1051,15 +1046,10 @@ export class SocialPublishingService {
       // Подготовка сообщения
       let message = processedContent.title ? `${processedContent.title}\n\n` : '';
       
-      // Удаляем HTML-теги, но сохраняем их содержимое
-      const contentText = processedContent.content
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n')
-        .replace(/<\/?[^>]+(>|$)/g, '');
+      // Форматируем контент для Facebook с сохранением структуры текста
+      const formattedContent = this.formatHtmlContent(processedContent.content, 'facebook');
       
-      message += contentText;
+      message += formattedContent;
 
       // Добавление хэштегов
       if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
