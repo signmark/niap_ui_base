@@ -11,6 +11,7 @@ import { ru } from 'date-fns/locale';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
+import { ImageProxy } from "@/components/ui/image-proxy";
 import { SocialPlatform, PlatformPublishInfo, CampaignContent } from "@/types";
 
 // Страница календаря публикаций
@@ -301,7 +302,7 @@ export default function Posts() {
                                 
                                 {content.imageUrl && (
                                   <div className="relative h-40 bg-muted border-t">
-                                    <img 
+                                    <ImageProxy 
                                       src={content.imageUrl}
                                       alt={content.title}
                                       className="object-cover w-full h-full"

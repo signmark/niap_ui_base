@@ -29,8 +29,20 @@ export class SocialPublishingService {
     
     log(`Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
     
-    // Если URL уже абсолютный, возвращаем как есть
+    // Если URL уже абсолютный, возвращаем как есть, но проверяем наличие UUID в пути
     if (imageUrl.startsWith('http')) {
+      // Проверяем, содержит ли URL UUID в пути (для случаев https://directus.nplanner.ru/assets/UUID)
+      const uuidInUrlPattern = /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+      const match = imageUrl.match(uuidInUrlPattern);
+      
+      if (match && match[1]) {
+        // Если нашли UUID в URL, переформируем URL для использования прокси
+        const uuid = match[1];
+        const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+        const proxyUrl = `${baseAppUrl}/api/proxy-file/${uuid}`;
+        log(`Обнаружен Directus URL с UUID в пути для ${platform}, использую прокси URL: ${proxyUrl}`, 'social-publishing');
+        return proxyUrl;
+      }
       return imageUrl;
     }
     

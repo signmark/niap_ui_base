@@ -25,6 +25,7 @@ import ScheduledPublicationDetails from '@/components/ScheduledPublicationDetail
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Search, RefreshCw, Filter, SortDesc, SortAsc } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ImageProxy } from '@/components/ui/image-proxy';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Select,
@@ -599,13 +600,10 @@ export default function ScheduledPublications() {
             
             {previewContent?.imageUrl && (
               <div className="mt-4">
-                <img 
+                <ImageProxy 
                   src={previewContent.imageUrl || ''} 
                   alt={previewContent.title || 'Content image'} 
                   className="rounded-md max-h-[400px] w-auto mx-auto"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-                  }}
                 />
               </div>
             )}
