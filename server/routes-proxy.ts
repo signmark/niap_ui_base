@@ -9,6 +9,31 @@ import { directusCrud } from './services/directus-crud';
 import { directusAuthManager } from './services/directus-auth-manager';
 
 /**
+ * Безопасное логирование объектов (с обработкой циклических ссылок)
+ * @param obj Объект для логирования
+ * @returns Безопасная строка для логирования
+ */
+function safeStringify(obj: any): string {
+  try {
+    // Обработка циклических ссылок
+    const cache: any[] = [];
+    const str = JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        // Обнаружение циклических ссылок
+        if (cache.indexOf(value) !== -1) {
+          return '[Циклическая ссылка]';
+        }
+        cache.push(value);
+      }
+      return value;
+    }, 2);
+    return str || String(obj);
+  } catch (error) {
+    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
+  }
+}
+
+/**
  * Регистрирует маршруты для проксирования файлов
  * @param app Экземпляр Express приложения
  */
@@ -57,12 +82,33 @@ export function registerProxyRoutes(app: Express) {
       response.data.pipe(res);
       log(`Проксирование файла по ID ${fileId} выполнено успешно`, 'proxy');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Безопасно извлекаем сообщение об ошибке
+      let errorMessage = 'Неизвестная ошибка';
+      let statusCode = 500;
+      
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = String(error);
+        }
+        
+        // Попытка получить статус код, если это ошибка axios
+        const axiosError = error as any;
+        if (axiosError && axiosError.response && typeof axiosError.response.status === 'number') {
+          statusCode = axiosError.response.status;
+          log(`Ошибка прокси файла: ${errorMessage}`, 'proxy');
+          log(`Статус ошибки: ${statusCode}`, 'proxy');
+        }
+      } catch (jsonError) {
+        log('Ошибка при обработке исключения (возможно циклическая структура)', 'proxy');
+        errorMessage = 'Ошибка прокси (невозможно обработать структуру ошибки)';
+      }
+      
       log(`Ошибка при проксировании файла: ${errorMessage}`, 'proxy');
       
       // Проверяем на ошибку доступа
-      const axiosError = error as any;
-      if (axiosError.response && axiosError.response.status === 403) {
+      if (statusCode === 403) {
         const fileIdParam = req.params.fileId; // Получаем ID файла из параметров запроса
         log(`Ошибка доступа 403 при запросе к файлу по ID: ${fileIdParam}`, 'proxy');
         
@@ -75,7 +121,7 @@ export function registerProxyRoutes(app: Express) {
       
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Ошибка при получении файла' });
+        res.status(statusCode).json({ success: false, error: 'Ошибка доступа к файлу: ' + errorMessage });
       } else {
         // Просто завершаем ответ, если заголовки уже отправлены
         res.end();
@@ -133,12 +179,33 @@ export function registerProxyRoutes(app: Express) {
       response.data.pipe(res);
       log(`Проксирование файла по URL выполнено успешно`, 'proxy');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Безопасно извлекаем сообщение об ошибке
+      let errorMessage = 'Неизвестная ошибка';
+      let statusCode = 500;
+      
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = String(error);
+        }
+        
+        // Попытка получить статус код, если это ошибка axios
+        const axiosError = error as any;
+        if (axiosError && axiosError.response && typeof axiosError.response.status === 'number') {
+          statusCode = axiosError.response.status;
+          log(`Ошибка прокси файла: ${errorMessage}`, 'proxy');
+          log(`Статус ошибки: ${statusCode}`, 'proxy');
+        }
+      } catch (jsonError) {
+        log('Ошибка при обработке исключения (возможно циклическая структура)', 'proxy');
+        errorMessage = 'Ошибка прокси (невозможно обработать структуру ошибки)';
+      }
+      
       log(`Ошибка при проксировании файла по URL: ${errorMessage}`, 'proxy');
       
       // Проверяем на ошибку доступа
-      const axiosError = error as any;
-      if (axiosError.response && axiosError.response.status === 403) {
+      if (statusCode === 403) {
         const fileUrlParam = req.query.url as string; // Получаем URL файла из параметров запроса
         log(`Ошибка доступа 403 при запросе к файлу по URL: ${fileUrlParam}`, 'proxy');
         
@@ -151,7 +218,7 @@ export function registerProxyRoutes(app: Express) {
       
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Ошибка при получении файла' });
+        res.status(statusCode).json({ success: false, error: 'Ошибка доступа к файлу: ' + errorMessage });
       } else {
         // Просто завершаем ответ, если заголовки уже отправлены
         res.end();
@@ -267,12 +334,34 @@ export function registerProxyRoutes(app: Express) {
       response.data.pipe(res);
       log(`Проксирование внешнего медиа выполнено успешно: ${mediaUrl}`, 'proxy');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Безопасно извлекаем сообщение об ошибке
+      let errorMessage = 'Неизвестная ошибка';
+      let statusCode = 500;
+      
+      try {
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = String(error);
+        }
+        
+        // Попытка получить статус код, если это ошибка axios
+        const axiosError = error as any;
+        if (axiosError && axiosError.response && typeof axiosError.response.status === 'number') {
+          statusCode = axiosError.response.status;
+          log(`Ошибка прокси файла: ${errorMessage}`, 'proxy');
+          log(`Статус ошибки: ${statusCode}`, 'proxy');
+        }
+      } catch (jsonError) {
+        log('Ошибка при обработке исключения (возможно циклическая структура)', 'proxy');
+        errorMessage = 'Ошибка прокси (невозможно обработать структуру ошибки)';
+      }
+      
+      // Выводим безопасное сообщение в лог
       log(`Ошибка при проксировании внешнего медиа: ${errorMessage}`, 'proxy');
       
-      // Проверяем на ошибку доступа
-      const axiosError = error as any;
-      if (axiosError.response && axiosError.response.status === 403) {
+      // Обрабатываем ошибку 403 Forbidden
+      if (statusCode === 403) {
         const mediaUrlParam = req.query.url as string;
         log(`Ошибка доступа 403 при запросе к медиа по URL: ${mediaUrlParam}`, 'proxy');
         
@@ -285,7 +374,7 @@ export function registerProxyRoutes(app: Express) {
       
       // Если уже начали отправлять ответ, не можем отправить JSON с ошибкой
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Ошибка при получении медиа-файла' });
+        res.status(statusCode).json({ success: false, error: 'Ошибка доступа к файлу: ' + errorMessage });
       } else {
         // Просто завершаем ответ, если заголовки уже отправлены
         res.end();

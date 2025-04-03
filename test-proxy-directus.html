@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directus Proxy Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        button {
+            padding: 10px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        input {
+            padding: 8px;
+            width: 80%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Directus Proxy Test Page</h1>
+    <p>Эта страница тестирует различные пути проксирования файлов из Directus через наш сервер.</p>
+    
+    <div class="test-section">
+        <h2>Тест 1: Proxy по прямому URL из Directus</h2>
+        <p>Прямой URL Directus: <input type="text" id="directUrl" value="https://directus.nplanner.ru/assets/9cb3b3b7-c2c1-45af-976b-14b5e1a825ce" /></p>
+        <p>Proxy URL: <span id="proxyUrl1"></span></p>
+        <button onclick="testDirectUrl()">Проверить</button>
+        <p id="result1"></p>
+        <div id="image1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Тест 2: Proxy по ID файла</h2>
+        <p>ID файла в Directus: <input type="text" id="fileId" value="9cb3b3b7-c2c1-45af-976b-14b5e1a825ce" /></p>
+        <p>Proxy URL: <span id="proxyUrl2"></span></p>
+        <button onclick="testFileId()">Проверить</button>
+        <p id="result2"></p>
+        <div id="image2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Тест 3: Proxy внешнего медиафайла (VK)</h2>
+        <p>URL медиа: <input type="text" id="mediaUrl" value="https://sun9-15.userapi.com/impg/7YBkJRFCxj_MuWDApVfJZc6lxE0o0LCTlUUu3Q/t3ZG7YN-w3Y.jpg" /></p>
+        <p>Proxy URL: <span id="proxyUrl3"></span></p>
+        <button onclick="testMediaUrl()">Проверить</button>
+        <p id="result3"></p>
+        <div id="image3"></div>
+    </div>
+
+    <script>
+        function testDirectUrl() {
+            const directUrl = document.getElementById('directUrl').value;
+            const proxyUrl = `/api/proxy-file?url=${encodeURIComponent(directUrl)}`;
+            document.getElementById('proxyUrl1').textContent = proxyUrl;
+            
+            // Тестируем загрузку
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('result1').innerHTML = '<span class="success">Успешно загружено!</span>';
+                document.getElementById('image1').innerHTML = '';
+                document.getElementById('image1').appendChild(img);
+            };
+            img.onerror = function() {
+                document.getElementById('result1').innerHTML = '<span class="error">Ошибка загрузки!</span>';
+                document.getElementById('image1').innerHTML = 'Ошибка загрузки изображения';
+            };
+            img.src = proxyUrl;
+        }
+        
+        function testFileId() {
+            const fileId = document.getElementById('fileId').value;
+            const proxyUrl = `/api/proxy-file/${fileId}`;
+            document.getElementById('proxyUrl2').textContent = proxyUrl;
+            
+            // Тестируем загрузку
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('result2').innerHTML = '<span class="success">Успешно загружено!</span>';
+                document.getElementById('image2').innerHTML = '';
+                document.getElementById('image2').appendChild(img);
+            };
+            img.onerror = function() {
+                document.getElementById('result2').innerHTML = '<span class="error">Ошибка загрузки!</span>';
+                document.getElementById('image2').innerHTML = 'Ошибка загрузки изображения';
+            };
+            img.src = proxyUrl;
+        }
+        
+        function testMediaUrl() {
+            const mediaUrl = document.getElementById('mediaUrl').value;
+            const proxyUrl = `/api/proxy-media?url=${encodeURIComponent(mediaUrl)}&platform=vk`;
+            document.getElementById('proxyUrl3').textContent = proxyUrl;
+            
+            // Тестируем загрузку
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('result3').innerHTML = '<span class="success">Успешно загружено!</span>';
+                document.getElementById('image3').innerHTML = '';
+                document.getElementById('image3').appendChild(img);
+            };
+            img.onerror = function() {
+                document.getElementById('result3').innerHTML = '<span class="error">Ошибка загрузки!</span>';
+                document.getElementById('image3').innerHTML = 'Ошибка загрузки изображения';
+            };
+            img.src = proxyUrl;
+        }
+    </script>
+</body>
+</html>
