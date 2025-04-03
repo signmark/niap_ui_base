@@ -7821,15 +7821,15 @@ https://t.me/channelname/ - description`;
           (r.error?.includes('400') || r.error?.includes('chat not found'))
         );
         
-        // Если это ошибка 400 с chat_id в Telegram, меняем сообщение
+        // Если это ошибка с chat_id в Telegram, меняем сообщение
         if (!hasSuccessfulPublish && hasChatIdError) {
-          console.log('⚠️ Обнаружена проблема с ID чата Telegram. Рекомендуется обновить настройки, убрав префикс -100');
+          console.log('⚠️ Обнаружена проблема с ID чата Telegram. Отправляем детальную информацию клиенту.');
           
           return res.json({
             success: false,
-            message: "Проблема с настройками Telegram: проверьте ID чата и убедитесь, что он введен правильно. Возможно, нужно убрать префикс -100.",
+            message: "Проблема с настройками Telegram: ID чата не найден или недействителен.",
             results: publishResults,
-            fix_suggestion: "Попробуйте обновить ID чата Telegram в настройках профиля, убрав префикс -100 из chat_id."
+            fix_suggestion: "Пожалуйста, проверьте ID чата Telegram в настройках профиля. Чат ID должен быть в формате '-1001234567890' (с префиксом -100 для групповых чатов) или '@username' для публичных каналов."
           });
         }
         
