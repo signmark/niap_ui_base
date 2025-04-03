@@ -1,32 +1,19 @@
 /**
- * Маршруты для загрузки файлов изображений
+ * Маршруты для загрузки файлов изображений через Directus API
  */
 
 import { Express, Request, Response } from 'express';
-import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import FormData from 'form-data';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { log } from './utils/logger';
+import { directusApiManager } from './directus';
 
-// Создаем директорию для хранения загруженных файлов, если она не существует
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Настраиваем хранилище для multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Генерируем уникальное имя файла с сохранением расширения
-    const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueFilename);
-  }
-});
+// Настраиваем временное хранилище для multer (файлы будут храниться в памяти)
+const storage = multer.memoryStorage();
 
 // Фильтр для проверки типа файла
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -70,11 +57,42 @@ const authenticateUser = (req: Request, res: Response, next: Function) => {
 };
 
 /**
+ * Загружает файл в Directus через API
+ * @param fileData Данные файла
+ * @param fileName Имя файла
+ * @param mimeType MIME-тип файла
+ * @param token Токен авторизации Directus
+ * @returns Объект с информацией о загруженном файле
+ */
+async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: string, token: string) {
+  try {
+    const formData = new FormData();
+    formData.append('file', fileData, {
+      filename: fileName,
+      contentType: mimeType
+    });
+
+    const directusUrl = process.env.DIRECTUS_URL || 'https://n8n.nplanner.ru';
+    const response = await axios.post(`${directusUrl}/files`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    log(`[uploads] Ошибка при загрузке файла в Directus: ${error.message}`);
+    throw new Error(`Ошибка при загрузке файла в Directus: ${error.message}`);
+  }
+}
+
+/**
  * Регистрирует маршруты для загрузки файлов
  */
 export function registerUploadRoutes(app: Express) {
   // Эндпоинт для загрузки одного изображения
-  app.post('/api/upload-image', authenticateUser, upload.single('image'), (req: Request, res: Response) => {
+  app.post('/api/upload-image', authenticateUser, upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -83,13 +101,41 @@ export function registerUploadRoutes(app: Express) {
         });
       }
 
-      // Создаем URL для доступа к загруженному файлу
-      const fileUrl = `/uploads/${req.file.filename}`;
-      log(`[uploads] Файл успешно загружен: ${fileUrl}`);
+      const token = getAuthTokenFromRequest(req);
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Требуется авторизация'
+        });
+      }
+
+      // Получаем информацию о пользователе через Directus API
+      const userData = await directusApiManager.getUserInfo(token);
+      if (!userData) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не удалось получить информацию о пользователе'
+        });
+      }
+
+      // Генерируем уникальное имя файла с сохранением расширения
+      const fileExt = path.extname(req.file.originalname) || '.jpg';
+      const uniqueFilename = `${uuidv4()}${fileExt}`;
+
+      // Загружаем файл в Directus
+      const fileInfo = await uploadToDirectus(
+        req.file.buffer, 
+        uniqueFilename, 
+        req.file.mimetype,
+        token
+      );
+
+      log(`[uploads] Файл успешно загружен в Directus: ${fileInfo.id}`);
 
       return res.json({
         success: true,
-        fileUrl: fileUrl,
+        fileInfo: fileInfo,
+        fileUrl: fileInfo.url,
         originalName: req.file.originalname,
         size: req.file.size,
         mimetype: req.file.mimetype
@@ -104,7 +150,7 @@ export function registerUploadRoutes(app: Express) {
   });
 
   // Эндпоинт для загрузки нескольких изображений
-  app.post('/api/upload-multiple-images', authenticateUser, upload.array('images', 10), (req: Request, res: Response) => {
+  app.post('/api/upload-multiple-images', authenticateUser, upload.array('images', 10), async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
       if (!files || files.length === 0) {
@@ -114,19 +160,50 @@ export function registerUploadRoutes(app: Express) {
         });
       }
 
-      // Создаем URL для каждого загруженного файла
-      const fileUrls = files.map(file => ({
-        fileUrl: `/uploads/${file.filename}`,
-        originalName: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype
-      }));
+      const token = getAuthTokenFromRequest(req);
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Требуется авторизация'
+        });
+      }
 
-      log(`[uploads] Успешно загружено ${files.length} файлов`);
+      // Получаем информацию о пользователе через Directus API
+      const userData = await directusApiManager.getUserInfo(token);
+      if (!userData) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не удалось получить информацию о пользователе'
+        });
+      }
+
+      // Загружаем каждый файл в Directus
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = path.extname(file.originalname) || '.jpg';
+        const uniqueFilename = `${uuidv4()}${fileExt}`;
+
+        const fileInfo = await uploadToDirectus(
+          file.buffer,
+          uniqueFilename,
+          file.mimetype,
+          token
+        );
+
+        return {
+          fileInfo: fileInfo,
+          fileUrl: fileInfo.url,
+          originalName: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype
+        };
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      log(`[uploads] Успешно загружено ${uploadedFiles.length} файлов в Directus`);
 
       return res.json({
         success: true,
-        files: fileUrls
+        files: uploadedFiles
       });
     } catch (error: any) {
       log(`[uploads] Ошибка при загрузке файлов: ${error.message}`);
@@ -157,18 +234,5 @@ export function registerUploadRoutes(app: Express) {
     next();
   });
 
-  // Статический маршрут для доступа к загруженным файлам
-  app.use('/uploads', (req: Request, res: Response, next: Function) => {
-    log(`[uploads] Запрос файла: ${req.path}`);
-    next();
-  }, (req, res, next) => {
-    // Добавляем заголовки для браузера, чтобы разрешить кэширование
-    res.set({
-      'Cache-Control': 'public, max-age=86400',
-      'Pragma': 'no-cache'
-    });
-    next();
-  }, express.static(uploadDir));
-
-  log(`[uploads] Маршруты загрузки файлов успешно зарегистрированы`);
+  log(`[uploads] Маршруты загрузки файлов через Directus успешно зарегистрированы`);
 }

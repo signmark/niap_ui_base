@@ -129,6 +129,27 @@ class DirectusApiManager {
     }
     return null;
   }
+
+  /**
+   * Получает информацию о пользователе из Directus
+   * @param token Токен авторизации пользователя
+   * @returns Информация о пользователе или null в случае ошибки
+   */
+  async getUserInfo(token: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      log(`Успешно получена информация о пользователе через Directus API`, 'directus');
+      return response.data.data;
+    } catch (error: any) {
+      log(`Ошибка при получении информации о пользователе: ${error.message}`, 'directus');
+      return null;
+    }
+  }
 }
 
 // Создаем экземпляр менеджера Directus API

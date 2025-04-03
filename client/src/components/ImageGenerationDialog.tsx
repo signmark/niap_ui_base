@@ -16,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Image, RefreshCw, Sparkles, Pencil } from "lucide-react";
+import { Loader2, Image, RefreshCw, Sparkles, Pencil, Upload } from "lucide-react";
 import { api } from "@/lib/api";
+import ImageUploader from "./ImageUploader";
 
 /**
  * ОТКЛЮЧЕНО: Извлечение ключевых слов больше не используется
@@ -72,6 +73,9 @@ export function ImageGenerationDialog({
   const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
   const [savePrompt, setSavePrompt] = useState<boolean>(true); // Флаг для сохранения промта в БД
   
+  // Состояние для загруженного изображения
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  
   // При монтировании компонента и при изменении входных параметров сбрасываем и инициализируем значения
   useEffect(() => {
     // Очищаем начальные данные от HTML
@@ -93,6 +97,7 @@ export function ImageGenerationDialog({
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
+    setUploadedImageUrl("");
     // Устанавливаем fast-sdxl как модель по умолчанию, исключая Schnell из списка
     setModelType("fast-sdxl");
     setStylePreset("photographic");
@@ -863,9 +868,10 @@ export function ImageGenerationDialog({
           console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
         }
       }} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-2">
+        <TabsList className="grid grid-cols-3 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
           <TabsTrigger value="text">На основе текста</TabsTrigger>
+          <TabsTrigger value="upload">Загрузить изображение</TabsTrigger>
         </TabsList>
         
         {/* Содержимое вкладки с промптом */}

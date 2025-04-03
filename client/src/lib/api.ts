@@ -158,4 +158,51 @@ api.interceptors.response.use(
   }
 );
 
+/**
+ * Загружает одно изображение на сервер
+ * @param file Файл изображения для загрузки
+ * @returns Информация о загруженном файле, включая URL
+ */
+export const uploadImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const response = await api.post('/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при загрузке изображения:', error);
+    throw error;
+  }
+};
+
+/**
+ * Загружает несколько изображений на сервер
+ * @param files Массив файлов для загрузки
+ * @returns Информация о загруженных файлах, включая URL
+ */
+export const uploadMultipleImages = async (files: File[]) => {
+  const formData = new FormData();
+  
+  files.forEach(file => {
+    formData.append('images', file);
+  });
+
+  try {
+    const response = await api.post('/upload-multiple-images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка при загрузке изображений:', error);
+    throw error;
+  }
+};
+
 export default api;
