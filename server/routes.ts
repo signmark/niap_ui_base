@@ -7813,7 +7813,27 @@ https://t.me/channelname/ - description`;
         // Проверяем, есть ли успешные публикации
         const hasSuccessfulPublish = publishResults.some(r => r.status === 'published');
         
-        // Формируем ответ
+        // Формируем ответ с дополнительной проверкой на ошибку 400 в Telegram
+        // Из-за проблемы с ID чата Telegram, сначала проверяем, есть ли ошибка "chat not found" в результатах публикации
+        const hasChatIdError = publishResults.some(r => 
+          r.platform === 'telegram' && 
+          r.status === 'error' && 
+          (r.error?.includes('400') || r.error?.includes('chat not found'))
+        );
+        
+        // Если это ошибка 400 с chat_id в Telegram, меняем сообщение
+        if (!hasSuccessfulPublish && hasChatIdError) {
+          console.log('⚠️ Обнаружена проблема с ID чата Telegram. Рекомендуется обновить настройки, убрав префикс -100');
+          
+          return res.json({
+            success: false,
+            message: "Проблема с настройками Telegram: проверьте ID чата и убедитесь, что он введен правильно. Возможно, нужно убрать префикс -100.",
+            results: publishResults,
+            fix_suggestion: "Попробуйте обновить ID чата Telegram в настройках профиля, убрав префикс -100 из chat_id."
+          });
+        }
+        
+        // Стандартный ответ для других случаев
         res.json({ 
           success: hasSuccessfulPublish, 
           message: hasSuccessfulPublish 
