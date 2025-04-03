@@ -5,26 +5,21 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Image, Upload, X, CheckCircle2 } from 'lucide-react';
 
-// Хелпер для получения URL изображения из Directus
+// Хелпер для формирования URL изображения из Directus
 function getProxiedFileUrl(fileUrl: string): string {
   if (!fileUrl) return '';
   
-  // Если это локальный URL (начинается с /) - оставляем как есть
-  if (fileUrl.startsWith('/uploads/')) {
-    return fileUrl;
-  }
-  
-  // Если это уже полный URL Directus - используем как есть
-  if (fileUrl.startsWith('https://directus.nplanner.ru/assets/')) {
-    return fileUrl;
-  }
-  
-  // Если это UUID (часто возвращается API) - формируем полный URL к Directus
+  // Если это UUID (наиболее частый случай) - формируем полный URL Directus
   if (fileUrl.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i)) {
     return `https://directus.nplanner.ru/assets/${fileUrl}`;
   }
   
-  // Иначе возвращаем URL как есть
+  // Если это уже полный URL с нужным путем - оставляем как есть
+  if (fileUrl.indexOf('https://directus.nplanner.ru/assets/') === 0) {
+    return fileUrl;
+  }
+  
+  // Любые другие URL просто возвращаем как есть
   return fileUrl;
 }
 
