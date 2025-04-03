@@ -236,23 +236,36 @@ export const uploadMultipleImages = async (files: File[]) => {
 
   try {
     console.log(`uploadMultipleImages: Отправка ${files.length} файлов на сервер...`);
-    const response = await api.post('/upload-multiple-images', formData, {
+    
+    // Используем fetch вместо axios, так как с ним могут быть проблемы
+    const url = `${api.defaults.baseURL}/upload-multiple-images`;
+    console.log(`uploadMultipleImages: URL запроса: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
+        // Не указываем Content-Type, fetch автоматически установит правильный с boundary для FormData
       }
     });
-    console.log('uploadMultipleImages: Ответ сервера:', response.data);
-    return response.data;
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('uploadMultipleImages: Ответ сервера:', data);
+    return data;
   } catch (error: any) {
     console.error('Ошибка при загрузке изображений:', error);
     
-    // Логируем дополнительные детали ошибки
-    if (error.response) {
-      console.error('Статус:', error.response.status);
-      console.error('Данные:', error.response.data);
-      console.error('Заголовки:', error.response.headers);
-    }
+    // Максимально детальное логирование ошибки
+    console.error('Детали ошибки:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    });
     
     throw error;
   }
