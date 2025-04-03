@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { storage } from '../storage';
-import { socialPublishingService } from '../services/social-publishing';
+// Импортируем исправленную версию сервиса публикации в социальные сети
+import { socialPublishingService } from '../services/updated-social-publishing';
 import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';

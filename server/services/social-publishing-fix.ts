@@ -1,331 +1,238 @@
 /**
- * Исправленный класс для публикации в социальные сети с акцентом на Telegram
- * Решает проблему авторизации при загрузке изображений из Directus
+ * Исправленная версия сервиса публикации в социальные сети
+ * с поддержкой загрузки изображений из Directus
  */
 
 import axios from 'axios';
-import FormData from 'form-data';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { getTelegramPublisher } from '../patches/telegram-publisher-patch';
-import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '../types';
+import { CampaignContent } from '../types/campaignContent';
+import { SocialMediaSettings, SocialPlatform, SocialPublication } from '../types/socialMedia';
+import { getTelegramPublisher } from '../patches/telegram-publisher-interface';
 import { directusApiManager } from '../directus';
 
 /**
- * Исправленный класс для публикации контента в социальные сети
- * с улучшенной поддержкой авторизации Directus для изображений
+ * Сервис для публикации контента в социальные сети
  */
-export class SocialPublishingServiceFixed {
-  private tempDir: string;
+class SocialPublishingService {
   private telegramPublisherCache: any | null = null;
 
   constructor() {
-    // Инициализируем временную директорию для файлов
-    this.tempDir = path.join(os.tmpdir(), 'social-publishing');
-    
-    // Создаем временную директорию, если она не существует
-    if (!fs.existsSync(this.tempDir)) {
-      try {
-        fs.mkdirSync(this.tempDir, { recursive: true });
-        console.log(`Создана временная директория: ${this.tempDir}`);
-      } catch (error) {
-        console.error(`Ошибка при создании временной директории: ${error}`);
-      }
-    }
+    console.log('Инициализация сервиса публикации в социальные сети (исправленная версия)');
   }
 
   /**
-   * Публикация в Telegram с использованием FormData
-   * Обрабатывает авторизацию при скачивании изображений из Directus
+   * Инициализирует издателя Telegram
    */
-  async publishToTelegram(
-    content: CampaignContent,
-    telegramSettings: SocialMediaSettings,
-  ): Promise<SocialPublication> {
+  private async initTelegramPublisher() {
     try {
-      console.log(`Публикация контента в Telegram, id=${content.id}`);
-
-      // Проверка настроек и токена
-      if (!telegramSettings?.token) {
-        console.error(`Отсутствует токен Telegram для публикации контента ${content.id}`);
-        return {
-          platform: 'telegram',
-          status: 'error',
-          publishedAt: null,
-          error: `Отсутствует токен Telegram для публикации`,
-          userId: telegramSettings?.chatId || null,
-        };
+      if (!this.telegramPublisherCache) {
+        console.log('Инициализация Telegram Publisher');
+        this.telegramPublisherCache = await getTelegramPublisher({
+          verbose: true,
+          directusEmail: process.env.DIRECTUS_EMAIL,
+          directusPassword: process.env.DIRECTUS_PASSWORD,
+          directusUrl: process.env.DIRECTUS_URL || 'https://db.nplanner.ru'
+        });
       }
-
-      if (!telegramSettings?.chatId) {
-        console.error(`Отсутствует ID чата Telegram для публикации контента ${content.id}`);
-        return {
-          platform: 'telegram',
-          status: 'error',
-          publishedAt: null,
-          error: `Отсутствует ID чата Telegram для публикации`,
-          userId: null,
-        };
-      }
-
-      // Обработка текста контента
-      const processedText = this.preprocessContentText(content.content || '');
-      const formattedText = this.addHtmlFormatting(processedText);
-      
-      // Определяем тип публикации (с изображением или только текст)
-      const hasImage = !!content.image_url;
-      
-      let result: SocialPublication;
-      
-      try {
-        const publisher = await this.getTelegramPublisher();
-        
-        if (hasImage) {
-          // Публикация с изображением
-          console.log(`Публикация в Telegram с изображением: ${content.image_url?.substring(0, 100)}...`);
-          
-          const response = await publisher.sendDirectusImageToTelegram(
-            content.image_url as string,
-            telegramSettings.chatId,
-            formattedText,
-            telegramSettings.token
-          );
-
-          if (response && response.ok) {
-            console.log(`Успешная публикация в Telegram, message_id: ${response.result?.message_id}`);
-            result = {
-              platform: 'telegram',
-              status: 'published',
-              publishedAt: new Date(),
-              error: null,
-              userId: telegramSettings.chatId,
-              postId: response.result?.message_id?.toString() || null,
-              postUrl: null, // Telegram не имеет прямых URL для сообщений в каналах
-            };
-          } else {
-            const errorMsg = response?.description || 'Неизвестная ошибка при публикации в Telegram';
-            console.error(`Ошибка публикации в Telegram: ${errorMsg}`);
-            result = {
-              platform: 'telegram',
-              status: 'error',
-              publishedAt: null,
-              error: errorMsg,
-              userId: telegramSettings.chatId,
-            };
-          }
-        } else {
-          // Публикация только текста
-          console.log(`Отправка текстового сообщения в Telegram`);
-          result = await this.sendTelegramTextMessage(
-            telegramSettings.chatId,
-            formattedText,
-            telegramSettings.token
-          );
-        }
-        
-        return result;
-      } catch (error: any) {
-        console.error(`Ошибка при публикации в Telegram: ${error.message}`);
-        console.error(error);
-        
-        return {
-          platform: 'telegram',
-          status: 'error',
-          publishedAt: null,
-          error: `Ошибка при публикации: ${error.message}`,
-          userId: telegramSettings.chatId,
-        };
-      }
-    } catch (error: any) {
-      console.error(`Ошибка в процессе публикации в Telegram: ${error.message}`);
-      
-      return {
-        platform: 'telegram',
-        status: 'error',
-        publishedAt: null,
-        error: `Ошибка в процессе публикации: ${error.message}`,
-        userId: telegramSettings?.chatId || null,
-      };
-    }
-  }
-
-  /**
-   * Отправляет текстовое сообщение в Telegram
-   * @param chatId ID чата Telegram для отправки
-   * @param text Текст сообщения (поддерживает HTML)
-   * @param token Токен бота Telegram
-   * @returns Результат отправки
-   */
-  private async sendTelegramTextMessage(chatId: string, text: string, token: string): Promise<SocialPublication> {
-    try {
-      const url = `https://api.telegram.org/bot${token}/sendMessage`;
-      
-      const response = await axios.post(url, {
-        chat_id: chatId,
-        text: text,
-        parse_mode: 'HTML',
-        disable_web_page_preview: false
-      });
-      
-      if (response.data && response.data.ok) {
-        return {
-          platform: 'telegram',
-          status: 'published',
-          publishedAt: new Date(),
-          error: null,
-          userId: chatId,
-          postId: response.data.result?.message_id?.toString() || null,
-          postUrl: null,
-        };
-      } else {
-        const errorMsg = response.data?.description || 'Неизвестная ошибка при отправке текста в Telegram';
-        return {
-          platform: 'telegram',
-          status: 'error',
-          publishedAt: null,
-          error: errorMsg,
-          userId: chatId,
-        };
-      }
-    } catch (error: any) {
-      console.error(`Ошибка при отправке текста в Telegram: ${error.message}`);
-      
-      return {
-        platform: 'telegram',
-        status: 'error',
-        publishedAt: null,
-        error: `Ошибка при отправке текста: ${error.message}`,
-        userId: chatId,
-      };
-    }
-  }
-
-  /**
-   * Скачивает изображение из Directus с учетом аутентификации
-   * @param imageUrl URL изображения в Directus
-   * @returns Объект с буфером изображения и типом содержимого
-   */
-  private async downloadImage(imageUrl: string): Promise<{ buffer: Buffer, contentType: string }> {
-    try {
-      console.log(`Скачивание изображения: ${imageUrl.substring(0, 100)}...`);
-      
-      const publisher = await this.getTelegramPublisher();
-      return await publisher.downloadImage(imageUrl);
-    } catch (error: any) {
-      console.error(`Ошибка при скачивании изображения: ${error.message}`);
+      return this.telegramPublisherCache;
+    } catch (error) {
+      console.error('Ошибка при инициализации Telegram Publisher:', error);
       throw error;
     }
   }
 
   /**
-   * Отправляет изображение в Telegram с поддержкой авторизации Directus
-   * @param imageUrl URL изображения (может быть Directus-ссылкой)
-   * @param chatId ID чата Telegram
-   * @param caption Подпись к изображению (HTML)
-   * @param token Токен бота Telegram
-   * @returns Результат публикации
+   * Отправляет изображение в Telegram
+   * Исправленная версия с поддержкой загрузки из Directus
+   * @param {string} imageUrl URL изображения
+   * @param {string} chatId ID чата Telegram
+   * @param {string} caption Подпись к изображению
+   * @param {string} token Токен бота Telegram
+   * @returns {Promise<Object>} Результат отправки
    */
-  private async sendTelegramPhotoMessage(
-    imageUrl: string, 
-    chatId: string, 
-    caption: string, 
+  public async uploadTelegramImageFromUrl(
+    imageUrl: string,
+    chatId: string,
+    caption: string,
     token: string
-  ): Promise<SocialPublication> {
+  ): Promise<any> {
     try {
-      const publisher = await this.getTelegramPublisher();
+      console.log(`Отправка изображения в Telegram: ${imageUrl} -> ${chatId}`);
+      const telegramPublisher = await this.initTelegramPublisher();
       
-      const result = await publisher.sendDirectusImageToTelegram(
+      // Используем метод из Telegram Publisher для отправки изображения
+      const result = await telegramPublisher.sendDirectusImageToTelegram(
         imageUrl,
         chatId,
         caption,
         token
       );
       
+      console.log('Результат отправки изображения в Telegram:', JSON.stringify(result));
+      return result;
+    } catch (error) {
+      console.error('Ошибка при отправке изображения в Telegram:', error);
+      return {
+        ok: false,
+        description: `Ошибка при отправке изображения: ${error}`,
+        error
+      };
+    }
+  }
+
+  /**
+   * Публикует контент в Telegram
+   * @param content Контент для публикации
+   * @param telegramSettings Настройки Telegram
+   * @returns Результат публикации
+   */
+  async publishToTelegram(
+    content: CampaignContent,
+    telegramSettings: SocialMediaSettings
+  ): Promise<SocialPublication> {
+    try {
+      console.log(`Публикация контента #${content.id} в Telegram`);
+
+      // Проверяем наличие необходимых настроек
+      if (!telegramSettings?.token || !telegramSettings?.chatId) {
+        return {
+          platform: 'telegram',
+          status: 'error',
+          publishedAt: null,
+          error: 'Отсутствуют настройки Telegram (токен или ID чата)',
+          userId: telegramSettings?.chatId || null
+        };
+      }
+
+      // Предобработка контента
+      const { text, imageUrl } = this.preprocessContent(content);
+      
+      // Форматируем текст для Telegram (с поддержкой HTML)
+      const formattedText = this.addHtmlFormatting(text);
+      
+      // Если есть изображение, отправляем с ним, иначе просто текст
+      let result;
+      
+      if (imageUrl) {
+        // Отправка контента с изображением
+        result = await this.uploadTelegramImageFromUrl(
+          imageUrl,
+          telegramSettings.chatId,
+          formattedText,
+          telegramSettings.token
+        );
+      } else {
+        // Отправка только текстового сообщения
+        const apiUrl = `https://api.telegram.org/bot${telegramSettings.token}/sendMessage`;
+        const response = await axios.post(apiUrl, {
+          chat_id: telegramSettings.chatId,
+          text: formattedText,
+          parse_mode: 'HTML'
+        });
+        result = response.data;
+      }
+
+      // Проверяем результат
       if (result && result.ok) {
         return {
           platform: 'telegram',
           status: 'published',
           publishedAt: new Date(),
           error: null,
-          userId: chatId,
+          userId: telegramSettings.chatId,
           postId: result.result?.message_id?.toString() || null,
-          postUrl: null,
+          postUrl: null // В Telegram нет прямой ссылки на сообщение
         };
       } else {
-        const errorMsg = result?.description || 'Неизвестная ошибка при отправке изображения в Telegram';
         return {
           platform: 'telegram',
           status: 'error',
           publishedAt: null,
-          error: errorMsg,
-          userId: chatId,
+          error: result?.description || 'Неизвестная ошибка при публикации в Telegram',
+          userId: telegramSettings.chatId
         };
       }
-    } catch (error: any) {
-      console.error(`Ошибка при отправке изображения в Telegram: ${error.message}`);
-      
+    } catch (error) {
+      console.error('Ошибка при публикации в Telegram:', error);
       return {
         platform: 'telegram',
         status: 'error',
         publishedAt: null,
-        error: `Ошибка при отправке изображения: ${error.message}`,
-        userId: chatId,
+        error: `Ошибка: ${error.message || error}`,
+        userId: telegramSettings?.chatId || null
       };
     }
   }
-  
+
   /**
-   * Получает экземпляр TelegramPublisher
-   * @returns Экземпляр TelegramPublisher
+   * Предобработка контента для публикации
    */
-  private async getTelegramPublisher() {
-    if (!this.telegramPublisherCache) {
-      this.telegramPublisherCache = await getTelegramPublisher();
+  private preprocessContent(content: CampaignContent): { text: string; imageUrl: string | null } {
+    try {
+      // Текст контента
+      let text = content.text || '';
+
+      // Ищем URL изображения
+      let imageUrl = null;
+
+      // Проверяем primary_image
+      if (content.primary_image && typeof content.primary_image === 'string') {
+        imageUrl = content.primary_image;
+      } else if (
+        content.primary_image && 
+        typeof content.primary_image === 'object' && 
+        content.primary_image.id
+      ) {
+        // Формируем URL для изображения из Directus
+        const directusUrl = process.env.DIRECTUS_URL || 'https://db.nplanner.ru';
+        imageUrl = `${directusUrl}/assets/${content.primary_image.id}`;
+      }
+
+      // Если нет основного изображения, проверяем additional_images
+      if (!imageUrl && content.additional_images && Array.isArray(content.additional_images) && content.additional_images.length > 0) {
+        const firstImage = content.additional_images[0];
+        if (typeof firstImage === 'string') {
+          imageUrl = firstImage;
+        } else if (firstImage && typeof firstImage === 'object' && firstImage.id) {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://db.nplanner.ru';
+          imageUrl = `${directusUrl}/assets/${firstImage.id}`;
+        }
+      }
+
+      // Предобработка текста
+      text = this.preprocessText(text);
+
+      return { text, imageUrl };
+    } catch (error) {
+      console.error('Ошибка при предобработке контента:', error);
+      return { text: content.text || '', imageUrl: null };
     }
-    return this.telegramPublisherCache;
   }
 
   /**
-   * Предобработка текста контента перед публикацией
-   * @param text Исходный текст
-   * @returns Обработанный текст
+   * Предобработка текста
    */
-  private preprocessContentText(text: string): string {
-    if (!text) return '';
-    
-    // Удаление лишних обрывов строк
-    let processedText = text.replace(/\n{3,}/g, '\n\n');
-    
-    // Сохранение абзацев и переносов строк
-    processedText = processedText.trim();
-    
-    return processedText;
+  private preprocessText(text: string): string {
+    // Обрежем длинный текст если необходимо
+    const maxLength = 4000; // Максимальная длина сообщения в Telegram
+    if (text.length > maxLength) {
+      text = text.substring(0, maxLength - 3) + '...';
+    }
+    return text;
   }
 
   /**
-   * Добавляет HTML-форматирование к тексту для Telegram
-   * @param text Текст для форматирования
-   * @returns Отформатированный текст
+   * Добавляет HTML-форматирование для Telegram
    */
   private addHtmlFormatting(text: string): string {
-    // Telegram поддерживает только ограниченный набор HTML-тегов
-    // https://core.telegram.org/bots/api#html-style
+    // В Telegram для HTML формата используются следующие теги:
+    // <b>bold</b>, <i>italic</i>, <code>mono</code>, <pre>pre</pre>
+    // <a href="http://example.com/">link</a>
     
-    // Заменяем **текст** на <b>текст</b> для выделения жирным
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    
-    // Заменяем *текст* на <i>текст</i> для курсива
-    formattedText = formattedText.replace(/\*(.*?)\*/g, '<i>$1</i>');
-    
-    // Заменяем _текст_ на <i>текст</i> для курсива (альтернативный вариант)
-    formattedText = formattedText.replace(/_(.*?)_/g, '<i>$1</i>');
-    
-    // Заменяем `текст` на <code>текст</code> для моноширинного текста
-    formattedText = formattedText.replace(/`(.*?)`/g, '<code>$1</code>');
+    // Сохраняем существующие переносы строк
+    let formattedText = text.replace(/\n/g, '\n');
     
     return formattedText;
   }
 }
 
-export const socialPublishingServiceFixed = new SocialPublishingServiceFixed();
+export const socialPublishingService = new SocialPublishingService();
