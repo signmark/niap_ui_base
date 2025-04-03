@@ -67,6 +67,8 @@ const authenticateUser = (req: Request, res: Response, next: Function) => {
 async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: string, token: string) {
   try {
     log(`[uploads] Подготовка загрузки файла в Directus: ${fileName}, тип: ${mimeType}`);
+    log(`[uploads] Размер файла: ${fileData.length} байт`);
+    log(`[uploads] Токен авторизации (первые 20 символов): ${token.substring(0, 20)}...`);
     
     const formData = new FormData();
     formData.append('file', fileData, {
@@ -76,6 +78,24 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
 
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
     log(`[uploads] Отправка запроса на ${directusUrl}/files с токеном авторизации`);
+    
+    // Проверка доступа к Directus перед загрузкой файла
+    try {
+      log(`[uploads] Проверка доступа к Directus через /users/me`);
+      const userResponse = await axios.get(`${directusUrl}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      log(`[uploads] Проверка доступа успешна, пользователь: ${userResponse.data?.data?.id || 'unknown'}`);
+    } catch (userError: any) {
+      log(`[uploads] Ошибка при проверке доступа к Directus: ${userError.message}`);
+      if (userError.response) {
+        log(`[uploads] Статус ошибки: ${userError.response.status}`);
+        log(`[uploads] Данные ошибки: ${JSON.stringify(userError.response.data)}`);
+      }
+      // Не прерываем выполнение, продолжаем загрузку файла
+    }
     
     const response = await axios.post(`${directusUrl}/files`, formData, {
       headers: {

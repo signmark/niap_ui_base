@@ -166,19 +166,35 @@ api.interceptors.response.use(
 export const uploadImage = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
+  
+  // Проверяем наличие токена авторизации
+  const token = localStorage.getItem('auth_token');
+  console.log('uploadImage: Наличие токена авторизации:', !!token);
+  if (!token) {
+    throw new Error('Не найден токен авторизации. Пожалуйста, войдите в систему снова.');
+  }
 
   try {
+    console.log('uploadImage: Отправка файла на /upload, размер:', file.size, 'тип:', file.type);
     // Сначала пробуем новый универсальный маршрут
     const response = await api.post('/upload', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
       }
     });
     
+    console.log('uploadImage: Ответ сервера:', response.data);
     // Если ответ успешный, возвращаем данные
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Ошибка при загрузке через универсальный маршрут, пробуем резервный:', error);
+    // Логируем дополнительные детали ошибки
+    if (error.response) {
+      console.error('Статус:', error.response.status);
+      console.error('Данные:', error.response.data);
+      console.error('Заголовки:', error.response.headers);
+    }
     
     // Если не удалось - пробуем старый маршрут для обратной совместимости
     try {
@@ -206,19 +222,38 @@ export const uploadImage = async (file: File) => {
 export const uploadMultipleImages = async (files: File[]) => {
   const formData = new FormData();
   
+  // Проверяем наличие токена авторизации
+  const token = localStorage.getItem('auth_token');
+  console.log('uploadMultipleImages: Наличие токена авторизации:', !!token);
+  if (!token) {
+    throw new Error('Не найден токен авторизации. Пожалуйста, войдите в систему снова.');
+  }
+  
   files.forEach(file => {
     formData.append('images', file);
+    console.log(`Добавлен файл: ${file.name}, размер: ${file.size}, тип: ${file.type}`);
   });
 
   try {
+    console.log(`uploadMultipleImages: Отправка ${files.length} файлов на сервер...`);
     const response = await api.post('/upload-multiple-images', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
       }
     });
+    console.log('uploadMultipleImages: Ответ сервера:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Ошибка при загрузке изображений:', error);
+    
+    // Логируем дополнительные детали ошибки
+    if (error.response) {
+      console.error('Статус:', error.response.status);
+      console.error('Данные:', error.response.data);
+      console.error('Заголовки:', error.response.headers);
+    }
+    
     throw error;
   }
 };
