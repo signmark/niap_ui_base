@@ -29,25 +29,47 @@ export class SocialPublishingService {
     
     log(`Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
     
-    // Если URL уже абсолютный, возвращаем как есть, но проверяем наличие UUID в пути
+    // Базовый URL сервера для относительных путей
+    const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+    
+    // Если URL уже абсолютный
     if (imageUrl.startsWith('http')) {
-      // Проверяем, содержит ли URL UUID в пути (для случаев https://directus.nplanner.ru/assets/UUID)
+      // Проверяем Directus URL (содержит assets/UUID)
       const uuidInUrlPattern = /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
       const match = imageUrl.match(uuidInUrlPattern);
       
       if (match && match[1]) {
         // Если нашли UUID в URL, переформируем URL для использования прокси
         const uuid = match[1];
-        const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
         const proxyUrl = `${baseAppUrl}/api/proxy-file/${uuid}`;
-        log(`Обнаружен Directus URL с UUID в пути для ${platform}, использую прокси URL: ${proxyUrl}`, 'social-publishing');
+        log(`Обнаружен Directus URL с UUID в пути для ${platform}, создан прокси URL: ${proxyUrl}`, 'social-publishing');
         return proxyUrl;
       }
+      
+      // Проверяем URL для FAL.AI (если используются их модели генерации изображений)
+      if (imageUrl.includes('fal.media') || imageUrl.includes('fal.ai')) {
+        log(`Обнаружен URL от FAL.AI для ${platform}, используем прямую ссылку`, 'social-publishing');
+        return imageUrl;
+      }
+      
+      // Проверяем ссылки на внешние медиа платформы, которые могут требовать аутентификации
+      if (
+        imageUrl.includes('instagram.') || 
+        imageUrl.includes('fbcdn.net') || 
+        imageUrl.includes('cdninstagram.com') || 
+        imageUrl.includes('scontent.') || 
+        imageUrl.includes('vk.com')
+      ) {
+        // Для внешних ресурсов, требующих аутентификации, проксируем через наш сервер
+        log(`Обнаружен URL с внешней платформы для ${platform}, используем прокси для доступа`, 'social-publishing');
+        // Кодируем полный URL для передачи в прокси
+        const encodedUrl = encodeURIComponent(imageUrl);
+        return `${baseAppUrl}/api/proxy-media?url=${encodedUrl}`;
+      }
+      
+      // Для всех остальных абсолютных URL используем их как есть
       return imageUrl;
     }
-    
-    // Базовый URL сервера для относительных путей
-    const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
     
     // Проверка, является ли это UUID для Directus
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
