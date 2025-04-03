@@ -87,6 +87,15 @@ app.use((req, res, next) => {
     registerUploadRoutes(app);
     log("File Upload routes registered successfully");
     
+    // Регистрируем тестовые маршруты для социальных сетей
+    log("Registering Social Testing routes...");
+    import('./routes-social-test').then(({ registerSocialTestRoutes }) => {
+      registerSocialTestRoutes(app);
+      log("Social Testing routes registered successfully");
+    }).catch(err => {
+      log(`Error registering Social Testing routes: ${err.message}`);
+    });
+    
     // Маршрут для доступа к локально сохраненным файлам
     const uploadDir = path.join(__dirname, '../uploads');
     
@@ -98,6 +107,10 @@ app.use((req, res, next) => {
     // Статический маршрут для доступа к файлам
     app.use('/uploads', express.static(uploadDir));
     log(`Serving locally stored files from ${uploadDir}`);
+    
+    // Маршрут для тестовой HTML-страницы Telegram
+    // убрано, так как перемещено в routes-social-test.ts
+    log('Test-telegram route now handled by routes-social-test.ts');
     
     console.log("Route registration completed");
     log("Routes registered successfully");

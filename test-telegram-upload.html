@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки изображений в Telegram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #D8000C;
+            background-color: #FFD2D2;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        .success {
+            color: #4F8A10;
+            background-color: #DFF2BF;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loading:after {
+            content: '.';
+            animation: dots 1s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: '....'; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест загрузки изображений в Telegram</h1>
+    
+    <div class="form-group">
+        <label for="imageUrl">URL изображения</label>
+        <input type="text" id="imageUrl" placeholder="Введите URL изображения для отправки">
+    </div>
+    
+    <div class="form-group">
+        <label for="chatId">ID чата Telegram</label>
+        <input type="text" id="chatId" placeholder="Введите ID чата для отправки">
+    </div>
+    
+    <div class="form-group">
+        <label for="caption">Подпись к изображению (опционально)</label>
+        <textarea id="caption" rows="4" placeholder="Введите текст подписи к изображению"></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="token">Токен бота Telegram</label>
+        <input type="text" id="token" placeholder="Введите токен бота Telegram">
+    </div>
+    
+    <button id="sendButton">Отправить изображение</button>
+    
+    <div class="loading" id="loading">Отправка</div>
+    <div class="error" id="error"></div>
+    <div class="success" id="success">Изображение успешно отправлено!</div>
+    
+    <div class="form-group">
+        <label for="result">Результат запроса:</label>
+        <div class="result" id="result">Результат будет отображен здесь...</div>
+    </div>
+    
+    <script>
+        document.getElementById('sendButton').addEventListener('click', async function() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            const chatId = document.getElementById('chatId').value.trim();
+            const caption = document.getElementById('caption').value.trim();
+            const token = document.getElementById('token').value.trim();
+            
+            // Скрываем предыдущие сообщения
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('result').textContent = 'Отправка...';
+            document.getElementById('loading').style.display = 'block';
+            
+            // Проверка ввода
+            if (!imageUrl) {
+                showError('Пожалуйста, введите URL изображения');
+                return;
+            }
+            
+            if (!chatId) {
+                showError('Пожалуйста, введите ID чата Telegram');
+                return;
+            }
+            
+            if (!token) {
+                showError('Пожалуйста, введите токен бота Telegram');
+                return;
+            }
+            
+            // Выполняем запрос к API
+            try {
+                const response = await fetch('/api/social-test/telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imageUrl,
+                        chatId,
+                        caption,
+                        token
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Отображаем результат
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.ok) {
+                    document.getElementById('success').style.display = 'block';
+                } else {
+                    showError(`Ошибка: ${data.description || 'Неизвестная ошибка'}`);
+                }
+            } catch (error) {
+                showError(`Ошибка выполнения запроса: ${error.message}`);
+                document.getElementById('result').textContent = error.toString();
+            }
+        });
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // Автозаполнение полей из URL-параметров
+        window.addEventListener('load', function() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has('imageUrl')) {
+                document.getElementById('imageUrl').value = params.get('imageUrl');
+            }
+            
+            if (params.has('chatId')) {
+                document.getElementById('chatId').value = params.get('chatId');
+            } else {
+                // Попытка загрузить значение из localStorage
+                const savedChatId = localStorage.getItem('telegramChatId');
+                if (savedChatId) {
+                    document.getElementById('chatId').value = savedChatId;
+                }
+            }
+            
+            if (params.has('token')) {
+                document.getElementById('token').value = params.get('token');
+            } else {
+                // Попытка загрузить значение из localStorage
+                const savedToken = localStorage.getItem('telegramToken');
+                if (savedToken) {
+                    document.getElementById('token').value = savedToken;
+                }
+            }
+            
+            // При заполнении полей сохраняем их значения в localStorage
+            document.getElementById('chatId').addEventListener('change', function() {
+                localStorage.setItem('telegramChatId', this.value);
+            });
+            
+            document.getElementById('token').addEventListener('change', function() {
+                localStorage.setItem('telegramToken', this.value);
+            });
+        });
+    </script>
+</body>
+</html>
