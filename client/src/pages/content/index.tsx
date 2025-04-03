@@ -1447,16 +1447,72 @@ export default function ContentPage() {
                     <div className="space-y-2">
                       {newContent.additionalImages.map((imageUrl, index) => (
                         <div key={index} className="flex gap-2 items-center">
-                          <Input
-                            placeholder="Введите URL изображения"
-                            value={imageUrl}
-                            onChange={(e) => {
-                              const updatedImages = [...newContent.additionalImages];
-                              updatedImages[index] = e.target.value;
-                              setNewContent({...newContent, additionalImages: updatedImages});
-                            }}
-                            className="flex-1"
-                          />
+                          <div className="relative flex-1">
+                            <Input
+                              placeholder="Введите URL изображения"
+                              value={imageUrl}
+                              onChange={(e) => {
+                                const updatedImages = [...newContent.additionalImages];
+                                updatedImages[index] = e.target.value;
+                                setNewContent({...newContent, additionalImages: updatedImages});
+                              }}
+                              className="pr-10"
+                            />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                              <label htmlFor={`additional-image-upload-${index}`} className="cursor-pointer">
+                                <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                                <span className="sr-only">Загрузить файл</span>
+                              </label>
+                              <input 
+                                type="file" 
+                                id={`additional-image-upload-${index}`} 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    // Формируем данные для загрузки
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    
+                                    // Используем API для загрузки файла
+                                    fetch('/upload', {
+                                      method: 'POST',
+                                      body: formData,
+                                      headers: {
+                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                      }
+                                    }).then(async (response) => {
+                                      const responseData = await response.json();
+                                      if (responseData?.url) {
+                                        // Обновляем URL в массиве дополнительных изображений
+                                        const updatedImages = [...newContent.additionalImages];
+                                        updatedImages[index] = responseData.url;
+                                        setNewContent({...newContent, additionalImages: updatedImages});
+                                        toast({
+                                          title: "Изображение загружено",
+                                          description: "Файл успешно загружен и добавлен в список дополнительных изображений",
+                                        });
+                                      } else {
+                                        toast({
+                                          title: "Ошибка загрузки",
+                                          description: "Не удалось загрузить файл",
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    }).catch(error => {
+                                      console.error('Ошибка загрузки файла:', error);
+                                      toast({
+                                        title: "Ошибка загрузки",
+                                        description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                        variant: "destructive",
+                                      });
+                                    });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
                           <Button 
                             type="button" 
                             variant="outline" 
@@ -1727,15 +1783,71 @@ export default function ContentPage() {
                         Сгенерировать изображение
                       </Button>
                     </div>
-                    <Input
-                      id="imageUrl"
-                      placeholder="Введите URL изображения"
-                      value={currentContent.imageUrl || ""}
-                      onChange={(e) => {
-                        const updatedContent = {...currentContent, imageUrl: e.target.value};
-                        setCurrentContentSafe(updatedContent);
-                      }}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="imageUrl"
+                        placeholder="Введите URL изображения"
+                        value={currentContent.imageUrl || ""}
+                        onChange={(e) => {
+                          const updatedContent = {...currentContent, imageUrl: e.target.value};
+                          setCurrentContentSafe(updatedContent);
+                        }}
+                        className="pr-10"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <label htmlFor="edit-main-image-upload" className="cursor-pointer">
+                          <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                          <span className="sr-only">Загрузить файл</span>
+                        </label>
+                        <input 
+                          type="file" 
+                          id="edit-main-image-upload" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              // Формируем данные для загрузки
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              
+                              // Используем API для загрузки файла
+                              fetch('/upload', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                  'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                }
+                              }).then(async (response) => {
+                                const responseData = await response.json();
+                                if (responseData?.url) {
+                                  // Устанавливаем полученный URL в состояние
+                                  const updatedContent = {...currentContent, imageUrl: responseData.url};
+                                  setCurrentContentSafe(updatedContent);
+                                  toast({
+                                    title: "Изображение загружено",
+                                    description: "Файл успешно загружен",
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Ошибка загрузки",
+                                    description: "Не удалось загрузить файл",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }).catch(error => {
+                                console.error('Ошибка загрузки файла:', error);
+                                toast({
+                                  title: "Ошибка загрузки",
+                                  description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                  variant: "destructive",
+                                });
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Дополнительные изображения */}
@@ -1766,17 +1878,74 @@ export default function ContentPage() {
                       <div className="space-y-2">
                         {currentContent.additionalImages.map((imageUrl, index) => (
                           <div key={index} className="flex gap-2 items-center">
-                            <Input
-                              placeholder="Введите URL изображения"
-                              value={imageUrl || ""}
-                              onChange={(e) => {
-                                const updatedImages = [...(currentContent.additionalImages || [])];
-                                updatedImages[index] = e.target.value;
-                                const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                setCurrentContentSafe(updatedContent);
-                              }}
-                              className="flex-1"
-                            />
+                            <div className="relative flex-1">
+                              <Input
+                                placeholder="Введите URL изображения"
+                                value={imageUrl || ""}
+                                onChange={(e) => {
+                                  const updatedImages = [...(currentContent.additionalImages || [])];
+                                  updatedImages[index] = e.target.value;
+                                  const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                  setCurrentContentSafe(updatedContent);
+                                }}
+                                className="pr-10"
+                              />
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                <label htmlFor={`edit-additional-image-upload-${index}`} className="cursor-pointer">
+                                  <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                                  <span className="sr-only">Загрузить файл</span>
+                                </label>
+                                <input 
+                                  type="file" 
+                                  id={`edit-additional-image-upload-${index}`} 
+                                  className="hidden" 
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // Формируем данные для загрузки
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      
+                                      // Используем API для загрузки файла
+                                      fetch('/upload', {
+                                        method: 'POST',
+                                        body: formData,
+                                        headers: {
+                                          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                        }
+                                      }).then(async (response) => {
+                                        const responseData = await response.json();
+                                        if (responseData?.url) {
+                                          // Обновляем URL в массиве дополнительных изображений
+                                          const updatedImages = [...(currentContent.additionalImages || [])];
+                                          updatedImages[index] = responseData.url;
+                                          const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                          setCurrentContentSafe(updatedContent);
+                                          toast({
+                                            title: "Изображение загружено",
+                                            description: "Файл успешно загружен и добавлен в список дополнительных изображений",
+                                          });
+                                        } else {
+                                          toast({
+                                            title: "Ошибка загрузки",
+                                            description: "Не удалось загрузить файл",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      }).catch(error => {
+                                        console.error('Ошибка загрузки файла:', error);
+                                        toast({
+                                          title: "Ошибка загрузки",
+                                          description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
                             <Button 
                               type="button" 
                               variant="outline" 
