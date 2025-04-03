@@ -173,18 +173,9 @@ async function testSend() {
       return;
     }
     
-    // Проверяем оба варианта
-    // Заданное изображение от пользователя (FAL.AI)
-    const falImageUrl = "https://v3.fal.media/files/tiger/OS8x6yWeWM9btdYXQULiR.png";
-    const falCaption = "Тестирование отправки изображения (fal.media)";
-    
-    // Заданное изображение из Directus 
-    const directusImageUrl = "https://v3.fal.media/files/panda/LUK2_nS9G0VxxC20qz9rs.jpeg";
-    const directusCaption = "Тестирование отправки изображения (panda)";
-    
-    // Выбираем изображение для тестирования
-    const imageUrl = directusImageUrl;
-    const caption = directusCaption;
+    // Заданное изображение из Directus
+    const imageUrl = "https://directus.nplanner.ru/assets/5cda5ed4-b69a-4453-a91a-d7bcedfd5140";
+    const caption = "Тестирование отправки изображения (настоящее Directus)";
     
     console.log(`🧪 Запуск тестовой отправки изображения: ${imageUrl}`);
     const result = await sendDirectusImageToTelegram(
