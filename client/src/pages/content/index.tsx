@@ -1502,9 +1502,26 @@ export default function ContentPage() {
                                       }
                                     }).catch(error => {
                                       console.error('Ошибка загрузки файла:', error);
+                                      
+                                      // Проверяем, есть ли сообщение об ошибке в ответе
+                                      let errorMessage = "Не удалось загрузить файл";
+                                      
+                                      if (error.response?.data?.errors) {
+                                        // Получаем сообщение из ответа Directus
+                                        const directusError = error.response.data.errors[0]?.message || "";
+                                        errorMessage = directusError;
+                                      }
+                                      
+                                      // Проверяем на известные типы ошибок
+                                      const isFileServiceUnavailable = 
+                                        errorMessage.includes('SERVICE_UNAVAILABLE') || 
+                                        errorMessage.includes('files is unavailable');
+                                      
                                       toast({
                                         title: "Ошибка загрузки",
-                                        description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                        description: isFileServiceUnavailable 
+                                          ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
+                                          : `${errorMessage}. Проверьте подключение к серверу.`,
                                         variant: "destructive",
                                       });
                                     });
@@ -1837,9 +1854,26 @@ export default function ContentPage() {
                                 }
                               }).catch(error => {
                                 console.error('Ошибка загрузки файла:', error);
+                                
+                                // Проверяем, есть ли сообщение об ошибке в ответе
+                                let errorMessage = "Не удалось загрузить файл";
+                                
+                                if (error.response?.data?.errors) {
+                                  // Получаем сообщение из ответа Directus
+                                  const directusError = error.response.data.errors[0]?.message || "";
+                                  errorMessage = directusError;
+                                }
+                                
+                                // Проверяем на известные типы ошибок
+                                const isFileServiceUnavailable = 
+                                  errorMessage.includes('SERVICE_UNAVAILABLE') || 
+                                  errorMessage.includes('files is unavailable');
+                                
                                 toast({
                                   title: "Ошибка загрузки",
-                                  description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                  description: isFileServiceUnavailable 
+                                    ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
+                                    : `${errorMessage}. Проверьте подключение к серверу.`,
                                   variant: "destructive",
                                 });
                               });
@@ -1935,9 +1969,26 @@ export default function ContentPage() {
                                         }
                                       }).catch(error => {
                                         console.error('Ошибка загрузки файла:', error);
+                                        
+                                        // Проверяем, есть ли сообщение об ошибке в ответе
+                                        let errorMessage = "Не удалось загрузить файл";
+                                        
+                                        if (error.response?.data?.errors) {
+                                          // Получаем сообщение из ответа Directus
+                                          const directusError = error.response.data.errors[0]?.message || "";
+                                          errorMessage = directusError;
+                                        }
+                                        
+                                        // Проверяем на известные типы ошибок
+                                        const isFileServiceUnavailable = 
+                                          errorMessage.includes('SERVICE_UNAVAILABLE') || 
+                                          errorMessage.includes('files is unavailable');
+                                        
                                         toast({
                                           title: "Ошибка загрузки",
-                                          description: "Не удалось загрузить файл. Проверьте подключение к серверу.",
+                                          description: isFileServiceUnavailable 
+                                            ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
+                                            : `${errorMessage}. Проверьте подключение к серверу.`,
                                           variant: "destructive",
                                         });
                                       });
