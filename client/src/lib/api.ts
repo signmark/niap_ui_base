@@ -228,9 +228,9 @@ export const uploadImage = async (file: File) => {
     
     // Если не удалось - пробуем старый маршрут для обратной совместимости
     try {
-      console.log('uploadImage: Пробуем резервный маршрут /api/upload-image через fetch');
+      console.log('uploadImage: Пробуем альтернативный маршрут /api/upload-image через fetch');
       const backupFormData = new FormData();
-      backupFormData.append('image', file);
+      backupFormData.append('file', file);
       
       const backupResponse = await fetch(`${api.defaults.baseURL}/upload-image`, {
         method: 'POST',

@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthStore } from '@/store/auth-store';
+// Получаем токен напрямую из localStorage, так как компонент демонстрационный
+const getToken = () => localStorage.getItem('auth_token');
 
 type UploadedFile = {
   url: string;
@@ -23,7 +24,7 @@ export function FileUploadDemo() {
   const singleFileInputRef = useRef<HTMLInputElement>(null);
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { token } = useAuthStore();
+  const token = getToken();
 
   const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

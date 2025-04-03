@@ -1187,9 +1187,9 @@ export default function ContentPage() {
                                 </div>
                                 
                                 {/* Content title */}
-                                {content.title && (
+                                {content.title && typeof content.title === 'string' && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{String(content.title)}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">{content.title}</h3>
                                   </div>
                                 )}
                                 
@@ -1391,7 +1391,7 @@ export default function ContentPage() {
                             formData.append('file', file);
                             
                             // Используем API для загрузки файла
-                            fetch('/upload', {
+                            fetch('/api/upload', {
                               method: 'POST',
                               body: formData,
                               headers: {
@@ -1476,7 +1476,7 @@ export default function ContentPage() {
                                     formData.append('file', file);
                                     
                                     // Используем API для загрузки файла
-                                    fetch('/upload', {
+                                    fetch('/api/upload', {
                                       method: 'POST',
                                       body: formData,
                                       headers: {
@@ -1829,7 +1829,7 @@ export default function ContentPage() {
                               formData.append('file', file);
                               
                               // Используем API для загрузки файла
-                              fetch('/upload', {
+                              fetch('/api/upload', {
                                 method: 'POST',
                                 body: formData,
                                 headers: {
@@ -1942,7 +1942,7 @@ export default function ContentPage() {
                                       formData.append('file', file);
                                       
                                       // Используем API для загрузки файла
-                                      fetch('/upload', {
+                                      fetch('/api/upload', {
                                         method: 'POST',
                                         body: formData,
                                         headers: {
