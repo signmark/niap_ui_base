@@ -519,26 +519,48 @@ export function registerUploadRoutes(app: Express) {
       const match = fileUrl.match(uuidRegex);
       
       let finalUrl = fileUrl;
+      let authToken = null;
       
-      // Если это UUID Directus, добавляем расширение .jpg для правильного MIME-типа
-      if (match && fileUrl.includes('directus.nplanner.ru/assets/')) {
-        const uuid = match[0];
-        if (!fileUrl.includes('.')) {
-          finalUrl = `https://directus.nplanner.ru/assets/${uuid}.jpg`;
-          log(`[uploads] Преобразован URL Directus с добавлением расширения: ${finalUrl}`);
+      // Если URL содержит directus.nplanner.ru - получаем токен администратора для доступа
+      if (fileUrl.includes('directus.nplanner.ru')) {
+        // Импортируем функцию для получения токена администратора
+        const { getAdminToken } = await import('./directus');
+        authToken = await getAdminToken();
+        
+        if (!authToken) {
+          log(`[uploads] Не удалось получить токен администратора для доступа к файлу`);
+        } else {
+          log(`[uploads] Получен токен администратора для доступа к файлу`);
+        }
+        
+        // Если это UUID Directus, добавляем расширение .jpg для правильного MIME-типа
+        if (match && fileUrl.includes('/assets/')) {
+          const uuid = match[0];
+          if (!fileUrl.includes('.')) {
+            finalUrl = `https://directus.nplanner.ru/assets/${uuid}.jpg`;
+            log(`[uploads] Преобразован URL Directus с добавлением расширения: ${finalUrl}`);
+          }
         }
       }
       
-      // Получаем файл из Directus и передаем его клиенту
+      // Настраиваем заголовки запроса
+      const headers: Record<string, string> = {
+        'Accept': 'image/*',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+      
+      // Если это запрос к Directus и у нас есть токен администратора - добавляем его в заголовки
+      if (authToken && fileUrl.includes('directus.nplanner.ru')) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Получаем файл из источника и передаем его клиенту
       const response = await axios({
         url: finalUrl,
         method: 'GET',
         responseType: 'stream',
-        headers: {
-          'Accept': 'image/*',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
+        headers: headers,
         // Добавляем случайный параметр для избежания кеширования
         params: {
           '_nocache': Date.now()
@@ -568,6 +590,12 @@ export function registerUploadRoutes(app: Express) {
       response.data.pipe(res);
     } catch (error: any) {
       log(`[uploads] Ошибка прокси файла: ${error.message}`);
+      
+      // Добавляем подробный вывод о запросе и ошибке
+      if (axios.isAxiosError(error) && error.response) {
+        log(`[uploads] Статус ошибки: ${error.response.status}`);
+        log(`[uploads] Данные ошибки: ${JSON.stringify(error.response.data)}`);
+      }
       
       // Если файл не найден, возвращаем изображение-заглушку
       if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
