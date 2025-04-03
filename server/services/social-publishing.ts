@@ -18,6 +18,41 @@ export class SocialPublishingService {
    * @param platform Платформа для которой выполняется форматирование (влияет на поддерживаемые теги)
    * @returns Отформатированный текст с сохранением структуры
    */
+  /**
+   * Преобразует URL изображения в полный URL, обрабатывая разные форматы (UUID Directus, относительные пути)
+   * @param imageUrl Исходный URL изображения 
+   * @param platform Название платформы для логирования
+   * @returns Полный URL изображения, готовый для использования API социальных сетей
+   */
+  private processImageUrl(imageUrl: string, platform: string): string {
+    if (!imageUrl) return '';
+    
+    log(`Обработка URL изображения для ${platform}: ${imageUrl}`, 'social-publishing');
+    
+    // Если URL уже абсолютный, возвращаем как есть
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    
+    // Базовый URL сервера для относительных путей
+    const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+    
+    // Проверка, является ли это UUID для Directus
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (uuidPattern.test(imageUrl)) {
+      // Это Directus UUID, создаем правильный URL через прокси
+      const fullUrl = `${baseAppUrl}/api/proxy-file/${imageUrl}`;
+      log(`Обнаружен UUID изображения Directus для ${platform}, создан прокси URL: ${fullUrl}`, 'social-publishing');
+      return fullUrl;
+    } else {
+      // Это локальный файл, добавляем базовый URL
+      const fullUrl = `${baseAppUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+      log(`Преобразован относительный URL в абсолютный для ${platform}: ${fullUrl}`, 'social-publishing');
+      return fullUrl;
+    }
+  }
+
   private formatHtmlContent(htmlContent: string, platform: 'telegram' | 'vk' | 'facebook' | 'instagram'): string {
     if (!htmlContent) return '';
     
@@ -230,45 +265,29 @@ export class SocialPublishingService {
       // Собираем все доступные изображения
       const images = [];
       
-      // Проверяем основное изображение
+      // Проверяем основное изображение с обработкой URL
       if (processedContent.imageUrl && typeof processedContent.imageUrl === 'string' && processedContent.imageUrl.trim() !== '') {
-        // Проверяем формат URL изображения для Telegram
-        let photoUrl = processedContent.imageUrl;
-        
-        // Если URL не начинается с http, добавляем базовый URL сервера
-        if (photoUrl && !photoUrl.startsWith('http')) {
-          const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
-          photoUrl = `${baseAppUrl}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
-          log(`Изменен URL изображения для Telegram: ${photoUrl}`, 'social-publishing');
-        }
-        
-        images.push(photoUrl);
+        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'telegram');
+        images.push(processedImageUrl);
+        log(`Добавлено основное изображение для Telegram: ${processedImageUrl}`, 'social-publishing');
       }
       
-      // Добавляем дополнительные изображения
+      // Добавляем дополнительные изображения с обработкой URL
       if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
         for (const additionalImage of processedContent.additionalImages) {
           if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim() !== '') {
-            // Проверяем формат URL изображения
-            let photoUrl = additionalImage;
-            
-            // Если URL не начинается с http, добавляем базовый URL сервера
-            if (photoUrl && !photoUrl.startsWith('http')) {
-              const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
-              photoUrl = `${baseAppUrl}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
-              log(`Изменен URL дополнительного изображения для Telegram: ${photoUrl}`, 'social-publishing');
-            }
-            
-            images.push(photoUrl);
-            log(`Добавлено дополнительное изображение в массив для Telegram: ${photoUrl}`, 'social-publishing');
+            const processedImg = this.processImageUrl(additionalImage, 'telegram');
+            images.push(processedImg);
+            log(`Добавлено дополнительное изображение для Telegram: ${processedImg}`, 'social-publishing');
           }
         }
         
         log(`Всего подготовлено ${images.length} изображений для Telegram`, 'social-publishing');
       }
       
-      // Проверяем доступность видео
+      // Проверяем доступность видео и обрабатываем URL
       const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+      let processedVideoUrl = hasVideo ? this.processImageUrl(content.videoUrl as string, 'telegram') : '';
       
       // Ограничиваем длину подписи, так как Telegram имеет ограничение
       const maxCaptionLength = 1024;
@@ -319,11 +338,11 @@ export class SocialPublishingService {
           headers: { 'Content-Type': 'application/json' }
         });
       } else if (hasVideo) {
-        // Отправка видео с подписью
-        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${content.videoUrl}`, 'social-publishing');
+        // Отправка видео с подписью (с обработанным URL)
+        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
         const videoRequestBody = {
           chat_id: formattedChatId,
-          video: content.videoUrl,
+          video: processedVideoUrl,
           caption: text,
           parse_mode: 'HTML'
         };
@@ -476,11 +495,17 @@ export class SocialPublishingService {
    */
   private async uploadPhotoToVk(uploadUrl: string, imageUrl: string): Promise<any | null> {
     try {
+      log(`Начало загрузки изображения в VK с URL: ${imageUrl}`, 'social-publishing');
+      
+      // Обработка URL изображения с использованием универсального метода
+      const fullImageUrl = this.processImageUrl(imageUrl, 'vk');
+      log(`Обработан URL изображения для VK: ${fullImageUrl}`, 'social-publishing');
+      
       // Скачиваем изображение
-      log(`Скачивание изображения с URL: ${imageUrl}`, 'social-publishing');
+      log(`Скачивание изображения с окончательного URL: ${fullImageUrl}`, 'social-publishing');
       const imageResponse = await axios({
         method: 'get',
-        url: imageUrl,
+        url: fullImageUrl,
         responseType: 'arraybuffer'
       });
 
@@ -627,18 +652,20 @@ export class SocialPublishingService {
       // Собираем все доступные изображения (основное и дополнительные)
       const images = [];
       
-      // Добавляем основное изображение, если оно есть
+      // Добавляем основное изображение с обработкой URL
       if (processedContent.imageUrl) {
-        images.push(processedContent.imageUrl);
-        log(`Добавлено основное изображение для VK: ${processedContent.imageUrl}`, 'social-publishing');
+        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'vk');
+        images.push(processedImageUrl);
+        log(`Добавлено основное изображение для VK: ${processedImageUrl}`, 'social-publishing');
       }
       
-      // Добавляем дополнительные изображения, если они есть
+      // Добавляем дополнительные изображения с обработкой URL
       if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages) && processedContent.additionalImages.length > 0) {
         for (let img of processedContent.additionalImages) {
           if (img && typeof img === 'string' && img.trim() !== '') {
-            images.push(img);
-            log(`Добавлено дополнительное изображение для VK: ${img}`, 'social-publishing');
+            const processedImg = this.processImageUrl(img, 'vk');
+            images.push(processedImg);
+            log(`Добавлено дополнительное изображение для VK: ${processedImg}`, 'social-publishing');
           }
         }
       }
@@ -863,17 +890,22 @@ export class SocialPublishingService {
       // Собираем все изображения для публикации
       const images = [];
       
-      // Добавляем основное изображение, если оно есть
+      // Добавляем основное изображение с обработкой URL
       if (processedContent.imageUrl) {
-        images.push(processedContent.imageUrl);
+        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'instagram');
+        images.push(processedImageUrl);
+        log(`Обработано основное изображение для Instagram: ${processedImageUrl}`, 'social-publishing');
       }
       
-      // Добавляем дополнительные изображения, если они есть
+      // Добавляем дополнительные изображения с обработкой URL
       if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
         log(`Найдено ${processedContent.additionalImages.length} дополнительных изображений для Instagram`, 'social-publishing');
         
-        // Фильтруем только валидные URL
-        const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
+        // Фильтруем только валидные URL и обрабатываем их
+        const validImages = processedContent.additionalImages
+          .filter(url => url && typeof url === 'string')
+          .map(url => this.processImageUrl(url, 'instagram'));
+        
         images.push(...validImages);
         
         log(`Добавлено ${validImages.length} дополнительных изображений в массив для Instagram`, 'social-publishing');
@@ -1092,17 +1124,22 @@ export class SocialPublishingService {
       // Собираем все изображения для публикации
       const images = [];
       
-      // Добавляем основное изображение, если оно есть
+      // Добавляем основное изображение с обработкой URL
       if (processedContent.imageUrl) {
-        images.push(processedContent.imageUrl);
+        const processedImageUrl = this.processImageUrl(processedContent.imageUrl, 'facebook');
+        images.push(processedImageUrl);
+        log(`Обработано основное изображение для Facebook: ${processedImageUrl}`, 'social-publishing');
       }
       
-      // Добавляем дополнительные изображения, если они есть
+      // Добавляем дополнительные изображения с обработкой URL
       if (processedContent.additionalImages && Array.isArray(processedContent.additionalImages)) {
         log(`Найдено ${processedContent.additionalImages.length} дополнительных изображений для Facebook`, 'social-publishing');
         
-        // Фильтруем только валидные URL
-        const validImages = processedContent.additionalImages.filter(url => url && typeof url === 'string');
+        // Фильтруем только валидные URL и обрабатываем их
+        const validImages = processedContent.additionalImages
+          .filter(url => url && typeof url === 'string')
+          .map(url => this.processImageUrl(url, 'facebook'));
+          
         images.push(...validImages);
         
         log(`Добавлено ${validImages.length} дополнительных изображений в массив для Facebook`, 'social-publishing');
@@ -1464,6 +1501,7 @@ export class SocialPublishingService {
       const childrenMediaIds = [];
       
       for (let i = 0; i < images.length; i++) {
+        // Изображения уже обработаны на этапе подготовки массива
         const imageUrl = images[i];
         log(`Создание дочернего контейнера ${i + 1}/${images.length} для изображения: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
         
@@ -1668,6 +1706,7 @@ export class SocialPublishingService {
       const mediaIds = [];
       
       for (let i = 0; i < images.length; i++) {
+        // Изображения уже обработаны на этапе подготовки массива
         const imageUrl = images[i];
         log(`Загрузка изображения ${i + 1}/${images.length} для Facebook: ${imageUrl.substring(0, 50)}...`, 'social-publishing');
         
