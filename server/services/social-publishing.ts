@@ -396,9 +396,46 @@ export class SocialPublishingService {
         
         log(`Отправляем запрос фото к Telegram API: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
         
-        response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        log(`Отправляем фото в Telegram, URL: ${images[0].substring(0, 100)}`, 'social-publishing');
+        try {
+          response = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
+            headers: { 'Content-Type': 'application/json' }
+          });
+          log(`Успешный ответ от Telegram API: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
+        } catch (telegramError) {
+          const errorData = (telegramError as any).response?.data 
+            ? JSON.stringify((telegramError as any).response.data) 
+            : String(telegramError);
+          log(`ОШИБКА в запросе к Telegram API: ${errorData}`, 'social-publishing');
+          
+          // Повторная попытка с локальной загрузкой изображения
+          if (images[0].startsWith('http')) {
+            log(`Telegram отклонил URL изображения. Попытка загрузки изображения локально и повторная отправка`, 'social-publishing');
+            try {
+              // Создаем FormData для мультипарт загрузки файла
+              const formData = new FormData();
+              formData.append('chat_id', formattedChatId);
+              formData.append('caption', truncatedCaption);
+              formData.append('parse_mode', 'HTML');
+
+              // Загружаем изображение и добавляем как файл
+              const imageResponse = await axios.get(images[0], { responseType: 'arraybuffer' });
+              const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+              formData.append('photo', imageBuffer, 'image.jpg');
+
+              // Отправляем запрос с мультипарт формой
+              response = await axios.post(`${baseUrl}/sendPhoto`, formData, {
+                headers: formData.getHeaders()
+              });
+              log(`Успешный ответ от Telegram API после локальной загрузки: ${JSON.stringify(response.data).substring(0, 150)}`, 'social-publishing');
+            } catch (retryError) {
+              log(`Повторная попытка загрузки изображения также не удалась: ${retryError}`, 'social-publishing');
+              throw retryError; // Пробрасываем исключение дальше
+            }
+          } else {
+            throw telegramError; // Пробрасываем исключение дальше
+          }
+        }
       } else if (hasVideo) {
         // Отправка видео с подписью (с обработанным URL)
         log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${processedVideoUrl}`, 'social-publishing');
