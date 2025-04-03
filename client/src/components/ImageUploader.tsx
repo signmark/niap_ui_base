@@ -49,6 +49,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       });
       return;
     }
+    
+    // Проверка токена авторизации
+    const token = localStorage.getItem('auth_token');
+    console.log('ImageUploader: Auth token present:', !!token);
+    if (!token) {
+      toast({
+        title: 'Ошибка авторизации',
+        description: 'Отсутствует токен авторизации. Попробуйте перезайти в систему.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setIsUploading(true);
 
