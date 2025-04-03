@@ -165,7 +165,7 @@ api.interceptors.response.use(
  */
 export const uploadImage = async (file: File) => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file); // Используем 'file' как имя поля, такое же как на сервере
   
   // Проверяем наличие токена авторизации
   const token = localStorage.getItem('auth_token');
@@ -175,9 +175,9 @@ export const uploadImage = async (file: File) => {
   }
 
   try {
-    console.log('uploadImage: Отправка файла на /upload, размер:', file.size, 'тип:', file.type);
+    console.log('uploadImage: Отправка файла на /api/upload, размер:', file.size, 'тип:', file.type);
     // Сначала пробуем новый универсальный маршрут
-    const response = await api.post('/upload', formData, {
+    const response = await axios.post('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
@@ -230,7 +230,7 @@ export const uploadMultipleImages = async (files: File[]) => {
   }
   
   files.forEach(file => {
-    formData.append('images', file);
+    formData.append('images', file); // Должно совпадать с именем в upload.array('images', 10) на сервере
     console.log(`Добавлен файл: ${file.name}, размер: ${file.size}, тип: ${file.type}`);
   });
 

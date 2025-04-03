@@ -94,18 +94,59 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
         log(`[uploads] Статус ошибки: ${userError.response.status}`);
         log(`[uploads] Данные ошибки: ${JSON.stringify(userError.response.data)}`);
       }
-      // Не прерываем выполнение, продолжаем загрузку файла
+      
+      // Если получили 401, выбрасываем ошибку, чтобы прервать загрузку
+      if (userError.response && userError.response.status === 401) {
+        throw new Error('Недействительный токен авторизации для Directus');
+      }
+      
+      // Иначе продолжаем попытку загрузки файла
+      log(`[uploads] Продолжаем загрузку, несмотря на ошибку проверки доступа`);
     }
     
-    const response = await axios.post(`${directusUrl}/files`, formData, {
+    // Создаем экземпляр axios с настройкой таймаута и повторными попытками
+    const axiosInstance = axios.create({
+      timeout: 30000, // 30 секунд таймаут
+    });
+    
+    // Добавляем информацию о форме и заголовки авторизации
+    const config = {
       headers: {
         ...formData.getHeaders(),
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
       }
-    });
+    };
+    
+    log(`[uploads] Отправка запроса на ${directusUrl}/files, размер данных: ${fileData.length} байт`);
+    
+    // Пробуем загрузить файл с повторными попытками
+    let response;
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (retries < maxRetries) {
+      try {
+        response = await axiosInstance.post(`${directusUrl}/files`, formData, config);
+        break; // Выходим из цикла, если запрос успешен
+      } catch (retryError: any) {
+        retries++;
+        log(`[uploads] Ошибка при попытке ${retries}/${maxRetries}: ${retryError.message}`);
+        
+        if (retries >= maxRetries) {
+          // Если исчерпали все попытки, пробрасываем последнюю ошибку
+          throw retryError;
+        }
+        
+        // Ждем перед следующей попыткой (экспоненциальное увеличение времени ожидания)
+        const delay = 1000 * Math.pow(2, retries - 1);
+        log(`[uploads] Ждем ${delay}мс перед следующей попыткой`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
 
-    if (!response.data || !response.data.data) {
-      log(`[uploads] Некорректный ответ от Directus API: ${JSON.stringify(response.data)}`);
+    if (!response || !response.data || !response.data.data) {
+      log(`[uploads] Некорректный ответ от Directus API: ${JSON.stringify(response?.data || 'нет данных')}`);
       throw new Error('Некорректный ответ от Directus API');
     }
 
@@ -131,13 +172,18 @@ async function uploadToDirectus(fileData: Buffer, fileName: string, mimeType: st
  */
 async function uploadFileToDirectus(file: Express.Multer.File, token: string | null) {
   if (!token) {
+    log(`[uploads] Попытка загрузки без токена авторизации`);
     throw new Error('Требуется авторизация');
   }
 
   try {
+    log(`[uploads] Начинаем загрузку файла: ${file.originalname}, размер: ${file.size}, MIME: ${file.mimetype}`);
+    log(`[uploads] Токен авторизации (первые 10 символов): ${token.substring(0, 10)}...`);
+    
     // Генерируем уникальное имя файла с сохранением расширения
     const fileExt = path.extname(file.originalname) || '.jpg';
     const uniqueFilename = `${uuidv4()}${fileExt}`;
+    log(`[uploads] Сгенерировано уникальное имя файла: ${uniqueFilename}`);
     
     // Загружаем файл в Directus
     const fileInfo = await uploadToDirectus(
@@ -148,6 +194,7 @@ async function uploadFileToDirectus(file: Express.Multer.File, token: string | n
     );
     
     log(`[uploads] Файл успешно загружен в Directus через универсальный маршрут: ${fileInfo.id}`);
+    log(`[uploads] URL файла: ${fileInfo.url || 'URL не получен'}`);
     
     return {
       success: true,
@@ -160,6 +207,13 @@ async function uploadFileToDirectus(file: Express.Multer.File, token: string | n
     };
   } catch (error: any) {
     log(`[uploads] Ошибка при загрузке файла через универсальный маршрут: ${error.message}`);
+    
+    // Логируем детали ошибки
+    if (error.response) {
+      log(`[uploads] Статус ошибки: ${error.response.status}`);
+      log(`[uploads] Данные ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    
     throw error;
   }
 }
@@ -168,8 +222,8 @@ async function uploadFileToDirectus(file: Express.Multer.File, token: string | n
  * Регистрирует маршруты для загрузки файлов
  */
 export function registerUploadRoutes(app: Express) {
-  // Универсальный маршрут для загрузки файлов изображений
-  app.post('/upload', authenticateUser, upload.single('file'), async (req: Request, res: Response) => {
+  // Универсальный маршрут для загрузки файлов изображений (новый формат с префиксом /api/)
+  app.post('/api/upload', authenticateUser, upload.single('file'), async (req: Request, res: Response) => {
     try {
       log(`[uploads] Начинаем обработку загрузки файла...`);
       
