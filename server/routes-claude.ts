@@ -25,10 +25,23 @@ export function registerClaudeRoutes(app: Router) {
     try {
       const userId = req.userId;
       if (!userId) {
+        logger.error('[claude-routes] Cannot get Claude API key: userId is missing in request');
         return null;
       }
 
-      return await apiKeyServiceInstance.getApiKey(userId, 'claude');
+      logger.log(`[claude-routes] Getting Claude API key for user ${userId}`, 'claude');
+      const apiKey = await apiKeyServiceInstance.getApiKey(userId, 'claude');
+      
+      if (apiKey) {
+        logger.log(`[claude-routes] Successfully retrieved Claude API key for user ${userId} (length: ${apiKey.length})`, 'claude');
+        // Маскируем ключ для логирования - показываем только первые 4 символа
+        const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
+        logger.log(`[claude-routes] Claude API key starts with: ${maskedKey}`, 'claude');
+      } else {
+        logger.error(`[claude-routes] Claude API key not found for user ${userId}`, 'claude');
+      }
+      
+      return apiKey;
     } catch (error) {
       logger.error('[claude-routes] Error getting Claude API key:', error);
       return null;
@@ -139,17 +152,23 @@ export function registerClaudeRoutes(app: Router) {
   router.post('/api/claude/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model } = req.body;
+      const userId = req.userId;
+      
+      logger.log(`[claude-routes] Received improve-text request from user ${userId}`, 'claude');
       
       if (!text || !prompt) {
+        logger.error('[claude-routes] Missing text or prompt in improve-text request', 'claude');
         return res.status(400).json({
           success: false,
           error: 'Текст и инструкции обязательны'
         });
       }
       
+      logger.log(`[claude-routes] Getting Claude service for user ${userId}`, 'claude');
       const claudeService = await getClaudeService(req);
       
       if (!claudeService) {
+        logger.error(`[claude-routes] Claude API key not configured for user ${userId}`, 'claude');
         return res.status(400).json({
           success: false,
           error: 'API ключ Claude не настроен',
@@ -157,17 +176,28 @@ export function registerClaudeRoutes(app: Router) {
         });
       }
       
+      logger.log(`[claude-routes] Calling improveText with model ${model || 'default'}`, 'claude');
       const improvedText = await claudeService.improveText({ text, prompt, model });
       
+      logger.log('[claude-routes] Text improved successfully, returning response', 'claude');
       return res.json({
         success: true,
         text: improvedText
       });
     } catch (error) {
       logger.error('[claude-routes] Error improving text with Claude:', error);
+      
+      // Более детальное логирование ошибки
+      if (error instanceof Error) {
+        logger.error(`[claude-routes] Error message: ${error.message}`, 'claude');
+        if ('stack' in error) {
+          logger.error(`[claude-routes] Error stack: ${error.stack}`, 'claude');
+        }
+      }
+      
       return res.status(500).json({
         success: false,
-        error: 'Ошибка при улучшении текста'
+        error: error instanceof Error ? error.message : 'Ошибка при улучшении текста'
       });
     }
   });
