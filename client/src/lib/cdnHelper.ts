@@ -1,100 +1,76 @@
 /**
- * Утилиты для работы с CDN и оптимизированными изображениями
+ * Хелпер для работы с CDN и оптимизацией изображений
  */
 
 /**
- * Формирует URL для изображения из CDN
- * @param path Путь к изображению или полный URL
- * @returns URL с CDN
+ * Опции для оптимизации изображения
  */
-export function getCdnUrl(path: string): string {
-  if (!path) return '';
-  
-  // Если уже полный URL, возвращаем его
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // Если путь начинается с /cdn, то это уже ссылка на CDN
-  if (path.startsWith('/cdn/')) {
-    return path;
-  }
-  
-  // Если путь начинается с /uploads, но не с /uploads/cdn,
-  // преобразуем его в CDN путь
-  if (path.startsWith('/uploads/') && !path.includes('/cdn/')) {
-    return `/cdn${path.replace('/uploads', '')}`;
-  }
-  
-  // Просто добавляем /cdn/ перед путем
-  return `/cdn/${path}`;
+export interface CdnOptions {
+  width?: number;
+  height?: number;
+  quality?: number;
+  format?: string;
 }
 
 /**
- * Получает URL изображения для предпросмотра
- * @param path Путь к изображению или полный URL
- * @param width Ширина изображения (по умолчанию 300)
- * @returns URL с CDN для предпросмотра
+ * Получает оптимизированный URL изображения
+ * @param url URL изображения (абсолютный или относительный)
+ * @param options Опции оптимизации
+ * @returns Оптимизированный URL для CDN
  */
-export function getImageThumbnail(path: string, width: number = 300): string {
-  if (!path) return '';
+export function getCdnUrl(url: string, options: CdnOptions = {}): string {
+  // Проверяем, есть ли URL
+  if (!url) {
+    return '';
+  }
   
-  const cdnUrl = getCdnUrl(path);
-  // Добавляем параметры для CDN оптимизации
-  return `${cdnUrl}?width=${width}&format=webp`;
+  // Проверяем, является ли URL внешним
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Для внешних URL мы не применяем CDN
+    return url;
+  }
+  
+  // Нормализуем URL (убираем начальный слеш, если он есть)
+  const normalizedPath = url.startsWith('/') ? url.slice(1) : url;
+  
+  // Если URL уже указывает на CDN, возвращаем его как есть
+  if (normalizedPath.startsWith('uploads/cdn/')) {
+    return `/${normalizedPath}`;
+  }
+  
+  // Базовый путь к CDN
+  const cdnBasePath = '/api/cdn';
+  
+  // Параметры запроса
+  const queryParams = new URLSearchParams();
+  
+  // Добавляем параметры оптимизации, если они указаны
+  if (options.width) queryParams.append('width', options.width.toString());
+  if (options.height) queryParams.append('height', options.height.toString());
+  if (options.quality) queryParams.append('quality', options.quality.toString());
+  if (options.format) queryParams.append('format', options.format);
+  
+  // Формируем итоговый URL
+  const queryString = queryParams.toString();
+  const cdnUrl = `${cdnBasePath}/${normalizedPath}${queryString ? `?${queryString}` : ''}`;
+  
+  return cdnUrl;
 }
 
 /**
- * Получает URL оптимизированного изображения
- * @param path Путь к изображению или полный URL
- * @param width Ширина изображения (по умолчанию 1200)
- * @param format Формат изображения (по умолчанию webp)
- * @returns URL с CDN для оптимизированного изображения
+ * Получает URL для изображения с адаптивными размерами
+ * @param url URL изображения
+ * @param size Размер изображения (маленький, средний, большой)
+ * @returns Оптимизированный URL с соответствующими размерами
  */
-export function getOptimizedImage(path: string, width: number = 1200, format: string = 'webp'): string {
-  if (!path) return '';
+export function getResponsiveImageUrl(url: string, size: 'small' | 'medium' | 'large' = 'medium'): string {
+  if (!url) return '';
   
-  const cdnUrl = getCdnUrl(path);
-  // Добавляем параметры для CDN оптимизации
-  return `${cdnUrl}?width=${width}&format=${format}`;
-}
-
-/**
- * Проверяет, существует ли изображение
- * @param path Путь к изображению или полный URL
- * @returns Промис с результатом проверки
- */
-export async function imageExists(path: string): Promise<boolean> {
-  if (!path) return false;
+  const sizeMap: Record<string, CdnOptions> = {
+    small: { width: 320, quality: 70 },
+    medium: { width: 768, quality: 80 },
+    large: { width: 1280, quality: 85 }
+  };
   
-  try {
-    const cdnUrl = getCdnUrl(path);
-    const response = await fetch(cdnUrl, { method: 'HEAD' });
-    return response.ok;
-  } catch (error) {
-    console.error('Error checking image existence:', error);
-    return false;
-  }
-}
-
-/**
- * Преобразует относительный путь к файлу в полный URL
- * @param path Путь к файлу
- * @returns Полный URL к файлу
- */
-export function getFileUrl(path: string): string {
-  if (!path) return '';
-  
-  // Если уже полный URL, возвращаем его
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // Если путь начинается с /, то это уже от корня
-  if (path.startsWith('/')) {
-    return path;
-  }
-  
-  // Добавляем / перед путем
-  return `/${path}`;
+  return getCdnUrl(url, sizeMap[size]);
 }
