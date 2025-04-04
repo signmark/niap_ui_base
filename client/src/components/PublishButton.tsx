@@ -18,7 +18,7 @@ import { SocialPlatform } from '@/types/social';
 
 interface PublishButtonProps {
   contentId: string;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "link" | "destructive";
+  variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive" | "black";
   size?: "default" | "sm" | "lg" | "icon";
   onSuccess?: (result: any) => void;
   onError?: (error: any) => void;
@@ -48,7 +48,7 @@ const PublishButton: React.FC<PublishButtonProps> = ({
       if (content) {
         result = await apiRequest(`/api/publish/content/${selectedPlatform}`, {
           method: 'POST',
-          body: content
+          data: content
         });
       } else {
         result = await apiRequest(`/api/publish/${selectedPlatform}/${contentId}`, {
