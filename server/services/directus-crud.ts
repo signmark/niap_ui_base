@@ -7,31 +7,6 @@ import { DirectusAuthResult, DirectusRequestOptions } from './directus-types';
 import axios from 'axios';
 
 /**
- * Безопасное логирование объектов (с обработкой циклических ссылок)
- * @param obj Объект для логирования
- * @returns Безопасная строка для логирования
- */
-function safeStringify(obj: any): string {
-  try {
-    // Обработка циклических ссылок
-    const cache: any[] = [];
-    const str = JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        // Обнаружение циклических ссылок
-        if (cache.indexOf(value) !== -1) {
-          return '[Циклическая ссылка]';
-        }
-        cache.push(value);
-      }
-      return value;
-    }, 2);
-    return str || String(obj);
-  } catch (error) {
-    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
-  }
-}
-
-/**
  * Типы операций для логирования
  */
 type CrudOperation = 'create' | 'read' | 'update' | 'delete' | 'list';
@@ -41,64 +16,6 @@ type CrudOperation = 'create' | 'read' | 'update' | 'delete' | 'list';
  */
 export class DirectusCrud {
   private logPrefix: string = 'directus-crud';
-  
-  /**
-   * Получает токен администратора для операций, требующих повышенные права
-   * @returns Токен администратора или null, если не удалось получить
-   */
-  async getAdminToken(): Promise<string | null> {
-    try {
-      // Приоритет 1: Используем токен из переменных окружения
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
-      if (adminToken) {
-        log(`Используем токен администратора из env`, this.logPrefix);
-        return adminToken;
-      }
-      
-      // Приоритет 2: Пытаемся авторизоваться с учетными данными администратора
-      const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
-      const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
-      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
-      
-      if (adminEmail && adminPassword) {
-        log(`Авторизация администратора с учетными данными из env`, this.logPrefix);
-        
-        try {
-          // Прямая авторизация через REST API
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          const response = await axios.post(`${directusUrl}/auth/login`, {
-            email: adminEmail,
-            password: adminPassword
-          });
-          
-          if (response?.data?.data?.access_token) {
-            const token = response.data.data.access_token;
-            log('Авторизация администратора успешна через прямой API запрос', this.logPrefix);
-            
-            // Сохраняем токен в кэше
-            directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
-            return token;
-          }
-        } catch (error: any) {
-          log(`Ошибка авторизации администратора: ${error.message}`, this.logPrefix);
-        }
-      }
-      
-      // Приоритет 3: Проверяем кэш токенов
-      const cachedToken = directusApiManager.getCachedToken(adminUserId);
-      if (cachedToken) {
-        log(`Используем кэшированный токен администратора`, this.logPrefix);
-        return cachedToken.token;
-      }
-      
-      log(`Не удалось получить токен администратора`, this.logPrefix);
-      return null;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log(`Ошибка при получении токена администратора: ${errorMessage}`, this.logPrefix);
-      return null;
-    }
-  }
 
   /**
    * Создает запись в коллекции Directus
@@ -275,7 +192,7 @@ export class DirectusCrud {
       if (error.response) {
         log(`Статус ошибки: ${error.response.status}`, this.logPrefix);
         if (error.response.data && error.response.data.errors) {
-          log(`Детали ошибки: ${safeStringify(error.response.data.errors)}`, this.logPrefix);
+          log(`Детали ошибки: ${JSON.stringify(error.response.data.errors)}`, this.logPrefix);
         }
       }
       
@@ -369,7 +286,7 @@ export class DirectusCrud {
       log(`Ошибка при авторизации пользователя ${email}: ${error.message}`, this.logPrefix);
       
       if (error.response && error.response.data) {
-        log(`Детали ошибки: ${safeStringify(error.response.data)}`, this.logPrefix);
+        log(`Детали ошибки: ${JSON.stringify(error.response.data)}`, this.logPrefix);
       }
       
       throw new Error(`Ошибка авторизации: ${error.response?.data?.errors?.[0]?.message || error.message}`);
@@ -406,7 +323,7 @@ export class DirectusCrud {
       log(`Ошибка при обновлении токена: ${error.message}`, this.logPrefix);
       
       if (error.response && error.response.data) {
-        log(`Детали ошибки: ${safeStringify(error.response.data)}`, this.logPrefix);
+        log(`Детали ошибки: ${JSON.stringify(error.response.data)}`, this.logPrefix);
       }
       
       throw new Error(`Ошибка обновления токена: ${error.response?.data?.errors?.[0]?.message || error.message}`);

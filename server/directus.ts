@@ -1,31 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { log } from './vite';
 
-/**
- * Безопасное логирование объектов (с обработкой циклических ссылок)
- * @param obj Объект для логирования
- * @returns Безопасная строка для логирования
- */
-function safeStringify(obj: any): string {
-  try {
-    // Обработка циклических ссылок
-    const cache: any[] = [];
-    const str = JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        // Обнаружение циклических ссылок
-        if (cache.indexOf(value) !== -1) {
-          return '[Циклическая ссылка]';
-        }
-        cache.push(value);
-      }
-      return value;
-    }, 2);
-    return str || String(obj);
-  } catch (error) {
-    return `[Невозможно преобразовать объект: ${error instanceof Error ? error.message : String(error)}]`;
-  }
-}
-
 // Создаем кэш для хранения токенов авторизации
 interface AuthTokenCache {
   [userId: string]: {
@@ -55,8 +30,7 @@ class DirectusApiManager {
     this.axiosInstance.interceptors.response.use(
       response => response,
       error => {
-        // Используем safeStringify для безопасного логирования ошибок
-        console.error('Directus API Error:', safeStringify({
+        console.error('Directus API Error:', {
           status: error.response?.status,
           data: error.response?.data,
           config: {
@@ -64,11 +38,11 @@ class DirectusApiManager {
             method: error.config?.method,
             params: error.config?.params
           }
-        }));
+        });
         
         // Детальная информация об ошибке для отладки
         if (error.response?.status === 401) {
-          console.error('Directus API error details:', safeStringify({
+          console.error('Directus API error details:', {
             status: error.response.status,
             data: error.response.data,
             config: {
@@ -76,7 +50,7 @@ class DirectusApiManager {
               method: error.config.method,
               params: error.config.params
             }
-          }));
+          });
           log('Ошибка авторизации при запросе к Directus API', 'directus');
         }
         
@@ -155,27 +129,6 @@ class DirectusApiManager {
     }
     return null;
   }
-
-  /**
-   * Получает информацию о пользователе из Directus
-   * @param token Токен авторизации пользователя
-   * @returns Информация о пользователе или null в случае ошибки
-   */
-  async getUserInfo(token: string): Promise<any> {
-    try {
-      const response = await this.axiosInstance.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      log(`Успешно получена информация о пользователе через Directus API`, 'directus');
-      return response.data.data;
-    } catch (error: any) {
-      log(`Ошибка при получении информации о пользователе: ${error.message}`, 'directus');
-      return null;
-    }
-  }
 }
 
 // Создаем экземпляр менеджера Directus API
@@ -183,71 +136,6 @@ const directusApiManager = new DirectusApiManager();
 
 // Экспортируем базовый Axios инстанс для обратной совместимости
 export const directusApi = directusApiManager.instance;
-
-// Функция для получения токена админа (используется для доступа к файлам)
-export async function getAdminToken(): Promise<string | null> {
-  try {
-    const email = process.env.DIRECTUS_ADMIN_EMAIL;
-    const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-    
-    if (!email || !password) {
-      log('Отсутствуют учетные данные администратора Directus', 'directus');
-      return null;
-    }
-    
-    log('Попытка получить токен администратора для доступа к файлам', 'directus');
-    
-    const response = await directusApi.post('/auth/login', {
-      email: email,
-      password: password
-    });
-    
-    if (response.data && response.data.data && response.data.data.access_token) {
-      log('Успешно получен токен администратора', 'directus');
-      return response.data.data.access_token;
-    }
-    
-    return null;
-  } catch (error: any) {
-    log(`Ошибка при получении токена администратора: ${error.message}`, 'directus');
-    return null;
-  }
-}
-
-// Добавляем отдельную экспортируемую функцию для прямого получения токена администратора 
-export async function getAdminTokenDirect(): Promise<string | null> {
-  try {
-    log('[directus] Получение прямого токена администратора через API');
-    
-    // Проверяем, есть ли учетные данные в переменных окружения
-    const email = process.env.DIRECTUS_EMAIL;
-    const password = process.env.DIRECTUS_PASSWORD;
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-    
-    if (!email || !password) {
-      log('[directus] Отсутствуют учетные данные в переменных окружения');
-      return null;
-    }
-    
-    // Отправляем запрос на авторизацию
-    const response = await axios.post(`${directusUrl}/auth/login`, {
-      email,
-      password
-    });
-    
-    if (response.data && response.data.data && response.data.data.access_token) {
-      const token = response.data.data.access_token;
-      log('[directus] Успешно получен токен администратора напрямую');
-      return token;
-    } else {
-      log('[directus] Ответ не содержит токен администратора');
-      return null;
-    }
-  } catch (error) {
-    log(`[directus] Ошибка при получении прямого токена администратора: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
-  }
-};
 
 // Экспортируем менеджер для расширенных возможностей
 export { directusApiManager };

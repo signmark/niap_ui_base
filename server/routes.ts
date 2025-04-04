@@ -7,8 +7,7 @@ import { qwenService } from './services/qwen';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { testFalApiConnection } from './services/fal-api-tester';
-import { socialPublishingService as socialPublishingServiceOld } from './services/social-publishing';
-import { socialPublishingService } from './services/updated-social-publishing';
+import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
@@ -7665,9 +7664,6 @@ https://t.me/channelname/ - description`;
         // Фильтруем только запрошенные платформы или используем все настроенные
         const platformsToPublish = platforms || Object.keys(content.social_platforms);
         
-        console.log(`📣 Запрос на публикацию контента ${contentId}. Запрошены платформы:`, platforms);
-        console.log(`📣 Будет опубликовано на платформах:`, platformsToPublish);
-        
         // Обновляем статус на "publishing" для выбранных платформ
         const updatedSocialPlatforms = { ...content.social_platforms };
         
@@ -7753,26 +7749,16 @@ https://t.me/channelname/ - description`;
             let result;
             if (platform === 'telegram' && userSettings.telegram) {
               // Публикация в Telegram
-              console.log(`🔵 Запуск публикации в Telegram для контента ${contentId}`);
-              console.log(`🔵 Настройки Telegram: ${JSON.stringify({
-                chatId: userSettings.telegram.chatId,
-                token: userSettings.telegram.token?.substring(0, 8) + '...'
-              })}`);
-              result = await socialPublishingService.publishToPlatform(campaignContent, 'telegram', userSettings);
+              result = await socialPublishingService.publishToTelegram(campaignContent, userSettings.telegram);
             } else if (platform === 'vk' && userSettings.vk) {
               // Публикация в VK
-              console.log(`🔵 Запуск публикации в VK для контента ${contentId}`);
-              console.log(`🔵 Настройки VK: ${JSON.stringify({
-                groupId: userSettings.vk.groupId,
-                token: userSettings.vk.token?.substring(0, 8) + '...'
-              })}`);  
-              result = await socialPublishingService.publishToPlatform(campaignContent, 'vk', userSettings);
+              result = await socialPublishingService.publishToVk(campaignContent, userSettings.vk);
             } else if (platform === 'facebook' && userSettings.facebook) {
               // Публикация в Facebook (не реализована)
-              result = await socialPublishingService.publishToPlatform(campaignContent, 'facebook', userSettings);
+              result = await socialPublishingService.publishToFacebook(campaignContent, userSettings.facebook);
             } else if (platform === 'instagram' && userSettings.instagram) {
               // Публикация в Instagram (не реализована)
-              result = await socialPublishingService.publishToPlatform(campaignContent, 'instagram', userSettings);
+              result = await socialPublishingService.publishToInstagram(campaignContent, userSettings.instagram);
             } else {
               result = {
                 platform: platform as any,
@@ -7813,27 +7799,7 @@ https://t.me/channelname/ - description`;
         // Проверяем, есть ли успешные публикации
         const hasSuccessfulPublish = publishResults.some(r => r.status === 'published');
         
-        // Формируем ответ с дополнительной проверкой на ошибку 400 в Telegram
-        // Из-за проблемы с ID чата Telegram, сначала проверяем, есть ли ошибка "chat not found" в результатах публикации
-        const hasChatIdError = publishResults.some(r => 
-          r.platform === 'telegram' && 
-          r.status === 'error' && 
-          (r.error?.includes('400') || r.error?.includes('chat not found'))
-        );
-        
-        // Если это ошибка с chat_id в Telegram, меняем сообщение
-        if (!hasSuccessfulPublish && hasChatIdError) {
-          console.log('⚠️ Обнаружена проблема с ID чата Telegram. Отправляем детальную информацию клиенту.');
-          
-          return res.json({
-            success: false,
-            message: "Проблема с настройками Telegram: ID чата не найден или недействителен.",
-            results: publishResults,
-            fix_suggestion: "Пожалуйста, проверьте ID чата Telegram в настройках профиля. Чат ID должен быть в формате '-1001234567890' (с префиксом -100 для групповых чатов) или '@username' для публичных каналов."
-          });
-        }
-        
-        // Стандартный ответ для других случаев
+        // Формируем ответ
         res.json({ 
           success: hasSuccessfulPublish, 
           message: hasSuccessfulPublish 

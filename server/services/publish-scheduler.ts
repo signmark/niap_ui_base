@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { storage } from '../storage';
-// Обновлено на использование исправленной версии сервиса публикации
-import { socialPublishingService } from './updated-social-publishing';
+import { socialPublishingService } from './social-publishing';
 import { CampaignContent, SocialPlatform, Campaign } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';

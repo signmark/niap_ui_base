@@ -9,7 +9,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -131,10 +131,10 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map((k: any) => {
+          processedKeywords = content.keywords.map(k => {
             // Проверяем, является ли k объектом с полем keyword
             if (k && typeof k === 'object' && 'keyword' in k) {
-              return k.keyword as string;
+              return k.keyword;
             }
             // Если это простой объект без специфической структуры
             if (k && typeof k === 'object') {
@@ -149,9 +149,9 @@ export default function ContentPage() {
             // Пытаемся разобрать JSON строку
             const parsed = JSON.parse(content.keywords);
             if (Array.isArray(parsed)) {
-              processedKeywords = parsed.map((k: any) => {
+              processedKeywords = parsed.map(k => {
                 if (k && typeof k === 'object' && 'keyword' in k) {
-                  return k.keyword as string;
+                  return k.keyword;
                 }
                 return typeof k === 'string' ? k : String(k);
               });
@@ -1187,11 +1187,11 @@ export default function ContentPage() {
                                 </div>
                                 
                                 {/* Content title */}
-                                {content.title && typeof content.title === 'string' ? (
+                                {content.title && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{content.title}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">{typeof content.title === 'string' ? content.title : String(content.title)}</h3>
                                   </div>
-                                ) : null}
+                                )}
                                 
                                 {/* Content preview */}
                                 <div className="flex gap-3">
@@ -1216,7 +1216,7 @@ export default function ContentPage() {
                                       <div className="flex flex-wrap gap-1 mt-2">
                                         {content.keywords.slice(0, 3).map((keyword, index) => (
                                           <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                            {typeof keyword === 'string' ? keyword : String(keyword)}
+                                            {keyword}
                                           </Badge>
                                         ))}
                                         {content.keywords.length > 3 && (
@@ -1232,16 +1232,10 @@ export default function ContentPage() {
                                   {content.contentType === "text-image" && content.imageUrl && (
                                     <div className="w-20 h-20 flex-shrink-0">
                                       <img 
-                                        src={content.imageUrl.includes('directus.nplanner.ru') 
-                                            ? `/api/proxy-file?url=${encodeURIComponent(content.imageUrl)}&_t=${Date.now()}` 
-                                            : content.imageUrl} 
-                                        alt={typeof content.title === 'string' ? content.title : "Content Image"} 
+                                        src={content.imageUrl} 
+                                        alt={content.title || "Content Image"} 
                                         className="rounded-md w-full h-full object-cover"
-                                        crossOrigin="anonymous"
-                                        referrerPolicy="no-referrer"
-                                        loading="lazy"
                                         onError={(e) => {
-                                          console.error("Error loading image:", content.imageUrl);
                                           (e.target as HTMLImageElement).src = "https://placehold.co/400x225?text=Image+Error";
                                         }}
                                       />
@@ -1371,61 +1365,39 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <div className="relative">
-                    <Input
-                      id="imageUrl"
-                      placeholder="Введите URL изображения"
-                      value={newContent.imageUrl}
-                      onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                      className="pr-10"
-                    />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <label htmlFor="main-image-upload" className="cursor-pointer">
-                        <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                        <span className="sr-only">Загрузить файл</span>
-                      </label>
-                      <input 
-                        type="file" 
-                        id="main-image-upload" 
-                        className="hidden" 
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            // Формируем данные для загрузки
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            
-                            // Используем API для загрузки файла
-                            fetch('/api/upload', {
-                              method: 'POST',
-                              body: formData,
-                              headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                              }
-                            }).then(async (response) => {
-                              const responseData = await response.json();
-                              if (responseData?.url) {
-                                // Устанавливаем полученный URL в состояние
-                                setNewContent({...newContent, imageUrl: responseData.url});
-                                toast({
-                                  title: "Изображение загружено",
-                                  description: "URL изображения добавлен в поле"
-                                });
-                              }
-                            }).catch((error: Error) => {
-                              console.error("Ошибка загрузки файла:", error);
-                              toast({
-                                variant: "destructive",
-                                title: "Ошибка загрузки",
-                                description: "Не удалось загрузить изображение"
-                              });
-                            });
-                          }
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        id="imageUrl"
+                        placeholder="Введите URL изображения"
+                        value={newContent.imageUrl}
+                        onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                        className="mb-2"
+                      />
+                    </div>
+                    <div>
+                      <ImageUploader 
+                        onImageUploaded={(imageUrl) => {
+                          setNewContent({...newContent, imageUrl});
                         }}
+                        buttonText="Загрузить изображение"
                       />
                     </div>
                   </div>
+                  {newContent.imageUrl && (
+                    <div className="mt-2 border border-border rounded-md p-2 bg-muted/50">
+                      <p className="text-sm font-medium mb-1">Предпросмотр изображения:</p>
+                      <img 
+                        src={newContent.imageUrl} 
+                        alt="Основное изображение"
+                        className="max-h-[150px] object-contain rounded-md mx-auto"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.png';
+                          e.currentTarget.onerror = null;
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Дополнительные изображения */}
@@ -1453,89 +1425,16 @@ export default function ContentPage() {
                     <div className="space-y-2">
                       {newContent.additionalImages.map((imageUrl, index) => (
                         <div key={index} className="flex gap-2 items-center">
-                          <div className="relative flex-1">
-                            <Input
-                              placeholder="Введите URL изображения"
-                              value={imageUrl}
-                              onChange={(e) => {
-                                const updatedImages = [...newContent.additionalImages];
-                                updatedImages[index] = e.target.value;
-                                setNewContent({...newContent, additionalImages: updatedImages});
-                              }}
-                              className="pr-10"
-                            />
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                              <label htmlFor={`additional-image-upload-${index}`} className="cursor-pointer">
-                                <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                                <span className="sr-only">Загрузить файл</span>
-                              </label>
-                              <input 
-                                type="file" 
-                                id={`additional-image-upload-${index}`} 
-                                className="hidden" 
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    // Формируем данные для загрузки
-                                    const formData = new FormData();
-                                    formData.append('file', file);
-                                    
-                                    // Используем API для загрузки файла
-                                    fetch('/api/upload', {
-                                      method: 'POST',
-                                      body: formData,
-                                      headers: {
-                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                                      }
-                                    }).then(async (response) => {
-                                      const responseData = await response.json();
-                                      if (responseData?.url) {
-                                        // Обновляем URL в массиве дополнительных изображений
-                                        const updatedImages = [...newContent.additionalImages];
-                                        updatedImages[index] = responseData.url;
-                                        setNewContent({...newContent, additionalImages: updatedImages});
-                                        toast({
-                                          title: "Изображение загружено",
-                                          description: "Файл успешно загружен и добавлен в список дополнительных изображений",
-                                        });
-                                      } else {
-                                        toast({
-                                          title: "Ошибка загрузки",
-                                          description: "Не удалось загрузить файл",
-                                          variant: "destructive",
-                                        });
-                                      }
-                                    }).catch(error => {
-                                      console.error('Ошибка загрузки файла:', error);
-                                      
-                                      // Проверяем, есть ли сообщение об ошибке в ответе
-                                      let errorMessage = "Не удалось загрузить файл";
-                                      
-                                      if (error.response?.data?.errors) {
-                                        // Получаем сообщение из ответа Directus
-                                        const directusError = error.response.data.errors[0]?.message || "";
-                                        errorMessage = directusError;
-                                      }
-                                      
-                                      // Проверяем на известные типы ошибок
-                                      const isFileServiceUnavailable = 
-                                        errorMessage.includes('SERVICE_UNAVAILABLE') || 
-                                        errorMessage.includes('files is unavailable');
-                                      
-                                      toast({
-                                        title: "Ошибка загрузки",
-                                        description: isFileServiceUnavailable 
-                                          ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
-                                          : `${errorMessage}. Проверьте подключение к серверу.`,
-                                        variant: "destructive",
-                                      });
-                                    });
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
+                          <Input
+                            placeholder="Введите URL изображения"
+                            value={imageUrl}
+                            onChange={(e) => {
+                              const updatedImages = [...newContent.additionalImages];
+                              updatedImages[index] = e.target.value;
+                              setNewContent({...newContent, additionalImages: updatedImages});
+                            }}
+                            className="flex-1"
+                          />
                           <Button 
                             type="button" 
                             variant="outline" 
@@ -1806,88 +1705,15 @@ export default function ContentPage() {
                         Сгенерировать изображение
                       </Button>
                     </div>
-                    <div className="relative">
-                      <Input
-                        id="imageUrl"
-                        placeholder="Введите URL изображения"
-                        value={currentContent.imageUrl || ""}
-                        onChange={(e) => {
-                          const updatedContent = {...currentContent, imageUrl: e.target.value};
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                        className="pr-10"
-                      />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <label htmlFor="edit-main-image-upload" className="cursor-pointer">
-                          <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                          <span className="sr-only">Загрузить файл</span>
-                        </label>
-                        <input 
-                          type="file" 
-                          id="edit-main-image-upload" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              // Формируем данные для загрузки
-                              const formData = new FormData();
-                              formData.append('file', file);
-                              
-                              // Используем API для загрузки файла
-                              fetch('/api/upload', {
-                                method: 'POST',
-                                body: formData,
-                                headers: {
-                                  'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                                }
-                              }).then(async (response) => {
-                                const responseData = await response.json();
-                                if (responseData?.url) {
-                                  // Устанавливаем полученный URL в состояние
-                                  const updatedContent = {...currentContent, imageUrl: responseData.url};
-                                  setCurrentContentSafe(updatedContent);
-                                  toast({
-                                    title: "Изображение загружено",
-                                    description: "Файл успешно загружен",
-                                  });
-                                } else {
-                                  toast({
-                                    title: "Ошибка загрузки",
-                                    description: "Не удалось загрузить файл",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }).catch(error => {
-                                console.error('Ошибка загрузки файла:', error);
-                                
-                                // Проверяем, есть ли сообщение об ошибке в ответе
-                                let errorMessage = "Не удалось загрузить файл";
-                                
-                                if (error.response?.data?.errors) {
-                                  // Получаем сообщение из ответа Directus
-                                  const directusError = error.response.data.errors[0]?.message || "";
-                                  errorMessage = directusError;
-                                }
-                                
-                                // Проверяем на известные типы ошибок
-                                const isFileServiceUnavailable = 
-                                  errorMessage.includes('SERVICE_UNAVAILABLE') || 
-                                  errorMessage.includes('files is unavailable');
-                                
-                                toast({
-                                  title: "Ошибка загрузки",
-                                  description: isFileServiceUnavailable 
-                                    ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
-                                    : `${errorMessage}. Проверьте подключение к серверу.`,
-                                  variant: "destructive",
-                                });
-                              });
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
+                    <Input
+                      id="imageUrl"
+                      placeholder="Введите URL изображения"
+                      value={currentContent.imageUrl || ""}
+                      onChange={(e) => {
+                        const updatedContent = {...currentContent, imageUrl: e.target.value};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                    />
                   </div>
                   
                   {/* Дополнительные изображения */}
@@ -1918,91 +1744,17 @@ export default function ContentPage() {
                       <div className="space-y-2">
                         {currentContent.additionalImages.map((imageUrl, index) => (
                           <div key={index} className="flex gap-2 items-center">
-                            <div className="relative flex-1">
-                              <Input
-                                placeholder="Введите URL изображения"
-                                value={imageUrl || ""}
-                                onChange={(e) => {
-                                  const updatedImages = [...(currentContent.additionalImages || [])];
-                                  updatedImages[index] = e.target.value;
-                                  const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                  setCurrentContentSafe(updatedContent);
-                                }}
-                                className="pr-10"
-                              />
-                              <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                                <label htmlFor={`edit-additional-image-upload-${index}`} className="cursor-pointer">
-                                  <Upload className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-                                  <span className="sr-only">Загрузить файл</span>
-                                </label>
-                                <input 
-                                  type="file" 
-                                  id={`edit-additional-image-upload-${index}`} 
-                                  className="hidden" 
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      // Формируем данные для загрузки
-                                      const formData = new FormData();
-                                      formData.append('file', file);
-                                      
-                                      // Используем API для загрузки файла
-                                      fetch('/api/upload', {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: {
-                                          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                                        }
-                                      }).then(async (response) => {
-                                        const responseData = await response.json();
-                                        if (responseData?.url) {
-                                          // Обновляем URL в массиве дополнительных изображений
-                                          const updatedImages = [...(currentContent.additionalImages || [])];
-                                          updatedImages[index] = responseData.url;
-                                          const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                          setCurrentContentSafe(updatedContent);
-                                          toast({
-                                            title: "Изображение загружено",
-                                            description: "Файл успешно загружен и добавлен в список дополнительных изображений",
-                                          });
-                                        } else {
-                                          toast({
-                                            title: "Ошибка загрузки",
-                                            description: "Не удалось загрузить файл",
-                                            variant: "destructive",
-                                          });
-                                        }
-                                      }).catch(error => {
-                                        console.error('Ошибка загрузки файла:', error);
-                                        
-                                        // Проверяем, есть ли сообщение об ошибке в ответе
-                                        let errorMessage = "Не удалось загрузить файл";
-                                        
-                                        if (error.response?.data?.errors) {
-                                          // Получаем сообщение из ответа Directus
-                                          const directusError = error.response.data.errors[0]?.message || "";
-                                          errorMessage = directusError;
-                                        }
-                                        
-                                        // Проверяем на известные типы ошибок
-                                        const isFileServiceUnavailable = 
-                                          errorMessage.includes('SERVICE_UNAVAILABLE') || 
-                                          errorMessage.includes('files is unavailable');
-                                        
-                                        toast({
-                                          title: "Ошибка загрузки",
-                                          description: isFileServiceUnavailable 
-                                            ? "Сервис файлов Directus временно недоступен. Пожалуйста, воспользуйтесь URL изображения или попробуйте позже." 
-                                            : `${errorMessage}. Проверьте подключение к серверу.`,
-                                          variant: "destructive",
-                                        });
-                                      });
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </div>
+                            <Input
+                              placeholder="Введите URL изображения"
+                              value={imageUrl || ""}
+                              onChange={(e) => {
+                                const updatedImages = [...(currentContent.additionalImages || [])];
+                                updatedImages[index] = e.target.value;
+                                const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                setCurrentContentSafe(updatedContent);
+                              }}
+                              className="flex-1"
+                            />
                             <Button 
                               type="button" 
                               variant="outline" 
@@ -2576,16 +2328,10 @@ export default function ContentPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
-                  src={previewContent.imageUrl && previewContent.imageUrl.includes('directus.nplanner.ru') 
-                      ? `/api/proxy-file?url=${encodeURIComponent(previewContent.imageUrl)}&_t=${Date.now()}` 
-                      : previewContent.imageUrl}
+                  src={previewContent.imageUrl}
                   alt={previewContent?.title || "Content Image"}
                   className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
-                  crossOrigin="anonymous"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
                   onError={(e) => {
-                    console.error("Error loading image in preview:", previewContent.imageUrl);
                     (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Image+Error";
                   }}
                 />
@@ -2603,16 +2349,10 @@ export default function ContentPage() {
                     imageUrl && (
                       <div key={index} className="overflow-hidden">
                         <img
-                          src={imageUrl && imageUrl.includes('directus.nplanner.ru') 
-                              ? `/api/proxy-file?url=${encodeURIComponent(imageUrl)}&_t=${Date.now()}` 
-                              : imageUrl}
+                          src={imageUrl}
                           alt={`Дополнительное изображение ${index + 1}`}
                           className="rounded-md max-h-[300px] w-full object-cover"
-                          crossOrigin="anonymous"
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
                           onError={(e) => {
-                            console.error("Error loading additional image in preview:", imageUrl);
                             (e.target as HTMLImageElement).src = "https://placehold.co/400x300?text=Image+Error";
                           }}
                         />

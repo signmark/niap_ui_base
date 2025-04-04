@@ -22,22 +22,10 @@ export class DirectusAuthManager {
   private sessionCache: Record<string, SessionInfo> = {};
   private sessionRefreshIntervalMs: number = 5 * 60 * 1000; // 5 минут
   private sessionRefreshIntervalId?: NodeJS.Timeout;
-  private static instance: DirectusAuthManager;
   
   constructor() {
     log('DirectusAuthManager initialized', this.logPrefix);
     this.startSessionRefreshInterval();
-  }
-  
-  /**
-   * Получает единственный экземпляр класса (Singleton pattern)
-   * @returns Экземпляр DirectusAuthManager
-   */
-  public static getInstance(): DirectusAuthManager {
-    if (!DirectusAuthManager.instance) {
-      DirectusAuthManager.instance = new DirectusAuthManager();
-    }
-    return DirectusAuthManager.instance;
   }
 
   /**
@@ -171,10 +159,10 @@ export class DirectusAuthManager {
     
     // Проверим токен у других компонентов, которые могут его кэшировать
     try {
-      // Проверяем, можем ли мы получить токен напрямую из directusApiManager
-      // Используем импортированный экземпляр вместо глобального, чтобы избежать ошибок типизации
-      if (directusApiManager && typeof directusApiManager.getCachedToken === 'function') {
-        const cachedToken = directusApiManager.getCachedToken(userId);
+      // Импортировать directusApiManager здесь нельзя из-за циклических зависимостей
+      // Проверим, есть ли переменная в global пространстве имен
+      if (global['directusApiManager'] && global['directusApiManager'].getCachedToken) {
+        const cachedToken = global['directusApiManager'].getCachedToken(userId);
         if (cachedToken) {
           log(`Found token in directusApiManager cache for user ${userId}`, this.logPrefix);
           
@@ -278,80 +266,6 @@ export class DirectusAuthManager {
     
     log(`Found ${activeSessions.length} active sessions`, this.logPrefix);
     return activeSessions;
-  }
-  
-  /**
-   * Получает сессию администратора для системных операций
-   * @returns Информация о сессии администратора или null, если не удалось получить токен
-   */
-  async getAdminSession(): Promise<{ userId: string; token: string } | null> {
-    // Получаем ID администратора из переменных окружения
-    const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
-    
-    // Проверяем, есть ли уже активная сессия для админа
-    const session = this.getSession(adminUserId);
-    if (session) {
-      log(`Found existing admin session for ${adminUserId}`, this.logPrefix);
-      return {
-        userId: adminUserId,
-        token: session.token
-      };
-    }
-    
-    // Пытаемся получить токен из окружения
-    const staticToken = process.env.DIRECTUS_ADMIN_TOKEN;
-    if (staticToken) {
-      log(`Using static admin token from environment variables`, this.logPrefix);
-      
-      // Сохраняем токен в кэше
-      this.sessionCache[adminUserId] = {
-        userId: adminUserId,
-        token: staticToken,
-        refreshToken: '',
-        expiresAt: Date.now() + 3600 * 1000, // 1 час
-        user: undefined
-      };
-      
-      return {
-        userId: adminUserId,
-        token: staticToken
-      };
-    }
-    
-    // Если нет статического токена, пытаемся авторизоваться
-    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
-    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
-    
-    if (adminEmail && adminPassword) {
-      try {
-        log(`Attempting to login as admin with credentials`, this.logPrefix);
-        const loginResult = await this.login(adminEmail, adminPassword);
-        
-        return {
-          userId: loginResult.userId,
-          token: loginResult.token
-        };
-      } catch (error) {
-        log(`Failed to login as admin: ${error}`, this.logPrefix);
-      }
-    }
-    
-    // Последний вариант - попытаться найти токен в кэше API Manager
-    try {
-      const cachedToken = directusApiManager.getCachedToken(adminUserId);
-      if (cachedToken) {
-        log(`Found cached admin token in API Manager`, this.logPrefix);
-        return {
-          userId: adminUserId,
-          token: cachedToken.token
-        };
-      }
-    } catch (error) {
-      log(`Error accessing cached admin token: ${error}`, this.logPrefix);
-    }
-    
-    log(`Could not obtain an admin session`, this.logPrefix);
-    return null;
   }
 
   /**

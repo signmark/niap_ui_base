@@ -8,13 +8,6 @@ import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import path from 'path';
-import * as fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-// Получаем путь к текущему файлу и директории в ES модуле
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
@@ -82,35 +75,15 @@ app.use((req, res, next) => {
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
     
-    // Регистрируем маршруты для загрузки файлов
-    log("Registering File Upload routes...");
+    // Регистрируем маршруты для работы с файлами и загрузками
+    log("Registering file upload routes...");
     registerUploadRoutes(app);
-    log("File Upload routes registered successfully");
+    log("File upload routes registered successfully");
     
-    // Регистрируем тестовые маршруты для социальных сетей
-    log("Registering Social Testing routes...");
-    import('./routes-social-test').then(({ registerSocialTestRoutes }) => {
-      registerSocialTestRoutes(app);
-      log("Social Testing routes registered successfully");
-    }).catch(err => {
-      log(`Error registering Social Testing routes: ${err.message}`);
-    });
-    
-    // Маршрут для доступа к локально сохраненным файлам
-    const uploadDir = path.join(__dirname, '../uploads');
-    
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-      log(`Created uploads directory: ${uploadDir}`);
-    }
-    
-    // Статический маршрут для доступа к файлам
+    // Настраиваем статическую директорию для загруженных файлов
+    const uploadDir = path.join(process.cwd(), 'uploads');
     app.use('/uploads', express.static(uploadDir));
-    log(`Serving locally stored files from ${uploadDir}`);
-    
-    // Маршрут для тестовой HTML-страницы Telegram
-    // убрано, так как перемещено в routes-social-test.ts
-    log('Test-telegram route now handled by routes-social-test.ts');
+    log(`Static file serving for uploads configured at path: ${uploadDir}`);
     
     console.log("Route registration completed");
     log("Routes registered successfully");

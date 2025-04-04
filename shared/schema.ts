@@ -356,32 +356,3 @@ export const insertCampaignKeywordSchema = createInsertSchema(campaignKeywords)
 // Тип ключевых слов кампании
 export type CampaignKeyword = typeof campaignKeywords.$inferSelect;
 export type InsertCampaignKeyword = z.infer<typeof insertCampaignKeywordSchema>;
-
-// Таблица для хранения загруженных файлов
-export const uploadedFiles = pgTable("uploaded_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  filename: text("filename").notNull(),
-  originalName: text("original_name").notNull(),
-  mimeType: text("mime_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  fileData: text("file_data").notNull(), // Содержимое файла в base64
-  userId: uuid("user_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  metadata: jsonb("metadata").default({})
-});
-
-// Schema для создания файлов
-export const insertUploadedFileSchema = createInsertSchema(uploadedFiles)
-  .pick({
-    filename: true,
-    originalName: true,
-    mimeType: true,
-    fileSize: true,
-    fileData: true,
-    userId: true,
-    metadata: true
-  });
-
-// Тип загруженных файлов
-export type UploadedFile = typeof uploadedFiles.$inferSelect;
-export type InsertUploadedFile = z.infer<typeof insertUploadedFileSchema>;
