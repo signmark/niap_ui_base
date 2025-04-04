@@ -2,6 +2,47 @@ import { Router } from 'express';
 import { imgurUploaderService } from './services/imgur-uploader';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
 import { storage } from './storage';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { mkdir } from 'fs/promises';
+
+// Настройка Multer для загрузки файлов
+const uploadsDir = path.join(process.cwd(), 'uploads', 'images');
+
+// Создаем директорию для загрузки, если она не существует
+(async () => {
+  try {
+    await mkdir(uploadsDir, { recursive: true });
+    console.log(`Директория для загрузки изображений создана: ${uploadsDir}`);
+  } catch (error) {
+    console.error(`Ошибка при создании директории для загрузки: ${error}`);
+  }
+})();
+
+const storage_config = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ 
+  storage: storage_config,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Ограничение размера файла (5MB)
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Только изображения разрешены к загрузке'));
+    }
+  }
+});
 
 /**
  * Маршруты для работы с загрузкой изображений на Imgur
@@ -194,6 +235,95 @@ export function registerImgurRoutes(router: Router) {
       return res.status(500).json({
         success: false,
         error: `Ошибка при тестировании публикации: ${error}`
+      });
+    }
+  });
+  
+  // Маршрут для загрузки файла изображения и его отправки на Imgur
+  router.post('/api/imgur/upload-file', upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Файл не загружен'
+        });
+      }
+      
+      const filePath = req.file.path;
+      console.log(`Файл успешно загружен: ${filePath}`);
+      
+      // Загружаем файл на Imgur
+      const imgurUrl = await imgurUploaderService.uploadImageFromFile(filePath);
+      
+      if (!imgurUrl) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось загрузить изображение на Imgur'
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          originalname: req.file.originalname,
+          filename: req.file.filename,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: filePath,
+          url: imgurUrl
+        }
+      });
+    } catch (error) {
+      console.error('Ошибка при загрузке файла на Imgur:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при загрузке файла: ${error}`
+      });
+    }
+  });
+  
+  // Маршрут для получения списка загруженных изображений
+  router.get('/api/imgur/images', (req, res) => {
+    try {
+      const files = fs.readdirSync(uploadsDir);
+      const images = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+      }).map(file => {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          name: file,
+          path: `/uploads/images/${file}`,
+          size: stats.size,
+          created: stats.birthtime
+        };
+      });
+      
+      return res.status(200).json({
+        success: true,
+        data: { images }
+      });
+    } catch (error) {
+      console.error('Ошибка при получении списка изображений:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при получении списка изображений: ${error}`
+      });
+    }
+  });
+  
+  // Маршрут для статического доступа к загруженным изображениям
+  router.get('/uploads/images/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadsDir, filename);
+    
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    } else {
+      return res.status(404).json({
+        success: false,
+        error: 'Файл не найден'
       });
     }
   });
