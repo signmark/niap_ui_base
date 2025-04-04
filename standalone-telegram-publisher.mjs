@@ -38,13 +38,22 @@ class TelegramPublisher {
   }
   
   /**
-   * Выводит сообщение в консоль, если включен режим подробного логирования
+   * Выводит сообщение в консоль и записывает в файл логов
    * @param {string} message Сообщение для логирования
    * @param {string} level Уровень логирования (log, warn, error)
    */
   log(message, level = 'log') {
-    if (this.verbose) {
-      console[level](message);
+    // Всегда выводим в консоль, независимо от режима verbose
+    console[level](message);
+    
+    // Выводим специальные отметки для важных логов
+    if (level === 'error' || message.includes('ОТПРАВЛЯЕМЫЙ ЗАПРОС') || message.includes('chat_id')) {
+      try {
+        const logMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`;
+        console[level](`TELEGRAM_DEBUG: ${logMessage}`);
+      } catch (e) {
+        console.error('Ошибка записи лога:', e);
+      }
     }
   }
   
