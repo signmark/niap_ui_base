@@ -29,8 +29,14 @@ export function registerClaudeRoutes(app: Router) {
         return null;
       }
 
+      // Извлекаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+      
       logger.log(`[claude-routes] Getting Claude API key for user ${userId}`, 'claude');
-      const apiKey = await apiKeyServiceInstance.getApiKey(userId, 'claude');
+      logger.log(`[claude-routes] Auth token present: ${!!authToken}`, 'claude');
+      
+      const apiKey = await apiKeyServiceInstance.getApiKey(userId, 'claude', authToken);
       
       if (apiKey) {
         logger.log(`[claude-routes] Successfully retrieved Claude API key for user ${userId} (length: ${apiKey.length})`, 'claude');

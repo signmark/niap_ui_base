@@ -107,6 +107,18 @@ export const api = axios.create({
   }
 });
 
+// Добавляем логирование для отладки
+api.interceptors.request.use(
+  config => {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, config.data);
+    return config;
+  },
+  error => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
 // Добавляем интерцептор для включения токена в заголовок Authorization
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('auth_token');

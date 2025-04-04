@@ -17,8 +17,14 @@ export function registerDeepSeekRoutes(app: Router) {
         return null;
       }
 
+      // Извлекаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+      
       log(`Getting DeepSeek API key for user ${userId}`);
-      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek');
+      log(`Auth token present: ${!!authToken}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       
       if (apiKey) {
         log(`Successfully retrieved DeepSeek API key for user ${userId} (length: ${apiKey.length})`);

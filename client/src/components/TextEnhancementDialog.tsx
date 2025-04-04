@@ -165,15 +165,19 @@ export function TextEnhancementDialog({
   const getApiEndpoint = () => {
     switch (selectedService) {
       case 'claude':
-        return '/api/claude/improve-text';
+        return '/claude/improve-text';
       case 'deepseek':
-        return '/api/deepseek/improve-text';
+        return '/deepseek/improve-text';
       case 'qwen':
-        return '/api/qwen/improve-text';
+        return '/qwen/improve-text';
       default:
-        return '/api/claude/improve-text';
+        return '/claude/improve-text';
     }
   };
+  
+  // Логирование в консоль для отладки
+  console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
+  console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
   
   // Мутация для улучшения текста
   const { mutate: improveText, isPending } = useMutation({
