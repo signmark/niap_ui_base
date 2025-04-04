@@ -78,11 +78,8 @@ export function AuthGuard({ children }: Props) {
         }
       }
       
-      // Если нет ни токена, ни storedToken и мы не на публичной странице, перенаправляем на логин
-      // Добавляем проверку для страниц, которые должны быть доступны без аутентификации
-      const isPublicPage = location === '/content' || location === '/';
-      
-      if (!token && !storedToken && !isLoginPage && !isPublicPage) {
+      // Если нет ни токена, ни storedToken, перенаправляем на логин
+      if (!token && !storedToken && !isLoginPage) {
         console.log('AuthGuard: No token found, redirecting to login');
         navigate('/auth/login');
       }

@@ -10,6 +10,22 @@ export interface CdnOptions {
   format?: string;
 }
 
+// Вспомогательная функция для получения пути к оптимизированному изображению
+export function getOptimizedImagePath(imagePath: string, width?: number): string {
+  // Если путь не указан, возвращаем пустую строку
+  if (!imagePath) return '';
+  
+  // Преобразуем относительный путь в абсолютный
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const relativePath = imagePath.startsWith('/uploads/') 
+    ? imagePath.slice(9) 
+    : imagePath.startsWith('/') 
+      ? imagePath.slice(1) 
+      : imagePath;
+  
+  return path.join(uploadsDir, relativePath);
+}
+
 /**
  * Сервис для работы с CDN и оптимизацией изображений
  */
