@@ -51,11 +51,16 @@ export class ClaudeService {
    */
   async testApiKey(): Promise<boolean> {
     try {
-      logger.log('Testing Claude API key...', 'claude');
+      // Маскируем ключ для логирования
+      const maskedKey = this.apiKey.substring(0, 4) + '...' + this.apiKey.substring(this.apiKey.length - 4);
+      logger.log(`Testing Claude API key starting with: ${maskedKey}`, 'claude');
       
       // Небольшой prompt для проверки ключа
+      const testModel = 'claude-3-haiku-20240307'; // Используем самую маленькую модель для быстрой проверки
+      logger.log(`Using model ${testModel} for API key test`, 'claude');
+      
       const result = await this.makeRequest({
-        model: 'claude-3-haiku-20240307',
+        model: testModel,
         max_tokens: 10,
         messages: [
           {
@@ -71,10 +76,24 @@ export class ClaudeService {
         result.content.length > 0 && 
         result.content[0].text.includes('valid');
       
-      logger.log(`Claude API key test result: ${hasValidResponse ? 'Valid' : 'Invalid'}`, 'claude');
+      logger.log(`Claude API key test result: ${hasValidResponse ? 'Valid' : 'Invalid'}, response content: ${JSON.stringify(result?.content)}`, 'claude');
       return hasValidResponse;
     } catch (error) {
-      logger.error('Error testing Claude API key:', error, 'claude');
+      if (axios.isAxiosError(error)) {
+        const axiosError = error;
+        logger.error(`Claude API key test failed with status: ${axiosError.response?.status}`, 'claude');
+        logger.error(`Error details: ${JSON.stringify(axiosError.response?.data)}`, 'claude');
+        
+        if (axiosError.response?.status === 401) {
+          logger.error('Claude API key is invalid or expired (401 Unauthorized)', 'claude');
+        } else if (axiosError.response?.status === 400) {
+          logger.error('Claude API request is malformed (400 Bad Request)', 'claude');
+        } else if (axiosError.response?.status === 429) {
+          logger.error('Claude API rate limit exceeded (429 Too Many Requests)', 'claude');
+        }
+      } else {
+        logger.error('Error testing Claude API key:', error, 'claude');
+      }
       return false;
     }
   }
@@ -157,6 +176,13 @@ export class ClaudeService {
       logger.debug(`Making Claude API request to ${this.apiUrl}`, 'claude');
       logger.debug(`Using model: ${requestData.model}`, 'claude');
       
+      // Вывод заголовков (без API ключа)
+      logger.debug('Request headers: Content-Type: application/json, anthropic-version: 2023-06-01', 'claude');
+      
+      // Первые 20 символов содержимого запроса для логирования
+      const contentPreview = requestData.messages[0].content.substring(0, 20) + '...';
+      logger.debug(`Request content preview: ${contentPreview}`, 'claude');
+      
       const response = await axios.post<ClaudeResponse>(
         this.apiUrl,
         requestData,
@@ -173,10 +199,24 @@ export class ClaudeService {
         throw new Error(`Claude API responded with status code ${response.status}`);
       }
       
+      logger.debug(`Claude API response received with status: ${response.status}`, 'claude');
+      
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         logger.error(`Claude API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`, 'claude');
+        
+        // Расширенное логирование ошибок по статус-кодам
+        const status = error.response.status;
+        if (status === 401) {
+          logger.error('Claude API rejected request: Invalid API key or permissions (401)', 'claude');
+        } else if (status === 400) {
+          logger.error(`Claude API rejected request: Bad request (400) - ${JSON.stringify(error.response.data)}`, 'claude');
+        } else if (status === 429) {
+          logger.error('Claude API rejected request: Rate limit exceeded (429)', 'claude');
+        } else if (status >= 500) {
+          logger.error(`Claude API server error (${status}). Please try again later.`, 'claude');
+        }
       } else {
         logger.error('Error making Claude API request:', error, 'claude');
       }
