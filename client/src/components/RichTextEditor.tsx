@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { TextEnhancementDialog } from './TextEnhancementDialog'
 import {
   Bold,
   Italic,
@@ -30,7 +31,8 @@ import {
   Heading1,
   Heading2,
   Heading3,
-  Palette
+  Palette,
+  Wand2
 } from 'lucide-react'
 
 interface RichTextEditorProps {
@@ -54,6 +56,7 @@ export default function RichTextEditor({
   const [isImagePopoverOpen, setIsImagePopoverOpen] = useState(false)
   const [colorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedColor, setSelectedColor] = useState('#000000')
+  const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -415,6 +418,23 @@ export default function RichTextEditor({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Magic Wand Button for AI Text Enhancement */}
+          <div className="mx-1 h-full w-px bg-border" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setIsTextEnhancementOpen(true)}
+              >
+                <Wand2 className="h-4 w-4 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Улучшить текст с помощью Claude AI</TooltipContent>
+          </Tooltip>
         </TooltipProvider>
       </div>
       
@@ -422,6 +442,17 @@ export default function RichTextEditor({
         editor={editor} 
         className={cn("prose max-w-none p-4", className)}
         style={{ minHeight }}
+      />
+
+      {/* Text Enhancement Dialog */}
+      <TextEnhancementDialog
+        open={isTextEnhancementOpen}
+        onClose={() => setIsTextEnhancementOpen(false)}
+        originalText={editor.getHTML()}
+        onApply={(enhancedText) => {
+          editor.commands.setContent(enhancedText);
+          onChange(enhancedText);
+        }}
       />
     </div>
   )
