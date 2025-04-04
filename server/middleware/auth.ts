@@ -8,7 +8,12 @@ const PUBLIC_PATHS = [
   '/api/auth/check',
   '/api/auth/refresh',
   '/api/upload-image', // Временно делаем публичным для отладки
-  '/api/cdn'
+  '/api/cdn',
+  '/api/uploads',
+  '/',
+  '/content',
+  '/assets',
+  '/favicon.ico'
 ];
 
 /**
