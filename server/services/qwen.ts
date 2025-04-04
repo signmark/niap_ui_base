@@ -28,6 +28,34 @@ export class QwenService {
   // Указываем активную конфигурацию API
   private apiMode: 'dashscope' | 'qwen' | 'openai' = 'dashscope';
   
+  /**
+   * Метод для перегрузки generateText, принимающий строку вместо массива сообщений
+   * @param prompt Промпт в виде строки
+   * @param options Дополнительные опции для генерации
+   * @returns Сгенерированный текст
+   */
+  async generateText(prompt: string, options?: {
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    top_p?: number;
+    stop?: string[];
+  }): Promise<string>;
+  
+  /**
+   * Основной метод generateText, принимающий массив сообщений
+   * @param messages Массив сообщений для модели
+   * @param options Дополнительные опции для генерации
+   * @returns Сгенерированный текст
+   */
+  async generateText(messages: QwenMessage[], options?: {
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+    top_p?: number;
+    stop?: string[];
+  }): Promise<string>;
+  
   constructor(config: QwenConfig) {
     this.apiKey = config.apiKey;
   }
@@ -53,17 +81,22 @@ export class QwenService {
   /**
    * Отправляет запрос на генерацию текста через Qwen API
    */
-  async generateText(messages: QwenMessage[], options: {
+  async generateText(messagesOrPrompt: string | QwenMessage[], options: {
     model?: string;
     temperature?: number;
     max_tokens?: number;
+    maxTokens?: number;
     top_p?: number;
     stop?: string[];
   } = {}): Promise<string> {
+    // Преобразуем строку в массив сообщений, если передана строка
+    const messages: QwenMessage[] = typeof messagesOrPrompt === 'string' 
+      ? [{ role: 'user', content: messagesOrPrompt }]
+      : messagesOrPrompt;
     try {
       const model = options.model || 'qwen-plus';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
-      const max_tokens = options.max_tokens || 1000;
+      const max_tokens = options.max_tokens || options.maxTokens || 1000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
       // Проверяем, что API ключ установлен

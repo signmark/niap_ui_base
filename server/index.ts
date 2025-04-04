@@ -3,6 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
+import { registerDeepSeekRoutes } from "./routes-deepseek";
+import { registerQwenRoutes } from "./routes-qwen";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
@@ -117,6 +119,20 @@ app.use((req, res, next) => {
     registerClaudeRoutes(app);
     console.log("Claude AI routes registered");
     log("Claude AI routes registered successfully");
+    
+    // Регистрируем маршруты для DeepSeek
+    console.log("Registering DeepSeek routes...");
+    log("Registering DeepSeek routes...");
+    registerDeepSeekRoutes(app);
+    console.log("DeepSeek routes registered");
+    log("DeepSeek routes registered successfully");
+    
+    // Регистрируем маршруты для Qwen
+    console.log("Registering Qwen routes...");
+    log("Registering Qwen routes...");
+    registerQwenRoutes(app);
+    console.log("Qwen routes registered");
+    log("Qwen routes registered successfully");
 
     log("Registering routes...");
     console.log("Starting route registration...");

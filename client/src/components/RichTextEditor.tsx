@@ -433,7 +433,7 @@ export default function RichTextEditor({
                 <Wand2 className="h-4 w-4 text-primary" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Улучшить текст с помощью Claude AI</TooltipContent>
+            <TooltipContent>Улучшить текст с помощью AI</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
