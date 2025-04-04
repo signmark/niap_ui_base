@@ -520,16 +520,24 @@ export class SocialPublishingService {
       // Подготовка сообщения
       let message = processedContent.title ? `${processedContent.title}\n\n` : '';
       
-      // Преобразовываем HTML-теги в VK-разметку
-      // VK использует разные API для форматирования. Мы можем только переносы строк и эмодзи сохранить
+      // Сохраняем HTML-теги для VK API
+      // VK на самом деле поддерживает HTML форматирование в API, а не только текстовую разметку
+      // Сохраняем основной набор HTML тегов для ВК
       let contentText = processedContent.content
+        // Обрабатываем блочные элементы для правильных переносов
         .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n');
+        .replace(/<p>(.*?)<\/p>/g, '<p>$1</p>\n')
+        .replace(/<div>(.*?)<\/div>/g, '<div>$1</div>\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n');
       
-      // Убираем все HTML-теги, но сохраняем их содержимое
-      contentText = contentText.replace(/<\/?[^>]+(>|$)/g, '');
+      // Стандартизируем HTML теги для VK
+      contentText = contentText
+        // Заменяем на стандартные HTML теги
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>');
+        
+      // Сохраняем HTML-теги в контенте без удаления
+      // ВКонтакте поддерживает основные HTML-теги через свои API
       message += contentText;
 
       // Добавление хэштегов
