@@ -17,6 +17,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Добавляем API маршрут для проверки статуса явно, чтобы он работал до инициализации Vite
+app.get('/api/status-check', (req, res) => {
+  const acceptHeader = req.headers.accept || '';
+  if (acceptHeader.includes('application/json')) {
+    return res.json({ status: 'ok', server: 'running' });
+  }
+  return res.json({ status: 'ok', server: 'running' });
+});
+
 // Middleware для логирования запросов
 app.use((req, res, next) => {
   const start = Date.now();
@@ -61,6 +70,11 @@ app.use((req, res, next) => {
   try {
     log("Starting server initialization...");
 
+    // Регистрируем маршруты для Claude AI в самом начале
+    log("Registering Claude AI routes first...");
+    registerClaudeRoutes(app);
+    log("Claude AI routes registered successfully");
+
     log("Registering routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
@@ -74,11 +88,6 @@ app.use((req, res, next) => {
     log("Registering FAL.AI Universal Image Generation routes...");
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
-    
-    // Регистрируем маршруты для Claude AI
-    log("Registering Claude AI routes...");
-    registerClaudeRoutes(app);
-    log("Claude AI routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
