@@ -360,7 +360,7 @@ export function TextEnhancementDialog({
                 type="button"
                 variant="default"
                 onClick={() => improveText()}
-                disabled={isPending || !text.trim()}
+                disabled={isPending || !text?.trim()}
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Улучшить текст
@@ -377,7 +377,7 @@ export function TextEnhancementDialog({
                   type="button"
                   variant="default"
                   onClick={handleSave}
-                  disabled={!enhancedText.trim()}
+                  disabled={!enhancedText?.trim()}
                 >
                   Использовать текст
                 </Button>
