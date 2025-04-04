@@ -21,6 +21,18 @@ export default function TestImgur() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Функция для загрузки списка изображений
+  const fetchUploadedImages = async () => {
+    try {
+      const response = await axios.get('/api/imgur/images');
+      if (response.data.success) {
+        setUploadedImages(response.data.data.images);
+      }
+    } catch (error) {
+      console.error('Ошибка при загрузке списка изображений:', error);
+    }
+  };
+
   // Загрузка списка изображений при монтировании компонента
   useEffect(() => {
     fetchUploadedImages();
@@ -230,6 +242,72 @@ export default function TestImgur() {
     }
   };
 
+  // Функция для загрузки файла на сервер
+  const uploadFile = async () => {
+    if (!fileInputRef.current?.files?.length) {
+      toast({
+        title: 'Ошибка',
+        description: 'Выберите файл для загрузки',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    const file = fileInputRef.current.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/imgur/upload-file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Файл загружен и опубликован на Imgur',
+        });
+        // Обновляем список файлов
+        fetchUploadedImages();
+        // Очищаем поле выбора файла
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Неизвестная ошибка',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setResult(error.response?.data || error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Функция для получения проксированного URL изображения
+  const getProxiedImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '';
+    // Проверяем, является ли URL локальным (не требует прокси)
+    if (imageUrl.startsWith('/uploads/')) {
+      return imageUrl;
+    }
+    // Иначе проксируем изображение через наш API
+    return `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+  };
+
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Тестирование Imgur интеграции</h1>
@@ -251,6 +329,23 @@ export default function TestImgur() {
                   onChange={(e) => setImageUrl(e.target.value)}
                 />
               </div>
+              
+              {imageUrl && (
+                <div className="mt-4">
+                  <Label>Предпросмотр URL:</Label>
+                  <div className="mt-2 p-2 border rounded-md">
+                    <img 
+                      src={getProxiedImageUrl(imageUrl)} 
+                      alt="Предпросмотр" 
+                      className="max-w-full max-h-[200px] mx-auto"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMiAyMkM2LjQ3NyAyMiAyIDE3LjUyMyAyIDEyUzYuNDc3IDIgMTIgMnMxMCA0LjQ3NyAxMCAxMC00LjQ3NyAxMC0xMCAxMHptMC0xMWExIDEgMCAxMDAgMiAxIDEgMCAwMDAtMnptMC0uNzVjLjY5IDAgMS4yNS0uNTYgMS4yNS0xLjI1di0xYzAtLjY5LS41Ni0xLjI1LTEuMjUtMS4yNVMxMC43NSA3LjMxIDEwLjc1IDh2MWMwIC42OS41NiAxLjI1IDEuMjUgMS4yNXoiIGZpbGw9IiNjNWM1YzUiLz48L3N2Zz4=';
+                        e.currentTarget.alt = 'Ошибка загрузки изображения';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter>
@@ -262,27 +357,120 @@ export default function TestImgur() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Загрузка нескольких изображений</CardTitle>
-            <CardDescription>Загрузка изображений на Imgur по URL (по одному на строку)</CardDescription>
+            <CardTitle>Загрузка локального файла</CardTitle>
+            <CardDescription>Загрузка изображения с локального компьютера на Imgur</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="imageUrls">URL изображений (по одному на строку)</Label>
-                <Textarea
-                  id="imageUrls"
-                  placeholder="https://example.com/image1.jpg
-https://example.com/image2.jpg"
-                  value={imageUrls}
-                  onChange={(e) => setImageUrls(e.target.value)}
-                  rows={5}
+                <Label htmlFor="fileInput">Выберите файл</Label>
+                <Input
+                  id="fileInput"
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={(e) => {
+                    // Просто для визуального эффекта, если нужно будет добавить превью загружаемого файла
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      if (file.type.startsWith('image/')) {
+                        // Для отображения превью можно использовать URL.createObjectURL
+                        const previewUrl = URL.createObjectURL(file);
+                        setSelectedImage(previewUrl);
+                      }
+                    } else {
+                      setSelectedImage(null);
+                    }
+                  }}
                 />
               </div>
+              
+              {selectedImage && (
+                <div className="mt-4">
+                  <Label>Предпросмотр выбранного файла:</Label>
+                  <div className="mt-2 p-2 border rounded-md">
+                    <img 
+                      src={selectedImage} 
+                      alt="Предпросмотр" 
+                      className="max-w-full max-h-[200px] mx-auto"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMiAyMkM2LjQ3NyAyMiAyIDE3LjUyMyAyIDEyUzYuNDc3IDIgMTIgMnMxMCA0LjQ3NyAxMCAxMC00LjQ3NyAxMC0xMCAxMHptMC0xMWExIDEgMCAxMDAgMiAxIDEgMCAwMDAtMnptMC0uNzVjLjY5IDAgMS4yNS0uNTYgMS4yNS0xLjI1di0xYzAtLjY5LS41Ni0xLjI1LTEuMjUtMS4yNVMxMC43NSA3LjMxIDEwLjc1IDh2MWMwIC42OS41NiAxLjI1IDEuMjUgMS4yNXoiIGZpbGw9IiNjNWM1YzUiLz48L3N2Zz4=';
+                        e.currentTarget.alt = 'Ошибка загрузки изображения';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={uploadMultipleImages} disabled={loading}>
-              {loading ? 'Загрузка...' : 'Загрузить изображения'}
+            <Button onClick={uploadFile} disabled={loading}>
+              {loading ? 'Загрузка...' : 'Загрузить файл'}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      {/* Секция с загруженными изображениями */}
+      <div className="mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Загруженные изображения</CardTitle>
+            <CardDescription>Список всех загруженных изображений</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {uploadedImages.length > 0 ? (
+                uploadedImages.map((image, index) => (
+                  <div key={index} className="border rounded-md overflow-hidden flex flex-col">
+                    <div className="h-32 bg-gray-100 flex items-center justify-center">
+                      <img 
+                        src={image.path} 
+                        alt={image.name}
+                        className="max-w-full max-h-32 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMiAyMkM2LjQ3NyAyMiAyIDE3LjUyMyAyIDEyUzYuNDc3IDIgMTIgMnMxMCA0LjQ3NyAxMCAxMC00LjQ3NyAxMC0xMCAxMHptMC0xMWExIDEgMCAxMDAgMiAxIDEgMCAwMDAtMnptMC0uNzVjLjY5IDAgMS4yNS0uNTYgMS4yNS0xLjI1di0xYzAtLjY5LS41Ni0xLjI1LTEuMjUtMS4yNVMxMC43NSA3LjMxIDEwLjc1IDh2MWMwIC42OS41NiAxLjI1IDEuMjUgMS4yNXoiIGZpbGw9IiNjNWM1YzUiLz48L3N2Zz4=';
+                          e.currentTarget.alt = 'Ошибка загрузки изображения';
+                        }}
+                      />
+                    </div>
+                    <div className="p-2 text-xs truncate" title={image.name}>
+                      {image.name}
+                    </div>
+                    <div className="p-2 pt-0 text-xs text-gray-500">
+                      {Math.round(image.size / 1024)} KB
+                    </div>
+                    <div className="mt-auto p-2 pt-0">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.origin + image.path);
+                          toast({
+                            title: 'Скопировано',
+                            description: 'Путь к изображению скопирован в буфер обмена',
+                          });
+                        }}
+                      >
+                        Копировать URL
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  Нет загруженных изображений
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={fetchUploadedImages} 
+              variant="outline"
+            >
+              Обновить список
             </Button>
           </CardFooter>
         </Card>
