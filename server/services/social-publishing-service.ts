@@ -1,7 +1,8 @@
 import axios from 'axios';
 import path from 'path';
 import fs from 'fs';
-import { logger } from '../utils/logger';
+import FormData from 'form-data';
+import { logger, log } from '../utils/logger';
 import { getOptimizedImagePath } from './cdn-service';
 
 const log = (message: string) => logger.info(`[SocialPublishingService] ${message}`);
