@@ -11,6 +11,7 @@ import {
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
   CalendarIcon, XCircle, Filter, Ban, CheckCircle
 } from "lucide-react";
+import { ImageUploader } from "@/components/ImageUploader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1705,15 +1706,43 @@ export default function ContentPage() {
                         Сгенерировать изображение
                       </Button>
                     </div>
-                    <Input
-                      id="imageUrl"
-                      placeholder="Введите URL изображения"
-                      value={currentContent.imageUrl || ""}
-                      onChange={(e) => {
-                        const updatedContent = {...currentContent, imageUrl: e.target.value};
-                        setCurrentContentSafe(updatedContent);
-                      }}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Input
+                          id="imageUrl"
+                          placeholder="Введите URL изображения"
+                          value={currentContent.imageUrl || ""}
+                          onChange={(e) => {
+                            const updatedContent = {...currentContent, imageUrl: e.target.value};
+                            setCurrentContentSafe(updatedContent);
+                          }}
+                          className="mb-2"
+                        />
+                      </div>
+                      <div>
+                        <ImageUploader 
+                          onImageUploaded={(imageUrl: string) => {
+                            const updatedContent = {...currentContent, imageUrl};
+                            setCurrentContentSafe(updatedContent);
+                          }}
+                          buttonText="Загрузить изображение"
+                        />
+                      </div>
+                    </div>
+                    {currentContent.imageUrl && (
+                      <div className="mt-2 border border-border rounded-md p-2 bg-muted/50">
+                        <p className="text-sm font-medium mb-1">Предпросмотр изображения:</p>
+                        <img 
+                          src={currentContent.imageUrl} 
+                          alt="Основное изображение"
+                          className="max-h-[150px] object-contain rounded-md mx-auto"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-image.png';
+                            e.currentTarget.onerror = null;
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   {/* Дополнительные изображения */}
