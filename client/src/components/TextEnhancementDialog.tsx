@@ -14,6 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Check, Info, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TextEnhancementDialogProps {
   open: boolean;
@@ -36,6 +43,14 @@ export function TextEnhancementDialog({
   const [needApiKey, setNeedApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [success, setSuccess] = useState(false);
+  const [aiModel, setAiModel] = useState('claude-3-sonnet-20240229'); // По умолчанию Claude 3 Sonnet
+  
+  // Доступные модели ИИ
+  const aiModels = [
+    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Баланс качества и скорости генерации' },
+    { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Быстрая генерация, оптимален для простых задач' },
+    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Высокое качество, медленнее других моделей' },
+  ];
   
   // Общие инструкции для улучшения текста
   const enhancementPresets = [
@@ -57,7 +72,8 @@ export function TextEnhancementDialog({
         method: 'POST',
         data: {
           text: originalText,
-          prompt: instructions
+          prompt: instructions,
+          model: aiModel // Передаем выбранную модель ИИ
         }
       });
       
@@ -246,19 +262,43 @@ export function TextEnhancementDialog({
             </Alert>
           )}
           
-          <div className="space-y-2">
-            <Label>Выберите шаблон инструкций</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {enhancementPresets.map((preset, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  onClick={() => setInstructions(preset.value)}
-                  className="justify-start"
-                >
-                  {preset.label}
-                </Button>
-              ))}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Выберите модель ИИ</Label>
+              <Select 
+                value={aiModel} 
+                onValueChange={setAiModel}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Выберите модель Claude AI" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex flex-col">
+                        <span>{model.name}</span>
+                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Выберите шаблон инструкций</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {enhancementPresets.map((preset, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    onClick={() => setInstructions(preset.value)}
+                    className="justify-start"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
           
