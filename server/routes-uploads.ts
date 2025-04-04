@@ -1,65 +1,70 @@
-/**
- * Маршруты для обработки загрузки и получения файлов
- */
-
-import { Express, Request, Response } from 'express';
-import { log } from './vite';
+import express from 'express';
 import multer from 'multer';
-import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-import dotenv from 'dotenv';
-import { getAuthTokenFromRequest } from './utils/auth';
+import fs from 'fs';
+import crypto from 'crypto';
+import { logger } from './utils/logger';
+import { requireAuth } from './middleware/auth';
 
-// Загружаем переменные окружения
-dotenv.config();
-
-// Создаем директорию для хранения файлов, если её нет
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Конфигурируем multer для хранения файлов
+// Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
+  destination: function(req, file, cb) {
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    
+    // Проверяем, существует ли директория, если нет - создаем
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+      logger.info(`[Upload] Создана директория для загрузок: ${uploadDir}`);
+    }
+    
     cb(null, uploadDir);
   },
-  filename: function (_req, file, cb) {
-    // Генерируем уникальное имя файла
-    const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueFilename);
+  filename: function(req, file, cb) {
+    // Генерируем уникальное имя файла с сохранением оригинального расширения
+    const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
   }
 });
 
 // Фильтр для проверки типов файлов
-const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Разрешенные типы файлов
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime'
+  ];
   
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Неподдерживаемый тип файла: ${file.mimetype}. Разрешены только: ${allowedMimeTypes.join(', ')}`));
+    cb(new Error(`Неподдерживаемый тип файла: ${file.mimetype}`));
   }
 };
 
-// Настройка загрузчика
+// Создаем middleware для загрузки
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB максимальный размер файла
+    fileSize: 10 * 1024 * 1024, // 10 MB
   },
   fileFilter: fileFilter
 });
 
-/**
- * Регистрирует маршруты для загрузки и получения файлов
- * @param app Express приложение
- */
-export function registerUploadRoutes(app: Express) {
-  // Маршрут для загрузки изображений
-  app.post('/api/upload-image', upload.single('image'), async (req: Request, res: Response) => {
+// Регистрируем маршруты для загрузки файлов
+export function registerUploadRoutes(app: express.Express): void {
+  const router = express.Router();
+  
+  // Middleware для всех маршрутов загрузки
+  router.use(requireAuth);
+  
+  // Маршрут для загрузки одного изображения
+  router.post('/upload/image', upload.single('image'), (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -67,116 +72,92 @@ export function registerUploadRoutes(app: Express) {
           error: 'Файл не был загружен'
         });
       }
-
-      const filename = req.file.filename;
-      const filePath = req.file.path;
-      const fileUrl = `/uploads/${filename}`;
-
-      log(`[uploads] Файл успешно загружен: ${filename}`);
-
+      
+      // Формируем URL для доступа к загруженному файлу
+      const fileUrl = `/uploads/${req.file.filename}`;
+      
       return res.json({
         success: true,
         data: {
-          filename,
-          filePath,
           url: fileUrl,
+          filename: req.file.filename,
+          originalName: req.file.originalname,
           mimetype: req.file.mimetype,
           size: req.file.size
         }
       });
-    } catch (error: any) {
-      log(`[uploads] Ошибка при загрузке файла: ${error.message}`);
+    } catch (error) {
+      logger.error(`[Upload] Ошибка при загрузке изображения: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
       return res.status(500).json({
         success: false,
-        error: error.message || 'Произошла ошибка при загрузке файла'
+        error: error instanceof Error ? error.message : 'Ошибка при загрузке файла'
       });
     }
   });
-
-  // Маршрут для получения загруженного файла
-  app.get('/uploads/:filename', (req: Request, res: Response) => {
-    const filename = req.params.filename;
-    const filePath = path.join(uploadDir, filename);
-
-    // Проверяем, существует ли файл
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Файл не найден'
-      });
-    }
-
-    // Определяем MIME-тип файла
-    const ext = path.extname(filename).toLowerCase();
-    let contentType = 'application/octet-stream';
-
-    switch(ext) {
-      case '.jpg':
-      case '.jpeg':
-        contentType = 'image/jpeg';
-        break;
-      case '.png':
-        contentType = 'image/png';
-        break;
-      case '.gif':
-        contentType = 'image/gif';
-        break;
-      case '.webp':
-        contentType = 'image/webp';
-        break;
-      case '.svg':
-        contentType = 'image/svg+xml';
-        break;
-    }
-
-    res.set('Content-Type', contentType);
-    res.sendFile(filePath);
-  });
-
-  // Прокси маршрут для получения файлов из Directus
-  app.get('/api/proxy-image', async (req: Request, res: Response) => {
+  
+  // Маршрут для загрузки нескольких изображений
+  router.post('/upload/images', upload.array('images', 10), (req, res) => {
     try {
-      const imageUrl = req.query.url as string;
-
-      if (!imageUrl) {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'URL изображения не указан'
+          error: 'Файлы не были загружены'
         });
       }
-
-      // Получаем токен пользователя или администратора для доступа к Directus
-      const token = getAuthTokenFromRequest(req) || process.env.DIRECTUS_ADMIN_TOKEN;
-
-      if (!token) {
-        return res.status(401).json({
-          success: false,
-          error: 'Требуется авторизация для доступа к изображению'
-        });
-      }
-
-      // Выполняем запрос к Directus с токеном авторизации
-      const response = await axios.get(imageUrl, {
-        responseType: 'arraybuffer',
-        timeout: 10000,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      
+      // Формируем массив URL для доступа к загруженным файлам
+      const fileUrls = files.map(file => ({
+        url: `/uploads/${file.filename}`,
+        filename: file.filename,
+        originalName: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size
+      }));
+      
+      return res.json({
+        success: true,
+        data: fileUrls
       });
-
-      // Устанавливаем заголовки для ответа
-      const contentType = response.headers['content-type'];
-      res.set('Content-Type', contentType);
-      res.set('Cache-Control', 'public, max-age=86400'); // Кэшируем на 24 часа
-
-      // Отправляем данные изображения
-      return res.send(response.data);
-    } catch (error: any) {
-      log(`[uploads] Ошибка при получении изображения через прокси: ${error.message}`);
+    } catch (error) {
+      logger.error(`[Upload] Ошибка при загрузке нескольких изображений: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
       return res.status(500).json({
         success: false,
-        error: error.message || 'Произошла ошибка при получении изображения'
+        error: error instanceof Error ? error.message : 'Ошибка при загрузке файлов'
       });
     }
   });
+  
+  // Обработчик ошибок multer
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err instanceof multer.MulterError) {
+      logger.error(`[Upload] Multer error: ${err.message}`);
+      
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          success: false,
+          error: 'Размер файла превышает допустимый лимит (10 MB)'
+        });
+      }
+      
+      return res.status(400).json({
+        success: false,
+        error: `Ошибка загрузки: ${err.message}`
+      });
+    }
+    
+    if (err) {
+      logger.error(`[Upload] Error: ${err.message}`);
+      return res.status(500).json({
+        success: false,
+        error: err.message
+      });
+    }
+    
+    next();
+  });
+  
+  // Подключаем маршруты к приложению с префиксом /api
+  app.use('/api', router);
 }

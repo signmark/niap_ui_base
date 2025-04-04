@@ -1,96 +1,74 @@
 /**
- * Вспомогательные функции для работы с CDN
+ * Преобразует URL изображения в URL для CDN с опциями оптимизации.
+ * @param imageUrl Исходный URL изображения
+ * @param options Опции оптимизации (ширина, высота, качество)
+ * @returns URL для CDN
  */
-
-interface CdnOptions {
-  width?: number;
-  height?: number;
-  format?: string;
-  quality?: number;
-}
-
-/**
- * Преобразует URL изображения в URL для CDN
- * 
- * @param imageUrl URL изображения
- * @param options Опции для оптимизации (ширина, высота, формат, качество)
- * @returns URL для доступа к изображению через CDN
- */
-export function getCdnUrl(imageUrl: string, options: CdnOptions = {}): string {
-  // Если изображение отсутствует или это уже CDN URL, возвращаем как есть
-  if (!imageUrl || imageUrl.startsWith('/cdn/')) {
-    return imageUrl;
+export function getCdnImageUrl(
+  imageUrl: string | null | undefined,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number;
+  } = {}
+): string {
+  // Если URL не указан, возвращаем URL заглушки
+  if (!imageUrl) {
+    return '/placeholder.png';
   }
 
-  // Если это URL из Directus, сохраняем как есть
-  if (imageUrl.includes('directus.nplanner.ru')) {
-    return imageUrl;
-  }
-
-  // Если это внешний URL (начинается с http:// или https://), возвращаем как есть
+  // Если это абсолютный URL внешнего источника, возвращаем как есть
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
+    // Исключаем локальные URL
+    if (!imageUrl.includes('localhost') && !imageUrl.includes('127.0.0.1') && !imageUrl.includes('0.0.0.0')) {
+      return imageUrl;
+    }
   }
 
-  // Если это путь к файлу в uploads, преобразуем в CDN URL
+  // Если это URL из нашей uploads директории, преобразуем в CDN URL
   if (imageUrl.startsWith('/uploads/')) {
-    // Удаляем начальный слеш для правильного формирования пути в CDN
-    const filePath = imageUrl.substring(1);
+    const filename = imageUrl.split('/').pop();
+    if (!filename) return '/placeholder.png';
+
+    let cdnUrl = `/cdn/image/${filename}`;
     
-    // Формируем параметры запроса
+    // Добавляем параметры оптимизации
     const params = new URLSearchParams();
-    if (options.width) params.append('width', options.width.toString());
-    if (options.height) params.append('height', options.height.toString());
-    if (options.format) params.append('format', options.format);
-    if (options.quality) params.append('quality', options.quality.toString());
+    if (options.width) params.append('w', options.width.toString());
+    if (options.height) params.append('h', options.height.toString());
+    if (options.quality) params.append('q', options.quality.toString());
     
-    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const queryString = params.toString();
+    if (queryString) {
+      cdnUrl += `?${queryString}`;
+    }
     
-    return `/cdn/${filePath}${queryString}`;
+    return cdnUrl;
   }
 
-  // Для остальных случаев предполагаем, что это относительный путь в uploads
-  // Формируем параметры запроса
-  const params = new URLSearchParams();
-  if (options.width) params.append('width', options.width.toString());
-  if (options.height) params.append('height', options.height.toString());
-  if (options.format) params.append('format', options.format);
-  if (options.quality) params.append('quality', options.quality.toString());
-  
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  
-  // Удаляем начальный слеш, если он есть
-  const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
-  
-  return `/cdn/uploads/${cleanPath}${queryString}`;
+  // В других случаях просто возвращаем исходный URL
+  return imageUrl;
 }
 
 /**
- * Преобразует URL изображения в URL для превью (миниатюры)
- * 
- * @param imageUrl URL изображения
- * @param width Ширина превью
- * @param height Высота превью (если не указана, вычисляется пропорционально)
- * @returns URL для доступа к миниатюре изображения через CDN
+ * Преобразует массив URL изображений в массив URL для CDN.
+ * @param imageUrls Массив исходных URL изображений
+ * @param options Опции оптимизации (ширина, высота, качество)
+ * @returns Массив URL для CDN
  */
-export function getImageThumbnail(imageUrl: string, width: number = 300, height?: number): string {
-  return getCdnUrl(imageUrl, { 
-    width, 
-    height, 
-    format: 'webp', 
-    quality: 85 
-  });
-}
+export function getCdnImageUrls(
+  imageUrls: (string | null | undefined)[] | null | undefined,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number;
+  } = {}
+): string[] {
+  if (!imageUrls || !Array.isArray(imageUrls)) {
+    return [];
+  }
 
-/**
- * Преобразует URL изображения в оптимизированный URL для CDN
- * 
- * @param imageUrl URL изображения
- * @returns URL для доступа к оптимизированному изображению через CDN
- */
-export function getOptimizedImage(imageUrl: string): string {
-  return getCdnUrl(imageUrl, { 
-    format: 'webp', 
-    quality: 90 
-  });
+  return imageUrls
+    .filter((url): url is string => !!url)
+    .map(url => getCdnImageUrl(url, options));
 }

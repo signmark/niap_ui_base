@@ -2,10 +2,11 @@ import axios from 'axios';
 import path from 'path';
 import fs from 'fs';
 import FormData from 'form-data';
-import { logger, log } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { getOptimizedImagePath } from './cdn-service';
 
-const log = (message: string) => logger.info(`[SocialPublishingService] ${message}`);
+// Вспомогательные функции логирования
+const logInfo = (message: string) => logger.info(`[SocialPublishingService] ${message}`);
 const errorLog = (message: string) => logger.error(`[SocialPublishingService] ${message}`);
 
 // Типы платформ для публикации
@@ -39,7 +40,7 @@ export async function publishToSocialNetwork(
   content?: Content
 ): Promise<any> {
   try {
-    log(`Подготовка к публикации контента на платформе ${platform}`);
+    logInfo(`Подготовка к публикации контента на платформе ${platform}`);
 
     // Если contentId указан, но контент не передан, то нужно получить контент по ID
     // В этом примере просто возвращаем ошибку, т.к. мы не реализуем полную интеграцию с Directus
@@ -77,7 +78,7 @@ export async function publishToSocialNetwork(
         if (fs.existsSync(imagePath)) {
           imageUrls.push(imagePath);
         } else {
-          log(`Основное изображение не найдено по пути: ${imagePath}`);
+          logInfo(`Основное изображение не найдено по пути: ${imagePath}`);
         }
       } catch (error) {
         errorLog(`Ошибка при обработке основного изображения: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
@@ -93,7 +94,7 @@ export async function publishToSocialNetwork(
             if (fs.existsSync(imagePath)) {
               imageUrls.push(imagePath);
             } else {
-              log(`Дополнительное изображение не найдено по пути: ${imagePath}`);
+              logInfo(`Дополнительное изображение не найдено по пути: ${imagePath}`);
             }
           } catch (error) {
             errorLog(`Ошибка при обработке дополнительного изображения: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
@@ -129,7 +130,7 @@ export async function publishToSocialNetwork(
  */
 async function publishToTelegram(text: string, imagePaths: string[]): Promise<any> {
   try {
-    log(`Публикация в Telegram: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
+    logInfo(`Публикация в Telegram: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -149,7 +150,7 @@ async function publishToTelegram(text: string, imagePaths: string[]): Promise<an
         parse_mode: 'HTML'
       });
       
-      log('Текст успешно опубликован в Telegram');
+      logInfo('Текст успешно опубликован в Telegram');
       return response.data;
     }
 
@@ -173,7 +174,7 @@ async function publishToTelegram(text: string, imagePaths: string[]): Promise<an
         }
       });
       
-      log('Изображение с текстом успешно опубликовано в Telegram');
+      logInfo('Изображение с текстом успешно опубликовано в Telegram');
       return response.data;
     }
 
@@ -204,7 +205,7 @@ async function publishToTelegram(text: string, imagePaths: string[]): Promise<an
       }
     });
     
-    log('Группа изображений успешно опубликована в Telegram');
+    logInfo('Группа изображений успешно опубликована в Telegram');
     return response.data;
   } catch (error) {
     errorLog(`Ошибка публикации в Telegram: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
@@ -219,7 +220,7 @@ async function publishToTelegram(text: string, imagePaths: string[]): Promise<an
  * @returns Результат публикации
  */
 async function publishToVK(text: string, imagePaths: string[]): Promise<any> {
-  log(`Публикация в ВКонтакте: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
+  logInfo(`Публикация в ВКонтакте: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
   // Пока это заглушка, здесь будет реальная реализация публикации в VK
   return {
     success: true,
@@ -239,7 +240,7 @@ async function publishToVK(text: string, imagePaths: string[]): Promise<any> {
  * @returns Результат публикации
  */
 async function publishToInstagram(text: string, imagePaths: string[]): Promise<any> {
-  log(`Публикация в Instagram: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
+  logInfo(`Публикация в Instagram: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
   // Пока это заглушка, здесь будет реальная реализация публикации в Instagram
   return {
     success: true,
@@ -259,7 +260,7 @@ async function publishToInstagram(text: string, imagePaths: string[]): Promise<a
  * @returns Результат публикации
  */
 async function publishToFacebook(text: string, imagePaths: string[]): Promise<any> {
-  log(`Публикация в Facebook: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
+  logInfo(`Публикация в Facebook: ${text.substring(0, 50)}... с ${imagePaths.length} изображениями`);
   // Пока это заглушка, здесь будет реальная реализация публикации в Facebook
   return {
     success: true,

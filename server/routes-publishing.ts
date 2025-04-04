@@ -1,115 +1,83 @@
-import express, { Request, Response } from 'express';
-import { authenticateToken } from './middleware/auth';
-import { publishToSocialNetwork } from './services/social-publishing-service';
+import express from 'express';
+import { publishToSocialNetwork, SocialPlatform, Content } from './services/social-publishing-service';
 import { logger } from './utils/logger';
+import { requireAuth } from './middleware/auth';
 
-const log = (message: string) => logger.info(`[PublishingRoutes] ${message}`);
-const errorLog = (message: string) => logger.error(`[PublishingRoutes] ${message}`);
+// Инициализация маршрутов публикации
+export function registerPublishingRoutes(app: express.Express): void {
+  const router = express.Router();
 
-/**
- * Регистрирует маршруты API для публикации контента в социальные сети
- * @param app Экземпляр Express приложения
- */
-export const registerPublishingRoutes = (app: express.Application) => {
-  log('Initializing publishing routes');
+  // Middleware для всех маршрутов публикации
+  router.use(requireAuth);
 
-  /**
-   * Маршрут для публикации контента в социальную сеть
-   * POST /api/publish
-   * 
-   * Body:
-   * - contentId: ID контента для публикации
-   * - platform: Платформа для публикации ('telegram', 'vk', 'instagram', 'facebook')
-   * - content: Объект с контентом (опционально, если contentId не указан)
-   */
-  app.post('/api/publish', authenticateToken, async (req: Request, res: Response) => {
+  // Опубликовать контент в социальную сеть по ID
+  router.post('/publish/:platform/:contentId', async (req, res) => {
     try {
-      const { contentId, platform, content } = req.body;
-
-      if (!platform) {
-        return res.status(400).json({
-          success: false,
-          message: 'Не указана платформа для публикации'
-        });
-      }
-
-      if (!contentId && !content) {
-        return res.status(400).json({
-          success: false,
-          message: 'Необходимо указать ID контента или передать контент'
-        });
-      }
-
-      log(`Запрос на публикацию контента ${contentId} на платформе ${platform}`);
-
-      // Делегируем публикацию сервису
-      const result = await publishToSocialNetwork(platform, contentId, content);
-
-      log(`Контент успешно опубликован на ${platform}`);
-      return res.status(200).json({
-        success: true,
-        data: result
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      errorLog(`Ошибка публикации: ${errorMessage}`);
+      const { platform, contentId } = req.params;
       
-      return res.status(500).json({
-        success: false,
-        message: `Ошибка публикации: ${errorMessage}`
+      // Проверяем, что platform является допустимым значением
+      if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Неподдерживаемая платформа: ${platform}` 
+        });
+      }
+
+      // Публикуем контент
+      const result = await publishToSocialNetwork(
+        platform as SocialPlatform,
+        contentId
+      );
+
+      return res.json({ success: true, data: result });
+    } catch (error) {
+      logger.error(`[PublishingRoutes] Ошибка публикации по ID: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      return res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка во время публикации' 
       });
     }
   });
 
-  /**
-   * Маршрут для обновления контента
-   * PATCH /api/publish/update-content/:id
-   */
-  app.patch('/api/publish/update-content/:id', authenticateToken, async (req: Request, res: Response) => {
+  // Опубликовать контент из тела запроса
+  router.post('/publish/content/:platform', async (req, res) => {
     try {
-      const contentId = req.params.id;
-      const updateData = req.body;
-
-      if (!contentId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Не указан ID контента для обновления'
-        });
-      }
-
-      log(`Запрос на обновление контента с ID ${contentId}`);
-
-      // Здесь должна быть логика обновления контента через Directus API
-      // Пример реализации:
+      const { platform } = req.params;
+      const content = req.body as Content;
       
-      try {
-        // Поскольку сейчас мы не разрабатываем полную интеграцию с Directus,
-        // просто возвращаем успешный ответ с обновленными данными
-        return res.status(200).json({
-          success: true,
-          data: {
-            id: contentId,
-            ...updateData,
-            updatedAt: new Date().toISOString()
-          }
-        });
-      } catch (directusError) {
-        errorLog(`Ошибка при обновлении контента в Directus: ${directusError instanceof Error ? directusError.message : 'Неизвестная ошибка'}`);
-        return res.status(500).json({
-          success: false,
-          message: 'Ошибка при обновлении контента'
+      // Проверяем, что platform является допустимым значением
+      if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Неподдерживаемая платформа: ${platform}` 
         });
       }
+      
+      // Проверяем наличие контента
+      if (!content || !content.id) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Контент не указан или не содержит ID' 
+        });
+      }
+
+      // Публикуем контент
+      const result = await publishToSocialNetwork(
+        platform as SocialPlatform,
+        undefined,
+        content
+      );
+
+      return res.json({ success: true, data: result });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      errorLog(`Ошибка обновления контента: ${errorMessage}`);
-      
-      return res.status(500).json({
-        success: false,
-        message: `Ошибка обновления контента: ${errorMessage}`
+      logger.error(`[PublishingRoutes] Ошибка публикации контента: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      return res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка во время публикации' 
       });
     }
   });
 
-  log('Publishing routes registered successfully');
-};
+  // Подключаем маршруты к приложению с префиксом /api
+  app.use('/api', router);
+}
