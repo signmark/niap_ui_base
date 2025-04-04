@@ -4,6 +4,7 @@ import { logger } from './utils/logger';
 import { authMiddleware } from './middleware/auth';
 import uploadsRouter from './routes-uploads';
 import cdnRouter from './routes-cdn';
+import authRouter from './routes-auth';
 import http from 'http';
 
 // Создаем экземпляр Express приложения
@@ -17,9 +18,10 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// Регистрируем маршруты для API, с аутентификацией
+// Регистрируем маршруты для API
 app.use('/api/upload-image', uploadsRouter);
 app.use('/api/cdn', cdnRouter);
+app.use('/api', authRouter);
 
 // Настраиваем обработку запросов к API
 app.use('/api', (req, res, next) => {
