@@ -11,9 +11,6 @@ import {
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
   CalendarIcon, XCircle, Filter, Ban, CheckCircle
 } from "lucide-react";
-import { ImageUploader } from "@/components/ImageUploader";
-import { getCdnUrl, getImageThumbnail, getOptimizedImage } from "@/lib/cdnHelper";
-import { PublishButton } from "@/components/PublishButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1368,39 +1365,12 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Input
-                        id="imageUrl"
-                        placeholder="Введите URL изображения"
-                        value={newContent.imageUrl}
-                        onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                        className="mb-2"
-                      />
-                    </div>
-                    <div>
-                      <ImageUploader 
-                        onImageUploaded={(imageUrl) => {
-                          setNewContent({...newContent, imageUrl});
-                        }}
-                        buttonText="Загрузить изображение"
-                      />
-                    </div>
-                  </div>
-                  {newContent.imageUrl && (
-                    <div className="mt-2 border border-border rounded-md p-2 bg-muted/50">
-                      <p className="text-sm font-medium mb-1">Предпросмотр изображения:</p>
-                      <img 
-                        src={newContent.imageUrl} 
-                        alt="Основное изображение"
-                        className="max-h-[150px] object-contain rounded-md mx-auto"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-image.png';
-                          e.currentTarget.onerror = null;
-                        }}
-                      />
-                    </div>
-                  )}
+                  <Input
+                    id="imageUrl"
+                    placeholder="Введите URL изображения"
+                    value={newContent.imageUrl}
+                    onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                  />
                 </div>
                 
                 {/* Дополнительные изображения */}
@@ -1708,43 +1678,15 @@ export default function ContentPage() {
                         Сгенерировать изображение
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Input
-                          id="imageUrl"
-                          placeholder="Введите URL изображения"
-                          value={currentContent.imageUrl || ""}
-                          onChange={(e) => {
-                            const updatedContent = {...currentContent, imageUrl: e.target.value};
-                            setCurrentContentSafe(updatedContent);
-                          }}
-                          className="mb-2"
-                        />
-                      </div>
-                      <div>
-                        <ImageUploader 
-                          onImageUploaded={(imageUrl: string) => {
-                            const updatedContent = {...currentContent, imageUrl};
-                            setCurrentContentSafe(updatedContent);
-                          }}
-                          buttonText="Загрузить изображение"
-                        />
-                      </div>
-                    </div>
-                    {currentContent.imageUrl && (
-                      <div className="mt-2 border border-border rounded-md p-2 bg-muted/50">
-                        <p className="text-sm font-medium mb-1">Предпросмотр изображения:</p>
-                        <img 
-                          src={currentContent.imageUrl} 
-                          alt="Основное изображение"
-                          className="max-h-[150px] object-contain rounded-md mx-auto"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder-image.png';
-                            e.currentTarget.onerror = null;
-                          }}
-                        />
-                      </div>
-                    )}
+                    <Input
+                      id="imageUrl"
+                      placeholder="Введите URL изображения"
+                      value={currentContent.imageUrl || ""}
+                      onChange={(e) => {
+                        const updatedContent = {...currentContent, imageUrl: e.target.value};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                    />
                   </div>
                   
                   {/* Дополнительные изображения */}
@@ -2324,10 +2266,7 @@ export default function ContentPage() {
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{previewContent?.title || "Просмотр контента"}</span>
-              {previewContent && <PublishButton content={previewContent} />}
-            </DialogTitle>
+            <DialogTitle>{previewContent?.title || "Просмотр контента"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Тип контента */}
@@ -2362,7 +2301,7 @@ export default function ContentPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
-                  src={getOptimizedImage(previewContent.imageUrl)}
+                  src={previewContent.imageUrl}
                   alt={previewContent?.title || "Content Image"}
                   className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
                   onError={(e) => {
@@ -2383,7 +2322,7 @@ export default function ContentPage() {
                     imageUrl && (
                       <div key={index} className="overflow-hidden">
                         <img
-                          src={getOptimizedImage(imageUrl)}
+                          src={imageUrl}
                           alt={`Дополнительное изображение ${index + 1}`}
                           className="rounded-md max-h-[300px] w-full object-cover"
                           onError={(e) => {
@@ -2400,7 +2339,7 @@ export default function ContentPage() {
             {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
               <div className="mt-4">
                 <video
-                  src={getOptimizedImage(previewContent.videoUrl)}
+                  src={previewContent.videoUrl}
                   controls
                   className="rounded-md max-h-[400px] max-w-full mx-auto"
                 />
