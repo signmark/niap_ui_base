@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { getCdnUrl, getImageThumbnail, getOptimizedImage } from "@/lib/cdnHelper";
+import { PublishButton } from "@/components/PublishButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -2323,7 +2324,10 @@ export default function ContentPage() {
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{previewContent?.title || "Просмотр контента"}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{previewContent?.title || "Просмотр контента"}</span>
+              {previewContent && <PublishButton content={previewContent} />}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Тип контента */}
@@ -2379,7 +2383,7 @@ export default function ContentPage() {
                     imageUrl && (
                       <div key={index} className="overflow-hidden">
                         <img
-                          src={imageUrl}
+                          src={getOptimizedImage(imageUrl)}
                           alt={`Дополнительное изображение ${index + 1}`}
                           className="rounded-md max-h-[300px] w-full object-cover"
                           onError={(e) => {
@@ -2396,7 +2400,7 @@ export default function ContentPage() {
             {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
               <div className="mt-4">
                 <video
-                  src={previewContent.videoUrl}
+                  src={getOptimizedImage(previewContent.videoUrl)}
                   controls
                   className="rounded-md max-h-[400px] max-w-full mx-auto"
                 />

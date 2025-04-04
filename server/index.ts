@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerUploadRoutes } from "./routes-uploads";
+import { registerPublishingRoutes } from "./routes-publishing";
 import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
@@ -90,6 +91,11 @@ app.use((req, res, next) => {
     log("Registering CDN routes...");
     app.use(cdnRouter);
     log("CDN routes registered successfully");
+    
+    // Регистрируем маршруты для публикации в социальные сети
+    log("Registering social publishing routes...");
+    registerPublishingRoutes(app);
+    log("Social publishing routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");

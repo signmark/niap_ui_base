@@ -240,5 +240,26 @@ export class CdnService {
   }
 }
 
+/**
+ * Возвращает полный путь к изображению на сервере
+ * @param url URL изображения 
+ * @returns Полный путь к изображению на диске
+ */
+export function getOptimizedImagePath(url: string): string {
+  // Если URL начинается с http, это внешний ресурс - не обрабатываем
+  if (url.startsWith('http')) {
+    throw new Error('External URLs are not supported for getOptimizedImagePath');
+  }
+  
+  // Удаляем параметры запроса и CDN префикс
+  let cleanPath = url.split('?')[0];
+  if (cleanPath.startsWith('/cdn/')) {
+    cleanPath = cleanPath.substring(5);
+  }
+  
+  // Формируем полный путь
+  return path.join(process.cwd(), 'uploads', cleanPath);
+}
+
 // Создаем и экспортируем экземпляр сервиса
 export const cdnService = new CdnService();
