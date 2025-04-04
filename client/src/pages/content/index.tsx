@@ -1365,12 +1365,39 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <Input
-                    id="imageUrl"
-                    placeholder="Введите URL изображения"
-                    value={newContent.imageUrl}
-                    onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        id="imageUrl"
+                        placeholder="Введите URL изображения"
+                        value={newContent.imageUrl}
+                        onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                        className="mb-2"
+                      />
+                    </div>
+                    <div>
+                      <ImageUploader 
+                        onImageUploaded={(imageUrl) => {
+                          setNewContent({...newContent, imageUrl});
+                        }}
+                        buttonText="Загрузить изображение"
+                      />
+                    </div>
+                  </div>
+                  {newContent.imageUrl && (
+                    <div className="mt-2 border border-border rounded-md p-2 bg-muted/50">
+                      <p className="text-sm font-medium mb-1">Предпросмотр изображения:</p>
+                      <img 
+                        src={newContent.imageUrl} 
+                        alt="Основное изображение"
+                        className="max-h-[150px] object-contain rounded-md mx-auto"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.png';
+                          e.currentTarget.onerror = null;
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Дополнительные изображения */}

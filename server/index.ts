@@ -2,10 +2,12 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
+import { registerUploadRoutes } from "./routes-uploads";
 import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import path from 'path';
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
@@ -72,6 +74,16 @@ app.use((req, res, next) => {
     log("Registering FAL.AI Universal Image Generation routes...");
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
+    
+    // Регистрируем маршруты для работы с файлами и загрузками
+    log("Registering file upload routes...");
+    registerUploadRoutes(app);
+    log("File upload routes registered successfully");
+    
+    // Настраиваем статическую директорию для загруженных файлов
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    app.use('/uploads', express.static(uploadDir));
+    log(`Static file serving for uploads configured at path: ${uploadDir}`);
     
     console.log("Route registration completed");
     log("Routes registered successfully");
