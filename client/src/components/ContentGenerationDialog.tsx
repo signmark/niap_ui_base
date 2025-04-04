@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -215,12 +215,13 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
+                      <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
-              {selectedService === 'deepseek' && (
+              {(selectedService === 'deepseek' || selectedService === 'claude') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа

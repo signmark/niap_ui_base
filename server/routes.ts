@@ -1,11 +1,13 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
+import { claudeService } from './services/claude';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
+import { registerClaudeRoutes } from './routes-claude';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import express, { Express, Request, Response, NextFunction } from "express";
@@ -1276,6 +1278,7 @@ function parseArrayField(value: any, itemId?: string): any[] {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем универсальный интерфейс для FAL.AI
+  registerClaudeRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
@@ -3335,10 +3338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Приоритет параметров: aiService, service
       const selectedAiService = aiService || service || 'perplexity';
       // Проверяем, что это один из поддерживаемых сервисов
-      // Поддерживаемые сервисы: perplexity, qwen, deepseek
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude
       const useService = 
         selectedAiService === 'qwen' ? 'qwen' : 
         selectedAiService === 'deepseek' ? 'deepseek' : 
+        selectedAiService === 'claude' ? 'claude' : 
         'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
@@ -3429,6 +3433,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           
           usedService = 'deepseek';
+          
+        } else if (useService === 'claude') {
+          // Инициализируем Claude API
+          console.log(`Попытка инициализации Claude сервиса для пользователя ${userId}`);
+          const initialized = await claudeService.initialize(userId);
+          
+          if (!initialized) {
+            console.log('Предупреждение: Claude API сервис не был полностью инициализирован');
+            console.error('Ошибка: Не удалось получить API ключ Claude');
+            return res.status(400).json({ 
+              error: 'Не удалось получить API ключ Claude. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
+            });
+          }
+          
+          console.log(`Generating content with Claude for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из tone (используя его как платформу)
+          const platform = tone === 'professional' ? 'facebook' :
+                         tone === 'casual' ? 'telegram' :
+                         tone === 'friendly' ? 'instagram' : 'general';
+          
+          // Используем Claude для генерации контента
+          generatedContent = await claudeService.generateSocialContent(
+            keywords,
+            prompt,
+            {
+              platform,
+              tone,
+              maxTokens: 4000,
+              temperature: 0.7,
+              model: 'claude-3-sonnet-20240229'
+            }
+          );
+          
+          usedService = 'claude';
           
         } else {
           // По умолчанию используем Perplexity API
@@ -10018,6 +10057,104 @@ ${datesText}
       return res.status(500).json({
         success: false,
         error: 'Ошибка сервера при тестировании API ключей'
+      });
+    }
+  });
+
+  // Эндпоинт для тестирования Claude API
+  app.get('/api/test-claude', async (req, res) => {
+    try {
+      // Получаем userId из токена авторизации, если пользователь авторизован
+      const authHeader = req.headers['authorization'];
+      let userId = null;
+      let token = null;
+      
+      if (authHeader) {
+        token = authHeader.replace('Bearer ', '');
+        try {
+          // Получаем данные пользователя из токена
+          const decodedToken = await directusApi.get('/users/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (decodedToken.data && decodedToken.data.data) {
+            userId = decodedToken.data.data.id;
+          }
+        } catch (error) {
+          console.error('Ошибка при декодировании токена:', error);
+        }
+      }
+      
+      if (!userId) {
+        // Если пользователь не авторизован, используем параметр userId из запроса
+        userId = req.query.userId as string;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не удалось определить пользователя. Пожалуйста, авторизуйтесь или укажите userId в параметрах запроса.'
+        });
+      }
+      
+      // Получаем API ключ Claude из сервиса ключей
+      const apiKey = await apiKeyService.getApiKey(userId, 'claude', token);
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Claude не найден. Пожалуйста, добавьте ключ в настройках.'
+        });
+      }
+      
+      // Инициализируем сервис Claude с полученным ключом
+      const initialized = await claudeService.initialize(userId);
+      
+      if (!initialized) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не удалось инициализировать Claude API. Проверьте ключ в настройках.'
+        });
+      }
+      
+      // Тестовый запрос к Claude API - простая генерация текста
+      try {
+        const testResult = await claudeService.generateText(
+          [
+            { role: 'user', content: 'Reply with a single word: "Working"' }
+          ],
+          { maxTokens: 10 }
+        );
+        
+        // Проверяем, содержит ли ответ ожидаемое слово
+        const isWorking = testResult.toLowerCase().includes('working');
+        
+        if (isWorking) {
+          return res.json({
+            success: true,
+            message: 'Claude API работает корректно',
+            response: testResult
+          });
+        } else {
+          return res.json({
+            success: false,
+            error: 'Claude API вернул неожиданный ответ',
+            response: testResult
+          });
+        }
+      } catch (error: any) {
+        return res.status(500).json({
+          success: false,
+          error: `Ошибка при тестировании Claude API: ${error.message}`
+        });
+      }
+    } catch (error: any) {
+      console.error('Ошибка при тестировании Claude API:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка сервера при тестировании Claude API: ${error.message}`
       });
     }
   });

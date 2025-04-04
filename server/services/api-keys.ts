@@ -6,7 +6,7 @@ import { directusCrud } from './directus-crud';
 const directusApi = directusApiManager.instance;
 
 // Типы API сервисов, используемых в приложении
-export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen';
+export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen' | 'claude';
 
 // Маппинг имен сервисов как они записаны в БД
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
@@ -16,7 +16,8 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   'deepseek': 'deepseek',
   'fal_ai': 'fal_ai',
   'xmlriver': 'xmlriver',
-  'qwen': 'qwen'
+  'qwen': 'qwen',
+  'claude': 'claude'
 };
 
 // Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
@@ -28,7 +29,8 @@ const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
   3: 'deepseek',         // Четвертое поле в UI - API Ключ DeepSeek
   4: 'fal_ai',           // Пятое поле в UI - API Ключ FAL.AI
   5: 'xmlriver',         // Шестое поле в UI - API Ключ XMLRiver
-  6: 'qwen'              // Седьмое поле в UI - API Ключ Qwen
+  6: 'qwen',             // Седьмое поле в UI - API Ключ Qwen
+  7: 'claude'            // Восьмое поле в UI - API Ключ Claude
 };
 
 // Интерфейс для хранения API ключей и метаданных
@@ -413,6 +415,12 @@ export class ApiKeyService {
     console.warn(`[${serviceName}] ⚠️ ВНИМАНИЕ: Запрошен ключ из переменных окружения!`);
     console.warn(`[${serviceName}] ⚠️ API ключи хранятся ТОЛЬКО в базе данных Directus!`);
     console.warn(`[${serviceName}] ⚠️ Пользователь должен добавить ключ через интерфейс настроек.`);
+    
+    // Временное исключение для Claude во время разработки
+    if (serviceName === 'claude' && process.env.CLAUDE_API_KEY) {
+      console.warn(`[${serviceName}] Использование временного ключа Claude API из переменных окружения для разработки`);
+      return process.env.CLAUDE_API_KEY;
+    }
     
     // Всегда возвращаем null, чтобы приложение не использовало ключи из .env
     return null;
