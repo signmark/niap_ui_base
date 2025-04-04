@@ -1,265 +1,225 @@
-/**
- * CDN Service - обеспечивает функционал CDN для изображений
- * - кэширование изображений
- * - базовая оптимизация (изменение размера, формата)
- * - поддержка заголовков кэширования
- */
-
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import sharp from 'sharp';
-import { Request, Response } from 'express';
+import { logger } from '../utils/logger';
 
-// Директория для кэширования обработанных изображений
-const CACHE_DIR = path.join(process.cwd(), 'uploads', 'cache');
+// Корневая директория для хранения загруженных файлов
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+// Корневая директория для хранения оптимизированных файлов (CDN)
+const CDN_DIR = path.join(process.cwd(), 'uploads', 'cdn');
 
-// Убедимся, что директория кэша существует
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
+// Создаем директории, если они не существуют
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  logger.info(`[CDN] Создана директория для загрузок: ${UPLOADS_DIR}`);
 }
 
-interface ResizeOptions {
-  width?: number;
-  height?: number;
-  format?: string;
-  quality?: number;
-}
-
-/**
- * Генерирует хеш строки для создания уникальных имен файлов
- */
-function generateHash(data: string): string {
-  return crypto.createHash('md5').update(data).digest('hex');
+if (!fs.existsSync(CDN_DIR)) {
+  fs.mkdirSync(CDN_DIR, { recursive: true });
+  logger.info(`[CDN] Создана директория для CDN: ${CDN_DIR}`);
 }
 
 /**
- * Получает расширение файла из пути
+ * Возвращает имя файла из URL или пути
+ * @param url URL или путь к файлу
+ * @returns Имя файла
  */
-function getExtension(filePath: string): string {
-  return path.extname(filePath).toLowerCase();
+export function getFilenameFromUrl(url: string): string {
+  // Удаляем все параметры из URL (часть после ?)
+  const urlWithoutParams = url.split('?')[0];
+  // Получаем имя файла из URL или пути
+  const filename = path.basename(urlWithoutParams);
+  return filename;
 }
 
 /**
- * Определяет MIME тип по расширению файла
+ * Преобразует URL в локальный путь к файлу, поддерживая различные форматы URL
+ * @param url URL, который нужно преобразовать
+ * @returns Локальный путь к файлу
  */
-function getMimeType(extension: string): string {
-  const mimeTypes: Record<string, string> = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.gif': 'image/gif',
-    '.webp': 'image/webp',
-    '.svg': 'image/svg+xml',
-    '.avif': 'image/avif'
-  };
-  
-  return mimeTypes[extension] || 'application/octet-stream';
-}
+export function resolveLocalPath(url: string): string {
+  // Если URL пустой, возвращаем путь к placeholder изображению
+  if (!url) {
+    return path.join(process.cwd(), 'public', 'placeholder.png');
+  }
 
-/**
- * Проверяет, является ли файл изображением по его расширению
- */
-function isImage(filePath: string): boolean {
-  const extension = getExtension(filePath);
-  return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.avif'].includes(extension);
-}
-
-/**
- * Определяет, поддерживается ли изображение для обработки с помощью sharp
- */
-function isProcessableImage(filePath: string): boolean {
-  const extension = getExtension(filePath);
-  return ['.jpg', '.jpeg', '.png', '.webp', '.avif'].includes(extension);
-}
-
-/**
- * Сервис CDN для обработки изображений
- */
-export class CdnService {
-  /**
-   * Обрабатывает запрос изображения, оптимизирует и кэширует результат
-   */
-  public async serveImage(req: Request, res: Response): Promise<void> {
-    try {
-      // Получаем путь к файлу из query параметров или из URL
-      const filePath = req.query.path as string || req.params[0];
-      
-      if (!filePath) {
-        res.status(400).json({ error: 'File path is required' });
-        return;
-      }
-      
-      // Формируем полный путь к файлу
-      const fullPath = path.join(process.cwd(), 'uploads', filePath);
-      
-      // Проверяем существование файла
-      if (!fs.existsSync(fullPath)) {
-        res.status(404).json({ error: 'File not found' });
-        return;
-      }
-      
-      // Проверяем, является ли файл изображением
-      if (!isImage(fullPath)) {
-        res.status(400).json({ error: 'Not an image file' });
-        return;
-      }
-      
-      // Получаем параметры изменения размера и формата из запроса
-      const options: ResizeOptions = {
-        width: req.query.width ? parseInt(req.query.width as string) : undefined,
-        height: req.query.height ? parseInt(req.query.height as string) : undefined,
-        format: req.query.format as string | undefined,
-        quality: req.query.quality ? parseInt(req.query.quality as string) : 80
-      };
-      
-      // Проверяем кэш для этой комбинации файла и параметров
-      const optionsHash = generateHash(JSON.stringify({ filePath, options }));
-      const cachePath = path.join(CACHE_DIR, optionsHash);
-      
-      // Если кэш существует, сразу отдаем его
-      if (fs.existsSync(cachePath)) {
-        const stats = fs.statSync(cachePath);
-        const extension = getExtension(fullPath);
-        const mimeType = getMimeType(extension);
-        
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Length', stats.size);
-        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Кэш на 1 год
-        res.setHeader('X-CDN-Cache', 'HIT');
-        
-        fs.createReadStream(cachePath).pipe(res);
-        return;
-      }
-      
-      // Если кэш не найден, обрабатываем изображение
-      if (isProcessableImage(fullPath) && (options.width || options.height || options.format)) {
-        const extension = options.format || getExtension(fullPath).substring(1);
-        const mimeType = getMimeType('.' + extension);
-        
-        let transformer = sharp(fullPath);
-        
-        // Изменение размера, если указаны параметры
-        if (options.width || options.height) {
-          transformer = transformer.resize(options.width, options.height);
-        }
-        
-        // Преобразование формата, если указан
-        if (options.format) {
-          if (options.format === 'jpeg' || options.format === 'jpg') {
-            transformer = transformer.jpeg({ quality: options.quality });
-          } else if (options.format === 'png') {
-            transformer = transformer.png();
-          } else if (options.format === 'webp') {
-            transformer = transformer.webp({ quality: options.quality });
-          } else if (options.format === 'avif') {
-            transformer = transformer.avif({ quality: options.quality });
-          }
-        }
-        
-        // Сохраняем в кэш
-        await transformer.toFile(cachePath);
-        
-        // Отправляем результат
-        const stats = fs.statSync(cachePath);
-        
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Length', stats.size);
-        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Кэш на 1 год
-        res.setHeader('X-CDN-Cache', 'MISS');
-        
-        fs.createReadStream(cachePath).pipe(res);
-      } else {
-        // Если формат не поддерживается для обработки, просто отдаем оригинал
-        const stats = fs.statSync(fullPath);
-        const extension = getExtension(fullPath);
-        const mimeType = getMimeType(extension);
-        
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Length', stats.size);
-        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Кэш на 1 год
-        res.setHeader('X-CDN-Processed', 'false');
-        
-        fs.createReadStream(fullPath).pipe(res);
-      }
-    } catch (error) {
-      console.error('CDN Error:', error);
-      res.status(500).json({ error: 'Error processing image' });
+  // Если URL является относительным и начинается с /
+  if (url.startsWith('/')) {
+    // Если это путь к файлу, загруженному в uploads
+    if (url.startsWith('/uploads/')) {
+      return path.join(process.cwd(), url);
     }
+    // Для других относительных путей
+    return path.join(process.cwd(), 'public', url);
   }
-  
-  /**
-   * Создает URL для CDN с опциональными параметрами обработки
-   */
-  public static createCdnUrl(filePath: string, options: ResizeOptions = {}): string {
-    const baseUrl = '/cdn';
+
+  // Если URL содержит http:// или https:// и указывает на локальный сервер
+  const isLocalUrl = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('0.0.0.0');
+  if ((url.startsWith('http://') || url.startsWith('https://')) && isLocalUrl) {
+    // Извлекаем путь из URL (без домена и протокола)
+    const urlPath = new URL(url).pathname;
+    if (urlPath.startsWith('/uploads/')) {
+      return path.join(process.cwd(), urlPath);
+    }
+    return path.join(process.cwd(), 'public', urlPath);
+  }
+
+  // В других случаях предполагаем, что путь уже является локальным
+  if (fs.existsSync(url)) {
+    return url;
+  }
+
+  // Проверяем, существует ли файл в директории uploads
+  const uploadsPath = path.join(UPLOADS_DIR, getFilenameFromUrl(url));
+  if (fs.existsSync(uploadsPath)) {
+    return uploadsPath;
+  }
+
+  // Если не удалось найти файл, возвращаем путь к placeholder изображению
+  logger.warn(`[CDN] Не удалось найти файл: ${url}, используем placeholder`);
+  return path.join(process.cwd(), 'public', 'placeholder.png');
+}
+
+/**
+ * Получает информацию об оптимизированном изображении
+ * @param imageUrl URL или путь к исходному изображению
+ * @param width Ширина оптимизированного изображения (опционально)
+ * @param height Высота оптимизированного изображения (опционально)
+ * @param quality Качество оптимизированного изображения (1-100, опционально)
+ * @returns Объект с путем к файлу и URL для CDN
+ */
+export function getOptimizedImageInfo(
+  imageUrl: string,
+  width?: number,
+  height?: number,
+  quality: number = 80
+): { filePath: string; cdnUrl: string } {
+  try {
+    // Получаем локальный путь к исходному изображению
+    const localPath = resolveLocalPath(imageUrl);
+    
+    // Получаем имя исходного файла
+    const originalFilename = getFilenameFromUrl(localPath);
+    
+    // Если файл не существует, возвращаем placeholder
+    if (!fs.existsSync(localPath)) {
+      logger.warn(`[CDN] Файл не найден: ${localPath}`);
+      return {
+        filePath: path.join(process.cwd(), 'public', 'placeholder.png'),
+        cdnUrl: '/placeholder.png'
+      };
+    }
+    
+    // Генерируем хеш для создания уникального имени файла
+    const hash = crypto
+      .createHash('md5')
+      .update(`${localPath}_${width || 'auto'}_${height || 'auto'}_${quality}`)
+      .digest('hex')
+      .substring(0, 10);
+    
+    // Определяем расширение исходного файла
+    const ext = path.extname(localPath).toLowerCase();
+    
+    // Формируем имя для оптимизированного файла
+    const optimizedFilename = `${path.basename(localPath, ext)}_${hash}${ext}`;
+    const optimizedPath = path.join(CDN_DIR, optimizedFilename);
+    
+    // Формируем URL для CDN
+    let cdnUrl = `/cdn/image/${optimizedFilename}`;
+    
+    // Добавляем параметры оптимизации в URL, если они указаны
     const params = new URLSearchParams();
+    if (width) params.append('w', width.toString());
+    if (height) params.append('h', height.toString());
+    if (quality !== 80) params.append('q', quality.toString());
     
-    if (options.width) params.append('width', options.width.toString());
-    if (options.height) params.append('height', options.height.toString());
-    if (options.format) params.append('format', options.format);
-    if (options.quality) params.append('quality', options.quality.toString());
+    const queryString = params.toString();
+    if (queryString) {
+      cdnUrl += `?${queryString}`;
+    }
     
-    const queryString = params.toString() ? `?${params.toString()}` : '';
+    // Если оптимизированный файл уже существует, просто возвращаем его информацию
+    if (fs.existsSync(optimizedPath)) {
+      return { filePath: optimizedPath, cdnUrl };
+    }
     
-    // Если путь начинается с "/", удаляем его для корректного формирования URL
-    const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    // Иначе создаем оптимизированную версию
+    let transformer = sharp(localPath);
     
-    return `${baseUrl}/${normalizedPath}${queryString}`;
-  }
-  
-  /**
-   * Очищает кэш для конкретного изображения или всего кэша
-   */
-  public clearCache(imagePath?: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        if (imagePath) {
-          // Очистка кэша для конкретного изображения
-          // Для этого нам нужно найти все файлы, связанные с этим изображением
-          const files = fs.readdirSync(CACHE_DIR);
-          for (const file of files) {
-            if (file.includes(imagePath)) {
-              fs.unlinkSync(path.join(CACHE_DIR, file));
-            }
-          }
-        } else {
-          // Очистка всего кэша
-          if (fs.existsSync(CACHE_DIR)) {
-            const files = fs.readdirSync(CACHE_DIR);
-            for (const file of files) {
-              fs.unlinkSync(path.join(CACHE_DIR, file));
-            }
-          }
-        }
-        resolve();
-      } catch (error) {
-        reject(error);
+    // Применяем изменение размера, если указаны width или height
+    if (width || height) {
+      transformer = transformer.resize(width, height, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      });
+    }
+    
+    // Применяем компрессию в зависимости от формата
+    if (ext === '.jpg' || ext === '.jpeg') {
+      transformer = transformer.jpeg({ quality });
+    } else if (ext === '.png') {
+      transformer = transformer.png({ quality: Math.floor(quality * 0.8) });
+    } else if (ext === '.webp') {
+      transformer = transformer.webp({ quality });
+    } else if (ext === '.avif') {
+      transformer = transformer.avif({ quality });
+    }
+    
+    // Сохраняем оптимизированный файл
+    transformer.toFile(optimizedPath, (err) => {
+      if (err) {
+        logger.error(`[CDN] Ошибка при оптимизации изображения: ${err.message}`);
+      } else {
+        logger.info(`[CDN] Создан оптимизированный файл: ${optimizedPath}`);
       }
     });
+    
+    // Возвращаем информацию об оптимизированном файле
+    return { filePath: optimizedPath, cdnUrl };
+  } catch (error) {
+    logger.error(`[CDN] Ошибка в getOptimizedImageInfo: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    // В случае ошибки возвращаем информацию об оригинальном файле
+    const localPath = resolveLocalPath(imageUrl);
+    return {
+      filePath: localPath,
+      cdnUrl: `/uploads/${getFilenameFromUrl(localPath)}`
+    };
   }
 }
 
 /**
- * Возвращает полный путь к изображению на сервере
- * @param url URL изображения 
- * @returns Полный путь к изображению на диске
+ * Получает путь к оптимизированному изображению для локального использования
+ * @param imageUrl URL или путь к исходному изображению
+ * @param width Ширина оптимизированного изображения (опционально)
+ * @param height Высота оптимизированного изображения (опционально)
+ * @param quality Качество оптимизированного изображения (1-100, опционально)
+ * @returns Полный путь к оптимизированному изображению
  */
-export function getOptimizedImagePath(url: string): string {
-  // Если URL начинается с http, это внешний ресурс - не обрабатываем
-  if (url.startsWith('http')) {
-    throw new Error('External URLs are not supported for getOptimizedImagePath');
-  }
-  
-  // Удаляем параметры запроса и CDN префикс
-  let cleanPath = url.split('?')[0];
-  if (cleanPath.startsWith('/cdn/')) {
-    cleanPath = cleanPath.substring(5);
-  }
-  
-  // Формируем полный путь
-  return path.join(process.cwd(), 'uploads', cleanPath);
+export function getOptimizedImagePath(
+  imageUrl: string,
+  width?: number,
+  height?: number,
+  quality: number = 80
+): string {
+  const { filePath } = getOptimizedImageInfo(imageUrl, width, height, quality);
+  return filePath;
 }
 
-// Создаем и экспортируем экземпляр сервиса
-export const cdnService = new CdnService();
+/**
+ * Получает URL оптимизированного изображения для использования в CDN
+ * @param imageUrl URL или путь к исходному изображению
+ * @param width Ширина оптимизированного изображения (опционально)
+ * @param height Высота оптимизированного изображения (опционально)
+ * @param quality Качество оптимизированного изображения (1-100, опционально)
+ * @returns URL для доступа к оптимизированному изображению через CDN
+ */
+export function getOptimizedImageUrl(
+  imageUrl: string,
+  width?: number,
+  height?: number,
+  quality: number = 80
+): string {
+  const { cdnUrl } = getOptimizedImageInfo(imageUrl, width, height, quality);
+  return cdnUrl;
+}

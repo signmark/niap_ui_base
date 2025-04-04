@@ -1,49 +1,81 @@
-/**
- * Маршруты для CDN - обеспечивают доступ к статическим файлам через CDN с кэшированием и оптимизацией
- */
-
 import express from 'express';
 import path from 'path';
-import { cdnService } from './services/cdn-service';
+import fs from 'fs';
+import { getOptimizedImagePath } from './services/cdn-service';
+import { logger } from './utils/logger';
 
-// Создаем роутер Express для CDN
-const cdnRouter = express.Router();
+const router = express.Router();
 
-// Базовый путь для CDN
-const CDN_BASE_PATH = '/cdn';
+// Базовые директории
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
 
-// Маршрут для обслуживания файлов через CDN (с параметрами оптимизации)
-cdnRouter.get(`${CDN_BASE_PATH}/*`, async (req, res) => {
+// Обработчик для получения изображений через CDN
+router.get('/cdn/image/:filename', (req, res) => {
   try {
-    // Извлекаем путь к файлу из URL
-    const filePath = req.path.substring(CDN_BASE_PATH.length + 1);
+    const { filename } = req.params;
     
-    if (!filePath) {
-      return res.status(400).json({ error: 'File path is required' });
+    // Параметры для изменения размера и качества изображения
+    const width = req.query.w ? parseInt(req.query.w as string, 10) : undefined;
+    const height = req.query.h ? parseInt(req.query.h as string, 10) : undefined;
+    const quality = req.query.q ? parseInt(req.query.q as string, 10) : 80;
+    
+    // Полный путь к исходному файлу
+    const originalPath = path.join(UPLOADS_DIR, filename);
+    
+    // Проверяем существование исходного файла
+    if (!fs.existsSync(originalPath)) {
+      logger.warn(`[CDN] Файл не найден: ${originalPath}`);
+      
+      // Проверяем, существует ли файл в директории публичных статических файлов
+      const publicPath = path.join(PUBLIC_DIR, filename);
+      if (fs.existsSync(publicPath)) {
+        return res.sendFile(publicPath);
+      }
+      
+      // Если файл не найден, возвращаем заглушку
+      return res.sendFile(path.join(PUBLIC_DIR, 'placeholder.png'));
     }
     
-    // Добавляем путь к файлу в параметры запроса
-    req.query.path = filePath;
+    // Получаем путь к оптимизированному изображению
+    const optimizedPath = getOptimizedImagePath(originalPath, width, height, quality);
     
-    // Обрабатываем запрос через CDN сервис
-    await cdnService.serveImage(req, res);
+    // Отправляем файл
+    return res.sendFile(optimizedPath);
   } catch (error) {
-    console.error('CDN Error:', error);
-    res.status(500).json({ error: 'Error serving file from CDN' });
+    logger.error(`[CDN] Ошибка при обработке запроса: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    return res.status(500).send('Ошибка при обработке изображения');
   }
 });
 
-// Маршрут для очистки кэша
-cdnRouter.post(`${CDN_BASE_PATH}/clear-cache`, async (req, res) => {
+// Обработчик для получения любых файлов через оптимизированный CDN
+router.get('/cdn/:filename', (req, res) => {
   try {
-    const imagePath = req.body.path;
-    await cdnService.clearCache(imagePath);
-    res.json({ success: true, message: 'Cache cleared successfully' });
+    const { filename } = req.params;
+    
+    // Полный путь к исходному файлу
+    const originalPath = path.join(UPLOADS_DIR, filename);
+    
+    // Проверяем существование исходного файла
+    if (!fs.existsSync(originalPath)) {
+      logger.warn(`[CDN] Файл не найден: ${originalPath}`);
+      
+      // Проверяем, существует ли файл в директории публичных статических файлов
+      const publicPath = path.join(PUBLIC_DIR, filename);
+      if (fs.existsSync(publicPath)) {
+        return res.sendFile(publicPath);
+      }
+      
+      // Если файл не найден, возвращаем 404
+      return res.status(404).send('Файл не найден');
+    }
+    
+    // Отправляем файл
+    return res.sendFile(originalPath);
   } catch (error) {
-    console.error('CDN Cache Clear Error:', error);
-    res.status(500).json({ error: 'Error clearing CDN cache' });
+    logger.error(`[CDN] Ошибка при обработке запроса: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    return res.status(500).send('Ошибка при обработке файла');
   }
 });
 
-// Экспортируем роутер
-export default cdnRouter;
+export default router;
