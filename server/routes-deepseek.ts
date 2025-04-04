@@ -85,16 +85,31 @@ export function registerDeepSeekRoutes(app: Router) {
         });
       }
       
+      // Определяем, содержит ли текст HTML-теги
+      const containsHtml = /<[^>]+>/.test(text);
+      
       // Формируем сообщения для DeepSeek API
+      let systemMessage = '';
+      let userMessage = '';
+      
+      if (containsHtml) {
+        systemMessage = `Ты опытный редактор текста. Твоя задача - улучшить предоставленный текст согласно инструкциям: ${prompt}
+        
+Важно: текст содержит HTML-форматирование, которое необходимо сохранить.
+Сохраняй все HTML-теги (например, <p>, <strong>, <em>, <ul>, <li> и др.) в твоем ответе.
+Не добавляй новые HTML-теги, если они не нужны для форматирования.
+Сохраняй структуру абзацев и списков.
+Не пиши служебную разметку или блоки кода.`;
+        
+        userMessage = `Вот исходный текст с HTML:\n\n${text}\n\nУлучшенный текст (с сохранением HTML-форматирования):`;
+      } else {
+        systemMessage = `Ты опытный редактор текста. Твоя задача - улучшить предоставленный текст согласно инструкциям: ${prompt}`;
+        userMessage = `Вот исходный текст:\n\n${text}\n\nУлучшенный текст:`;
+      }
+      
       const messages: DeepSeekMessage[] = [
-        { 
-          role: 'system', 
-          content: `Ты опытный редактор текста. Твоя задача - улучшить предоставленный текст согласно инструкциям: ${prompt}` 
-        },
-        { 
-          role: 'user', 
-          content: `Вот исходный текст:\n\n${text}\n\nУлучшенный текст:` 
-        }
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: userMessage }
       ];
       
       // Выбираем модель (или используем дефолтную)
@@ -102,11 +117,26 @@ export function registerDeepSeekRoutes(app: Router) {
       
       log(`Calling DeepSeek with model ${modelToUse}`);
       // Генерируем улучшенный текст
-      const improvedText = await deepseekService.generateText(messages, {
+      let improvedText = await deepseekService.generateText(messages, {
         model: modelToUse,
         temperature: 0.3,
         max_tokens: 4000
       });
+      
+      // Удаляем служебный текст в тройных обратных кавычках (```)
+      improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
+      
+      // Если оригинальный текст содержал HTML, но ответ не содержит, 
+      // попробуем заключить абзацы в теги <p>
+      if (containsHtml && !/<[^>]+>/.test(improvedText)) {
+        log('HTML tags were not preserved in DeepSeek response, attempting to add paragraph tags');
+        improvedText = improvedText
+          .split('\n\n')
+          .map(para => para.trim())
+          .filter(para => para.length > 0)
+          .map(para => `<p>${para}</p>`)
+          .join('\n');
+      }
       
       log('Text improved successfully with DeepSeek, returning response');
       return res.json({

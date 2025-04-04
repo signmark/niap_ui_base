@@ -107,7 +107,23 @@ export class ClaudeService {
     const requestModel = model || this.defaultModel;
     
     try {
-      const contentPrompt = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+      // Определяем, содержит ли текст HTML-теги
+      const containsHtml = /<[^>]+>/.test(text);
+      
+      // Если текст содержит HTML, добавляем специальные инструкции для сохранения форматирования
+      let contentPrompt = '';
+      if (containsHtml) {
+        contentPrompt = `${prompt}\n\n
+Важно: текст содержит HTML-форматирование, которое необходимо сохранить. 
+Сохраняй все HTML-теги (например, <p>, <strong>, <em>, <ul>, <li> и др.) в твоем ответе.
+Не добавляй новые HTML-теги, если они не нужны для форматирования.
+Сохраняй структуру абзацев и списков.
+
+Исходный текст с HTML:\n"""${text}"""\n\nУлучшенный текст (с сохранением HTML-форматирования):`;
+      } else {
+        // Обычный промпт без инструкций по HTML
+        contentPrompt = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+      }
       
       const result = await this.makeRequest({
         model: requestModel,
@@ -125,7 +141,23 @@ export class ClaudeService {
         throw new Error('Claude API returned empty response');
       }
       
-      const improvedText = result.content[0].text.trim();
+      let improvedText = result.content[0].text.trim();
+      
+      // Удаляем служебный текст в тройных обратных кавычках (```)
+      improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
+      
+      // Если оригинальный текст содержал HTML, но ответ не содержит, 
+      // попробуем заключить абзацы в теги <p>
+      if (containsHtml && !/<[^>]+>/.test(improvedText)) {
+        logger.log('HTML tags were not preserved, attempting to add paragraph tags', 'claude');
+        improvedText = improvedText
+          .split('\n\n')
+          .map(para => para.trim())
+          .filter(para => para.length > 0)
+          .map(para => `<p>${para}</p>`)
+          .join('\n');
+      }
+      
       logger.log('Text successfully improved with Claude AI', 'claude');
       return improvedText;
     } catch (error) {
@@ -159,7 +191,11 @@ export class ClaudeService {
         throw new Error('Claude API returned empty response');
       }
       
-      const generatedContent = result.content[0].text.trim();
+      let generatedContent = result.content[0].text.trim();
+      
+      // Удаляем служебный текст в тройных обратных кавычках (```)
+      generatedContent = generatedContent.replace(/```[\s\S]*?```/g, '');
+      
       logger.log('Content successfully generated with Claude AI', 'claude');
       return generatedContent;
     } catch (error) {
