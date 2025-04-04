@@ -11,7 +11,7 @@ export function registerQwenRoutes(app: Router) {
    */
   async function getQwenApiKey(req: Request): Promise<string | null> {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         log('Cannot get Qwen API key: userId is missing in request');
         return null;
@@ -42,7 +42,7 @@ export function registerQwenRoutes(app: Router) {
   router.post('/api/qwen/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model } = req.body;
-      const userId = req.user?.id;
+      const userId = req.userId;
       
       log(`Received improve-text request from user ${userId}`);
       

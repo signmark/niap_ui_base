@@ -11,7 +11,7 @@ export function registerDeepSeekRoutes(app: Router) {
    */
   async function getDeepSeekApiKey(req: Request): Promise<string | null> {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         log('Cannot get DeepSeek API key: userId is missing in request');
         return null;
@@ -55,7 +55,7 @@ export function registerDeepSeekRoutes(app: Router) {
   router.post('/api/deepseek/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model } = req.body;
-      const userId = req.user?.id;
+      const userId = req.userId;
       
       log(`Received improve-text request from user ${userId}`);
       
