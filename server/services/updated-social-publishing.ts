@@ -670,8 +670,13 @@ class SocialPublishingService {
       // Предобработка контента
       const { text, imageUrl } = this.preprocessContent(content);
       
+      // Проверка на пустой текст и установка значения по умолчанию
+      const safeText = text && text.trim() ? text : "📷 Новая публикация";
+      
       // Форматируем текст для Telegram (с поддержкой HTML)
-      const formattedText = this.addHtmlFormatting(text);
+      const formattedText = this.addHtmlFormatting(safeText);
+      
+      console.log(`Отправка в Telegram. Текст: "${safeText.substring(0, 50)}", Изображение: ${!!imageUrl}`);
       
       // Если есть изображение, отправляем с ним, иначе просто текст
       let result;
