@@ -6,6 +6,8 @@ import { pipeline } from 'stream/promises';
 import { createWriteStream } from 'fs';
 import { randomUUID } from 'crypto';
 import { mkdir } from 'fs/promises';
+import * as http from 'http';
+import * as https from 'https';
 
 // Функция для логирования с указанием контекста
 function log(message: string, context: string = 'imgur-uploader') {
@@ -35,7 +37,7 @@ export class ImgurUploaderService {
   }
 
   /**
-   * Загружает изображение из URL на Imgur
+   * Загружает изображение из URL на Imgur, работает только с локальными файлами
    * @param imageUrl URL изображения для загрузки
    * @returns URL загруженного изображения на Imgur или null в случае ошибки
    */
@@ -43,41 +45,44 @@ export class ImgurUploaderService {
     try {
       log(`Загрузка изображения на Imgur из URL: ${imageUrl}`);
       
-      // Скачиваем изображение во временный файл
-      const tempFilePath = path.join(this.tempDir, `${randomUUID()}.jpg`);
+      // Если это не локальный файл, то возвращаем исходный URL
+      if (imageUrl.startsWith('http') && !imageUrl.includes('localhost') && !imageUrl.includes('127.0.0.1')) {
+        log(`URL не является локальным, возвращаем исходный URL: ${imageUrl}`);
+        return imageUrl;
+      }
       
-      try {
-        // Получаем изображение
-        const response = await axios({
-          method: 'GET',
-          url: imageUrl,
-          responseType: 'stream',
-        });
-
-        // Сохраняем изображение во временный файл
-        await pipeline(response.data, createWriteStream(tempFilePath));
-        log(`Изображение скачано во временный файл: ${tempFilePath}`);
-        
-        // Загружаем изображение на Imgur
-        const imgurUrl = await this.uploadImageFromFile(tempFilePath);
-        
-        // Удаляем временный файл
-        fs.unlinkSync(tempFilePath);
-        log(`Временный файл удален: ${tempFilePath}`);
-        
+      // Проверяем, является ли URL локальным файлом
+      if (!imageUrl.startsWith('/') && !imageUrl.startsWith('./')) {
+        log(`URL не является путем к локальному файлу: ${imageUrl}`);
+        return imageUrl;
+      }
+      
+      // Преобразуем относительный путь в абсолютный
+      let filePath = imageUrl;
+      if (imageUrl.startsWith('./')) {
+        filePath = path.join(process.cwd(), imageUrl.substring(2));
+      } else if (!path.isAbsolute(imageUrl)) {
+        filePath = path.join(process.cwd(), imageUrl);
+      }
+      
+      // Проверяем, существует ли файл
+      if (!fs.existsSync(filePath)) {
+        log(`Локальный файл не найден: ${filePath}`);
+        return imageUrl;
+      }
+      
+      // Загружаем изображение на Imgur
+      const imgurUrl = await this.uploadImageFromFile(filePath);
+      if (imgurUrl) {
+        log(`Локальный файл успешно загружен на Imgur: ${imgurUrl}`);
         return imgurUrl;
-      } catch (error) {
-        log(`Ошибка при скачивании изображения: ${error}`);
-        // Удаляем временный файл при ошибке, если он был создан
-        if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
-          log(`Временный файл удален после ошибки: ${tempFilePath}`);
-        }
-        return null;
+      } else {
+        log(`Не удалось загрузить локальный файл на Imgur: ${filePath}`);
+        return imageUrl;
       }
     } catch (error) {
       log(`Ошибка при загрузке изображения на Imgur: ${error}`);
-      return null;
+      return imageUrl; // Возвращаем исходный URL в случае ошибки
     }
   }
 

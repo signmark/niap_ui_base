@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,14 @@ export default function TestImgur() {
   const [telegramChatId, setTelegramChatId] = useState('');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<any[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Загрузка списка изображений при монтировании компонента
+  useEffect(() => {
+    fetchUploadedImages();
+  }, []);
 
   const uploadSingleImage = async () => {
     if (!imageUrl) {
