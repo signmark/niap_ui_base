@@ -37,7 +37,7 @@ export function registerQwenRoutes(app: Router) {
       
       return apiKey;
     } catch (error) {
-      log('Error getting Qwen API key:', error);
+      log('Error getting Qwen API key:', (error as Error).message);
       return null;
     }
   }
@@ -141,7 +141,7 @@ ${text}
         text: improvedText
       });
     } catch (error) {
-      log('Error improving text with Qwen:', error);
+      log('Error improving text with Qwen:', (error as Error).message);
       
       if (error instanceof Error) {
         log(`Error message: ${error.message}`);

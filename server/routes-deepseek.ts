@@ -37,7 +37,7 @@ export function registerDeepSeekRoutes(app: Router) {
       
       return apiKey;
     } catch (error) {
-      log('Error getting DeepSeek API key:', error);
+      log('Error getting DeepSeek API key:', (error as Error).message);
       return null;
     }
   }
@@ -144,7 +144,7 @@ export function registerDeepSeekRoutes(app: Router) {
         text: improvedText
       });
     } catch (error) {
-      log('Error improving text with DeepSeek:', error);
+      log('Error improving text with DeepSeek:', (error as Error).message);
       
       // Более детальное логирование ошибки
       if (error instanceof Error) {
