@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { log } from './vite';
+import { log } from './utils/logger';
 
 // Создаем кэш для хранения токенов авторизации
 interface AuthTokenCache {
@@ -128,6 +128,14 @@ class DirectusApiManager {
       return this.authTokenCache[userId];
     }
     return null;
+  }
+  
+  /**
+   * Возвращает axios инстанс для работы с Directus API
+   * @returns Axios инстанс
+   */
+  getDirectusClient(): AxiosInstance {
+    return this.axiosInstance;
   }
 }
 
