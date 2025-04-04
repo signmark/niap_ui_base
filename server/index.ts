@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import cdnRouter from './routes-cdn';
 import path from 'path';
 
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
@@ -84,6 +85,11 @@ app.use((req, res, next) => {
     const uploadDir = path.join(process.cwd(), 'uploads');
     app.use('/uploads', express.static(uploadDir));
     log(`Static file serving for uploads configured at path: ${uploadDir}`);
+    
+    // Регистрируем CDN маршруты
+    log("Registering CDN routes...");
+    app.use(cdnRouter);
+    log("CDN routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
