@@ -268,10 +268,14 @@ class TelegramPublisher {
       // Добавляем параметры
       formData.append('chat_id', chatId);
       
-      if (caption) {
-        formData.append('caption', caption);
-        formData.append('parse_mode', 'HTML');
-      }
+      // Проверка на пустую подпись и добавление значения по умолчанию
+      const safeCaption = caption && caption.trim() ? caption : "📷 Новая публикация";
+      formData.append('caption', safeCaption);
+      formData.append('parse_mode', 'HTML');
+      
+      // Выводим подробную диагностику
+      this.log(`📝 Отправляемая подпись: "${safeCaption.substring(0, 50)}${safeCaption.length > 50 ? '...' : ''}" (${safeCaption.length} символов)`);
+      
       
       // Добавляем файл
       const fileStream = fs.createReadStream(tempFilePath);
