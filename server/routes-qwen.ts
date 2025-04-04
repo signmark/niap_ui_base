@@ -75,8 +75,30 @@ export function registerQwenRoutes(app: Router) {
       // Используем Qwen сервис с API ключом пользователя
       qwenService.updateApiKey(qwenApiKey);
       
-      // Формируем промпт для Qwen
-      const fullPrompt = `Задача: улучшить предоставленный текст в соответствии с инструкциями.
+      // Определяем, содержит ли текст HTML-теги
+      const containsHtml = /<[^>]+>/.test(text);
+      
+      // Формируем промпт для Qwen в зависимости от наличия HTML
+      let fullPrompt = '';
+      
+      if (containsHtml) {
+        fullPrompt = `Задача: улучшить предоставленный текст в соответствии с инструкциями, сохраняя HTML форматирование.
+Инструкции: ${prompt}
+
+ВАЖНО: текст содержит HTML-форматирование, которое необходимо сохранить.
+Сохраняй все HTML-теги (например, <p>, <strong>, <em>, <ul>, <li> и др.) в твоем ответе.
+Не добавляй новые HTML-теги, если они не нужны для форматирования.
+Сохраняй структуру абзацев и списков.
+Не пиши служебную разметку или блоки кода.
+
+Исходный текст с HTML:
+"""
+${text}
+"""
+
+Улучшенный текст (с сохранением HTML-форматирования):`;
+      } else {
+        fullPrompt = `Задача: улучшить предоставленный текст в соответствии с инструкциями.
 Инструкции: ${prompt}
 
 Исходный текст:
@@ -85,17 +107,33 @@ ${text}
 """
 
 Улучшенный текст:`;
+      }
       
       // Выбираем модель (или используем дефолтную)
       const modelToUse = model || 'qwen-max';
       
       log(`Calling Qwen with model ${modelToUse}`);
       // Генерируем улучшенный текст
-      const improvedText = await qwenService.generateText(fullPrompt, {
+      let improvedText = await qwenService.generateText(fullPrompt, {
         model: modelToUse,
         temperature: 0.3,
         maxTokens: 4000
       });
+      
+      // Удаляем служебный текст в тройных обратных кавычках (```)
+      improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
+      
+      // Если оригинальный текст содержал HTML, но ответ не содержит, 
+      // попробуем заключить абзацы в теги <p>
+      if (containsHtml && !/<[^>]+>/.test(improvedText)) {
+        log('HTML tags were not preserved in Qwen response, attempting to add paragraph tags');
+        improvedText = improvedText
+          .split('\n\n')
+          .map(para => para.trim())
+          .filter(para => para.length > 0)
+          .map(para => `<p>${para}</p>`)
+          .join('\n');
+      }
       
       log('Text improved successfully with Qwen, returning response');
       return res.json({
