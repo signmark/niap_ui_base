@@ -1,88 +1,58 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { getOptimizedImagePath } from './services/cdn-service';
+import { cdnService } from './services/cdn-service';
 import { logger } from './utils/logger';
 
 const router = express.Router();
 
-// Базовые директории
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
-const CDN_DIR = path.join(process.cwd(), 'uploads', 'cdn');
-const PUBLIC_DIR = path.join(process.cwd(), 'public');
-
-// Обработчик для получения изображений через CDN
-router.get('/cdn/image/:filename', (req, res) => {
+// Маршрут для CDN и оптимизированных изображений
+router.get('/cdn/:filePath(*)', async (req, res) => {
   try {
-    const { filename } = req.params;
+    // Получаем путь к файлу из параметров запроса
+    const filePath = req.params.filePath;
     
-    // Параметры для изменения размера и качества изображения
-    const width = req.query.w ? parseInt(req.query.w as string, 10) : undefined;
-    const height = req.query.h ? parseInt(req.query.h as string, 10) : undefined;
-    const quality = req.query.q ? parseInt(req.query.q as string, 10) : 80;
-    
-    // Проверяем, это оптимизированный файл или оригинальный
-    let filePath;
-    
-    // Если файл уже находится в CDN_DIR
-    const cdnFilePath = path.join(CDN_DIR, filename);
-    if (fs.existsSync(cdnFilePath)) {
-      filePath = cdnFilePath;
-    } else {
-      // Если это оригинальный файл в UPLOADS_DIR
-      const originalPath = path.join(UPLOADS_DIR, filename);
-      if (fs.existsSync(originalPath)) {
-        // Оптимизируем изображение
-        filePath = getOptimizedImagePath(originalPath, width, height, quality);
-      } else {
-        logger.warn(`[CDN] Файл не найден: ${originalPath}`);
-        
-        // Проверяем, существует ли файл в директории публичных статических файлов
-        const publicPath = path.join(PUBLIC_DIR, filename);
-        if (fs.existsSync(publicPath)) {
-          return res.sendFile(publicPath);
-        }
-        
-        // Если файл не найден, возвращаем заглушку
-        return res.sendFile(path.join(PUBLIC_DIR, 'placeholder.png'));
-      }
+    if (!filePath) {
+      logger.warn('[CDN] Empty file path requested');
+      return res.status(400).json({ error: 'File path is required' });
     }
     
-    // Отправляем файл
-    return res.sendFile(filePath);
-  } catch (error) {
-    logger.error(`[CDN] Ошибка при обработке запроса: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-    return res.status(500).send('Ошибка при обработке изображения');
-  }
-});
-
-// Обработчик для получения любых файлов через оптимизированный CDN
-router.get('/cdn/:filename', (req, res) => {
-  try {
-    const { filename } = req.params;
+    // Получаем параметры запроса для оптимизации изображения
+    const width = req.query.width ? parseInt(req.query.width as string, 10) : undefined;
+    const height = req.query.height ? parseInt(req.query.height as string, 10) : undefined;
+    const quality = req.query.quality ? parseInt(req.query.quality as string, 10) : undefined;
+    const format = req.query.format as string | undefined;
     
-    // Полный путь к исходному файлу
-    const originalPath = path.join(UPLOADS_DIR, filename);
+    // Путь к файлу заглушки для случая ошибки
+    const placeholderPath = path.join(process.cwd(), 'uploads', 'placeholder', 'placeholder.png');
     
-    // Проверяем существование исходного файла
-    if (!fs.existsSync(originalPath)) {
-      logger.warn(`[CDN] Файл не найден: ${originalPath}`);
+    // Обрабатываем изображение
+    const processedImagePath = await cdnService.processImage(filePath, {
+      width,
+      height,
+      quality,
+      format
+    });
+    
+    if (!processedImagePath) {
+      logger.warn(`[CDN] Failed to process image: ${filePath}`);
       
-      // Проверяем, существует ли файл в директории публичных статических файлов
-      const publicPath = path.join(PUBLIC_DIR, filename);
-      if (fs.existsSync(publicPath)) {
-        return res.sendFile(publicPath);
+      // Если файл заглушки существует, отправляем его
+      if (fs.existsSync(placeholderPath)) {
+        return res.sendFile(placeholderPath);
       }
       
-      // Если файл не найден, возвращаем 404
-      return res.status(404).send('Файл не найден');
+      return res.status(404).json({ error: 'Image not found' });
     }
     
+    // Получаем полный путь к обработанному изображению
+    const fullPath = path.join(process.cwd(), processedImagePath);
+    
     // Отправляем файл
-    return res.sendFile(originalPath);
+    res.sendFile(fullPath);
   } catch (error) {
-    logger.error(`[CDN] Ошибка при обработке запроса: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-    return res.status(500).send('Ошибка при обработке файла');
+    logger.error(`[CDN] Error serving CDN content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    res.status(500).json({ error: 'Error serving CDN content' });
   }
 });
 
