@@ -17,8 +17,14 @@ export function registerQwenRoutes(app: Router) {
         return null;
       }
 
+      // Извлекаем токен из заголовка Authorization
+      const authHeader = req.headers.authorization;
+      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+      
       log(`Getting Qwen API key for user ${userId}`);
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen');
+      log(`Auth token present: ${!!authToken}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       
       if (apiKey) {
         log(`Successfully retrieved Qwen API key for user ${userId} (length: ${apiKey.length})`);
