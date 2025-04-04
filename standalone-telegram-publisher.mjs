@@ -284,6 +284,20 @@ class TelegramPublisher {
       const baseUrl = 'https://api.telegram.org/bot';
       this.log(`🔍 Полный URL для запроса: ${baseUrl}${token.substring(0, 8)}...}/sendPhoto с chat_id=${chatId}`);
       
+      // Логируем детали запроса и структуру FormData
+      const formDataEntries = [];
+      formData.getBuffer().toString().split('\r\n').forEach(line => {
+        if (line && !line.includes('Content-Type: image/') && !line.includes('filename=')) {
+          formDataEntries.push(line);
+        }
+      });
+      console.log('==== ОТПРАВЛЯЕМЫЙ ЗАПРОС В TELEGRAM ====');
+      console.log(`URL: ${baseUrl}${token.substring(0, 8)}...}/sendPhoto`);
+      console.log(`Chat ID: ${chatId} (тип: ${typeof chatId})`); 
+      console.log(`Заголовки: ${JSON.stringify(formData.getHeaders(), null, 2)}`);
+      console.log(`Данные FormData: ${formDataEntries.join('\n')}`);
+      console.log('=======================================');
+      
       const response = await axios.post(`${baseUrl}${token}/sendPhoto`, formData, {
         headers: {
           ...formData.getHeaders(),
