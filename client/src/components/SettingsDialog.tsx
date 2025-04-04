@@ -170,6 +170,59 @@ export function SettingsDialog() {
         }
       }
       
+      // Для Claude API используем специальный эндпоинт проверки
+      if (keyType === 'claude') {
+        try {
+          // Используем эндпоинт тестирования ключа Claude
+          const response = await api.post('/api/claude/test-api-key', {
+            apiKey: keyValue
+          });
+          
+          if (response.data.success && response.data.isValid) {
+            setTestingState({ 
+              status: 'success', 
+              message: 'API ключ Claude работает' 
+            });
+            toast({
+              title: "Успешно",
+              description: "API ключ Claude работает корректно"
+            });
+          } else {
+            setTestingState({ 
+              status: 'error', 
+              message: response.data.error || 'Недействительный API ключ Claude'
+            });
+            toast({
+              variant: "destructive",
+              title: "Ошибка API ключа",
+              description: response.data.error || 'API ключ Claude не работает'
+            });
+          }
+          return;
+        } catch (err: any) {
+          console.error('Ошибка при тестировании Claude ключа:', err);
+          
+          let errorMessage = 'Ошибка при проверке API ключа Claude';
+          if (err.response && err.response.data && err.response.data.error) {
+            errorMessage = err.response.data.error;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
+          setTestingState({ 
+            status: 'error', 
+            message: errorMessage
+          });
+          
+          toast({
+            variant: "destructive",
+            title: "Ошибка проверки",
+            description: errorMessage
+          });
+          return;
+        }
+      }
+      
       // Для остальных ключей просто сообщаем об успешном сохранении
       const serviceNames = {
         perplexity: 'Perplexity',
