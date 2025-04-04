@@ -12,6 +12,7 @@ import {
   CalendarIcon, XCircle, Filter, Ban, CheckCircle
 } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
+import { getCdnUrl, getImageThumbnail, getOptimizedImage } from "@/lib/cdnHelper";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -2357,7 +2358,7 @@ export default function ContentPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
-                  src={previewContent.imageUrl}
+                  src={getOptimizedImage(previewContent.imageUrl)}
                   alt={previewContent?.title || "Content Image"}
                   className="rounded-md max-h-[400px] max-w-full object-contain mx-auto"
                   onError={(e) => {
