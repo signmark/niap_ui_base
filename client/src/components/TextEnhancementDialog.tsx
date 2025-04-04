@@ -193,10 +193,16 @@ export function TextEnhancementDialog({
     },
     onSuccess: (data) => {
       setEnhancedText(data);
+      
+      // Показываем уведомление об успешном улучшении
       toast({
         title: "Готово!",
-        description: "Текст успешно улучшен",
+        description: "Текст успешно улучшен и применен в редакторе",
       });
+      
+      // Сразу же сохраняем улучшенный текст и закрываем диалог
+      onSave(data);
+      onOpenChange(false);
     },
     onError: (error: any) => {
       // Проверяем, нужен ли API ключ
@@ -331,57 +337,62 @@ export function TextEnhancementDialog({
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="original-text" className="mb-2 block">Исходный текст</Label>
-                <Textarea
-                  id="original-text"
-                  placeholder="Введите текст для улучшения"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className="min-h-[200px]"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="enhanced-text" className="mb-2 block">Улучшенный текст</Label>
-                <Textarea
-                  id="enhanced-text"
-                  placeholder="Здесь появится улучшенный текст"
-                  value={enhancedText}
-                  onChange={(e) => setEnhancedText(e.target.value)}
-                  className="min-h-[200px]"
-                />
-              </div>
+            {/* Скрытые текстовые поля - мы скрываем их от пользователя, но они все еще используются для хранения данных */}
+            <div className="hidden">
+              <Textarea
+                id="original-text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <Textarea
+                id="enhanced-text"
+                value={enhancedText}
+                onChange={(e) => setEnhancedText(e.target.value)}
+              />
             </div>
             
+            {/* Индикатор загрузки во время обработки */}
+            {isPending && (
+              <div className="my-4 flex flex-col items-center justify-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="text-sm font-medium">Улучшаем текст...</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Это может занять некоторое время в зависимости от размера текста и выбранной модели
+                </div>
+              </div>
+            )}
+            
             <div className="flex justify-between pt-4">
-              <Button
-                type="button"
-                variant="default"
-                onClick={() => improveText()}
-                disabled={isPending || !text?.trim()}
-              >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Улучшить текст
-              </Button>
-              
-              <div className="space-x-2">
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">
-                    Отмена
-                  </Button>
-                </DialogClose>
-                
+              {!isPending && !enhancedText?.trim() ? (
                 <Button
                   type="button"
                   variant="default"
-                  onClick={handleSave}
-                  disabled={!enhancedText?.trim()}
+                  onClick={() => improveText()}
+                  disabled={isPending || !text?.trim()}
+                  className="w-full"
                 >
-                  Использовать текст
+                  Улучшить и применить текст
                 </Button>
-              </div>
+              ) : (
+                <div className="flex justify-between w-full">
+                  <DialogClose asChild>
+                    <Button variant="outline" type="button">
+                      Отмена
+                    </Button>
+                  </DialogClose>
+                  
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={handleSave}
+                    disabled={!enhancedText?.trim() || isPending}
+                  >
+                    Использовать улучшенный текст
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}

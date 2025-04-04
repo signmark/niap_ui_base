@@ -447,9 +447,9 @@ export default function RichTextEditor({
       {/* Text Enhancement Dialog */}
       <TextEnhancementDialog
         open={isTextEnhancementOpen}
-        onClose={() => setIsTextEnhancementOpen(false)}
-        originalText={editor.getHTML()}
-        onApply={(enhancedText) => {
+        onOpenChange={setIsTextEnhancementOpen}
+        initialText={editor.getHTML()}
+        onSave={(enhancedText) => {
           editor.commands.setContent(enhancedText);
           onChange(enhancedText);
         }}
