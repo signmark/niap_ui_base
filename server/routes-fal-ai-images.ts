@@ -1,7 +1,6 @@
 import { Express, Request, Response } from 'express';
 import { log } from './vite';
 import { falAiUniversalService } from './services/fal-ai-universal';
-import { getAuthTokenFromRequest } from './utils/auth';
 
 /**
  * Регистрирует универсальный интерфейс для работы с различными моделями генерации изображений FAL.AI
