@@ -6,6 +6,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { mkdir } from 'fs/promises';
+import axios from 'axios';
+import http from 'http';
+import https from 'https';
 
 // Настройка Multer для загрузки файлов
 const uploadsDir = path.join(process.cwd(), 'uploads', 'images');
@@ -325,6 +328,48 @@ export function registerImgurRoutes(router: Router) {
         success: false,
         error: 'Файл не найден'
       });
+    }
+  });
+  
+  // Прокси для изображений с Imgur и других сервисов
+  router.get('/api/proxy-image', async (req, res) => {
+    try {
+      const imageUrl = req.query.url as string;
+      
+      if (!imageUrl) {
+        return res.status(400).send('URL изображения не указан');
+      }
+      
+      console.log(`Проксирование изображения: ${imageUrl}`);
+      
+      // Создаем HTTP или HTTPS клиент в зависимости от протокола URL
+      const isHttps = imageUrl.startsWith('https://');
+      const agent = isHttps ? https : http;
+      
+      try {
+        // Получаем изображение как поток
+        const response = await axios({
+          method: 'GET',
+          url: imageUrl,
+          responseType: 'stream',
+          timeout: 10000, // 10 секунд таймаут
+          maxContentLength: 10 * 1024 * 1024, // Максимальный размер 10MB
+        });
+        
+        // Устанавливаем заголовки ответа
+        res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400'); // Кэшировать на 1 день
+        res.set('Access-Control-Allow-Origin', '*'); // Разрешаем доступ с любого домена
+        
+        // Отправляем изображение клиенту
+        response.data.pipe(res);
+      } catch (error) {
+        console.error(`Ошибка при проксировании изображения: ${error}`);
+        res.status(500).send('Не удалось загрузить изображение');
+      }
+    } catch (error) {
+      console.error(`Ошибка в маршруте прокси-изображения: ${error}`);
+      res.status(500).send('Ошибка сервера при загрузке изображения');
     }
   });
   
