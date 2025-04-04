@@ -5,6 +5,7 @@ import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerQwenRoutes } from "./routes-qwen";
+import { registerImgurRoutes } from "./routes-imgur";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
@@ -147,6 +148,11 @@ app.use((req, res, next) => {
     log("Registering FAL.AI Universal Image Generation routes...");
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
+    
+    // Регистрируем маршруты для Imgur Uploader
+    log("Registering Imgur Uploader routes...");
+    registerImgurRoutes(app);
+    log("Imgur Uploader routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");

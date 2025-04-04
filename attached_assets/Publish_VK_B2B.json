@@ -1,0 +1,846 @@
+{
+  "name": "Publish VK B2B",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news",
+          "mode": "list",
+          "cachedResultName": "news"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "guid",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "96b4a485-14b6-4c4f-9f0e-760c4ae9bc5b",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        700,
+        440
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "OGLaL0xoD8bs2EJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-4o-mini-2024-07-18\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Достань ссылку на новость с номером {{ $json.body.id }}. Ответь только ссылкой без лишних знаков и символов. Ссылку дай в точности как нашел.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": {{ JSON.stringify($json.body.list) }}\n      }\n    ]\n  } ",
+        "options": {}
+      },
+      "id": "d4dc0221-f443-4582-9b98-3f09594b803b",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=",
+        "options": {}
+      },
+      "id": "6f17ceed-a697-4c91-8be4-2b0b14475bca",
+      "name": "Download Photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.vk.com/method/photos.saveWallPhoto",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=server",
+              "value": "={{ $json.server }}"
+            },
+            {
+              "name": "photo",
+              "value": "={{ $json.photo }}"
+            },
+            {
+              "name": "hash",
+              "value": "={{ $json.hash }}"
+            },
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            },
+            {
+              "name": "group_id",
+              "value": "48657164"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            },
+            {
+              "name": "from_group",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "582526ba-3400-4bbf-ab18-f382ace3e504",
+      "name": "saveWallPhoto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2140,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('getWallUploadServer').first().json.response.upload_url }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "photo",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "group_id",
+              "value": "48657164"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c001b167-b369-4030-a539-287601ec5326",
+      "name": "Upload photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.vk.com/method/wall.createComment",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=owner_id",
+              "value": "=-48657164"
+            },
+            {
+              "name": "attachments",
+              "value": "=photo519796265_457239022_9f6fbcc2d2e4d066cc"
+            },
+            {
+              "name": "access_token",
+              "value": "vk1.a.K5FGOU1sGP-IhxvK06pYs-blV_OyKVBNS6eVejBHrQGAVaBI4T6FpKrShOO4o7P7wdNYIRVg7pIg-h9BYBGVvm-RjK24J2mNAsh4P-TXvSQgGBvu6xDa5U-O5dyWWb6_1j4CbWEc7CzE7aWW5XoGI8OjRdhdHNdUvdOduO7f9CnpfYNE6dGK5WIi1GW9m_8DfW4E5iu0FcPGLFsw6v6J0w"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            },
+            {
+              "name": "post_id",
+              "value": "={{ $('Make Post').first().json.response.post_id }}"
+            },
+            {
+              "name": "message",
+              "value": "Ну круто,  а чё?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e902106-d7b7-4031-931f-8bf6adb64d9b",
+      "name": "createComment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.vk.com/method/photos.getWallUploadServer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            },
+            {
+              "name": "user_id",
+              "value": "48657164"
+            },
+            {
+              "name": "group_id",
+              "value": "48657164"
+            },
+            {
+              "name": "from_group",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b719e891-d69b-4f2f-8243-b2866b7339f1",
+      "name": "getWallUploadServer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.vk.com/method/wall.post",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=server",
+              "value": "={{ $json.server }}"
+            },
+            {
+              "name": "photo",
+              "value": "={{ $json.photo }}"
+            },
+            {
+              "name": "hash",
+              "value": "={{ $json.hash }}"
+            },
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            },
+            {
+              "name": "group_id",
+              "value": "48657164"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54486dae-fc03-4887-a782-9f295183b1cf",
+      "name": "saveWallPhoto1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Пример кода для ноды Code в n8n, которая преобразует HTML-контент в простой текст, поддерживаемый ВКонтакте\n\nconst convertContentToVkFormat = (content) => {\n  if (typeof content !== 'string') {\n    return content;\n  }\n  // Убираем все HTML-теги, кроме ссылок\n  content = content.replace(/<(?!a\\s|\\/a>)[^>]+>/g, '');\n  \n  // Заменяем ссылки на формат текст (url)\n  content = content.replace(/<a href=\"(.*?)\".*?>(.*?)<\\/a>/gs, '$2 ($1)');\n\n  return content;\n};\n\n// Получаем данные из ноды Postgres\nconst items = $('Postgres').all();\nconst results = items.map(item => {\n  const newItem = { ...item.json };\n  newItem.content = convertContentToVkFormat(newItem.content);\n  return { json: newItem };\n});\n\nreturn results;\n"
+      },
+      "id": "59fe6ad2-a0a1-4bbe-87f6-566c2b531bd1",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://i.imgur.com/7FaBFHC.jpeg",
+        "options": {}
+      },
+      "id": "28411faa-2566-4a76-801b-5452f59a56f6",
+      "name": "Download Photo2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Postgres').item.json.image_gen_b2b || $('Postgres').item.json.image }}",
+        "responseFormat": "file",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Accept",
+              "value": "image/jpeg"
+            }
+          ]
+        }
+      },
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        300
+      ],
+      "id": "a4edeba5-06c7-405a-8618-fbd0d8c52d09"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vk.com/method/wall.post",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "owner_id",
+              "value": "-227978705"
+            },
+            {
+              "name": "from_group",
+              "value": "1"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.vk_b2b }}"
+            },
+            {
+              "name": "attachments",
+              "value": "=photo{{ $('saveWallPhoto').item.json.response[0].owner_id }}_{{ $('saveWallPhoto').item.json.response[0].id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "561dcf47-b640-4064-a269-4f51d2b9e741",
+      "name": "Make Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Draft",
+        "height": 429.61583236321314,
+        "width": 970.6169965075671
+      },
+      "id": "4e4e22cd-cabc-491d-8aab-96bc4596f757",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').first().json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').first().json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=n8n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "99cfd884-0fa5-417d-aae7-6a70226538c7",
+      "name": "SendToSalebot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "81459a4b-a573-44f9-9d81-d3edfb6bdfd2",
+              "leftValue": "={{ $json.vk_b2b }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a255d3ab-45c2-43fe-96dc-3ab30eb1a4cf",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').first().json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').first().json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=rewrite"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "16ce99a1-324e-4a0c-b60d-9ee405a6b67f",
+      "name": "Send to Rewrite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Postgres').item.json.image_gen || $('Postgres').item.json.image }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "=image_gen"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "90f9d0bc-41ce-475a-bfc2-9db765d6115a",
+                    "leftValue": "={{ $('Postgres').item.json.image_gen }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No image_gen"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1dcf94f4-1c1e-47e3-bdae-950c2a729970",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vk.com/method/wall.post",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "vk1.a.H3FHEaxpNljE8LD0Yr3jjcboyHSDq-nsmqN2Z3NRJMrx5fjvwhsjfUwDl1eo7mxPW--Z-XTCa7i-1XlwAGznRzjZxpor-f7EFt_Mmx1ur8xxSh_ZliPuMuA5KfuwXNYOXv1V9EKhE30kaAdqNdMB_109aLI4KRjCqzQuY5L43fNMW8qeiHtEggAWrSiS40QqrFMleormTGWTokRBUMoNvw"
+            },
+            {
+              "name": "v",
+              "value": "5.131"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $('Postgres').item.json.vk_b2b }}"
+            },
+            {
+              "name": "owner_id",
+              "value": "-227978705"
+            },
+            {
+              "name": "from_group",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "db8b8a5f-c1e0-446a-971c-ae896a751ee7",
+      "name": "Make no Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "728eb580-6978-4bc4-bb25-eff5091a16bf",
+        "options": {}
+      },
+      "id": "25de6e3f-0dde-4e24-95ae-e729dfdf69e0",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        440
+      ],
+      "webhookId": "728eb580-6978-4bc4-bb25-eff5091a16bf"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем HTML списка новостей напрямую из ноды Webhook\nconst listHtml = $node[\"Webhook\"].json.body.list;\n\n// Извлекаем номер новости из ID в теле Webhook\nconst newsNumber = parseInt($node[\"Webhook\"].json.body.id, 10); // Преобразуем в число, если rawId существует\n\n// Регулярное выражение для поиска URL новости с данным номером\nconst regex = new RegExp(`<strong>\\\\s*${newsNumber}\\\\.\\\\s*<a href=\"([^\"]+)\"`, 'i');\n\n// Ищем URL новости с данным номером\nconst match = listHtml.match(regex);\nconst newsUrl = match ? match[1] : 'URL новости не найден';\n\n// Возвращаем только URL новости\nreturn [\n  {\n    json: {\n      url: newsUrl,\n      id: newsNumber\n    }\n  }\n];\n"
+      },
+      "id": "bb27d4eb-c0b8-4d27-8be5-ff6d4b0fc81c",
+      "name": "Get GUID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        440
+      ]
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.api-ai.net",
+            "user-agent": "python-requests/2.31.0",
+            "content-length": "8861",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate",
+            "content-type": "application/json",
+            "x-forwarded-for": "158.160.42.134",
+            "x-forwarded-host": "n8n.api-ai.net",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "318b0a7e186c",
+            "x-real-ip": "158.160.42.134"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "api_key": "ed09ac5a0f2c095a9d124faa32e33da7",
+            "client_id": "592123039",
+            "chat_id": "276351686",
+            "list": "<h2>Список новостей для рерайта</h2>\n<table style=\"border-collapse:collapse; width:100%;\">\n<tr><td style=\"padding: 10px;\">\n        <strong>1. <a href=\"https://larta.com/ru/news/larta-glass-svela-tri-steklozavoda-v-edinuyu-sistemu2024\">Larta Glass из ГК ФСК свела три стеклозавода в единую систему</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        3 июня 2024 года\nРостов-на-Дону. 3 июня. ИНТЕРФАКС - ГК Larta Glass, входящая в ГК ФСК, завершила основной этап интеграции трех стекольных заводов группы в единую экосистему, сообщила \"Интерфаксу\" ген...<br>\n        <img src=\"https://static.tildacdn.com/tild3962-3632-4930-a235-346661316161/PX7R6573_1.jpg\" alt=\"Larta Glass из ГК ФСК свела три стеклозавода в единую систему\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>2. <a href=\"https://larta.com/ru/news/larta-glass-iz-gkfsk-v-2024g-rasshirit-assortiment\">Larta Glass из ГК ФСК в 2024г расширит ассортимент импортозамещающей продукции</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        4 июня 2024 года\nРостов-на-Дону. 4 июня. ИНТЕРФАКС - Стекольные заводы Larta Glass, входящие в ГК ФСК, в 2024 году планируют расширить ассортимент импортозамещающей продукции, сообщила \"Интерфаксу\" ге...<br>\n        <img src=\"https://static.tildacdn.com/tild6437-6364-4465-a534-373135653662/ID-7458.png\" alt=\"Larta Glass из ГК ФСК в 2024г расширит ассортимент импортозамещающей продукции\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>3. <a href=\"https://larta.com/ru/news/larta-glass-zapuskaet-linejku-produktov-na-prosvetlennom-stekle-2024\">Larta Glass запускает новую линейку продуктов на базе просветленного стекла для архитектурных и интерьерных решений</a></strong><br>\n        <strong>Современные технологии остекления</strong> и <strong>50%</strong><br>\n        13 февраля 2024 года\nLarta Glass, один из крупнейших производителей стекла в России, представляет новую линейку продуктов на базе просветленного стекла Larta UltraClear для архитектурных и интерьерных...<br>\n        <img src=\"https://i.ibb.co/0BK4mHL/ultra.png\" alt=\"Larta Glass запускает новую линейку продуктов на базе просветленного стекла для архитектурных и интерьерных решений\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>4. <a href=\"https://larta.com/ru/news/portfolio-produktov-larta-glass-15012024\">Портфолио продуктов Larta Glass</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        15 января 2024 года\nУважаемые коллеги и партнеры!Информируем вас об актуальном портфолио продуктов, производимых на заводах группы компаний Larta Glass.Если у вас возникнут вопросы, обращайтесь к терр...<br>\n        <img src=\"https://static.tildacdn.com/tild3062-6231-4965-b438-643862316666/IMG_9407_1690px.jpg\" alt=\"Портфолио продуктов Larta Glass\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>5. <a href=\"https://larta.com/ru/news/izmeneniya-v-portfolio-produktov-larta-glass-15012024\">Изменения в портфолио продуктов Larta Glass в январе 2024 года</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        15 января 2024 года\nУважаемые коллеги и партнеры!C 15 января 2024 года в портфолио продуктов на заводах группы компаний Larta Glass произойдут изменения.Эти изменения направлены на оптимизацию и унифи...<br>\n        <img src=\"https://static.tildacdn.com/tild3566-6132-4939-b465-393733303030/DSC_6739_16-9.png\" alt=\"Изменения в портфолио продуктов Larta Glass в январе 2024 года\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n</table>\n",
+            "id": "3",
+            "rewrite": "news",
+            "old": "Список новостей для рерайта:\n\n1. <strong><a href=\"https://larta.com/ru/news/larta-glass-svela-tri-steklozavoda-v-edinuyu-sistemu2024\">Larta Glass из ГК ФСК свела три стеклозавода в единую систему</a></strong> (<strong>Без темы</strong> и <strong>0%</strong>)\n<i>3 июня 2024 года\nРостов-на-Дону. 3 июня. ИНТЕРФАКС - ГК Larta Glass, входящая в ГК ФСК, завершила основной этап интеграции трех стекольных заводов группы в единую экосистему, сообщила \"Интерфаксу\" ген...</i>\n\n2. <strong><a href=\"https://larta.com/ru/news/larta-glass-iz-gkfsk-v-2024g-rasshirit-assortiment\">Larta Glass из ГК ФСК в 2024г расширит ассортимент импортозамещающей продукции</a></strong> (<strong>Без темы</strong> и <strong>0%</strong>)\n<i>4 июня 2024 года\nРостов-на-Дону. 4 июня. ИНТЕРФАКС - Стекольные заводы Larta Glass, входящие в ГК ФСК, в 2024 году планируют расширить ассортимент импортозамещающей продукции, сообщила \"Интерфаксу\" ге...</i>\n\n3. <strong><a href=\"https://larta.com/ru/news/larta-glass-zapuskaet-linejku-produktov-na-prosvetlennom-stekle-2024\">Larta Glass запускает новую линейку продуктов на базе просветленного стекла для архитектурных и интерьерных решений</a></strong> (<strong>Современные технологии остекления</strong> и <strong>50%</strong>)\n<i>13 февраля 2024 года\nLarta Glass, один из крупнейших производителей стекла в России, представляет новую линейку продуктов на базе просветленного стекла Larta UltraClear для архитектурных и интерьерных...</i>\n\n4. <strong><a href=\"https://larta.com/ru/news/portfolio-produktov-larta-glass-15012024\">Портфолио продуктов Larta Glass</a></strong> (<strong>Без темы</strong> и <strong>0%</strong>)\n<i>15 января 2024 года\nУважаемые коллеги и партнеры!Информируем вас об актуальном портфолио продуктов, производимых на заводах группы компаний Larta Glass.Если у вас возникнут вопросы, обращайтесь к терр...</i>\n\n5. <strong><a href=\"https://larta.com/ru/news/izmeneniya-v-portfolio-produktov-larta-glass-15012024\">Изменения в портфолио продуктов Larta Glass в январе 2024 года</a></strong> (<strong>Без темы</strong> и <strong>0%</strong>)\n<i>15 января 2024 года\nУважаемые коллеги и партнеры!C 15 января 2024 года в портфолио продуктов на заводах группы компаний Larta Glass произойдут изменения.Эти изменения направлены на оптимизацию и унифи...</i>\n\n",
+            "format": "format"
+          },
+          "webhookUrl": "https://n8n.api-ai.net/webhook/728eb580-6978-4bc4-bb25-eff5091a16bf",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Photo": {
+      "main": [
+        [
+          {
+            "node": "Download Photo2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "saveWallPhoto": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload photo": {
+      "main": [
+        [
+          {
+            "node": "saveWallPhoto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getWallUploadServer": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Make Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Upload photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Post": {
+      "main": [
+        [
+          {
+            "node": "SendToSalebot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "getWallUploadServer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Rewrite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Make no Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get GUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get GUID": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "318f8e06-51b2-4384-8b52-c998fb0ba7a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "332f4e2842ac35bdf92bcf45820374737b808cfde08870402695ef84706bff04"
+  },
+  "id": "vA0McUDBVlN6yrFN",
+  "tags": []
+}

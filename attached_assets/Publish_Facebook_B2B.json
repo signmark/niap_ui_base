@@ -1,0 +1,413 @@
+{
+  "name": "Publish Facebook B2B",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-4o-mini-2024-07-18\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Достань ссылку на новость с номером {{ $json.body.id }}. Ответь только ссылкой без лишних знаков и символов. Ссылку дай в точности как нашел.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": {{ JSON.stringify($json.body.list) }}\n      }\n    ]\n  } ",
+        "options": {}
+      },
+      "id": "cdd09660-f6bc-4625-bd63-0603bdfddeca",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').first().json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').first().json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=n8n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8f75c497-f384-483e-8dae-84a33416d299",
+      "name": "SendToSalebot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "483710c7-4951-456d-a7e4-24e01649e6e4",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v14.0/oauth/access_token",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "fb_exchange_token"
+            },
+            {
+              "name": "client_id",
+              "value": "3949244088688194"
+            },
+            {
+              "name": "client_secret",
+              "value": "9ab587c37b0f1d2c2633e32433038397"
+            },
+            {
+              "name": "fb_exchange_token",
+              "value": "EAA4H0QsJnkIBO9hA3XJCfFwLq4ysZAgkkUEEBvLEh4BeTrI1CPDT6faP1D9EwbwYRs5Jex50joDGnPT3cS2jegt7Rq1fhRgPiCIzvPZBH80ZBCbCCczrXPli5iW8QHbf8lRfC9toRqZBVaZB5wKoTjKRUQ0h50WnIPGwXbUqRrZAGiBWzg3Onl2wajqPfADKtPDa9aSe5qg6rRq6RFZA4HNMZA2cfbndAj8cmeqY2qUZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9a7627d0-be6b-4813-93f2-2871ef0752b0",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news",
+          "mode": "list",
+          "cachedResultName": "news"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "guid",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "465722aa-ecd6-48af-a491-dc3b93f7a1ea",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        920,
+        420
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "OGLaL0xoD8bs2EJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84a9386b-b2a0-49fe-a8ba-8c9c36ec8737",
+              "leftValue": "={{ $json.facebook_b2b }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "245353c1-0394-43b2-9703-aecaa5c04a3f",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').first().json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').first().json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=rewrite"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "484de73b-08c8-4cb0-a7d4-238b6bd2cd15",
+      "name": "Send to Rewrite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "39b92a34-5463-48b9-9c71-2b10331361af",
+        "options": {}
+      },
+      "id": "066b658e-d362-4c12-bd79-c0a152f6429f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        480,
+        420
+      ],
+      "webhookId": "39b92a34-5463-48b9-9c71-2b10331361af"
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v20.0",
+        "node": "104546331988361",
+        "edge": "photos",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "url",
+                "value": "={{ $('Postgres').item.json.image_gen_b2b || $('Postgres').item.json.image }}"
+              },
+              {
+                "name": "message",
+                "value": "={{ $('Postgres').item.json.facebook_b2b }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $('Postgres').item.json.facebook_b2b }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "e0c09385-7a66-4f08-9794-8c72a427fa6d",
+      "name": "Facebook Graph API",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        320
+      ],
+      "retryOnFail": false,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "m2n8FC1hZ4QNRPUx",
+          "name": "СКАП"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем HTML списка новостей напрямую из ноды Webhook\nconst listHtml = $node[\"Webhook\"].json.body.list;\n\n// Извлекаем номер новости из ID в теле Webhook\nconst newsNumber = parseInt($node[\"Webhook\"].json.body.id, 10); // Преобразуем в число, если rawId существует\n\n// Регулярное выражение для поиска URL новости с данным номером\nconst regex = new RegExp(`<strong>\\\\s*${newsNumber}\\\\.\\\\s*<a href=\"([^\"]+)\"`, 'i');\n\n// Ищем URL новости с данным номером\nconst match = listHtml.match(regex);\nconst newsUrl = match ? match[1] : 'URL новости не найден';\n\n// Возвращаем только URL новости\nreturn [\n  {\n    json: {\n      url: newsUrl,\n      id: newsNumber\n    }\n  }\n];\n"
+      },
+      "id": "a6073032-393b-4c32-ab5d-e697ac1b9b3a",
+      "name": "Get GUID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        420
+      ]
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.api-ai.net",
+            "user-agent": "python-requests/2.31.0",
+            "content-length": "5967",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate",
+            "content-type": "application/json",
+            "x-forwarded-for": "62.84.125.172",
+            "x-forwarded-host": "n8n.api-ai.net",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "318b0a7e186c",
+            "x-real-ip": "62.84.125.172"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "api_key": "ed09ac5a0f2c095a9d124faa32e33da7",
+            "client_id": "592123039",
+            "chat_id": "276351686",
+            "list": "<h2>Список новостей для рерайта</h2>\n<table style=\"border-collapse:collapse; width:100%;\">\n<tr><td style=\"padding: 10px;\">\n        <strong>1. <a href=\"https://larta.com/ru/news/press-reliz-lartapro-hd-royal-grey-45\">Представляем новое архитектурное стекло LartaPro HD Royal Grey 45</a></strong><br>\n        <strong>Современные технологии остекления</strong> и <strong>50%</strong><br>\n        04 октября 2024 года\nLarta Glass, крупнейший* производитель стекла в России, объявляет о запуске нового продукта — стекла с покрытием LartaPro HD Royal Grey 45. Этот продукт стал ответом на текущие по...<br>\n        <img src=\"https://static.tildacdn.com/tild3038-6437-4637-b265-373065646533/1212.jpg\" alt=\"Представляем новое архитектурное стекло LartaPro HD Royal Grey 45\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>2. <a href=\"https://larta.com/ru/news/priglashenie-na-rossiskii-okonnyj-kongress\">Приглашаем на Российский оконный конгресс — крупнейшее коммуникационное мероприятие отрасли</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        24 сентября 2024 года\nПриглашаем вас принять участие в РОССИЙСКОМ ОКОННОМ КОНГРЕССЕ – крупнейшем коммуникационном мероприятии отрасли. Первый российский оконный конгресс будет проходить с 24 по 27 ноя...<br>\n        <img src=\"https://i.ibb.co/KGp6yjj/ultra.png\" alt=\"Приглашаем на Российский оконный конгресс — крупнейшее коммуникационное мероприятие отрасли\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>3. <a href=\"https://larta.com/ru/news/configurator-interfejs-na-anglijskom-yazyke\">Интерфейс на английском языке и настройка пользовательского отчета: что нового в конфигураторе Larta Glass</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        24 сентября 2024 года\nLarta Glass представляет обновления для своего онлайн-конфигуратора. Новые функции открывают дополнительные возможности для партнеров и делают процесс выбора материалов еще более...<br>\n        <img src=\"https://i.ibb.co/VNNR0dZ/ultra.png\" alt=\"Интерфейс на английском языке и настройка пользовательского отчета: что нового в конфигураторе Larta Glass\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>4. <a href=\"https://larta.com/ru/news/tpost/ehnff3vsl1-izmeneniya-v-portfolio-produktov-larta-g\">Изменения в портфолио продуктов Larta Glass</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        В связи с изменением в портфолио продуктов на заводах группы компаний Larta Glass мы рекомендуем рассмотреть альтернативные варианты для тех позиций, которые будут выведены из текущего ассортимента....<br>\n        <img src=\"https://i.ibb.co/R3dPjFt/ultra.png\" alt=\"Изменения в портфолио продуктов Larta Glass\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>5. <a href=\"https://larta.com/ru/news/lartahome-solar-light-grey\">Эстетика и функциональность: Larta Glass запускает новый продукт в оконном сегменте LartaHome Solar Light Grey</a></strong><br>\n        <strong>Современные технологии остекления</strong> и <strong>40%</strong><br>\n        2 августа 2024 года\nLarta Glass, ведущий производитель архитектурного и интерьерного стекла в России и странах СНГ, объявляет о запуске нового продукта в оконном сегменте — LartaHome Solar Light Grey....<br>\n        <img src=\"https://i.ibb.co/x71bBf2/ultra.png\" alt=\"Эстетика и функциональность: Larta Glass запускает новый продукт в оконном сегменте LartaHome Solar Light Grey\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n</table>\n",
+            "id": "4",
+            "rewrite": "news",
+            "old": "<strong>В связи с обновлением ассортимента на заводах группы компаний Larta Glass, мы советуем обратить внимание на альтернативные продукты.</strong>\n\n<strong>Эти продукты станут заменами для тех позиций, которые планируется исключить из текущего предложения.</strong>",
+            "format": "facebook_b2b"
+          },
+          "webhookUrl": "https://n8n.api-ai.net/webhook/39b92a34-5463-48b9-9c71-2b10331361af",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Rewrite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get GUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API": {
+      "main": [
+        [
+          {
+            "node": "SendToSalebot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get GUID": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e49aa698-0cf6-4311-9116-f512a475c3e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "332f4e2842ac35bdf92bcf45820374737b808cfde08870402695ef84706bff04"
+  },
+  "id": "LxfGLjTHEHpf6ZRt",
+  "tags": []
+}
