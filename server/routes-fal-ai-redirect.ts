@@ -4,7 +4,7 @@
  */
 
 import { Express, Request, Response } from 'express';
-import { log } from './vite';
+import { log } from './utils/logger';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { storage } from './storage';
 import axios from 'axios';

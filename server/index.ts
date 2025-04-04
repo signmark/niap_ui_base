@@ -2,7 +2,9 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerClaudeRoutes } from "./routes-claude";
+import { setupVite, serveStatic } from "./vite";
+import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
@@ -72,6 +74,11 @@ app.use((req, res, next) => {
     log("Registering FAL.AI Universal Image Generation routes...");
     registerFalAiImageRoutes(app);
     log("FAL.AI Universal Image Generation routes registered successfully");
+    
+    // Регистрируем маршруты для Claude AI
+    log("Registering Claude AI routes...");
+    registerClaudeRoutes(app);
+    log("Claude AI routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
