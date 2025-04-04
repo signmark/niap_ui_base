@@ -416,12 +416,6 @@ export class ApiKeyService {
     console.warn(`[${serviceName}] ⚠️ API ключи хранятся ТОЛЬКО в базе данных Directus!`);
     console.warn(`[${serviceName}] ⚠️ Пользователь должен добавить ключ через интерфейс настроек.`);
     
-    // Временное исключение для Claude во время разработки
-    if (serviceName === 'claude' && process.env.CLAUDE_API_KEY) {
-      console.warn(`[${serviceName}] Использование временного ключа Claude API из переменных окружения для разработки`);
-      return process.env.CLAUDE_API_KEY;
-    }
-    
     // Всегда возвращаем null, чтобы приложение не использовало ключи из .env
     return null;
   }
