@@ -17,12 +17,34 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// Применяем middleware авторизации
-app.use(authMiddleware);
+// Регистрируем маршруты для API, с аутентификацией
+app.use('/api/upload-image', uploadsRouter);
+app.use('/api/cdn', cdnRouter);
 
-// Регистрируем маршруты
-app.use('/api', uploadsRouter);
-app.use('/api', cdnRouter);
+// Настраиваем обработку запросов к API
+app.use('/api', (req, res, next) => {
+  // Пропускаем определенные пути без аутентификации
+  if (req.path.startsWith('/login') || 
+      req.path.startsWith('/register') || 
+      req.path.startsWith('/auth/check') || 
+      req.path.startsWith('/auth/refresh') || 
+      req.path.startsWith('/upload-image') || 
+      req.path.startsWith('/cdn')) {
+    return next();
+  }
+  
+  // Для всех остальных API-запросов применяем проверку аутентификации
+  authMiddleware(req, res, next);
+});
+
+// Настраиваем Express для поддержки клиентского маршрутизатора
+// Используем статические файлы из собранного frontend приложения
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+// Для всех остальных маршрутов отдаем статический HTML
+app.get('*', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+});
 
 // Обработка ошибок
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -44,6 +66,12 @@ export function initServer(port: number = 3000) {
   });
   
   return server;
+}
+
+// Запускаем сервер если этот файл запущен напрямую (не импортирован)
+// В ESM используем другой способ определения точки входа
+if (import.meta.url.endsWith('server/index.ts')) {
+  initServer(5000);
 }
 
 // Экспортируем приложение для использования в других файлах

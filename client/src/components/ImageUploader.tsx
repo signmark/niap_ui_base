@@ -1,26 +1,45 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import axios from 'axios';
 import { getCdnUrl } from '@/lib/cdnHelper';
+import { Input } from "@/components/ui/input";
 
 interface ImageUploaderProps {
   onImageUpload: (imageUrl: string) => void;
   className?: string;
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive" | "black";
+  initialImageUrl?: string; // Начальный URL изображения для редактирования
+  label?: string; // Заголовок для поля изображения
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImageUpload,
   className = '',
   size = "icon",
-  variant = "outline"
+  variant = "outline",
+  initialImageUrl = '',
+  label = 'Основное изображение'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(initialImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Обновляем локальный URL при изменении initialImageUrl (например, при редактировании)
+  useEffect(() => {
+    if (initialImageUrl) {
+      setImageUrl(initialImageUrl);
+    }
+  }, [initialImageUrl]);
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setImageUrl(url);
+    onImageUpload(url);
+  };
 
   const handleClick = () => {
     if (fileInputRef.current) {
@@ -74,6 +93,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         // Получаем URL изображения через CDN
         const cdnUrl = getCdnUrl(response.data.file.path);
         
+        // Обновляем локальное состояние
+        setImageUrl(cdnUrl);
+        
         // Вызываем callback с URL изображения
         onImageUpload(cdnUrl);
         
@@ -101,29 +123,38 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   return (
-    <>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        style={{ display: 'none' }}
-      />
-      <Button
-        type="button"
-        onClick={handleClick}
-        className={className}
-        size={size}
-        variant={variant}
-        disabled={isUploading}
-      >
-        {isUploading ? (
-          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-        ) : (
-          <Upload className="h-4 w-4" />
-        )}
-      </Button>
-    </>
+    <div className="space-y-2">
+      <div className="text-sm font-medium">{label}</div>
+      <div className="flex items-center space-x-2">
+        <Input
+          value={imageUrl}
+          onChange={handleUrlChange}
+          placeholder="Ссылка на изображение"
+          className="flex-grow"
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          style={{ display: 'none' }}
+        />
+        <Button
+          type="button"
+          onClick={handleClick}
+          size={size}
+          variant={variant}
+          disabled={isUploading}
+          className={className}
+        >
+          {isUploading ? (
+            <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+          ) : (
+            <Upload className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 };
 
