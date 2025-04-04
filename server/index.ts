@@ -4,7 +4,6 @@ import { logger } from './utils/logger';
 import { authMiddleware } from './middleware/auth';
 import uploadsRouter from './routes-uploads';
 import cdnRouter from './routes-cdn';
-import authRouter from './routes-auth';
 import http from 'http';
 
 // Создаем экземпляр Express приложения
@@ -18,35 +17,12 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// Регистрируем маршруты для API
-app.use('/api/upload-image', uploadsRouter);
-app.use('/api/cdn', cdnRouter);
-app.use('/api', authRouter);
+// Применяем middleware авторизации
+app.use(authMiddleware);
 
-// Настраиваем обработку запросов к API
-app.use('/api', (req, res, next) => {
-  // Пропускаем определенные пути без аутентификации
-  if (req.path.startsWith('/login') || 
-      req.path.startsWith('/register') || 
-      req.path.startsWith('/auth/check') || 
-      req.path.startsWith('/auth/refresh') || 
-      req.path.startsWith('/upload-image') || 
-      req.path.startsWith('/cdn')) {
-    return next();
-  }
-  
-  // Для всех остальных API-запросов применяем проверку аутентификации
-  authMiddleware(req, res, next);
-});
-
-// Настраиваем Express для поддержки клиентского маршрутизатора
-// Используем статические файлы из собранного frontend приложения
-app.use(express.static(path.join(process.cwd(), 'public')));
-
-// Для всех остальных маршрутов отдаем статический HTML
-app.get('*', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
-});
+// Регистрируем маршруты
+app.use('/api', uploadsRouter);
+app.use('/api', cdnRouter);
 
 // Обработка ошибок
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

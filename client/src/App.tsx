@@ -51,8 +51,8 @@ function Router() {
       <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
       <Route path="/test/universal-image-gen" component={() => <Layout><UniversalImageGenTest /></Layout>} />
       <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
-      {/* Добавляем корневой роут */}
-      <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
+      {/* Добавляем корневой роут с автоматическим перенаправлением на /content */}
+      <Route path="/" component={() => <Layout><Content /></Layout>} />
       {/* NotFound должен быть последним */}
       <Route component={NotFound} />
     </Switch>
