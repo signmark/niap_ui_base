@@ -147,4 +147,4 @@ const PublishButton: React.FC<PublishButtonProps> = ({
   );
 };
 
-export default PublishButton;
+export { PublishButton };
