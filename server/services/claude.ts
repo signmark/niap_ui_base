@@ -1,77 +1,186 @@
 import axios from 'axios';
-import { apiKeyService } from './api-keys';
+import * as logger from '../utils/logger';
 
-// Интерфейс для запроса к Claude API
-interface ClaudeRequest {
+export interface ClaudeRequest {
   model: string;
+  max_tokens: number;
+  temperature?: number;
   messages: {
-    role: 'user' | 'assistant' | 'system';
+    role: string;
     content: string;
   }[];
-  max_tokens?: number;
-  temperature?: number;
-  system?: string;
+}
+
+export interface ClaudeResponse {
+  id: string;
+  type: string;
+  role: string;
+  content: {
+    type: string;
+    text: string;
+  }[];
+  model: string;
+  stop_reason: string;
+  stop_sequence: string | null;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
+
+export interface ClaudeImproveTextParams {
+  text: string;
+  prompt: string;
+  model?: string;
 }
 
 /**
- * Сервис для работы с Claude AI API
+ * Сервис для работы с Claude API
  */
 export class ClaudeService {
-  private readonly CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-  private readonly DEFAULT_MODEL = 'claude-3-sonnet-20240229';
-  
+  private apiKey: string;
+  private apiUrl = 'https://api.anthropic.com/v1/messages';
+  private defaultModel = 'claude-3-sonnet-20240229';
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
   /**
-   * Улучшает текст с помощью Claude AI
-   * 
-   * @param text - Текст для улучшения
-   * @param prompt - Инструкции для улучшения
-   * @returns Улучшенный текст
+   * Проверяет доступность API ключа
    */
-  async improveText(text: string, prompt: string, userId?: string): Promise<string> {
-    // Получаем API ключ для Claude
-    const apiKey = userId 
-      ? await apiKeyService.getApiKey(userId, 'claude')
-      : null;
-    
-    if (!apiKey) {
-      throw new Error('CLAUDE_API_KEY not found');
-    }
-    
-    const systemPrompt = `Ты - профессиональный редактор текста для социальных сетей. 
-Твоя задача - улучшить предоставленный текст, сохраняя его основную суть и стиль. 
-Не добавляй новой информации, не меняй смысловые акценты.
-Сохраняй все HTML-теги, которые могут быть в тексте.
-Работай только с текстом, который предоставил пользователь.`;
-    
-    const userPrompt = `${prompt}\n\nВот текст, который нужно улучшить:\n\n${text}\n\nПожалуйста, верни только улучшенный текст, без объяснений, вступлений или дополнительных комментариев.`;
-    
-    const request: ClaudeRequest = {
-      model: this.DEFAULT_MODEL,
-      messages: [
-        { role: 'user', content: userPrompt }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7,
-      system: systemPrompt
-    };
-    
+  async testApiKey(): Promise<boolean> {
     try {
-      const response = await axios.post(this.CLAUDE_API_URL, request, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        }
+      logger.log('Testing Claude API key...', 'claude');
+      
+      // Небольшой prompt для проверки ключа
+      const result = await this.makeRequest({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 10,
+        messages: [
+          {
+            role: 'user',
+            content: 'Say "API key is valid" if you can read this message.'
+          }
+        ]
       });
       
-      // Извлекаем улучшенный текст из ответа
-      return response.data.content[0].text;
-    } catch (error: any) {
-      console.error('Error improving text with Claude:', error.response?.data || error.message);
+      // Проверяем, получили ли мы осмысленный ответ
+      const hasValidResponse = result && 
+        result.content && 
+        result.content.length > 0 && 
+        result.content[0].text.includes('valid');
+      
+      logger.log(`Claude API key test result: ${hasValidResponse ? 'Valid' : 'Invalid'}`, 'claude');
+      return hasValidResponse;
+    } catch (error) {
+      logger.error('Error testing Claude API key:', error, 'claude');
+      return false;
+    }
+  }
+
+  /**
+   * Улучшает текст с помощью Claude AI
+   */
+  async improveText({ text, prompt, model }: ClaudeImproveTextParams): Promise<string> {
+    logger.log('Improving text with Claude AI...', 'claude');
+    
+    const requestModel = model || this.defaultModel;
+    
+    try {
+      const contentPrompt = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+      
+      const result = await this.makeRequest({
+        model: requestModel,
+        max_tokens: 4000,
+        temperature: 0.7,
+        messages: [
+          {
+            role: 'user',
+            content: contentPrompt
+          }
+        ]
+      });
+      
+      if (!result || !result.content || result.content.length === 0) {
+        throw new Error('Claude API returned empty response');
+      }
+      
+      const improvedText = result.content[0].text.trim();
+      logger.log('Text successfully improved with Claude AI', 'claude');
+      return improvedText;
+    } catch (error) {
+      logger.error('Error improving text with Claude:', error, 'claude');
+      throw new Error('Failed to improve text with Claude: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+
+  /**
+   * Генерирует контент на основе промпта
+   */
+  async generateContent(prompt: string, model?: string): Promise<string> {
+    logger.log('Generating content with Claude AI...', 'claude');
+    
+    const requestModel = model || this.defaultModel;
+    
+    try {
+      const result = await this.makeRequest({
+        model: requestModel,
+        max_tokens: 4000,
+        temperature: 0.7,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      });
+      
+      if (!result || !result.content || result.content.length === 0) {
+        throw new Error('Claude API returned empty response');
+      }
+      
+      const generatedContent = result.content[0].text.trim();
+      logger.log('Content successfully generated with Claude AI', 'claude');
+      return generatedContent;
+    } catch (error) {
+      logger.error('Error generating content with Claude:', error, 'claude');
+      throw new Error('Failed to generate content with Claude: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+  
+  /**
+   * Выполняет запрос к Claude API
+   */
+  private async makeRequest(requestData: ClaudeRequest): Promise<ClaudeResponse> {
+    try {
+      logger.debug(`Making Claude API request to ${this.apiUrl}`, 'claude');
+      logger.debug(`Using model: ${requestData.model}`, 'claude');
+      
+      const response = await axios.post<ClaudeResponse>(
+        this.apiUrl,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': this.apiKey,
+            'anthropic-version': '2023-06-01'
+          }
+        }
+      );
+      
+      if (response.status !== 200) {
+        throw new Error(`Claude API responded with status code ${response.status}`);
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        logger.error(`Claude API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`, 'claude');
+      } else {
+        logger.error('Error making Claude API request:', error, 'claude');
+      }
       throw error;
     }
   }
 }
-
-// Экспортируем экземпляр сервиса для использования в других модулях
-export const claudeService = new ClaudeService();

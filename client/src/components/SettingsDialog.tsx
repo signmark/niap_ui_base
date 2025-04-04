@@ -21,7 +21,8 @@ function getServiceDisplayName(serviceName: string): string {
     'apify': 'Apify',
     'deepseek': 'DeepSeek',
     'fal_ai': 'FAL.AI',
-    'xmlriver': 'XMLRiver'
+    'xmlriver': 'XMLRiver',
+    'claude': 'Claude AI'
   };
   
   return serviceNames[serviceName] || serviceName;
@@ -52,6 +53,7 @@ export function SettingsDialog() {
   const [apifyKey, setApifyKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
+  const [claudeKey, setClaudeKey] = useState(""); // Добавлен ключ Claude
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
@@ -61,6 +63,7 @@ export function SettingsDialog() {
   const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
+  const [claudeTesting, setClaudeTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Claude
   // Состояния для соцсетей убраны, т.к. токены перенесены в настройки кампаний
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
@@ -92,7 +95,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -202,6 +205,7 @@ export function SettingsDialog() {
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
+  const testClaudeKey = () => testApiKey('claude', claudeKey, setClaudeTesting);
   // Токены социальных сетей (Instagram и Facebook) были перемещены
   // в настройки каждой кампании и убраны из глобальных настроек
   
@@ -224,6 +228,7 @@ export function SettingsDialog() {
       const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
+      const claudeKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'claude');
       // Социальные сети перенесены в настройки кампаний
 
       if (perplexityKeyData) {
@@ -237,6 +242,9 @@ export function SettingsDialog() {
       }
       if (falAiKeyData) {
         setFalAiKey(falAiKeyData.api_key);
+      }
+      if (claudeKeyData) {
+        setClaudeKey(claudeKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -280,6 +288,7 @@ export function SettingsDialog() {
         { name: 'apify', key: apifyKey },
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
+        { name: 'claude', key: claudeKey },
         { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
       // Токены социальных сетей перенесены в настройки кампаний
@@ -503,6 +512,70 @@ export function SettingsDialog() {
           </p>
           {falAiTesting.status === 'error' && (
             <p className="text-sm text-red-500">{falAiTesting.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Claude AI</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={claudeKey}
+              onChange={(e) => setClaudeKey(e.target.value)}
+              placeholder="Введите API ключ Claude AI"
+              className={cn("flex-1", !claudeKey && "border-amber-400 focus-visible:ring-amber-400")}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://console.anthropic.com/settings/keys', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ на сайте Anthropic</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testClaudeKey}
+              disabled={!claudeKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {claudeTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : claudeTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : claudeTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для улучшения текста и генерации контента через Claude AI
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функции "Улучшить текст" при редактировании постов</li>
+              <li>Обеспечивает доступ к Claude 3.7 Sonnet для высококачественной генерации текста</li>
+              <li>Ключ можно получить в <a href="https://console.anthropic.com/settings/keys" target="_blank" className="text-blue-500 hover:underline">настройках консоли Anthropic</a></li>
+            </ul>
+          </div>
+          {claudeTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{claudeTesting.message}</p>
           )}
         </div>
         

@@ -1,165 +1,215 @@
-import { Express, Request, Response } from 'express';
-import { log } from './utils/logger';
-import { claudeService } from './services/claude';
-import { apiKeyService } from './services/api-keys';
+import { Router, Request, Response } from 'express';
+import { ClaudeService } from './services/claude';
+import { ApiKeyService } from './services/api-keys';
+import * as logger from './utils/logger';
 
 /**
- * Регистрирует маршруты для работы с Claude AI API
- * 
- * @param app Express приложение
+ * Расширяем интерфейс Request для поддержки userId
  */
-export function registerClaudeRoutes(app: Express) {
-  // Вспомогательная функция для получения токена из запроса
-  const getAuthTokenFromRequest = (req: Request): string | null => {
-    const authHeader = req.headers.authorization;
-    return authHeader && authHeader.startsWith('Bearer ') 
-      ? authHeader.substring(7) // Убираем 'Bearer ' из начала
-      : null;
-  };
-  
-  // Промежуточное ПО для аутентификации запросов
-  const authenticateUser = (req: Request, res: Response, next: any) => {
-    // Получаем токен из заголовка авторизации
-    const token = getAuthTokenFromRequest(req);
-      
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Требуется авторизация'
-      });
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
     }
-    next();
-  };
+  }
+}
 
-  // Маршрут для улучшения текста с помощью Claude AI
-  app.post('/api/claude/improve-text', authenticateUser, async (req: Request, res: Response) => {
+export function registerClaudeRoutes(app: Router) {
+  const router = app;
+  // Создаем экземпляр ApiKeyService
+  const apiKeyServiceInstance = new ApiKeyService();
+  /**
+   * Проверка наличия API ключа Claude для текущего пользователя
+   */
+  async function getClaudeApiKey(req: Request): Promise<string | null> {
     try {
-      const { text, prompt } = req.body;
-      
-      if (!text) {
-        return res.status(400).json({
-          success: false,
-          error: 'Необходимо указать текст для улучшения'
-        });
-      }
-      
-      if (!prompt) {
-        return res.status(400).json({
-          success: false,
-          error: 'Необходимо указать инструкции для улучшения текста'
-        });
+      const userId = req.userId;
+      if (!userId) {
+        return null;
       }
 
-      // Проверяем наличие API ключа для Claude
-      // Получаем токен для доступа к Directus API
-      const token = getAuthTokenFromRequest(req);
-      
-      try {
-        // Получаем userId из токена, если возможно
-        let userId = null;
-        if (token) {
-          try {
-            // @ts-ignore - используем глобальную переменную для доступа к directusApiManager
-            const directusApi = global['directusApiManager']?.getDirectusClient();
-            const userResponse = await directusApi.get('/users/me', {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            userId = userResponse?.data?.data?.id;
-            console.log(`Получен пользователь для Claude API: ${userId}`);
-          } catch (error) {
-            console.error("Ошибка при получении информации о пользователе:", error);
-          }
-        }
-        
-        const enhancedText = await claudeService.improveText(text, prompt, userId);
-        
-        return res.json({
-          success: true,
-          text: enhancedText
-        });
-      } catch (error: any) {
-        if (error.message.includes('CLAUDE_API_KEY not found')) {
-          return res.status(403).json({
-            success: false,
-            error: 'API ключ Claude не найден',
-            needApiKey: true
-          });
-        }
-        throw error;
-      }
-    } catch (error: any) {
-      log(`[claude] Ошибка при улучшении текста: ${error.message}`);
-      
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Произошла ошибка при улучшении текста'
-      });
+      return await apiKeyServiceInstance.getApiKey(userId, 'claude');
+    } catch (error) {
+      logger.error('[claude-routes] Error getting Claude API key:', error);
+      return null;
     }
-  });
+  }
 
-  // Маршрут для сохранения API ключа Claude
-  app.post('/api/claude/save-api-key', authenticateUser, async (req: Request, res: Response) => {
+  /**
+   * Получение экземпляра сервиса Claude с API ключом пользователя
+   */
+  async function getClaudeService(req: Request): Promise<ClaudeService | null> {
+    const apiKey = await getClaudeApiKey(req);
+    
+    if (!apiKey) {
+      return null;
+    }
+    
+    return new ClaudeService(apiKey);
+  }
+
+  /**
+   * Маршрут для тестирования API ключа Claude
+   */
+  router.post('/api/claude/test-api-key', async (req: Request, res: Response) => {
     try {
       const { apiKey } = req.body;
       
       if (!apiKey) {
         return res.status(400).json({
           success: false,
-          error: 'Необходимо указать API ключ'
+          error: 'API ключ не указан'
         });
       }
       
-      // Получаем токен для доступа к Directus API
-      const token = getAuthTokenFromRequest(req);
+      const claudeService = new ClaudeService(apiKey);
+      const isValid = await claudeService.testApiKey();
       
-      // Получаем userId из токена
-      let userId = null;
-      if (token) {
-        try {
-          // @ts-ignore - используем глобальную переменную для доступа к directusApiManager
-          const directusApi = global['directusApiManager']?.getDirectusClient();
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          userId = userResponse?.data?.data?.id;
-          console.log(`Получен пользователь для сохранения API ключа Claude: ${userId}`);
-        } catch (error) {
-          console.error("Ошибка при получении информации о пользователе:", error);
-          return res.status(401).json({
-            success: false,
-            error: 'Не удалось получить информацию о пользователе'
-          });
-        }
-      }
+      return res.json({
+        success: true,
+        isValid
+      });
+    } catch (error) {
+      logger.error('[claude-routes] Error testing Claude API key:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при проверке API ключа'
+      });
+    }
+  });
+
+  /**
+   * Маршрут для сохранения API ключа Claude
+   */
+  router.post('/api/claude/save-api-key', async (req: Request, res: Response) => {
+    try {
+      const { apiKey } = req.body;
+      const userId = req.userId;
       
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Не удалось получить идентификатор пользователя'
+          error: 'Пользователь не авторизован'
         });
       }
       
-      // Сохраняем API ключ
-      const saved = await apiKeyService.saveApiKey(userId, 'claude', apiKey, token ? token : undefined);
-      
-      if (saved) {
-        return res.json({
-          success: true,
-          message: 'API ключ успешно сохранен'
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ не указан'
         });
-      } else {
+      }
+      
+      // Проверяем работоспособность ключа перед сохранением
+      const claudeService = new ClaudeService(apiKey);
+      const isValid = await claudeService.testApiKey();
+      
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Недействительный API ключ Claude'
+        });
+      }
+      
+      // Сохраняем ключ в хранилище
+      const success = await apiKeyServiceInstance.saveApiKey(userId, 'claude', apiKey);
+      
+      if (!success) {
         return res.status(500).json({
           success: false,
-          error: 'Не удалось сохранить API ключ'
+          error: 'Ошибка при сохранении API ключа'
         });
       }
-    } catch (error: any) {
-      log(`[claude] Ошибка при сохранении API ключа: ${error.message}`);
       
+      return res.json({
+        success: true
+      });
+    } catch (error) {
+      logger.error('[claude-routes] Error saving Claude API key:', error);
       return res.status(500).json({
         success: false,
-        error: error.message || 'Произошла ошибка при сохранении API ключа'
+        error: 'Ошибка при сохранении API ключа'
       });
     }
   });
+
+  /**
+   * Маршрут для улучшения текста с помощью Claude
+   */
+  router.post('/api/claude/improve-text', async (req: Request, res: Response) => {
+    try {
+      const { text, prompt, model } = req.body;
+      
+      if (!text || !prompt) {
+        return res.status(400).json({
+          success: false,
+          error: 'Текст и инструкции обязательны'
+        });
+      }
+      
+      const claudeService = await getClaudeService(req);
+      
+      if (!claudeService) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Claude не настроен',
+          needApiKey: true
+        });
+      }
+      
+      const improvedText = await claudeService.improveText({ text, prompt, model });
+      
+      return res.json({
+        success: true,
+        text: improvedText
+      });
+    } catch (error) {
+      logger.error('[claude-routes] Error improving text with Claude:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при улучшении текста'
+      });
+    }
+  });
+
+  /**
+   * Маршрут для генерации контента с помощью Claude
+   */
+  router.post('/api/claude/generate-content', async (req: Request, res: Response) => {
+    try {
+      const { prompt, model } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          error: 'Промпт обязателен'
+        });
+      }
+      
+      const claudeService = await getClaudeService(req);
+      
+      if (!claudeService) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Claude не настроен',
+          needApiKey: true
+        });
+      }
+      
+      const generatedContent = await claudeService.generateContent(prompt, model);
+      
+      return res.json({
+        success: true,
+        text: generatedContent
+      });
+    } catch (error) {
+      logger.error('[claude-routes] Error generating content with Claude:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при генерации контента'
+      });
+    }
+  });
+
+  return router;
 }

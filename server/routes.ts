@@ -1,6 +1,6 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
-import { claudeService } from './services/claude';
+import { ClaudeService } from './services/claude';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
