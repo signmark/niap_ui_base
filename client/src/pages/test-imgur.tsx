@@ -1,0 +1,364 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+
+export default function TestImgur() {
+  const { toast } = useToast();
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrls, setImageUrls] = useState('');
+  const [contentId, setContentId] = useState('');
+  const [platform, setPlatform] = useState('telegram');
+  const [telegramToken, setTelegramToken] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const uploadSingleImage = async () => {
+    if (!imageUrl) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите URL изображения',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/imgur/upload-from-url', {
+        imageUrl
+      });
+      
+      setResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Изображение загружено на Imgur',
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Неизвестная ошибка',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setResult(error.response?.data || error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadMultipleImages = async () => {
+    if (!imageUrls) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите URL изображений (по одному на строку)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const urls = imageUrls.split('\n').filter(url => url.trim() !== '');
+      
+      if (urls.length === 0) {
+        throw new Error('Нет корректных URL для загрузки');
+      }
+      
+      const response = await axios.post('/api/imgur/upload-multiple', {
+        imageUrls: urls
+      });
+      
+      setResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: `Загружено ${response.data.data.totalUploaded} из ${response.data.data.totalRequested} изображений`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Неизвестная ошибка',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setResult(error.response?.data || error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testTelegramPublication = async () => {
+    if (!contentId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите ID контента',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!telegramToken || !telegramChatId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите токен и ID чата Telegram',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/imgur/test-telegram-publication', {
+        contentId,
+        telegramToken,
+        telegramChatId
+      });
+      
+      setResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Контент опубликован в Telegram',
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Неизвестная ошибка',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setResult(error.response?.data || error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const publishContent = async () => {
+    if (!contentId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите ID контента',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (platform === 'telegram' && (!telegramToken || !telegramChatId)) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите токен и ID чата Telegram',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const settings = {
+        telegram: {
+          token: telegramToken,
+          chatId: telegramChatId
+        }
+      };
+      
+      const response = await axios.post('/api/imgur/publish-content', {
+        contentId,
+        platform,
+        settings,
+        userId: '53921f16-f51d-4591-80b9-8caa4fde4d13' // ID тестового пользователя, в реальном приложении должен быть динамическим
+      });
+      
+      setResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: `Контент опубликован в ${platform}`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Неизвестная ошибка',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setResult(error.response?.data || error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container py-8">
+      <h1 className="text-3xl font-bold mb-6">Тестирование Imgur интеграции</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Загрузка одиночного изображения</CardTitle>
+            <CardDescription>Загрузка изображения на Imgur по URL</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="imageUrl">URL изображения</Label>
+                <Input
+                  id="imageUrl"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={uploadSingleImage} disabled={loading}>
+              {loading ? 'Загрузка...' : 'Загрузить изображение'}
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Загрузка нескольких изображений</CardTitle>
+            <CardDescription>Загрузка изображений на Imgur по URL (по одному на строку)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="imageUrls">URL изображений (по одному на строку)</Label>
+                <Textarea
+                  id="imageUrls"
+                  placeholder="https://example.com/image1.jpg
+https://example.com/image2.jpg"
+                  value={imageUrls}
+                  onChange={(e) => setImageUrls(e.target.value)}
+                  rows={5}
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={uploadMultipleImages} disabled={loading}>
+              {loading ? 'Загрузка...' : 'Загрузить изображения'}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Публикация контента с Imgur</CardTitle>
+            <CardDescription>Тестирование публикации в социальные сети с загрузкой изображений на Imgur</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="contentId">ID контента</Label>
+                <Input
+                  id="contentId"
+                  placeholder="uuid контента в Directus"
+                  value={contentId}
+                  onChange={(e) => setContentId(e.target.value)}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="platform">Платформа</Label>
+                <select
+                  id="platform"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={platform}
+                  onChange={(e) => setPlatform(e.target.value)}
+                >
+                  <option value="telegram">Telegram</option>
+                </select>
+              </div>
+              
+              {platform === 'telegram' && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="telegramToken">Telegram API токен</Label>
+                    <Input
+                      id="telegramToken"
+                      placeholder="1234567890:AAFfRTa-4XYZabc-YourToken"
+                      value={telegramToken}
+                      onChange={(e) => setTelegramToken(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="telegramChatId">Telegram Chat ID</Label>
+                    <Input
+                      id="telegramChatId"
+                      placeholder="-1001234567890"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button onClick={testTelegramPublication} disabled={loading} variant="outline">
+              {loading ? 'Публикация...' : 'Тест публикации в Telegram'}
+            </Button>
+            
+            <Button onClick={publishContent} disabled={loading}>
+              {loading ? 'Публикация...' : 'Опубликовать через универсальный API'}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1">
+        <Card>
+          <CardHeader>
+            <CardTitle>Результат</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+              {result ? JSON.stringify(result, null, 2) : 'Нет данных'}
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

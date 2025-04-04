@@ -1,0 +1,447 @@
+{
+  "name": "Publish Pinterest",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "news",
+          "mode": "list",
+          "cachedResultName": "news"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "guid",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a57a6bc0-d91e-4938-99f1-fa525e4c6c76",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        860,
+        280
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "OGLaL0xoD8bs2EJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-4o-mini-2024-07-18\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"Достань ссылку на новость с номером {{ $json.body.id }}. Ответь только ссылкой без лишних знаков и символов. Ссылку дай в точности как нашел.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": {{ JSON.stringify($json.body.list) }}\n      }\n    ]\n  } ",
+        "options": {}
+      },
+      "id": "14aa72f1-4f53-4069-afcc-a61c911721ad",
+      "name": "Get news GUID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Функция для удаления всех HTML-тегов\nfunction stripTags(content) {\n  return content.replace(/<\\/?[^>]+(>|$)/g, \"\"); // Удаляет все теги\n}\n\n// Функция для обрезки строки до заданного количества символов и добавления \"...\" в конце\nfunction trimToLength(content, maxLength) {\n  if (content.length > maxLength) {\n    return content.substring(0, maxLength - 3) + \"...\";\n  }\n  return content;\n}\n\n// Основной код\nconst MAX_TELEGRAM_LENGTH = 4096;\n\nreturn items.map(item => {\n  if (item.json && item.json.content) {\n    // Убираем все теги из content\n    item.json.content = stripTags(item.json.content);\n    // Обрезаем строку до максимальной длины для Telegram и добавляем \"...\"\n    item.json.content = trimToLength(item.json.content, MAX_TELEGRAM_LENGTH);\n  }\n  return item;\n});\n"
+      },
+      "id": "1183ad8b-ca2e-4c5c-b31c-329f3255ef2e",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "62f929bb-94b8-4124-a31e-9c30dd59c0d8",
+              "leftValue": "={{ $json.pinterest }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "47babc0e-f0da-4113-b61b-a510723a14bf",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1080,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').item.json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').item.json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=rewrite"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2fb72147-aa27-425f-991e-b2ed7e788ab7",
+      "name": "Send to Rewrite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').item.json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').item.json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=n8n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2db24ef1-6023-4831-8a78-d51802ca49f9",
+      "name": "Send Published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-4o-mini-2024-07-18\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": {{ JSON.stringify(\"Перепиши заголовок под новость:\"  +$json.pinterest) }}\n      },\n      {\n        \"role\": \"user\",\n        \"content\": {{ JSON.stringify($('Postgres').item.json.title) }}\n      }\n    ]\n  } ",
+        "options": {}
+      },
+      "id": "303c0ff4-c516-4848-b8cc-9c76b24db7ed",
+      "name": "Rewrite Title",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем HTML списка новостей напрямую из ноды Webhook\nconst listHtml = $node[\"Webhook\"].json.body.list;\n\n// Извлекаем номер новости из ID в теле Webhook\nconst newsNumber = parseInt($node[\"Webhook\"].json.body.id, 10); // Преобразуем в число, если rawId существует\n\n// Регулярное выражение для поиска URL новости с данным номером\nconst regex = new RegExp(`<strong>\\\\s*${newsNumber}\\\\.\\\\s*<a href=\"([^\"]+)\"`, 'i');\n\n// Ищем URL новости с данным номером\nconst match = listHtml.match(regex);\nconst newsUrl = match ? match[1] : 'URL новости не найден';\n\n// Возвращаем только URL новости\nreturn [\n  {\n    json: {\n      url: newsUrl,\n      id: newsNumber\n    }\n  }\n];\n"
+      },
+      "id": "86a1dd7f-c8a6-4ca6-bec0-287aea2593e8",
+      "name": "Get GUID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chatter.salebot.pro/api/{{ $('Webhook').item.json.body.api_key }}/callback",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $('Webhook').item.json.body.client_id }}"
+            },
+            {
+              "name": "message",
+              "value": "=error"
+            },
+            {
+              "name": "response",
+              "value": "={{ $json.error.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7291321d-59fa-47af-aa65-8ba201f98d1b",
+      "name": "Send Published1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "9e875ab1-4a55-4942-964b-a221833c8a49",
+        "options": {}
+      },
+      "id": "4830a878-cca4-45f4-9148-0e13773c3e07",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        360,
+        280
+      ],
+      "webhookId": "9e875ab1-4a55-4942-964b-a221833c8a49"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-sandbox.pinterest.com/v5/pins",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer pina_AMA5V6QWACM4MAYAGDAAUDUIN6BU5EYBACGSOY27YK5VURB3ZR3MPHQFYWRZCNECKMYLEPOVFYJIIO4QWG2ZUZQPCZXBMSQA"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"board_id\": \"1011832309970807800\",\n  \"media_source\": {\n    \"source_type\": \"image_url\",\n    \"url\": \"{{ $('Postgres').item.json.image_gen || $('Postgres').item.json.image}}\"\n  },\n  \"link\": \"https://www.okna98.ru/\",\n  \"title\": \"{{ $json.choices[0].message.content.length > 100 ? $json.choices[0].message.content.substring(0, 97) + '...' : $json.choices[0].message.content }}\",\n  \"description\": {{ $('Postgres').item.json.pinterest && $('Postgres').item.json.pinterest.length > 450 ? JSON.stringify($('Postgres').item.json.pinterest.substring(0, 450) + '...') : JSON.stringify($('Postgres').item.json.pinterest) }}\n}",
+        "options": {}
+      },
+      "id": "e199162b-21ef-4838-b919-17612d36eef4",
+      "name": "Publish Pinterest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        260
+      ],
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.api-ai.net",
+            "user-agent": "python-requests/2.31.0",
+            "content-length": "5308",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate",
+            "content-type": "application/json",
+            "x-forwarded-for": "158.160.42.134",
+            "x-forwarded-host": "n8n.api-ai.net",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "318b0a7e186c",
+            "x-real-ip": "158.160.42.134"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "api_key": "ed09ac5a0f2c095a9d124faa32e33da7",
+            "client_id": "606710306",
+            "chat_id": "276351686",
+            "list": "<h2>Список новостей для рерайта</h2>\n<table style=\"border-collapse:collapse; width:100%;\">\n<tr><td style=\"padding: 10px;\">\n        <strong>1. <a href=\"https://larta.com/news/portfolio-larta-glass-oktyabr\">Портфолио продуктов Larta Glass октябрь 2024</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        18 октября 2024 года\nУважаемые коллеги и партнеры!Информируем вас об актуальном портфолио продуктов, производимых на заводах группы компаний Larta Glass. Письмо для ознакомления доступно по ссылке.Есл...<br>\n        <img src=\"https://static.tildacdn.com/tild3062-6231-4965-b438-643862316666/IMG_9407_1690px.jpg\" alt=\"Портфолио продуктов Larta Glass октябрь 2024\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>2. <a href=\"https://larta.com/ru/news/izmeneniya-v-portfolio-produktov-larta-glass-oktyabr-2024\">Изменения в портфолио продуктов Larta Glass</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        04 октября 2024 года\nУважаемые коллеги и партнеры!В связи с изменением в портфолио продуктов на заводах группы компаний Larta Glass мы рекомендуем рассмотреть альтернативные варианты для тех позиций, ...<br>\n        <img src=\"https://i.ibb.co/MCP7Dyv/ultra.png\" alt=\"Изменения в портфолио продуктов Larta Glass\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>3. <a href=\"https://larta.com/ru/news/press-reliz-lartapro-hd-royal-grey-45\">Представляем новое архитектурное стекло LartaPro HD Royal Grey 45</a></strong><br>\n        <strong>Остекление фасадов</strong> и <strong>80%</strong><br>\n        04 октября 2024 года\nLarta Glass, крупнейший* производитель стекла в России, объявляет о запуске нового продукта — стекла с покрытием LartaPro HD Royal Grey 45. Этот продукт стал ответом на текущие по...<br>\n        <img src=\"https://static.tildacdn.com/tild3038-6437-4637-b265-373065646533/1212.jpg\" alt=\"Представляем новое архитектурное стекло LartaPro HD Royal Grey 45\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>4. <a href=\"https://alutech.ru/novosti-i-akcii/skidka-10-na-rollety-v-serebristom-tsvete/\">Скидка 10% на роллеты в серебристом цвете</a></strong><br>\n        <strong>Утепление и звукоизоляция окон</strong> и <strong>25%</strong><br>\n        Приобретите роллеты в серебристом цвете из классического профиля AR55N и получите на них скидку 10%.\n\n\n\t Акция действует в компании «РОЛ-ТЭК» до конца ноября 2024 года.\n\n\n\t Роллеты «АЛЮТЕХ» защищают к...<br>\n        <img src=\"https://i.ibb.co/f8d00SC/ultra.png\" alt=\"Скидка 10% на роллеты в серебристом цвете\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n<tr><td style=\"padding: 10px;\">\n        <strong>5. <a href=\"https://larta.com/ru/news/configurator-interfejs-na-anglijskom-yazyke\">Интерфейс на английском языке и настройка пользовательского отчета: что нового в конфигураторе Larta Glass</a></strong><br>\n        <strong>Без темы</strong> и <strong>0%</strong><br>\n        24 сентября 2024 года\nLarta Glass представляет обновления для своего онлайн-конфигуратора. Новые функции открывают дополнительные возможности для партнеров и делают процесс выбора материалов еще более...<br>\n        <img src=\"https://static.tildacdn.com/tild3630-3462-4637-b765-663364393032/_-.jpg\" alt=\"Интерфейс на английском языке и настройка пользовательского отчета: что нового в конфигураторе Larta Glass\" style=\"max-width: 100%; height: auto;\">\n      </td></tr>\n</table>\n",
+            "id": "1",
+            "rewrite": "news",
+            "old": "401 - \"{\\\"code\\\":2,\\\"message\\\":\\\"Authentication failed.\\\",\\\"status\\\":\\\"failure\\\"}\"",
+            "format": "pinterest",
+            "promt": "promt",
+            "text": "text"
+          },
+          "webhookUrl": "https://n8n.api-ai.net/webhook/9e875ab1-4a55-4942-964b-a221833c8a49",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Rewrite Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Rewrite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rewrite Title": {
+      "main": [
+        [
+          {
+            "node": "Publish Pinterest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get GUID": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get GUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Pinterest": {
+      "main": [
+        [
+          {
+            "node": "Send Published",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Published1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78869e33-e1ee-48de-949a-920fc1f871f3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "332f4e2842ac35bdf92bcf45820374737b808cfde08870402695ef84706bff04"
+  },
+  "id": "OpPR41ajdwmAIpvh",
+  "tags": []
+}
