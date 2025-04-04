@@ -9,7 +9,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
 } from "lucide-react";
 import {
   AlertDialog,
@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import type { Campaign, CampaignContent } from "@shared/schema";
+import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ContentGenerationDialog } from "@/components/ContentGenerationDialog";
@@ -1365,12 +1366,70 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <Input
-                    id="imageUrl"
-                    placeholder="Введите URL изображения"
-                    value={newContent.imageUrl}
-                    onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="imageUrl"
+                      placeholder="Введите URL изображения"
+                      value={newContent.imageUrl}
+                      onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
+                      className="flex-1"
+                    />
+                    <div className="relative">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        id="mainImageUpload"
+                        className="absolute inset-0 opacity-0 w-full cursor-pointer"
+                        onChange={async (e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const file = e.target.files[0];
+                            // Создаем FormData для загрузки
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            try {
+                              const response = await axios.post('/api/imgur/upload-file', formData, {
+                                headers: {
+                                  'Content-Type': 'multipart/form-data'
+                                }
+                              });
+                              
+                              if (response.data.success) {
+                                toast({
+                                  title: 'Успешно',
+                                  description: 'Изображение загружено'
+                                });
+                                // Устанавливаем URL загруженного изображения
+                                setNewContent({...newContent, imageUrl: response.data.data.link});
+                                // Очищаем поле выбора файла
+                                e.target.value = '';
+                              } else {
+                                toast({
+                                  title: 'Ошибка',
+                                  description: response.data.error || 'Неизвестная ошибка при загрузке',
+                                  variant: 'destructive'
+                                });
+                              }
+                            } catch (error: any) {
+                              toast({
+                                title: 'Ошибка',
+                                description: error.message || 'Ошибка при загрузке изображения',
+                                variant: 'destructive'
+                              });
+                            }
+                          }
+                        }}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="icon"
+                        className="h-9 w-9"
+                      >
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Дополнительные изображения */}
@@ -1408,6 +1467,62 @@ export default function ContentPage() {
                             }}
                             className="flex-1"
                           />
+                          <div className="relative">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              id={`newAdditionalImageUpload-${index}`}
+                              className="absolute inset-0 opacity-0 w-full cursor-pointer"
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  const file = e.target.files[0];
+                                  const formData = new FormData();
+                                  formData.append('image', file);
+                                  
+                                  try {
+                                    const response = await axios.post('/api/imgur/upload-file', formData, {
+                                      headers: {
+                                        'Content-Type': 'multipart/form-data'
+                                      }
+                                    });
+                                    
+                                    if (response.data.success) {
+                                      toast({
+                                        title: 'Успешно',
+                                        description: 'Изображение загружено'
+                                      });
+                                      
+                                      const updatedImages = [...newContent.additionalImages];
+                                      updatedImages[index] = response.data.data.link;
+                                      setNewContent({...newContent, additionalImages: updatedImages});
+                                      
+                                      e.target.value = '';
+                                    } else {
+                                      toast({
+                                        title: 'Ошибка',
+                                        description: response.data.error || 'Неизвестная ошибка при загрузке',
+                                        variant: 'destructive'
+                                      });
+                                    }
+                                  } catch (error: any) {
+                                    toast({
+                                      title: 'Ошибка',
+                                      description: error.message || 'Ошибка при загрузке изображения',
+                                      variant: 'destructive'
+                                    });
+                                  }
+                                }
+                              }}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon"
+                              className="h-9 w-9"
+                            >
+                              <Upload className="h-4 w-4" />
+                            </Button>
+                          </div>
                           <Button 
                             type="button" 
                             variant="outline" 
@@ -1678,15 +1793,71 @@ export default function ContentPage() {
                         Сгенерировать изображение
                       </Button>
                     </div>
-                    <Input
-                      id="imageUrl"
-                      placeholder="Введите URL изображения"
-                      value={currentContent.imageUrl || ""}
-                      onChange={(e) => {
-                        const updatedContent = {...currentContent, imageUrl: e.target.value};
-                        setCurrentContentSafe(updatedContent);
-                      }}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="imageUrl"
+                        placeholder="Введите URL изображения"
+                        value={currentContent.imageUrl || ""}
+                        onChange={(e) => {
+                          const updatedContent = {...currentContent, imageUrl: e.target.value};
+                          setCurrentContentSafe(updatedContent);
+                        }}
+                        className="flex-1"
+                      />
+                      <div className="relative">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          id="editMainImageUpload"
+                          className="absolute inset-0 opacity-0 w-full cursor-pointer"
+                          onChange={async (e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const file = e.target.files[0];
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              
+                              try {
+                                const response = await axios.post('/api/imgur/upload-file', formData, {
+                                  headers: {
+                                    'Content-Type': 'multipart/form-data'
+                                  }
+                                });
+                                
+                                if (response.data.success) {
+                                  toast({
+                                    title: 'Успешно',
+                                    description: 'Изображение загружено'
+                                  });
+                                  const updatedContent = {...currentContent, imageUrl: response.data.data.link};
+                                  setCurrentContentSafe(updatedContent);
+                                  e.target.value = '';
+                                } else {
+                                  toast({
+                                    title: 'Ошибка',
+                                    description: response.data.error || 'Неизвестная ошибка при загрузке',
+                                    variant: 'destructive'
+                                  });
+                                }
+                              } catch (error: any) {
+                                toast({
+                                  title: 'Ошибка',
+                                  description: error.message || 'Ошибка при загрузке изображения',
+                                  variant: 'destructive'
+                                });
+                              }
+                            }
+                          }}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          className="h-9 w-9"
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Дополнительные изображения */}
@@ -1728,6 +1899,63 @@ export default function ContentPage() {
                               }}
                               className="flex-1"
                             />
+                            <div className="relative">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                id={`editAdditionalImageUpload-${index}`}
+                                className="absolute inset-0 opacity-0 w-full cursor-pointer"
+                                onChange={async (e) => {
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    const file = e.target.files[0];
+                                    const formData = new FormData();
+                                    formData.append('image', file);
+                                    
+                                    try {
+                                      const response = await axios.post('/api/imgur/upload-file', formData, {
+                                        headers: {
+                                          'Content-Type': 'multipart/form-data'
+                                        }
+                                      });
+                                      
+                                      if (response.data.success) {
+                                        toast({
+                                          title: 'Успешно',
+                                          description: 'Изображение загружено'
+                                        });
+                                        
+                                        const updatedImages = [...(currentContent.additionalImages || [])];
+                                        updatedImages[index] = response.data.data.link;
+                                        const updatedContent = {...currentContent, additionalImages: updatedImages};
+                                        setCurrentContentSafe(updatedContent);
+                                        
+                                        e.target.value = '';
+                                      } else {
+                                        toast({
+                                          title: 'Ошибка',
+                                          description: response.data.error || 'Неизвестная ошибка при загрузке',
+                                          variant: 'destructive'
+                                        });
+                                      }
+                                    } catch (error: any) {
+                                      toast({
+                                        title: 'Ошибка',
+                                        description: error.message || 'Ошибка при загрузке изображения',
+                                        variant: 'destructive'
+                                      });
+                                    }
+                                  }
+                                }}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="icon"
+                                className="h-9 w-9"
+                              >
+                                <Upload className="h-4 w-4" />
+                              </Button>
+                            </div>
                             <Button 
                               type="button" 
                               variant="outline" 
