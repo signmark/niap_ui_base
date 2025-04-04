@@ -9,6 +9,10 @@ import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
 
+// Установка переменных окружения для отладки
+process.env.DEBUG = 'express:*,vite:*';
+process.env.NODE_ENV = 'development';
+
 // Глобальная переменная для доступа к directusApiManager без импорта (избегаем циклические зависимости)
 // @ts-ignore - игнорируем проверку типов
 global['directusApiManager'] = directusApiManager;
@@ -19,11 +23,47 @@ app.use(express.urlencoded({ extended: false }));
 
 // Добавляем API маршрут для проверки статуса явно, чтобы он работал до инициализации Vite
 app.get('/api/status-check', (req, res) => {
-  const acceptHeader = req.headers.accept || '';
-  if (acceptHeader.includes('application/json')) {
-    return res.json({ status: 'ok', server: 'running' });
-  }
-  return res.json({ status: 'ok', server: 'running' });
+  return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
+});
+
+// Добавляем маршрут для проверки здоровья
+app.get('/health', (req, res) => {
+  return res.status(200).send('OK');
+});
+
+// Специальный маршрут для проверки доступности сервера с интерфейсом
+app.get('/server-health', (req, res) => {
+  const content = `
+  <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сервер работает</title>
+    <style>
+      body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+      .status { color: #4caf50; font-weight: bold; }
+      .time { color: #2196f3; margin-top: 20px; }
+      pre { text-align: left; max-width: 800px; margin: 20px auto; background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <h1>Статус сервера: <span class="status">Работает</span></h1>
+    <div class="time">Текущее время: ${new Date().toLocaleString('ru-RU')}</div>
+    <pre>
+API маршруты:
+- GET /api/status-check - Проверка статуса API
+- GET /api/claude/test-api-key - Проверка API ключа Claude
+- POST /api/claude/improve-text - Улучшение текста с Claude AI
+
+Конфигурация сервера:
+- NODE_ENV: ${process.env.NODE_ENV || 'не задано'}
+- PORT: ${process.env.PORT || '5000 (по умолчанию)'}
+    </pre>
+  </body>
+  </html>
+  `;
+  return res.status(200).type('html').send(content);
 });
 
 // Middleware для логирования запросов
@@ -68,11 +108,14 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    console.log("=== SERVER INITIALIZATION START ===");
     log("Starting server initialization...");
 
     // Регистрируем маршруты для Claude AI в самом начале
+    console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes first...");
     registerClaudeRoutes(app);
+    console.log("Claude AI routes registered");
     log("Claude AI routes registered successfully");
 
     log("Registering routes...");
@@ -101,26 +144,29 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    if (app.get("env") === "development") {
+    // Всегда настраиваем Vite в среде Replit
+    try {
       log("Setting up Vite in development mode...");
       await setupVite(app, server);
       log("Vite setup completed");
-    } else {
-      log("Setting up static file serving...");
-      serveStatic(app);
-      log("Static file serving setup completed");
+    } catch (viteError) {
+      log(`Warning: Error setting up Vite: ${viteError instanceof Error ? viteError.message : 'Unknown error'}`);
+      log("Continuing server startup despite Vite initialization error");
     }
 
-    // Используем стандартный порт 5000
-    const PORT = 5000;
+    // Используем стандартный порт 5000 или порт из переменной окружения
+    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+    console.log(`=== STARTING SERVER ON PORT ${PORT} ===`);
     log(`Attempting to start server on port ${PORT}...`);
 
-    server.listen({
-      port: PORT,
-      host: "0.0.0.0",
-    }, () => {
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`=== SERVER SUCCESSFULLY STARTED ON PORT ${PORT} ===`);
       log(`Server successfully started on port ${PORT}`);
+      
+      // Печатаем URL-адрес приложения
+      console.log(`=== SERVER URL: http://0.0.0.0:${PORT} ===`);
     }).on('error', (err: NodeJS.ErrnoException) => {
+      console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {
         log(`Fatal error: Port ${PORT} is already in use. Please ensure no other process is using this port.`);
       } else {

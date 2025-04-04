@@ -2876,11 +2876,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   console.log('Starting route registration...');
+  // Создаем HTTP сервер
+  console.log('Creating HTTP server...');
   const httpServer = createServer(app);
+  console.log('HTTP server created successfully');
   
   // Регистрируем маршруты валидации API ключей социальных сетей
+  console.log('Registering validation routes...');
   registerValidationRoutes(app);
+  console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
+  console.log('API routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);
