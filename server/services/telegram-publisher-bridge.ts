@@ -97,6 +97,17 @@ export async function sendImageToTelegram(
   token: string
 ): Promise<any> {
   try {
+    console.log(`[TelegramPublisherBridge] Отправка изображения в Telegram: ${imageUrl.substring(0, 50)}...`);
+    console.log(`[TelegramPublisherBridge] ID чата: ${chatId}`);
+    console.log(`[TelegramPublisherBridge] Длина подписи: ${caption ? caption.length : 0} символов`);
+    console.log(`[TelegramPublisherBridge] Первые 50 символов подписи: "${caption ? caption.substring(0, 50) : 'ПУСТО'}${caption && caption.length > 50 ? '...' : ''}"`);
+    
+    // Убедимся, что подпись не пустая
+    if (!caption || caption.trim() === '') {
+      console.log(`[TelegramPublisherBridge] ⚠️ Обнаружена пустая подпись, установка значения по умолчанию`);
+      caption = "📷 Новая публикация";
+    }
+    
     const publisher = await getTelegramPublisher({
       verbose: true,
       directusEmail: process.env.DIRECTUS_EMAIL,

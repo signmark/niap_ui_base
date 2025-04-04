@@ -540,6 +540,7 @@ class SocialPublishingService {
     console.log('[TELEGRAM] Начало загрузки и отправки изображения в Telegram через TelegramPublisher...');
     console.log(`[TELEGRAM] URL изображения: ${imageUrl.substring(0, 50)}...`);
     console.log(`[TELEGRAM] ID чата: ${chatId}`);
+    console.log(`[TELEGRAM] Длина подписи: ${caption ? caption.length : 0} символов, первые 50 символов: "${caption ? caption.substring(0, 50) : 'ПУСТО'}"...`);
     
     try {
       // Проверяем исходные параметры
@@ -672,9 +673,13 @@ class SocialPublishingService {
       
       // Проверка на пустой текст и установка значения по умолчанию
       const safeText = text && text.trim() ? text : "📷 Новая публикация";
+      console.log(`[TELEGRAM] Оригинальный текст (${text ? text.length : 0} символов): "${text ? text.substring(0, 50) : 'ПУСТО'}${text && text.length > 50 ? '...' : ''}"`);
+      console.log(`[TELEGRAM] Безопасный текст (${safeText.length} символов): "${safeText.substring(0, 50)}${safeText.length > 50 ? '...' : ''}"`);
       
       // Форматируем текст для Telegram (с поддержкой HTML)
       const formattedText = this.addHtmlFormatting(safeText);
+      console.log(`[TELEGRAM] Форматированный текст (${formattedText.length} символов): "${formattedText.substring(0, 50)}${formattedText.length > 50 ? '...' : ''}"`);
+      
       
       console.log(`Отправка в Telegram. Текст: "${safeText.substring(0, 50)}", Изображение: ${!!imageUrl}`);
       
@@ -907,6 +912,19 @@ class SocialPublishingService {
    * @returns Текст с экранированными символами
    */
   private escapeHtmlSpecialChars(text: string): string {
+    // Проверяем наличие допустимых HTML-тегов (которые поддерживаются в Telegram)
+    const telegramAllowedTagsRegex = /<(b|i|u|s|code|pre|a(\s+href=".*?"|>|$))>/i;
+    
+    // Если в тексте есть допустимые HTML-теги, предполагаем, что текст уже отформатирован
+    // и не нужно экранировать символы HTML
+    if (telegramAllowedTagsRegex.test(text)) {
+      console.log('[TELEGRAM] Обнаружены допустимые HTML-теги, пропускаем экранирование');
+      return text;
+    }
+    
+    console.log('[TELEGRAM] HTML-теги не найдены, выполняем стандартное экранирование');
+    
+    // Если нет допустимых тегов, выполняем стандартное экранирование
     return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
