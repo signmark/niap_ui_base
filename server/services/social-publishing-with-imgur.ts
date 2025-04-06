@@ -283,19 +283,25 @@ export class SocialPublishingWithImgurService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    if (!telegramSettings?.token || !telegramSettings?.chatId) {
+    // Получаем токен и chatId из настроек или переменных окружения, если настройки отсутствуют
+    const token = telegramSettings?.token || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = telegramSettings?.chatId || process.env.TELEGRAM_CHAT_ID;
+    
+    // Проверяем наличие необходимых параметров
+    if (!token || !chatId) {
+      log(`Ошибка публикации в Telegram: отсутствуют настройки. Токен: ${token ? 'задан' : 'отсутствует'}, ID чата: ${chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
         platform: 'telegram',
         status: 'failed',
         publishedAt: null,
-        error: 'Отсутствуют настройки для Telegram (токен или ID чата)'
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании или в переменных окружения.'
       };
     }
+    
+    log(`Используем токен Telegram: ${token.substring(0, 6)}... и ID чата: ${chatId}`, 'social-publishing');
 
     try {
-      const { token, chatId } = telegramSettings;
       log(`Публикация в Telegram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
-      log(`Публикация в Telegram. Чат: ${chatId}, Токен: ${token.substring(0, 6)}...`, 'social-publishing');
 
       // Обработка дополнительных изображений
       let processedContent = this.processAdditionalImages(content, 'Telegram');
@@ -593,24 +599,24 @@ export class SocialPublishingWithImgurService {
             const hasImage = content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '';
             const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
             
+            // Подготавливаем корректно ID чата (повторяем логику из основного кода)
+            let formattedChatId = chatId;
+            if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+              formattedChatId = `-100${chatId}`;
+            }
+            
+            // URL для API запросов
+            const baseUrl = `https://api.telegram.org/bot${token}`;
+            
             if (hasImage) {
               // Отправляем фото без подписи
-              // Получаем chatId и API URL из контекста
-              const telegramChatId = telegramSettings?.chatId || '';
-              let formattedChatId = telegramChatId;
-              if (!telegramChatId.startsWith('-100') && !isNaN(Number(telegramChatId))) {
-                formattedChatId = `-100${telegramChatId}`;
-              }
-              
-              const telegramApiBaseUrl = `https://api.telegram.org/bot${telegramSettings?.token || ''}`;
-              
               const photoRequestBody = {
                 chat_id: formattedChatId,
                 photo: content.imageUrl
               };
               
               log(`Отправка фото без подписи: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
-              const photoResponse = await axios.post(`${telegramApiBaseUrl}/sendPhoto`, photoRequestBody, {
+              const photoResponse = await axios.post(`${baseUrl}/sendPhoto`, photoRequestBody, {
                 headers: { 'Content-Type': 'application/json' }
               });
               
@@ -619,7 +625,7 @@ export class SocialPublishingWithImgurService {
                 const textResponse = await this.sendTextMessageToTelegram(
                   content.content || '',
                   formattedChatId,
-                  telegramSettings?.token || ''
+                  token
                 );
                 
                 // Если фото отправилось успешно, считаем публикацию успешной
@@ -637,24 +643,13 @@ export class SocialPublishingWithImgurService {
               }
             } else if (hasVideo) {
               // Аналогичная логика для видео
-              // Получаем настройки для Telegram
-              const telegramChatId = telegramSettings?.chatId || '';
-              let formattedChatId = telegramChatId;
-              
-              // Форматируем ID чата, если он числовой и не начинается с '-100'
-              if (!telegramChatId.startsWith('-100') && !isNaN(Number(telegramChatId))) {
-                formattedChatId = `-100${telegramChatId}`;
-              }
-              
-              const telegramApiBaseUrl = `https://api.telegram.org/bot${telegramSettings?.token || ''}`;
-              
               const videoRequestBody = {
                 chat_id: formattedChatId,
                 video: content.videoUrl
               };
               
               log(`Отправка видео без подписи: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
-              const videoResponse = await axios.post(`${telegramApiBaseUrl}/sendVideo`, videoRequestBody, {
+              const videoResponse = await axios.post(`${baseUrl}/sendVideo`, videoRequestBody, {
                 headers: { 'Content-Type': 'application/json' }
               });
               
@@ -663,7 +658,7 @@ export class SocialPublishingWithImgurService {
                 const textResponse = await this.sendTextMessageToTelegram(
                   content.content || '',
                   formattedChatId,
-                  telegramSettings?.token || ''
+                  token
                 );
                 
                 // Если видео отправилось успешно, считаем публикацию успешной
