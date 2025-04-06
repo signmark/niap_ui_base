@@ -170,5 +170,33 @@ export function registerDeepSeekRoutes(app: Router) {
     }
   });
 
+  /**
+   * Маршрут для получения списка доступных моделей DeepSeek
+   */
+  router.get('/api/deepseek/models', async (_req: Request, res: Response) => {
+    try {
+      // Список поддерживаемых моделей DeepSeek
+      const models = [
+        {
+          id: 'deepseek-v3',
+          name: 'DeepSeek V3',
+          description: 'Самая современная и мощная модель DeepSeek для генерации текста',
+          default: true
+        }
+      ];
+      
+      return res.json({
+        success: true,
+        models
+      });
+    } catch (error: any) {
+      log('Error getting DeepSeek models:', (error as Error).message);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Произошла ошибка при получении списка моделей DeepSeek'
+      });
+    }
+  });
+
   return router;
 }
