@@ -11,6 +11,34 @@
 export function log(message: string, source = "express") {
   const time = new Date().toLocaleTimeString();
   console.log(`${time} [${source}] ${message}`);
+  
+  // Добавляем детальное логирование для отладки
+  const isDebug = source.endsWith('-debug');
+  if (isDebug) {
+    try {
+      const fs = require('fs');
+      const logDir = './logs';
+      
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      
+      // Записываем в JSON-формате для удобного анализа
+      const logData = {
+        timestamp: new Date().toISOString(),
+        source,
+        message,
+        level: 'debug'
+      };
+      
+      fs.appendFileSync(
+        `${logDir}/debug-${new Date().toISOString().split('T')[0]}.log`, 
+        JSON.stringify(logData) + '\n'
+      );
+    } catch (err) {
+      console.error(`Ошибка записи логов: ${err}`);
+    }
+  }
 }
 
 /**

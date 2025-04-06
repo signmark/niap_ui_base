@@ -506,6 +506,17 @@ export class SocialPublishingWithImgurService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
+    // Добавляем расширенное логирование для отладки
+    log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram-debug');
+    log(`Telegram настройки: ${JSON.stringify({
+      hasSettings: !!telegramSettings,
+      hasToken: !!telegramSettings?.token,
+      hasChatId: !!telegramSettings?.chatId,
+      token: telegramSettings?.token ? `${telegramSettings.token.substring(0, 6)}...` : 'отсутствует',
+      chatId: telegramSettings?.chatId || 'отсутствует',
+      campaignId: content.campaignId
+    })}`, 'telegram-debug');
+    
     // Расширенное логирование для отладки
     log(`publishToTelegram вызван для контента ID: ${content.id}, Title: "${content.title}"`, 'social-publishing');
     log(`Параметры Telegram: ${JSON.stringify({

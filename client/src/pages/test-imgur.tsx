@@ -20,6 +20,10 @@ export default function TestImgur() {
   const [uploadedImages, setUploadedImages] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Новое состояние для проверки Telegram чата
+  const [chatCheckResult, setChatCheckResult] = useState<any>(null);
+  const [checkingChat, setCheckingChat] = useState(false);
 
   // Функция для загрузки списка изображений
   const fetchUploadedImages = async () => {
@@ -128,6 +132,50 @@ export default function TestImgur() {
     }
   };
 
+  // Функция для проверки существования чата Telegram
+  const checkTelegramChat = async () => {
+    if (!telegramToken || !telegramChatId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите токен и ID чата Telegram',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    setCheckingChat(true);
+    try {
+      const response = await axios.post('/api/imgur/check-telegram-chat', {
+        telegramToken,
+        telegramChatId
+      });
+      
+      setChatCheckResult(response.data);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Чат Telegram успешно проверен и существует',
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: response.data.error || 'Чат не найден или недоступен',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      setChatCheckResult(error.response?.data || { error: error.message });
+      toast({
+        title: 'Ошибка',
+        description: error.response?.data?.error || error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setCheckingChat(false);
+    }
+  };
+  
   const testTelegramPublication = async () => {
     if (!contentId) {
       toast({
