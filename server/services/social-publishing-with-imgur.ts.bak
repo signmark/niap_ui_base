@@ -57,78 +57,6 @@ export class SocialPublishingWithImgurService {
     
     return formattedText;
   }
-  
-  /**
-   * Создает и отправляет текстовое сообщение в Telegram
-   * @param text Текст для отправки
-   * @param chatId ID чата Telegram
-   * @param token Токен бота Telegram
-   * @returns Результат отправки сообщения
-   */
-  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<any> {
-    try {
-      // Форматируем ID чата если нужно
-      let formattedChatId = chatId;
-      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-        formattedChatId = `-100${chatId}`;
-      }
-      
-      // Подготавливаем текст с форматированием и обрезкой
-      const processedText = this.prepareTelegramText(text);
-      log(`Отправка текстового сообщения в Telegram, длина: ${processedText.length} символов`, 'social-publishing');
-      
-      // Базовый URL API
-      const baseUrl = `https://api.telegram.org/bot${token}`;
-      
-      // Тело запроса
-      const messageBody = {
-        chat_id: formattedChatId,
-        text: processedText,
-        parse_mode: 'HTML'
-      };
-      
-      // Отправляем запрос с HTML форматированием
-      const response = await axios.post(`${baseUrl}/sendMessage`, messageBody, {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      log(`Ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
-      
-      if (!response.data.ok) {
-        log(`Ошибка при отправке HTML-форматированного текста: ${response.data.description}`, 'social-publishing');
-        
-        // Если не получилось отправить с HTML форматированием, пробуем без него
-        const plainText = text.replace(/<[^>]*>/g, '');
-        
-        // Обрезаем по тому же лимиту
-        const maxLength = 4000;
-        const processedPlainText = plainText.length > maxLength ? 
-          plainText.substring(0, maxLength - 3) + '...' : 
-          plainText;
-        
-        log(`Отправка обычного текста в Telegram, длина: ${processedPlainText.length} символов`, 'social-publishing');
-        
-        // Тело запроса без указания parse_mode
-        const plainMessageBody = {
-          chat_id: formattedChatId,
-          text: processedPlainText
-        };
-        
-        // Отправляем запрос без HTML форматирования
-        const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        log(`Ответ на отправку обычного текста: ${JSON.stringify(plainResponse.data)}`, 'social-publishing');
-        return plainResponse.data;
-      }
-      
-      return response.data;
-    } catch (error: any) {
-      log(`Ошибка при отправке текстового сообщения в Telegram: ${error.message}`, 'social-publishing');
-      throw error;
-    }
-  }
 
   /**
    * Обрабатывает поле дополнительных изображений в контенте, проверяя и преобразуя его при необходимости
@@ -509,16 +437,62 @@ export class SocialPublishingWithImgurService {
         try {
           log(`Отправка отдельного текстового сообщения после медиа в Telegram`, 'social-publishing');
           
-          // Используем нашу новую функцию для отправки текста, которая 
-          // автоматически форматирует текст и пробует отправить как HTML или простой текст при неудаче
-          const textResponse = await this.sendTextMessageToTelegram(
-            content.content || '',
-            formattedChatId,
-            token
-          );
+          // Получаем сырой текст без HTML форматирования, если не удастся отправить форматированный
+          const plainText = content.content?.replace(/<[^>]*>/g, '') || '';
           
-          log(`Результат отправки текстового сообщения после медиа: ${JSON.stringify(textResponse)}`, 'social-publishing');
+          // Формируем текст с помощью метода prepareTelegramText, который уже включает
+          // форматирование HTML и обрезку по лимиту
+          let messageText = this.prepareTelegramText(content.content || '');
+            
+          log(`Отправка отдельного текстового сообщения в Telegram, длина текста: ${messageText.length} символов`, 'social-publishing');
           
+          // Создаем объект запроса
+          const textMessageBody = {
+            chat_id: formattedChatId,
+            text: messageText,
+            parse_mode: 'HTML'
+          };
+          
+          try {
+            // Первая попытка - отправляем с HTML форматированием
+            log(`Отправка форматированного текста в Telegram`, 'social-publishing');
+            const textResponse = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            log(`Ответ на отправку форматированного текста: ${JSON.stringify(textResponse.data)}`, 'social-publishing');
+            
+            if (!textResponse.data.ok) {
+              log(`Не удалось отправить форматированный текст: ${textResponse.data.description}`, 'social-publishing');
+              throw new Error(textResponse.data.description);
+            }
+          } catch (htmlError: any) {
+            // Если не получилось отправить HTML форматированный текст, пробуем без форматирования
+            log(`Ошибка при отправке HTML-форматированного текста: ${htmlError.message}. Попытка отправки обычного текста`, 'social-publishing');
+            
+            // Обрезаем обычный текст, если он слишком длинный
+            let plainTextToSend = plainText;
+            if (plainTextToSend.length > maxMessageLength) {
+              plainTextToSend = plainTextToSend.substring(0, maxMessageLength - 3) + '...';
+            }
+            
+            // Отправляем обычный текст без форматирования
+            const plainTextBody = {
+              chat_id: formattedChatId,
+              text: plainTextToSend
+              // Не указываем parse_mode для обычного текста
+            };
+            
+            const plainTextResponse = await axios.post(`${baseUrl}/sendMessage`, plainTextBody, {
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            log(`Ответ на отправку обычного текста: ${JSON.stringify(plainTextResponse.data)}`, 'social-publishing');
+            
+            if (!plainTextResponse.data.ok) {
+              log(`Не удалось отправить даже обычный текст: ${plainTextResponse.data.description}`, 'social-publishing');
+            }
+          }
         } catch (error: any) {
           // Логируем ошибку, но не прерываем основной процесс, т.к. медиа уже отправлено
           log(`Ошибка при отправке отдельного текстового сообщения: ${error.message}`, 'social-publishing');
@@ -615,12 +589,19 @@ export class SocialPublishingWithImgurService {
               });
               
               if (photoResponse.data.ok) {
-                // Отправляем текст отдельным сообщением используя нашу универсальную функцию
-                const textResponse = await this.sendTextMessageToTelegram(
-                  content.content || '',
-                  formattedChatId,
-                  telegramSettings?.token || ''
-                );
+                // Отправляем текст отдельным сообщением
+                // Формируем текстовое сообщение с помощью метода форматирования для Telegram
+                const formattedText = this.formatTextForTelegram(content.content || '');
+                
+                const textMessageBody = {
+                  chat_id: formattedChatId,
+                  text: formattedText,
+                  parse_mode: 'HTML'
+                };
+                
+                const textResponse = await axios.post(`${telegramApiBaseUrl}/sendMessage`, textMessageBody, {
+                  headers: { 'Content-Type': 'application/json' }
+                });
                 
                 // Если фото отправилось успешно, считаем публикацию успешной
                 // даже если текст не удалось отправить
@@ -659,12 +640,19 @@ export class SocialPublishingWithImgurService {
               });
               
               if (videoResponse.data.ok) {
-                // Отправляем текст отдельным сообщением используя нашу универсальную функцию
-                const textResponse = await this.sendTextMessageToTelegram(
-                  content.content || '',
-                  formattedChatId,
-                  telegramSettings?.token || ''
-                );
+                // Отправляем текст отдельным сообщением
+                // Формируем текстовое сообщение с помощью метода форматирования для Telegram
+                const formattedText = this.formatTextForTelegram(content.content || '');
+                
+                const textMessageBody = {
+                  chat_id: formattedChatId,
+                  text: formattedText,
+                  parse_mode: 'HTML'
+                };
+                
+                const textResponse = await axios.post(`${telegramApiBaseUrl}/sendMessage`, textMessageBody, {
+                  headers: { 'Content-Type': 'application/json' }
+                });
                 
                 // Если видео отправилось успешно, считаем публикацию успешной
                 const message = videoResponse.data.result;
