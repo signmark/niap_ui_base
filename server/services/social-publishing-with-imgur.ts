@@ -255,11 +255,29 @@ export class SocialPublishingWithImgurService {
       // Проверяем доступность видео
       const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
       
-      // Ограничиваем длину подписи, так как Telegram имеет ограничение в 4096 символов
-      const maxCaptionLength = 4096;
+      // Telegram имеет разные ограничения для разных типов сообщений:
+      // - 4096 символов для обычного текста (без медиа)
+      // - 1024 символа для подписи к медиа (фото, видео)
+      const maxCaptionLength = 1024; // Лимит для подписи к медиа
+      const maxTextLength = 4096;    // Лимит для обычного текстового сообщения
+      
+      // Подготавливаем текст для разных сценариев
       const truncatedCaption = text.length > maxCaptionLength ? 
         text.substring(0, maxCaptionLength - 3) + '...' : 
         text;
+      
+      const truncatedText = text.length > maxTextLength ? 
+        text.substring(0, maxTextLength - 3) + '...' : 
+        text;
+      
+      // Флаг для определения, нужно ли отправлять текст отдельным сообщением
+      let needSeparateTextMessage = false;
+      
+      // Для изображений с длинным текстом > 1024 символов отправляем текст отдельно
+      if ((images.length > 0 || hasVideo) && text.length > maxCaptionLength) {
+        needSeparateTextMessage = true;
+        log(`Telegram: текст (${text.length} символов) превышает ограничение подписи ${maxCaptionLength} символов, будет отправлен отдельным сообщением`, 'social-publishing');
+      }
       
       // Решение о методе публикации на основе доступности медиа и типа контента
       if (images.length > 1) {
@@ -270,8 +288,8 @@ export class SocialPublishingWithImgurService {
         const mediaGroup = images.map((url, index) => ({
           type: 'photo',
           media: url,
-          // Добавляем подпись только к первому изображению
-          ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
+          // Добавляем подпись только к первому изображению, и только если не нужно отправлять текст отдельным сообщением
+          ...(index === 0 && !needSeparateTextMessage ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
         }));
         
         log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
@@ -291,11 +309,12 @@ export class SocialPublishingWithImgurService {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
         
+        // Если нужно отправить текст отдельным сообщением, отправляем изображение без подписи
         const photoRequestBody = {
           chat_id: formattedChatId, 
           photo: images[0],
-          caption: truncatedCaption,
-          parse_mode: 'HTML'
+          // Если текст длинный и будет отправлен отдельно - не добавляем подпись к фото
+          ...(needSeparateTextMessage ? {} : { caption: truncatedCaption, parse_mode: 'HTML' })
         };
         
         log(`Отправляем запрос фото к Telegram API: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
@@ -309,8 +328,8 @@ export class SocialPublishingWithImgurService {
         const videoRequestBody = {
           chat_id: formattedChatId,
           video: content.videoUrl,
-          caption: text,
-          parse_mode: 'HTML'
+          // Если текст длинный и будет отправлен отдельно - не добавляем подпись к видео
+          ...(needSeparateTextMessage ? {} : { caption: truncatedCaption, parse_mode: 'HTML' })
         };
         
         log(`Отправляем запрос видео к Telegram API: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
@@ -363,6 +382,34 @@ export class SocialPublishingWithImgurService {
       }
 
       log(`Получен ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
+      
+      // Отправляем текст отдельным сообщением, если нужно
+      if (needSeparateTextMessage && response.data.ok) {
+        try {
+          log(`Отправка отдельного текстового сообщения после медиа в Telegram`, 'social-publishing');
+          
+          const textMessageBody = {
+            chat_id: formattedChatId,
+            text: text,
+            parse_mode: 'HTML'
+          };
+          
+          // Отправляем отдельное текстовое сообщение
+          const textResponse = await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          log(`Ответ на отдельное текстовое сообщение: ${JSON.stringify(textResponse.data)}`, 'social-publishing');
+          
+          // Если не удалось отправить текст - это не критично, основное медиа уже отправлено
+          if (!textResponse.data.ok) {
+            log(`Не удалось отправить отдельное текстовое сообщение: ${textResponse.data.description}`, 'social-publishing');
+          }
+        } catch (error: any) {
+          // Логируем ошибку, но не прерываем основной процесс, т.к. медиа уже отправлено
+          log(`Ошибка при отправке отдельного текстового сообщения: ${error.message}`, 'social-publishing');
+        }
+      }
 
       // Обработка успешного ответа
       if (response.data.ok) {
@@ -416,8 +463,8 @@ export class SocialPublishingWithImgurService {
         
         // Добавляем детальную информацию для проблем с длиной текста
         if (error.response.data.description && error.response.data.description.includes('message is too long')) {
-          log(`Ошибка длины сообщения в Telegram. Длина текста: ${text.length}, макс: 4096`, 'social-publishing');
-          errorMessage = `Сообщение слишком длинное для Telegram (${text.length} символов, максимум 4096)`;
+          log(`Ошибка длины сообщения в Telegram. Длина текста слишком большая, макс: 4096`, 'social-publishing');
+          errorMessage = `Сообщение слишком длинное для Telegram (превышен лимит в 4096 символов)`;
         }
       }
       
