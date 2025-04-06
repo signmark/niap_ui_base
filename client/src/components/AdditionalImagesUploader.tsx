@@ -66,6 +66,7 @@ export function AdditionalImagesUploader({
                     value={imageUrl}
                     onChange={(url) => handleImageChange(index, url)}
                     placeholder="Введите URL дополнительного изображения"
+                    forcePreview={true}
                   />
                 </div>
                 <Button 
