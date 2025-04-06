@@ -89,8 +89,8 @@ const AI_SERVICES = [
     name: "DeepSeek",
     models: [
       {
-        id: "deepseek-v3",
-        name: "DeepSeek V3",
+        id: "deepseek-chat",
+        name: "DeepSeek Chat",
         default: true
       }
     ]
