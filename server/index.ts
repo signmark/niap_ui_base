@@ -176,8 +176,8 @@ app.use((req, res, next) => {
       log("Continuing server startup despite Vite initialization error");
     }
 
-    // Используем порт 5001 или порт из переменной окружения, так как порт 5000 уже занят
-    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5001;
+    // Используем стандартный порт 5000 или порт из переменной окружения
+    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
     console.log(`=== STARTING SERVER ON PORT ${PORT} ===`);
     log(`Attempting to start server on port ${PORT}...`);
 
