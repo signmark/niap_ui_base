@@ -42,11 +42,14 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
       setIsUploading(true);
       
       try {
+        console.log('Отправка запроса на загрузку файла...');
         const response = await axios.post('/api/imgur/upload-file', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
+        
+        console.log('Получен ответ от сервера:', JSON.stringify(response.data, null, 2));
         
         if (response.data.success) {
           toast({
@@ -54,16 +57,42 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
             description: 'Изображение загружено'
           });
           
-          // Используем URL из ответа с сервера (url вместо link)
-          const imageUrl = response.data.data.url || response.data.data.link;
+          // Извлекаем URL из ответа сервера с подробной проверкой
+          let imageUrl = '';
+          if (response.data.data) {
+            if (response.data.data.url) {
+              imageUrl = response.data.data.url;
+              console.log('Найден URL в response.data.data.url:', imageUrl);
+            } else if (response.data.data.link) {
+              imageUrl = response.data.data.link;
+              console.log('Найден URL в response.data.data.link:', imageUrl);
+            } else {
+              console.warn('URL не найден в ожидаемых полях ответа:', response.data.data);
+              // Поиск URL в любом поле ответа
+              for (const key in response.data.data) {
+                const value = response.data.data[key];
+                if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
+                  imageUrl = value;
+                  console.log(`Найден альтернативный URL в поле ${key}:`, imageUrl);
+                  break;
+                }
+              }
+            }
+          }
           
-          // Для отладки
-          console.log('Ответ от сервера:', response.data);
-          console.log('Полученный URL изображения:', imageUrl);
-          
-          onChange(imageUrl);
-          setPreviewUrl(imageUrl);
-          setShowPreview(true);
+          if (imageUrl) {
+            console.log('ИТОГОВЫЙ URL изображения для вставки:', imageUrl);
+            onChange(imageUrl);
+            setPreviewUrl(imageUrl);
+            setShowPreview(true);
+          } else {
+            console.error('Не удалось извлечь URL изображения из ответа сервера');
+            toast({
+              title: 'Предупреждение',
+              description: 'Изображение загружено, но URL не получен. Пожалуйста, сообщите разработчикам.',
+              variant: 'destructive'
+            });
+          }
           
           // Очищаем поле выбора файла
           e.target.value = '';
@@ -75,6 +104,7 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
           });
         }
       } catch (error: any) {
+        console.error('Ошибка при загрузке файла:', error);
         toast({
           title: 'Ошибка',
           description: error.message || 'Ошибка при загрузке изображения',
