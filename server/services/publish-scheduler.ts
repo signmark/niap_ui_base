@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { storage } from '../storage';
-import { socialPublishingService } from './social-publishing';
+import { socialPublishingWithImgurService } from './social-publishing-with-imgur';
 import { CampaignContent, SocialPlatform, Campaign } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';
@@ -476,14 +476,14 @@ export class PublishScheduler {
         }
 
         // Публикуем контент в платформу
-        const result = await socialPublishingService.publishToPlatform(
+        const result = await socialPublishingWithImgurService.publishToPlatform(
           content,
           platform,
           socialSettings
         );
 
         // Обновляем статус публикации
-        await socialPublishingService.updatePublicationStatus(
+        await socialPublishingWithImgurService.updatePublicationStatus(
           content.id,
           platform,
           result
