@@ -12,7 +12,8 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
-import telegramTestRoutes from './routes-telegram-test';
+// Убрали импорт несуществующего модуля
+// import telegramTestRoutes from './routes-telegram-test';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -161,10 +162,10 @@ app.use((req, res, next) => {
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
     
-    // Регистрируем тестовые маршруты Telegram
-    log("Registering Telegram test routes...");
-    app.use(telegramTestRoutes);
-    log("Telegram test routes registered successfully");
+    // Закомментировали регистрацию тестовых маршрутов Telegram
+    // log("Registering Telegram test routes...");
+    // app.use(telegramTestRoutes);
+    // log("Telegram test routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
