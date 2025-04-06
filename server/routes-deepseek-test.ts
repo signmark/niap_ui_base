@@ -209,7 +209,7 @@ export function registerDeepSeekTestRoutes(app: Express) {
       const generatedText = await deepseekService.generateText(
         messages,
         { 
-          model: 'deepseek-v3',  // Используем новую модель DeepSeek V3
+          model: 'deepseek-chat',  // Используем современную модель DeepSeek Chat
           temperature: 0.7,
           max_tokens: 1000  // Увеличиваем лимит токенов для более полных ответов
         }
