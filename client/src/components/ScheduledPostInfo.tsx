@@ -20,6 +20,38 @@ const formatDate = (dateStr: string | null) => {
   return format(correctedDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
 };
 
+/**
+ * Форматирует URL Telegram для правильного отображения
+ * @param url URL Telegram для форматирования
+ * @returns Форматированный URL
+ */
+const formatTelegramUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  
+  // Проверяем, что это URL Telegram
+  if (!url.includes('t.me')) return url;
+  
+  try {
+    // Разбираем URL
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(Boolean);
+    
+    if (pathParts.length === 0) return url;
+    
+    // Если первая часть пути 'c', и затем идет числовой ID
+    if (pathParts[0] === 'c' && pathParts.length > 1) {
+      // Формируем URL для числового ID: https://t.me/c/123456789/123
+      return `https://t.me/c/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+    } 
+    
+    // URL для username: https://t.me/username/123
+    return `https://t.me/${pathParts[0]}${pathParts.length > 1 ? `/${pathParts[1]}` : ''}`;
+  } catch (error) {
+    console.error('Ошибка при форматировании URL Telegram:', error);
+    return url;
+  }
+};
+
 interface SocialPublicationStatus {
   platform: string;
   status: 'pending' | 'published' | 'failed';
@@ -127,7 +159,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       {status.postUrl && (
                         <p className="text-xs mt-1">
                           <a 
-                            href={status.postUrl} 
+                            href={platform === 'telegram' ? formatTelegramUrl(status.postUrl) || status.postUrl : status.postUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-primary underline"
@@ -216,7 +248,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                   .map(([platform, status]) => (
                     <a 
                       key={platform}
-                      href={status.postUrl!} 
+                      href={platform === 'telegram' ? formatTelegramUrl(status.postUrl) || status.postUrl! : status.postUrl!} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-xs text-primary underline flex items-center gap-1"
