@@ -64,7 +64,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         throw new Error('Требуется авторизация');
       }
 
-      // Выбираем API в зависимости от выбранного сервиса
+      // Выбираем правильный API маршрут в зависимости от выбранного сервиса
       let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
       console.log(`Генерация контента через ${selectedService} API`);
@@ -105,19 +105,19 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       const service = data.service;
       
       let formattedContent = content
-        .split('\n\n').map(paragraph => paragraph.trim()) // Разбиваем на параграфы
-        .filter(p => p) // Убираем пустые параграфы
-        .map(paragraph => {
+        .split('\n\n').map((paragraph: string) => paragraph.trim()) // Разбиваем на параграфы
+        .filter((p: string) => p) // Убираем пустые параграфы
+        .map((paragraph: string) => {
           // Обрабатываем маркдаун-форматирование
           return paragraph
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
             .replace(/\*(.*?)\*/g, '<em>$1</em>') // Курсив
-            .replace(/^#+ (.*)$/, (match, text) => { // Заголовки
-              const level = (match.match(/^#+/)[0].length);
+            .replace(/^#+ (.*)$/, (match: string, text: string) => { // Заголовки
+              const level = (match.match(/^#+/) || ['#'])[0].length;
               return `<h${level}>${text}</h${level}>`;
             });
         })
-        .map(p => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
+        .map((p: string) => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
         .join('');
       
       setGenerationResult(formattedContent);
