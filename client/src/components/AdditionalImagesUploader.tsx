@@ -34,6 +34,12 @@ export function AdditionalImagesUploader({
     onChange([...images, ""]);
   };
   
+  // Функция для отображения URL
+  const displayUrl = (url: string) => {
+    if (!url || url.trim() === '') return 'Пустой URL';
+    return url.length > 50 ? url.substring(0, 47) + '...' : url;
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center mb-2">
@@ -52,24 +58,31 @@ export function AdditionalImagesUploader({
       {images.length > 0 ? (
         <div className="space-y-3">
           {images.map((imageUrl, index) => (
-            <div key={index} className="flex gap-2 items-start">
-              <div className="flex-1">
-                <ImageUploader
-                  id={`additional-image-${index}`}
-                  value={imageUrl}
-                  onChange={(url) => handleImageChange(index, url)}
-                  placeholder="Введите URL дополнительного изображения"
-                />
+            <div key={index} className="flex flex-col gap-1">
+              <div className="flex gap-2 items-start">
+                <div className="flex-1 w-full">
+                  <ImageUploader
+                    id={`additional-image-${index}`}
+                    value={imageUrl}
+                    onChange={(url) => handleImageChange(index, url)}
+                    placeholder="Введите URL дополнительного изображения"
+                  />
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  className="h-9 w-9 mt-1"
+                  onClick={() => handleRemoveImage(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                className="h-9 w-9 mt-1"
-                onClick={() => handleRemoveImage(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {imageUrl && imageUrl.trim() !== '' && (
+                <div className="text-xs text-muted-foreground ml-1 break-all">
+                  URL: {displayUrl(imageUrl)}
+                </div>
+              )}
             </div>
           ))}
         </div>
