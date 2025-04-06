@@ -10,12 +10,19 @@ interface ImageUploaderProps {
   onChange: (url: string) => void;
   placeholder?: string;
   id: string;
+  forcePreview?: boolean; // Новый параметр для принудительного отображения превью
 }
 
-export function ImageUploader({ value, onChange, placeholder = "Введите URL изображения", id }: ImageUploaderProps) {
+export function ImageUploader({ 
+  value, 
+  onChange, 
+  placeholder = "Введите URL изображения", 
+  id, 
+  forcePreview = false 
+}: ImageUploaderProps) {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(forcePreview);
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
 
@@ -23,14 +30,15 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
   useEffect(() => {
     if (value && value.trim() !== '') {
       setPreviewUrl(value);
-      setShowPreview(true);
+      // Если forcePreview=true или уже показываем превью, то продолжаем показывать
+      setShowPreview(forcePreview || showPreview);
       setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
     } else {
       setShowPreview(false);
       setPreviewUrl('');
       setDisplayUrl('');
     }
-  }, [value]);
+  }, [value, forcePreview]);
 
   // Обработка загрузки файла
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
