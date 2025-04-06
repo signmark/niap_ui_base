@@ -49,59 +49,62 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
           }
         });
         
-        console.log('Получен ответ от сервера:', JSON.stringify(response.data, null, 2));
+        // НОВЫЙ КОД: выводим больше информации для отладки
+        console.log('СЫРОЙ ОТВЕТ:', response);
+        console.log('DATA:', response.data);
+        console.log('DATA.DATA:', response.data.data);
+        console.log('DUMP FULL JSON:', JSON.stringify(response.data, null, 2));
+        console.log('RESPONSE URL:', response.data.url);
+        console.log('RESPONSE LINK:', response.data.link);
         
-        if (response.data.success) {
+        // Просто берем URL из корня ответа - после изменения серверного кода
+        const imageUrl = response.data.url || response.data.link;
+        
+        if (imageUrl) {
+          console.log('ИТОГОВЫЙ URL изображения для вставки (из корня):', imageUrl);
+          onChange(imageUrl);
+          setPreviewUrl(imageUrl);
+          setShowPreview(true);
           toast({
             title: 'Успешно',
             description: 'Изображение загружено'
           });
           
-          // Извлекаем URL из ответа сервера с подробной проверкой
-          let imageUrl = '';
-          if (response.data.data) {
-            if (response.data.data.url) {
-              imageUrl = response.data.data.url;
-              console.log('Найден URL в response.data.data.url:', imageUrl);
-            } else if (response.data.data.link) {
-              imageUrl = response.data.data.link;
-              console.log('Найден URL в response.data.data.link:', imageUrl);
-            } else {
-              console.warn('URL не найден в ожидаемых полях ответа:', response.data.data);
-              // Поиск URL в любом поле ответа
-              for (const key in response.data.data) {
-                const value = response.data.data[key];
-                if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
-                  imageUrl = value;
-                  console.log(`Найден альтернативный URL в поле ${key}:`, imageUrl);
-                  break;
-                }
-              }
-            }
-          }
-          
-          if (imageUrl) {
-            console.log('ИТОГОВЫЙ URL изображения для вставки:', imageUrl);
-            onChange(imageUrl);
-            setPreviewUrl(imageUrl);
-            setShowPreview(true);
-          } else {
-            console.error('Не удалось извлечь URL изображения из ответа сервера');
-            toast({
-              title: 'Предупреждение',
-              description: 'Изображение загружено, но URL не получен. Пожалуйста, сообщите разработчикам.',
-              variant: 'destructive'
-            });
-          }
-          
           // Очищаем поле выбора файла
           e.target.value = '';
         } else {
-          toast({
-            title: 'Ошибка',
-            description: response.data.error || 'Неизвестная ошибка при загрузке',
-            variant: 'destructive'
-          });
+          // Если в корне ответа нет URL, ищем в data
+          let nestedUrl = '';
+          if (response.data.data) {
+            if (response.data.data.url) {
+              nestedUrl = response.data.data.url;
+              console.log('Найден URL в response.data.data.url:', nestedUrl);
+            } else if (response.data.data.link) {
+              nestedUrl = response.data.data.link;
+              console.log('Найден URL в response.data.data.link:', nestedUrl);
+            }
+          }
+          
+          if (nestedUrl) {
+            console.log('ИТОГОВЫЙ URL изображения для вставки (из data):', nestedUrl);
+            onChange(nestedUrl);
+            setPreviewUrl(nestedUrl);
+            setShowPreview(true);
+            toast({
+              title: 'Успешно',
+              description: 'Изображение загружено'
+            });
+            
+            // Очищаем поле выбора файла
+            e.target.value = '';
+          } else {
+            console.error('Не удалось извлечь URL изображения из ответа сервера');
+            toast({
+              title: 'Изображение загружено, но...',
+              description: 'URL не получен. Пожалуйста, вставьте его вручную из консоли разработчика (F12).',
+              variant: 'destructive'
+            });
+          }
         }
       } catch (error: any) {
         console.error('Ошибка при загрузке файла:', error);
