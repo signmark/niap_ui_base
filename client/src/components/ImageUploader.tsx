@@ -17,15 +17,18 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
   const [isUploading, setIsUploading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [displayUrl, setDisplayUrl] = useState<string>('');
 
-  // Обновление превью при изменении значения
+  // Обновление превью и отображаемого URL при изменении значения
   useEffect(() => {
     if (value && value.trim() !== '') {
       setPreviewUrl(value);
       setShowPreview(true);
+      setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
     } else {
       setShowPreview(false);
       setPreviewUrl('');
+      setDisplayUrl('');
     }
   }, [value]);
 
@@ -111,6 +114,13 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
           </Button>
         </div>
       </div>
+      
+      {/* Всегда отображаем URL, если он есть */}
+      {value && value.trim() !== '' && (
+        <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
+          URL: {value}
+        </div>
+      )}
       
       {showPreview && previewUrl && (
         <div className="mt-2 border rounded-md p-2 bg-muted/20">
