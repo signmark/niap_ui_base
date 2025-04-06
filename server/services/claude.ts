@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as logger from '../utils/logger';
+import { apiKeyService } from './api-keys';
 
 export interface ClaudeRequest {
   model: string;
@@ -34,16 +35,77 @@ export interface ClaudeImproveTextParams {
   model?: string;
 }
 
+interface SocialContentParams {
+  platform?: string;
+  tone?: string;
+  maxTokens?: number;
+  temperature?: number;
+  model?: string;
+}
+
 /**
  * Сервис для работы с Claude API
  */
 export class ClaudeService {
-  private apiKey: string;
+  private apiKey: string | null = null;
   private apiUrl = 'https://api.anthropic.com/v1/messages';
   private defaultModel = 'claude-3-sonnet-20240229';
+  private isInitialized = false;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor(apiKey?: string) {
+    if (apiKey) {
+      this.apiKey = apiKey;
+      this.isInitialized = true;
+    }
+  }
+  
+  /**
+   * Инициализирует сервис Claude с ключом из хранилища API ключей
+   * @param userId ID пользователя
+   * @param token Токен авторизации (опционально)
+   * @returns true, если инициализация успешна, иначе false
+   */
+  async initialize(userId: string, token?: string): Promise<boolean> {
+    try {
+      if (this.isInitialized && this.apiKey) {
+        logger.log(`Claude service already initialized`, 'claude');
+        return true;
+      }
+      
+      logger.log(`Initializing Claude service for user ${userId}`, 'claude');
+      
+      // Получаем API ключ из хранилища
+      this.apiKey = await apiKeyService.getApiKey(userId, 'claude', token);
+      
+      if (!this.apiKey) {
+        logger.error(`Failed to get Claude API key for user ${userId}`, 'claude');
+        return false;
+      }
+      
+      // Проверяем валидность ключа
+      const isValid = await this.testApiKey();
+      if (!isValid) {
+        logger.error(`Claude API key for user ${userId} is invalid`, 'claude');
+        this.apiKey = null;
+        return false;
+      }
+      
+      this.isInitialized = true;
+      logger.log(`Claude service successfully initialized for user ${userId}`, 'claude');
+      return true;
+    } catch (error) {
+      logger.error('Error initializing Claude service:', error, 'claude');
+      this.apiKey = null;
+      this.isInitialized = false;
+      return false;
+    }
+  }
+  
+  /**
+   * Проверяет, инициализирован ли сервис с API ключом
+   */
+  hasApiKey(): boolean {
+    return this.isInitialized && !!this.apiKey;
   }
 
   /**
@@ -51,6 +113,11 @@ export class ClaudeService {
    */
   async testApiKey(): Promise<boolean> {
     try {
+      if (!this.apiKey) {
+        logger.error('Cannot test API key: No API key provided', 'claude');
+        return false;
+      }
+      
       // Маскируем ключ для логирования
       const maskedKey = this.apiKey.substring(0, 4) + '...' + this.apiKey.substring(this.apiKey.length - 4);
       logger.log(`Testing Claude API key starting with: ${maskedKey}`, 'claude');
@@ -103,6 +170,10 @@ export class ClaudeService {
    */
   async improveText({ text, prompt, model }: ClaudeImproveTextParams): Promise<string> {
     logger.log('Improving text with Claude AI...', 'claude');
+    
+    if (!this.apiKey) {
+      throw new Error('Claude API key is not configured');
+    }
     
     const requestModel = model || this.defaultModel;
     
@@ -172,6 +243,10 @@ export class ClaudeService {
   async generateContent(prompt: string, model?: string): Promise<string> {
     logger.log('Generating content with Claude AI...', 'claude');
     
+    if (!this.apiKey) {
+      throw new Error('Claude API key is not configured');
+    }
+    
     const requestModel = model || this.defaultModel;
     
     try {
@@ -205,10 +280,193 @@ export class ClaudeService {
   }
   
   /**
+   * Генерирует контент для социальных сетей на основе ключевых слов и инструкций
+   * @param keywords Ключевые слова для включения в контент
+   * @param prompt Дополнительные инструкции/контекст для генерации
+   * @param params Параметры для настройки генерации
+   * @returns Сгенерированный текст
+   */
+  async generateSocialContent(
+    keywords: string[],
+    prompt: string,
+    params: SocialContentParams = {}
+  ): Promise<string> {
+    logger.log(`Generating social content with Claude AI for platform: ${params.platform || 'general'}`, 'claude');
+    
+    if (!this.apiKey) {
+      throw new Error('Claude API key is not configured');
+    }
+    
+    const { 
+      platform = 'general',
+      tone = 'informative',
+      maxTokens = 4000,
+      temperature = 0.7,
+      model = this.defaultModel
+    } = params;
+    
+    try {
+      // Создаем детальный промпт для социальных сетей с учетом платформы
+      const socialPrompt = this.createSocialPrompt(keywords, prompt, platform, tone);
+      
+      const result = await this.makeRequest({
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: [
+          {
+            role: 'user',
+            content: socialPrompt
+          }
+        ]
+      });
+      
+      if (!result || !result.content || result.content.length === 0) {
+        throw new Error('Claude API returned empty response');
+      }
+      
+      let generatedContent = result.content[0].text.trim();
+      
+      // Удаляем служебный текст в тройных обратных кавычках (```)
+      generatedContent = generatedContent.replace(/```[\s\S]*?```/g, '');
+      
+      // Форматируем контент в зависимости от платформы
+      const formattedContent = this.formatContentForPlatform(generatedContent, platform);
+      
+      logger.log('Social content successfully generated with Claude AI', 'claude');
+      return formattedContent;
+    } catch (error) {
+      logger.error('Error generating social content with Claude:', error, 'claude');
+      throw new Error('Failed to generate social content with Claude: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+  
+  /**
+   * Создает промпт для генерации контента для социальных сетей
+   */
+  private createSocialPrompt(keywords: string[], userPrompt: string, platform: string, tone: string): string {
+    const keywordsText = keywords.join(", ");
+    
+    // Базовый шаблон промпта
+    let prompt = `Ты - профессиональный SMM-копирайтер и специалист по созданию популярного контента.
+Твоя задача - написать интересный и вовлекающий пост для ${platform === 'general' ? 'социальных сетей' : platform}.
+
+Ключевые слова, которые нужно использовать: ${keywordsText}.
+
+Тон и стиль: ${tone}.
+
+Инструкции пользователя: ${userPrompt}
+
+`;
+
+    // Добавляем специфичные инструкции в зависимости от платформы
+    switch(platform) {
+      case 'telegram':
+        prompt += `
+Особенности для Telegram:
+- Используй эмодзи для структурирования текста и добавления эмоций
+- Текст может быть длиннее, чем для других соцсетей (до 4000 символов)
+- Можно использовать форматирование: *жирный*, _курсив_, __подчеркнутый__, ~зачеркнутый~
+- Создай заголовок, который будет привлекать внимание`;
+        break;
+      case 'instagram':
+        prompt += `
+Особенности для Instagram:
+- Сделай текст визуально привлекательным, используй эмодзи
+- Разбивай текст на абзацы, используй пробелы для лучшей читаемости
+- Добавь хэштеги в конце поста (не более 10)
+- В первых 2-3 предложениях должна быть суть поста, чтобы привлечь внимание`;
+        break;
+      case 'facebook':
+        prompt += `
+Особенности для Facebook:
+- Более развернутый текст, чем для Instagram
+- Добавь призыв к действию (поделиться, прокомментировать)
+- Используй эмодзи умеренно
+- Сделай текст удобным для чтения с мобильных устройств`;
+        break;
+      case 'vk':
+        prompt += `
+Особенности для ВКонтакте:
+- Используй неформальный, но грамотный стиль
+- Добавь эмодзи для структурирования текста
+- Добавь хэштеги (не более 5-7)
+- Сделай текст эмоционально привлекательным`;
+        break;
+      default:
+        prompt += `
+Общие рекомендации:
+- Сделай текст структурированным и легким для чтения
+- Используй заголовок, привлекающий внимание
+- Разбивай информацию на абзацы
+- Используй эмодзи, если это уместно для стиля
+- Добавь призыв к действию в конце поста`;
+    }
+
+    // Дополнительные инструкции для правильного форматирования
+    prompt += `
+
+ВАЖНО:
+1. Не используй маркеры, нумерованные списки или другие форматирующие элементы, которые не поддерживаются в социальных сетях
+2. Создай только текст поста, без метаинформации, комментариев или пояснений
+3. Текст должен быть готов к публикации без дополнительного редактирования
+4. Не включай в ответ следующие фразы: "Вот пост для...", "Пост для социальных сетей", "Хэштеги:" и т.п.
+5. Пиши исключительно на русском языке
+
+Создай пост прямо сейчас:`;
+
+    return prompt;
+  }
+  
+  /**
+   * Форматирует сгенерированный контент под конкретную платформу
+   */
+  private formatContentForPlatform(content: string, platform: string): string {
+    // Общая постобработка для всех платформ
+    let formattedContent = content
+      .replace(/^["'](.+)["']$/gm, '$1') // Удаляем кавычки в начале и конце строк
+      .replace(/^(пост для|вот пост для|контент для|публикация для|текст для)\s+[\w\s]+:\s*/i, '') // Удаляем преамбулу
+      .trim();
+    
+    // Специфическая постобработка для разных платформ
+    switch(platform) {
+      case 'telegram':
+        // Преобразование маркированных и нумерованных списков в Telegram-совместимый формат
+        formattedContent = formattedContent
+          .replace(/^-\s+(.+)$/gm, '• $1') // Заменяем маркеры списка на символ точки
+          .replace(/^(\d+)[\.\)]\s+(.+)$/gm, '$1. $2'); // Форматируем нумерованный список
+        break;
+      case 'instagram':
+        // Добавляем пробелы между абзацами для лучшей читаемости в Instagram
+        formattedContent = formattedContent
+          .replace(/\n+/g, '\n\n')
+          .replace(/(\#[\wа-яА-Я]+)([^\s])/g, '$1 $2'); // Добавляем пробелы между хэштегами
+        break;
+      case 'vk':
+        // ВКонтакте не поддерживает специальное форматирование
+        formattedContent = formattedContent;
+        break;
+      case 'facebook':
+        // Facebook имеет минимальное форматирование
+        formattedContent = formattedContent;
+        break;
+      default:
+        // Общий формат по умолчанию
+        formattedContent = formattedContent;
+    }
+    
+    return formattedContent;
+  }
+  
+  /**
    * Выполняет запрос к Claude API
    */
   private async makeRequest(requestData: ClaudeRequest): Promise<ClaudeResponse> {
     try {
+      if (!this.apiKey) {
+        throw new Error('Claude API key is not configured');
+      }
+      
       logger.debug(`Making Claude API request to ${this.apiUrl}`, 'claude');
       logger.debug(`Using model: ${requestData.model}`, 'claude');
       

@@ -246,6 +246,79 @@ export function registerClaudeRoutes(app: Router) {
       });
     }
   });
+  
+  /**
+   * Маршрут для генерации социального контента с помощью Claude
+   */
+  router.post('/api/claude/generate-social-content', async (req: Request, res: Response) => {
+    try {
+      const { keywords, prompt, platform, tone, model } = req.body;
+      const userId = req.userId;
+      
+      logger.log(`[claude-routes] Received generate-social-content request from user ${userId} for platform ${platform}`, 'claude');
+      
+      if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+        logger.error('[claude-routes] Missing or invalid keywords in request', 'claude');
+        return res.status(400).json({
+          success: false,
+          error: 'Ключевые слова обязательны и должны быть в формате массива'
+        });
+      }
+      
+      if (!prompt) {
+        logger.error('[claude-routes] Missing prompt in request', 'claude');
+        return res.status(400).json({
+          success: false,
+          error: 'Промпт обязателен'
+        });
+      }
+      
+      logger.log(`[claude-routes] Getting Claude service for user ${userId}`, 'claude');
+      const claudeService = await getClaudeService(req);
+      
+      if (!claudeService) {
+        logger.error(`[claude-routes] Claude API key not configured for user ${userId}`, 'claude');
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ Claude не настроен',
+          needApiKey: true
+        });
+      }
+      
+      logger.log(`[claude-routes] Generating social content with model ${model || 'default'} for platform ${platform || 'general'}`, 'claude');
+      const generatedContent = await claudeService.generateSocialContent(
+        keywords,
+        prompt,
+        {
+          platform,
+          tone,
+          model
+        }
+      );
+      
+      logger.log('[claude-routes] Social content generated successfully, returning response', 'claude');
+      return res.json({
+        success: true,
+        content: generatedContent,
+        service: 'claude'
+      });
+    } catch (error) {
+      logger.error('[claude-routes] Error generating social content with Claude:', error);
+      
+      // Более детальное логирование ошибки
+      if (error instanceof Error) {
+        logger.error(`[claude-routes] Error message: ${error.message}`, 'claude');
+        if ('stack' in error) {
+          logger.error(`[claude-routes] Error stack: ${error.stack}`, 'claude');
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Ошибка при генерации социального контента'
+      });
+    }
+  });
 
   return router;
 }

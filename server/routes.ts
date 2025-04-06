@@ -3441,27 +3441,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           usedService = 'deepseek';
           
         } else if (useService === 'claude') {
-          // Инициализируем Claude API
+          // Инициализируем Claude API с токеном запроса
           console.log(`Попытка инициализации Claude сервиса для пользователя ${userId}`);
-          const initialized = await claudeService.initialize(userId);
+          
+          // Создаем новый экземпляр сервиса Claude
+          const claudeInstance = new ClaudeService();
+          
+          // Инициализируем сервис с ключом из API Keys Storage
+          const initialized = await claudeInstance.initialize(userId, token);
           
           if (!initialized) {
             console.log('Предупреждение: Claude API сервис не был полностью инициализирован');
-            console.error('Ошибка: Не удалось получить API ключ Claude');
-            return res.status(400).json({ 
-              error: 'Не удалось получить API ключ Claude. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.' 
-            });
+            
+            if (!claudeInstance.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Claude');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Claude. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
+                needApiKey: true
+              });
+            }
           }
           
           console.log(`Generating content with Claude for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
           
-          // Получаем платформу из tone (используя его как платформу)
-          const platform = tone === 'professional' ? 'facebook' :
-                         tone === 'casual' ? 'telegram' :
-                         tone === 'friendly' ? 'instagram' : 'general';
+          // Получаем платформу из поля platform или из tone, если platform не указана
+          const platform = req.body.platform || (
+              tone === 'professional' ? 'facebook' :
+              tone === 'casual' ? 'telegram' :
+              tone === 'friendly' ? 'instagram' : 'general'
+          );
           
           // Используем Claude для генерации контента
-          generatedContent = await claudeService.generateSocialContent(
+          generatedContent = await claudeInstance.generateSocialContent(
             keywords,
             prompt,
             {
