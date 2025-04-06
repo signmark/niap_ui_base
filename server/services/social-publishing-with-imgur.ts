@@ -283,20 +283,20 @@ export class SocialPublishingWithImgurService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    // Получаем токен и chatId из настроек или переменных окружения, если настройки отсутствуют
-    const token = telegramSettings?.token || process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = telegramSettings?.chatId || process.env.TELEGRAM_CHAT_ID;
-    
-    // Проверяем наличие необходимых параметров
-    if (!token || !chatId) {
-      log(`Ошибка публикации в Telegram: отсутствуют настройки. Токен: ${token ? 'задан' : 'отсутствует'}, ID чата: ${chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
+    // Проверяем наличие настроек кампании
+    if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
+      log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
         platform: 'telegram',
         status: 'failed',
         publishedAt: null,
-        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании или в переменных окружения.'
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании.'
       };
     }
+
+    // Получаем токен и chatId из настроек кампании
+    const token = telegramSettings.token;
+    const chatId = telegramSettings.chatId;
     
     log(`Используем токен Telegram: ${token.substring(0, 6)}... и ID чата: ${chatId}`, 'social-publishing');
 
@@ -520,7 +520,7 @@ export class SocialPublishingWithImgurService {
           const textResponse = await this.sendTextMessageToTelegram(
             content.content || '',
             formattedChatId,
-            token
+            telegramSettings.token
           );
           
           log(`Результат отправки текстового сообщения после медиа: ${JSON.stringify(textResponse)}`, 'social-publishing');
@@ -600,13 +600,13 @@ export class SocialPublishingWithImgurService {
             const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
             
             // Подготавливаем корректно ID чата (повторяем логику из основного кода)
-            let formattedChatId = chatId;
-            if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-              formattedChatId = `-100${chatId}`;
+            let formattedChatId = telegramSettings.chatId;
+            if (!formattedChatId.startsWith('-100') && !isNaN(Number(formattedChatId))) {
+              formattedChatId = `-100${formattedChatId}`;
             }
             
             // URL для API запросов
-            const baseUrl = `https://api.telegram.org/bot${token}`;
+            const baseUrl = `https://api.telegram.org/bot${telegramSettings.token}`;
             
             if (hasImage) {
               // Отправляем фото без подписи
@@ -625,7 +625,7 @@ export class SocialPublishingWithImgurService {
                 const textResponse = await this.sendTextMessageToTelegram(
                   content.content || '',
                   formattedChatId,
-                  token
+                  telegramSettings.token
                 );
                 
                 // Если фото отправилось успешно, считаем публикацию успешной
@@ -658,7 +658,7 @@ export class SocialPublishingWithImgurService {
                 const textResponse = await this.sendTextMessageToTelegram(
                   content.content || '',
                   formattedChatId,
-                  token
+                  telegramSettings.token
                 );
                 
                 // Если видео отправилось успешно, считаем публикацию успешной
