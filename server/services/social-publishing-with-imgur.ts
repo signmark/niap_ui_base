@@ -725,12 +725,14 @@ export class SocialPublishingWithImgurService {
             log(`Изображение для Telegram - тип: ${isUrl ? 'URL' : 'локальный путь'}, значение: ${processedContent.imageUrl}`, 'social-publishing');
             
             // Формируем запрос с учетом типа изображения
+            // ВАЖНО: Отправляем фото БЕЗ ПОДПИСИ, чтобы избежать обрезки текста
+            // Используем только точку, чтобы сохранить возможность публикации
             const photoResponse = await axios.post(
               `${baseUrl}/sendPhoto`,
               {
                 chat_id: formattedChatId,
                 photo: processedContent.imageUrl,
-                caption: imageCaption,
+                caption: '.',  // Всегда используем короткую подпись чтобы избежать обрезки
                 parse_mode: 'HTML'
               },
               {
@@ -760,7 +762,9 @@ export class SocialPublishingWithImgurService {
             try {
               await axios.post(`${baseUrl}/sendPhoto`, {
                 chat_id: formattedChatId,
-                photo: processedContent.additionalImages[i]
+                photo: processedContent.additionalImages[i],
+                caption: '.', // Также используем минимальную подпись
+                parse_mode: 'HTML'
               });
               
               log(`Дополнительное изображение ${i+1} успешно отправлено в Telegram`, 'social-publishing');
@@ -772,9 +776,16 @@ export class SocialPublishingWithImgurService {
         
         // Наконец, отправляем сам текст (полный с заголовком)
         try {
+          // Добавляем заголовок перед текстом, если он не включен в текст
+          const fullText = processedContent.title && !text.includes(processedContent.title) 
+            ? `<b>${processedContent.title}</b>\n\n${text}` 
+            : text;
+            
+          log(`Telegram: отправка текста отдельным сообщением, длина: ${fullText.length} символов`, 'social-publishing');
+            
           // Если текст превышает максимальную длину для Telegram (4096 символов),
           // он будет автоматически обрезан в методе sendTextMessageToTelegram
-          const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+          const textResponse = await this.sendTextMessageToTelegram(fullText, formattedChatId, token);
           log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
           
           return {
