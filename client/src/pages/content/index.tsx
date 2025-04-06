@@ -44,6 +44,8 @@ import RichTextEditor from "@/components/RichTextEditor";
 import SocialMediaFilter from "@/components/SocialMediaFilter";
 import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
+import { ImageUploader } from "@/components/ImageUploader";
+import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
 import { 
   Popover, 
   PopoverContent, 
@@ -1366,184 +1368,23 @@ export default function ContentPage() {
                       Сгенерировать изображение
                     </Button>
                   </div>
-                  <div className="flex gap-2">
-                    <Input
-                      id="imageUrl"
-                      placeholder="Введите URL изображения"
-                      value={newContent.imageUrl}
-                      onChange={(e) => setNewContent({...newContent, imageUrl: e.target.value})}
-                      className="flex-1"
-                    />
-                    <div className="relative">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        id="mainImageUpload"
-                        className="absolute inset-0 opacity-0 w-full cursor-pointer"
-                        onChange={async (e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            const file = e.target.files[0];
-                            // Создаем FormData для загрузки
-                            const formData = new FormData();
-                            formData.append('image', file);
-                            
-                            try {
-                              const response = await axios.post('/api/imgur/upload-file', formData, {
-                                headers: {
-                                  'Content-Type': 'multipart/form-data'
-                                }
-                              });
-                              
-                              if (response.data.success) {
-                                toast({
-                                  title: 'Успешно',
-                                  description: 'Изображение загружено'
-                                });
-                                // Устанавливаем URL загруженного изображения
-                                setNewContent({...newContent, imageUrl: response.data.data.link});
-                                // Очищаем поле выбора файла
-                                e.target.value = '';
-                              } else {
-                                toast({
-                                  title: 'Ошибка',
-                                  description: response.data.error || 'Неизвестная ошибка при загрузке',
-                                  variant: 'destructive'
-                                });
-                              }
-                            } catch (error: any) {
-                              toast({
-                                title: 'Ошибка',
-                                description: error.message || 'Ошибка при загрузке изображения',
-                                variant: 'destructive'
-                              });
-                            }
-                          }
-                        }}
-                      />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="icon"
-                        className="h-9 w-9"
-                      >
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                  <ImageUploader
+                    id="imageUrl"
+                    value={newContent.imageUrl}
+                    onChange={(url) => setNewContent({...newContent, imageUrl: url})}
+                    placeholder="Введите URL изображения"
+                  />
                 </div>
-                
                 {/* Дополнительные изображения */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label>Дополнительные изображения</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        // Добавляем пустое поле для нового изображения
-                        setNewContent({
-                          ...newContent, 
-                          additionalImages: [...newContent.additionalImages, ""]
-                        });
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Добавить изображение
-                    </Button>
                   </div>
-                  
-                  {newContent.additionalImages.length > 0 ? (
-                    <div className="space-y-2">
-                      {newContent.additionalImages.map((imageUrl, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <Input
-                            placeholder="Введите URL изображения"
-                            value={imageUrl}
-                            onChange={(e) => {
-                              const updatedImages = [...newContent.additionalImages];
-                              updatedImages[index] = e.target.value;
-                              setNewContent({...newContent, additionalImages: updatedImages});
-                            }}
-                            className="flex-1"
-                          />
-                          <div className="relative">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              id={`newAdditionalImageUpload-${index}`}
-                              className="absolute inset-0 opacity-0 w-full cursor-pointer"
-                              onChange={async (e) => {
-                                if (e.target.files && e.target.files.length > 0) {
-                                  const file = e.target.files[0];
-                                  const formData = new FormData();
-                                  formData.append('image', file);
-                                  
-                                  try {
-                                    const response = await axios.post('/api/imgur/upload-file', formData, {
-                                      headers: {
-                                        'Content-Type': 'multipart/form-data'
-                                      }
-                                    });
-                                    
-                                    if (response.data.success) {
-                                      toast({
-                                        title: 'Успешно',
-                                        description: 'Изображение загружено'
-                                      });
-                                      
-                                      const updatedImages = [...newContent.additionalImages];
-                                      updatedImages[index] = response.data.data.link;
-                                      setNewContent({...newContent, additionalImages: updatedImages});
-                                      
-                                      e.target.value = '';
-                                    } else {
-                                      toast({
-                                        title: 'Ошибка',
-                                        description: response.data.error || 'Неизвестная ошибка при загрузке',
-                                        variant: 'destructive'
-                                      });
-                                    }
-                                  } catch (error: any) {
-                                    toast({
-                                      title: 'Ошибка',
-                                      description: error.message || 'Ошибка при загрузке изображения',
-                                      variant: 'destructive'
-                                    });
-                                  }
-                                }
-                              }}
-                            />
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="icon"
-                              className="h-9 w-9"
-                            >
-                              <Upload className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={() => {
-                              const updatedImages = [...newContent.additionalImages];
-                              updatedImages.splice(index, 1);
-                              setNewContent({...newContent, additionalImages: updatedImages});
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Нет дополнительных изображений. Нажмите "Добавить изображение" для добавления.
-                    </p>
-                  )}
+                  <AdditionalImagesUploader
+                    images={newContent.additionalImages}
+                    onChange={(images) => setNewContent({...newContent, additionalImages: images})}
+                    label="Загрузите дополнительные изображения"
+                  />
                 </div>
               </div>
             )}
