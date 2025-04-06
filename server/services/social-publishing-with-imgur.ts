@@ -300,20 +300,14 @@ export class SocialPublishingWithImgurService {
       // Флаг для определения, нужно ли отправлять текст отдельным сообщением
       let needSeparateTextMessage = false;
       
-      // Для всех сообщений с текстом длиннее определенного порога отправляем текст отдельно
-      // Используем порог меньше лимита для надежности (800 символов вместо 1024)
-      const textThreshold = 800;
+      // Правило: если текст больше 1000 символов - отправляем раздельно, иначе вместе
+      const textThreshold = 1000;
       
       if ((images.length > 0 || hasVideo) && text.length > textThreshold) {
         needSeparateTextMessage = true;
         log(`Telegram: текст (${text.length} символов) превышает порог в ${textThreshold} символов, будет отправлен отдельным сообщением`, 'social-publishing');
-      }
-      
-      // Дополнительно: если есть изображения и длина текста больше 200 символов, также отправляем отдельно
-      // Это позволит улучшить читаемость постов в Telegram
-      if ((images.length > 0 || hasVideo) && text.length > 200) {
-        needSeparateTextMessage = true;
-        log(`Telegram: текст (${text.length} символов) превышает порог в 200 символов, будет отправлен отдельным сообщением для лучшей читаемости`, 'social-publishing');
+      } else if ((images.length > 0 || hasVideo)) {
+        log(`Telegram: текст (${text.length} символов) не превышает порог в ${textThreshold} символов, будет отправлен вместе с изображением`, 'social-publishing');
       }
       
       // Решение о методе публикации на основе доступности медиа и типа контента
