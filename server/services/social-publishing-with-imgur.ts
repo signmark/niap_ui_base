@@ -321,13 +321,16 @@ export class SocialPublishingWithImgurService {
       } else if (content.contentType === 'text' || !content.contentType) {
         // Отправка текстового сообщения (по умолчанию)
         log(`Отправка текстового сообщения в Telegram с HTML`, 'social-publishing');
+        
+        // Здесь добавлено использование truncatedCaption вместо text!
+        // Это решает проблему с отправкой больших текстов
         const messageRequestBody = {
           chat_id: formattedChatId,
-          text,
+          text: truncatedCaption, // Используем обрезанный текст вместо полного
           parse_mode: 'HTML'
         };
         
-        log(`Отправляем текстовый запрос к Telegram API: ${JSON.stringify(messageRequestBody)}`, 'social-publishing');
+        log(`Отправляем текстовый запрос к Telegram API (длина текста: ${truncatedCaption.length} символов)`, 'social-publishing');
         
         response = await axios.post(`${baseUrl}/sendMessage`, messageRequestBody, {
           headers: { 'Content-Type': 'application/json' }
@@ -336,13 +339,14 @@ export class SocialPublishingWithImgurService {
         // Неподдерживаемый формат - пробуем отправить текст как запасной вариант
         log(`Для типа контента ${content.contentType} не найдены медиа. Отправляем как текст`, 'social-publishing');
         try {
+          // Используем truncatedCaption также и для резервного варианта отправки текста
           const fallbackMessageBody = {
             chat_id: formattedChatId,
-            text,
+            text: truncatedCaption,
             parse_mode: 'HTML'
           };
           
-          log(`Отправляем fallback-текстовый запрос к Telegram API: ${JSON.stringify(fallbackMessageBody)}`, 'social-publishing');
+          log(`Отправляем fallback-текстовый запрос к Telegram API (длина текста: ${truncatedCaption.length} символов)`, 'social-publishing');
           
           response = await axios.post(`${baseUrl}/sendMessage`, fallbackMessageBody, {
             headers: { 'Content-Type': 'application/json' }
@@ -409,6 +413,12 @@ export class SocialPublishingWithImgurService {
       if (error.response && error.response.data) {
         log(`Данные ответа при ошибке Telegram: ${JSON.stringify(error.response.data)}`, 'social-publishing');
         errorMessage = `Ошибка Telegram API: ${error.response.data.description || error.message}`;
+        
+        // Добавляем детальную информацию для проблем с длиной текста
+        if (error.response.data.description && error.response.data.description.includes('message is too long')) {
+          log(`Ошибка длины сообщения в Telegram. Длина текста: ${text.length}, макс: 4096`, 'social-publishing');
+          errorMessage = `Сообщение слишком длинное для Telegram (${text.length} символов, максимум 4096)`;
+        }
       }
       
       return {
