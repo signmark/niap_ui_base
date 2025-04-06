@@ -14,6 +14,33 @@ import { imgurUploaderService } from './imgur-uploader';
 export class SocialPublishingWithImgurService {
 
   /**
+   * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
+   * @param content Исходный текст контента
+   * @returns Отформатированный текст для Telegram с поддержкой HTML
+   */
+  private formatTextForTelegram(content: string): string {
+    // Telegram поддерживает только ограниченный набор HTML-тегов:
+    // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
+    return content
+      // Обрабатываем блочные элементы для правильных переносов
+      .replace(/<br\s*\/?>/g, '\n')
+      .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+      .replace(/<div>(.*?)<\/div>/g, '$1\n')
+      .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+      
+      // Стандартизируем теги форматирования
+      .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+      .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+      .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+      
+      // Приводим ссылки к простому формату href
+      .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+      
+      // Удаляем все прочие неподдерживаемые теги (но сохраняем их содержимое)
+      .replace(/<(?!\/?(b|strong|i|em|u|s|strike|code|pre|a)(?=>|\s.*>))\/?.*?>/gi, '');
+  }
+
+  /**
    * Обрабатывает поле дополнительных изображений в контенте, проверяя и преобразуя его при необходимости
    * @param content Контент, содержащий дополнительные изображения
    * @param platform Название социальной платформы (для логирования)
@@ -388,9 +415,12 @@ export class SocialPublishingWithImgurService {
         try {
           log(`Отправка отдельного текстового сообщения после медиа в Telegram`, 'social-publishing');
           
+          // Формируем текст с помощью метода форматирования для Telegram
+          const formattedText = this.formatTextForTelegram(content.content || '');
+          
           const textMessageBody = {
             chat_id: formattedChatId,
-            text: text,
+            text: formattedText,
             parse_mode: 'HTML'
           };
           
@@ -465,6 +495,124 @@ export class SocialPublishingWithImgurService {
         if (error.response.data.description && error.response.data.description.includes('message is too long')) {
           log(`Ошибка длины сообщения в Telegram. Длина текста слишком большая, макс: 4096`, 'social-publishing');
           errorMessage = `Сообщение слишком длинное для Telegram (превышен лимит в 4096 символов)`;
+        }
+        // Добавляем проверку для ошибки длины подписи к фото/видео
+        else if (error.response.data.description && error.response.data.description.includes('caption is too long')) {
+          log(`Ошибка длины подписи в Telegram. Длина подписи слишком большая, макс: 1024`, 'social-publishing');
+          errorMessage = `Подпись к медиа слишком длинная для Telegram (превышен лимит в 1024 символов)`;
+          
+          // Попробуем отправить медиа без подписи, а затем текст отдельным сообщением
+          try {
+            log(`Повторная попытка отправки без подписи`, 'social-publishing');
+            
+            // Определяем тип запроса (фото или видео) по наличию соответствующих полей в контенте
+            const hasImage = content.imageUrl && typeof content.imageUrl === 'string' && content.imageUrl.trim() !== '';
+            const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+            
+            if (hasImage) {
+              // Отправляем фото без подписи
+              // Получаем chatId и API URL из контекста
+              const telegramChatId = telegramSettings?.chatId || '';
+              let formattedChatId = telegramChatId;
+              if (!telegramChatId.startsWith('-100') && !isNaN(Number(telegramChatId))) {
+                formattedChatId = `-100${telegramChatId}`;
+              }
+              
+              const telegramApiBaseUrl = `https://api.telegram.org/bot${telegramSettings?.token || ''}`;
+              
+              const photoRequestBody = {
+                chat_id: formattedChatId,
+                photo: content.imageUrl
+              };
+              
+              log(`Отправка фото без подписи: ${JSON.stringify(photoRequestBody)}`, 'social-publishing');
+              const photoResponse = await axios.post(`${telegramApiBaseUrl}/sendPhoto`, photoRequestBody, {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              if (photoResponse.data.ok) {
+                // Отправляем текст отдельным сообщением
+                // Формируем текстовое сообщение с помощью метода форматирования для Telegram
+                const formattedText = this.formatTextForTelegram(content.content || '');
+                
+                const textMessageBody = {
+                  chat_id: formattedChatId,
+                  text: formattedText,
+                  parse_mode: 'HTML'
+                };
+                
+                const textResponse = await axios.post(`${telegramApiBaseUrl}/sendMessage`, textMessageBody, {
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                
+                // Если фото отправилось успешно, считаем публикацию успешной
+                // даже если текст не удалось отправить
+                const message = photoResponse.data.result;
+                log(`Успешная публикация в Telegram после разделения. Message ID: ${message.message_id}`, 'social-publishing');
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postId: message.message_id.toString(),
+                  postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+                  userId: content.userId
+                };
+              }
+            } else if (hasVideo) {
+              // Аналогичная логика для видео
+              // Получаем настройки для Telegram
+              const telegramChatId = telegramSettings?.chatId || '';
+              let formattedChatId = telegramChatId;
+              
+              // Форматируем ID чата, если он числовой и не начинается с '-100'
+              if (!telegramChatId.startsWith('-100') && !isNaN(Number(telegramChatId))) {
+                formattedChatId = `-100${telegramChatId}`;
+              }
+              
+              const telegramApiBaseUrl = `https://api.telegram.org/bot${telegramSettings?.token || ''}`;
+              
+              const videoRequestBody = {
+                chat_id: formattedChatId,
+                video: content.videoUrl
+              };
+              
+              log(`Отправка видео без подписи: ${JSON.stringify(videoRequestBody)}`, 'social-publishing');
+              const videoResponse = await axios.post(`${telegramApiBaseUrl}/sendVideo`, videoRequestBody, {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              if (videoResponse.data.ok) {
+                // Отправляем текст отдельным сообщением
+                // Формируем текстовое сообщение с помощью метода форматирования для Telegram
+                const formattedText = this.formatTextForTelegram(content.content || '');
+                
+                const textMessageBody = {
+                  chat_id: formattedChatId,
+                  text: formattedText,
+                  parse_mode: 'HTML'
+                };
+                
+                const textResponse = await axios.post(`${telegramApiBaseUrl}/sendMessage`, textMessageBody, {
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                
+                // Если видео отправилось успешно, считаем публикацию успешной
+                const message = videoResponse.data.result;
+                log(`Успешная публикация в Telegram после разделения. Message ID: ${message.message_id}`, 'social-publishing');
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postId: message.message_id.toString(),
+                  postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+                  userId: content.userId
+                };
+              }
+            }
+          } catch (retryError: any) {
+            log(`Ошибка при повторной попытке: ${retryError.message}`, 'social-publishing');
+            errorMessage += ` (повторная попытка также не удалась: ${retryError.message})`;
+          }
         }
       }
       

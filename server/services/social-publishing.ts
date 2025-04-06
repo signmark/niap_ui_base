@@ -819,7 +819,7 @@ export class SocialPublishingService {
         // Конвертирование обычных букв в "жирные" Unicode-символы только для коротких фраз
         .replace(/<b>([^<]{1,30})<\/b>/g, (match, text) => {
           // Конвертируем каждую букву в соответствующий Unicode "жирный" символ
-          return text.split('').map(char => {
+          return text.split('').map((char: string) => {
             // Простая карта символов для латиницы и кириллицы
             const boldMap: {[key: string]: string} = {
               'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴', 'h': '𝗵',
@@ -846,7 +846,7 @@ export class SocialPublishingService {
         })
         .replace(/<strong>([^<]{1,30})<\/strong>/g, (match, text) => {
           // То же самое для тега <strong>
-          return text.split('').map(char => {
+          return text.split('').map((char: string) => {
             const boldMap: {[key: string]: string} = {
               'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴', 'h': '𝗵',
               'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻', 'o': '𝗼', 'p': '𝗽',
@@ -874,7 +874,7 @@ export class SocialPublishingService {
         // Курсив с использованием Unicode (для коротких фраз)
         .replace(/<i>([^<]{1,30})<\/i>/g, (match, text) => {
           // Конвертируем каждую букву в соответствующий Unicode "курсивный" символ
-          return text.split('').map(char => {
+          return text.split('').map((char: string) => {
             const italicMap: {[key: string]: string} = {
               'a': '𝘢', 'b': '𝘣', 'c': '𝘤', 'd': '𝘥', 'e': '𝘦', 'f': '𝘧', 'g': '𝘨', 'h': '𝘩',
               'i': '𝘪', 'j': '𝘫', 'k': '𝘬', 'l': '𝘭', 'm': '𝘮', 'n': '𝘯', 'o': '𝘰', 'p': '𝘱',
@@ -900,7 +900,7 @@ export class SocialPublishingService {
         })
         .replace(/<em>([^<]{1,30})<\/em>/g, (match, text) => {
           // То же самое для тега <em>
-          return text.split('').map(char => {
+          return text.split('').map((char: string) => {
             const italicMap: {[key: string]: string} = {
               'a': '𝘢', 'b': '𝘣', 'c': '𝘤', 'd': '𝘥', 'e': '𝘦', 'f': '𝘧', 'g': '𝘨', 'h': '𝘩',
               'i': '𝘪', 'j': '𝘫', 'k': '𝘬', 'l': '𝘭', 'm': '𝘮', 'n': '𝘯', 'o': '𝘰', 'p': '𝘱',
