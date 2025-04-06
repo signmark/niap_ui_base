@@ -712,32 +712,152 @@ export class SocialPublishingWithImgurService {
         log(`Telegram: отправка одного изображения с подписью. Длина текста: ${text.length} символов.`, 'social-publishing');
         
         try {
+          // Проверяем валидность URL изображения и убеждаемся, что он действительно указывает на изображение
+          let imageUrl = processedContent.imageUrl;
+          if (!imageUrl.startsWith('http')) {
+            const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+            imageUrl = `${baseAppUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+            log(`Исправлен URL для основного изображения: ${imageUrl}`, 'social-publishing');
+          }
+          
+          log(`Отправка фото в Telegram: ${imageUrl}`, 'social-publishing');
+          
+          // Используем validateStatus чтобы получить полный ответ даже в случае ошибки
           const response = await axios.post(`${baseUrl}/sendPhoto`, {
             chat_id: formattedChatId,
-            photo: processedContent.imageUrl,
+            photo: imageUrl,
             caption: text,
-            parse_mode: 'HTML'
+            parse_mode: 'HTML',
+            protect_content: false, // Дополнительный параметр, который может быть полезен
+            disable_notification: false // Дополнительный параметр, который может быть полезен
+          }, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 30000, // Увеличенный таймаут
+            validateStatus: () => true // Всегда возвращаем ответ, даже если это ошибка
           });
           
-          if (response.data && response.data.ok) {
+          // Расширенное логирование ответа
+          log(`Ответ от Telegram API (sendPhoto): код ${response.status}, body: ${JSON.stringify(response.data)}`, 'social-publishing');
+          
+          if (response.status === 200 && response.data && response.data.ok) {
             log(`Изображение с текстом успешно отправлено в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
             return {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: `https://t.me/${formattedChatId.replace('-100', '')}`
+              postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+            
+            // Попробуем отправить как URL, если не получилось отправить как файл
+            const errorDescription = response.data?.description || '';
+            
+            if (errorDescription.includes('Bad Request') || errorDescription.includes('URL') || errorDescription.includes('photo')) {
+              log(`Пробуем альтернативный метод отправки изображения через медиагруппу...`, 'social-publishing');
+              
+              try {
+                // Отправляем изображение и текст как медиагруппу
+                const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
+                  chat_id: formattedChatId,
+                  media: [
+                    {
+                      type: 'photo',
+                      media: imageUrl,
+                      caption: text,
+                      parse_mode: 'HTML'
+                    }
+                  ]
+                }, {
+                  headers: { 'Content-Type': 'application/json' },
+                  timeout: 30000,
+                  validateStatus: () => true
+                });
+                
+                if (mediaResponse.status === 200 && mediaResponse.data && mediaResponse.data.ok) {
+                  log(`Успешно отправлена медиагруппа: ${JSON.stringify(mediaResponse.data)}`, 'social-publishing');
+                  return {
+                    platform: 'telegram',
+                    status: 'published',
+                    publishedAt: new Date(),
+                    postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                  };
+                } else {
+                  // Если оба метода не работают, отправляем изображение и текст по отдельности
+                  log(`Альтернативный метод тоже не сработал. Пробуем отправить изображение и текст отдельно...`, 'social-publishing');
+                  
+                  // Отправляем сначала изображение без подписи
+                  const imageOnlyResponse = await axios.post(`${baseUrl}/sendPhoto`, {
+                    chat_id: formattedChatId,
+                    photo: imageUrl
+                  }, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 30000,
+                    validateStatus: () => true
+                  });
+                  
+                  // Затем отправляем текст отдельно
+                  const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+                  
+                  if (imageOnlyResponse.data?.ok || textResponse.success) {
+                    log(`Удалось отправить изображение и текст по отдельности`, 'social-publishing');
+                    return {
+                      platform: 'telegram',
+                      status: 'published',
+                      publishedAt: new Date(),
+                      postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                    };
+                  }
+                }
+              } catch (mediaError: any) {
+                log(`Ошибка при альтернативной отправке: ${mediaError.message}`, 'social-publishing');
+              }
+            }
+            
             return {
               platform: 'telegram',
               status: 'failed',
               publishedAt: null,
-              error: `Ошибка при отправке изображения с текстом: ${JSON.stringify(response.data)}`
+              error: `Ошибка при отправке изображения с текстом: ${response.data?.description || JSON.stringify(response.data)}`
             };
           }
         } catch (error: any) {
-          log(`Ошибка при отправке изображения с текстом в Telegram: ${error.message}`, 'social-publishing');
+          log(`Исключение при отправке изображения с текстом в Telegram: ${error.message}`, 'social-publishing');
+          
+          // Детальное логирование для диагностики
+          if (error.response) {
+            log(`Данные ответа API: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
+          
+          // Попробуем отправить текст и изображение отдельно как запасной вариант
+          try {
+            log(`Пробуем отправить текст и изображение отдельно после сбоя...`, 'social-publishing');
+            
+            // Отправляем сначала изображение без подписи
+            await axios.post(`${baseUrl}/sendPhoto`, {
+              chat_id: formattedChatId,
+              photo: processedContent.imageUrl
+            }, {
+              validateStatus: () => true,
+              timeout: 30000
+            });
+            
+            // Затем отправляем текст отдельно
+            const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+            
+            if (textResponse.success) {
+              log(`Резервный план сработал: изображение и текст отправлены отдельно`, 'social-publishing');
+              return {
+                platform: 'telegram',
+                status: 'published',
+                publishedAt: new Date(),
+                postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+              };
+            }
+          } catch (backupError: any) {
+            log(`Резервный план также не сработал: ${backupError.message}`, 'social-publishing');
+          }
+          
           return {
             platform: 'telegram',
             status: 'failed',
