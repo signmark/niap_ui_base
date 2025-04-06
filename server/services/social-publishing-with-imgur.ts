@@ -93,25 +93,59 @@ export class SocialPublishingWithImgurService {
    * @returns Отформатированный текст для Telegram с поддержкой HTML
    */
   private formatTextForTelegram(content: string): string {
-    // Telegram поддерживает только ограниченный набор HTML-тегов:
-    // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
-    return content
-      // Обрабатываем блочные элементы для правильных переносов
-      .replace(/<br\s*\/?>/g, '\n')
-      .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
-      .replace(/<div>(.*?)<\/div>/g, '$1\n')
-      .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+    // Проверка на null или undefined
+    if (!content) {
+      return '';
+    }
+    
+    // Сохраняем исходный текст для логирования
+    const originalLength = content.length;
+    
+    try {
+      // Telegram поддерживает только ограниченный набор HTML-тегов:
+      // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
+      let formattedText = content
+        // Обрабатываем блочные элементы для правильных переносов
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+        
+        // Стандартизируем теги форматирования
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        
+        // Приводим ссылки к простому формату href
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
-      // Стандартизируем теги форматирования
-      .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-      .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-      .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+      // Улучшенная регулярка для удаления неподдерживаемых тегов
+      formattedText = formattedText.replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
       
-      // Приводим ссылки к простому формату href
-      .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+      // Проверяем правильность HTML (закрытые теги)
+      const openTags = (formattedText.match(/<([a-z]+)[^>]*>/gi) || []).map(tag => 
+        tag.replace(/<([a-z]+)[^>]*>/i, '$1').toLowerCase()
+      );
       
-      // Удаляем все прочие неподдерживаемые теги (но сохраняем их содержимое)
-      .replace(/<(?!\/?(b|strong|i|em|u|s|strike|code|pre|a)(?=>|\s.*>))\/?.*?>/gi, '');
+      const closeTags = (formattedText.match(/<\/([a-z]+)>/gi) || []).map(tag => 
+        tag.replace(/<\/([a-z]+)>/i, '$1').toLowerCase()
+      );
+      
+      // Если количество открывающих и закрывающих тегов не совпадает,
+      // может возникнуть ошибка при отправке. Логируем это.
+      if (openTags.length !== closeTags.length) {
+        log(`Внимание: количество открывающих (${openTags.length}) и закрывающих (${closeTags.length}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
+        
+        // В случае дисбаланса можно дополнительно удалить HTML-форматирование,
+        // но сейчас мы просто логируем для отладки и возвращаем текст как есть
+      }
+      
+      log(`Форматирование текста для Telegram: было ${originalLength} символов, стало ${formattedText.length}`, 'social-publishing');
+      return formattedText;
+    } catch (error) {
+      log(`Ошибка при форматировании текста для Telegram: ${error}. Возвращаем исходный текст.`, 'social-publishing');
+      return content; // В случае ошибки возвращаем исходный текст
+    }
   }
   
   /**
@@ -121,15 +155,71 @@ export class SocialPublishingWithImgurService {
    * @returns Отформатированный и обрезанный текст для Telegram
    */
   private prepareTelegramText(content: string, maxLength: number = 4000): string {
-    // Сначала форматируем текст для Telegram
-    const formattedText = this.formatTextForTelegram(content);
-    
-    // Затем проверяем длину и обрезаем при необходимости
-    if (formattedText.length > maxLength) {
-      return formattedText.substring(0, maxLength - 3) + '...';
+    try {
+      if (!content) {
+        log('Попытка отправки пустого контента в Telegram', 'social-publishing');
+        return '';
+      }
+      
+      log(`Подготовка текста для Telegram, исходная длина: ${content.length} символов`, 'social-publishing');
+      
+      // Очистка текста от скрытых спец-символов, которые могут вызвать проблемы
+      // в кодировке при отправке в Telegram
+      const cleanContent = content
+        .replace(/\u200B/g, '') // Zero-width space
+        .replace(/\u200C/g, '') // Zero-width non-joiner
+        .replace(/\u200D/g, '') // Zero-width joiner
+        .replace(/\uFEFF/g, ''); // Zero-width no-break space
+      
+      // Сначала форматируем текст для Telegram с поддержкой HTML
+      const formattedText = this.formatTextForTelegram(cleanContent);
+      
+      // Проверка на слишком длинные строки без пробелов (они могут вызвать проблемы при рендеринге)
+      const longWordsFound = formattedText.match(/[^\s]{100,}/g);
+      if (longWordsFound && longWordsFound.length > 0) {
+        log(`Внимание: найдены слишком длинные строки без пробелов (${longWordsFound.length}): ${longWordsFound[0].substring(0, 50)}...`, 'social-publishing');
+      }
+      
+      // Затем проверяем общую длину и обрезаем при необходимости
+      if (formattedText.length > maxLength) {
+        log(`Текст превышает максимальную длину ${maxLength}. Исходная длина: ${formattedText.length}, будет обрезан`, 'social-publishing');
+        
+        // Обрезаем текст до последнего полного предложения или абзаца
+        // чтобы избежать обрыва посреди предложения
+        let truncatedText = formattedText.substring(0, maxLength - 3);
+        
+        // Ищем последний символ конца предложения или абзаца
+        let lastSentenceEnd = Math.max(
+          truncatedText.lastIndexOf('. '),
+          truncatedText.lastIndexOf('! '),
+          truncatedText.lastIndexOf('? '),
+          truncatedText.lastIndexOf('.\n'),
+          truncatedText.lastIndexOf('!\n'),
+          truncatedText.lastIndexOf('?\n'),
+          truncatedText.lastIndexOf('\n\n')
+        );
+        
+        // Если нашли подходящее место для разрыва, обрезаем там
+        if (lastSentenceEnd > maxLength * 0.8) { // Не обрезаем слишком рано
+          truncatedText = truncatedText.substring(0, lastSentenceEnd + 1);
+        }
+        
+        // Добавляем многоточие, чтобы показать, что текст обрезан
+        truncatedText += '...';
+        
+        log(`Текст обрезан до ${truncatedText.length} символов`, 'social-publishing');
+        return truncatedText;
+      }
+      
+      return formattedText;
+    } catch (error) {
+      log(`Ошибка при подготовке текста для Telegram: ${error}. Возвращаем оригинальный текст с обрезкой.`, 'social-publishing');
+      // В случае ошибки возвращаем простой обрезанный текст
+      if (content && content.length > maxLength) {
+        return content.substring(0, maxLength - 3) + '...';
+      }
+      return content || '';
     }
-    
-    return formattedText;
   }
   
   /**
@@ -141,15 +231,28 @@ export class SocialPublishingWithImgurService {
    */
   private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<any> {
     try {
-      // Форматируем ID чата если нужно
+      // Форматируем ID чата с учетом различных форматов
       let formattedChatId = chatId;
-      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-        formattedChatId = `-100${chatId}`;
+      
+      // Улучшенная логика форматирования chat ID
+      if (!chatId.startsWith('-100')) {
+        if (chatId.startsWith('-')) {
+          // Если ID начинается с минуса, но не с "-100", форматируем правильно
+          formattedChatId = `-100${chatId.replace(/^-/, '')}`;
+        } else if (chatId.startsWith('@')) {
+          // Обрабатываем имя канала, если оно начинается с @
+          formattedChatId = chatId;
+        } else if (!isNaN(Number(chatId))) {
+          // Если это просто число, добавляем "-100" префикс
+          formattedChatId = `-100${chatId}`;
+        }
       }
+      
+      log(`Форматирование chat ID: исходный "${chatId}" -> форматированный "${formattedChatId}"`, 'social-publishing');
       
       // Подготавливаем текст с форматированием и обрезкой
       const processedText = this.prepareTelegramText(text);
-      log(`Отправка текстового сообщения в Telegram, длина: ${processedText.length} символов`, 'social-publishing');
+      log(`Отправка текстового сообщения в Telegram, длина: ${processedText.length} символов, первые 100 символов: "${processedText.substring(0, 100)}..."`, 'social-publishing');
       
       // Базовый URL API
       const baseUrl = `https://api.telegram.org/bot${token}`;
@@ -158,49 +261,95 @@ export class SocialPublishingWithImgurService {
       const messageBody = {
         chat_id: formattedChatId,
         text: processedText,
-        parse_mode: 'HTML'
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
       };
       
-      // Отправляем запрос с HTML форматированием
+      // Отправляем запрос с HTML форматированием и расширенными параметрами
       const response = await axios.post(`${baseUrl}/sendMessage`, messageBody, {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000, // Увеличенный таймаут для стабильности
+        validateStatus: () => true // Чтобы получить полный ответ, даже при ошибке
       });
       
       log(`Ответ от Telegram API: ${JSON.stringify(response.data)}`, 'social-publishing');
       
-      if (!response.data.ok) {
-        log(`Ошибка при отправке HTML-форматированного текста: ${response.data.description}`, 'social-publishing');
+      if (response.status !== 200 || !response.data.ok) {
+        const errorDescription = response.data?.description || 'Неизвестная ошибка';
+        const errorCode = response.data?.error_code || response.status;
+        log(`Ошибка при отправке HTML-форматированного текста: код ${errorCode}, ${errorDescription}`, 'social-publishing');
         
-        // Если не получилось отправить с HTML форматированием, пробуем без него
-        const plainText = text.replace(/<[^>]*>/g, '');
-        
-        // Обрезаем по тому же лимиту
-        const maxLength = 4000;
-        const processedPlainText = plainText.length > maxLength ? 
-          plainText.substring(0, maxLength - 3) + '...' : 
-          plainText;
-        
-        log(`Отправка обычного текста в Telegram, длина: ${processedPlainText.length} символов`, 'social-publishing');
-        
-        // Тело запроса без указания parse_mode
-        const plainMessageBody = {
-          chat_id: formattedChatId,
-          text: processedPlainText
-        };
-        
-        // Отправляем запрос без HTML форматирования
-        const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        log(`Ответ на отправку обычного текста: ${JSON.stringify(plainResponse.data)}`, 'social-publishing');
-        return plainResponse.data;
+        // Если ошибка связана с HTML-форматированием, пробуем без него
+        if (errorDescription.includes('can\'t parse entities') || 
+            errorDescription.includes('Bad Request') || 
+            errorDescription.includes('parse entities')) {
+          
+          // Удаляем все HTML-теги
+          const plainText = text.replace(/<[^>]*>/g, '');
+          
+          // Обрезаем по тому же лимиту
+          const maxLength = 4000;
+          const processedPlainText = plainText.length > maxLength ? 
+            plainText.substring(0, maxLength - 3) + '...' : 
+            plainText;
+          
+          log(`Отправка обычного текста в Telegram (без HTML), длина: ${processedPlainText.length} символов`, 'social-publishing');
+          
+          // Тело запроса без указания parse_mode
+          const plainMessageBody = {
+            chat_id: formattedChatId,
+            text: processedPlainText,
+            disable_web_page_preview: true
+          };
+          
+          // Отправляем запрос без HTML форматирования
+          const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 30000
+          });
+          
+          if (plainResponse.data && plainResponse.data.ok) {
+            log(`Успешная отправка обычного текста: message_id ${plainResponse.data.result?.message_id}`, 'social-publishing');
+            return {
+              success: true,
+              data: plainResponse.data
+            };
+          } else {
+            log(`Ошибка при отправке обычного текста: ${JSON.stringify(plainResponse.data)}`, 'social-publishing');
+            return {
+              success: false,
+              error: plainResponse.data,
+              errorDescription: plainResponse.data?.description
+            };
+          }
+        } else {
+          // Если ошибка не связана с HTML-форматированием, возвращаем исходную ошибку
+          return {
+            success: false,
+            error: response.data,
+            errorDescription
+          };
+        }
       }
       
-      return response.data;
+      log(`Сообщение успешно отправлено в Telegram, message_id: ${response.data.result?.message_id}`, 'social-publishing');
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error: any) {
-      log(`Ошибка при отправке текстового сообщения в Telegram: ${error.message}`, 'social-publishing');
-      throw error;
+      log(`Исключение при отправке текстового сообщения в Telegram: ${error.message}`, 'social-publishing');
+      
+      // Расширенный лог ошибки для отладки
+      if (error.response) {
+        log(`Данные при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      
+      return {
+        success: false,
+        error: error.message,
+        errorObject: error.response?.data
+      };
     }
   }
 
