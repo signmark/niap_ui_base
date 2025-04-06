@@ -497,6 +497,24 @@ export class SocialPublishingWithImgurService {
   }
 
   /**
+   * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
+   * @param chatId Исходный chat ID (может быть @username или числовым ID)
+   * @param formattedChatId Форматированный chat ID для API запросов
+   * @param messageId Опциональный ID сообщения для создания прямой ссылки
+   * @returns Корректно форматированный URL
+   */
+  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
+    // Если это username (начинается с @), удаляем @ и не добавляем /c/
+    if (chatId.startsWith('@')) {
+      return `https://t.me/${chatId.substring(1)}${messageId ? `/${messageId}` : ''}`;
+    } 
+    // Для числовых ID используем формат с /c/
+    else {
+      return `https://t.me/c/${formattedChatId.replace('-100', '')}${messageId ? `/${messageId}` : ''}`;
+    }
+  }
+  
+  /**
    * Публикует контент в Telegram с использованием Imgur для изображений
    * @param content Контент для публикации
    * @param telegramSettings Настройки Telegram API
@@ -798,7 +816,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: `https://t.me/${chatId.replace('-100', '')}`
+            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : `c/${formattedChatId.replace('-100', '')}`}/${response.data.result?.message_id || ''}`
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -1003,7 +1021,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: `https://t.me/${chatId.replace('-100', '')}`
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, photoResponse.data?.result?.message_id)
                 };
               }
             } catch (error: any) {
@@ -1036,7 +1054,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+            postUrl: this.formatTelegramUrl(chatId, formattedChatId)
           };
         } else {
           try {
@@ -1114,7 +1132,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId)
                 };
               } else {
                 return {
@@ -1134,7 +1152,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, textResponse.data?.result?.message_id)
                 };
               } else {
                 return {
