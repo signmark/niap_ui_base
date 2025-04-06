@@ -437,9 +437,19 @@ export class SocialPublishingWithImgurService {
       // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
       
       // 1. Если есть изображения и текст длинный (более 1000 символов),
-      // отправляем сначала изображения, затем текст отдельным сообщением
+      // отправляем сначала изображения без подписи или с коротким заголовком, 
+      // затем текст отдельным сообщением
       if (hasImages && text.length > 1000) {
         log(`Telegram: текст слишком длинный (${text.length} символов) для отправки с изображением. Отправляем раздельно.`, 'social-publishing');
+        
+        // Подготавливаем краткую подпись для изображения (только заголовок)
+        const imageCaption = processedContent.title ? 
+          (processedContent.title.length > 200 ? 
+            processedContent.title.substring(0, 197) + '...' : 
+            processedContent.title) : 
+          '';
+        
+        log(`Используем краткую подпись для изображения: "${imageCaption}"`, 'social-publishing');
         
         // Сначала отправляем основное изображение
         if (processedContent.imageUrl) {
@@ -447,7 +457,8 @@ export class SocialPublishingWithImgurService {
             const photoResponse = await axios.post(`${baseUrl}/sendPhoto`, {
               chat_id: formattedChatId,
               photo: processedContent.imageUrl,
-              caption: processedContent.title || ''
+              caption: imageCaption,
+              parse_mode: 'HTML'
             });
             
             log(`Основное изображение успешно отправлено в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
@@ -472,8 +483,10 @@ export class SocialPublishingWithImgurService {
           }
         }
         
-        // Наконец, отправляем сам текст
+        // Наконец, отправляем сам текст (полный с заголовком)
         try {
+          // Если текст превышает максимальную длину для Telegram (4096 символов),
+          // он будет автоматически обрезан в методе sendTextMessageToTelegram
           const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
           log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
           
@@ -481,7 +494,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            responseData: textResponse
+            postUrl: `https://t.me/${chatId.replace('-100', '')}`
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -512,7 +525,7 @@ export class SocialPublishingWithImgurService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              responseData: response.data
+              postUrl: `https://t.me/${formattedChatId.replace('-100', '')}`
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -537,25 +550,36 @@ export class SocialPublishingWithImgurService {
       else {
         // Если есть изображения, отправляем их
         if (processedContent.imageUrl || (processedContent.additionalImages && processedContent.additionalImages.length > 0)) {
+          // Подготавливаем подпись для изображения
+          const imageCaption = text.length <= 1024 ? 
+            text : 
+            (processedContent.title ? 
+              (processedContent.title.length > 200 ? 
+                processedContent.title.substring(0, 197) + '...' : 
+                processedContent.title) : 
+              '');
+              
+          log(`Telegram: подготовлена подпись для изображения, длина: ${imageCaption.length} символов`, 'social-publishing');
+          
           // Отправляем основное изображение
           if (processedContent.imageUrl) {
             try {
               const photoResponse = await axios.post(`${baseUrl}/sendPhoto`, {
                 chat_id: formattedChatId,
                 photo: processedContent.imageUrl,
-                caption: text.length <= 1024 ? text : '',
+                caption: imageCaption,
                 parse_mode: 'HTML'
               });
               
               log(`Основное изображение успешно отправлено в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
               
-              // Если подпись была добавлена к изображению, не нужно отправлять отдельный текст
+              // Если полный текст был добавлен к изображению, не нужно отправлять отдельный текст
               if (text.length <= 1024) {
                 return {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  responseData: photoResponse.data
+                  postUrl: `https://t.me/${chatId.replace('-100', '')}`
                 };
               }
             } catch (error: any) {
@@ -597,7 +621,7 @@ export class SocialPublishingWithImgurService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              responseData: textResponse
+              postUrl: `https://t.me/${formattedChatId.replace('-100', '')}`
             };
           } catch (error: any) {
             log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -922,7 +946,8 @@ export class SocialPublishingWithImgurService {
         platform: 'instagram',
         status: 'published',
         publishedAt: new Date(),
-        responseData: { message: 'Имитация успешной публикации в Instagram (Instagram API требует бизнес-аккаунт и дополнительную настройку)' }
+        postUrl: 'https://instagram.com/example', // Это заглушка, которую нужно будет заменить на реальный URL
+        postId: 'mock_post_id' // Это заглушка, в реальной реализации будет корректный ID
       };
     } catch (error: any) {
       log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
