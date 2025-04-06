@@ -54,7 +54,13 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
             description: 'Изображение загружено'
           });
           
-          const imageUrl = response.data.data.link;
+          // Используем URL из ответа с сервера (url вместо link)
+          const imageUrl = response.data.data.url || response.data.data.link;
+          
+          // Для отладки
+          console.log('Ответ от сервера:', response.data);
+          console.log('Полученный URL изображения:', imageUrl);
+          
           onChange(imageUrl);
           setPreviewUrl(imageUrl);
           setShowPreview(true);
