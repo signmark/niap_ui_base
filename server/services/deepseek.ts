@@ -54,7 +54,7 @@ export class DeepSeekService {
     try {
       const model = options.model || 'deepseek-chat';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
-      const max_tokens = options.max_tokens || 1000;
+      const max_tokens = options.max_tokens || 4000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
       // Проверяем, что API ключ установлен
@@ -196,7 +196,7 @@ export class DeepSeekService {
       ];
 
       const result = await this.generateText(messages, {
-        model: 'deepseek-chat',  // Используем самую мощную доступную модель
+        model: 'deepseek-llm',  // Используем самую мощную доступную модель
         temperature: 0.2,        // Немного увеличиваем для разнообразия
         top_p: 0.85,
         max_tokens: 2000        // Увеличиваем для более подробного анализа
@@ -408,7 +408,7 @@ Output ONLY the English prompt with no explanations or preamble.`;
 
       // Вызываем генерацию с соответствующими параметрами
       const result = await this.generateText(messages, {
-        model: 'deepseek-chat',
+        model: 'deepseek-llm',
         temperature: 0.7,  // Более высокая температура для творческих результатов
         max_tokens: 300    // Ограничиваем длину промта
       });
