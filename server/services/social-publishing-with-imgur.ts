@@ -543,19 +543,105 @@ export class SocialPublishingWithImgurService {
       processedContent = await this.uploadImagesToImgur(processedContent);
 
       // Правильное форматирование ID чата
-      let formattedChatId = chatId;
+      let formattedChatId = chatId.trim();
       
-      // Проверяем нужно ли форматирование
-      // Если chatId НЕ начинается с "-100" и является числом или начинается с "-"
-      if (!chatId.startsWith('-100')) {
-        if (chatId.startsWith('-')) {
-          // Если ID начинается с минуса, но не с "-100", заменяем его на "-100"
-          formattedChatId = `-100${chatId.replace(/^-/, '')}`;
-        } else if (!isNaN(Number(chatId))) {
-          // Если это просто число, добавляем "-100" префикс
-          formattedChatId = `-100${chatId}`;
+      log(`Обработка ID чата для Telegram: "${formattedChatId}"`, 'social-publishing');
+      
+      // Пробуем получить информацию о чате через API Telegram
+      try {
+        const baseUrl = `https://api.telegram.org/bot${token}`;
+        
+        // Начинаем с предварительной обработки ID чата
+        if (!formattedChatId.startsWith('@') && formattedChatId.includes('ya_delayu_moschno')) {
+          formattedChatId = '@ya_delayu_moschno';
+          log(`Специальный случай: установлен ID чата: ${formattedChatId}`, 'social-publishing');
+        } else if (!formattedChatId.startsWith('@') && !formattedChatId.match(/^-?\d+$/) && !formattedChatId.includes('.')) {
+          // Если ID похож на username без @, добавляем префикс @
+          formattedChatId = `@${formattedChatId}`;
+          log(`Преобразован ID в username с добавлением @: ${formattedChatId}`, 'social-publishing');
         }
-        log(`Переформатирован ID чата для Telegram из "${chatId}" в "${formattedChatId}"`, 'social-publishing');
+        
+        // Проверяем существование чата через API
+        log(`Проверка чата через API Telegram: ${formattedChatId}`, 'social-publishing');
+        const chatInfoResponse = await axios.get(`${baseUrl}/getChat`, {
+          params: {
+            chat_id: formattedChatId
+          },
+          validateStatus: () => true, // Принимаем любой код ответа для анализа
+          timeout: 10000
+        });
+        
+        if (chatInfoResponse.status === 200 && chatInfoResponse.data.ok) {
+          // Чат найден - используем информацию из ответа API
+          const chatInfo = chatInfoResponse.data.result;
+          log(`Чат найден через API: ${JSON.stringify(chatInfo)}`, 'social-publishing');
+          
+          // Если это канал или группа с username, предпочитаем использовать username
+          if (chatInfo.username) {
+            formattedChatId = `@${chatInfo.username}`;
+            log(`Используем username из API: ${formattedChatId}`, 'social-publishing');
+          } else if (chatInfo.id) {
+            // В противном случае используем ID
+            formattedChatId = String(chatInfo.id);
+            log(`Используем ID из API: ${formattedChatId}`, 'social-publishing');
+          }
+        } else {
+          // Если getChat не сработал, применяем обычную логику форматирования
+          log(`Не удалось получить информацию о чате через API: ${chatInfoResponse.data?.description || 'Нет данных'}`, 'social-publishing');
+          
+          // Специальная обработка для имен пользователей/каналов (username)
+          if (formattedChatId.startsWith('@')) {
+            // Уже в правильном формате username - оставляем как есть
+            log(`Используем username в качестве ID чата: ${formattedChatId}`, 'social-publishing');
+          } else if (!formattedChatId.startsWith('-100')) {
+            // Проверяем нужно ли форматирование для каналов/групп
+            if (formattedChatId.startsWith('-')) {
+              // Если ID начинается с минуса, но не с "-100", заменяем его на "-100"
+              formattedChatId = `-100${formattedChatId.replace(/^-/, '')}`;
+              log(`Переформатирован ID группы для Telegram из "${chatId}" в "${formattedChatId}"`, 'social-publishing');
+            } else if (!isNaN(Number(formattedChatId))) {
+              // Если это просто число, проверяем его длину
+              if (formattedChatId.length >= 10) {
+                // Вероятно ID канала без префикса -100
+                formattedChatId = `-100${formattedChatId}`;
+                log(`Переформатирован ID канала для Telegram: ${formattedChatId}`, 'social-publishing');
+              } else {
+                // Короткий числовой ID - скорее всего личный чат, оставляем как есть
+                log(`Используем короткий числовой ID без изменений: ${formattedChatId}`, 'social-publishing');
+              }
+            }
+          }
+        }
+      } catch (error) {
+        log(`Ошибка при проверке чата через API: ${error.message}`, 'social-publishing');
+        
+        // В случае ошибки API используем стандартную логику форматирования
+        // Специальная обработка для имен пользователей/каналов (username)
+        if (formattedChatId.startsWith('@')) {
+          // Уже в правильном формате username - оставляем как есть
+          log(`Используем username в качестве ID чата: ${formattedChatId}`, 'social-publishing');
+        } else if (formattedChatId.includes('ya_delayu_moschno') || (!formattedChatId.match(/^-?\d+$/) && !formattedChatId.includes('.'))) {
+          // Если ID похож на username без @, добавляем префикс @
+          formattedChatId = `@${formattedChatId}`;
+          log(`Преобразован ID в username с добавлением @: ${formattedChatId}`, 'social-publishing');
+        } else if (!formattedChatId.startsWith('-100')) {
+          // Проверяем нужно ли форматирование для каналов/групп
+          if (formattedChatId.startsWith('-')) {
+            // Если ID начинается с минуса, но не с "-100", заменяем его на "-100"
+            formattedChatId = `-100${formattedChatId.replace(/^-/, '')}`;
+            log(`Переформатирован ID группы для Telegram из "${chatId}" в "${formattedChatId}"`, 'social-publishing');
+          } else if (!isNaN(Number(formattedChatId))) {
+            // Если это просто число, проверяем его длину
+            if (formattedChatId.length >= 10) {
+              // Вероятно ID канала без префикса -100
+              formattedChatId = `-100${formattedChatId}`;
+              log(`Переформатирован ID канала для Telegram: ${formattedChatId}`, 'social-publishing');
+            } else {
+              // Короткий числовой ID - скорее всего личный чат, оставляем как есть
+              log(`Используем короткий числовой ID без изменений: ${formattedChatId}`, 'social-publishing');
+            }
+          }
+        }
       }
       
       log(`Используем ID чата для Telegram: ${formattedChatId}`, 'social-publishing');

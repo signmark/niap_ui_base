@@ -192,6 +192,136 @@ export function registerImgurRoutes(router: Router) {
     }
   });
   
+  // Маршрут для проверки информации о чате Telegram
+  router.post('/api/imgur/check-telegram-chat', async (req, res) => {
+    try {
+      const { telegramToken, telegramChatId } = req.body;
+      
+      if (!telegramToken) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не указан токен Telegram бота'
+        });
+      }
+      
+      if (!telegramChatId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не указан ID чата Telegram'
+        });
+      }
+      
+      console.log(`[routes-imgur] Проверка чата в Telegram:`, {
+        chatId: telegramChatId,
+        tokenLength: telegramToken.length
+      });
+      
+      // Пытаемся получить информацию о чате через API Telegram
+      try {
+        const baseUrl = `https://api.telegram.org/bot${telegramToken}`;
+        
+        // Предварительная обработка ID чата
+        let formattedChatId = telegramChatId.trim();
+        
+        // Стратегия 1: Попробовать с исходным ID
+        let chatInfoResponse = await axios.get(`${baseUrl}/getChat`, {
+          params: { chat_id: formattedChatId },
+          validateStatus: () => true,
+          timeout: 10000
+        });
+        
+        // Если не получилось, пробуем другие форматы
+        if (chatInfoResponse.status !== 200 || !chatInfoResponse.data.ok) {
+          console.log(`[routes-imgur] Не удалось получить информацию с исходным ID, пробуем другие форматы`);
+          
+          // Стратегия 2: Если это не username и не числовой ID, добавляем @ для username
+          if (!formattedChatId.startsWith('@') && !formattedChatId.match(/^-?\d+$/) && !formattedChatId.includes('.')) {
+            formattedChatId = `@${formattedChatId}`;
+            console.log(`[routes-imgur] Пробуем как username с @: ${formattedChatId}`);
+            
+            chatInfoResponse = await axios.get(`${baseUrl}/getChat`, {
+              params: { chat_id: formattedChatId },
+              validateStatus: () => true,
+              timeout: 10000
+            });
+          }
+          
+          // Стратегия 3: Если это числовой ID, но не канал, проверяем нужно ли добавить -100
+          if ((chatInfoResponse.status !== 200 || !chatInfoResponse.data.ok) && 
+              !formattedChatId.startsWith('@') && !formattedChatId.startsWith('-100') && 
+              formattedChatId.match(/^\d+$/)) {
+                
+            // Для каналов/групп добавляем префикс -100
+            formattedChatId = `-100${formattedChatId}`;
+            console.log(`[routes-imgur] Пробуем как ID канала с префиксом -100: ${formattedChatId}`);
+            
+            chatInfoResponse = await axios.get(`${baseUrl}/getChat`, {
+              params: { chat_id: formattedChatId },
+              validateStatus: () => true,
+              timeout: 10000
+            });
+          }
+          
+          // Стратегия 4: Если ID начинается с минуса, но не с "-100", преобразуем его
+          if ((chatInfoResponse.status !== 200 || !chatInfoResponse.data.ok) && 
+              formattedChatId.startsWith('-') && !formattedChatId.startsWith('-100')) {
+                
+            formattedChatId = `-100${formattedChatId.substring(1)}`;
+            console.log(`[routes-imgur] Пробуем как ID канала, заменяя минус на -100: ${formattedChatId}`);
+            
+            chatInfoResponse = await axios.get(`${baseUrl}/getChat`, {
+              params: { chat_id: formattedChatId },
+              validateStatus: () => true,
+              timeout: 10000
+            });
+          }
+        }
+        
+        console.log(`[routes-imgur] Финальный ответ API Telegram:`, 
+                   chatInfoResponse.status, chatInfoResponse.data.ok ? 'успех' : 'ошибка');
+        
+        if (chatInfoResponse.status === 200 && chatInfoResponse.data.ok) {
+          // Чат найден
+          const chatInfo = chatInfoResponse.data.result;
+          
+          // Логируем расширенную информацию о найденном чате
+          console.log(`[routes-imgur] Найден чат:`, {
+            id: chatInfo.id,
+            type: chatInfo.type,
+            title: chatInfo.title || null,
+            username: chatInfo.username || null
+          });
+          
+          return res.status(200).json({
+            success: true,
+            data: chatInfo,
+            originalId: telegramChatId,
+            formattedId: formattedChatId,
+            recommendedFormat: chatInfo.username ? `@${chatInfo.username}` : String(chatInfo.id)
+          });
+        } else {
+          // Чат не найден или другая ошибка после всех попыток
+          return res.status(400).json({
+            success: false,
+            error: chatInfoResponse.data?.description || 'Не удалось получить информацию о чате'
+          });
+        }
+      } catch (error: any) {
+        console.error(`[routes-imgur] Ошибка при проверке чата Telegram: ${error.message}`);
+        return res.status(500).json({
+          success: false,
+          error: `Ошибка при проверке чата Telegram: ${error.message || 'Неизвестная ошибка'}`
+        });
+      }
+    } catch (error: any) {
+      console.error(`[routes-imgur] Ошибка при проверке чата Telegram: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при проверке чата Telegram: ${error.message || 'Неизвестная ошибка'}`
+      });
+    }
+  });
+  
   // Маршрут для тестирования публикации в Telegram с использованием Imgur
   router.post('/api/imgur/test-telegram-publication', async (req, res) => {
     try {
@@ -210,6 +340,14 @@ export function registerImgurRoutes(router: Router) {
           error: 'Не указаны настройки Telegram (токен или ID чата)'
         });
       }
+      
+      // Добавляем логирование для отладки
+      console.log(`[routes-imgur] Тестовая публикация в Telegram:`, {
+        chatId: telegramChatId,
+        chatIdLength: telegramChatId.length,
+        tokenLength: telegramToken.length,
+        contentId
+      });
       
       // Получаем контент из базы данных
       const content = await storage.getCampaignContentById(contentId);

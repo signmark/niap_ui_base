@@ -520,12 +520,78 @@ export default function TestImgur() {
                   
                   <div className="grid gap-2">
                     <Label htmlFor="telegramChatId">Telegram Chat ID</Label>
-                    <Input
-                      id="telegramChatId"
-                      placeholder="-1001234567890"
-                      value={telegramChatId}
-                      onChange={(e) => setTelegramChatId(e.target.value)}
-                    />
+                    <div className="flex space-x-2">
+                      <Input
+                        id="telegramChatId"
+                        placeholder="@username или -1001234567890"
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={async () => {
+                          if (!telegramToken || !telegramChatId) {
+                            toast({
+                              title: 'Ошибка',
+                              description: 'Введите токен бота и ID чата',
+                              variant: 'destructive'
+                            });
+                            return;
+                          }
+                          
+                          setLoading(true);
+                          try {
+                            const response = await axios.post('/api/imgur/check-telegram-chat', {
+                              telegramToken,
+                              telegramChatId
+                            });
+                            
+                            if (response.data.success) {
+                              const chatInfo = response.data.data;
+                              toast({
+                                title: 'Чат найден',
+                                description: `Тип: ${chatInfo.type}, Название: ${chatInfo.title || chatInfo.username || chatInfo.first_name || 'Не указано'}`,
+                              });
+                              
+                              setResult({
+                                success: true,
+                                chatInfo: chatInfo
+                              });
+                              
+                              // Если есть username, предлагаем использовать его
+                              if (chatInfo.username) {
+                                if (telegramChatId !== `@${chatInfo.username}`) {
+                                  const useUsername = window.confirm(`Рекомендуется использовать @${chatInfo.username} вместо введенного ID. Изменить автоматически?`);
+                                  if (useUsername) {
+                                    setTelegramChatId(`@${chatInfo.username}`);
+                                  }
+                                }
+                              }
+                            } else {
+                              toast({
+                                title: 'Ошибка',
+                                description: response.data.error || 'Чат не найден',
+                                variant: 'destructive'
+                              });
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: 'Ошибка',
+                              description: error.response?.data?.error || error.message,
+                              variant: 'destructive'
+                            });
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        disabled={loading || !telegramToken || !telegramChatId}
+                      >
+                        Проверить
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Поддерживаются форматы: @username, числовой ID чата, ID канала с префиксом -100 или без него
+                    </p>
                   </div>
                 </>
               )}
