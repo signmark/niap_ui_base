@@ -5,6 +5,25 @@ import { Upload, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
+/**
+ * Функция для преобразования URL изображения в прокси-URL
+ * @param url Исходный URL изображения
+ * @returns Прокси-URL изображения
+ */
+export function getProxiedImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // Пропускаем URL, которые уже проксированы
+  if (url.startsWith('/api/proxy-image')) return url;
+  
+  // Для imgur ссылок и других внешних источников используем прокси
+  if (url.match(/^https?:\/\//)) {
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  
+  return url;
+}
+
 interface ImageUploaderProps {
   value: string;
   onChange: (url: string) => void;
@@ -29,7 +48,8 @@ export function ImageUploader({
   // Обновление превью и отображаемого URL при изменении значения
   useEffect(() => {
     if (value && value.trim() !== '') {
-      setPreviewUrl(value);
+      // Используем прокси URL для превью изображения
+      setPreviewUrl(getProxiedImageUrl(value));
       // Если forcePreview=true или уже показываем превью, то продолжаем показывать
       setShowPreview(forcePreview || showPreview);
       setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
@@ -71,7 +91,8 @@ export function ImageUploader({
         if (imageUrl) {
           console.log('ИТОГОВЫЙ URL изображения для вставки (из корня):', imageUrl);
           onChange(imageUrl);
-          setPreviewUrl(imageUrl);
+          // Используем прокси URL для превью изображения
+          setPreviewUrl(getProxiedImageUrl(imageUrl));
           setShowPreview(true);
           toast({
             title: 'Успешно',
@@ -96,7 +117,8 @@ export function ImageUploader({
           if (nestedUrl) {
             console.log('ИТОГОВЫЙ URL изображения для вставки (из data):', nestedUrl);
             onChange(nestedUrl);
-            setPreviewUrl(nestedUrl);
+            // Используем прокси URL для превью изображения
+            setPreviewUrl(getProxiedImageUrl(nestedUrl));
             setShowPreview(true);
             toast({
               title: 'Успешно',
