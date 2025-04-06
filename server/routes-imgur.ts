@@ -265,7 +265,8 @@ export function registerImgurRoutes(router: Router) {
         });
       }
       
-      return res.status(200).json({
+      // Отправляем ответ в двух форматах для совместимости
+      const responseData = {
         success: true,
         data: {
           originalname: req.file.originalname,
@@ -273,9 +274,16 @@ export function registerImgurRoutes(router: Router) {
           mimetype: req.file.mimetype,
           size: req.file.size,
           path: filePath,
-          url: imgurUrl
-        }
-      });
+          url: imgurUrl,
+          link: imgurUrl // Добавляем также поле link для совместимости
+        },
+        url: imgurUrl,  // Дублируем URL в корне ответа
+        link: imgurUrl  // И также добавляем поле link для совместимости
+      };
+      
+      console.log('Отправляем ответ на запрос загрузки файла:', JSON.stringify(responseData, null, 2));
+      
+      return res.status(200).json(responseData);
     } catch (error) {
       console.error('Ошибка при загрузке файла на Imgur:', error);
       return res.status(500).json({
