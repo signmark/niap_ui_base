@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
+import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
 import { registerImgurRoutes } from "./routes-imgur";
 import { setupVite, serveStatic } from "./vite";
@@ -153,6 +154,11 @@ app.use((req, res, next) => {
     log("Registering Imgur Uploader routes...");
     registerImgurRoutes(app);
     log("Imgur Uploader routes registered successfully");
+    
+    // Регистрируем маршруты для получения моделей DeepSeek
+    log("Registering DeepSeek Models route...");
+    registerDeepSeekModelsRoute(app);
+    log("DeepSeek Models route registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");

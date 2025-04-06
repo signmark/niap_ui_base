@@ -180,8 +180,14 @@ export function registerDeepSeekRoutes(app: Router) {
         {
           id: 'deepseek-chat',
           name: 'DeepSeek Chat',
-          description: 'Самая современная и мощная модель DeepSeek для генерации текста',
+          description: 'Основная и мощная модель DeepSeek для генерации текста',
           default: true
+        },
+        {
+          id: 'deepseek-reasoner',
+          name: 'DeepSeek Reasoner',
+          description: 'Модель DeepSeek с улучшенными навыками логического мышления',
+          default: false
         }
       ];
       
