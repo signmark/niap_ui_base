@@ -1703,122 +1703,11 @@ export default function ContentPage() {
                   
                   {/* Дополнительные изображения */}
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label>Дополнительные изображения</Label>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // Убедимся, что у нас есть массив дополнительных изображений
-                          const currentImages = currentContent.additionalImages || [];
-                          // Добавляем пустое поле для нового изображения
-                          const updatedContent = {
-                            ...currentContent, 
-                            additionalImages: [...currentImages, ""]
-                          };
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Добавить изображение
-                      </Button>
-                    </div>
-                    
-                    {Array.isArray(currentContent.additionalImages) && currentContent.additionalImages.length > 0 ? (
-                      <div className="space-y-2">
-                        {currentContent.additionalImages.map((imageUrl, index) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <Input
-                              placeholder="Введите URL изображения"
-                              value={imageUrl || ""}
-                              onChange={(e) => {
-                                const updatedImages = [...(currentContent.additionalImages || [])];
-                                updatedImages[index] = e.target.value;
-                                const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                setCurrentContentSafe(updatedContent);
-                              }}
-                              className="flex-1"
-                            />
-                            <div className="relative">
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                id={`editAdditionalImageUpload-${index}`}
-                                className="absolute inset-0 opacity-0 w-full cursor-pointer"
-                                onChange={async (e) => {
-                                  if (e.target.files && e.target.files.length > 0) {
-                                    const file = e.target.files[0];
-                                    const formData = new FormData();
-                                    formData.append('image', file);
-                                    
-                                    try {
-                                      const response = await axios.post('/api/imgur/upload-file', formData, {
-                                        headers: {
-                                          'Content-Type': 'multipart/form-data'
-                                        }
-                                      });
-                                      
-                                      if (response.data.success) {
-                                        toast({
-                                          title: 'Успешно',
-                                          description: 'Изображение загружено'
-                                        });
-                                        
-                                        const updatedImages = [...(currentContent.additionalImages || [])];
-                                        updatedImages[index] = response.data.data.link;
-                                        const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                        setCurrentContentSafe(updatedContent);
-                                        
-                                        e.target.value = '';
-                                      } else {
-                                        toast({
-                                          title: 'Ошибка',
-                                          description: response.data.error || 'Неизвестная ошибка при загрузке',
-                                          variant: 'destructive'
-                                        });
-                                      }
-                                    } catch (error: any) {
-                                      toast({
-                                        title: 'Ошибка',
-                                        description: error.message || 'Ошибка при загрузке изображения',
-                                        variant: 'destructive'
-                                      });
-                                    }
-                                  }
-                                }}
-                              />
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="icon"
-                                className="h-9 w-9"
-                              >
-                                <Upload className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="icon"
-                              className="h-9 w-9"
-                              onClick={() => {
-                                const updatedImages = [...(currentContent.additionalImages || [])];
-                                updatedImages.splice(index, 1);
-                                const updatedContent = {...currentContent, additionalImages: updatedImages};
-                                setCurrentContentSafe(updatedContent);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Нет дополнительных изображений. Нажмите "Добавить изображение" для добавления.
-                      </p>
-                    )}
+                    <AdditionalImagesUploader
+                      images={currentContent.additionalImages || []}
+                      onChange={(images) => setCurrentContentSafe({...currentContent, additionalImages: images})}
+                      label="Дополнительные изображения"
+                    />
                   </div>
                 </div>
               )}
@@ -2383,21 +2272,25 @@ export default function ContentPage() {
             {/* Дополнительные изображения */}
             {previewContent?.contentType === "text-image" && 
              Array.isArray(previewContent?.additionalImages) && 
-             previewContent.additionalImages.length > 0 && (
+             previewContent.additionalImages.filter(url => url && url.trim() !== '').length > 0 && (
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-2">Дополнительные изображения</h4>
                 <div className="grid grid-cols-2 gap-4">
                   {previewContent.additionalImages.map((imageUrl, index) => (
-                    imageUrl && (
-                      <div key={index} className="overflow-hidden">
+                    imageUrl && imageUrl.trim() !== '' && (
+                      <div key={index} className="relative border rounded-md overflow-hidden bg-muted/20 h-[300px]">
                         <img
                           src={imageUrl}
                           alt={`Дополнительное изображение ${index + 1}`}
-                          className="rounded-md max-h-[300px] w-full object-cover"
+                          className="rounded-md max-h-[300px] w-full h-full object-contain"
                           onError={(e) => {
+                            console.error(`Ошибка загрузки изображения: ${imageUrl}`);
                             (e.target as HTMLImageElement).src = "https://placehold.co/400x300?text=Image+Error";
                           }}
                         />
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                          {imageUrl}
+                        </div>
                       </div>
                     )
                   ))}

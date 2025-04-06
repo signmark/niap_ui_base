@@ -20,11 +20,12 @@ export function ImageUploader({ value, onChange, placeholder = "Введите U
 
   // Обновление превью при изменении значения
   useEffect(() => {
-    if (value) {
+    if (value && value.trim() !== '') {
       setPreviewUrl(value);
       setShowPreview(true);
     } else {
       setShowPreview(false);
+      setPreviewUrl('');
     }
   }, [value]);
 

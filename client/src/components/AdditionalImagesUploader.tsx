@@ -36,7 +36,7 @@ export function AdditionalImagesUploader({
   
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-2">
         <Label>{label}</Label>
         <Button 
           type="button" 
