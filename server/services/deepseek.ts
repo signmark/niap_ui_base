@@ -52,8 +52,8 @@ export class DeepSeekService {
     stop?: string[];
   } = {}): Promise<string> {
     try {
-      // Используем DeepSeek V3 - самую современную модель по умолчанию
-      const model = options.model || 'deepseek-v3';
+      // Используем DeepSeek Chat - самую современную модель по умолчанию
+      const model = options.model || 'deepseek-chat';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
       const max_tokens = options.max_tokens || 8000; // Увеличиваем лимит по умолчанию для модели DeepSeek V3
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
@@ -197,7 +197,7 @@ export class DeepSeekService {
       ];
 
       const result = await this.generateText(messages, {
-        model: 'deepseek-v3',  // Используем самую мощную доступную модель DeepSeek V3
+        model: 'deepseek-chat',  // Используем самую мощную доступную модель DeepSeek для чата
         temperature: 0.2,        // Немного увеличиваем для разнообразия
         top_p: 0.85,
         max_tokens: 4000        // Значительно увеличиваем для более полного и глубокого анализа
@@ -409,7 +409,7 @@ Output ONLY the English prompt with no explanations or preamble.`;
 
       // Вызываем генерацию с соответствующими параметрами
       const result = await this.generateText(messages, {
-        model: 'deepseek-v3',
+        model: 'deepseek-chat',
         temperature: 0.7,  // Более высокая температура для творческих результатов
         max_tokens: 300    // Ограничиваем длину промта
       });
