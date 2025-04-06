@@ -89,8 +89,8 @@ const AI_SERVICES = [
     name: "DeepSeek",
     models: [
       {
-        id: "deepseek-llm",
-        name: "DeepSeek LLM",
+        id: "deepseek-v3",
+        name: "DeepSeek V3",
         default: true
       }
     ]

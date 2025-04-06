@@ -113,7 +113,7 @@ export function registerDeepSeekRoutes(app: Router) {
       ];
       
       // Выбираем модель (или используем дефолтную)
-      const modelToUse = model || 'deepseek-chat';
+      const modelToUse = model || 'deepseek-v3'; // Используем DeepSeek V3 как модель по умолчанию
       
       log(`Calling DeepSeek with model ${modelToUse}`);
       // Генерируем улучшенный текст

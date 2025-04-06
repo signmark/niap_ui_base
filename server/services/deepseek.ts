@@ -52,9 +52,10 @@ export class DeepSeekService {
     stop?: string[];
   } = {}): Promise<string> {
     try {
-      const model = options.model || 'deepseek-chat';
+      // Используем DeepSeek V3 - самую современную модель по умолчанию
+      const model = options.model || 'deepseek-v3';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
-      const max_tokens = options.max_tokens || 4000;
+      const max_tokens = options.max_tokens || 8000; // Увеличиваем лимит по умолчанию для модели DeepSeek V3
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
       // Проверяем, что API ключ установлен
@@ -196,10 +197,10 @@ export class DeepSeekService {
       ];
 
       const result = await this.generateText(messages, {
-        model: 'deepseek-llm',  // Используем самую мощную доступную модель
+        model: 'deepseek-v3',  // Используем самую мощную доступную модель DeepSeek V3
         temperature: 0.2,        // Немного увеличиваем для разнообразия
         top_p: 0.85,
-        max_tokens: 2000        // Увеличиваем для более подробного анализа
+        max_tokens: 4000        // Значительно увеличиваем для более полного и глубокого анализа
       });
       
       console.log(`[${requestId}] Enhanced DeepSeek API response (first 150 chars): ${result.substring(0, 150)}...`);
@@ -340,7 +341,7 @@ ${platformSpecifics}
         ],
         {
           temperature: 0.7,  // Более высокая температура для креативности
-          max_tokens: length === 'short' ? 300 : length === 'medium' ? 500 : 800
+          max_tokens: length === 'short' ? 600 : length === 'medium' ? 1000 : 1500
         }
       );
     } catch (error) {
@@ -408,7 +409,7 @@ Output ONLY the English prompt with no explanations or preamble.`;
 
       // Вызываем генерацию с соответствующими параметрами
       const result = await this.generateText(messages, {
-        model: 'deepseek-llm',
+        model: 'deepseek-v3',
         temperature: 0.7,  // Более высокая температура для творческих результатов
         max_tokens: 300    // Ограничиваем длину промта
       });
@@ -470,7 +471,7 @@ ${originalContent}
         ],
         {
           temperature: 0.4,
-          max_tokens: 1000
+          max_tokens: 2000  // Увеличиваем лимит для длинного контента
         }
       );
     } catch (error) {
