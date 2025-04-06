@@ -38,20 +38,33 @@ const formatTelegramUrl = (url: string | null): string | null => {
     
     if (pathParts.length === 0) return url;
     
-    // Исправление смешанного формата: если есть /c/ и имя пользователя начинается с @
+    // Специальная обработка для формата https://t.me/c/@username/123
+    // Это неправильный формат, который нужно преобразовать в https://t.me/username/123
     if (pathParts[0] === 'c' && pathParts.length > 1) {
       if (pathParts[1].startsWith('@')) {
         // Смешанный формат: /c/@username/message_id -> /username/message_id
         return `https://t.me/${pathParts[1].substring(1)}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
       }
       
-      // Числовой ID: /c/123456789/message_id
+      // Возможно числовой ID канала без -100 префикса
+      // Проверим, является ли это именем пользователя, которое по ошибке было помещено после /c/
+      if (!pathParts[1].match(/^\d+$/)) {
+        // Если это не чисто числовой ID, считаем, что это имя пользователя
+        return `https://t.me/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+      }
+      
+      // Числовой ID: /c/123456789/message_id - оставляем как есть
       return `https://t.me/c/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
     } 
     
     // Проверяем, если имя пользователя начинается с @, удаляем символ @
     if (pathParts[0].startsWith('@')) {
       return `https://t.me/${pathParts[0].substring(1)}${pathParts.length > 1 ? `/${pathParts[1]}` : ''}`;
+    }
+    
+    // Числовой ID без префикса /c/ - нужно добавить префикс /c/
+    if (pathParts[0].match(/^\d+$/) && pathParts.length > 1) {
+      return `https://t.me/c/${pathParts[0]}/${pathParts[1]}`;
     }
     
     // Обычный URL для username: https://t.me/username/123
