@@ -92,6 +92,11 @@ const AI_SERVICES = [
         id: "deepseek-chat",
         name: "DeepSeek Chat",
         default: true
+      },
+      {
+        id: "deepseek-reasoner",
+        name: "DeepSeek Reasoner",
+        default: false
       }
     ]
   },
