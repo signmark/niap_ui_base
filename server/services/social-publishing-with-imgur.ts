@@ -774,18 +774,13 @@ export class SocialPublishingWithImgurService {
           }
         }
         
-        // Наконец, отправляем сам текст (полный с заголовком)
+        // Наконец, отправляем сам текст как есть, без дополнительных заголовков
         try {
-          // Добавляем заголовок перед текстом, если он не включен в текст
-          const fullText = processedContent.title && !text.includes(processedContent.title) 
-            ? `<b>${processedContent.title}</b>\n\n${text}` 
-            : text;
-            
-          log(`Telegram: отправка текста отдельным сообщением, длина: ${fullText.length} символов`, 'social-publishing');
+          log(`Telegram: отправка текста отдельным сообщением, длина: ${text.length} символов`, 'social-publishing');
             
           // Если текст превышает максимальную длину для Telegram (4096 символов),
           // он будет автоматически обрезан в методе sendTextMessageToTelegram
-          const textResponse = await this.sendTextMessageToTelegram(fullText, formattedChatId, token);
+          const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
           log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
           
           return {
