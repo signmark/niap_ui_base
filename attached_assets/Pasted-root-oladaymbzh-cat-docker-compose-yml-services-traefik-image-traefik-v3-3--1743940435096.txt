@@ -1,3 +1,4 @@
+root@oladaymbzh:~# cat docker-compose.yml
 services:
   traefik:
     image: "traefik:v3.3"
@@ -63,7 +64,7 @@ services:
               - EXECUTIONS_DATA_PRUNE_MAX_COUNT=10000
               - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
               - NODE_PATH=/home/node/.n8n/node_modules
-              - NODE_FUNCTION_ALLOW_EXTERNAL=*  
+              - NODE_FUNCTION_ALLOW_EXTERNAL=*
             volumes:
               - ./n8n_data:/home/node/.n8n
               - ./local-files:/files
@@ -132,7 +133,7 @@ services:
             restart: always
             volumes:
               - ./smm:/app
-              # - /app/node_modules  # Закомментируйте или удалите эту строку
+              - /app/node_modules
             environment:
               - NODE_ENV=development
             command: npm run dev
@@ -142,4 +143,6 @@ services:
               - traefik.http.routers.smm.tls=true
               - traefik.http.routers.smm.entrypoints=web,websecure
               - traefik.http.routers.smm.tls.certresolver=mytlschallenge
-              - traefik.http.services.smm.loadbalancer.server.port=5000
+              - tradocker-compose build smm
+yaml: line 2: did not find expected key
+root@oladaymbzh:~#
