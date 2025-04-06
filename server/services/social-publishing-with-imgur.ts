@@ -725,14 +725,14 @@ export class SocialPublishingWithImgurService {
             log(`Изображение для Telegram - тип: ${isUrl ? 'URL' : 'локальный путь'}, значение: ${processedContent.imageUrl}`, 'social-publishing');
             
             // Формируем запрос с учетом типа изображения
-            // ВАЖНО: Отправляем фото БЕЗ ПОДПИСИ, чтобы избежать обрезки текста
-            // Используем только точку, чтобы сохранить возможность публикации
+            // ВАЖНО: Отправляем фото вообще БЕЗ ПОДПИСИ
+            // Telegram поддерживает отправку без подписи
             const photoResponse = await axios.post(
               `${baseUrl}/sendPhoto`,
               {
                 chat_id: formattedChatId,
                 photo: processedContent.imageUrl,
-                caption: '.',  // Всегда используем короткую подпись чтобы избежать обрезки
+                // Не указываем caption вообще для чистой отправки изображения
                 parse_mode: 'HTML'
               },
               {
@@ -763,7 +763,7 @@ export class SocialPublishingWithImgurService {
               await axios.post(`${baseUrl}/sendPhoto`, {
                 chat_id: formattedChatId,
                 photo: processedContent.additionalImages[i],
-                caption: '.', // Также используем минимальную подпись
+                // Отправляем без подписи, как в VK
                 parse_mode: 'HTML'
               });
               
@@ -1007,6 +1007,7 @@ export class SocialPublishingWithImgurService {
                 await axios.post(`${baseUrl}/sendPhoto`, {
                   chat_id: formattedChatId,
                   photo: processedContent.additionalImages[i]
+                  // Чистая отправка без подписи
                 });
                 
                 log(`Дополнительное изображение ${i+1} успешно отправлено в Telegram`, 'social-publishing');
