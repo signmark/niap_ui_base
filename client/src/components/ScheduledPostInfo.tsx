@@ -38,13 +38,23 @@ const formatTelegramUrl = (url: string | null): string | null => {
     
     if (pathParts.length === 0) return url;
     
-    // Если первая часть пути 'c', и затем идет числовой ID
+    // Исправление смешанного формата: если есть /c/ и имя пользователя начинается с @
     if (pathParts[0] === 'c' && pathParts.length > 1) {
-      // Формируем URL для числового ID: https://t.me/c/123456789/123
+      if (pathParts[1].startsWith('@')) {
+        // Смешанный формат: /c/@username/message_id -> /username/message_id
+        return `https://t.me/${pathParts[1].substring(1)}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+      }
+      
+      // Числовой ID: /c/123456789/message_id
       return `https://t.me/c/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
     } 
     
-    // URL для username: https://t.me/username/123
+    // Проверяем, если имя пользователя начинается с @, удаляем символ @
+    if (pathParts[0].startsWith('@')) {
+      return `https://t.me/${pathParts[0].substring(1)}${pathParts.length > 1 ? `/${pathParts[1]}` : ''}`;
+    }
+    
+    // Обычный URL для username: https://t.me/username/123
     return `https://t.me/${pathParts[0]}${pathParts.length > 1 ? `/${pathParts[1]}` : ''}`;
   } catch (error) {
     console.error('Ошибка при форматировании URL Telegram:', error);
@@ -159,7 +169,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       {status.postUrl && (
                         <p className="text-xs mt-1">
                           <a 
-                            href={platform === 'telegram' ? formatTelegramUrl(status.postUrl) || status.postUrl : status.postUrl} 
+                            href={platform === 'telegram' ? formatTelegramUrl(status.postUrl!) || status.postUrl : status.postUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-primary underline"
@@ -248,7 +258,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                   .map(([platform, status]) => (
                     <a 
                       key={platform}
-                      href={platform === 'telegram' ? formatTelegramUrl(status.postUrl) || status.postUrl! : status.postUrl!} 
+                      href={platform === 'telegram' ? formatTelegramUrl(status.postUrl!) || status.postUrl! : status.postUrl!} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-xs text-primary underline flex items-center gap-1"
