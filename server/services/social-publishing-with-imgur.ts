@@ -255,8 +255,8 @@ export class SocialPublishingWithImgurService {
       // Проверяем доступность видео
       const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
       
-      // Ограничиваем длину подписи, так как Telegram имеет ограничение
-      const maxCaptionLength = 1024;
+      // Ограничиваем длину подписи, так как Telegram имеет ограничение в 4096 символов
+      const maxCaptionLength = 4096;
       const truncatedCaption = text.length > maxCaptionLength ? 
         text.substring(0, maxCaptionLength - 3) + '...' : 
         text;
