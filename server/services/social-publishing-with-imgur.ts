@@ -930,21 +930,123 @@ export class SocialPublishingWithImgurService {
           return {
             platform: 'telegram',
             status: 'published',
-            publishedAt: new Date()
+            publishedAt: new Date(),
+            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
           };
         } else {
           try {
-            const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
-            log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
+            log(`Отправка текстового сообщения в Telegram, длина: ${text.length} символов`, 'social-publishing');
             
-            return {
-              platform: 'telegram',
-              status: 'published',
-              publishedAt: new Date(),
-              postUrl: `https://t.me/${formattedChatId.replace('-100', '')}`
-            };
+            // Для длинных текстов (> 4000 символов) разбиваем на части
+            if (text.length > 4000) {
+              log(`Текст слишком длинный (${text.length} символов), разбиваем на части`, 'social-publishing');
+              
+              // Разбиваем текст на части примерно по 3500 символов
+              // чтобы не обрезать посреди HTML-тега, разбиваем на абзацы
+              const maxPartLength = 3500;
+              let remainingText = text;
+              let success = false;
+              let successCount = 0;
+              let partNumber = 1;
+              
+              while (remainingText.length > 0) {
+                let partEndPos = Math.min(remainingText.length, maxPartLength);
+                
+                // Ищем подходящее место для разрыва (конец абзаца, предложения или просто пробел)
+                if (partEndPos < remainingText.length) {
+                  const possibleBreakPoints = [
+                    remainingText.lastIndexOf('\n\n', maxPartLength),
+                    remainingText.lastIndexOf('\n', maxPartLength),
+                    remainingText.lastIndexOf('. ', maxPartLength),
+                    remainingText.lastIndexOf('! ', maxPartLength),
+                    remainingText.lastIndexOf('? ', maxPartLength),
+                    remainingText.lastIndexOf(' ', maxPartLength)
+                  ].filter(pos => pos > 0);
+                  
+                  if (possibleBreakPoints.length > 0) {
+                    partEndPos = Math.max(...possibleBreakPoints) + 1;
+                  }
+                }
+                
+                const textPart = remainingText.substring(0, partEndPos);
+                remainingText = remainingText.substring(partEndPos);
+                
+                // Добавляем индикатор части для длинных сообщений
+                const partIndicator = remainingText.length > 0 ? 
+                  `\n\n(Часть ${partNumber}/${Math.ceil(text.length / maxPartLength)})` : 
+                  '';
+                
+                try {
+                  const partResponse = await this.sendTextMessageToTelegram(
+                    textPart + partIndicator, 
+                    formattedChatId, 
+                    token
+                  );
+                  
+                  log(`Отправлена часть ${partNumber} текстового сообщения (${textPart.length} символов)`, 'social-publishing');
+                  
+                  if (partResponse.success) {
+                    successCount++;
+                    success = true;
+                  } else {
+                    log(`Ошибка при отправке части ${partNumber}: ${JSON.stringify(partResponse.error)}`, 'social-publishing');
+                  }
+                  
+                  // Небольшая пауза между сообщениями, чтобы избежать ограничений API
+                  if (remainingText.length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  }
+                  
+                  partNumber++;
+                } catch (partError: any) {
+                  log(`Ошибка при отправке части ${partNumber}: ${partError.message}`, 'social-publishing');
+                }
+              }
+              
+              if (success) {
+                log(`Успешно отправлено ${successCount} из ${partNumber-1} частей длинного сообщения`, 'social-publishing');
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                };
+              } else {
+                return {
+                  platform: 'telegram',
+                  status: 'failed',
+                  publishedAt: null,
+                  error: `Не удалось отправить длинное текстовое сообщение`
+                };
+              }
+            } else {
+              // Для обычных сообщений используем стандартный метод
+              const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+              log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
+              
+              if (textResponse.success) {
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                };
+              } else {
+                return {
+                  platform: 'telegram',
+                  status: 'failed',
+                  publishedAt: null,
+                  error: `Ошибка при отправке текста: ${textResponse.error || JSON.stringify(textResponse)}`
+                };
+              }
+            }
           } catch (error: any) {
             log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
+            
+            if (error.response) {
+              log(`Данные ответа при ошибке: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+            }
+            
             return {
               platform: 'telegram',
               status: 'failed',
