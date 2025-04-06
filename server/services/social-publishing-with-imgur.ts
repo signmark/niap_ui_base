@@ -357,6 +357,16 @@ export class SocialPublishingWithImgurService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
+    // Расширенное логирование для отладки
+    log(`publishToTelegram вызван для контента ID: ${content.id}, Title: "${content.title}"`, 'social-publishing');
+    log(`Параметры Telegram: ${JSON.stringify({
+      settingsProvided: !!telegramSettings,
+      tokenProvided: !!telegramSettings?.token,
+      chatIdProvided: !!telegramSettings?.chatId,
+      tokenLength: telegramSettings?.token ? telegramSettings.token.length : 0,
+      chatIdValue: telegramSettings?.chatId || 'не задан'
+    })}`, 'social-publishing');
+    
     // Проверяем наличие настроек кампании
     if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
       log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
@@ -385,10 +395,21 @@ export class SocialPublishingWithImgurService {
 
       // Правильное форматирование ID чата
       let formattedChatId = chatId;
-      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-        formattedChatId = `-100${chatId}`;
-        log(`Переформатирован ID чата для Telegram: ${formattedChatId}`, 'social-publishing');
+      
+      // Проверяем нужно ли форматирование
+      // Если chatId НЕ начинается с "-100" и является числом или начинается с "-"
+      if (!chatId.startsWith('-100')) {
+        if (chatId.startsWith('-')) {
+          // Если ID начинается с минуса, но не с "-100", заменяем его на "-100"
+          formattedChatId = `-100${chatId.replace(/^-/, '')}`;
+        } else if (!isNaN(Number(chatId))) {
+          // Если это просто число, добавляем "-100" префикс
+          formattedChatId = `-100${chatId}`;
+        }
+        log(`Переформатирован ID чата для Telegram из "${chatId}" в "${formattedChatId}"`, 'social-publishing');
       }
+      
+      log(`Используем ID чата для Telegram: ${formattedChatId}`, 'social-publishing');
 
       // Подготовка сообщения с сохранением HTML-форматирования
       let text = processedContent.title ? `<b>${processedContent.title}</b>\n\n` : '';
@@ -396,6 +417,10 @@ export class SocialPublishingWithImgurService {
       // Telegram поддерживает только ограниченный набор HTML-тегов:
       // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
       // Нужно преобразовать все HTML-теги к поддерживаемым Telegram форматам
+      
+      // Сохраняем исходный текст для логирования
+      const originalContent = processedContent.content;
+      
       let contentText = processedContent.content
         // Обрабатываем блочные элементы для правильных переносов
         .replace(/<br\s*\/?>/g, '\n')
@@ -411,8 +436,13 @@ export class SocialPublishingWithImgurService {
         // Приводим ссылки к простому формату href
         .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
         
-        // Удаляем все прочие неподдерживаемые теги (но сохраняем их содержимое)
-        .replace(/<(?!\/?(b|strong|i|em|u|s|strike|code|pre|a)(?=>|\s.*>))\/?.*?>/gi, '');
+        // Улучшенное регулярное выражение для удаления неподдерживаемых тегов
+        // Сохраняет содержимое тегов, но удаляет сами теги, если они не в списке поддерживаемых
+        .replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
+        
+      // Логирование обработанного текста для отладки
+      log(`Обработка HTML для Telegram: исходный текст ${originalContent.length} символов, обработанный ${contentText.length} символов`, 'social-publishing');
+      log(`Первые 100 символов обработанного текста: ${contentText.substring(0, 100)}`, 'social-publishing');
       
       text += contentText;
       
@@ -454,16 +484,37 @@ export class SocialPublishingWithImgurService {
         // Сначала отправляем основное изображение
         if (processedContent.imageUrl) {
           try {
-            const photoResponse = await axios.post(`${baseUrl}/sendPhoto`, {
-              chat_id: formattedChatId,
-              photo: processedContent.imageUrl,
-              caption: imageCaption,
-              parse_mode: 'HTML'
-            });
+            // Проверяем, является ли изображение URL или локальным файлом
+            const isUrl = processedContent.imageUrl.startsWith('http://') || processedContent.imageUrl.startsWith('https://');
+            log(`Изображение для Telegram - тип: ${isUrl ? 'URL' : 'локальный путь'}, значение: ${processedContent.imageUrl}`, 'social-publishing');
             
-            log(`Основное изображение успешно отправлено в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
+            // Формируем запрос с учетом типа изображения
+            const photoResponse = await axios.post(
+              `${baseUrl}/sendPhoto`,
+              {
+                chat_id: formattedChatId,
+                photo: processedContent.imageUrl,
+                caption: imageCaption,
+                parse_mode: 'HTML'
+              },
+              {
+                // Если возникают ошибки с timeout, увеличиваем его
+                timeout: 30000,
+                // Для отладки видим полную ошибку
+                validateStatus: () => true
+              }
+            );
+            
+            if (photoResponse.status !== 200 || !photoResponse.data.ok) {
+              log(`Ошибка при отправке основного изображения в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
+            } else {
+              log(`Основное изображение успешно отправлено в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
+            }
           } catch (error: any) {
-            log(`Ошибка при отправке основного изображения в Telegram: ${error.message}`, 'social-publishing');
+            log(`Исключение при отправке основного изображения в Telegram: ${error.message}`, 'social-publishing');
+            if (error.response) {
+              log(`Данные ответа от Telegram API: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+            }
           }
         }
         
