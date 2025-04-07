@@ -3,8 +3,8 @@
  * Запустите: node run-test-api-keys.js
  */
 
-const axios = require('axios');
-const dotenv = require('dotenv');
+import axios from 'axios';
+import dotenv from 'dotenv';
 
 // Загружаем переменные окружения
 dotenv.config();
@@ -81,45 +81,49 @@ async function loadApiKeys(token) {
       
       // Обрабатываем полученные ключи
       for (const keyData of response.data.data) {
-        if (keyData.service && keyData.key) {
-          switch (keyData.service.toLowerCase()) {
+        if (keyData.service_name && keyData.api_key) {
+          switch (keyData.service_name.toLowerCase()) {
             case 'perplexity':
-              apiKeys.perplexity = keyData.key;
+              apiKeys.perplexity = keyData.api_key;
               console.log('✓ Загружен ключ для Perplexity API');
               break;
             case 'apify':
-              apiKeys.apify = keyData.key;
+              apiKeys.apify = keyData.api_key;
               console.log('✓ Загружен ключ для Apify API');
               break;
             case 'deepseek':
-              apiKeys.deepseek = keyData.key;
+              apiKeys.deepseek = keyData.api_key;
               console.log('✓ Загружен ключ для DeepSeek API');
               break;
-            case 'falai':
-              apiKeys.falai = keyData.key;
+            case 'fal_ai':
+              apiKeys.falai = keyData.api_key;
               console.log('✓ Загружен ключ для FAL.AI API');
               break;
             case 'claude':
-              apiKeys.claude = keyData.key;
+              apiKeys.claude = keyData.api_key;
               console.log('✓ Загружен ключ для Claude AI API');
               break;
             case 'xmlriver':
-              // Если для XMLRiver хранится полный ключ в формате userId:apiKey
-              if (keyData.key.includes(':')) {
-                const [userId, apiKey] = keyData.key.split(':');
-                apiKeys.xmlriver.userId = userId;
-                apiKeys.xmlriver.apiKey = apiKey;
-                console.log('✓ Загружен составной ключ для XMLRiver');
-              } else if (keyData.field === 'userId') {
-                apiKeys.xmlriver.userId = keyData.key;
-                console.log('✓ Загружен userId для XMLRiver');
-              } else if (keyData.field === 'apiKey') {
-                apiKeys.xmlriver.apiKey = keyData.key;
-                console.log('✓ Загружен apiKey для XMLRiver');
+              // Для XMLRiver, ключ может храниться как JSON-строка
+              try {
+                const xmlriverData = JSON.parse(keyData.api_key);
+                if (xmlriverData.user && xmlriverData.key) {
+                  apiKeys.xmlriver.userId = xmlriverData.user;
+                  apiKeys.xmlriver.apiKey = xmlriverData.key;
+                  console.log('✓ Загружен составной ключ для XMLRiver из JSON');
+                }
+              } catch (e) {
+                // Если это не JSON, то проверяем другие форматы
+                if (keyData.api_key.includes(':')) {
+                  const [userId, apiKey] = keyData.api_key.split(':');
+                  apiKeys.xmlriver.userId = userId;
+                  apiKeys.xmlriver.apiKey = apiKey;
+                  console.log('✓ Загружен составной ключ для XMLRiver из строки с разделителем');
+                }
               }
               break;
             default:
-              console.log(`✓ Найден ключ для сервиса: ${keyData.service}`);
+              console.log(`✓ Найден ключ для сервиса: ${keyData.service_name}`);
           }
         }
       }
@@ -169,3 +173,10 @@ async function main() {
 
 // Запускаем основную функцию
 main();
+
+// Экспортируем функции для использования в тестах
+export {
+  authenticate,
+  loadApiKeys,
+  apiKeys
+};
