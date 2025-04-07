@@ -1681,7 +1681,7 @@ export class SocialPublishingWithImgurService {
       log(`Обновление статуса публикации: ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
       
       // Получаем системный токен (токен администратора)
-      const systemToken = await DirectusAuthManager.getInstance().getAdminToken();
+      const systemToken = await this.getSystemToken();
       
       if (!systemToken) {
         log(`Не удалось получить системный токен для обновления статуса публикации`, 'social-publishing');
