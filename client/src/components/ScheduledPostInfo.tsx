@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Clock, Instagram, AlertTriangle, CheckCircle2, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatDateWithTimezone, formatDate } from '@/lib/date-utils';
+import { formatDateWithTimezone } from '@/lib/date-utils';
 
 /**
  * Форматирует URL Telegram для правильного отображения
