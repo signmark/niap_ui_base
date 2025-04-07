@@ -467,6 +467,19 @@ export class PublishScheduler {
             if (campaignItem) {
               log(`Кампания найдена в списке: ${campaignItem.name}`, 'scheduler');
               
+              // Добавим подробное логирование настроек для диагностики
+              log(`Настройки кампании: ${JSON.stringify({
+                id: campaignItem.id,
+                hasSettings: !!campaignItem.social_media_settings,
+                settingsType: typeof campaignItem.social_media_settings,
+                settingsKeys: campaignItem.social_media_settings ? Object.keys(campaignItem.social_media_settings) : [],
+                telegramSettings: campaignItem.social_media_settings?.telegram ? 'имеются' : 'отсутствуют',
+                instagramSettings: campaignItem.social_media_settings?.instagram ? 'имеются' : 'отсутствуют',
+                vkSettings: campaignItem.social_media_settings?.vk ? 'имеются' : 'отсутствуют',
+                facebookSettings: campaignItem.social_media_settings?.facebook ? 'имеются' : 'отсутствуют',
+                rawSettings: campaignItem.social_media_settings
+              })}`, 'scheduler');
+              
               campaign = {
                 id: parseInt(campaignItem.id) || 0,
                 name: campaignItem.name || '',
