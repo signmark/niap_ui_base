@@ -2,74 +2,73 @@
  * Тестовый скрипт для проверки TelegramService после исправления проблемы с forceImageTextSeparation
  * Запустите: node test-telegram-service.js
  */
-import 'dotenv/config';
+import axios from 'axios';
 
-// Импортируем нашу службу Telegram напрямую из приложения
-import { telegramService } from './server/services/social/telegram-service.js';
+// Настройки Telegram из кампании "Правильное питание"
+const TELEGRAM_TOKEN = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+const TELEGRAM_CHAT_ID = '-1002302366310';
 
-// Тестовые данные
-const testImages = [
-  'https://picsum.photos/1200/800',
-  'https://picsum.photos/800/600'
-];
+// URL нашего API 
+const API_URL = 'http://localhost:3000';
 
-// Функция для тестирования публикации в Telegram через наш сервис
+// Текст с HTML-тегами для тестирования
+const TEST_HTML = `<b>Жирный текст</b>
+
+<i>Курсивный текст</i>
+
+<u>Подчеркнутый текст</u>
+
+<b>Вложенный <i>текст с</i> разными <u>тегами</u></b>
+
+<i>Незакрытый тег курсива
+
+<b>Незакрытый тег жирного
+
+Проверка работы HTML-тегов в Telegram через наш API`;
+
 async function testTelegramService() {
+  console.log('=== Тест отправки HTML-форматированного текста через API приложения ===\n');
+  console.log('Отправляемый текст:');
+  console.log('--------------------------------------------------');
+  console.log(TEST_HTML);
+  console.log('--------------------------------------------------\n');
+
   try {
-    console.log('Начинаем тестирование TelegramService...');
+    // Отправляем сообщение через наш API приложения
+    console.log('Отправка сообщения через API приложения...');
     
-    // Получаем переменные окружения для тестов
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-    
-    if (!token || !chatId) {
-      console.error('Ошибка: Необходимо указать TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в .env файле');
-      return;
-    }
-    
-    console.log('Используем настройки:', { token: token.substring(0, 10) + '...', chatId });
-    
-    // Создаем тестовый контент (без metadata.forceImageTextSeparation)
-    const testContent = {
-      id: 'test-content-id',
-      title: 'Тестовое сообщение',
-      content: 'Это короткий текст без HTML-форматирования, который должен отправиться как подпись к изображениям',
-      contentType: 'text-image',
-      imageUrl: testImages[0],
-      additionalImages: [testImages[1]],
-      hashtags: ['тест', 'telegram'],
-      socialPlatforms: ['telegram'],
-      // Без forceImageTextSeparation в metadata
-      metadata: {}
-    };
-    
-    // Настройки для Telegram
-    const telegramSettings = {
-      telegram: {
-        token,
-        chatId
+    // Используем тестовый маршрут нашего API
+    const response = await axios.post(`${API_URL}/api/test/telegram-post`, {
+      text: TEST_HTML,
+      chatId: TELEGRAM_CHAT_ID,
+      token: TELEGRAM_TOKEN
+    });
+
+    console.log('\nРезультат публикации:');
+    console.log(JSON.stringify(response.data, null, 2));
+
+    if (response.data && response.data.success) {
+      const result = response.data.data;
+      
+      if (result.status === 'published') {
+        console.log('\n✅ УСПЕХ: Сообщение успешно опубликовано в Telegram!');
+        console.log(`URL сообщения: ${result.postUrl || 'URL не доступен'}`);
+      } else {
+        console.log(`\n❌ ОШИБКА: Не удалось опубликовать сообщение. Статус: ${result.status}`);
+        if (result.error) {
+          console.log(`Описание ошибки: ${result.error}`);
+        }
       }
-    };
-    
-    console.log('Отправка тестового контента через TelegramService...');
-    
-    // Публикуем контент через наш сервис
-    const result = await telegramService.publishToPlatform(
-      testContent,
-      'telegram',
-      telegramSettings
-    );
-    
-    console.log('Результат публикации:', result);
-    
-    if (result.status === 'published') {
-      console.log('ТЕСТ УСПЕШНО ПРОЙДЕН: Сообщение опубликовано!');
-      console.log('Ссылка на пост:', result.postUrl);
     } else {
-      console.error('ТЕСТ НЕ ПРОЙДЕН: Ошибка при публикации', result.error);
+      console.log('\n❌ ОШИБКА: Неожиданный ответ от API приложения');
+      console.log(JSON.stringify(response.data, null, 2));
     }
   } catch (error) {
-    console.error('Ошибка при тестировании:', error);
+    console.error('\n❌ ОШИБКА при выполнении теста:', error.message);
+    if (error.response) {
+      console.error('Ответ сервера:', error.response.status);
+      console.error('Данные ответа:', JSON.stringify(error.response.data, null, 2));
+    }
   }
 }
 
