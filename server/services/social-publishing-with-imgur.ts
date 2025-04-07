@@ -1686,6 +1686,15 @@ export class SocialPublishingWithImgurService {
     instagramSettings?: SocialMediaSettings['instagram']
   ): Promise<SocialPublication> {
     // Проверяем наличие настроек
+    log(`Проверка настроек Instagram: ${JSON.stringify({
+      hasSettings: !!instagramSettings,
+      settingsType: typeof instagramSettings,
+      tokenExists: instagramSettings?.token ? 'да' : 'нет',
+      tokenType: instagramSettings?.token ? typeof instagramSettings.token : 'не определен',
+      tokenLength: instagramSettings?.token ? instagramSettings.token.length : 0,
+      businessAccountId: instagramSettings?.businessAccountId || 'отсутствует'
+    })}`, 'social-publishing');
+    
     if (!instagramSettings || !instagramSettings.token) {
       log(`Ошибка публикации в Instagram: отсутствуют настройки. Token: ${instagramSettings?.token ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
