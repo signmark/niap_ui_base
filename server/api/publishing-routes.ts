@@ -48,6 +48,13 @@ export function registerPublishingRoutes(app: Express): void {
       // Настройки социальных сетей
       const socialSettings = campaign.socialMediaSettings || {};
       log(`Получены настройки социальных сетей для кампании ${content.campaignId}`, 'api');
+      
+      // Добавляем флаг forceImageTextSeparation для принудительного разделения изображений и текста
+      // Это заставит функцию работать так же, как и при отложенной публикации
+      content.metadata = content.metadata || {};
+      if (typeof content.metadata === 'object') {
+        (content.metadata as any).forceImageTextSeparation = true;
+      }
 
       // Результаты публикации
       const results: Record<string, any> = {};
@@ -96,7 +103,9 @@ export function registerPublishingRoutes(app: Express): void {
             contentId,
             platform as SocialPlatform,
             {
+              platform: platform as SocialPlatform,
               status: 'failed',
+              publishedAt: null,
               error: platformError.message
             }
           );
