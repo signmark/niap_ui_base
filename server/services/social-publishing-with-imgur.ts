@@ -764,13 +764,18 @@ export class SocialPublishingWithImgurService {
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
       
+      // Проверяем необходимость принудительного разделения текста и изображений
+      // Флаг устанавливается в методе publishToPlatform для всех Telegram публикаций
+      const forceImageTextSeparation = processedContent.metadata && 
+        (processedContent.metadata as any).forceImageTextSeparation === true;
+      
+      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      
       // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
       
-      // 1. Если есть изображения и текст длинный (более 1000 символов),
-      // отправляем сначала изображения без подписи или с коротким заголовком, 
-      // затем текст отдельным сообщением
-      // ВАЖНО: принудительно используем этот путь для всех постов с изображениями
-      if (hasImages) {
+      // 1. Если есть изображения и включен флаг принудительного разделения,
+      // отправляем сначала изображения без подписи, затем текст отдельным сообщением
+      if (hasImages && forceImageTextSeparation) {
         log(`Telegram: публикация с изображением. Отправляем изображение и текст раздельно.`, 'social-publishing');
         
         // Подготавливаем краткую подпись для изображения (только заголовок)
@@ -1829,7 +1834,20 @@ export class SocialPublishingWithImgurService {
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
     log(`Публикация контента "${content.title}" в ${platform}`, 'social-publishing');
-
+    
+    // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
+    // Это гарантирует, что текст всегда будет отправлен отдельно от изображений,
+    // что решает проблему обрезания длинных текстов в запланированных публикациях
+    if (platform === 'telegram') {
+      if (!content.metadata) {
+        content.metadata = {};
+      }
+      if (typeof content.metadata === 'object') {
+        (content.metadata as any).forceImageTextSeparation = true;
+        log(`Установлен флаг forceImageTextSeparation для Telegram публикации`, 'social-publishing');
+      }
+    }
+    
     switch (platform) {
       case 'telegram':
         return await this.publishToTelegram(content, settings.telegram);
