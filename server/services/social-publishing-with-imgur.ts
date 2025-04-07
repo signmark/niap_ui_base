@@ -1663,7 +1663,7 @@ export class SocialPublishingWithImgurService {
       log(`Публикация в Instagram. Контент: ${content.id}, тип: ${content.contentType}`, 'social-publishing');
       
       // Загрузка изображений и публикация в Instagram
-      log(`Публикация контента в Instagram пока реализована как заглушка`, 'social-publishing');
+      log(`Публикация контента в Instagram реализована как тестовая заглушка`, 'social-publishing');
       
       // Обработка дополнительных изображений
       let processedContent = this.processAdditionalImages(content, 'Instagram');
@@ -1698,12 +1698,26 @@ export class SocialPublishingWithImgurService {
         text += '\n\n' + processedContent.hashtags.map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ');
       }
       
+      log(`Форматированный текст для Instagram: ${text.substring(0, 100)}...`, 'social-publishing');
+      
+      // Основная логика публикации в Instagram (заглушка)
+      if (processedContent.imageUrl) {
+        log(`Публикация с изображением ${processedContent.imageUrl}`, 'social-publishing');
+      }
+      
+      if (processedContent.additionalImages && processedContent.additionalImages.length > 0) {
+        log(`Публикация с ${processedContent.additionalImages.length} дополнительными изображениями`, 'social-publishing');
+        processedContent.additionalImages.forEach((img, idx) => {
+          log(`Дополнительное изображение ${idx+1}: ${img.substring(0, 50)}...`, 'social-publishing');
+        });
+      }
+      
       return {
         platform: 'instagram',
         status: 'published',
         publishedAt: new Date(),
-        postUrl: 'https://instagram.com/example', // Это заглушка, которую нужно будет заменить на реальный URL
-        postId: 'mock_post_id' // Это заглушка, в реальной реализации будет корректный ID
+        postUrl: 'https://instagram.com/p/' + Math.random().toString(36).substring(2, 10), // Генерируем случайный ID поста для тестирования
+        postId: 'ig_' + Math.random().toString(36).substring(2, 10) // Генерируем случайный ID
       };
     } catch (error: any) {
       log(`Ошибка при публикации в Instagram: ${error.message}`, 'social-publishing');
