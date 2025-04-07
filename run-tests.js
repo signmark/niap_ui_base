@@ -3,67 +3,136 @@
  * Для запуска используйте команду: node run-tests.js
  */
 
-import { execSync } from 'child_process';
-import dotenv from 'dotenv';
+import { spawn, execSync } from 'child_process';
+import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// Загружаем переменные окружения
-dotenv.config();
+// Получаем текущую директорию для использования в ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Проверяем наличие Jest в локальных зависимостях
-try {
-  require.resolve('jest');
-  console.log('Jest найден в локальных зависимостях.');
-} catch (e) {
-  console.error('Ошибка: Jest не установлен. Установите его с помощью: npm install jest');
-  process.exit(1);
-}
+// Цвета для вывода в консоль
+const colors = {
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  bold: '\x1b[1m'
+};
 
-// Проверяем, что в .env есть необходимые переменные окружения для Directus
-const requiredEnvVars = ['DIRECTUS_ADMIN_EMAIL', 'DIRECTUS_ADMIN_PASSWORD', 'DIRECTUS_URL'];
-const missingVars = [];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    missingVars.push(envVar);
+/**
+ * Проверяет существование файла
+ * @param {string} filePath Путь к файлу
+ * @returns {boolean} Существует файл или нет
+ */
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath);
+  } catch (error) {
+    return false;
   }
 }
 
-if (missingVars.length > 0) {
-  console.error(`Ошибка: Отсутствуют необходимые переменные окружения: ${missingVars.join(', ')}`);
-  console.error('Задайте их в файле .env и запустите скрипт заново.');
-  process.exit(1);
+/**
+ * Запускает тесты с помощью Jest
+ * @param {string[]} testFiles Файлы с тестами или директории
+ * @returns {boolean} Успешны ли тесты
+ */
+function runTests(testFiles) {
+  return new Promise((resolve) => {
+    // По умолчанию запускаем все тесты, если не указаны конкретные файлы
+    const args = testFiles.length ? testFiles : [];
+    args.push('--verbose');
+    
+    console.log(`${colors.yellow}Запуск тестов:${colors.reset} npx jest ${args.join(' ')}\n`);
+    
+    const jestProcess = spawn('npx', ['jest', ...args], {
+      stdio: 'inherit',
+      shell: true
+    });
+    
+    jestProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log(`\n${colors.green}${colors.bold}✓ Тесты успешно пройдены!${colors.reset}`);
+        resolve(true);
+      } else {
+        console.log(`\n${colors.red}${colors.bold}✗ Ошибка при выполнении тестов!${colors.reset}`);
+        resolve(false);
+      }
+    });
+  });
 }
 
-// Проверяем указан ли путь к тесту в аргументах
-const args = process.argv.slice(2);
-let testPath = '';
-
-if (args.length > 0) {
-  testPath = args[0];
+/**
+ * Главная функция
+ */
+async function main() {
+  console.log(`\n${colors.blue}${colors.bold}===== Запуск тестов для SMM Manager =====${colors.reset}`);
+  console.log(`${colors.cyan}Дата:${colors.reset} ${new Date().toLocaleString()}\n`);
   
-  // Проверяем существование файла теста
-  if (!fs.existsSync(testPath)) {
-    console.error(`Ошибка: Тест по пути ${testPath} не найден.`);
-    process.exit(1);
+  // Получаем аргументы командной строки (пропускаем node и имя скрипта)
+  const args = process.argv.slice(2);
+  
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`${colors.bold}Использование:${colors.reset}`);
+    console.log(`  node run-tests.js [опции] [путь к тестам]`);
+    console.log(`\n${colors.bold}Опции:${colors.reset}`);
+    console.log(`  --help, -h     Показать эту справку`);
+    console.log(`  --pretty       Использовать вывод в стиле pytest`);
+    console.log(`  --watch        Запустить тесты в режиме наблюдения`);
+    console.log(`\n${colors.bold}Примеры:${colors.reset}`);
+    console.log(`  node run-tests.js                                    # запустить все тесты`);
+    console.log(`  node run-tests.js --pretty                           # запустить с красивым выводом`);
+    console.log(`  node run-tests.js server/__tests__/telegram-service.test.ts  # запустить конкретный тест`);
+    return;
   }
   
-  console.log(`Запускаем тест: ${testPath}`);
-} else {
-  console.log('Запускаем все тесты...');
+  // Проверка аргументов
+  const usePrettyOutput = args.includes('--pretty');
+  const watchMode = args.includes('--watch');
+  
+  // Фильтруем аргументы, чтобы получить только пути к тестам
+  const testPaths = args.filter(arg => !arg.startsWith('--'));
+  
+  // Проверяем, существуют ли указанные файлы
+  for (const testPath of testPaths) {
+    if (!fileExists(testPath)) {
+      console.log(`${colors.red}Ошибка: Файл или директория не найдены: ${testPath}${colors.reset}`);
+      process.exit(1);
+    }
+  }
+  
+  // Для красивого вывода используем наш скрипт
+  if (usePrettyOutput) {
+    const prettyScript = path.join(__dirname, 'pytest-style-output.js');
+    if (fileExists(prettyScript)) {
+      try {
+        execSync(`node ${prettyScript}`, { stdio: 'inherit' });
+      } catch (error) {
+        process.exit(1);
+      }
+    } else {
+      console.log(`${colors.red}Ошибка: Не найден скрипт для красивого вывода: ${prettyScript}${colors.reset}`);
+      process.exit(1);
+    }
+    return;
+  }
+  
+  // Для обычного запуска тестов
+  const args2 = [...testPaths];
+  if (watchMode) {
+    args2.push('--watch');
+  }
+  
+  await runTests(args2);
 }
 
-// Запускаем тесты
-try {
-  const command = testPath 
-    ? `npx jest ${testPath} --verbose` 
-    : 'npx jest --verbose';
-  
-  console.log(`Выполнение команды: ${command}`);
-  execSync(command, { stdio: 'inherit' });
-  
-  console.log('Тесты успешно выполнены.');
-} catch (error) {
-  console.error('Ошибка при выполнении тестов:', error.message);
+// Запускаем основную функцию
+main().catch(error => {
+  console.error(`${colors.red}${colors.bold}Ошибка при выполнении:${colors.reset}`, error);
   process.exit(1);
-}
+});

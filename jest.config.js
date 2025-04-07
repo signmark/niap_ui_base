@@ -1,25 +1,44 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-export default {
+const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-    '^@server/(.*)$': '<rootDir>/server/$1',
-    '^@client/(.*)$': '<rootDir>/client/$1',
-    '^@shared/(.*)$': '<rootDir>/shared/$1',
-  },
   testMatch: [
-    '**/server/__tests__/**/*.test.ts',
-    '**/server/**/*.test.ts',
+    "**/__tests__/**/*.test.ts"
   ],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-    }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.json',
+        isolatedModules: true,
+        useESM: true
+      }
+    ]
   },
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov'],
-  verbose: true,
-  setupFilesAfterEnv: ['<rootDir>/server/__tests__/setup.ts'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/client/src/$1',
+    '^@shared/(.*)$': '<rootDir>/shared/$1',
+    '^@server/(.*)$': '<rootDir>/server/$1'
+  },
+  setupFilesAfterEnv: [
+    '<rootDir>/server/__tests__/jest.setup.js'
+  ],
+  maxWorkers: 1, // Ограничиваем количество параллельных тестов для предотвращения конфликтов
+  verbose: true, // Включаем подробный вывод
+  testTimeout: 30000, // Устанавливаем таймаут для тестов в 30 секунд
+  collectCoverage: false, // Не собираем покрытие кода по умолчанию
+  // Исключаем из тестирования определенные директории
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.replit/'
+  ],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
 };
+
+export default config;

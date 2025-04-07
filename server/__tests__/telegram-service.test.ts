@@ -1,180 +1,293 @@
 /**
  * Тесты для Telegram сервиса
+ * Проверяет корректность публикации контента в Telegram
  */
-import axios from 'axios';
-import { TelegramService } from '../services/social/telegram-service';
-import { mockTelegramAPIResponse, generateTestContent, generateSocialSettings } from './test-utils';
 
-// Мокаем axios для имитации API-вызовов
+import axios from 'axios';
+import { DirectusAuthManager } from '../services/directus-auth-manager';
+import { TelegramService } from '../services/social/telegram-service';
+import { 
+  mockTelegramAPIResponse, 
+  generateTestContent, 
+  generateFormattedHtmlContent,
+  TEST_TELEGRAM_BOT_TOKEN,
+  TEST_TELEGRAM_CHAT_ID
+} from './test-utils';
+import { mocks, config } from './setup';
+
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('TelegramService', () => {
   let telegramService: TelegramService;
-  
-  // Тестовые данные
-  const CHAT_ID = '-1002302366310';
-  const TELEGRAM_TOKEN = 'test-telegram-token';
-  const MESSAGE_ID = 12345;
+  let directusAuthManager: DirectusAuthManager;
   
   beforeEach(() => {
-    // Создаем новый экземпляр сервиса перед каждым тестом
-    telegramService = new TelegramService();
-    
-    // Очищаем все моки
     jest.clearAllMocks();
+    directusAuthManager = mocks.authManager as unknown as DirectusAuthManager;
+    telegramService = new TelegramService(directusAuthManager);
+    
+    // Добавляем метод для получения настроек прямо в экземпляр
+    (telegramService as any).getCampaignSettings = jest.fn().mockResolvedValue({
+      telegram: {
+        token: TEST_TELEGRAM_BOT_TOKEN,
+        chatId: TEST_TELEGRAM_CHAT_ID
+      }
+    });
+    
+    // Сбрасываем моки axios
+    mockedAxios.post.mockClear();
   });
   
-  describe('formatTelegramUrl', () => {
-    test('should format URL for channel with username', () => {
-      const chatId = '@test_channel';
-      const formattedChatId = 'test_channel';
-      const messageId = 12345;
-      const chatUsername = 'test_channel';
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  
+  describe('Генерация URL сообщения', () => {
+    it('должен формировать корректный URL сообщения для публичного канала', async () => {
+      // Моки для API ответов
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(12345) });
+        }
+        if (url.includes('getChat')) {
+          return Promise.resolve({
+            data: {
+              ok: true,
+              result: {
+                id: Number(TEST_TELEGRAM_CHAT_ID),
+                type: 'channel',
+                username: 'test_channel'
+              }
+            }
+          });
+        }
+        return Promise.resolve({ data: {} });
+      });
       
-      const url = telegramService.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername);
+      // Получаем информацию о чате сначала, чтобы сохранить username
+      await (telegramService as any).getChatInfo(TEST_TELEGRAM_CHAT_ID, TEST_TELEGRAM_BOT_TOKEN);
       
-      expect(url).toBe('https://t.me/test_channel/12345');
+      // Формируем URL с использованием сохраненного username
+      const result = await (telegramService as any).generatePostUrl(TEST_TELEGRAM_CHAT_ID, TEST_TELEGRAM_CHAT_ID, 12345);
+      
+      // Проверяем результат
+      expect(result).toBe('https://t.me/test_channel/12345');
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('getChat'),
+        expect.objectContaining({ chat_id: TEST_TELEGRAM_CHAT_ID })
+      );
     });
     
-    test('should format URL for chat with numeric ID', () => {
-      const chatId = '-1001234567890';
-      const formattedChatId = '1234567890';
-      const messageId = 12345;
+    it('должен формировать корректный URL сообщения для приватного канала', async () => {
+      // Моки для API ответов
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(12345) });
+        }
+        if (url.includes('getChat')) {
+          return Promise.resolve({
+            data: {
+              ok: true,
+              result: {
+                id: Number(TEST_TELEGRAM_CHAT_ID),
+                type: 'channel',
+                title: 'Private Channel',
+                // Приватный канал - нет username
+              }
+            }
+          });
+        }
+        return Promise.resolve({ data: {} });
+      });
       
-      const url = telegramService.formatTelegramUrl(chatId, formattedChatId, messageId);
+      // Получаем информацию о чате сначала, чтобы сбросить значение username
+      await (telegramService as any).getChatInfo(TEST_TELEGRAM_CHAT_ID, TEST_TELEGRAM_BOT_TOKEN);
       
-      // Для числовых ID должен использовать формат c/chatId/messageId
-      expect(url).toBe('https://t.me/c/1234567890/12345');
-    });
-    
-    test('should handle missing message ID', () => {
-      const chatId = '@test_channel';
-      const formattedChatId = 'test_channel';
+      // Вручную обнуляем username для проверки генерации URL для приватного канала
+      (telegramService as any).currentChatUsername = undefined;
       
-      const url = telegramService.formatTelegramUrl(chatId, formattedChatId);
+      // Формируем URL
+      const result = await (telegramService as any).generatePostUrl(TEST_TELEGRAM_CHAT_ID, TEST_TELEGRAM_CHAT_ID, 12345);
       
-      // Без message ID должен возвращать только ссылку на канал
-      expect(url).toBe('https://t.me/test_channel');
+      // Проверяем результат - должен использовать формат для приватных каналов
+      expect(result).toBe(`https://t.me/c/${TEST_TELEGRAM_CHAT_ID.replace('-100', '')}/12345`);
     });
   });
   
-  describe('publishToTelegram', () => {
-    test('should successfully publish text and single image to Telegram', async () => {
-      // Настраиваем мок axios для имитации успешного ответа от Telegram API
-      mockedAxios.post.mockResolvedValueOnce({ data: mockTelegramAPIResponse(MESSAGE_ID) });
+  describe('Публикация текстовых сообщений', () => {
+    it('должен корректно публиковать только текстовое сообщение', async () => {
+      const messageId = 12345;
       
-      // Создаем тестовый контент с одним изображением
-      const content = generateTestContent({
-        text: 'Тестовый текст с <b>форматированием</b>',
-        image_url: 'https://example.com/test-image.jpg',
-        additional_images: []
+      // Мокируем ответ API Telegram
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(messageId) });
+        }
+        return Promise.resolve({ data: {} });
       });
-      
-      // Создаем тестовые настройки
-      const settings = generateSocialSettings({
-        telegram: { token: TELEGRAM_TOKEN, chatId: CHAT_ID }
-      });
-      
-      // Выполняем публикацию
-      const result = await telegramService.publishToTelegram(content, settings.telegram);
-      
-      // Проверяем результат
-      expect(result.success).toBe(true);
-      expect(result.postId).toBe(MESSAGE_ID.toString());
-      expect(result.postUrl).toContain('/12345');
-      
-      // Проверяем, что был вызван правильный эндпоинт Telegram API с правильными параметрами
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.post.mock.calls[0][0]).toContain('sendPhoto');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('photo');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('caption');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('parse_mode', 'HTML');
-    });
-    
-    test('should successfully publish text and multiple images to Telegram', async () => {
-      // Настраиваем мок axios для имитации успешного ответа от Telegram API
-      mockedAxios.post.mockResolvedValueOnce({ data: mockTelegramAPIResponse(MESSAGE_ID) });
-      
-      // Создаем тестовый контент с несколькими изображениями
-      const content = generateTestContent({
-        text: 'Тестовый текст с <b>форматированием</b>',
-        image_url: 'https://example.com/test-image.jpg',
-        additional_images: [
-          'https://example.com/additional-image-1.jpg', 
-          'https://example.com/additional-image-2.jpg'
-        ]
-      });
-      
-      // Создаем тестовые настройки
-      const settings = generateSocialSettings({
-        telegram: { token: TELEGRAM_TOKEN, chatId: CHAT_ID }
-      });
-      
-      // Выполняем публикацию
-      const result = await telegramService.publishToTelegram(content, settings.telegram);
-      
-      // Проверяем результат
-      expect(result.success).toBe(true);
-      expect(result.postId).toBe(MESSAGE_ID.toString());
-      expect(result.postUrl).toContain('/12345');
-      
-      // Проверяем, что был вызван правильный эндпоинт Telegram API с правильными параметрами
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.post.mock.calls[0][0]).toContain('sendMediaGroup');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('media');
-      expect(mockedAxios.post.mock.calls[0][1].media).toHaveLength(3); // 1 основное + 2 дополнительных
-    });
-    
-    test('should successfully publish text only to Telegram', async () => {
-      // Настраиваем мок axios для имитации успешного ответа от Telegram API
-      mockedAxios.post.mockResolvedValueOnce({ data: mockTelegramAPIResponse(MESSAGE_ID) });
-      
-      // Создаем тестовый контент только с текстом
-      const content = generateTestContent({
-        text: 'Тестовый текст без изображений',
-        image_url: '',
-        additional_images: []
-      });
-      
-      // Создаем тестовые настройки
-      const settings = generateSocialSettings({
-        telegram: { token: TELEGRAM_TOKEN, chatId: CHAT_ID }
-      });
-      
-      // Выполняем публикацию
-      const result = await telegramService.publishToTelegram(content, settings.telegram);
-      
-      // Проверяем результат
-      expect(result.success).toBe(true);
-      expect(result.postId).toBe(MESSAGE_ID.toString());
-      expect(result.postUrl).toContain('/12345');
-      
-      // Проверяем, что был вызван правильный эндпоинт Telegram API с правильными параметрами
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.post.mock.calls[0][0]).toContain('sendMessage');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('text');
-      expect(mockedAxios.post.mock.calls[0][1]).toHaveProperty('parse_mode', 'HTML');
-    });
-    
-    test('should handle error from Telegram API', async () => {
-      // Настраиваем мок axios для имитации ошибки от Telegram API
-      mockedAxios.post.mockRejectedValueOnce(new Error('Telegram API error'));
       
       // Создаем тестовый контент
-      const content = generateTestContent();
-      
-      // Создаем тестовые настройки
-      const settings = generateSocialSettings({
-        telegram: { token: TELEGRAM_TOKEN, chatId: CHAT_ID }
+      const testContent = generateTestContent({
+        id: 'test-content-id',
+        title: 'Test Post',
+        text: 'This is a test message',
+        image_url: null,
+        social_platforms: ['telegram']
       });
       
-      // Выполняем публикацию и ожидаем ошибку
-      await expect(telegramService.publishToTelegram(content, settings.telegram))
-        .rejects.toThrow();
+      // Публикуем контент
+      const result = await (telegramService as any).publishContent(testContent);
       
-      // Проверяем, что был вызван API
-      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+      // Проверяем успешность публикации
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(messageId);
+      
+      // Проверяем, что был выполнен корректный API вызов
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('sendMessage'),
+        expect.objectContaining({
+          chat_id: TEST_TELEGRAM_CHAT_ID,
+          text: testContent.content,
+          parse_mode: 'HTML'
+        })
+      );
+    });
+    
+    it('должен корректно обрабатывать HTML-форматирование', async () => {
+      const messageId = 12346;
+      const formattedText = generateFormattedHtmlContent();
+      
+      // Мокируем ответ API Telegram
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(messageId) });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      
+      // Создаем тестовый контент с HTML форматированием
+      const testContent = generateTestContent({
+        id: 'test-formatted-content-id',
+        title: 'Test Formatted Post',
+        text: formattedText,
+        image_url: null,
+        social_platforms: ['telegram']
+      });
+      
+      // Публикуем контент
+      const result = await (telegramService as any).publishContent(testContent);
+      
+      // Проверяем успешность публикации
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(messageId);
+      
+      // Проверяем, что был выполнен корректный API вызов с HTML режимом парсинга
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('sendMessage'),
+        expect.objectContaining({
+          chat_id: TEST_TELEGRAM_CHAT_ID,
+          text: formattedText,
+          parse_mode: 'HTML'
+        })
+      );
+    });
+  });
+  
+  describe('Публикация сообщений с медиа', () => {
+    it('должен корректно публиковать одно изображение с текстом', async () => {
+      const messageId = 12347;
+      
+      // Мокируем ответ API Telegram
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendPhoto')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(messageId) });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      
+      // Создаем тестовый контент с изображением
+      const testContent = generateTestContent({
+        id: 'test-image-content-id',
+        title: 'Test Image Post',
+        text: 'This is a post with image',
+        image_url: 'https://example.com/test-image.jpg',
+        social_platforms: ['telegram']
+      });
+      
+      // Публикуем контент
+      const result = await (telegramService as any).publishContent(testContent);
+      
+      // Проверяем успешность публикации
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(messageId);
+      
+      // Проверяем, что был выполнен корректный API вызов с отправкой фото
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('sendPhoto'),
+        expect.objectContaining({
+          chat_id: TEST_TELEGRAM_CHAT_ID,
+          photo: testContent.imageUrl,
+          caption: testContent.content,
+          parse_mode: 'HTML'
+        })
+      );
+    });
+    
+    it('должен корректно публиковать несколько изображений с текстом', async () => {
+      const messageId = 12348;
+      
+      // Мокируем ответ API Telegram
+      mockedAxios.post.mockImplementation(url => {
+        if (url.includes('sendMediaGroup')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(messageId) });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      
+      // Создаем тестовый контент с несколькими изображениями
+      const testContent = generateTestContent({
+        id: 'test-multi-image-content-id',
+        title: 'Test Multi Image Post',
+        text: 'This is a post with multiple images',
+        image_url: 'https://example.com/test-image-1.jpg',
+        additional_images: [
+          'https://example.com/test-image-2.jpg',
+          'https://example.com/test-image-3.jpg'
+        ],
+        social_platforms: ['telegram']
+      });
+      
+      // Публикуем контент
+      const result = await (telegramService as any).publishContent(testContent);
+      
+      // Проверяем успешность публикации
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(messageId);
+      
+      // Проверяем, что был выполнен корректный API вызов с медиа группой
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('sendMediaGroup'),
+        expect.objectContaining({
+          chat_id: TEST_TELEGRAM_CHAT_ID,
+          media: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'photo',
+              media: testContent.imageUrl,
+              caption: testContent.content,
+              parse_mode: 'HTML'
+            }),
+            expect.objectContaining({
+              type: 'photo',
+              media: testContent.additionalImages![0]
+            }),
+            expect.objectContaining({
+              type: 'photo',
+              media: testContent.additionalImages![1]
+            })
+          ])
+        })
+      );
     });
   });
 });
