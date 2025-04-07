@@ -5,7 +5,8 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 // Правильный путь к DirectusAuthManager
-import { DirectusAuthManager } from '../services/directus/directus-auth-manager';
+// import { DirectusAuthManager } from '../services/directus/directus-auth-manager';
+// Будем использовать мок для DirectusAuthManager
 import { DatabaseStorage } from '../storage';
 
 // Загружаем переменные окружения

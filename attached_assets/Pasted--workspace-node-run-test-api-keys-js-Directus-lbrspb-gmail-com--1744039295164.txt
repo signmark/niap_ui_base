@@ -1,0 +1,129 @@
+~/workspace$ node run-test-api-keys.js
+Авторизация в Directus (lbrspb@gmail.com)...
+Авторизация успешна
+Загрузка API ключей из user_api_keys...
+Найдено 18 записей с API ключами:
+[
+  {
+    "id": "00053535-ad91-49af-a0c9-1e7a3bfd9aff",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "facebook",
+    "api_key": "EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R"
+  },
+  {
+    "id": "13d74cca-2159-4a63-be5a-540b24de6f33",
+    "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4",
+    "service_name": "perplexity",
+    "api_key": "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"
+  },
+  {
+    "id": "1433394a-96c3-40aa-b89f-2529030e7865",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "xmlriver",
+    "api_key": "{\"user\":\"16797\",\"key\":\"f7947eff83104621deb713275fe3260bfde4f001\"}"
+  },
+  {
+    "id": "1a2ada37-532c-4ae7-9991-87f268773231",
+    "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4",
+    "service_name": "apify",
+    "api_key": "apify_api_yv8QYmrwWRDS23vPjAj5GNb3JTXh2k2F9ky1"
+  },
+  {
+    "id": "1cc6c09d-5e4c-4829-bb8c-6eed326da527",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "claude",
+    "api_key": "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"
+  },
+  {
+    "id": "1f83951f-1182-4eaf-827b-39cfda8112c3",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d4c",
+    "service_name": "deepseek",
+    "api_key": "sk-7dedbe066de4456bbf2b029beb789db3"
+  },
+  {
+    "id": "1ff34898-a729-4900-853e-d7c80b56daee",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "qwen",
+    "api_key": "sk-5c87e3fd170f46ba9d502769f92d28ce"
+  },
+  {
+    "id": "4590db05-56e4-48eb-90cc-e5a5207e046d",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "perplexity",
+    "api_key": "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"
+  },
+  {
+    "id": "64ec6905-7820-491a-a042-61ee05114476",
+    "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4",
+    "service_name": "deepseek",
+    "api_key": "sk-96f71706dc4344f5abfbffdc7405fea8"
+  },
+  {
+    "id": "958a5467-d720-4bfb-8bf4-0f084e263fd5",
+    "user_id": "cfc2c181-d982-40f0-911b-b503cedc27ad",
+    "service_name": "apify",
+    "api_key": "apify_api_yv8QYmrwWRDS23vPjAj5GNb3JTXh2k2F9ky1"
+  },
+  {
+    "id": "a24039e6-de47-461b-b213-f7419f1d3777",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "fal_ai",
+    "api_key": "c3d5286b-907d-4685-b491-76f725fe6adb:fec10cfbb2a550802f7907a9f959a5c9"
+  },
+  {
+    "id": "a7a853e1-38bb-4319-bb72-e1ed22be9ed6",
+    "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4",
+    "service_name": "xmlriver",
+    "api_key": "{\"user\":\"16797\",\"key\":\"f7947eff83104621deb713275fe3260bfde4f001\"}"
+  },
+  {
+    "id": "b2c2b188-48d9-42ee-92f9-6ccfe57ae226",
+    "user_id": "cfc2c181-d982-40f0-911b-b503cedc27ad",
+    "service_name": "perplexity",
+    "api_key": "apify_api_yv8QYmrwWRDS23vPjAj5GNb3JTXh2k2F9ky1"
+  },
+  {
+    "id": "b382427a-278e-46d9-9e2c-be61ee64c88e",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "instagram",
+    "api_key": "EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R"
+  },
+  {
+    "id": "bcae1328-a8f5-4ee5-ad8f-bee6d923eb19",
+    "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4",
+    "service_name": "fal_ai",
+    "api_key": "b0fcf74f-edaa-4ca7-8df7-948612182088:4441cc3b542b85d636f2dea9f7086d29"
+  },
+  {
+    "id": "c3d61412-5d55-4dc1-9065-3da57d184d83",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "deepseek",
+    "api_key": "sk-96f71706dc4344f5abfbffdc7405fea8"
+  },
+  {
+    "id": "dd83c5c4-6399-4530-ba33-0e622737b142",
+    "user_id": "cfc2c181-d982-40f0-911b-b503cedc27ad",
+    "service_name": "xmlriver",
+    "api_key": "{\"user\":\"16797\",\"key\":\"f7947eff83104621deb713275fe3260bfde4f001\"}"
+  },
+  {
+    "id": "f0a18286-a69e-409a-a34c-3c293f9e3553",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "service_name": "apify",
+    "api_key": "apify_api_yv8QYmrwWRDS23vPjAj5GNb3JTXh2k2F9ky1"
+  }
+]
+
+Итоговое состояние API ключей:
+{
+  "perplexity": "",
+  "apify": "",
+  "deepseek": "",
+  "falai": "",
+  "claude": "",
+  "xmlriver": {
+    "userId": "",
+    "apiKey": ""
+  }
+}
+ Environment updated. Reloading shell...

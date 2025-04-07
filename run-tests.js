@@ -3,9 +3,9 @@
  * Для запуска используйте команду: node run-tests.js
  */
 
-const { execSync } = require('child_process');
-const dotenv = require('dotenv');
-const fs = require('fs');
+import { execSync } from 'child_process';
+import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Загружаем переменные окружения
 dotenv.config();
