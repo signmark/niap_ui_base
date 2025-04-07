@@ -277,13 +277,15 @@ export class TelegramService extends BaseSocialService {
    * @param token Токен бота Telegram
    * @param images Массив URL изображений
    * @param baseUrl Базовый URL API Telegram
+   * @param caption Текстовая подпись к изображениям (опционально)
    * @returns Результат отправки (успех/ошибка)
    */
   private async sendImagesToTelegram(
     chatId: string,
     token: string,
     images: string[],
-    baseUrl: string
+    baseUrl: string,
+    caption?: string
   ): Promise<{ success: boolean; error?: string; messageId?: number; messageUrl?: string }> {
     try {
       if (!images || images.length === 0) {
@@ -297,10 +299,20 @@ export class TelegramService extends BaseSocialService {
         log(`Отправка одного изображения через sendPhoto: ${images[0]}`, 'social-publishing');
         
         try {
-          const response = await axios.post(`${baseUrl}/sendPhoto`, {
+          // Создаем объект запроса с дополнительными параметрами если есть подпись
+          const requestBody: any = {
             chat_id: chatId,
             photo: images[0]
-          }, {
+          };
+          
+          // Если есть текст подписи, добавляем его
+          if (caption && caption.trim() !== '') {
+            requestBody.caption = caption;
+            requestBody.parse_mode = 'HTML';
+            log(`Добавляем текстовую подпись к изображению (${caption.length} символов)`, 'social-publishing');
+          }
+          
+          const response = await axios.post(`${baseUrl}/sendPhoto`, requestBody, {
             headers: { 'Content-Type': 'application/json' },
             timeout: 30000,
             validateStatus: () => true
@@ -334,13 +346,38 @@ export class TelegramService extends BaseSocialService {
         log(`Отправка ${images.length} изображений через sendMediaGroup (${chunks.length} групп)`, 'social-publishing');
         
         // Отправляем каждую группу изображений последовательно
-        for (const chunk of chunks) {
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
           try {
             // Создаем медиа-группу для API Telegram
-            const media = chunk.map(img => ({
-              type: 'photo',
-              media: img
-            }));
+            const media = chunk.map((img, index) => {
+              // Проверяем, что изображение имеет URL
+              const imageUrl = img && typeof img === 'string' ? img : '';
+              if (!imageUrl) {
+                log(`Предупреждение: пустой URL изображения в группе`, 'social-publishing');
+              }
+              
+              // Добавляем подпись только к первому изображению в первой группе
+              if (i === 0 && index === 0 && caption && caption.trim() !== '') {
+                return {
+                  type: 'photo',
+                  media: imageUrl,
+                  caption: caption,
+                  parse_mode: 'HTML'
+                };
+              } else {
+                return {
+                  type: 'photo',
+                  media: imageUrl
+                };
+              }
+            });
+            
+            // Проверяем, что есть хотя бы одно корректное изображение
+            if (media.length === 0 || !media.some(m => m.media)) {
+              log(`Ошибка: нет корректных URL изображений для отправки в группе`, 'social-publishing');
+              continue; // Пропускаем эту группу и переходим к следующей
+            }
             
             const response = await axios.post(`${baseUrl}/sendMediaGroup`, {
               chat_id: chatId,
@@ -548,11 +585,13 @@ export class TelegramService extends BaseSocialService {
         if (images.length > 0) {
           log(`Отправка всех ${images.length} изображений через универсальный метод`, 'social-publishing');
           
+          // Передаем текст как caption при отправке изображений
           const imagesResult = await this.sendImagesToTelegram(
             formattedChatId,
             token,
             images,
-            baseUrl
+            baseUrl,
+            text // Передаем текст как caption
           );
           
           if (!imagesResult.success) {
@@ -563,34 +602,47 @@ export class TelegramService extends BaseSocialService {
           }
         }
         
-        // Наконец, отправляем сам текст как есть, без дополнительных заголовков
-        try {
-          log(`Telegram: отправка текста отдельным сообщением, длина: ${text.length} символов`, 'social-publishing');
-            
-          // Если текст превышает максимальную длину для Telegram (4096 символов),
-          // он будет автоматически обрезан в методе sendTextMessageToTelegram
-          const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
-          log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
-          
-          // Обновляем lastMessageId если есть message_id
-          if (textResponse.result && textResponse.result.message_id) {
-            lastMessageId = textResponse.result.message_id;
-          }
-            
+        // Текст теперь отправляется вместе с изображениями как подпись, 
+        // поэтому отдельная отправка текста не требуется
+        if (imagesResult.success) {
+          // Если изображения успешно отправлены с текстом, возвращаем успешный результат
+          log(`Публикация в Telegram завершена успешно (изображения с подписью)`, 'social-publishing');
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+            postUrl: imagesResult.messageUrl || this.formatTelegramUrl(chatId, formattedChatId, imagesResult.messageId || '')
           };
-        } catch (error: any) {
-          log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
-          return {
-            platform: 'telegram',
-            status: 'failed',
-            publishedAt: null,
-            error: `Ошибка при отправке текста в Telegram: ${error.message}`
-          };
+        } else {
+          // Если возникла проблема с отправкой изображений, попробуем отправить только текст
+          try {
+            log(`Отправка изображений с подписью не удалась, пробуем отправить только текст: ${text.length} символов`, 'social-publishing');
+              
+            // Если текст превышает максимальную длину для Telegram (4096 символов),
+            // он будет автоматически обрезан в методе sendTextMessageToTelegram
+            const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+            log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
+            
+            // Обновляем lastMessageId если есть message_id
+            if (textResponse.result && textResponse.result.message_id) {
+              lastMessageId = textResponse.result.message_id;
+            }
+              
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+            };
+          } catch (error: any) {
+            log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'failed',
+              publishedAt: null,
+              error: `Ошибка при отправке текста в Telegram: ${error.message}`
+            };
+          }
         }
       }
       // 2. Если есть только одно основное изображение и текст умещается в лимит,
