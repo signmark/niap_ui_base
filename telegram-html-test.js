@@ -2,109 +2,75 @@
  * Тестовый скрипт для проверки HTML-форматирования в Telegram сообщениях
  * Проверяет корректность отображения различных HTML-тегов
  */
-import { config } from 'dotenv';
 import axios from 'axios';
+import { config } from 'dotenv';
 
 config();
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// Настройки Telegram из кампании "Правильное питание"
+const TELEGRAM_TOKEN = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+const TELEGRAM_CHAT_ID = '-1002302366310';
 
-// Функция для тестирования HTML форматирования в Telegram
+// Текст с различными HTML-тегами для тестирования
+const TEST_HTML = `<b>Это текст в жирном шрифте</b>
+
+<i>Это курсивный текст</i>
+
+<u>Этот текст подчеркнут</u>
+
+<b>Вложенный <i>текст с</i> разными <u>тегами</u></b>
+
+<i>Незакрытый тег курсива
+
+<b>Незакрытый тег жирного
+
+Проверка работы HTML-тегов в Telegram`;
+
 async function testHtmlFormatting() {
+  console.log('=== Тест HTML-форматирования в Telegram ===\n');
+  console.log('Отправляемый текст:');
+  console.log('--------------------------------------------------');
+  console.log(TEST_HTML);
+  console.log('--------------------------------------------------\n');
+
   try {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-      console.error('Ошибка: не указаны TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID в .env файле');
-      return;
-    }
-    
-    // Текст с различными HTML-тегами для тестирования
-    const testText = `
-<b>Жирный текст</b>
-<i>Курсивный текст</i>
-<u>Подчеркнутый текст</u>
-<s>Зачеркнутый текст</s>
-<code>Моноширинный текст для кода</code>
-<a href="https://example.com">Ссылка на сайт</a>
-
-Комбинированное форматирование:
-<b><i>Жирный курсив</i></b>
-<b><u>Жирный подчеркнутый</u></b>
-<i><s>Курсивный зачеркнутый</s></i>
-
-<b>Заголовок статьи</b>
-
-<i>Описание и важные детали об этой интересной статье. Могут быть разные аспекты, которые нужно выделить.</i>
-
-Основной текст статьи, несколько абзацев обычного текста.
-В котором могут быть <b>выделенные части</b> и <i>важные моменты</i>.
-
-<a href="https://t.me/ya_delayu_moschno">Наш канал</a>
-`;
-    
-    console.log(`Отправка HTML-форматированного сообщения в чат: ${TELEGRAM_CHAT_ID}`);
-    
-    // Отправка сообщения с HTML-форматированием
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    // Отправляем сообщение с HTML-форматированием напрямую через Telegram API
+    console.log('Отправка сообщения в Telegram...');
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
     const response = await axios.post(url, {
       chat_id: TELEGRAM_CHAT_ID,
-      text: testText,
+      text: TEST_HTML,
       parse_mode: 'HTML'
     });
-    
-    if (response.status === 200 && response.data && response.data.ok) {
+
+    if (response.data && response.data.ok) {
       const messageId = response.data.result.message_id;
-      console.log(`Сообщение успешно отправлено, ID: ${messageId}`);
+      console.log(`\n✅ УСПЕХ: Сообщение успешно отправлено в Telegram, message_id: ${messageId}`);
       
-      // Получаем информацию о чате для определения username
-      const chatInfoUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getChat`;
-      const chatResponse = await axios.post(chatInfoUrl, { chat_id: TELEGRAM_CHAT_ID });
-      
-      if (chatResponse.status === 200 && chatResponse.data && chatResponse.data.ok) {
-        const chatInfo = chatResponse.data.result;
-        const chatUsername = chatInfo.username;
-        
-        // Формируем URL сообщения с использованием username
-        const messageUrl = chatUsername 
-          ? `https://t.me/${chatUsername}/${messageId}`
-          : `https://t.me/c/${TELEGRAM_CHAT_ID.replace('-100', '')}/${messageId}`;
-        
-        console.log('=== РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ HTML-ФОРМАТИРОВАНИЯ ===');
-        console.log(`ID сообщения: ${messageId}`);
-        console.log(`URL сообщения: ${messageUrl}`);
-        console.log(`Имя канала: ${chatInfo.title}`);
-        console.log(`Username канала: ${chatUsername || 'не указан'}`);
-        console.log('Для просмотра HTML-форматирования перейдите по URL сообщения');
-        
-        return {
-          success: true,
-          messageId,
-          messageUrl,
-          chatInfo
-        };
+      // Формируем URL на сообщение
+      let messageUrl;
+      if (TELEGRAM_CHAT_ID.startsWith('-100')) {
+        // Для приватного канала
+        const channelId = TELEGRAM_CHAT_ID.substring(4);
+        messageUrl = `https://t.me/c/${channelId}/${messageId}`;
       } else {
-        console.error('Ошибка при получении информации о чате:', chatResponse.data);
-        return { success: false, error: 'Ошибка получения информации о чате' };
+        // Для публичного канала (мы бы получили информацию о канале, но для простоты используем приватный формат)
+        messageUrl = `https://t.me/c/${TELEGRAM_CHAT_ID.replace('-', '')}/${messageId}`;
       }
+      
+      console.log(`URL сообщения: ${messageUrl}`);
     } else {
-      console.error('Ошибка при отправке сообщения:', response.data);
-      return { success: false, error: 'Ошибка отправки сообщения' };
+      console.error('\n❌ ОШИБКА: Сообщение не отправлено');
+      console.error(JSON.stringify(response.data, null, 2));
     }
   } catch (error) {
-    console.error('Исключение при выполнении теста:', error.message);
-    return { success: false, error: error.message };
+    console.error('\n❌ ОШИБКА при выполнении теста:', error.message);
+    if (error.response) {
+      console.error('Ответ сервера:', error.response.status);
+      console.error('Данные ответа:', JSON.stringify(error.response.data, null, 2));
+    }
   }
 }
 
-// Запуск тестирования
-testHtmlFormatting()
-  .then(result => {
-    if (result.success) {
-      console.log('Тест успешно завершен!');
-    } else {
-      console.log('Тест завершился с ошибкой:', result.error);
-    }
-  })
-  .catch(error => {
-    console.error('Неожиданная ошибка при выполнении теста:', error.message);
-  });
+// Запускаем тест
+testHtmlFormatting();
