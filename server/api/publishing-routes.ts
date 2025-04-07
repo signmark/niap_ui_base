@@ -31,15 +31,10 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Не указаны платформы для публикации' });
       }
 
-      // Получаем токен авторизации из заголовка
-      const authHeader = req.headers['authorization'];
-      const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-
-      // Получаем контент с передачей токена авторизации
-      const content = await storage.getCampaignContentById(contentId, token);
+      // Получаем контент
+      const content = await storage.getCampaignContentById(contentId);
       if (!content) {
         log(`Контент ${contentId} не найден при попытке публикации`, 'api');
-        log(`Использовался токен: ${token ? 'Да' : 'Нет'}`, 'api');
         return res.status(404).json({ error: 'Контент не найден' });
       }
 
@@ -53,13 +48,6 @@ export function registerPublishingRoutes(app: Express): void {
       // Настройки социальных сетей
       const socialSettings = campaign.socialMediaSettings || {};
       log(`Получены настройки социальных сетей для кампании ${content.campaignId}`, 'api');
-      
-      // Добавляем флаг forceImageTextSeparation для принудительного разделения изображений и текста
-      // Это заставит функцию работать так же, как и при отложенной публикации
-      content.metadata = content.metadata || {};
-      if (typeof content.metadata === 'object') {
-        (content.metadata as any).forceImageTextSeparation = true;
-      }
 
       // Результаты публикации
       const results: Record<string, any> = {};
@@ -108,17 +96,15 @@ export function registerPublishingRoutes(app: Express): void {
             contentId,
             platform as SocialPlatform,
             {
-              platform: platform as SocialPlatform,
               status: 'failed',
-              publishedAt: null,
               error: platformError.message
             }
           );
         }
       }
 
-      // Получаем обновленный контент с передачей токена авторизации
-      const updatedContent = await storage.getCampaignContentById(contentId, token);
+      // Получаем обновленный контент
+      const updatedContent = await storage.getCampaignContentById(contentId);
       
       // Логируем успешное завершение
       log(`Ручная публикация контента ${contentId} завершена. Результаты: ${JSON.stringify(results)}`, 'api');
@@ -148,15 +134,9 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Не указан ID контента' });
       }
 
-      // Получаем токен авторизации из заголовка
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-      // Получаем контент с передачей токена авторизации
-      const content = await storage.getCampaignContentById(contentId, token);
+      // Получаем контент
+      const content = await storage.getCampaignContentById(contentId);
       if (!content) {
-        log(`Контент ${contentId} не найден при запросе статуса публикации`, 'api');
-        log(`Использовался токен: ${token ? 'Да' : 'Нет'}`, 'api');
         return res.status(404).json({ error: 'Контент не найден' });
       }
 
@@ -219,20 +199,21 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
       }
       
-      // Получаем токен авторизации
-      const authToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-      
-      // Получаем контент с передачей токена авторизации
-      const content = await storage.getCampaignContentById(contentId, authToken);
+      // Получаем контент
+      const content = await storage.getCampaignContentById(contentId);
       if (!content) {
-        log(`Контент ${contentId} не найден при попытке отмены публикации`, 'api');
-        log(`Использовался токен: ${authToken ? 'Да' : 'Нет'}`, 'api');
         return res.status(404).json({ error: 'Контент не найден' });
       }
       
-      // Настраиваем временно токен для пользователя, если есть userId в контенте
-      if (content.userId && authToken) {
-        directusApiManager.cacheAuthToken(content.userId, authToken);
+      // Получаем токен авторизации
+      let authToken = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+        
+        // Настраиваем временно токен для пользователя, если есть userId в контенте
+        if (content.userId) {
+          directusApiManager.cacheAuthToken(content.userId, authToken);
+        }
       }
       
       // Проверяем, что контент запланирован
@@ -343,12 +324,15 @@ export function registerPublishingRoutes(app: Express): void {
       let scheduledContent: any[] = [];
       
       // Пытаемся получить токен авторизации
-      const authToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-      
-      // Кэшируем токен для пользователя (для последующих запросов)
-      if (authToken) {
-        directusApiManager.cacheAuthToken(userId, authToken);
-        log(`Токен для пользователя ${userId} кэширован`, 'api');
+      let authToken: string | null = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+        
+        // Кэшируем токен для пользователя (для последующих запросов)
+        if (authToken) {
+          directusApiManager.cacheAuthToken(userId, authToken);
+          log(`Токен для пользователя ${userId} кэширован`, 'api');
+        }
       } else {
         log('No authorization header provided for scheduled content', 'api');
       }

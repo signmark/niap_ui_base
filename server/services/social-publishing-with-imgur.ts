@@ -764,16 +764,18 @@ export class SocialPublishingWithImgurService {
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
       
-      // ВСЕГДА принудительно разделяем изображения и текст
-      const forceImageTextSeparation = true;
+      // Проверяем необходимость принудительного разделения текста и изображений
+      // Флаг устанавливается в методе publishToPlatform для всех Telegram публикаций
+      const forceImageTextSeparation = processedContent.metadata && 
+        (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: принудительное разделение изображений и текста для всех публикаций`, 'social-publishing');
+      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
       // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
       
-      // Отправляем сначала изображения без подписи или с коротким заголовком, 
-      // затем текст отдельным сообщением - теперь для всех публикаций с изображениями
-      if (hasImages) {
+      // 1. Если есть изображения и включен флаг принудительного разделения,
+      // отправляем сначала изображения без подписи, затем текст отдельным сообщением
+      if (hasImages && forceImageTextSeparation) {
         log(`Telegram: публикация с изображением. Отправляем изображение и текст раздельно.`, 'social-publishing');
         
         // Подготавливаем краткую подпись для изображения (только заголовок)
@@ -1833,17 +1835,19 @@ export class SocialPublishingWithImgurService {
   ): Promise<SocialPublication> {
     log(`Публикация контента "${content.title}" в ${platform}`, 'social-publishing');
     
-    // Для всех типов немедленной публикации добавляем флаг принудительного разделения
-    // текста и изображений, чтобы поведение соответствовало отложенной публикации
-    if (!content.metadata) {
-      content.metadata = {};
+    // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
+    // Это гарантирует, что текст всегда будет отправлен отдельно от изображений,
+    // что решает проблему обрезания длинных текстов в запланированных публикациях
+    if (platform === 'telegram') {
+      if (!content.metadata) {
+        content.metadata = {};
+      }
+      if (typeof content.metadata === 'object') {
+        (content.metadata as any).forceImageTextSeparation = true;
+        log(`Установлен флаг forceImageTextSeparation для Telegram публикации`, 'social-publishing');
+      }
     }
     
-    if (typeof content.metadata === 'object') {
-      (content.metadata as any).forceImageTextSeparation = true;
-      log(`Установлен флаг forceImageTextSeparation для публикации на платформе ${platform}`, 'social-publishing');
-    }
-
     switch (platform) {
       case 'telegram':
         return await this.publishToTelegram(content, settings.telegram);

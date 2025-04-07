@@ -322,20 +322,43 @@ export class PublishScheduler {
           if (allContent && Array.isArray(allContent) && allContent.length > 0) {
             log(`Получено ${allContent.length} запланированных публикаций через CRUD интерфейс`, 'scheduler');
             
-            const contentItems = allContent.map((item: any) => ({
-              id: item.id,
-              content: item.content,
-              userId: item.user_id,
-              campaignId: item.campaign_id,
-              status: item.status,
-              contentType: item.content_type || "text",
-              title: item.title || null,
-              imageUrl: item.image_url,
-              videoUrl: item.video_url,
-              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-              createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms
-            }));
+            const contentItems = allContent.map((item: any) => {
+              // Создаем базовую структуру объекта с обязательными полями
+              const content = {
+                id: item.id,
+                content: item.content,
+                userId: item.user_id,
+                campaignId: item.campaign_id,
+                status: item.status,
+                contentType: item.content_type || "text",
+                title: item.title || null,
+                imageUrl: item.image_url,
+                videoUrl: item.video_url,
+                scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+                createdAt: new Date(item.created_at),
+                socialPlatforms: item.social_platforms,
+                additionalImages: item.additional_images || null,
+                prompt: item.prompt || null,
+                keywords: item.keywords || null,
+                hashtags: item.hashtags || null,
+                links: item.links || null,
+                publishedAt: item.published_at ? new Date(item.published_at) : null,
+                metadata: item.metadata || {}
+              };
+              
+              // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
+              // в метаданных, чтобы гарантировать правильное отображение больших текстов
+              if (item.social_platforms && 
+                  typeof item.social_platforms === 'object' && 
+                  Array.isArray(item.social_platforms) && 
+                  item.social_platforms.includes('telegram')) {
+                if (!content.metadata) content.metadata = {};
+                (content.metadata as any).forceImageTextSeparation = true;
+                log(`Установлен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${item.id}`, 'scheduler');
+              }
+              
+              return content;
+            });
             
             scheduledContent = [...scheduledContent, ...contentItems];
           }
@@ -449,6 +472,20 @@ export class PublishScheduler {
                 directusId: campaignItem.id,
                 link: null
               } as Campaign;
+              
+              // Добавляем логирование настроек Telegram для диагностики
+              if (campaign.socialMediaSettings && 
+                  typeof campaign.socialMediaSettings === 'object') {
+                const socialSettings = campaign.socialMediaSettings as any;
+                if (socialSettings.telegram) {
+                  const telegramSettings = socialSettings.telegram;
+                  log(`Настройки Telegram для кампании: token=${telegramSettings.token ? 'задан' : 'не задан'}, chatId=${telegramSettings.chatId || 'не задан'}`, 'scheduler');
+                } else {
+                  log(`Настройки Telegram для кампании не найдены`, 'scheduler');
+                }
+              } else {
+                log(`Настройки социальных сетей для кампании не найдены`, 'scheduler');
+              }
             } else {
               log(`Кампания с ID ${content.campaignId} не найдена в списке из ${response.data.data.length} элементов`, 'scheduler');
             }
@@ -499,6 +536,17 @@ export class PublishScheduler {
           continue;
         }
 
+        // Убедимся, что метаданные проинициализированы и установлен флаг forceImageTextSeparation для Telegram
+        if (!content.metadata) {
+          content.metadata = {};
+        }
+        
+        // Для Telegram всегда устанавливаем флаг forceImageTextSeparation
+        if (platform === 'telegram') {
+          (content.metadata as any).forceImageTextSeparation = true;
+          log(`Установлен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
+        }
+        
         // Публикуем контент в платформу
         const result = await socialPublishingWithImgurService.publishToPlatform(
           content,
