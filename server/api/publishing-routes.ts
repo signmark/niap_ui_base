@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { storage } from '../storage';
 import { socialPublishingService } from '../services/social-publishing';
+import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
 import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';
@@ -53,15 +54,15 @@ export function registerPublishingRoutes(app: Express): void {
           continue;
         }
 
-        // Публикуем контент в платформу
-        const result = await socialPublishingService.publishToPlatform(
+        // Публикуем контент в платформу, используя новый сервис с поддержкой Imgur
+        const result = await socialPublishingWithImgurService.publishToPlatform(
           content,
           platform as SocialPlatform,
           socialSettings
         );
 
         // Обновляем статус публикации
-        await socialPublishingService.updatePublicationStatus(
+        await socialPublishingWithImgurService.updatePublicationStatus(
           contentId,
           platform as SocialPlatform,
           result
