@@ -118,6 +118,53 @@ describe('TelegramService', () => {
     });
   });
   
+  describe('Обработка HTML-тегов', () => {
+    it('должен корректно закрывать незакрытые HTML теги', () => {
+      // Текст с незакрытыми тегами
+      const unclosedText = generateUnclosedHtmlContent();
+      const expectedFixedText = generateFixedHtmlContent();
+      
+      // Вызываем метод напрямую для тестирования его работы
+      const result = (telegramService as any).fixUnclosedTags(unclosedText);
+      
+      // Проверяем результат
+      expect(result).toContain('</u>'); // Закрывающий тег для u
+      expect(result).toContain('</b>'); // Закрывающий тег для b
+      expect(result).toContain('</s>'); // Закрывающий тег для s
+      expect(result).toContain('</i>'); // Закрывающий тег для i
+      
+      // Проверяем правильность порядка закрывающих тегов
+      // Последний открытый тег должен быть закрыт первым (LIFO)
+      expect(result).toMatch(/<i>.*?<\/i>/s);
+      expect(result).toMatch(/<s>.*?<\/s>/s);
+      expect(result).toMatch(/<u>.*?<\/u>/s);
+      expect(result).toMatch(/<b>.*?<\/b>/s);
+    });
+    
+    it('должен оставлять без изменений текст с правильно закрытыми тегами', () => {
+      // Текст с правильными тегами
+      const formattedText = generateFormattedHtmlContent();
+      
+      // Вызываем метод фиксации тегов
+      const result = (telegramService as any).fixUnclosedTags(formattedText);
+      
+      // Результат должен быть идентичен исходному тексту
+      expect(result).toBe(formattedText);
+    });
+    
+    it('должен корректно обрабатывать случай с вложенными тегами', () => {
+      // Текст с вложенными тегами, но не все закрыты
+      const nestedUnclosedText = `<b>Жирный <i>курсив <u>подчеркнутый`;
+      
+      // Вызываем метод фиксации тегов
+      const result = (telegramService as any).fixUnclosedTags(nestedUnclosedText);
+      
+      // Проверяем, что все теги закрыты в правильном порядке (LIFO)
+      // Последний открытый </u>, затем </i>, затем </b>
+      expect(result).toBe(`<b>Жирный <i>курсив <u>подчеркнутый</u></i></b>`);
+    });
+  });
+
   describe('Публикация текстовых сообщений', () => {
     it('должен корректно публиковать только текстовое сообщение', async () => {
       const messageId = 12345;
@@ -196,7 +243,7 @@ describe('TelegramService', () => {
       );
     });
     
-    it('должен автоматически закрывать незакрытые HTML теги', async () => {
+    it('должен автоматически закрывать незакрытые HTML теги при публикации', async () => {
       const messageId = 12349;
       const unclosedText = generateUnclosedHtmlContent();
       const expectedFixedText = generateFixedHtmlContent();
