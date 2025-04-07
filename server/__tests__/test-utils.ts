@@ -110,6 +110,30 @@ export function generateFormattedHtmlContent() {
 }
 
 /**
+ * Генерирует HTML-текст с незакрытыми тегами для тестирования исправления
+ * @returns {string} HTML-текст с ошибками
+ */
+export function generateUnclosedHtmlContent() {
+  return `Не дай бог провалишь тесты!
+<u>Дичь сраная
+<b><u>Пездула безглазая
+<b><s>Умри
+<i>Нахуй`;
+}
+
+/**
+ * Генерирует корректный HTML-текст после исправления незакрытых тегов
+ * @returns {string} Исправленный HTML-текст
+ */
+export function generateFixedHtmlContent() {
+  return `Не дай бог провалишь тесты!
+<u>Дичь сраная</u>
+<b><u>Пездула безглазая</u></b>
+<b><s>Умри</s></b>
+<i>Нахуй</i>`;
+}
+
+/**
  * Создает мок для функций авторизации и получения токена
  * @returns {object} Объект с моками для авторизации
  */
