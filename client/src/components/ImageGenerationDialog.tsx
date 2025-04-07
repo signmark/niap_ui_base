@@ -750,16 +750,13 @@ export function ImageGenerationDialog({
     }
   });
   
-  // Выбор изображения и закрытие диалога
+  // Выбор изображения (только выделение, без вызова callback)
   const handleSelectImage = (index: number) => {
     if (index >= 0 && index < generatedImages.length) {
+      console.log(`Выбрано изображение с индексом ${index}: ${generatedImages[index].substring(0, 50)}...`);
       setSelectedImageIndex(index);
-      
-      // При выборе изображения передаем также текущий промт, если он есть
-      if (onImageGenerated) {
-        const currentPrompt = generatedPrompt || prompt;
-        onImageGenerated(generatedImages[index], currentPrompt);
-      }
+      // Мы больше не вызываем onImageGenerated здесь
+      // Теперь он вызывается только в confirmSelection
     }
   };
   
