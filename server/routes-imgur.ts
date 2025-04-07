@@ -121,6 +121,8 @@ export function registerImgurRoutes(router: Router) {
     try {
       const { contentId, platform, settings, userId } = req.body;
       
+      console.log(`[routes-imgur] Запрос на публикацию контента ${contentId} в платформу ${platform}`);
+      
       if (!contentId) {
         return res.status(400).json({
           success: false,
@@ -132,6 +134,14 @@ export function registerImgurRoutes(router: Router) {
         return res.status(400).json({
           success: false,
           error: 'Не указана платформа для публикации'
+        });
+      }
+      
+      // Проверяем поддерживаемые платформы
+      if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+        return res.status(400).json({
+          success: false,
+          error: `Неподдерживаемая платформа: ${platform}`
         });
       }
       
@@ -150,9 +160,24 @@ export function registerImgurRoutes(router: Router) {
         });
       }
       
+      if (platform === 'instagram' && (!settings?.instagram?.token)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не указаны настройки Instagram (токен)'
+        });
+      }
+      
+      if (platform === 'facebook' && (!settings?.facebook?.token || !settings?.facebook?.pageId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Не указаны настройки Facebook (токен или ID страницы)'
+        });
+      }
+      
       // Получаем контент из базы данных
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
+        console.log(`[routes-imgur] Контент с ID ${contentId} не найден`);
         return res.status(404).json({
           success: false,
           error: `Контент с ID ${contentId} не найден`
@@ -162,21 +187,29 @@ export function registerImgurRoutes(router: Router) {
       // Если передан userId, добавляем его в контент
       if (userId) {
         content.userId = userId;
+        console.log(`[routes-imgur] Добавлен userId: ${userId} к контенту ${contentId}`);
       }
       
-      // Публикуем контент на выбранной платформе
-      let result;
+      console.log(`[routes-imgur] Публикация контента ${contentId} в ${platform}`);
       
-      if (platform === 'telegram') {
-        result = await socialPublishingWithImgurService.publishToTelegram(
-          content,
-          settings?.telegram
+      // Публикуем контент на выбранной платформе через универсальный метод
+      const result = await socialPublishingWithImgurService.publishToPlatform(
+        content,
+        platform,
+        settings
+      );
+      
+      // Обновляем статус публикации в базе данных
+      try {
+        await socialPublishingWithImgurService.updatePublicationStatus(
+          contentId,
+          platform,
+          result
         );
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: `Неподдерживаемая платформа: ${platform}`
-        });
+        console.log(`[routes-imgur] Статус публикации обновлен для контента ${contentId} в ${platform}`);
+      } catch (updateError) {
+        console.error(`[routes-imgur] Ошибка при обновлении статуса публикации: ${updateError}`);
+        // Продолжаем выполнение даже если обновление статуса не удалось
       }
       
       return res.status(200).json({
@@ -184,7 +217,7 @@ export function registerImgurRoutes(router: Router) {
         data: result
       });
     } catch (error) {
-      console.error(`Ошибка при публикации контента: ${error}`);
+      console.error(`[routes-imgur] Ошибка при публикации контента: ${error}`);
       return res.status(500).json({
         success: false,
         error: `Ошибка при публикации контента: ${error}`
