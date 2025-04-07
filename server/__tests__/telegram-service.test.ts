@@ -75,7 +75,8 @@ describe('TelegramService', () => {
       expect(result).toBe('https://t.me/test_channel/12345');
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('getChat'),
-        expect.objectContaining({ chat_id: TEST_TELEGRAM_CHAT_ID })
+        expect.objectContaining({ chat_id: TEST_TELEGRAM_CHAT_ID }),
+        expect.anything() // Добавляем третий параметр, который может быть чем угодно
       );
     });
     
