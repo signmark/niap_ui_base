@@ -10,14 +10,14 @@
 export function generateTestContent(overrides = {}) {
   return {
     id: 'test-content-id',
-    title: 'Тестовый контент',
-    text: 'Тестовый текст для публикации с <b>жирным текстом</b> и <i>курсивом</i>',
-    status: 'draft',
-    campaign_id: 'test-campaign-id',
-    user_id: 'test-user-id',
-    social_platforms: ['telegram', 'vk'],
+    title: 'Тестовый заголовок',
+    text: 'Тестовый текст поста',
     image_url: 'https://example.com/test-image.jpg',
-    additional_images: ['https://example.com/additional-image-1.jpg', 'https://example.com/additional-image-2.jpg'],
+    additional_images: [],
+    status: 'draft',
+    user_id: 'test-user-id',
+    campaign_id: 'test-campaign-id',
+    social_platforms: ['telegram', 'vk', 'instagram'],
     ...overrides
   };
 }
@@ -31,19 +31,19 @@ export function generateSocialSettings(overrides = {}) {
   return {
     telegram: {
       token: 'test-telegram-token',
-      chatId: 'test-chat-id',
+      chatId: '-1001234567890'
     },
     vk: {
       token: 'test-vk-token',
-      groupId: 'test-group-id',
+      groupId: '123456789'
     },
     instagram: {
       token: 'test-instagram-token',
-      businessAccountId: 'test-business-account-id',
+      businessAccountId: '123456789'
     },
     facebook: {
       token: 'test-facebook-token',
-      pageId: 'test-page-id',
+      pageId: '123456789'
     },
     ...overrides
   };
@@ -59,14 +59,19 @@ export function mockTelegramAPIResponse(messageId = 12345) {
     ok: true,
     result: {
       message_id: messageId,
+      from: {
+        id: 7529101043,
+        is_bot: true,
+        first_name: 'TestBot',
+        username: 'test_bot'
+      },
       chat: {
-        id: -1002302366310,
+        id: -1001234567890,
         title: 'Test Channel',
-        username: 'testchannel',
         type: 'channel'
       },
       date: Math.floor(Date.now() / 1000),
-      text: 'Тестовое сообщение'
+      text: 'Test message'
     }
   };
 }
