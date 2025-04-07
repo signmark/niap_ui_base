@@ -672,11 +672,14 @@ export class SocialPublishingWithImgurService {
    * @param messageId Опциональный ID сообщения для создания прямой ссылки
    * @returns Корректно форматированный URL
    */
-  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
+  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
+    // Определяем базовый URL для публичных каналов или приватных чатов
+    let baseUrl = '';
+    
     // Если это username (начинается с @), удаляем @ и не добавляем /c/
     if (chatId.startsWith('@')) {
-      return `https://t.me/${chatId.substring(1)}${messageId ? `/${messageId}` : ''}`;
-    } 
+      baseUrl = `https://t.me/${chatId.substring(1)}`;
+    }
     // Для числовых ID проверяем, нужен ли префикс /c/
     else {
       // Проверяем, является ли chatId полным числовым идентификатором канала (с -100...)
@@ -687,13 +690,24 @@ export class SocialPublishingWithImgurService {
         // Для таких ID нужен формат с /c/ и без -100
         const channelId = chatId.substring(4); // Убираем префикс -100
         log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в https://t.me/c/${channelId}`, 'social-publishing');
-        return `https://t.me/c/${channelId}${messageId ? `/${messageId}` : ''}`;
+        baseUrl = `https://t.me/c/${channelId}`;
+      } else if (chatId.startsWith('-')) {
+        // Для обычных групп (с - в начале) прямых ссылок нет
+        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
+        baseUrl = 'https://t.me';
       } else {
-        // Для обычных числовых ID без префикса просто используем их (прямой канал)
+        // Для обычных числовых ID без префикса просто используем их (прямой канал или чат с ботом)
         log(`Форматирование Telegram URL: обычный числовой ID ${chatId} используется напрямую`, 'social-publishing');
-        return `https://t.me/${chatId}${messageId ? `/${messageId}` : ''}`;
+        baseUrl = `https://t.me/${chatId}`;
       }
     }
+    
+    // Добавляем ID сообщения, если он указан
+    if (messageId) {
+      return `${baseUrl}/${messageId}`;
+    }
+    
+    return baseUrl;
   }
   
   /**
@@ -741,6 +755,8 @@ export class SocialPublishingWithImgurService {
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
+    // Переменная для хранения ID последнего отправленного сообщения
+    let lastMessageId: string | number | undefined;
     // Добавляем расширенное логирование для отладки
     log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram-debug');
     log(`Telegram настройки: ${JSON.stringify({
@@ -903,16 +919,21 @@ export class SocialPublishingWithImgurService {
       const originalContent = processedContent.content;
       
       let contentText = processedContent.content
-        // Обрабатываем блочные элементы для правильных переносов
+        // Обрабатываем блочные элементы для правильных переносов (сокращаем лишние переносы)
         .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
         
-        // Стандартизируем теги форматирования
+        // Стандартизируем теги форматирования - сохраняем как HTML-теги для Telegram
         .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
         .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        
+        // Специальная обработка маркированных списков (преобразуем <li> в формат с точками)
+        .replace(/<li>(.*?)<\/li>/g, '• $1\n')
+        .replace(/<ul>(.*?)<\/ul>/g, '$1\n')
+        .replace(/<ol>(.*?)<\/ol>/g, '$1\n')
         
         // Приводим ссылки к простому формату href
         .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
@@ -1012,11 +1033,16 @@ export class SocialPublishingWithImgurService {
           const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
           log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
           
+          // Обновляем lastMessageId если есть message_id
+          if (textResponse.result && textResponse.result.message_id) {
+            lastMessageId = textResponse.result.message_id;
+          }
+            
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: this.formatTelegramUrl(chatId, formattedChatId, textResponse.result?.message_id || '')
+            postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -1067,7 +1093,7 @@ export class SocialPublishingWithImgurService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+              postUrl: this.formatTelegramUrl(chatId, formattedChatId, response.data?.result?.message_id)
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -1098,11 +1124,16 @@ export class SocialPublishingWithImgurService {
                 
                 if (mediaResponse.status === 200 && mediaResponse.data && mediaResponse.data.ok) {
                   log(`Успешно отправлена медиагруппа: ${JSON.stringify(mediaResponse.data)}`, 'social-publishing');
+                  // Сохраняем ID сообщения для формирования корректной ссылки
+                  if (mediaResponse.data?.result?.[0]?.message_id) {
+                    lastMessageId = mediaResponse.data.result[0].message_id;
+                  }
+                  
                   return {
                     platform: 'telegram',
                     status: 'published',
                     publishedAt: new Date(),
-                    postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+                    postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                   };
                 } else {
                   // Если оба метода не работают, отправляем изображение и текст по отдельности
@@ -1123,11 +1154,18 @@ export class SocialPublishingWithImgurService {
                   
                   if (imageOnlyResponse.data?.ok || textResponse.success) {
                     log(`Удалось отправить изображение и текст по отдельности`, 'social-publishing');
+                    // Сохраняем ID сообщения для формирования корректной ссылки
+                    if (imageOnlyResponse.data?.result?.message_id) {
+                      lastMessageId = imageOnlyResponse.data.result.message_id;
+                    } else if (textResponse.success && textResponse.result?.message_id) {
+                      lastMessageId = textResponse.result.message_id;
+                    }
+                    
                     return {
                       platform: 'telegram',
                       status: 'published',
                       publishedAt: new Date(),
-                      postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+                      postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                     };
                   }
                 }
@@ -1169,11 +1207,16 @@ export class SocialPublishingWithImgurService {
             
             if (textResponse.success) {
               log(`Резервный план сработал: изображение и текст отправлены отдельно`, 'social-publishing');
+              // Сохраняем ID сообщения для формирования корректной ссылки
+              if (textResponse.result?.message_id) {
+                lastMessageId = textResponse.result.message_id;
+              }
+              
               return {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+                postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
               };
             }
           } catch (backupError: any) {
@@ -1217,11 +1260,16 @@ export class SocialPublishingWithImgurService {
               
               // Если полный текст был добавлен к изображению, не нужно отправлять отдельный текст
               if (text.length <= 1024) {
+                // Сохраняем ID сообщения для формирования корректной ссылки
+                if (photoResponse?.data?.result?.message_id) {
+                  lastMessageId = photoResponse.data.result.message_id;
+                }
+                
                 return {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, photoResponse.data?.result?.message_id)
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                 };
               }
             } catch (error: any) {
@@ -1267,11 +1315,12 @@ export class SocialPublishingWithImgurService {
         // Отправляем текст (если он не был отправлен с основным изображением)
         if (processedContent.imageUrl && text.length <= 1024) {
           // Текст уже был отправлен с основным изображением
+          // Используем messageId из замыкания, который был сохранен при отправке изображения
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+            postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId)
           };
         } else {
           try {
@@ -1317,11 +1366,17 @@ export class SocialPublishingWithImgurService {
                   '';
                 
                 try {
+                  // Сохраняем последний ответ, чтобы использовать message_id в URL
                   const partResponse = await this.sendTextMessageToTelegram(
                     textPart + partIndicator, 
                     formattedChatId, 
                     token
                   );
+                  
+                  // Обновляем lastMessageId если есть message_id
+                  if (partResponse.success && partResponse.data && partResponse.data.result && partResponse.data.result.message_id) {
+                    lastMessageId = partResponse.data.result.message_id;
+                  }
                   
                   log(`Отправлена часть ${partNumber} текстового сообщения (${textPart.length} символов)`, 'social-publishing');
                   
@@ -1349,7 +1404,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: this.formatTelegramUrl(chatId, formattedChatId)
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                 };
               } else {
                 return {
@@ -1365,11 +1420,16 @@ export class SocialPublishingWithImgurService {
               log(`Текст успешно отправлен в Telegram: ${JSON.stringify(textResponse)}`, 'social-publishing');
               
               if (textResponse.success) {
+                // Обновляем lastMessageId если есть message_id
+                if (textResponse.success && textResponse.result && textResponse.result.message_id) {
+                  lastMessageId = textResponse.result.message_id;
+                }
+                
                 return {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, textResponse.data?.result?.message_id)
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId)
                 };
               } else {
                 return {
