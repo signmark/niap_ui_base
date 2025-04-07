@@ -531,17 +531,23 @@ export class PublishScheduler {
       }
 
       // Публикуем в каждую платформу
+      let successfulPublications = 0;
+      let totalAttempts = 0;
+      
       for (const platform of platformsToPublish) {
         // Проверяем, существует ли объект социальных платформ и платформа в нём
         const platformStatus = socialPlatforms && typeof socialPlatforms === 'object' 
           ? (socialPlatforms as Record<string, any>)[platform]?.status
           : undefined;
           
-        // Пропускаем уже опубликованные
+        // Пропускаем уже опубликованные, но считаем их как успешные
         if (platformStatus === 'published') {
           log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
+          successfulPublications++;
           continue;
         }
+
+        totalAttempts++;
 
         // Убедимся, что метаданные проинициализированы и установлен флаг forceImageTextSeparation для Telegram
         if (!content.metadata) {
@@ -571,9 +577,21 @@ export class PublishScheduler {
         // Логируем результат
         if (result.status === 'published') {
           log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
+          successfulPublications++;
         } else {
           log(`Ошибка при публикации контента ${content.id} в ${platform}: ${result.error}`, 'scheduler');
         }
+      }
+      
+      // Обновляем основной статус контента на "published", если:
+      // 1. Есть хотя бы одна успешная публикация
+      // 2. Все платформы уже были в статусе "published" (successfulPublications > 0 && totalAttempts === 0)
+      if (successfulPublications > 0) {
+        log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах`, 'scheduler');
+        
+        await storage.updateCampaignContent(content.id, {
+          status: 'published'
+        });
       }
     } catch (error: any) {
       log(`Ошибка при публикации контента ${content.id}: ${error.message}`, 'scheduler');
