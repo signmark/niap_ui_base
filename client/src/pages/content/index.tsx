@@ -2299,6 +2299,7 @@ export default function ContentPage() {
                     createdAt={previewContent.scheduledAt}
                     label="Запланировано:"
                     showIcon={true}
+                    iconType="clock"
                     className="flex items-center gap-1"
                   />
                 )}
@@ -2307,6 +2308,7 @@ export default function ContentPage() {
                     createdAt={previewContent.createdAt}
                     label="Создано:"
                     showIcon={true}
+                    iconType="calendar"
                     className="flex items-center gap-1"
                   />
                 )}
