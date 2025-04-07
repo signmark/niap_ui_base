@@ -582,11 +582,13 @@ export class TelegramService extends BaseSocialService {
         }
         
         // Отправляем все изображения через универсальный метод
+        let imagesSentResult = { success: false, error: 'Изображения не отправлены' };
+        
         if (images.length > 0) {
           log(`Отправка всех ${images.length} изображений через универсальный метод`, 'social-publishing');
           
           // Передаем текст как caption при отправке изображений
-          const imagesResult = await this.sendImagesToTelegram(
+          imagesSentResult = await this.sendImagesToTelegram(
             formattedChatId,
             token,
             images,
@@ -594,24 +596,26 @@ export class TelegramService extends BaseSocialService {
             text // Передаем текст как caption
           );
           
-          if (!imagesResult.success) {
-            log(`Ошибка при отправке изображений в Telegram: ${imagesResult.error}`, 'social-publishing');
+          if (!imagesSentResult.success) {
+            log(`Ошибка при отправке изображений в Telegram: ${imagesSentResult.error}`, 'social-publishing');
           } else {
             log(`Все изображения успешно отправлены в Telegram`, 'social-publishing');
-            log(`URL сообщения с изображениями: ${imagesResult.messageUrl || 'не создан'}`, 'social-publishing');
+            log(`URL сообщения с изображениями: ${imagesSentResult.messageUrl || 'не создан'}`, 'social-publishing');
           }
         }
         
         // Текст теперь отправляется вместе с изображениями как подпись, 
         // поэтому отдельная отправка текста не требуется
-        if (imagesResult.success) {
+        
+        // Используем результат предыдущей отправки изображений
+        if (imagesSentResult && imagesSentResult.success) {
           // Если изображения успешно отправлены с текстом, возвращаем успешный результат
           log(`Публикация в Telegram завершена успешно (изображения с подписью)`, 'social-publishing');
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: imagesResult.messageUrl || this.formatTelegramUrl(chatId, formattedChatId, imagesResult.messageId || '')
+            postUrl: imagesSentResult.messageUrl || this.formatTelegramUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
           };
         } else {
           // Если возникла проблема с отправкой изображений, попробуем отправить только текст
