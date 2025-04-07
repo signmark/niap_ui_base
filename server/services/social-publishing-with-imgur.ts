@@ -764,13 +764,22 @@ export class SocialPublishingWithImgurService {
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
       
+      // Проверяем наличие флага принудительного разделения изображений и текста
+      const forceImageTextSeparation = 
+        processedContent.metadata && 
+        typeof processedContent.metadata === 'object' && 
+        (processedContent.metadata as any).forceImageTextSeparation === true;
+      
+      if (forceImageTextSeparation) {
+        log(`Telegram: принудительное разделение изображений и текста из-за флага forceImageTextSeparation`, 'social-publishing');
+      }
+      
       // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
       
-      // 1. Если есть изображения и текст длинный (более 1000 символов),
+      // 1. Если есть изображения и (текст длинный (более 1000 символов) ИЛИ установлен флаг forceImageTextSeparation),
       // отправляем сначала изображения без подписи или с коротким заголовком, 
       // затем текст отдельным сообщением
-      // ВАЖНО: принудительно используем этот путь для всех постов с изображениями
-      if (hasImages) {
+      if (hasImages && (text.length > 1000 || forceImageTextSeparation)) {
         log(`Telegram: публикация с изображением. Отправляем изображение и текст раздельно.`, 'social-publishing');
         
         // Подготавливаем краткую подпись для изображения (только заголовок)
