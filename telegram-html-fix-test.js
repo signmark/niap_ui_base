@@ -3,22 +3,30 @@
  * Запустите: node telegram-html-fix-test.js
  */
 
-import axios from 'axios';
-import { log } from './server/utils/logger.js';
+const axios = require('axios');
 
-// Токен и chatId из настроек кампании
-const token = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+// Настройки Telegram
+const telegramToken = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
 const chatId = '-1002302366310';
 
-// Текст с незакрытыми HTML тегами
-const unclosedText = `Тест исправленного форматирования HTML в Telegram:
+// Примеры текстов с незакрытыми тегами
+const textWithUnclosedTags = `
+<b>Жирный текст без закрытия
+<i>Курсивный текст
+<u>Подчеркнутый текст</u>
+Этот текст должен был быть курсивным, но тег не закрыт
+`;
 
-<b>Жирный текст
-<i>Жирный и курсивный текст
-<u>Жирный, курсивный и подчеркнутый текст
+// Более сложный пример с многоуровневыми вложенными тегами
+const complexNestedTags = `
+<b>Жирный <i>текст с <u>вложенным подчеркиванием
+и курсивом. Этот тег жирного шрифта не закрыт.
 
-<code>Моноширинный текст
-<a href='https://replit.com'>Ссылка`;
+<b>Второй жирный текст с <i>курсивом.
+<code>Моноширинный текст в курсиве</i> но не закрыт код.
+
+Внешняя конструкция <b>где внутри есть <i>курсив</i>.
+`;
 
 /**
  * Исправляет незакрытые HTML-теги в тексте
@@ -26,130 +34,142 @@ const unclosedText = `Тест исправленного форматирова
  * @returns {string} Текст с исправленными незакрытыми тегами
  */
 function fixUnclosedTags(text) {
-  // Определяем поддерживаемые Telegram теги
-  const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+  // Стек для отслеживания открытых тегов
+  const tagStack = [];
   
-  // Создаем стек для отслеживания открытых тегов
-  const stack = [];
+  // Регулярное выражение для поиска открывающих и закрывающих тегов
+  const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
   
-  // Регулярное выражение для поиска всех HTML-тегов
-  const tagRegex = /<\/?([a-z]+)[^>]*>/gi;
+  // Находим все теги в тексте
   let match;
-  let processedText = text;
-  const allTags = [];
+  let lastIndex = 0;
+  let result = '';
   
-  // Находим все теги и их позиции
   while ((match = tagRegex.exec(text)) !== null) {
     const fullTag = match[0];
     const tagName = match[1].toLowerCase();
+    const isClosingTag = fullTag.startsWith('</');
     
-    // Проверяем, является ли тег поддерживаемым
-    if (supportedTags.includes(tagName)) {
-      const isClosing = fullTag.startsWith('</');
-      allTags.push({
-        tag: tagName,
-        isClosing,
-        position: match.index
-      });
-    }
-  }
-  
-  // Сортируем по позиции, чтобы обрабатывать теги в порядке их появления
-  allTags.sort((a, b) => a.position - b.position);
-  
-  // Определяем, какие теги открыты и неправильно закрыты
-  for (const tagInfo of allTags) {
-    if (tagInfo.isClosing) {
-      // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому
-      if (stack.length > 0 && stack[stack.length - 1] === tagInfo.tag) {
-        stack.pop(); // Правильный закрывающий тег, удаляем из стека
+    // Добавляем текст до текущего тега
+    result += text.substring(lastIndex, match.index);
+    lastIndex = match.index + fullTag.length;
+    
+    if (isClosingTag) {
+      // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому тегу
+      if (tagStack.length > 0) {
+        const lastOpenTag = tagStack[tagStack.length - 1];
+        if (lastOpenTag === tagName) {
+          // Тег правильно закрыт, удаляем его из стека
+          tagStack.pop();
+          result += fullTag;
+        } else {
+          // Закрывающий тег не соответствует последнему открытому
+          // Добавляем закрывающие теги для всех открытых тегов до соответствующего
+          let found = false;
+          for (let i = tagStack.length - 1; i >= 0; i--) {
+            if (tagStack[i] === tagName) {
+              found = true;
+              // Закрываем все промежуточные теги
+              for (let j = tagStack.length - 1; j >= i; j--) {
+                result += `</${tagStack[j]}>`;
+                tagStack.pop();
+              }
+              break;
+            }
+          }
+          
+          if (!found) {
+            // Если соответствующий открывающий тег не найден, игнорируем закрывающий тег
+            console.log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`);
+          } else {
+            // Добавляем текущий закрывающий тег
+            result += fullTag;
+          }
+        }
       } else {
-        // Неправильный порядок закрытия, но не обрабатываем здесь
-        continue;
+        // Если стек пуст, значит это закрывающий тег без открывающего
+        console.log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`);
       }
     } else {
-      // Открывающий тег - добавляем в стек
-      stack.push(tagInfo.tag);
+      // Открывающий тег, добавляем в стек
+      tagStack.push(tagName);
+      result += fullTag;
     }
   }
   
-  // Если остались незакрытые теги, закрываем их в обратном порядке
-  if (stack.length > 0) {
-    console.log(`Обнаружены незакрытые HTML теги: ${stack.join(', ')}. Автоматически закрываем их.`);
-    
-    let closingTags = '';
-    // Закрываем теги в обратном порядке (LIFO)
-    for (let i = stack.length - 1; i >= 0; i--) {
-      closingTags += `</${stack[i]}>`;
-    }
-    
-    // Добавляем закрывающие теги в конец текста
-    processedText += closingTags;
-    
-    console.log(`Текст с закрытыми тегами: ${processedText}`);
-  } else {
-    console.log('Все теги уже закрыты правильно.');
+  // Добавляем оставшийся текст
+  result += text.substring(lastIndex);
+  
+  // Закрываем все оставшиеся открытые теги в обратном порядке (LIFO)
+  for (let i = tagStack.length - 1; i >= 0; i--) {
+    result += `</${tagStack[i]}>`;
   }
   
-  return processedText;
+  return result;
 }
 
 /**
  * Отправляет текст в Telegram с HTML форматированием
  * @param {string} text Текст для отправки
+ * @param {string} description Описание теста
  * @returns {Promise<void>}
  */
-async function sendToTelegram(text) {
+async function sendToTelegram(text, description) {
   try {
-    console.log('Отправка исправленного текста в Telegram...');
+    const fixedText = fixUnclosedTags(text);
     
-    const response = await axios.post(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        chat_id: chatId,
-        text: text,
-        parse_mode: 'HTML'
-      },
-      {
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    console.log(`\n--- Тест: ${description} ---`);
+    console.log('Оригинальный текст:');
+    console.log(text);
+    console.log('\nИсправленный текст:');
+    console.log(fixedText);
+    
+    // Используем точно такой же формат запроса, как в TelegramService
+    const response = await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+      chat_id: chatId,
+      text: fixedText,
+      parse_mode: 'HTML',
+      protect_content: false,
+      disable_notification: false
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 30000,
+    });
     
     if (response.data && response.data.ok) {
-      console.log('Сообщение успешно отправлено!');
-      console.log(`Message ID: ${response.data.result.message_id}`);
+      console.log('\n✅ Сообщение успешно отправлено!');
+      console.log(`ID сообщения: ${response.data.result.message_id}`);
       
-      // Получаем информацию о чате для формирования URL
-      const getChat = await axios.post(
-        `https://api.telegram.org/bot${token}/getChat`,
-        { chat_id: chatId },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      
-      // Формируем URL для сообщения
-      let messageUrl;
-      if (getChat.data && getChat.data.ok) {
-        if (getChat.data.result.username) {
-          // Для публичных каналов
-          messageUrl = `https://t.me/${getChat.data.result.username}/${response.data.result.message_id}`;
-          console.log(`Канал публичный с username: ${getChat.data.result.username}`);
-        } else {
-          // Для приватных каналов
-          const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
-          messageUrl = `https://t.me/c/${formattedChatId}/${response.data.result.message_id}`;
-          console.log(`Канал приватный (без username)`);
+      // Получаем URL сообщения
+      try {
+        const chatInfo = await axios.post(
+          `https://api.telegram.org/bot${telegramToken}/getChat`,
+          { chat_id: chatId },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        
+        if (chatInfo.data.ok) {
+          let messageUrl;
+          if (chatInfo.data.result.username) {
+            messageUrl = `https://t.me/${chatInfo.data.result.username}/${response.data.result.message_id}`;
+            console.log(`Публичный канал: ${chatInfo.data.result.username}`);
+          } else {
+            const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
+            messageUrl = `https://t.me/c/${formattedChatId}/${response.data.result.message_id}`;
+            console.log('Приватный канал');
+          }
+          console.log(`URL сообщения: ${messageUrl}`);
         }
-        console.log(`URL сообщения: ${messageUrl}`);
-      } else {
-        console.log('Не удалось получить информацию о чате');
+      } catch (error) {
+        console.error('Ошибка при получении URL сообщения:', error);
       }
     } else {
-      console.error('Ошибка при отправке:', response.data);
+      console.error('\n❌ Ошибка при отправке:', response.data);
     }
   } catch (error) {
-    console.error('Ошибка:', error.message);
+    console.error('\n❌ Ошибка при отправке:', error);
     if (error.response) {
-      console.error('Ответ API:', error.response.data);
+      console.error('Данные ошибки:', error.response.data);
     }
   }
 }
@@ -158,21 +178,14 @@ async function sendToTelegram(text) {
  * Основная функция запуска теста
  */
 async function runTest() {
-  console.log('=== Тест исправления незакрытых HTML-тегов в Telegram ===');
-  console.log('\nИсходный текст с незакрытыми тегами:');
-  console.log(unclosedText);
-  console.log('\n--- Исправление тегов ---');
+  console.log('=== Тестирование функции исправления незакрытых HTML тегов для Telegram ===\n');
   
-  // Исправляем текст
-  const fixedText = fixUnclosedTags(unclosedText);
+  // Запускаем тесты с разными примерами
+  await sendToTelegram(textWithUnclosedTags, 'Простой пример с незакрытыми тегами');
+  await sendToTelegram(complexNestedTags, 'Сложный пример с вложенными тегами');
   
-  console.log('\n=== Отправка исправленного текста в Telegram ===');
-  await sendToTelegram(fixedText);
-  
-  console.log('\n=== Тест завершен ===');
+  console.log('\n=== Тестирование завершено ===');
 }
 
 // Запускаем тест
-runTest().catch(error => {
-  console.error('Произошла ошибка при выполнении теста:', error);
-});
+runTest().catch(console.error);
