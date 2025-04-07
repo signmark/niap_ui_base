@@ -949,9 +949,9 @@ export class SocialPublishingWithImgurService {
         
         // Обрабатываем блочные элементы для правильных переносов (сокращаем лишние переносы)
         .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
+        .replace(/<p>([^]*?)<\/p>/g, '$1\n') // Используем [^] вместо . для поддержки многострочных совпадений
+        .replace(/<div>([^]*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>([^]*?)<\/h[1-6]>/g, '<b>$1</b>\n')
         
         // Стандартизируем теги форматирования - сохраняем как HTML-теги для Telegram
         .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
@@ -960,8 +960,8 @@ export class SocialPublishingWithImgurService {
         
         // Специальная обработка маркированных списков (преобразуем <li> в формат с точками)
         .replace(/<li>(.*?)<\/li>/g, '• $1\n')
-        .replace(/<ul>(.*?)<\/ul>/gs, '$1\n')
-        .replace(/<ol>(.*?)<\/ol>/gs, '$1\n')
+        .replace(/<ul>([^]*?)<\/ul>/g, '$1\n')
+        .replace(/<ol>([^]*?)<\/ol>/g, '$1\n')
         
         // Приводим ссылки к простому формату href
         .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { storage } from '../storage';
-import { socialPublishingWithImgurService } from './social-publishing-with-imgur';
+// Не используем старый сервис, заменив его на новый модульный
+import { socialPublishingService } from './social/index';
 import { CampaignContent, SocialPlatform, Campaign } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';
@@ -573,15 +574,15 @@ export class PublishScheduler {
           log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
         }
         
-        // Публикуем контент в платформу
-        const result = await socialPublishingWithImgurService.publishToPlatform(
+        // Публикуем контент в платформу через модульный сервис socialPublishingService
+        const result = await socialPublishingService.publishToPlatform(
           content,
           platform,
           socialSettings
         );
 
-        // Обновляем статус публикации
-        await socialPublishingWithImgurService.updatePublicationStatus(
+        // Обновляем статус публикации через модульный сервис socialPublishingService
+        await socialPublishingService.updatePublicationStatus(
           content.id,
           platform,
           result

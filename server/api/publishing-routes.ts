@@ -1,7 +1,8 @@
 import { Express, Request, Response } from 'express';
 import { storage } from '../storage';
-import { socialPublishingService } from '../services/social-publishing';
-import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
+import { socialPublishingService } from '../services/social/index';
+
+// Не используем старый сервис, заменив его на новый модульный
 import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';
@@ -66,8 +67,8 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Начинаем публикацию в ${platform} для контента ${contentId}`, 'api');
         
         try {
-          // Публикуем контент в платформу, используя сервис с поддержкой Imgur
-          const result = await socialPublishingWithImgurService.publishToPlatform(
+          // Публикуем контент в платформу через модульный сервис socialPublishingService
+          const result = await socialPublishingService.publishToPlatform(
             content,
             platform as SocialPlatform,
             socialSettings
@@ -75,8 +76,8 @@ export function registerPublishingRoutes(app: Express): void {
           
           log(`Результат публикации в ${platform}: ${JSON.stringify(result)}`, 'api');
 
-          // Обновляем статус публикации
-          await socialPublishingWithImgurService.updatePublicationStatus(
+          // Обновляем статус публикации через модульный сервис socialPublishingService
+          await socialPublishingService.updatePublicationStatus(
             contentId,
             platform as SocialPlatform,
             result
@@ -91,8 +92,8 @@ export function registerPublishingRoutes(app: Express): void {
             error: platformError.message
           };
           
-          // Обновляем статус публикации как неудачный
-          await socialPublishingWithImgurService.updatePublicationStatus(
+          // Обновляем статус публикации как неудачный через модульный сервис socialPublishingService
+          await socialPublishingService.updatePublicationStatus(
             contentId,
             platform as SocialPlatform,
             {
