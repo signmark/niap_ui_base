@@ -1838,6 +1838,17 @@ export class SocialPublishingWithImgurService {
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
     log(`Публикация контента "${content.title}" в ${platform}`, 'social-publishing');
+    
+    // Для всех типов немедленной публикации добавляем флаг принудительного разделения
+    // текста и изображений, чтобы поведение соответствовало отложенной публикации
+    if (!content.metadata) {
+      content.metadata = {};
+    }
+    
+    if (typeof content.metadata === 'object') {
+      (content.metadata as any).forceImageTextSeparation = true;
+      log(`Установлен флаг forceImageTextSeparation для публикации на платформе ${platform}`, 'social-publishing');
+    }
 
     switch (platform) {
       case 'telegram':
