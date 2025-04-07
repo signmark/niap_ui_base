@@ -49,12 +49,12 @@ export class TelegramService extends BaseSocialService {
         .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
         
         // Улучшенная обработка списков
-        .replace(/<ul>([^]*?)<\/ul>/g, function(match, p1) {
+        .replace(/<ul>([^]*?)<\/ul>/g, function(match: string, p1: string) {
             return p1.replace(/<li>(.*?)<\/li>/g, '• $1\n');
         })
-        .replace(/<ol>([^]*?)<\/ol>/g, function(match, p1) {
+        .replace(/<ol>([^]*?)<\/ol>/g, function(match: string, p1: string) {
             let index = 1;
-            return p1.replace(/<li>(.*?)<\/li>/g, function(m, li) {
+            return p1.replace(/<li>(.*?)<\/li>/g, function(m: string, li: string) {
                 return (index++) + '. ' + li + '\n';
             });
         })
@@ -451,19 +451,19 @@ export class TelegramService extends BaseSocialService {
         validateStatus: () => true
       });
       
-      // Проверяем ответ от Telegram API
-      // Примечание: Некоторые логи указывают "Ошибка API" даже для успешных ответов, исправляем это
-      if (response.status === 200 && response.data && response.data.ok === true) {
+      // FIX: Улучшена обработка ответов API
+      if (response.data && response.data.ok === true && response.data.result) {
         log(`Успешно получена информация о чате: ${JSON.stringify(response.data.result)}`, 'social-publishing');
         
         // Если в ответе есть username, сохраним его в свойстве экземпляра класса
-        if (response.data.result && response.data.result.username) {
+        if (response.data.result.username) {
           this.currentChatUsername = response.data.result.username;
           log(`Сохранен username чата: ${this.currentChatUsername}`, 'social-publishing');
         }
         
         return response.data.result;
       } else {
+        // Только в случае реальной ошибки выводим сообщение об ошибке
         log(`Ошибка API Telegram при получении информации о чате: ${JSON.stringify(response.data || 'Нет данных в ответе')}`, 'social-publishing');
         return null;
       }
@@ -537,10 +537,20 @@ export class TelegramService extends BaseSocialService {
     
     // Обработка случая с супергруппой/каналом (-100...)
     if (chatId.startsWith('-100')) {
-      // Для публичных супергрупп/каналов удаляем префикс -100
+      // Для приватных каналов используем формат с /c/
+      // Для публичных - формат без /c/
       const channelId = chatId.substring(4);
+      
+      // Для приватных каналов (без username)
+      if (!chatUsername) {
+        const url = `https://t.me/c/${channelId}/${messageId}`;
+        log(`Сформирован URL для приватного канала: ${url}`, 'social-publishing');
+        return url;
+      }
+      
+      // Для публичных супергрупп/каналов удаляем префикс -100
       const url = `https://t.me/${channelId}/${messageId}`;
-      log(`Сформирован URL для супергруппы/канала: ${url}`, 'social-publishing');
+      log(`Сформирован URL для публичного канала: ${url}`, 'social-publishing');
       return url;
     }
     
@@ -690,7 +700,15 @@ export class TelegramService extends BaseSocialService {
         }
         
         // Отправляем все изображения через универсальный метод
-        let imagesSentResult = { success: false, error: 'Изображения не отправлены' };
+        let imagesSentResult: {
+          success: boolean;
+          error: string;
+          messageId?: number | string;
+          messageUrl?: string;
+        } = { 
+          success: false, 
+          error: 'Изображения не отправлены' 
+        };
         
         if (images.length > 0) {
           log(`Отправка всех ${images.length} изображений через универсальный метод`, 'social-publishing');
