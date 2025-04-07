@@ -288,7 +288,7 @@ export class TelegramService extends BaseSocialService {
     images: string[],
     baseUrl: string,
     caption?: string
-  ): Promise<{ success: boolean; error?: string; messageId?: number; messageUrl?: string }> {
+  ): Promise<{ success: boolean; error: string; messageId?: number; messageUrl?: string }> {
     try {
       if (!images || images.length === 0) {
         return { success: false, error: 'No images provided' };
@@ -325,6 +325,7 @@ export class TelegramService extends BaseSocialService {
             log(`Изображение успешно отправлено, message_id: ${lastMessageId}`, 'social-publishing');
             return { 
               success: true, 
+              error: '',  // Добавляем пустую строку для соответствия типу
               messageId: lastMessageId,
               messageUrl: lastMessageId ? `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}` : undefined
             };
@@ -409,6 +410,7 @@ export class TelegramService extends BaseSocialService {
         // Если все группы успешно отправлены
         return { 
           success: true, 
+          error: '',  // Добавляем пустую строку для соответствия типу
           messageId: lastMessageId,
           messageUrl: lastMessageId ? `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}` : undefined
         };
@@ -438,11 +440,17 @@ export class TelegramService extends BaseSocialService {
         validateStatus: () => true
       });
       
-      if (response.status === 200 && response.data && response.data.ok) {
-        log(`Получена информация о чате: ${JSON.stringify(response.data.result)}`, 'social-publishing');
+      // Проверяем ответ от Telegram API
+      if (response.status === 200 && response.data && response.data.ok === true) {
+        log(`Успешно получена информация о чате: ${JSON.stringify(response.data.result)}`, 'social-publishing');
+        // Если в ответе есть username, сохраним его в свойстве экземпляра класса
+        if (response.data.result && response.data.result.username) {
+          this.currentChatUsername = response.data.result.username;
+          log(`Сохранен username чата: ${this.currentChatUsername}`, 'social-publishing');
+        }
         return response.data.result;
       } else {
-        log(`Ошибка при получении информации о чате: ${JSON.stringify(response.data)}`, 'social-publishing');
+        log(`Ошибка API Telegram при получении информации о чате: ${JSON.stringify(response.data || 'Нет данных в ответе')}`, 'social-publishing');
         return null;
       }
     } catch (error) {
