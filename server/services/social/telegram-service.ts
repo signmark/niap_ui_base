@@ -46,13 +46,20 @@ export class TelegramService extends BaseSocialService {
         .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
         .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
         
-        // Улучшенная обработка списков (без флага s для совместимости)
-        .replace(/<ul>([^]*?)<\/ul>/g, '$1')
-        .replace(/<ol>([^]*?)<\/ol>/g, '$1')
+        // Улучшенная обработка списков
+        .replace(/<ul>([^]*?)<\/ul>/g, function(match, p1) {
+            return p1.replace(/<li>(.*?)<\/li>/g, '• $1\n');
+        })
+        .replace(/<ol>([^]*?)<\/ol>/g, function(match, p1) {
+            let index = 1;
+            return p1.replace(/<li>(.*?)<\/li>/g, function(m, li) {
+                return (index++) + '. ' + li + '\n';
+            });
+        })
         .replace(/<li>(.*?)<\/li>/g, '• $1\n')
         
-        // Обрабатываем ссылки по формату Telegram
-        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>');
+        // Обрабатываем ссылки по формату Telegram - важно для корректной работы с разными атрибутами в тегах ссылок
+        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
       // Telegram не поддерживает вложенные теги одного типа, исправляем это
       // Например: <b>жирный <b>вложенный</b> текст</b> -> <b>жирный вложенный текст</b>
@@ -387,32 +394,42 @@ export class TelegramService extends BaseSocialService {
     // Если это username (начинается с @), удаляем @ и не добавляем /c/
     if (chatId.startsWith('@')) {
       baseUrl = `https://t.me/${chatId.substring(1)}`;
-    }
-    // Для числовых ID проверяем, нужен ли префикс /c/
-    else {
-      // Проверяем, является ли chatId полным числовым идентификатором канала (с -100...)
-      // который нужно обработать специальным образом
-      const isFullNumericId = chatId.startsWith('-100') && /^-100\d+$/.test(chatId);
-      
-      if (isFullNumericId) {
-        // Для таких ID нужен формат с /c/ и без -100
-        const channelId = chatId.substring(4); // Убираем префикс -100
-        log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в https://t.me/c/${channelId}`, 'social-publishing');
-        baseUrl = `https://t.me/c/${channelId}`;
-      } else if (chatId.startsWith('-')) {
-        // Для обычных групп (с - в начале) прямых ссылок нет
-        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
-        baseUrl = 'https://t.me';
-      } else {
-        // Для обычных числовых ID без префикса просто используем их (прямой канал или чат с ботом)
-        log(`Форматирование Telegram URL: обычный числовой ID ${chatId} используется напрямую`, 'social-publishing');
-        baseUrl = `https://t.me/${chatId}`;
+      // Добавляем ID сообщения, если оно указано
+      if (messageId) {
+        return `${baseUrl}/${messageId}`;
       }
     }
-    
-    // Добавляем ID сообщения, если он указан
-    if (messageId) {
-      return `${baseUrl}/${messageId}`;
+    // Для числовых ID требуется специальная обработка
+    else {
+      // Проверка на супергруппы/каналы (начинаются с -100)
+      if (chatId.startsWith('-100')) {
+        // Извлекаем числовой ID (убираем префикс -100)
+        const channelId = chatId.substring(4);
+        log(`Форматирование Telegram URL: числовой ID супергруппы/канала ${chatId} -> ${channelId}`, 'social-publishing');
+        
+        // Если есть ID сообщения, формируем полную ссылку
+        if (messageId) {
+          return `https://t.me/c/${channelId}/${messageId}`;
+        }
+        // Если нет ID сообщения, то такая ссылка на канал без username невозможна
+        return `https://t.me`;
+      } 
+      // Обычные группы (начинаются с -)
+      else if (chatId.startsWith('-')) {
+        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
+        // Для обычных групп без username прямых ссылок на сообщения нет
+        return 'https://t.me';
+      } 
+      // Личные чаты или боты (числовой ID без минуса)
+      else {
+        log(`Форматирование Telegram URL: чат/бот с ID ${chatId}`, 'social-publishing');
+        baseUrl = `https://t.me`;
+        
+        // Добавляем ID сообщения, если оно указано
+        if (messageId) {
+          return `${baseUrl}/c/${chatId}/${messageId}`;
+        }
+      }
     }
     
     return baseUrl;
@@ -426,7 +443,7 @@ export class TelegramService extends BaseSocialService {
    */
   async publishToTelegram(
     content: CampaignContent,
-    telegramSettings: { token: string; chatId: string }
+    telegramSettings: { token: string | null; chatId: string | null }
   ): Promise<SocialPublication> {
     // ID последнего сообщения для формирования ссылки
     let lastMessageId: number | string | undefined;
@@ -962,7 +979,14 @@ export class TelegramService extends BaseSocialService {
       };
     }
 
-    if (!settings.telegram || !settings.telegram.token || !settings.telegram.chatId) {
+    // Проверяем наличие настроек и логируем их для дебага
+    const telegramSettings = settings.telegram || { token: null, chatId: null };
+    const hasToken = Boolean(telegramSettings.token);
+    const hasChatId = Boolean(telegramSettings.chatId);
+    
+    log(`TelegramService.publishToPlatform: Настройки: hasToken=${hasToken}, hasChatId=${hasChatId}`, 'social-publishing');
+
+    if (!hasToken || !hasChatId) {
       return {
         platform: 'telegram',
         status: 'failed',
@@ -975,12 +999,12 @@ export class TelegramService extends BaseSocialService {
     const contentWithMetadata = {
       ...content,
       metadata: {
-        ...content.metadata,
+        ...(content.metadata || {}),
         forceImageTextSeparation: true
       }
     };
 
-    return this.publishToTelegram(contentWithMetadata, settings.telegram);
+    return this.publishToTelegram(contentWithMetadata, telegramSettings);
   }
 }
 
