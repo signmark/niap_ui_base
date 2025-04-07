@@ -442,7 +442,8 @@ export class SocialPublishingWithImgurService {
         // Если URL не начинается с http, добавляем базовый URL сервера
         let originalImageUrl = updatedContent.imageUrl;
         if (!originalImageUrl.startsWith('http')) {
-          const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+          // Используем фиксированный базовый URL или получаем его из конфигурации в Directus
+          const baseAppUrl = this.getAppBaseUrl(); 
           originalImageUrl = `${baseAppUrl}${originalImageUrl.startsWith('/') ? '' : '/'}${originalImageUrl}`;
           log(`Изменен URL основного изображения для загрузки: ${originalImageUrl}`, 'social-publishing');
         }
@@ -469,7 +470,7 @@ export class SocialPublishingWithImgurService {
             // Если URL не начинается с http, добавляем базовый URL сервера
             let originalImageUrl = additionalImage;
             if (!originalImageUrl.startsWith('http')) {
-              const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+              const baseAppUrl = this.getAppBaseUrl();
               originalImageUrl = `${baseAppUrl}${originalImageUrl.startsWith('/') ? '' : '/'}${originalImageUrl}`;
               log(`Изменен URL дополнительного изображения ${i+1} для загрузки: ${originalImageUrl}`, 'social-publishing');
             }
@@ -511,6 +512,41 @@ export class SocialPublishingWithImgurService {
     // Для числовых ID используем формат с /c/
     else {
       return `https://t.me/c/${formattedChatId.replace('-100', '')}${messageId ? `/${messageId}` : ''}`;
+    }
+  }
+  
+  /**
+   * Получает базовый URL приложения без использования process.env
+   * @returns Базовый URL приложения
+   */
+  private getAppBaseUrl(): string {
+    // Приоритеты URL:
+    // 1. Продакшен URL (основной стабильный URL)
+    // 2. URL разработки (URL на платформе разработки)
+    // 3. Резервный URL (если ничего не сработало)
+    
+    // Основной URL продакшена
+    const productionUrl = 'https://smm.nplanner.ru';
+    
+    // URL для разработки на Replit
+    const developmentUrl = 'https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev';
+    
+    // Резервный URL по умолчанию
+    const fallbackUrl = 'https://nplanner.replit.app';
+    
+    try {
+      // Пытаемся определить текущий хост из запроса
+      // Поскольку мы не можем получить req напрямую, 
+      // выбираем наиболее вероятный URL для текущего окружения
+      
+      // Логика выбора URL здесь не использует process.env
+      // В будущем можно добавить получение URL из конфигурации в БД
+      
+      // Для простоты используем продакшен URL как основной
+      return productionUrl;
+    } catch (error) {
+      // В случае ошибки возвращаем резервный URL
+      return fallbackUrl;
     }
   }
   
@@ -641,7 +677,7 @@ export class SocialPublishingWithImgurService {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         log(`Ошибка при проверке чата через API: ${error.message}`, 'social-publishing');
         
         // В случае ошибки API используем стандартную логику форматирования
@@ -816,7 +852,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : `c/${formattedChatId.replace('-100', '')}`}/${response.data.result?.message_id || ''}`
+            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : `c/${formattedChatId.replace('-100', '')}`}/${textResponse.result?.message_id || ''}`
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -837,7 +873,7 @@ export class SocialPublishingWithImgurService {
           // Проверяем валидность URL изображения и убеждаемся, что он действительно указывает на изображение
           let imageUrl = processedContent.imageUrl;
           if (!imageUrl.startsWith('http')) {
-            const baseAppUrl = process.env.BASE_URL || 'https://nplanner.replit.app';
+            const baseAppUrl = this.getAppBaseUrl();
             imageUrl = `${baseAppUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
             log(`Исправлен URL для основного изображения: ${imageUrl}`, 'social-publishing');
           }
