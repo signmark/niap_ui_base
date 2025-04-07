@@ -2,8 +2,10 @@
  * Тестовый скрипт для проверки отправки текста вместе с изображениями в Telegram
  * Запустите: node telegram-caption-test.js
  */
-require('dotenv').config();
-const axios = require('axios');
+import { config } from 'dotenv';
+import axios from 'axios';
+
+config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
