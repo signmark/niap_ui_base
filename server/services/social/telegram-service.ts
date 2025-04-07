@@ -430,8 +430,10 @@ export class TelegramService extends BaseSocialService {
       log(`Запрос информации о чате: ${chatId}`, 'social-publishing');
       const baseUrl = `https://api.telegram.org/bot${token}`;
       
-      const response = await axios.get(`${baseUrl}/getChat`, {
-        params: { chat_id: chatId },
+      // Используем post чтобы быть совместимым с другими методами API и тестами
+      const response = await axios.post(`${baseUrl}/getChat`, {
+        chat_id: chatId
+      }, {
         timeout: 10000,
         validateStatus: () => true
       });
