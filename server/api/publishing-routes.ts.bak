@@ -149,8 +149,8 @@ export function registerPublishingRoutes(app: Express): void {
       }
 
       // Получаем токен авторизации из заголовка
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+      const authHeader = req.headers['authorization'];
+      const token = authHeader ? authHeader.replace('Bearer ', '') : null;
 
       // Получаем контент с передачей токена авторизации
       const content = await storage.getCampaignContentById(contentId, token);
@@ -220,7 +220,10 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Получаем токен авторизации
-      const authToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+      let authToken = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+      }
       
       // Получаем контент с передачей токена авторизации
       const content = await storage.getCampaignContentById(contentId, authToken);
@@ -343,12 +346,15 @@ export function registerPublishingRoutes(app: Express): void {
       let scheduledContent: any[] = [];
       
       // Пытаемся получить токен авторизации
-      const authToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-      
-      // Кэшируем токен для пользователя (для последующих запросов)
-      if (authToken) {
-        directusApiManager.cacheAuthToken(userId, authToken);
-        log(`Токен для пользователя ${userId} кэширован`, 'api');
+      let authToken: string | null = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7);
+        
+        // Кэшируем токен для пользователя (для последующих запросов)
+        if (authToken) {
+          directusApiManager.cacheAuthToken(userId, authToken);
+          log(`Токен для пользователя ${userId} кэширован`, 'api');
+        }
       } else {
         log('No authorization header provided for scheduled content', 'api');
       }
