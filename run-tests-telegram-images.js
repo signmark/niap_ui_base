@@ -13,16 +13,16 @@ import { storage } from './server/storage.js';
 config();
 
 // API URL по умолчанию
-const API_URL = process.env.API_URL || 'http://localhost:3000';
+const API_URL = process.env.API_URL || 'http://localhost:5000';
 
-// ID кампании "Правильное питание"
-const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
+// ID кампании из переменных окружения
+const CAMPAIGN_ID = process.env.CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
 
 // Хранилище для настроек, полученных из кампании
 let settings = {
   telegram: {
-    token: null,
-    chatId: null
+    token: process.env.TELEGRAM_BOT_TOKEN || null,
+    chatId: process.env.TELEGRAM_CHAT_ID || null
   }
 };
 

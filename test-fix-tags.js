@@ -9,8 +9,8 @@ import { config } from 'dotenv';
 
 config();
 
-// ID кампании "Правильное питание"
-const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
+// ID кампании из секретов окружения
+const CAMPAIGN_ID = process.env.CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
 
 // Адрес Directus
 const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://smm-manager.directus.app';
