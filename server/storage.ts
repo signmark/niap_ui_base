@@ -780,8 +780,24 @@ export class DatabaseStorage implements IStorage {
       // Настраиваем headers с токеном, если он передан
       let response = null;
       
-      // Попытка 1: Используем переданный токен
+      // Попытка 1: Используем переданный токен авторизации (если он есть)
       if (authToken) {
+        try {
+          console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+          response = await directusApi.get(`/items/campaign_content/${id}`, { 
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (response?.data?.data) {
+            console.log(`Успешно получен контент с использованием переданного токена`);
+          }
+        } catch (error: any) {
+          console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
+          response = null;
+        }
+      }
+      
+      // Попытка 2: Используем переданный токен, если первая попытка не удалась
+      if (!response && authToken) {
         console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
         
         try {
@@ -795,7 +811,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // Попытка 2: Если не удалось с токеном, пробуем получить владельца контента
+      // Попытка 3: Если не удалось с токеном, пробуем получить владельца контента
       if (!response) {
         console.log(`Пробуем получить владельца контента другими способами`);
         
@@ -844,7 +860,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // Попытка 3: Пробуем без токена (публичный доступ)
+      // Попытка 4: Пробуем без токена (публичный доступ)
       if (!response) {
         console.log(`Пробуем получить контент без токена авторизации`);
         try {
