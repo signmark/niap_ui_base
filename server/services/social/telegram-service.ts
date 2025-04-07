@@ -1131,12 +1131,13 @@ export class TelegramService extends BaseSocialService {
       };
     }
 
-    // Для Telegram добавляем флаг принудительного разделения текста и изображений
+    // Для Telegram НЕ добавляем флаг принудительного разделения,
+    // чтобы короткий текст без форматирования отправлялся как подпись к изображениям
     const contentWithMetadata = {
       ...content,
       metadata: {
-        ...(content.metadata || {}),
-        forceImageTextSeparation: true
+        ...(content.metadata || {})
+        // Убираем forceImageTextSeparation: true, чтобы текст отправлялся как подпись
       }
     };
 
