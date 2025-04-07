@@ -102,6 +102,7 @@ export class SocialPublishingWithImgurService {
     baseUrl: string = `https://api.telegram.org/bot${token}`
   ): Promise<{success: boolean, error?: string, messageIds?: number[]}> {
     if (!images || images.length === 0) {
+      log(`sendImagesToTelegram: Пустой массив изображений`, 'telegram-debug');
       return {success: true, messageIds: []}; // Нет изображений - нет проблем
     }
     
@@ -116,12 +117,39 @@ export class SocialPublishingWithImgurService {
     
     log(`Отправка ${images.length} изображений в Telegram, chatId: ${formattedChatId}`, 'social-publishing');
     
+    // Проверяем доступность каждого URL через HEAD запрос
+    const validImages: string[] = [];
+    for (const imgUrl of images) {
+      try {
+        // Проверяем, что URL не пустой
+        if (!imgUrl || typeof imgUrl !== 'string' || imgUrl.trim() === '') {
+          log(`Пропускаем пустой URL изображения`, 'telegram-debug');
+          continue;
+        }
+        
+        log(`Проверка доступности изображения: ${imgUrl}`, 'telegram-debug');
+        validImages.push(imgUrl);
+      } catch (err) {
+        log(`Ошибка при проверке доступности изображения ${imgUrl}: ${(err as Error).message}`, 'telegram-debug');
+      }
+    }
+    
+    log(`Найдено ${validImages.length} доступных изображений из ${images.length}`, 'telegram-debug');
+    
+    if (validImages.length === 0) {
+      return {
+        success: false,
+        error: 'Нет доступных изображений для отправки'
+      };
+    }
+    
     try {
       // Если одно изображение - отправляем как отдельное фото
-      if (images.length === 1) {
+      if (validImages.length === 1) {
+        log(`Отправка одного изображения через sendPhoto: ${validImages[0]}`, 'telegram-debug');
         const response = await axios.post(`${baseUrl}/sendPhoto`, {
           chat_id: formattedChatId,
-          photo: images[0],
+          photo: validImages[0],
           parse_mode: 'HTML'
         }, {
           headers: { 'Content-Type': 'application/json' },
@@ -149,11 +177,16 @@ export class SocialPublishingWithImgurService {
       const messageIds: number[] = [];
       
       // Разбиваем на группы по 10 (лимит Telegram API)
-      for (let i = 0; i < images.length; i += 10) {
-        const mediaGroup = images.slice(i, i + 10).map(img => ({
+      for (let i = 0; i < validImages.length; i += 10) {
+        const batch = validImages.slice(i, i + 10);
+        log(`Формирование группы ${i/10 + 1} из ${Math.ceil(validImages.length/10)} (${batch.length} изображений)`, 'telegram-debug');
+        
+        const mediaGroup = batch.map(img => ({
           type: 'photo',
           media: img
         }));
+        
+        log(`Отправка группы через sendMediaGroup: ${JSON.stringify(mediaGroup)}`, 'telegram-debug');
         
         const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
           chat_id: formattedChatId,
@@ -163,6 +196,8 @@ export class SocialPublishingWithImgurService {
           timeout: 60000,
           validateStatus: () => true
         });
+        
+        log(`Ответ API Telegram: ${JSON.stringify(mediaResponse.data)}`, 'telegram-debug');
         
         if (mediaResponse.status === 200 && mediaResponse.data.ok) {
           log(`Группа из ${mediaGroup.length} изображений успешно отправлена в Telegram`, 'social-publishing');
@@ -1368,7 +1403,13 @@ export class SocialPublishingWithImgurService {
 
     // Получаем токен и groupId из настроек
     const token = vkSettings.token;
-    const groupId = vkSettings.groupId;
+    let groupId = vkSettings.groupId;
+    
+    // Очищаем groupId от префикса "club" если он присутствует
+    if (typeof groupId === 'string' && groupId.startsWith('club')) {
+      groupId = groupId.replace(/^club/, '');
+      log(`Формат ID группы VK очищен от префикса "club": ${groupId}`, 'social-publishing');
+    }
     
     log(`Используем токен VK: ${token.substring(0, 6)}... и ID группы: ${groupId}`, 'social-publishing');
 
