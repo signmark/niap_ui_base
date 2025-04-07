@@ -7,6 +7,8 @@ import { BaseSocialService } from './base-service';
  * Сервис для публикации контента в Telegram
  */
 export class TelegramService extends BaseSocialService {
+  // Храним username канала, полученный в процессе публикации
+  private currentChatUsername?: string;
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
@@ -418,18 +420,70 @@ export class TelegramService extends BaseSocialService {
   }
 
   /**
+   * Получает информацию о чате в Telegram
+   * @param chatId ID чата
+   * @param token Токен бота
+   * @returns Информация о чате или null в случае ошибки
+   */
+  private async getChatInfo(chatId: string, token: string): Promise<any | null> {
+    try {
+      log(`Запрос информации о чате: ${chatId}`, 'social-publishing');
+      const baseUrl = `https://api.telegram.org/bot${token}`;
+      
+      const response = await axios.get(`${baseUrl}/getChat`, {
+        params: { chat_id: chatId },
+        timeout: 10000,
+        validateStatus: () => true
+      });
+      
+      if (response.status === 200 && response.data && response.data.ok) {
+        log(`Получена информация о чате: ${JSON.stringify(response.data.result)}`, 'social-publishing');
+        return response.data.result;
+      } else {
+        log(`Ошибка при получении информации о чате: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return null;
+      }
+    } catch (error) {
+      log(`Исключение при запросе информации о чате: ${error instanceof Error ? error.message : String(error)}`, 'social-publishing');
+      return null;
+    }
+  }
+
+  /**
+   * Вспомогательный метод для генерации URL сообщения в этом контексте публикации
+   * Использует chatUsername из текущего контекста
+   * @param chatId Исходный chat ID (может быть @username или числовым ID)
+   * @param formattedChatId Форматированный chat ID для API запросов
+   * @param messageId ID сообщения
+   * @returns URL сообщения
+   */
+  private generatePostUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
+    return this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
+  }
+  
+  /**
    * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
    * @param chatId Исходный chat ID (может быть @username или числовым ID)
    * @param formattedChatId Форматированный chat ID для API запросов
    * @param messageId Опциональный ID сообщения для создания прямой ссылки
+   * @param chatUsername Опциональный username чата (если известен)
    * @returns Корректно форматированный URL
    */
-  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
-    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
+  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined, chatUsername?: string): string {
+    // Сохраняем username для использования в generatePostUrl
+    if (chatUsername) {
+      this.currentChatUsername = chatUsername;
+    }
+    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}, username=${chatUsername || 'не указан'}`, 'social-publishing');
     
     // Если ID сообщения не указан, вернем дефолтный URL Telegram
     if (!messageId) {
       log(`messageId не указан, возвращаем базовый URL для Telegram`, 'social-publishing');
+      
+      // Если известен username, используем его
+      if (chatUsername) {
+        return `https://t.me/${chatUsername}`;
+      }
       
       // Если это username (начинается с @), можем вернуть URL на канал
       if (chatId.startsWith('@')) {
@@ -439,6 +493,15 @@ export class TelegramService extends BaseSocialService {
       // Для всех остальных случаев без messageId возвращаем базовый URL
       return 'https://t.me';
     }
+    
+    // Если известен username чата, используем его для URL
+    if (chatUsername) {
+      const url = `https://t.me/${chatUsername}/${messageId}`;
+      log(`Сформирован URL для канала с известным username: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Стандартные случаи форматирования URL
     
     // Обработка случая с username (@channel)
     if (chatId.startsWith('@')) {
@@ -450,22 +513,26 @@ export class TelegramService extends BaseSocialService {
     
     // Обработка случая с супергруппой/каналом (-100...)
     if (chatId.startsWith('-100')) {
-      // Для публичных супергрупп/каналов используем формат с /c/
-      const channelId = chatId.substring(4); // Удаляем префикс -100
-      const url = `https://t.me/c/${channelId}/${messageId}`;
+      // Для публичных супергрупп/каналов удаляем префикс -100
+      const channelId = chatId.substring(4);
+      const url = `https://t.me/${channelId}/${messageId}`;
       log(`Сформирован URL для супергруппы/канала: ${url}`, 'social-publishing');
       return url;
     }
     
     // Обработка обычных групп (начинаются с -)
     if (chatId.startsWith('-')) {
-      log(`Для обычной группы ${chatId} публичных URL нет, возвращаем базовый URL`, 'social-publishing');
-      return 'https://t.me';
+      // Для обычной группы без username форматируем URL по стандарту
+      const groupId = chatId.substring(1); // Убираем только минус
+      const url = `https://t.me/c/${groupId}/${messageId}`;
+      log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
+      return url;
     }
     
     // Личные чаты или боты (числовой ID без минуса)
-    log(`Сформирован URL для личного чата/бота: https://t.me/c/${chatId}/${messageId}`, 'social-publishing');
-    return `https://t.me/c/${chatId}/${messageId}`;
+    const url = `https://t.me/c/${chatId}/${messageId}`;
+    log(`Сформирован URL для личного чата/бота: ${url}`, 'social-publishing');
+    return url;
   }
 
   /**
@@ -480,6 +547,8 @@ export class TelegramService extends BaseSocialService {
   ): Promise<SocialPublication> {
     // ID последнего сообщения для формирования ссылки
     let lastMessageId: number | string | undefined;
+    // Храним username канала, если его удастся получить
+    let chatUsername: string | undefined;
     
     try {
       // Проверяем наличие необходимых параметров
@@ -499,6 +568,21 @@ export class TelegramService extends BaseSocialService {
       
       // Форматируем ID чата для API Telegram (удаляем @ для username)
       const formattedChatId = chatId.startsWith('@') ? chatId : chatId;
+      
+      // Пытаемся получить информацию о чате для корректного формирования URL
+      try {
+        const chatInfo = await this.getChatInfo(formattedChatId, token);
+        if (chatInfo && chatInfo.username) {
+          chatUsername = chatInfo.username;
+          // Сохраняем username чата в свойстве класса для дальнейшего использования
+          this.currentChatUsername = chatUsername;
+          log(`Получен username чата: ${chatUsername}`, 'social-publishing');
+        } else {
+          log(`Не удалось получить username чата или у чата нет публичного username`, 'social-publishing');
+        }
+      } catch (error) {
+        log(`Ошибка при запросе информации о чате: ${error instanceof Error ? error.message : String(error)}`, 'social-publishing');
+      }
       
       // Обрабатываем контент
       const processedContent = this.processAdditionalImages(content, 'telegram');
@@ -615,7 +699,7 @@ export class TelegramService extends BaseSocialService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: imagesSentResult.messageUrl || this.formatTelegramUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
+            postUrl: imagesSentResult.messageUrl || this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
           };
         } else {
           // Если возникла проблема с отправкой изображений, попробуем отправить только текст
