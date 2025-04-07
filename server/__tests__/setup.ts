@@ -16,6 +16,19 @@ let testStorage: DatabaseStorage;
 let directusToken: string | null = null;
 let campaignSettings: any = null;
 
+// Хранилище для API ключей внешних сервисов
+export const apiKeys = {
+  perplexity: process.env.PERPLEXITY_API_KEY || '',
+  apify: process.env.APIFY_API_KEY || '',
+  deepseek: process.env.DEEPSEEK_API_KEY || '',
+  falai: process.env.FALAI_API_KEY || '',
+  claude: process.env.CLAUDE_API_KEY || '',
+  xmlriver: {
+    userId: process.env.XMLRIVER_USER_ID || '',
+    apiKey: process.env.XMLRIVER_API_KEY || ''
+  }
+};
+
 // Проверяем наличие требуемых переменных окружения и инициализируем тесты
 beforeAll(async () => {
   // Устанавливаем таймаут для всех тестов
