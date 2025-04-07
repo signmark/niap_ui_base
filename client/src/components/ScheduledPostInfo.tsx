@@ -22,6 +22,22 @@ const formatTelegramUrl = (url: string | null): string | null => {
     
     if (pathParts.length === 0) return url;
     
+    // Проверяем, является ли первый сегмент пути числовым ID (проблемный случай)
+    // Например: https://t.me/2302366310 (числовой ID канала без /c/)
+    if (pathParts.length === 1 && pathParts[0].match(/^\d+$/)) {
+      // Исправляем путь для числового ID (публичного канала), добавляя префикс /c/
+      // Правильный формат для числовых ID каналов: https://t.me/c/1234567890/123
+      // Но если нет ID поста, то этот вариант не сработает - нужно использовать ссылку для приватного канала
+      // Возвращаем ссылку без изменений, так как она ведет на канал, а не конкретный пост
+      if (url.split('/').length <= 4) {
+        console.log('Обнаружен числовой ID канала Telegram без /c/ префикса', url);
+        return url; // возвращаем без изменений, т.к. формат неверный изначально
+      }
+      
+      // Если это URL с ID поста, форматируем правильно
+      return `https://t.me/c/${pathParts[0]}`;
+    }
+    
     // Фиксированная обработка URL-адресов Telegram
     // Пример: https://t.me/c/@ya_delayu_moschno/575 -> https://t.me/ya_delayu_moschno/575
     if (pathParts[0] === 'c') {
@@ -33,9 +49,9 @@ const formatTelegramUrl = (url: string | null): string | null => {
         channelName = channelName.substring(1);
       }
       
-      // Если канал имеет числовой ID вместо имени (редко)
+      // Если канал имеет числовой ID вместо имени (приватные каналы)
       if (channelName.match(/^\d+$/) && !channelName.startsWith('-100')) {
-        // Это специальный случай, мы сохраняем /c/ для числовых ID
+        // Сохраняем /c/ префикс для числовых ID - это правильный формат для приватных каналов
         return `https://t.me/c/${channelName}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
       }
       
