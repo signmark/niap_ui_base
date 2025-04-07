@@ -1467,11 +1467,11 @@ export class SocialPublishingWithImgurService {
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
         .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n\n')
         
-        // Форматирование текста
-        .replace(/<b>(.*?)<\/b>/g, '*$1*')
-        .replace(/<strong>(.*?)<\/strong>/g, '*$1*')
-        .replace(/<i>(.*?)<\/i>/g, '_$1_')
-        .replace(/<em>(.*?)<\/em>/g, '_$1_')
+        // Для ВКонтакте НЕ преобразуем теги форматирования, т.к. символы * и _ не обрабатываются
+        .replace(/<b>(.*?)<\/b>/g, '$1')
+        .replace(/<strong>(.*?)<\/strong>/g, '$1')
+        .replace(/<i>(.*?)<\/i>/g, '$1')
+        .replace(/<em>(.*?)<\/em>/g, '$1')
         
         // Удаление всех остальных HTML-тегов
         .replace(/<[^>]*>/g, '');
@@ -1869,11 +1869,12 @@ export class SocialPublishingWithImgurService {
         .replace(/<div>(.*?)<\/div>/g, '$1\n')
         .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n\n')
         
-        // Форматирование текста (жирный, курсив)
-        .replace(/<b>(.*?)<\/b>/g, '*$1*')
-        .replace(/<strong>(.*?)<\/strong>/g, '*$1*')
-        .replace(/<i>(.*?)<\/i>/g, '_$1_')
-        .replace(/<em>(.*?)<\/em>/g, '_$1_')
+        // Форматирование текста для Facebook - не используем символы * и _
+        // так как они не отображаются корректно во многих случаях
+        .replace(/<b>(.*?)<\/b>/g, '$1')
+        .replace(/<strong>(.*?)<\/strong>/g, '$1')
+        .replace(/<i>(.*?)<\/i>/g, '$1')
+        .replace(/<em>(.*?)<\/em>/g, '$1')
         
         // Удаление всех остальных HTML-тегов
         .replace(/<[^>]*>/g, '');
@@ -2113,16 +2114,21 @@ export class SocialPublishingWithImgurService {
   ): Promise<SocialPublication> {
     log(`Публикация контента "${content.title}" в ${platform}`, 'social-publishing');
     
-    // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
-    // Это гарантирует, что текст всегда будет отправлен отдельно от изображений,
-    // что решает проблему обрезания длинных текстов в запланированных публикациях
+    // Для публикации в Telegram устанавливаем флаг forceImageTextSeparation только для длинных текстов
+    // Для коротких текстов (менее 1000 символов) публикуем текст и изображение вместе
     if (platform === 'telegram') {
       if (!content.metadata) {
         content.metadata = {};
       }
       if (typeof content.metadata === 'object') {
-        (content.metadata as any).forceImageTextSeparation = true;
-        log(`Установлен флаг forceImageTextSeparation для Telegram публикации`, 'social-publishing');
+        // Проверяем длину текста
+        const textLength = (content.content || '').length + (content.title ? content.title.length : 0);
+        const needsSeparation = textLength > 1000;
+        
+        // Устанавливаем флаг разделения только для длинных текстов (> 1000 символов)
+        (content.metadata as any).forceImageTextSeparation = needsSeparation;
+        
+        log(`${needsSeparation ? 'Установлен' : 'Отключен'} флаг forceImageTextSeparation для Telegram публикации. Длина текста: ${textLength} символов`, 'social-publishing');
       }
     }
     
