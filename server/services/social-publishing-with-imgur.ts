@@ -100,7 +100,7 @@ export class SocialPublishingWithImgurService {
     token: string,
     images: string[],
     baseUrl: string = `https://api.telegram.org/bot${token}`
-  ): Promise<{success: boolean, error?: string, messageIds?: number[]}> {
+  ): Promise<{success: boolean, error?: string, messageIds?: number[], messageUrl?: string}> {
     if (!images || images.length === 0) {
       log(`sendImagesToTelegram: Пустой массив изображений`, 'telegram-debug');
       return {success: true, messageIds: []}; // Нет изображений - нет проблем
@@ -108,14 +108,19 @@ export class SocialPublishingWithImgurService {
     
     // Форматируем chatId, если это необходимо
     let formattedChatId = chatId;
+    let originalChatId = chatId; // Оригинальный ID для создания URL
+    
     if (chatId.startsWith('@')) {
-      // Это имя пользователя - не нужно форматировать
+      // Это имя пользователя - не нужно форматировать для API, но сохраняем без @ для URL
+      originalChatId = chatId.substring(1); // Убираем @ для URL
     } else if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-      // Для групповых чатов добавляем префикс -100
+      // Для групповых чатов добавляем префикс -100 для API
       formattedChatId = `-100${chatId}`;
+      // Оригинальный ID без -100 для URL будет использоваться именно числовой ID
+      originalChatId = chatId;
     }
     
-    log(`Отправка ${images.length} изображений в Telegram, chatId: ${formattedChatId}`, 'social-publishing');
+    log(`Отправка ${images.length} изображений в Telegram, chatId для API: ${formattedChatId}, для URL: ${originalChatId}`, 'telegram-debug');
     
     // Проверяем доступность каждого URL через HEAD запрос
     const validImages: string[] = [];
@@ -159,9 +164,16 @@ export class SocialPublishingWithImgurService {
         
         if (response.status === 200 && response.data.ok) {
           log(`Изображение успешно отправлено в Telegram`, 'social-publishing');
+          const messageId = response.data.result.message_id;
+          
+          // Создаем правильный URL сообщения: https://t.me/username/messageId
+          const messageUrl = `https://t.me/${originalChatId}/${messageId}`;
+          log(`Создан URL сообщения: ${messageUrl}`, 'telegram-debug');
+          
           return {
             success: true,
-            messageIds: [response.data.result.message_id]
+            messageIds: [messageId],
+            messageUrl
           };
         } else {
           log(`Ошибка при отправке изображения в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -219,9 +231,17 @@ export class SocialPublishingWithImgurService {
         }
       }
       
+      // Если есть ID сообщений, создаем URL первого сообщения в группе
+      let messageUrl;
+      if (messageIds.length > 0) {
+        messageUrl = `https://t.me/${originalChatId}/${messageIds[0]}`;
+        log(`Создан URL для группы изображений: ${messageUrl}`, 'telegram-debug');
+      }
+      
       return {
         success: true,
-        messageIds
+        messageIds,
+        messageUrl
       };
     } catch (error: any) {
       log(`Исключение при отправке изображений в Telegram: ${error.message}`, 'social-publishing');
@@ -657,9 +677,10 @@ export class SocialPublishingWithImgurService {
     if (chatId.startsWith('@')) {
       return `https://t.me/${chatId.substring(1)}${messageId ? `/${messageId}` : ''}`;
     } 
-    // Для числовых ID используем формат с /c/
+    // Для числовых ID используем формат без /c/ для публичных каналов
     else {
-      return `https://t.me/c/${formattedChatId.replace('-100', '')}${messageId ? `/${messageId}` : ''}`;
+      // Важная правка: убираем префикс /c/ из URL, чтобы ссылки работали корректно
+      return `https://t.me/${chatId.replace('-100', '')}${messageId ? `/${messageId}` : ''}`;
     }
   }
   
@@ -966,6 +987,7 @@ export class SocialPublishingWithImgurService {
             log(`Ошибка при отправке изображений в Telegram: ${imagesResult.error}`, 'social-publishing');
           } else {
             log(`Все изображения успешно отправлены в Telegram`, 'social-publishing');
+            log(`URL сообщения с изображениями: ${imagesResult.messageUrl || 'не создан'}`, 'social-publishing');
           }
         }
         
@@ -982,7 +1004,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : `c/${formattedChatId.replace('-100', '')}`}/${textResponse.result?.message_id || ''}`
+            postUrl: this.formatTelegramUrl(chatId, formattedChatId, textResponse.result?.message_id || '')
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -1033,7 +1055,7 @@ export class SocialPublishingWithImgurService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+              postUrl: this.formatTelegramUrl(chatId, formattedChatId)
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -1068,7 +1090,7 @@ export class SocialPublishingWithImgurService {
                     platform: 'telegram',
                     status: 'published',
                     publishedAt: new Date(),
-                    postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                    postUrl: this.formatTelegramUrl(chatId, formattedChatId)
                   };
                 } else {
                   // Если оба метода не работают, отправляем изображение и текст по отдельности
@@ -1093,7 +1115,7 @@ export class SocialPublishingWithImgurService {
                       platform: 'telegram',
                       status: 'published',
                       publishedAt: new Date(),
-                      postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                      postUrl: this.formatTelegramUrl(chatId, formattedChatId)
                     };
                   }
                 }
@@ -1139,7 +1161,7 @@ export class SocialPublishingWithImgurService {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: `https://t.me/${chatId.startsWith('@') ? chatId.substring(1) : formattedChatId.replace('-100', '')}`
+                postUrl: this.formatTelegramUrl(chatId, formattedChatId)
               };
             }
           } catch (backupError: any) {

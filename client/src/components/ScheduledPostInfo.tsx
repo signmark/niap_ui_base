@@ -22,34 +22,25 @@ const formatTelegramUrl = (url: string | null): string | null => {
     
     if (pathParts.length === 0) return url;
     
-    // Проверяем формат, начинающийся с /c/
-    if (pathParts[0] === 'c' && pathParts.length > 1) {
-      // Если следующий элемент начинается с @, это имя канала - убираем /c/ и @
-      if (pathParts[1].startsWith('@')) {
-        const channelName = pathParts[1].substring(1); // Убираем символ @
-        return `https://t.me/${channelName}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+    // Фиксированная обработка URL-адресов Telegram
+    // Пример: https://t.me/c/@ya_delayu_moschno/575 -> https://t.me/ya_delayu_moschno/575
+    if (pathParts[0] === 'c') {
+      // Имя канала следует за /c/
+      let channelName = pathParts.length > 1 ? pathParts[1] : '';
+      
+      // Если имя канала начинается с @, удаляем его
+      if (channelName.startsWith('@')) {
+        channelName = channelName.substring(1);
       }
       
-      // Если числовой ID, всё равно преобразуем в прямой формат без /c/
-      // Проверяем, что это имя канала, а не ID
-      if (!pathParts[1].match(/^\d+$/)) {
-        return `https://t.me/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+      // Если канал имеет числовой ID вместо имени (редко)
+      if (channelName.match(/^\d+$/) && !channelName.startsWith('-100')) {
+        // Это специальный случай, мы сохраняем /c/ для числовых ID
+        return `https://t.me/c/${channelName}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
       }
       
-      // Спорный случай: возможно числовой ID публичного канала
-      // Попробуем угадать имя канала из URL, если оно есть
-      const queryParams = new URLSearchParams(urlObj.search);
-      const channelName = queryParams.get('channel') || queryParams.get('chat');
-      
-      // Если удалось извлечь имя канала из параметров
-      if (channelName) {
-        return `https://t.me/${channelName}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
-      }
-      
-      // Если ничего не помогло, просто возвращаем прямой URL без /c/
-      // Всегда предпочитаем формат https://t.me/username/post_id
-      console.log(`Преобразование сложного Telegram URL: ${url} -> https://t.me/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`);
-      return `https://t.me/${pathParts[1]}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
+      // Обычный случай - канал с именем
+      return `https://t.me/${channelName}${pathParts.length > 2 ? `/${pathParts[2]}` : ''}`;
     } 
     
     // Проверяем, если имя пользователя начинается с @, удаляем символ @
