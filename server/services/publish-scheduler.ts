@@ -282,9 +282,16 @@ export class PublishScheduler {
               title: item.title || null,
               imageUrl: item.image_url,
               videoUrl: item.video_url,
+              additionalImages: item.additional_images || null,
               scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
               createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms
+              socialPlatforms: item.social_platforms,
+              prompt: item.prompt || null,
+              keywords: item.keywords || null,
+              hashtags: item.hashtags || null,
+              links: item.links || null,
+              publishedAt: item.published_at ? new Date(item.published_at) : null,
+              metadata: item.metadata || {}
             }));
             
             scheduledContent = [...scheduledContent, ...contentItems];
