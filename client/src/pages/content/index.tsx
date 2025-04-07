@@ -521,8 +521,8 @@ export default function ContentPage() {
           }
         });
       } else {
-        // Если платформы не выбраны, используем все доступные
-        ['telegram', 'vk'].forEach(platform => {
+        // Если платформы не выбраны, используем все доступные, кроме Facebook (по требованию пользователя)
+        ['telegram', 'vk', 'instagram'].forEach(platform => {
           socialPlatformsData[platform] = {
             status: 'pending',
             publishedAt: null,
