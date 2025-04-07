@@ -567,10 +567,10 @@ export class PublishScheduler {
           content.metadata = {};
         }
         
-        // Для Telegram всегда устанавливаем флаг forceImageTextSeparation
+        // Для Telegram убираем принудительное разделение картинки и текста
         if (platform === 'telegram') {
-          (content.metadata as any).forceImageTextSeparation = true;
-          log(`Установлен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
+          (content.metadata as any).forceImageTextSeparation = false;
+          log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
         }
         
         // Публикуем контент в платформу
