@@ -4,7 +4,8 @@
  */
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { DirectusAuthManager } from '../services/directus/directus-auth';
+// Правильный путь к DirectusAuthManager
+import { DirectusAuthManager } from '../services/directus/directus-auth-manager';
 import { DatabaseStorage } from '../storage';
 
 // Загружаем переменные окружения
@@ -18,21 +19,26 @@ let campaignSettings: any = null;
 
 // Хранилище для API ключей внешних сервисов
 export const apiKeys = {
-  perplexity: process.env.PERPLEXITY_API_KEY || '',
-  apify: process.env.APIFY_API_KEY || '',
-  deepseek: process.env.DEEPSEEK_API_KEY || '',
-  falai: process.env.FALAI_API_KEY || '',
-  claude: process.env.CLAUDE_API_KEY || '',
+  perplexity: '',
+  apify: '',
+  deepseek: '',
+  falai: '',
+  claude: '',
   xmlriver: {
-    userId: process.env.XMLRIVER_USER_ID || '',
-    apiKey: process.env.XMLRIVER_API_KEY || ''
+    userId: '',
+    apiKey: ''
   }
 };
+
+// Определяем jest глобальную функцию beforeAll
+const beforeAll = globalThis.beforeAll || (async (fn) => await fn());
 
 // Проверяем наличие требуемых переменных окружения и инициализируем тесты
 beforeAll(async () => {
   // Устанавливаем таймаут для всех тестов
-  jest.setTimeout(30000);
+  if (globalThis.jest) {
+    globalThis.jest.setTimeout(30000);
+  }
   
   // Проверяем наличие переменных окружения для Directus
   const requiredEnvVars = ['DIRECTUS_ADMIN_EMAIL', 'DIRECTUS_ADMIN_PASSWORD'];
@@ -65,9 +71,14 @@ beforeAll(async () => {
   }
 });
 
+// Определяем jest глобальную функцию afterEach
+const afterEach = globalThis.afterEach || ((fn) => fn());
+
 // Очищаем моки после каждого теста
 afterEach(() => {
-  jest.clearAllMocks();
+  if (globalThis.jest) {
+    globalThis.jest.clearAllMocks();
+  }
 });
 
 /**
@@ -108,7 +119,7 @@ async function initializeDirectusAuth(): Promise<string | null> {
 }
 
 /**
- * Загружает настройки кампании для использования в тестах
+ * Загружает настройки кампании и API ключи для использования в тестах
  */
 async function loadCampaignSettings() {
   if (!testStorage || !directusToken) {
@@ -117,10 +128,10 @@ async function loadCampaignSettings() {
   }
   
   try {
-    console.log(`Загрузка настроек кампании ${testCampaignId}...`);
+    console.log(`Загрузка настроек кампании ${CAMPAIGN_ID}...`);
     
     // Получаем кампанию с настройками через хранилище
-    const campaign = await testStorage.getCampaign(testCampaignId);
+    const campaign = await testStorage.getCampaign(CAMPAIGN_ID);
     
     if (campaign && campaign.socialMediaSettings) {
       console.log('Настройки кампании загружены успешно');
@@ -128,11 +139,89 @@ async function loadCampaignSettings() {
       
       // Сохраняем настройки в глобальных мокированных данных для использования в тестах
       mocks.campaignSettings = campaign.socialMediaSettings;
+      
+      // Загружаем API ключи из таблицы user_api_keys
+      await loadApiKeys();
     } else {
       console.warn('Настройки социальных сетей для кампании не найдены');
     }
   } catch (error) {
     console.error('Ошибка при загрузке настроек кампании:', error);
+  }
+}
+
+/**
+ * Загружает API ключи пользователя из Directus
+ */
+async function loadApiKeys() {
+  if (!directusToken) {
+    console.warn('Невозможно загрузить API ключи: отсутствует токен доступа к Directus');
+    return;
+  }
+  
+  try {
+    console.log('Загрузка API ключей из user_api_keys...');
+    
+    // Выполняем запрос к Directus для получения API ключей
+    const directusUrl = process.env.DIRECTUS_URL || 'https://cms.smm-manager.ru';
+    const response = await axios.get(`${directusUrl}/items/user_api_keys`, {
+      headers: {
+        'Authorization': `Bearer ${directusToken}`
+      }
+    });
+    
+    if (response.data && response.data.data && response.data.data.length > 0) {
+      console.log(`Найдено ${response.data.data.length} записей с API ключами`);
+      
+      // Обрабатываем полученные ключи
+      for (const keyData of response.data.data) {
+        if (keyData.service && keyData.key) {
+          switch (keyData.service.toLowerCase()) {
+            case 'perplexity':
+              apiKeys.perplexity = keyData.key;
+              console.log('Загружен ключ для Perplexity API');
+              break;
+            case 'apify':
+              apiKeys.apify = keyData.key;
+              console.log('Загружен ключ для Apify API');
+              break;
+            case 'deepseek':
+              apiKeys.deepseek = keyData.key;
+              console.log('Загружен ключ для DeepSeek API');
+              break;
+            case 'falai':
+              apiKeys.falai = keyData.key;
+              console.log('Загружен ключ для FAL.AI API');
+              break;
+            case 'claude':
+              apiKeys.claude = keyData.key;
+              console.log('Загружен ключ для Claude AI API');
+              break;
+            case 'xmlriver':
+              // Если для XMLRiver хранится полный ключ в формате userId:apiKey
+              if (keyData.key.includes(':')) {
+                const [userId, apiKey] = keyData.key.split(':');
+                apiKeys.xmlriver.userId = userId;
+                apiKeys.xmlriver.apiKey = apiKey;
+                console.log('Загружен составной ключ для XMLRiver');
+              } else if (keyData.field === 'userId') {
+                apiKeys.xmlriver.userId = keyData.key;
+                console.log('Загружен userId для XMLRiver');
+              } else if (keyData.field === 'apiKey') {
+                apiKeys.xmlriver.apiKey = keyData.key;
+                console.log('Загружен apiKey для XMLRiver');
+              }
+              break;
+            default:
+              console.log(`Найден ключ для неизвестного сервиса: ${keyData.service}`);
+          }
+        }
+      }
+    } else {
+      console.warn('API ключи не найдены в таблице user_api_keys');
+    }
+  } catch (error) {
+    console.error('Ошибка при загрузке API ключей:', error);
   }
 }
 
