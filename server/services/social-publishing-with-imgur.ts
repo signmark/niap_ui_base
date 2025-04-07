@@ -1900,7 +1900,9 @@ export class SocialPublishingWithImgurService {
             keywords: item.keywords || null,
             hashtags: item.hashtags || null,
             prompt: item.prompt || null,
-            metadata: item.metadata || null
+            links: item.links || null,
+            publishedAt: item.published_at ? new Date(item.published_at) : null,
+            metadata: item.metadata || {}
           };
           
           log(`Контент успешно получен через API: ${content.id}, user_id: ${content.userId}`, 'social-publishing');
