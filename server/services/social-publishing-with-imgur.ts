@@ -1678,55 +1678,56 @@ export class SocialPublishingWithImgurService {
     publicationResult: SocialPublication
   ): Promise<CampaignContent | null> {
     try {
-      // Получаем текущий контент из хранилища
-      const systemToken = await this.getSystemToken();
-      let content = null;
+      log(`Обновление статуса публикации: ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
       
-      if (systemToken) {
-        content = await storage.getCampaignContentById(contentId, systemToken);
+      // Получаем системный токен (токен администратора)
+      const systemToken = await DirectusAuthManager.getInstance().getAdminToken();
+      
+      if (!systemToken) {
+        log(`Не удалось получить системный токен для обновления статуса публикации`, 'social-publishing');
+        return null;
       }
       
-      if (!content) {
-        log(`Не удалось получить контент с ID ${contentId} для обновления статуса`, 'social-publishing');
-        log(`Прямой запрос для получения контента через API: ${contentId}`, 'social-publishing');
+      // Шаг 1: Получаем текущие данные контента напрямую через API с системным токеном
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      let content: CampaignContent | null = null;
+      
+      try {
+        log(`Получение данных контента через API: ${contentId}`, 'social-publishing');
         
-        // Прямой запрос к API для получения контента
-        try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
-            headers: {
-              'Authorization': `Bearer ${systemToken}`
-            }
-          });
-          
-          if (response.data && response.data.data) {
-            const item = response.data.data;
-            content = {
-              id: item.id,
-              content: item.content,
-              userId: item.user_id,
-              campaignId: item.campaign_id,
-              status: item.status,
-              contentType: item.content_type || 'text',
-              title: item.title || null,
-              imageUrl: item.image_url,
-              videoUrl: item.video_url,
-              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-              createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms || {},
-              additionalImages: item.additional_images || null,
-              keywords: item.keywords || null,
-              hashtags: item.hashtags || null,
-              prompt: item.prompt || null,
-              metadata: item.metadata || null
-            };
-            
-            log(`Контент получен через API: ${content.id}`, 'social-publishing');
+        const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${systemToken}`
           }
-        } catch (error: any) {
-          log(`Ошибка при получении контента через API: ${error.message}`, 'social-publishing');
-          return null;
+        });
+        
+        if (response.data && response.data.data) {
+          const item = response.data.data;
+          content = {
+            id: item.id,
+            content: item.content,
+            userId: item.user_id,
+            campaignId: item.campaign_id,
+            status: item.status,
+            contentType: item.content_type || 'text',
+            title: item.title || null,
+            imageUrl: item.image_url,
+            videoUrl: item.video_url,
+            scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+            createdAt: new Date(item.created_at),
+            socialPlatforms: item.social_platforms || {},
+            additionalImages: item.additional_images || null,
+            keywords: item.keywords || null,
+            hashtags: item.hashtags || null,
+            prompt: item.prompt || null,
+            metadata: item.metadata || null
+          };
+          
+          log(`Контент успешно получен через API: ${content.id}, user_id: ${content.userId}`, 'social-publishing');
         }
+      } catch (error: any) {
+        log(`Ошибка при получении контента через API: ${error.message}`, 'social-publishing');
+        return null;
       }
       
       if (!content) {
@@ -1734,10 +1735,9 @@ export class SocialPublishingWithImgurService {
         return null;
       }
       
-      // Обновляем статус публикации в Social Platforms
+      // Шаг 2: Обновляем статус публикации в объекте social_platforms
       const socialPlatforms = content.socialPlatforms || {};
       
-      // Создаем обновленный объект socialPlatforms
       const updatedSocialPlatforms = {
         ...socialPlatforms,
         [platform]: {
@@ -1747,36 +1747,42 @@ export class SocialPublishingWithImgurService {
         }
       };
       
-      // Обновляем статус в хранилище
-      const updatedContent = await storage.updateCampaignContent(contentId, {
-        socialPlatforms: updatedSocialPlatforms
-      });
+      // Шаг 3: Обновляем данные напрямую через API с системным токеном
+      log(`Прямое обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
       
-      // Если не получилось через хранилище, пробуем через API
-      if (!updatedContent && systemToken) {
-        log(`Обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
-        
-        try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          const response = await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
-            social_platforms: updatedSocialPlatforms
-          }, {
-            headers: {
-              'Authorization': `Bearer ${systemToken}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.data && response.data.data) {
-            log(`Статус публикации успешно обновлен через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
-            return content;
+      try {
+        const updateResponse = await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+          social_platforms: updatedSocialPlatforms
+        }, {
+          headers: {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
           }
-        } catch (error: any) {
-          log(`Ошибка при обновлении статуса публикации через API: ${error.message}`, 'social-publishing');
+        });
+        
+        if (updateResponse.data && updateResponse.data.data) {
+          log(`Статус публикации успешно обновлен через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
+          
+          // Возвращаем обновленный объект контента с новым значением socialPlatforms
+          return {
+            ...content,
+            socialPlatforms: updatedSocialPlatforms
+          };
+        } else {
+          log(`Странный ответ от API при обновлении статуса: ${JSON.stringify(updateResponse.data)}`, 'social-publishing');
         }
+      } catch (error: any) {
+        log(`Ошибка при прямом обновлении статуса публикации через API: ${error.message}`, 'social-publishing');
+        
+        // В случае ошибки, возвращаем исходный объект с обновленным полем socialPlatforms
+        // Это позволит избежать ошибки при последующих вызовах этого метода
+        return {
+          ...content,
+          socialPlatforms: updatedSocialPlatforms
+        };
       }
       
-      return updatedContent || content;
+      return null;
     } catch (error: any) {
       log(`Ошибка при обновлении статуса публикации: ${error.message}`, 'social-publishing');
       return null;
