@@ -20,6 +20,8 @@ export function registerPublishingRoutes(app: Express): void {
       const { contentId } = req.params;
       const { platforms } = req.body;
 
+      log(`Запрос на ручную публикацию контента ${contentId} в платформы: ${JSON.stringify(platforms)}`, 'api');
+
       // Проверяем параметры
       if (!contentId) {
         return res.status(400).json({ error: 'Не указан ID контента' });
@@ -32,17 +34,20 @@ export function registerPublishingRoutes(app: Express): void {
       // Получаем контент
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
+        log(`Контент ${contentId} не найден при попытке публикации`, 'api');
         return res.status(404).json({ error: 'Контент не найден' });
       }
 
       // Получаем кампанию для настроек социальных сетей
-      const campaign = await storage.getCampaign(parseInt(content.campaignId));
+      const campaign = await storage.getCampaign(content.campaignId);
       if (!campaign) {
+        log(`Кампания ${content.campaignId} не найдена при попытке публикации контента ${contentId}`, 'api');
         return res.status(404).json({ error: 'Кампания не найдена' });
       }
 
       // Настройки социальных сетей
       const socialSettings = campaign.socialMediaSettings || {};
+      log(`Получены настройки социальных сетей для кампании ${content.campaignId}`, 'api');
 
       // Результаты публикации
       const results: Record<string, any> = {};
@@ -50,30 +55,59 @@ export function registerPublishingRoutes(app: Express): void {
       // Публикуем в каждую платформу
       for (const platform of platforms) {
         if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
-          results[platform] = { error: 'Неподдерживаемая платформа' };
+          log(`Неподдерживаемая платформа: ${platform}`, 'api');
+          results[platform] = { 
+            status: 'failed',
+            error: 'Неподдерживаемая платформа' 
+          };
           continue;
         }
 
-        // Публикуем контент в платформу, используя новый сервис с поддержкой Imgur
-        const result = await socialPublishingWithImgurService.publishToPlatform(
-          content,
-          platform as SocialPlatform,
-          socialSettings
-        );
+        log(`Начинаем публикацию в ${platform} для контента ${contentId}`, 'api');
+        
+        try {
+          // Публикуем контент в платформу, используя сервис с поддержкой Imgur
+          const result = await socialPublishingWithImgurService.publishToPlatform(
+            content,
+            platform as SocialPlatform,
+            socialSettings
+          );
+          
+          log(`Результат публикации в ${platform}: ${JSON.stringify(result)}`, 'api');
 
-        // Обновляем статус публикации
-        await socialPublishingWithImgurService.updatePublicationStatus(
-          contentId,
-          platform as SocialPlatform,
-          result
-        );
+          // Обновляем статус публикации
+          await socialPublishingWithImgurService.updatePublicationStatus(
+            contentId,
+            platform as SocialPlatform,
+            result
+          );
 
-        // Сохраняем результат
-        results[platform] = result;
+          // Сохраняем результат
+          results[platform] = result;
+        } catch (platformError: any) {
+          log(`Ошибка при публикации в ${platform}: ${platformError.message}`, 'api');
+          results[platform] = { 
+            status: 'failed',
+            error: platformError.message
+          };
+          
+          // Обновляем статус публикации как неудачный
+          await socialPublishingWithImgurService.updatePublicationStatus(
+            contentId,
+            platform as SocialPlatform,
+            {
+              status: 'failed',
+              error: platformError.message
+            }
+          );
+        }
       }
 
       // Получаем обновленный контент
       const updatedContent = await storage.getCampaignContentById(contentId);
+      
+      // Логируем успешное завершение
+      log(`Ручная публикация контента ${contentId} завершена. Результаты: ${JSON.stringify(results)}`, 'api');
       
       // Возвращаем результат
       return res.status(200).json({ 
