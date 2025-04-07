@@ -1,5 +1,6 @@
 import { directusApi } from "./lib/directus";
 import { directusStorageAdapter } from './services/directus';
+import axios from 'axios';
 import { 
   type Campaign, 
   type InsertCampaign, 
@@ -626,6 +627,64 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  /**
+   * Получает кампанию по ID с настройками для социальных платформ
+   * @param campaignId ID кампании
+   * @returns Объект кампании с настройками или undefined
+   */
+  async getCampaignById(campaignId: string): Promise<any> {
+    try {
+      console.log(`[DatabaseStorage] Getting campaign with settings by ID: ${campaignId}`);
+      
+      // Получаем системный токен администратора
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        console.error('No admin token available');
+        return undefined;
+      }
+      
+      // Получаем кампанию через API
+      const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+        params: {
+          fields: ['id', 'name', 'description', 'user_id', 'settings']
+        },
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      
+      if (!response.data?.data) {
+        console.error(`Campaign with ID ${campaignId} not found`);
+        return undefined;
+      }
+      
+      const item = response.data.data;
+      
+      // Парсим настройки, если они есть
+      let settings = null;
+      if (item.settings) {
+        try {
+          settings = typeof item.settings === 'string' 
+            ? JSON.parse(item.settings) 
+            : item.settings;
+        } catch (parseError) {
+          console.error('Error parsing campaign settings:', parseError);
+        }
+      }
+      
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        userId: item.user_id,
+        settings
+      };
+    } catch (error) {
+      console.error('Error getting campaign with settings from Directus:', error);
+      return undefined;
+    }
+  }
+
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
     try {
       const authToken = await this.getAuthToken(campaign.userId);
@@ -712,6 +771,44 @@ export class DatabaseStorage implements IStorage {
       return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Получает токен авторизации администратора системы
+   * @returns Токен администратора или null
+   */
+  async getAdminToken(): Promise<string | null> {
+    try {
+      // Получаем e-mail и пароль администратора из переменных окружения
+      const email = process.env.DIRECTUS_EMAIL;
+      const password = process.env.DIRECTUS_PASSWORD;
+      
+      if (!email || !password) {
+        console.error('Отсутствуют учетные данные администратора (DIRECTUS_EMAIL, DIRECTUS_PASSWORD)');
+        return null;
+      }
+      
+      console.log(`Получение токена администратора для ${email}`);
+      
+      // Пытаемся авторизоваться как администратор
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
+      });
+      
+      if (response?.data?.data?.access_token) {
+        const token = response.data.data.access_token;
+        console.log('Авторизация администратора успешна, получен токен');
+        return token;
+      } else {
+        console.error('Не удалось получить токен администратора: неожиданный формат ответа');
+        return null;
+      }
+    } catch (error) {
+      console.error('Ошибка при получении токена администратора:', error);
       return null;
     }
   }

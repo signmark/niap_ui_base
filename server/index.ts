@@ -117,9 +117,16 @@ app.use((req, res, next) => {
     console.log("=== SERVER INITIALIZATION START ===");
     log("Starting server initialization...");
 
-    // Регистрируем маршруты для Claude AI в самом начале
+    // Регистрируем тестовые маршруты для проверки Telegram и других API
+    console.log("Registering test API routes...");
+    log("Registering test API routes first...");
+    app.use('/api/test', testRouter);
+    console.log("Test API routes registered");
+    log("Test API routes registered successfully");
+    
+    // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
-    log("Registering Claude AI routes first...");
+    log("Registering Claude AI routes...");
     registerClaudeRoutes(app);
     console.log("Claude AI routes registered");
     log("Claude AI routes registered successfully");
@@ -162,10 +169,10 @@ app.use((req, res, next) => {
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
     
-    // Регистрируем тестовые маршруты Telegram
-    log("Registering Telegram test routes...");
-    app.use('/api/test', testRouter);
-    log("Telegram test routes registered successfully");
+    // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
+    // log("Registering Telegram test routes...");
+    // app.use('/api/test', testRouter);
+    // log("Telegram test routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");

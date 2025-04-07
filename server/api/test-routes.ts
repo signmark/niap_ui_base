@@ -4,6 +4,7 @@
  */
 import express, { Request, Response } from 'express';
 import { telegramService } from '../services/social/telegram-service';
+import { DatabaseStorage } from '../storage';
 
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
@@ -109,6 +110,96 @@ testRouter.get('/telegram-url', (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Ошибка при форматировании URL Telegram:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки HTML-форматирования с использованием настроек кампании
+ * POST /api/test/telegram-html
+ */
+testRouter.post('/telegram-html', async (req: Request, res: Response) => {
+  // Устанавливаем правильный Content-Type для ответа
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const { text, campaignId } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!text || !campaignId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: text и campaignId'
+      });
+    }
+    
+    console.log(`[Test API] Запрос на тестирование HTML-форматирования для кампании ${campaignId}`);
+    
+    // Получаем настройки кампании и токен администратора
+    const storage = new DatabaseStorage();
+    
+    // Получаем токен администратора
+    const adminToken = await storage.getAdminToken();
+    console.log(`[Test API] Токен администратора: ${adminToken ? 'получен' : 'не получен'}`);
+    
+    const campaign = await storage.getCampaignById(campaignId);
+    
+    if (!campaign || !campaign.settings) {
+      return res.status(404).json({
+        success: false,
+        error: 'Кампания не найдена или не имеет настроек'
+      });
+    }
+    
+    console.log(`[Test API] Получены настройки кампании: ${JSON.stringify(campaign.settings)}`);
+    
+    // Проверяем настройки Telegram
+    if (!campaign.settings.telegram || !campaign.settings.telegram.token || !campaign.settings.telegram.chatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'В настройках кампании отсутствуют настройки Telegram'
+      });
+    }
+    
+    // Формируем тестовый контент
+    const testContent = {
+      id: `test-${Date.now()}`,
+      title: 'Тест HTML-форматирования',
+      content: text,
+      contentType: 'text',
+      imageUrl: '',
+      additionalImages: [],
+      status: 'draft',
+      userId: 'test-user',
+      campaignId: campaignId,
+      socialPlatforms: ['telegram'],
+      createdAt: new Date(),
+      hashtags: [],
+      links: [],
+      metadata: {}
+    };
+    
+    // Отправляем тестовое сообщение в Telegram с настройками из кампании
+    const result = await telegramService.publishToTelegram(testContent, {
+      token: campaign.settings.telegram.token,
+      chatId: campaign.settings.telegram.chatId
+    });
+    
+    // Логируем результат для отладки
+    console.log(`[Test API] Результат отправки HTML-сообщения: ${JSON.stringify(result)}`);
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      postUrl: result.postUrl,
+      platform: result.platform,
+      status: result.status,
+      data: result
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при тестировании HTML-форматирования:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Неизвестная ошибка'
