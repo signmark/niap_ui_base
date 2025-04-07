@@ -521,8 +521,9 @@ export default function ContentPage() {
           }
         });
       } else {
-        // Если платформы не выбраны, используем все доступные, кроме Facebook (по требованию пользователя)
-        ['telegram', 'vk', 'instagram'].forEach(platform => {
+        // Если платформы не выбраны, по умолчанию используем только Telegram и VK
+        // (Instagram и Facebook требуют явного выбора)
+        ['telegram', 'vk'].forEach(platform => {
           socialPlatformsData[platform] = {
             status: 'pending',
             publishedAt: null,
@@ -1996,8 +1997,10 @@ export default function ContentPage() {
                   // Публикуем немедленно
                   publishContentMutation.mutate({
                     id: currentContent?.id || '',
-                    platforms: selectedPlatforms // передаем объект платформ, не массив
+                    platforms: selectedPlatforms // передаем объект с выбранными платформами
                   });
+                  
+                  console.log("Запрос на публикацию с выбранными платформами:", selectedPlatforms);
                   setIsScheduleDialogOpen(false);
                 }}
                 disabled={

@@ -10,6 +10,7 @@ import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { registerClaudeRoutes } from './routes-claude';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
+import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { createServer, Server } from "http";
 import path from "path";
@@ -7803,18 +7804,10 @@ https://t.me/channelname/ - description`;
             log(`Публикация контента в ${platform}`, 'social-publish');
             
             let result;
-            if (platform === 'telegram' && userSettings.telegram) {
-              // Публикация в Telegram
-              result = await socialPublishingService.publishToTelegram(campaignContent, userSettings.telegram);
-            } else if (platform === 'vk' && userSettings.vk) {
-              // Публикация в VK
-              result = await socialPublishingService.publishToVk(campaignContent, userSettings.vk);
-            } else if (platform === 'facebook' && userSettings.facebook) {
-              // Публикация в Facebook (не реализована)
-              result = await socialPublishingService.publishToFacebook(campaignContent, userSettings.facebook);
-            } else if (platform === 'instagram' && userSettings.instagram) {
-              // Публикация в Instagram (не реализована)
-              result = await socialPublishingService.publishToInstagram(campaignContent, userSettings.instagram);
+            // Используем новый сервис публикации с поддержкой Imgur для всех платформ
+            if (userSettings) {
+              // Универсальный метод публикации для всех типов платформ
+              result = await socialPublishingWithImgurService.publishToPlatform(campaignContent, platform as any, userSettings);
             } else {
               result = {
                 platform: platform as any,
