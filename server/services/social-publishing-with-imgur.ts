@@ -88,6 +88,119 @@ export class SocialPublishingWithImgurService {
   }
 
   /**
+   * Универсальный метод для отправки изображений в Telegram
+   * @param chatId ID чата Telegram 
+   * @param token Токен бота Telegram
+   * @param images Массив URL изображений
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
+  private async sendImagesToTelegram(
+    chatId: string,
+    token: string,
+    images: string[],
+    baseUrl: string = `https://api.telegram.org/bot${token}`
+  ): Promise<{success: boolean, error?: string, messageIds?: number[]}> {
+    if (!images || images.length === 0) {
+      return {success: true, messageIds: []}; // Нет изображений - нет проблем
+    }
+    
+    // Форматируем chatId, если это необходимо
+    let formattedChatId = chatId;
+    if (chatId.startsWith('@')) {
+      // Это имя пользователя - не нужно форматировать
+    } else if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+      // Для групповых чатов добавляем префикс -100
+      formattedChatId = `-100${chatId}`;
+    }
+    
+    log(`Отправка ${images.length} изображений в Telegram, chatId: ${formattedChatId}`, 'social-publishing');
+    
+    try {
+      // Если одно изображение - отправляем как отдельное фото
+      if (images.length === 1) {
+        const response = await axios.post(`${baseUrl}/sendPhoto`, {
+          chat_id: formattedChatId,
+          photo: images[0],
+          parse_mode: 'HTML'
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 30000,
+          validateStatus: () => true
+        });
+        
+        if (response.status === 200 && response.data.ok) {
+          log(`Изображение успешно отправлено в Telegram`, 'social-publishing');
+          return {
+            success: true,
+            messageIds: [response.data.result.message_id]
+          };
+        } else {
+          log(`Ошибка при отправке изображения в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+          return {
+            success: false,
+            error: `Ошибка API Telegram: ${response.data?.description || 'Неизвестная ошибка'}`
+          };
+        }
+      }
+      
+      // Если несколько изображений - отправляем как медиагруппу
+      // Формируем массив медиа (с ограничением в 10 изображений за раз)
+      const messageIds: number[] = [];
+      
+      // Разбиваем на группы по 10 (лимит Telegram API)
+      for (let i = 0; i < images.length; i += 10) {
+        const mediaGroup = images.slice(i, i + 10).map(img => ({
+          type: 'photo',
+          media: img
+        }));
+        
+        const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
+          chat_id: formattedChatId,
+          media: mediaGroup
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 60000,
+          validateStatus: () => true
+        });
+        
+        if (mediaResponse.status === 200 && mediaResponse.data.ok) {
+          log(`Группа из ${mediaGroup.length} изображений успешно отправлена в Telegram`, 'social-publishing');
+          
+          // Добавляем ID сообщений для возможного создания ссылок
+          if (mediaResponse.data.result && Array.isArray(mediaResponse.data.result)) {
+            mediaResponse.data.result.forEach((msg: any) => {
+              if (msg.message_id) {
+                messageIds.push(msg.message_id);
+              }
+            });
+          }
+        } else {
+          log(`Ошибка при отправке группы изображений в Telegram: ${JSON.stringify(mediaResponse.data)}`, 'social-publishing');
+          return {
+            success: false,
+            error: `Ошибка API Telegram при отправке медиагруппы: ${mediaResponse.data?.description || 'Неизвестная ошибка'}`
+          };
+        }
+      }
+      
+      return {
+        success: true,
+        messageIds
+      };
+    } catch (error: any) {
+      log(`Исключение при отправке изображений в Telegram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        success: false,
+        error: `Исключение при отправке изображений: ${error.message}`
+      };
+    }
+  }
+
+  /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
    * @returns Отформатированный текст для Telegram с поддержкой HTML
@@ -787,60 +900,37 @@ export class SocialPublishingWithImgurService {
         
         log(`Используем краткую подпись для изображения: "${imageCaption}"`, 'social-publishing');
         
-        // Сначала отправляем основное изображение
+        // Собираем все изображения для отправки через универсальный метод
+        const images: string[] = [];
+        
+        // Добавляем основное изображение, если оно есть
         if (processedContent.imageUrl) {
-          try {
-            // Проверяем, является ли изображение URL или локальным файлом
-            const isUrl = processedContent.imageUrl.startsWith('http://') || processedContent.imageUrl.startsWith('https://');
-            log(`Изображение для Telegram - тип: ${isUrl ? 'URL' : 'локальный путь'}, значение: ${processedContent.imageUrl}`, 'social-publishing');
-            
-            // Формируем запрос с учетом типа изображения
-            // ВАЖНО: Отправляем фото вообще БЕЗ ПОДПИСИ
-            // Telegram поддерживает отправку без подписи
-            const photoResponse = await axios.post(
-              `${baseUrl}/sendPhoto`,
-              {
-                chat_id: formattedChatId,
-                photo: processedContent.imageUrl,
-                // Не указываем caption вообще для чистой отправки изображения
-                parse_mode: 'HTML'
-              },
-              {
-                // Если возникают ошибки с timeout, увеличиваем его
-                timeout: 30000,
-                // Для отладки видим полную ошибку
-                validateStatus: () => true
-              }
-            );
-            
-            if (photoResponse.status !== 200 || !photoResponse.data.ok) {
-              log(`Ошибка при отправке основного изображения в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
-            } else {
-              log(`Основное изображение успешно отправлено в Telegram: ${JSON.stringify(photoResponse.data)}`, 'social-publishing');
-            }
-          } catch (error: any) {
-            log(`Исключение при отправке основного изображения в Telegram: ${error.message}`, 'social-publishing');
-            if (error.response) {
-              log(`Данные ответа от Telegram API: ${JSON.stringify(error.response.data)}`, 'social-publishing');
-            }
-          }
+          const isUrl = processedContent.imageUrl.startsWith('http://') || processedContent.imageUrl.startsWith('https://');
+          log(`Основное изображение для Telegram - тип: ${isUrl ? 'URL' : 'локальный путь'}, значение: ${processedContent.imageUrl}`, 'social-publishing');
+          images.push(processedContent.imageUrl);
         }
         
-        // Затем отправляем дополнительные изображения (если есть)
+        // Добавляем дополнительные изображения в общий список
         if (processedContent.additionalImages && processedContent.additionalImages.length > 0) {
-          for (let i = 0; i < processedContent.additionalImages.length; i++) {
-            try {
-              await axios.post(`${baseUrl}/sendPhoto`, {
-                chat_id: formattedChatId,
-                photo: processedContent.additionalImages[i],
-                // Отправляем без подписи, как в VK
-                parse_mode: 'HTML'
-              });
-              
-              log(`Дополнительное изображение ${i+1} успешно отправлено в Telegram`, 'social-publishing');
-            } catch (error: any) {
-              log(`Ошибка при отправке дополнительного изображения ${i+1} в Telegram: ${error.message}`, 'social-publishing');
-            }
+          log(`Добавляем ${processedContent.additionalImages.length} дополнительных изображений в общий список`, 'social-publishing');
+          images.push(...processedContent.additionalImages);
+        }
+        
+        // Отправляем все изображения через универсальный метод
+        if (images.length > 0) {
+          log(`Отправка всех ${images.length} изображений через универсальный метод`, 'social-publishing');
+          
+          const imagesResult = await this.sendImagesToTelegram(
+            formattedChatId,
+            token,
+            images,
+            baseUrl
+          );
+          
+          if (!imagesResult.success) {
+            log(`Ошибка при отправке изображений в Telegram: ${imagesResult.error}`, 'social-publishing');
+          } else {
+            log(`Все изображения успешно отправлены в Telegram`, 'social-publishing');
           }
         }
         
@@ -1070,19 +1160,36 @@ export class SocialPublishingWithImgurService {
             }
           }
           
-          // Отправляем дополнительные изображения (если есть)
+          // Отправляем дополнительные изображения (если есть) всегда группой
           if (processedContent.additionalImages && processedContent.additionalImages.length > 0) {
-            for (let i = 0; i < processedContent.additionalImages.length; i++) {
-              try {
-                await axios.post(`${baseUrl}/sendPhoto`, {
+            try {
+              log(`Отправка группы из ${processedContent.additionalImages.length} дополнительных изображений`, 'social-publishing');
+              
+              // Подготавливаем массив медиа для отправки группой
+              const media = processedContent.additionalImages.map(img => ({
+                type: 'photo',
+                media: img
+              }));
+              
+              // Разбиваем на группы по 10 (лимит Telegram API)
+              for (let i = 0; i < media.length; i += 10) {
+                const mediaGroup = media.slice(i, i + 10);
+                
+                const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
                   chat_id: formattedChatId,
-                  photo: processedContent.additionalImages[i]
-                  // Чистая отправка без подписи
+                  media: mediaGroup
+                }, {
+                  headers: { 'Content-Type': 'application/json' },
+                  timeout: 30000
                 });
                 
-                log(`Дополнительное изображение ${i+1} успешно отправлено в Telegram`, 'social-publishing');
-              } catch (error: any) {
-                log(`Ошибка при отправке дополнительного изображения ${i+1} в Telegram: ${error.message}`, 'social-publishing');
+                log(`Группа изображений ${i / 10 + 1} успешно отправлена в Telegram`, 'social-publishing');
+              }
+            } catch (error: any) {
+              log(`Ошибка при отправке группы изображений в Telegram: ${error.message}`, 'social-publishing');
+              
+              if (error.response) {
+                log(`Ответ API: ${JSON.stringify(error.response.data)}`, 'social-publishing');
               }
             }
           }
