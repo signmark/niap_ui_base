@@ -1609,6 +1609,8 @@ export class SocialPublishingWithImgurService {
       if (processedContent.imageUrl) {
         try {
           log(`Facebook: Публикация с изображением ${processedContent.imageUrl}`, 'social-publishing');
+          log(`Facebook: Отправка фото на ${pageId} с токеном длиной ${token.length} символов`, 'social-publishing');
+          log(`Facebook: Текст подписи (начало): ${text.substring(0, 100)}...`, 'social-publishing');
           
           // Для Facebook можно отправить URL изображения напрямую
           const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/photos`, {
@@ -1618,15 +1620,24 @@ export class SocialPublishingWithImgurService {
           });
           
           if (response.data && response.data.id) {
+            log(`Изображение успешно опубликовано в Facebook, ID: ${response.data.id}`, 'social-publishing');
+            
             return {
               platform: 'facebook',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: `https://www.facebook.com/${response.data.post_id}`
+              postUrl: `https://www.facebook.com/${response.data.post_id || response.data.id}`
             };
+          } else {
+            log(`Странный ответ от Facebook API при публикации фото: ${JSON.stringify(response.data)}`, 'social-publishing');
           }
         } catch (error: any) {
           log(`Ошибка при публикации фото в Facebook: ${error.message}`, 'social-publishing');
+          
+          // Информация об ошибке Facebook API
+          if (error.response && error.response.data) {
+            log(`Facebook API ответ (фото): ${JSON.stringify(error.response.data)}`, 'social-publishing');
+          }
           
           // Если не удалось опубликовать с фото, пробуем только текст
           log(`Пробуем опубликовать только текстовый пост в Facebook`, 'social-publishing');
@@ -1634,24 +1645,40 @@ export class SocialPublishingWithImgurService {
       }
       
       // Публикация обычного текстового поста (если нет фото или не удалось опубликовать с фото)
-      const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/feed`, postData);
-      
-      if (response.data && response.data.id) {
-        log(`Пост успешно опубликован в Facebook, ID: ${response.data.id}`, 'social-publishing');
+      try {
+        log(`Facebook: Отправка текстового поста на ${pageId} с токеном длиной ${token.length} символов`, 'social-publishing');
+        log(`Facebook: Текст поста (начало): ${text.substring(0, 100)}...`, 'social-publishing');
+
+        const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/feed`, postData);
         
-        return {
-          platform: 'facebook',
-          status: 'published',
-          publishedAt: new Date(),
-          postUrl: `https://www.facebook.com/${response.data.id}`
-        };
-      } else {
-        log(`Ошибка при публикации в Facebook: ${JSON.stringify(response.data)}`, 'social-publishing');
+        if (response.data && response.data.id) {
+          log(`Пост успешно опубликован в Facebook, ID: ${response.data.id}`, 'social-publishing');
+          
+          return {
+            platform: 'facebook',
+            status: 'published',
+            publishedAt: new Date(),
+            postUrl: `https://www.facebook.com/${response.data.id}`
+          };
+        } else {
+          log(`Ошибка при публикации в Facebook (пустой ответ): ${JSON.stringify(response.data)}`, 'social-publishing');
+          return {
+            platform: 'facebook',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка при публикации поста в Facebook: ${JSON.stringify(response.data)}`
+          };
+        }
+      } catch (fbError: any) {
+        log(`Ошибка при текстовой публикации в Facebook: ${fbError.message}`, 'social-publishing');
+        if (fbError.response) {
+          log(`Facebook API ответ: ${JSON.stringify(fbError.response.data)}`, 'social-publishing');
+        }
         return {
           platform: 'facebook',
           status: 'failed',
           publishedAt: null,
-          error: `Ошибка при публикации поста в Facebook: ${JSON.stringify(response.data)}`
+          error: `Ошибка при публикации в Facebook: ${fbError.message}`
         };
       }
     } catch (error: any) {
