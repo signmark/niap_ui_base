@@ -458,7 +458,7 @@ export class TelegramService extends BaseSocialService {
    * @returns URL сообщения
    */
   private generatePostUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
-    return this.generatePostUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
+    return this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
   }
   
   /**

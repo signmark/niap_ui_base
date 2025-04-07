@@ -1,56 +1,20 @@
 /**
- * Утилиты для тестирования SMM Менеджера
- * Содержит вспомогательные функции, моки и тестовые данные
+ * Вспомогательные утилиты для тестирования
+ * Содержит общие функции и тестовые данные для модульных тестов
  */
 
-// Константы для тестов
-export const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
-export const USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-
-// Типы контента для тестирования
-export interface TestContentOptions {
-  id?: string;
-  title: string;
-  text: string;
-  image_url: string | null;
-  additional_images?: string[];
-  social_platforms: string[];
-  campaignId: string;
-  userId?: string;
-  scheduledAt?: string;
-}
+// Константы для тестирования
+export const TEST_TELEGRAM_BOT_TOKEN = 'test_telegram_token';
+export const TEST_TELEGRAM_CHAT_ID = '-100123456789';
+export const TEST_VK_API_TOKEN = 'test_vk_token';
+export const TEST_VK_GROUP_ID = 'club123456789';
+export const TEST_USER_ID = 'test-user-id';
+export const TEST_CAMPAIGN_ID = 'test-campaign-id';
 
 /**
- * Генерирует тестовый контент с указанными параметрами
- * @param options Параметры контента
- * @returns Объект с тестовым контентом
- */
-export function generateTestContent(options: TestContentOptions): any {
-  const now = new Date();
-  const futureDate = new Date();
-  futureDate.setHours(futureDate.getHours() + 1);
-  
-  return {
-    id: options.id || `test-content-${Date.now()}`,
-    title: options.title,
-    text: options.text,
-    image_url: options.image_url,
-    additional_images: options.additional_images || [],
-    social_platforms: options.social_platforms,
-    campaign_id: options.campaignId,
-    user_id: options.userId || USER_ID,
-    status: 'draft',
-    created_at: now.toISOString(),
-    updated_at: now.toISOString(),
-    scheduled_at: options.scheduledAt || futureDate.toISOString(),
-    content_type: 'standard'
-  };
-}
-
-/**
- * Возвращает мок успешного ответа Telegram API
- * @param messageId ID сообщения
- * @returns Объект с ответом Telegram API
+ * Генерирует мок ответа Telegram API
+ * @param {number} messageId ID сообщения
+ * @returns {object} Объект с ответом API Telegram
  */
 export function mockTelegramAPIResponse(messageId: number) {
   return {
@@ -58,26 +22,25 @@ export function mockTelegramAPIResponse(messageId: number) {
     result: {
       message_id: messageId,
       from: {
-        id: 7529101043,
+        id: 123456789,
         is_bot: true,
         first_name: 'TestBot',
         username: 'test_bot'
       },
       chat: {
-        id: -1002302366310,
-        title: 'Тестовый канал',
+        id: Number(TEST_TELEGRAM_CHAT_ID),
+        title: 'Test Channel',
         type: 'channel'
       },
-      date: Math.floor(Date.now() / 1000),
-      text: 'Тестовое сообщение'
+      date: Math.floor(Date.now() / 1000)
     }
   };
 }
 
 /**
- * Возвращает мок успешного ответа VK API
- * @param postId ID поста
- * @returns Объект с ответом VK API
+ * Генерирует мок ответа VK API
+ * @param {number} postId ID поста
+ * @returns {object} Объект с ответом API ВКонтакте
  */
 export function mockVkAPIResponse(postId: number) {
   return {
@@ -88,91 +51,151 @@ export function mockVkAPIResponse(postId: number) {
 }
 
 /**
- * Возвращает мок ошибки API
- * @param platform Платформа (vk, telegram и т.д.)
- * @param errorCode Код ошибки
- * @param errorMessage Сообщение об ошибке
- * @returns Объект с ошибкой API
+ * Генерирует тестовый контент для публикации
+ * @param {object} data Данные для создания контента
+ * @returns {object} Объект с тестовым контентом
  */
-export function mockAPIError(platform: string, errorCode: number, errorMessage: string) {
-  switch (platform) {
-    case 'telegram':
-      return {
-        ok: false,
-        error_code: errorCode,
-        description: errorMessage
-      };
-    case 'vk':
-      return {
-        error: {
-          error_code: errorCode,
-          error_msg: errorMessage
-        }
-      };
-    case 'instagram':
-      return {
-        error: {
-          message: errorMessage,
-          code: errorCode
-        }
-      };
-    default:
-      return {
-        error: errorMessage,
-        code: errorCode
-      };
-  }
-}
-
-/**
- * Форматирует URL поста в Telegram
- * @param chatId ID чата
- * @param messageId ID сообщения
- * @returns URL поста
- */
-export function formatTelegramUrl(chatId: string, messageId: number): string {
-  // Удаляем префикс -100 из ID канала, если он есть
-  const formattedChatId = chatId.toString().replace('-100', '');
-  return `https://t.me/c/${formattedChatId}/${messageId}`;
-}
-
-/**
- * Форматирует URL поста во ВКонтакте
- * @param ownerId ID владельца (группы)
- * @param postId ID поста
- * @returns URL поста
- */
-export function formatVkUrl(ownerId: string, postId: number): string {
-  // Если ID группы передан в формате "clubXXXXXX", извлекаем числовой ID
-  let numericOwnerId = ownerId;
-  if (ownerId.startsWith('club')) {
-    numericOwnerId = `-${ownerId.replace('club', '')}`;
-  } else if (!ownerId.startsWith('-')) {
-    numericOwnerId = `-${ownerId}`;
-  }
-  
-  return `https://vk.com/wall${numericOwnerId}_${postId}`;
-}
-
-/**
- * Создает моковый объект для FormData
- * @returns Мок FormData
- */
-export function createFormDataMock() {
+export function generateTestContent(data: {
+  id: string;
+  title: string;
+  text: string;
+  image_url: string | null;
+  additional_images?: string[];
+  social_platforms: string[];
+  status?: string;
+  keywords?: string[];
+  hashtags?: string[];
+}) {
   return {
-    append: jest.fn(),
-    getHeaders: jest.fn(() => ({})),
-    getBuffer: jest.fn(() => Buffer.from('test')),
-    getBoundary: jest.fn(() => 'test-boundary')
+    id: data.id,
+    userId: TEST_USER_ID,
+    campaignId: TEST_CAMPAIGN_ID,
+    title: data.title,
+    content: data.text,
+    contentType: 'post',
+    imageUrl: data.image_url,
+    additionalImages: data.additional_images || null,
+    videoUrl: null,
+    status: data.status || 'draft',
+    prompt: null,
+    scheduledAt: null,
+    publishedAt: null,
+    socialPlatforms: data.social_platforms,
+    hashtags: data.hashtags || [],
+    keywords: data.keywords || [],
+    links: [],
+    metadata: {},
+    createdAt: new Date()
   };
 }
 
 /**
- * Возвращает заголовки для имитации multipart/form-data запроса
- * @returns Заголовки запроса
+ * Генерирует HTML-форматированный текст для тестирования
+ * @returns {string} HTML-форматированный текст
  */
-export function getMultipartHeaders() {
+export function generateFormattedHtmlContent() {
+  return `<b>Жирный текст</b>
+<i>Наклонный текст</i>
+<u>Подчеркнутый текст</u>
+<s>Зачеркнутый текст</s>
+<code>Моноширинный текст</code>
+<a href="https://example.com/">Ссылка</a>
+
+Поддержка списков:
+• Пункт 1
+• Пункт 2
+• Пункт 3
+
+И абзацев с переносами строк.`;
+}
+
+/**
+ * Создает мок для функций авторизации и получения токена
+ * @returns {object} Объект с моками для авторизации
+ */
+export function mockAuthFunctions() {
+  const mockGetToken = jest.fn().mockResolvedValue('test_token');
+  const mockLoginAdmin = jest.fn().mockResolvedValue({
+    success: true,
+    token: 'test_admin_token'
+  });
+  
   return {
-    'Content-Type': 'multipart/form-data; boundary=test-boundary'
+    getToken: mockGetToken,
+    loginAdmin: mockLoginAdmin
+  };
+}
+
+/**
+ * Создает мок для API-ключей 
+ * @returns {object} Объект с тестовыми API ключами
+ */
+export function mockApiKeys() {
+  return {
+    falAiApiKey: 'test_fal_ai_key',
+    openAiApiKey: 'test_openai_key',
+    claudeApiKey: 'test_claude_key',
+    deepseekoApiKey: 'test_deepseek_key',
+    stabilityAiKey: 'test_stability_key'
+  };
+}
+
+/**
+ * Создает тестовую директорию и файлы для тестирования
+ * @param {string} testDir Путь к тестовой директории
+ * @returns {Promise<void>}
+ */
+export async function createTestDirectory(testDir: string) {
+  const fs = require('fs').promises;
+  const path = require('path');
+  
+  try {
+    await fs.mkdir(testDir, { recursive: true });
+    await fs.writeFile(path.join(testDir, 'test-image.jpg'), 'fake image data');
+    return true;
+  } catch (error) {
+    console.error('Ошибка при создании тестовой директории:', error);
+    return false;
+  }
+}
+
+/**
+ * Преобразует объект в FormData для тестирования отправки файлов
+ * @param {object} data Объект с данными
+ * @returns {FormData} FormData объект
+ */
+export function createFormDataMock(data: Record<string, any>) {
+  const FormData = require('form-data');
+  const formData = new FormData();
+  
+  Object.entries(data).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+  
+  return formData;
+}
+
+/**
+ * Генерирует мок настроек социальных сетей для кампании
+ * @returns {object} Объект с настройками социальных сетей
+ */
+export function mockCampaignSocialSettings() {
+  return {
+    telegram: {
+      token: TEST_TELEGRAM_BOT_TOKEN,
+      chatId: TEST_TELEGRAM_CHAT_ID
+    },
+    vk: {
+      token: TEST_VK_API_TOKEN,
+      groupId: TEST_VK_GROUP_ID
+    },
+    instagram: {
+      token: 'test_instagram_token',
+      businessAccountId: '123456789'
+    },
+    facebook: {
+      token: 'test_facebook_token',
+      pageId: '123456789'
+    }
   };
 }
