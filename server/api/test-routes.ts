@@ -43,9 +43,16 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
       chatId
     });
     
-    // Возвращаем результат
+    // Логируем результат для отладки
+    console.log(`[Test API] Результат отправки в Telegram: ${JSON.stringify(result)}`);
+    
+    // Возвращаем обработанный результат
     return res.json({
       success: true,
+      messageId: result.messageId,
+      postUrl: result.postUrl,
+      platform: result.platform,
+      status: result.status,
       data: result
     });
   } catch (error: any) {
