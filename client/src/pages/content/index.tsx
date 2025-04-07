@@ -1286,13 +1286,31 @@ export default function ContentPage() {
                                 {/* Dates */}
                                 <div className="mt-2 pt-1.5 border-t text-xs text-muted-foreground flex flex-wrap gap-x-3">
                                   {content.publishedAt && (
-                                    <span>Опубл.: {formatDate(content.publishedAt)}</span>
+                                    <CreationTimeDisplay
+                                      createdAt={content.publishedAt}
+                                      label="Опубл.:"
+                                      showIcon={false}
+                                      iconType="check"
+                                      className="text-xs"
+                                    />
                                   )}
                                   {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
-                                    <span>План: {formatDate(content.scheduledAt)}</span>
+                                    <CreationTimeDisplay
+                                      createdAt={content.scheduledAt}
+                                      label="План:"
+                                      showIcon={false}
+                                      iconType="clock"
+                                      className="text-xs"
+                                    />
                                   )}
                                   {!content.publishedAt && !content.scheduledAt && (
-                                    <span>Создано: {formatDate(content.createdAt || new Date())}</span>
+                                    <CreationTimeDisplay
+                                      createdAt={content.createdAt || new Date()}
+                                      label="Создано:"
+                                      showIcon={false}
+                                      iconType="calendar"
+                                      className="text-xs"
+                                    />
                                   )}
                                 </div>
                               </div>
