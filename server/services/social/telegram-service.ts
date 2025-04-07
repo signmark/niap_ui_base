@@ -458,7 +458,7 @@ export class TelegramService extends BaseSocialService {
    * @returns URL сообщения
    */
   private generatePostUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
-    return this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
+    return this.generatePostUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
   }
   
   /**
@@ -720,7 +720,7 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
             };
           } catch (error: any) {
             log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -772,7 +772,7 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.formatTelegramUrl(chatId, formattedChatId, response.data?.result?.message_id)
+              postUrl: this.generatePostUrl(chatId, formattedChatId, response.data?.result?.message_id)
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -812,7 +812,7 @@ export class TelegramService extends BaseSocialService {
                     platform: 'telegram',
                     status: 'published',
                     publishedAt: new Date(),
-                    postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                    postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
                   };
                 } else {
                   // Если оба метода не работают, отправляем изображение и текст по отдельности
@@ -844,7 +844,7 @@ export class TelegramService extends BaseSocialService {
                       platform: 'telegram',
                       status: 'published',
                       publishedAt: new Date(),
-                      postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                      postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
                     };
                   }
                 }
@@ -895,7 +895,7 @@ export class TelegramService extends BaseSocialService {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
               };
             }
           } catch (backupError: any) {
@@ -1031,7 +1031,7 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId)
+              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
             };
           } else {
             return {
@@ -1061,7 +1061,7 @@ export class TelegramService extends BaseSocialService {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
               };
             } else {
               log(`Ошибка при отправке текста: ${textResponse.error}`, 'social-publishing');
