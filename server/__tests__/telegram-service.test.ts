@@ -10,6 +10,8 @@ import {
   mockTelegramAPIResponse, 
   generateTestContent, 
   generateFormattedHtmlContent,
+  generateUnclosedHtmlContent,
+  generateFixedHtmlContent,
   TEST_TELEGRAM_BOT_TOKEN,
   TEST_TELEGRAM_CHAT_ID
 } from './test-utils';
@@ -192,6 +194,56 @@ describe('TelegramService', () => {
           parse_mode: 'HTML'
         })
       );
+    });
+    
+    it('должен автоматически закрывать незакрытые HTML теги', async () => {
+      const messageId = 12349;
+      const unclosedText = generateUnclosedHtmlContent();
+      const expectedFixedText = generateFixedHtmlContent();
+      
+      // Первый запрос возвращает ошибку из-за незакрытых тегов, второй успешен
+      mockedAxios.post.mockImplementationOnce(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({
+            status: 400,
+            data: {
+              ok: false,
+              error_code: 400,
+              description: "Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+            }
+          });
+        }
+        return Promise.resolve({ data: {} });
+      }).mockImplementationOnce(url => {
+        if (url.includes('sendMessage')) {
+          return Promise.resolve({ data: mockTelegramAPIResponse(messageId) });
+        }
+        return Promise.resolve({ data: {} });
+      });
+      
+      // Создаем тестовый контент с незакрытыми HTML тегами
+      const testContent = generateTestContent({
+        id: 'test-unclosed-tags-content-id',
+        title: 'Test Unclosed HTML Tags',
+        text: unclosedText,
+        image_url: null,
+        social_platforms: ['telegram']
+      });
+      
+      // Публикуем контент с незакрытыми тегами
+      const result = await (telegramService as any).publishContent(testContent);
+      
+      // Проверяем что несмотря на ошибку в первой попытке, метод исправил теги и успешно опубликовал
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe(messageId);
+      
+      // Проверяем, что вторая попытка была вызвана с исправленным HTML
+      const calls = mockedAxios.post.mock.calls;
+      const secondCallParams = calls[1][1]; // Второй вызов, параметры запроса
+      
+      // Проверяем что текст был исправлен с добавлением закрывающих тегов
+      expect((telegramService as any).formatTextForTelegram(unclosedText))
+        .toMatch(/\<\/[bi]>|\<\/[us]>|\<\/code>|\<\/a>/i); // Должен содержать закрывающие теги
     });
   });
   
