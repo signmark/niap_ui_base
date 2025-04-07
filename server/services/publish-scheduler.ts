@@ -373,8 +373,9 @@ export class PublishScheduler {
   /**
    * Публикует контент в выбранные социальные сети
    * @param content Контент для публикации
+   * @param forcePublish Принудительная публикация, игнорируя текущий статус (по умолчанию false)
    */
-  async publishContent(content: CampaignContent) {
+  async publishContent(content: CampaignContent, forcePublish: boolean = false) {
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
