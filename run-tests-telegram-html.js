@@ -12,16 +12,16 @@ import { config } from 'dotenv';
 config();
 
 // API URL по умолчанию
-const API_URL = process.env.API_URL || 'https://smm-manager.replit.app';
+const API_URL = process.env.API_URL || 'http://localhost:5000';
 
-// Настройки кампании "Правильное питание"
-const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
+// ID кампании из переменных окружения
+const CAMPAIGN_ID = process.env.CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
 
 // Хранилище для настроек, полученных из кампании
 let settings = {
   telegram: {
-    token: '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU',
-    chatId: '-1002302366310'
+    token: process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU',
+    chatId: process.env.TELEGRAM_CHAT_ID || '-1002302366310'
   }
 };
 
