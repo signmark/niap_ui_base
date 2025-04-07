@@ -244,18 +244,28 @@ export class PublishScheduler {
         log('Поиск запланированных публикаций через API с системным токеном', 'scheduler');
         
         try {
-          // Прямой запрос без параметров, точно как в успешном тестовом скрипте
+          // Прямой запрос с параметрами фильтрации
           const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          log(`Прямой запрос axios к ${directusUrl}/items/campaign_content без фильтров`, 'scheduler');
+          log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
           
           const headers = {
             'Authorization': `Bearer ${systemToken}`,
             'Content-Type': 'application/json'
           };
           
-          // Простой запрос без параметров
+          // Запрос с фильтром по статусу "scheduled"
           const response = await axios.get(`${directusUrl}/items/campaign_content`, {
-            headers
+            headers,
+            params: {
+              filter: JSON.stringify({
+                status: {
+                  _eq: 'scheduled'
+                },
+                scheduled_at: {
+                  _nnull: true
+                }
+              })
+            }
           });
           
           if (response?.data?.data) {
@@ -350,6 +360,20 @@ export class PublishScheduler {
       
       // Текущее время
       const now = new Date();
+      
+      // Детальное логирование каждого запланированного элемента
+      scheduledContent.forEach(content => {
+        if (content.scheduledAt) {
+          const scheduledTime = new Date(content.scheduledAt);
+          const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+          
+          log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()}, ` +
+              `текущее время: ${now.toISOString()}, ` + 
+              `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+        } else {
+          log(`Контент ID ${content.id} "${content.title}" не имеет времени публикации`, 'scheduler');
+        }
+      });
       
       // Фильтруем контент, который пора публиковать
       const contentToPublish = scheduledContent.filter(content => {
