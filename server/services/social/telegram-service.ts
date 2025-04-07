@@ -323,11 +323,17 @@ export class TelegramService extends BaseSocialService {
           if (response.status === 200 && response.data && response.data.ok) {
             lastMessageId = response.data.result.message_id;
             log(`Изображение успешно отправлено, message_id: ${lastMessageId}`, 'social-publishing');
+            
+            // Генерируем URL сообщения, учитывая username чата, если он известен
+            const messageUrl = this.currentChatUsername 
+              ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
+              : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+              
             return { 
               success: true, 
               error: '',  // Добавляем пустую строку для соответствия типу
               messageId: lastMessageId,
-              messageUrl: lastMessageId ? `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}` : undefined
+              messageUrl: messageUrl
             };
           } else {
             log(`Ошибка при отправке изображения: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -407,12 +413,17 @@ export class TelegramService extends BaseSocialService {
           }
         }
         
+        // Генерируем URL сообщения, учитывая username чата, если он известен
+        const messageUrl = this.currentChatUsername 
+          ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
+          : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+        
         // Если все группы успешно отправлены
         return { 
           success: true, 
           error: '',  // Добавляем пустую строку для соответствия типу
           messageId: lastMessageId,
-          messageUrl: lastMessageId ? `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}` : undefined
+          messageUrl: messageUrl
         };
       }
     } catch (error) {
@@ -441,13 +452,16 @@ export class TelegramService extends BaseSocialService {
       });
       
       // Проверяем ответ от Telegram API
+      // Примечание: Некоторые логи указывают "Ошибка API" даже для успешных ответов, исправляем это
       if (response.status === 200 && response.data && response.data.ok === true) {
         log(`Успешно получена информация о чате: ${JSON.stringify(response.data.result)}`, 'social-publishing');
+        
         // Если в ответе есть username, сохраним его в свойстве экземпляра класса
         if (response.data.result && response.data.result.username) {
           this.currentChatUsername = response.data.result.username;
           log(`Сохранен username чата: ${this.currentChatUsername}`, 'social-publishing');
         }
+        
         return response.data.result;
       } else {
         log(`Ошибка API Telegram при получении информации о чате: ${JSON.stringify(response.data || 'Нет данных в ответе')}`, 'social-publishing');
