@@ -90,7 +90,7 @@ export class InstagramService extends BaseSocialService {
    */
   async publishToInstagram(
     content: CampaignContent,
-    instagramSettings: { token: string; businessAccountId: string }
+    instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null }
   ): Promise<SocialPublication> {
     try {
       // Проверяем наличие необходимых параметров
@@ -100,7 +100,7 @@ export class InstagramService extends BaseSocialService {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Missing Instagram API settings (token or businessAccountId)'
+          error: 'Отсутствуют настройки Instagram API (токен или ID бизнес-аккаунта)'
         };
       }
       
@@ -121,7 +121,7 @@ export class InstagramService extends BaseSocialService {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Missing image for Instagram post'
+          error: 'Отсутствует изображение для публикации в Instagram. Необходимо добавить изображение.'
         };
       }
       
@@ -291,7 +291,7 @@ export class InstagramService extends BaseSocialService {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: `Exception while posting to Instagram: ${error.message}`
+          error: `Ошибка при публикации в Instagram: ${error.message}`
         };
       }
     } catch (error: any) {
@@ -301,7 +301,7 @@ export class InstagramService extends BaseSocialService {
         platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        error: `General error: ${error.message}`
+        error: `Общая ошибка при публикации: ${error.message}`
       };
     }
   }
@@ -323,19 +323,36 @@ export class InstagramService extends BaseSocialService {
         platform: platform, 
         status: 'failed',
         publishedAt: null,
-        error: 'Unsupported platform for InstagramService'
+        error: 'Неподдерживаемая платформа для Instagram-сервиса'
       };
     }
 
-    if (!settings.instagram || !settings.instagram.token || !settings.instagram.businessAccountId) {
+    // Проверяем наличие настроек и логируем их для дебага
+    const instagramSettings = settings.instagram || { token: null, accessToken: null, businessAccountId: null };
+    const hasToken = Boolean(instagramSettings.token);
+    const hasBusinessAccountId = Boolean(instagramSettings.businessAccountId);
+    
+    log(`InstagramService.publishToPlatform: Настройки: hasToken=${hasToken}, hasBusinessAccountId=${hasBusinessAccountId}`, 'social-publishing');
+
+    if (!hasToken || !hasBusinessAccountId) {
       return {
         platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        error: 'Missing Instagram API configuration'
+        error: 'Отсутствуют настройки для Instagram (токен или ID бизнес-аккаунта). Убедитесь, что настройки заданы в кампании.'
       };
     }
 
+    // Проверка на undefined для избежания ошибки типизации
+    if (!settings.instagram) {
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для Instagram'
+      };
+    }
+    
     return this.publishToInstagram(content, settings.instagram);
   }
 }

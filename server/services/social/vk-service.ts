@@ -56,7 +56,7 @@ export class VkService extends BaseSocialService {
    */
   async publishToVk(
     content: CampaignContent,
-    vkSettings: { token: string; groupId: string }
+    vkSettings: { token: string | null; groupId: string | null }
   ): Promise<SocialPublication> {
     try {
       // Проверяем наличие необходимых параметров
@@ -406,16 +406,23 @@ export class VkService extends BaseSocialService {
       };
     }
 
-    if (!settings.vk || !settings.vk.token || !settings.vk.groupId) {
+    // Проверяем наличие настроек и логируем их для дебага
+    const vkSettings = settings.vk || { token: null, groupId: null };
+    const hasToken = Boolean(vkSettings.token);
+    const hasGroupId = Boolean(vkSettings.groupId);
+    
+    log(`VkService.publishToPlatform: Настройки: hasToken=${hasToken}, hasGroupId=${hasGroupId}`, 'social-publishing');
+
+    if (!hasToken || !hasGroupId) {
       return {
         platform: 'vk',
         status: 'failed',
         publishedAt: null,
-        error: 'Missing VK API configuration'
+        error: 'Отсутствуют настройки для ВКонтакте (токен или ID группы). Убедитесь, что настройки заданы в кампании.'
       };
     }
 
-    return this.publishToVk(content, settings.vk);
+    return this.publishToVk(content, vkSettings);
   }
 }
 

@@ -388,51 +388,47 @@ export class TelegramService extends BaseSocialService {
    * @returns Корректно форматированный URL
    */
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
-    // Определяем базовый URL для публичных каналов или приватных чатов
-    let baseUrl = '';
+    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
     
-    // Если это username (начинается с @), удаляем @ и не добавляем /c/
+    // Если ID сообщения не указан, вернем дефолтный URL Telegram
+    if (!messageId) {
+      log(`messageId не указан, возвращаем базовый URL для Telegram`, 'social-publishing');
+      
+      // Если это username (начинается с @), можем вернуть URL на канал
+      if (chatId.startsWith('@')) {
+        return `https://t.me/${chatId.substring(1)}`;
+      }
+      
+      // Для всех остальных случаев без messageId возвращаем базовый URL
+      return 'https://t.me';
+    }
+    
+    // Обработка случая с username (@channel)
     if (chatId.startsWith('@')) {
-      baseUrl = `https://t.me/${chatId.substring(1)}`;
-      // Добавляем ID сообщения, если оно указано
-      if (messageId) {
-        return `${baseUrl}/${messageId}`;
-      }
-    }
-    // Для числовых ID требуется специальная обработка
-    else {
-      // Проверка на супергруппы/каналы (начинаются с -100)
-      if (chatId.startsWith('-100')) {
-        // Извлекаем числовой ID (убираем префикс -100)
-        const channelId = chatId.substring(4);
-        log(`Форматирование Telegram URL: числовой ID супергруппы/канала ${chatId} -> ${channelId}`, 'social-publishing');
-        
-        // Если есть ID сообщения, формируем полную ссылку
-        if (messageId) {
-          return `https://t.me/c/${channelId}/${messageId}`;
-        }
-        // Если нет ID сообщения, то такая ссылка на канал без username невозможна
-        return `https://t.me`;
-      } 
-      // Обычные группы (начинаются с -)
-      else if (chatId.startsWith('-')) {
-        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
-        // Для обычных групп без username прямых ссылок на сообщения нет
-        return 'https://t.me';
-      } 
-      // Личные чаты или боты (числовой ID без минуса)
-      else {
-        log(`Форматирование Telegram URL: чат/бот с ID ${chatId}`, 'social-publishing');
-        baseUrl = `https://t.me`;
-        
-        // Добавляем ID сообщения, если оно указано
-        if (messageId) {
-          return `${baseUrl}/c/${chatId}/${messageId}`;
-        }
-      }
+      const username = chatId.substring(1);
+      const url = `https://t.me/${username}/${messageId}`;
+      log(`Сформирован URL для канала с username: ${url}`, 'social-publishing');
+      return url;
     }
     
-    return baseUrl;
+    // Обработка случая с супергруппой/каналом (-100...)
+    if (chatId.startsWith('-100')) {
+      // Для публичных супергрупп/каналов используем формат с /c/
+      const channelId = chatId.substring(4); // Удаляем префикс -100
+      const url = `https://t.me/c/${channelId}/${messageId}`;
+      log(`Сформирован URL для супергруппы/канала: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Обработка обычных групп (начинаются с -)
+    if (chatId.startsWith('-')) {
+      log(`Для обычной группы ${chatId} публичных URL нет, возвращаем базовый URL`, 'social-publishing');
+      return 'https://t.me';
+    }
+    
+    // Личные чаты или боты (числовой ID без минуса)
+    log(`Сформирован URL для личного чата/бота: https://t.me/c/${chatId}/${messageId}`, 'social-publishing');
+    return `https://t.me/c/${chatId}/${messageId}`;
   }
 
   /**
@@ -991,7 +987,7 @@ export class TelegramService extends BaseSocialService {
         platform: 'telegram',
         status: 'failed',
         publishedAt: null,
-        error: 'Missing Telegram API configuration'
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании.'
       };
     }
 
