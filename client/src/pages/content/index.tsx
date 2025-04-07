@@ -504,47 +504,32 @@ export default function ContentPage() {
   // Мутация для немедленной публикации контента
   const publishContentMutation = useMutation({
     mutationFn: async ({ id, platforms }: { id: string, platforms?: {[key: string]: boolean} }) => {
-      // Подготовка данных о платформах
-      const socialPlatformsData: Record<string, any> = {};
+      // Подготовка данных о выбранных платформах
+      let platformsToPublish: string[] = [];
       
-      // Если есть выбранные платформы, настраиваем их в JSON-структуру
+      // Если есть выбранные платформы, преобразуем их в массив
       if (platforms) {
         Object.entries(platforms).forEach(([platform, isEnabled]) => {
           if (isEnabled) {
-            socialPlatformsData[platform] = {
-              status: 'pending',
-              publishedAt: null,
-              postId: null,
-              postUrl: null,
-              error: null
-            };
+            platformsToPublish.push(platform);
           }
         });
       } else {
         // Если платформы не выбраны, по умолчанию используем только Telegram и VK
         // (Instagram и Facebook требуют явного выбора)
-        ['telegram', 'vk'].forEach(platform => {
-          socialPlatformsData[platform] = {
-            status: 'pending',
-            publishedAt: null,
-            postId: null,
-            postUrl: null,
-            error: null
-          };
-        });
+        platformsToPublish = ['telegram', 'vk'];
       }
 
       console.log("🚀 Подготовленные данные для прямой публикации:");
       console.log("ID контента:", id);
-      console.log("Выбранные платформы:", platforms || "Все доступные");
-      console.log("Данные socialPlatforms для сохранения:", JSON.stringify(socialPlatformsData, null, 2));
+      console.log("Выбранные платформы:", platformsToPublish.join(', '));
 
-      // Отправляем запрос на публикацию в социальные сети
-      return await apiRequest(`/api/content/${id}/publish-social`, { 
+      // Используем маршрут /api/publish/:contentId для публикации
+      // Этот маршрут использует тот же механизм, что и планировщик
+      return await apiRequest(`/api/publish/${id}`, { 
         method: 'POST',
         data: {
-          // Передаем массив ключей платформ, а не объект
-          platforms: Object.keys(socialPlatformsData)
+          platforms: platformsToPublish
         }
       });
     },
