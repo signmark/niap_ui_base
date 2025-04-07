@@ -46,6 +46,7 @@ import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
 import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
+import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
   PopoverContent, 
@@ -2285,76 +2286,29 @@ export default function ContentPage() {
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {previewContent?.publishedAt && (
-                  <div className="flex items-center gap-1">
-                    <CheckCircle2 size={14} />
-                    <span>Опубликовано: {
-                      (() => {
-                        try {
-                          // Получение даты из UTC и преобразование к локальному времени
-                          let dateStr = typeof previewContent.publishedAt === 'string' 
-                            ? previewContent.publishedAt 
-                            : (previewContent.publishedAt instanceof Date 
-                                ? previewContent.publishedAt.toISOString() 
-                                : String(previewContent.publishedAt));
-                              
-                          // JavaScript автоматически преобразует UTC в локальное время пользователя
-                          const localDate = new Date(dateStr);
-                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                        } catch (error) {
-                          console.error("Ошибка форматирования даты публикации:", error, previewContent.publishedAt);
-                          return "Некорректная дата";
-                        }
-                      })()
-                    }</span>
-                  </div>
+                  <CreationTimeDisplay 
+                    createdAt={previewContent.publishedAt}
+                    label="Опубликовано:"
+                    showIcon={true}
+                    iconType="check"
+                    className="flex items-center gap-1"
+                  />
                 )}
                 {previewContent?.scheduledAt && !previewContent?.publishedAt && (
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    <span>Запланировано: {
-                      (() => {
-                        try {
-                          // Получение даты из UTC и преобразование к локальному времени
-                          let dateStr = typeof previewContent.scheduledAt === 'string' 
-                            ? previewContent.scheduledAt 
-                            : (previewContent.scheduledAt instanceof Date 
-                                ? previewContent.scheduledAt.toISOString() 
-                                : String(previewContent.scheduledAt));
-                                
-                          // JavaScript автоматически преобразует UTC в локальное время пользователя
-                          const localDate = new Date(dateStr);
-                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                        } catch (error) {
-                          console.error("Ошибка форматирования даты публикации:", error, previewContent.scheduledAt);
-                          return "Некорректная дата";
-                        }
-                      })()
-                    }</span>
-                  </div>
+                  <CreationTimeDisplay 
+                    createdAt={previewContent.scheduledAt}
+                    label="Запланировано:"
+                    showIcon={true}
+                    className="flex items-center gap-1"
+                  />
                 )}
                 {previewContent?.createdAt && (
-                  <div className="flex items-center gap-1">
-                    <CalendarDays size={14} />
-                    <span>Создано: {
-                      (() => {
-                        try {
-                          // Получение даты из UTC и преобразование к локальному времени
-                          let dateStr = typeof previewContent.createdAt === 'string' 
-                            ? previewContent.createdAt 
-                            : (previewContent.createdAt instanceof Date 
-                                ? previewContent.createdAt.toISOString() 
-                                : String(previewContent.createdAt));
-                                
-                          // JavaScript автоматически преобразует UTC в локальное время пользователя
-                          const localDate = new Date(dateStr);
-                          return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
-                        } catch (error) {
-                          console.error("Ошибка форматирования даты создания:", error, previewContent.createdAt);
-                          return "Некорректная дата";
-                        }
-                      })()
-                    }</span>
-                  </div>
+                  <CreationTimeDisplay 
+                    createdAt={previewContent.createdAt}
+                    label="Создано:"
+                    showIcon={true}
+                    className="flex items-center gap-1"
+                  />
                 )}
               </div>
             )}
