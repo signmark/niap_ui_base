@@ -21,6 +21,7 @@ import FalAiTest from "@/pages/test/fal-ai-test";
 import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
 import UniversalImageGenTest from "@/pages/test/universal-image-gen";
+import TimeDisplayTest from "@/pages/test/time-display-test";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import NotFound from "@/pages/not-found";
