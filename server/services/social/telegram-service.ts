@@ -72,41 +72,8 @@ export class TelegramService extends BaseSocialService {
       // Удаляем все неподдерживаемые HTML-теги, но сохраняем их содержимое
       formattedText = formattedText.replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
       
-      // Проверяем правильность HTML (закрытые теги)
-      const openTags = (formattedText.match(/<([a-z]+)[^>]*>/gi) || []).map(tag => 
-        tag.replace(/<([a-z]+)[^>]*>/i, '$1').toLowerCase()
-      );
-      
-      const closeTags = (formattedText.match(/<\/([a-z]+)>/gi) || []).map(tag => 
-        tag.replace(/<\/([a-z]+)>/i, '$1').toLowerCase()
-      );
-      
-      // Если количество открывающих и закрывающих тегов не совпадает,
-      // может возникнуть ошибка при отправке. Логируем это.
-      if (openTags.length !== closeTags.length) {
-        log(`Предупреждение: несбалансированные HTML-теги в тексте для Telegram. Открывающих: ${openTags.length}, закрывающих: ${closeTags.length}`, 'social-publishing');
-        
-        // Анализируем, какие теги не сбалансированы
-        const tagCounts = new Map<string, number>();
-        openTags.forEach(tag => {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        });
-        closeTags.forEach(tag => {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) - 1);
-        });
-        
-        // Показываем несбалансированные теги
-        let imbalancedTags = '';
-        tagCounts.forEach((count, tag) => {
-          if (count !== 0) {
-            imbalancedTags += `${tag}(${count > 0 ? '+' : ''}${count}) `;
-          }
-        });
-        
-        if (imbalancedTags) {
-          log(`Несбалансированные теги: ${imbalancedTags}`, 'social-publishing');
-        }
-      }
+      // Исправляем незакрытые теги
+      formattedText = this.fixUnclosedTags(formattedText);
       
       // Удаление невидимых символов
       formattedText = formattedText
@@ -143,6 +110,78 @@ export class TelegramService extends BaseSocialService {
       }
       return content;
     }
+  }
+  
+  /**
+   * Исправляет незакрытые HTML-теги в тексте
+   * @param text Текст с HTML-разметкой
+   * @returns Текст с исправленными незакрытыми тегами
+   */
+  private fixUnclosedTags(text: string): string {
+    // Определяем поддерживаемые Telegram теги
+    const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+    
+    // Создаем стек для отслеживания открытых тегов
+    const stack: string[] = [];
+    
+    // Регулярное выражение для поиска всех HTML-тегов
+    const tagRegex = /<\/?([a-z]+)[^>]*>/gi;
+    let match;
+    let processedText = text;
+    let allTags: { tag: string, isClosing: boolean, position: number }[] = [];
+    
+    // Находим все теги и их позиции
+    while ((match = tagRegex.exec(text)) !== null) {
+      const fullTag = match[0];
+      const tagName = match[1].toLowerCase();
+      
+      // Проверяем, является ли тег поддерживаемым
+      if (supportedTags.includes(tagName)) {
+        const isClosing = fullTag.startsWith('</');
+        allTags.push({
+          tag: tagName,
+          isClosing,
+          position: match.index
+        });
+      }
+    }
+    
+    // Сортируем по позиции, чтобы обрабатывать теги в порядке их появления
+    allTags.sort((a, b) => a.position - b.position);
+    
+    // Определяем, какие теги открыты и неправильно закрыты
+    for (const tagInfo of allTags) {
+      if (tagInfo.isClosing) {
+        // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому
+        if (stack.length > 0 && stack[stack.length - 1] === tagInfo.tag) {
+          stack.pop(); // Правильный закрывающий тег, удаляем из стека
+        } else {
+          // Неправильный порядок закрытия, но не обрабатываем здесь
+          continue;
+        }
+      } else {
+        // Открывающий тег - добавляем в стек
+        stack.push(tagInfo.tag);
+      }
+    }
+    
+    // Если остались незакрытые теги, закрываем их в обратном порядке
+    if (stack.length > 0) {
+      log(`Обнаружены незакрытые HTML теги: ${stack.join(', ')}. Автоматически закрываем их.`, 'social-publishing');
+      
+      let closingTags = '';
+      // Закрываем теги в обратном порядке (LIFO)
+      for (let i = stack.length - 1; i >= 0; i--) {
+        closingTags += `</${stack[i]}>`;
+      }
+      
+      // Добавляем закрывающие теги в конец текста
+      processedText += closingTags;
+      
+      log(`Текст с закрытыми тегами: ${processedText.substring(0, Math.min(100, processedText.length))}...`, 'social-publishing');
+    }
+    
+    return processedText;
   }
 
   /**
