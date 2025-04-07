@@ -1,105 +1,178 @@
 /**
- * Вспомогательные функции для тестирования
+ * Утилиты для тестирования SMM Менеджера
+ * Содержит вспомогательные функции, моки и тестовые данные
  */
 
-/**
- * Генерирует тестовый контент для публикации в социальных сетях
- * @param options Параметры контента
- * @returns Объект с контентом для публикации
- */
-export function generateTestContent(options: {
-  id: string;
+// Константы для тестов
+export const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
+export const USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+
+// Типы контента для тестирования
+export interface TestContentOptions {
+  id?: string;
   title: string;
   text: string;
   image_url: string | null;
   additional_images?: string[];
   social_platforms: string[];
   campaignId: string;
-}) {
+  userId?: string;
+  scheduledAt?: string;
+}
+
+/**
+ * Генерирует тестовый контент с указанными параметрами
+ * @param options Параметры контента
+ * @returns Объект с тестовым контентом
+ */
+export function generateTestContent(options: TestContentOptions): any {
+  const now = new Date();
+  const futureDate = new Date();
+  futureDate.setHours(futureDate.getHours() + 1);
+  
   return {
-    id: options.id,
-    userId: '53921f16-f51d-4591-80b9-8caa4fde4d13',
-    createdAt: new Date(),
-    campaignId: options.campaignId,
-    title: options.title || null,
-    content: options.text,
-    contentType: 'text',
-    imageUrl: options.image_url,
-    additionalImages: options.additional_images || [],
-    videoUrl: null,
-    links: [],
-    hashtags: [],
-    keywords: [],
-    status: 'scheduled',
-    scheduledAt: new Date(),
-    publishedAt: null,
-    socialPlatforms: options.social_platforms,
-    prompt: null,
-    metadata: {}
+    id: options.id || `test-content-${Date.now()}`,
+    title: options.title,
+    text: options.text,
+    image_url: options.image_url,
+    additional_images: options.additional_images || [],
+    social_platforms: options.social_platforms,
+    campaign_id: options.campaignId,
+    user_id: options.userId || USER_ID,
+    status: 'draft',
+    created_at: now.toISOString(),
+    updated_at: now.toISOString(),
+    scheduled_at: options.scheduledAt || futureDate.toISOString(),
+    content_type: 'standard'
   };
 }
 
 /**
- * Генерирует настройки социальных сетей для тестирования
- * @param settings Объект с настройками
- * @returns Объект, имитирующий возвращаемое значение getCampaignSettings
- */
-export function generateSocialSettings(settings: any) {
-  return settings;
-}
-
-/**
- * Мокирует ответ API Telegram
+ * Возвращает мок успешного ответа Telegram API
  * @param messageId ID сообщения
- * @returns Объект, имитирующий ответ API Telegram
+ * @returns Объект с ответом Telegram API
  */
 export function mockTelegramAPIResponse(messageId: number) {
   return {
     ok: true,
     result: {
       message_id: messageId,
-      date: Math.floor(Date.now() / 1000),
-      chat: {
-        id: -1002302366310,
-        title: 'Test Channel',
-        type: 'channel'
-      },
       from: {
         id: 7529101043,
         is_bot: true,
-        first_name: 'Test Bot',
+        first_name: 'TestBot',
         username: 'test_bot'
       },
-      text: 'Test message'
+      chat: {
+        id: -1002302366310,
+        title: 'Тестовый канал',
+        type: 'channel'
+      },
+      date: Math.floor(Date.now() / 1000),
+      text: 'Тестовое сообщение'
     }
   };
 }
 
 /**
- * Имитирует ответ Directus API с правильными настройками
- * @param campaignId ID кампании
- * @returns Объект с настройками социальных сетей
+ * Возвращает мок успешного ответа VK API
+ * @param postId ID поста
+ * @returns Объект с ответом VK API
  */
-export function mockDirectusGetCampaign(campaignId: string) {
+export function mockVkAPIResponse(postId: number) {
   return {
-    id: campaignId,
-    socialMediaSettings: {
-      telegram: {
-        token: '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU',
-        chatId: '-1002302366310'
-      },
-      vk: {
-        token: 'vk1.a.0jlmORGkgmds1qIB5btPIIuT1FZ8C_bkGpCcowI9Ml214neQFgVMiYEnePWq48txdx3D7oTtKbEvgnEifytkkyjv1FvooFsI0y_YYPX8Cw__525Tnqt_H7C9hEEdmsqHXExr4Q3DK7CL0quCvnhrhN368Ter9yFLe6buYgpnamBXwUx4yZnRJPdBVfnPmObtZRrXw7NaZJboCqAK8sXLEA',
-        groupId: 'club228626989'
-      },
-      instagram: {
-        token: 'EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R',
-        businessAccountId: '17841422577074562'
-      },
-      facebook: {
-        token: 'EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R',
-        pageId: '2120362494678794'
-      }
+    response: {
+      post_id: postId
     }
+  };
+}
+
+/**
+ * Возвращает мок ошибки API
+ * @param platform Платформа (vk, telegram и т.д.)
+ * @param errorCode Код ошибки
+ * @param errorMessage Сообщение об ошибке
+ * @returns Объект с ошибкой API
+ */
+export function mockAPIError(platform: string, errorCode: number, errorMessage: string) {
+  switch (platform) {
+    case 'telegram':
+      return {
+        ok: false,
+        error_code: errorCode,
+        description: errorMessage
+      };
+    case 'vk':
+      return {
+        error: {
+          error_code: errorCode,
+          error_msg: errorMessage
+        }
+      };
+    case 'instagram':
+      return {
+        error: {
+          message: errorMessage,
+          code: errorCode
+        }
+      };
+    default:
+      return {
+        error: errorMessage,
+        code: errorCode
+      };
+  }
+}
+
+/**
+ * Форматирует URL поста в Telegram
+ * @param chatId ID чата
+ * @param messageId ID сообщения
+ * @returns URL поста
+ */
+export function formatTelegramUrl(chatId: string, messageId: number): string {
+  // Удаляем префикс -100 из ID канала, если он есть
+  const formattedChatId = chatId.toString().replace('-100', '');
+  return `https://t.me/c/${formattedChatId}/${messageId}`;
+}
+
+/**
+ * Форматирует URL поста во ВКонтакте
+ * @param ownerId ID владельца (группы)
+ * @param postId ID поста
+ * @returns URL поста
+ */
+export function formatVkUrl(ownerId: string, postId: number): string {
+  // Если ID группы передан в формате "clubXXXXXX", извлекаем числовой ID
+  let numericOwnerId = ownerId;
+  if (ownerId.startsWith('club')) {
+    numericOwnerId = `-${ownerId.replace('club', '')}`;
+  } else if (!ownerId.startsWith('-')) {
+    numericOwnerId = `-${ownerId}`;
+  }
+  
+  return `https://vk.com/wall${numericOwnerId}_${postId}`;
+}
+
+/**
+ * Создает моковый объект для FormData
+ * @returns Мок FormData
+ */
+export function createFormDataMock() {
+  return {
+    append: jest.fn(),
+    getHeaders: jest.fn(() => ({})),
+    getBuffer: jest.fn(() => Buffer.from('test')),
+    getBoundary: jest.fn(() => 'test-boundary')
+  };
+}
+
+/**
+ * Возвращает заголовки для имитации multipart/form-data запроса
+ * @returns Заголовки запроса
+ */
+export function getMultipartHeaders() {
+  return {
+    'Content-Type': 'multipart/form-data; boundary=test-boundary'
   };
 }
