@@ -6,7 +6,6 @@ import TextStyle from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -58,24 +57,26 @@ export default function RichTextEditor({
   const [selectedColor, setSelectedColor] = useState('#000000')
   const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false)
 
-  // Создаем кастомное расширение для обработки текста без добавления параграфов
-  // Используем только элементы, совместимые с форматированием Telegram
-  const CustomDocument = Document.extend({
-    content: 'inline*',
-  })
+  // Используем только базовые расширения, совместимые с форматированием Telegram
+  // Примечание: не создаем кастомный Document, так как TipTap автоматически добавляет обертку
 
   const editor = useEditor({
     extensions: [
       // Используем только базовые расширения, совместимые с Telegram
-      // Не включаем StarterKit, т.к. он добавляет параграфы и другие блочные элементы
-      CustomDocument,
-      Text,
-      Bold,
-      Italic,
-      Strike,
-      Code,
+      // Не включаем StarterKit полностью, а только части, которые поддерживаются в Telegram
+      StarterKit.configure({
+        // Отключаем все элементы, которые не поддерживаются Telegram, оставляем только текстовое форматирование
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        codeBlock: false,
+        horizontalRule: false,
+        blockquote: false,
+        dropcursor: false,
+        gapcursor: false,
+      }),
       Underline,
-      HardBreak,
       Link.configure({
         openOnClick: false,
         linkOnPaste: true,
