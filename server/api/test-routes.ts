@@ -9,6 +9,7 @@ import { socialPublishingService } from '../services/social/index';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import axios from 'axios';
+import { SocialPlatform, SocialPublication } from '../../shared/types';
 
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
@@ -900,6 +901,149 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       success: false,
       error: error.message,
       details: error.response?.data || null
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки сохранения URL публикации
+ * POST /api/test/save-publication-url
+ * 
+ * Используется для тестирования обновления статуса публикации и сохранения URL
+ */
+testRouter.post('/save-publication-url', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  
+  try {
+    const { contentId, platform, postUrl, postId } = req.body;
+    
+    // Проверяем обязательные параметры
+    if (!contentId || !platform || !postUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: contentId, platform, postUrl'
+      });
+    }
+    
+    log(`[Test API] Запрос на сохранение URL публикации для контента ${contentId}, платформа: ${platform}`, 'test');
+    
+    // Создаем объект результата публикации
+    const publicationResult: SocialPublication = {
+      platform: platform as SocialPlatform,
+      status: 'published',
+      publishedAt: new Date(),
+      postUrl: postUrl,
+      postId: postId || 'test-post-id'
+    };
+    
+    // Получаем инстанс BaseSocialService для выбранной платформы
+    let service;
+    
+    if (platform === 'telegram') {
+      service = telegramService;
+    } else if (platform === 'instagram') {
+      service = instagramService;
+    } else {
+      // Для других платформ используем метод напрямую
+      const result = await socialPublishingService.updatePublicationStatus(contentId, platform as SocialPlatform, publicationResult);
+      
+      return res.json({
+        success: !!result,
+        platform,
+        contentId,
+        postUrl,
+        result: result || null,
+        message: result ? 'URL публикации успешно сохранен' : 'Не удалось сохранить URL публикации'
+      });
+    }
+    
+    // Используем метод updatePublicationStatus из соответствующего сервиса
+    const result = await service.updatePublicationStatus(contentId, platform as SocialPlatform, publicationResult);
+    
+    return res.json({
+      success: !!result,
+      platform,
+      contentId,
+      postUrl,
+      result: result || null,
+      message: result ? 'URL публикации успешно сохранен' : 'Не удалось сохранить URL публикации'
+    });
+  } catch (error: any) {
+    log(`[Test API] Ошибка при сохранении URL публикации: ${error.message}`, 'test');
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для получения данных контента
+ * GET /api/test/get-content/:contentId
+ * 
+ * Используется для получения данных о контенте с социальными публикациями
+ */
+testRouter.get('/get-content/:contentId', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  
+  try {
+    const { contentId } = req.params;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательный параметр: contentId'
+      });
+    }
+    
+    log(`[Test API] Запрос на получение данных контента ${contentId}`, 'test');
+    
+    // Получаем системный токен, используя метод telegramService, т.к. BaseSocialService
+    const systemToken = await telegramService.getSystemToken();
+    
+    if (!systemToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Не удалось получить системный токен'
+      });
+    }
+    
+    // Получаем контент из хранилища по ID
+    const content = await storage.getCampaignContentById(contentId, systemToken);
+    
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: `Контент с ID ${contentId} не найден`
+      });
+    }
+    
+    // Извлекаем данные о социальных публикациях, если они есть
+    const socialPublications = content.socialPublications || {};
+    
+    // Логируем полное содержимое контента для отладки
+    log(`[Test API] Содержимое контента: ${JSON.stringify(content, null, 2)}`, 'test');
+    log(`[Test API] Извлеченные социальные публикации: ${JSON.stringify(socialPublications, null, 2)}`, 'test');
+    
+    return res.json({
+      success: true,
+      content: {
+        id: content.id,
+        title: content.title,
+        status: content.status,
+        platforms: content.socialPlatforms || [],
+        publications: socialPublications
+      }
+    });
+  } catch (error: any) {
+    log(`[Test API] Ошибка при получении данных контента: ${error.message}`, 'test');
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
     });
   }
 });
