@@ -310,3 +310,13 @@ export {
   canUseCaptionForImage,
   determineSendingStrategy
 };
+
+// CommonJS module export для обратной совместимости
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    processHtmlForTelegram,
+    splitLongText,
+    canUseCaptionForImage,
+    determineSendingStrategy
+  };
+}
