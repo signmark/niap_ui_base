@@ -12,7 +12,7 @@ import axios from 'axios';
 import fs from 'fs';
 
 // Настройки для тестов
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:5000';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 секунды
 
