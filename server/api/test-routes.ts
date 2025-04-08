@@ -401,32 +401,35 @@ router.get('/list-content-ids', async (req: Request, res: Response) => {
   try {
     console.log(`[Test API] Запрос на получение списка ID контента`);
     
-    // Получаем контент напрямую через API Directus
-    // Используем учетные данные администратора из .env
-    const { directusApiManager } = await import('../directus');
+    // Используем DirectusAuthManager для авторизации
+    const { directusAuthManager } = await import('../services/directus');
+    const { directusCrud } = await import('../services/directus');
     
     // Пробуем авторизоваться как администратор
     try {
-      await directusApiManager.login({
-        email: process.env.DIRECTUS_ADMIN_EMAIL,
-        password: process.env.DIRECTUS_ADMIN_PASSWORD
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
+      }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем последние 20 элементов контента через directusCrud
+      const contentItems = await directusCrud.list('campaign_content', {
+        sort: ['-date_created'], // Directus использует date_created как стандартное поле даты создания
+        limit: 20,
+        authToken: authResult.token
       });
       
-      console.log(`[Test API] Успешная авторизация в Directus как администратор`);
-      
-      // Получаем последние 20 элементов контента
-      const response = await directusApiManager.request({
-        url: '/items/campaign_content',
-        method: 'get',
-        params: {
-          sort: '-date_created',
-          limit: 20,
-          fields: ['id', 'title', 'status', 'content', 'content_type', 'image_url']
-        }
-      });
-      
-      if (response.data && response.data.data) {
-        const contentList = response.data.data.map((item: any) => ({
+      if (contentItems && contentItems.length > 0) {
+        const contentList = contentItems.map((item: any) => ({
           id: item.id,
           title: item.title,
           status: item.status,
@@ -483,8 +486,8 @@ router.post('/publish-content-by-id', async (req: Request, res: Response) => {
     }
     
     // Используем переданные настройки или берем из .env
-    const token = telegramToken || process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = telegramChatId || process.env.TELEGRAM_CHAT_ID;
+    const token = telegramToken || process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TEST_TOKEN;
+    const chatId = telegramChatId || process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TEST_CHAT_ID;
     
     if (!token || !chatId) {
       return res.status(400).json({
@@ -496,53 +499,80 @@ router.post('/publish-content-by-id', async (req: Request, res: Response) => {
     console.log(`[Test API] Получение контента по ID: ${contentId}`);
     console.log(`[Test API] Использование настроек: chatId=${chatId}`);
     
-    // Получаем контент напрямую из хранилища
-    const { storage } = await import('../storage');
-    const content = await storage.getCampaignContentById(contentId);
-    
-    if (!content) {
-      return res.status(404).json({
+    try {
+      // Авторизуемся как администратор для получения контента
+      const { directusAuthManager } = await import('../services/directus');
+      const { directusCrud } = await import('../services/directus');
+      
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
+      }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем контент напрямую из хранилища
+      const { storage } = await import('../storage');
+      const content = await storage.getCampaignContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: `Контент с ID ${contentId} не найден`
+        });
+      }
+      
+      console.log(`[Test API] Контент получен: ${content.title}`);
+      console.log(`[Test API] Тип контента: ${content.contentType}`);
+      console.log(`[Test API] HTML текст: ${content.content.substring(0, 100)}${content.content.length > 100 ? '...' : ''}`);
+      
+      // Инициализируем telegramService с нашими настройками
+      telegramService.initialize(token, chatId);
+      
+      // Публикуем контент с использованием метода publishToPlatform
+      const result = await telegramService.publishToPlatform(content);
+      
+      if (!result) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать контент в Telegram',
+          details: 'Нет ответа от сервиса публикации'
+        });
+      }
+      
+      console.log(`[Test API] Публикация успешно отправлена, URL: ${result.postUrl}`);
+      
+      // Обновляем статус публикации в хранилище
+      const { socialPublishingService } = await import('../services/social/index');
+      await socialPublishingService.updatePublicationStatus(
+        contentId,
+        'telegram',
+        result
+      );
+      
+      return res.json({
+        success: true,
+        contentId: contentId,
+        messageId: result.messageId,
+        postUrl: result.postUrl,
+        chatId: chatId,
+        result: result
+      });
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации или получения данных: ${authError.message}`);
+      return res.status(401).json({
         success: false,
-        error: `Контент с ID ${contentId} не найден`
+        error: 'Ошибка авторизации или получения данных',
+        message: authError.message
       });
     }
-    
-    console.log(`[Test API] Контент получен: ${content.title}`);
-    console.log(`[Test API] Тип контента: ${content.contentType}`);
-    console.log(`[Test API] HTML текст: ${content.content.substring(0, 100)}${content.content.length > 100 ? '...' : ''}`);
-    
-    // Инициализируем telegramService с нашими настройками
-    telegramService.initialize(token, chatId);
-    
-    // Публикуем контент с использованием метода publishToPlatform
-    const result = await telegramService.publishToPlatform(content);
-    
-    if (!result) {
-      return res.status(500).json({
-        success: false,
-        error: 'Не удалось опубликовать контент в Telegram',
-        details: 'Нет ответа от сервиса публикации'
-      });
-    }
-    
-    console.log(`[Test API] Публикация успешно отправлена, URL: ${result.postUrl}`);
-    
-    // Обновляем статус публикации в хранилище
-    const { socialPublishingService } = await import('../services/social/index');
-    await socialPublishingService.updatePublicationStatus(
-      contentId,
-      'telegram',
-      result
-    );
-    
-    return res.json({
-      success: true,
-      contentId: contentId,
-      messageId: result.messageId,
-      postUrl: result.postUrl,
-      chatId: chatId,
-      result: result
-    });
   } catch (error: any) {
     console.error('[Test API] Ошибка при публикации контента в Telegram:', error);
     
