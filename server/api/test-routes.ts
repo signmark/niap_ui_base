@@ -5,7 +5,7 @@
 import express, { Request, Response } from 'express';
 import { telegramService } from '../services/social/telegram-service';
 import { socialPublishingService } from '../services/social/index';
-import { DatabaseStorage } from '../storage';
+import { storage } from '../storage';
 import { log } from '../utils/logger';
 import axios from 'axios';
 
@@ -239,7 +239,6 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
     console.log(`[Test API] Запрос на тестирование HTML-форматирования для кампании ${campaignId}`);
     
     // Получаем настройки кампании и токен администратора
-    const storage = new DatabaseStorage();
     
     // Получаем токен администратора
     const adminToken = await storage.getAdminToken();
@@ -438,9 +437,30 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
     log(`[Test API] Запрос на отправку HTML и эмодзи в Telegram`, 'test');
     log(`[Test API] Текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`, 'test');
     
-    // Получаем настройки кампании
-    const storage = new DatabaseStorage();
+    // Получаем настройки кампании с дополнительной отладкой
+    // Используем глобальный экземпляр storage с явной авторизацией
+    
+    // Сначала получаем админский токен для авторизации
+    const adminToken = await storage.getAdminToken();
+    console.log(`[Test API] Админский токен получен: ${adminToken ? 'да' : 'нет'}`);
+    
+    // Затем получаем кампанию
+    console.log(`[Test API] Запрашиваем кампанию ${campaignId}`);
     const campaign = await storage.getCampaignById(campaignId);
+    
+    console.log(`[Test API] Получены данные кампании: ${JSON.stringify(campaign)}`);
+    
+    // Если кампания не получена, пробуем получить из логов (для отладки)
+    if (!campaign) {
+      console.log(`[Test API] Не удалось получить кампанию, используем тестовые данные`);
+      
+      // Создаем тестовые настройки для Telegram (для тестирования)
+      return res.status(500).json({
+        success: false,
+        error: `Не удалось получить настройки кампании. ID: ${campaignId}`,
+        adminToken: adminToken ? 'Токен получен' : 'Токен не получен'
+      });
+    }
     
     if (!campaign || !campaign.settings || !campaign.settings.telegram) {
       return res.status(404).json({
