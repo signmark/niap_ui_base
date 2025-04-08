@@ -1,122 +1,176 @@
 /**
- * Прямой тест HTML-форматирования в Telegram с использованием конкретных значений токена и chat ID.
- * Для запуска: node direct-telegram-html-test.js
+ * Прямой тест отправки HTML-сообщения в Telegram с использованием токена из секретов
+ * Запуск: node direct-telegram-html-test.js
  */
 
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Здесь указываем конкретные значения для тестирования
-// Вставьте реальные значения перед запуском
-const TELEGRAM_TOKEN = '5825011904:AAGQtDcTgcuHPx8OYxBu9mMXwdIpYnQfrrg';
-const TELEGRAM_CHAT_ID = '@smm_manager_dev_channel';
+// Настройки Telegram из переменных окружения
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const CONTENT_ID = '094bb372-d8ae-4759-8d0e-1c6c63391a04';
 
-// Вспомогательные функции
-function log(message) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
+// Проверяем наличие токена и ID чата
+if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+  console.error('Ошибка: не указаны TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID');
+  process.exit(1);
 }
 
-// Отправка сообщения с HTML-форматированием
-async function sendHtmlMessage(text) {
-  if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
-    log('ОШИБКА: Не указаны TELEGRAM_TOKEN или TELEGRAM_CHAT_ID');
-    return;
+// Примеры HTML-текста для тестирования
+const UNCLOSED_TAG_HTML = `<b>Тест с незакрытым тегом жирного текста и <i>курсива
+Этот текст должен отправиться после автоматического исправления тегов.
+<u>Еще один незакрытый тег`;
+
+/**
+ * Исправляет незакрытые HTML-теги в тексте
+ * @param {string} html HTML-текст для исправления
+ * @returns {string} Исправленный HTML-текст
+ */
+function fixUnclosedTags(html) {
+  if (!html) return '';
+  
+  // Список поддерживаемых Telegram тегов
+  const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+  
+  // Стек для отслеживания открытых тегов
+  const openTags = [];
+  
+  // Регулярное выражение для поиска тегов (открывающих и закрывающих)
+  const tagRegex = /<\/?([a-z]+)(?:\s+[^>]*)?\/?>/gi;
+  
+  // Находим все теги в тексте
+  let lastIndex = 0;
+  let result = '';
+  let match;
+  
+  while ((match = tagRegex.exec(html)) !== null) {
+    // Добавляем текст до текущего тега
+    result += html.substring(lastIndex, match.index);
+    lastIndex = match.index + match[0].length;
+    
+    const fullTag = match[0];
+    const tagName = match[1].toLowerCase();
+    
+    // Пропускаем теги, которые не поддерживаются Telegram
+    if (!supportedTags.includes(tagName)) {
+      continue;
+    }
+    
+    // Проверяем, открывающий или закрывающий тег
+    if (fullTag.startsWith('</')) {
+      // Закрывающий тег
+      const lastOpenTagIndex = openTags.lastIndexOf(tagName);
+      if (lastOpenTagIndex !== -1) {
+        // Если нашли соответствующий открывающий тег, удаляем его из стека
+        openTags.splice(lastOpenTagIndex, 1);
+        result += fullTag;
+      }
+    } else {
+      // Открывающий тег
+      openTags.push(tagName);
+      result += fullTag;
+    }
   }
   
+  // Добавляем оставшийся текст
+  result += html.substring(lastIndex);
+  
+  // Закрываем все незакрытые теги в обратном порядке
+  for (let i = openTags.length - 1; i >= 0; i--) {
+    result += `</${openTags[i]}>`;
+  }
+  
+  return result;
+}
+
+/**
+ * Отправляет HTML-сообщение в Telegram
+ * @param {string} html HTML-текст для отправки
+ * @param {boolean} autoFix Автоматически исправлять незакрытые теги
+ * @returns {Promise<object>} Результат отправки
+ */
+async function sendHtmlMessage(html, autoFix = true) {
   try {
-    log(`Отправка сообщения: "${text}"`);
+    const textToSend = autoFix ? fixUnclosedTags(html) : html;
+    console.log(`\nОтправка HTML-сообщения ${autoFix ? '(с автоисправлением)' : ''}:`);
+    console.log(textToSend);
     
-    const formattedChatId = TELEGRAM_CHAT_ID.startsWith('@') 
-      ? TELEGRAM_CHAT_ID 
-      : TELEGRAM_CHAT_ID.startsWith('-100') 
-        ? TELEGRAM_CHAT_ID 
-        : `-100${TELEGRAM_CHAT_ID}`;
-    
-    const response = await axios.post(
-      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, 
-      {
-        chat_id: formattedChatId,
-        text: text,
-        parse_mode: 'HTML'
-      }
-    );
+    const response = await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: textToSend,
+      parse_mode: 'HTML'
+    });
     
     if (response.data && response.data.ok) {
-      log(`✅ Сообщение успешно отправлено. ID: ${response.data.result.message_id}`);
-      return true;
+      console.log('✅ Сообщение успешно отправлено в Telegram');
+      console.log(`ID сообщения: ${response.data.result.message_id}`);
+      return response.data;
     } else {
-      log(`❌ Ошибка при отправке: ${JSON.stringify(response.data)}`);
-      return false;
+      console.log('❌ Ошибка при отправке сообщения:', response.data);
+      return null;
     }
   } catch (error) {
-    log(`❌ Исключение при отправке: ${error.message}`);
-    if (error.response) {
-      log(`Ответ сервера: ${JSON.stringify(error.response.data)}`);
+    console.error('❌ Ошибка при отправке HTML-сообщения:', error.message);
+    if (error.response && error.response.data) {
+      console.error('Детали ошибки:', JSON.stringify(error.response.data));
     }
-    return false;
+    return null;
   }
 }
 
-// Тестовые случаи
-const testCases = [
-  {
-    name: 'Простые HTML-теги для жирного и курсивного текста',
-    text: 'Тест базовых тегов: <b>жирный текст</b> и <i>курсивный текст</i>'
-  },
-  {
-    name: 'Вложенные HTML-теги',
-    text: 'Тест вложенных тегов: <b>жирный и <i>жирный курсивный</i> текст</b>'
-  },
-  {
-    name: 'Подчеркивание и зачеркивание',
-    text: 'Тест стилей текста: <u>подчеркнутый</u> и <s>зачеркнутый</s> текст'
-  },
-  {
-    name: 'HTML-ссылки',
-    text: 'Тест ссылок: <a href="https://telegram.org">ссылка на Telegram</a>'
-  },
-  {
-    name: 'Код и предварительно отформатированный текст',
-    text: 'Тест кода: <code>console.log("Hello");</code>\n\n<pre>function hello() {\n  return "world";\n}</pre>'
-  },
-  {
-    name: 'Неподдерживаемые Telegram HTML-теги',
-    text: 'Тест неподдерживаемых тегов: <div>div контейнер</div>, <p>параграф</p>'
-  },
-  {
-    name: 'Незакрытые HTML-теги',
-    text: 'Тест незакрытых тегов: <b>жирный текст <i>и курсивный'
-  },
-  {
-    name: 'Список и маркированный список',
-    text: 'Тест списков:\n• Первый пункт\n• Второй пункт\n\n1. Нумерованный пункт 1\n2. Нумерованный пункт 2'
-  },
-  {
-    name: 'Сложное форматирование с комбинацией стилей',
-    text: 'Тест <b>комбинированного</b> <i>форматирования</i> с <u>различными</u> <s>стилями</s> и <a href="https://example.com">ссылками</a> в <code>одном</code> сообщении.'
-  }
-];
-
-// Запуск всех тестов
-async function runAllTests() {
-  log('🚀 Запуск тестов HTML-форматирования в Telegram...');
-  log(`Токен: ${TELEGRAM_TOKEN ? TELEGRAM_TOKEN.substring(0, 5) + '...' : 'не указан'}`);
-  log(`Chat ID: ${TELEGRAM_CHAT_ID || 'не указан'}`);
-  
-  for (const [index, test] of testCases.entries()) {
-    log(`\n[Тест ${index + 1}/${testCases.length}] ${test.name}`);
-    const success = await sendHtmlMessage(test.text);
+/**
+ * Отправляет контент из Directus в Telegram
+ */
+async function sendContentToTelegram() {
+  try {
+    console.log(`Отправка контента ID: ${CONTENT_ID} в Telegram`);
     
-    // Пауза между отправками сообщений
-    if (index < testCases.length - 1) {
-      log('Пауза 1 секунда перед следующим тестом...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Прямые тестовые сообщения для тестирования форматирования
+    console.log('\n=== Тест #1: Отправка текста с незакрытыми тегами (с автоисправлением) ===');
+    const result1 = await sendHtmlMessage(UNCLOSED_TAG_HTML, true);
+    
+    console.log('\n=== Тест #2: Отправка текста с незакрытыми тегами (без автоисправления) ===');
+    try {
+      const result2 = await sendHtmlMessage(UNCLOSED_TAG_HTML, false);
+      console.log('Результат:', result2?.ok ? 'Успешно' : 'Ошибка');
+    } catch (error) {
+      console.error('Ошибка при отправке без автоисправления:', error.message);
     }
+    
+    console.log('\n=== Тест #3: Отправка сложного HTML-форматирования ===');
+    const complexHtml = `
+<b>Заголовок</b>
+
+<i>Курсивный текст с <a href="https://example.com">ссылкой</a></i>
+
+Обычный текст и <code>моноширинный код</code>.
+
+<u>Подчеркнутый список</u>:
+• Первый пункт
+• Второй <b>жирный</b> пункт
+• Третий <i>курсивный</i> пункт
+
+<b><i>Жирный и курсивный одновременно!</i></b>
+`;
+    const result3 = await sendHtmlMessage(complexHtml, true);
+    console.log('Результат:', result3?.ok ? 'Успешно' : 'Ошибка');
+    
+  } catch (error) {
+    console.error('Ошибка при отправке контента в Telegram:', error.message);
   }
-  
-  log('\n✅ Все тесты HTML-форматирования выполнены');
 }
 
-// Запуск тестирования
-runAllTests().catch(error => {
-  log(`❌ Критическая ошибка при выполнении тестов: ${error.message}`);
-});
+// Запуск скрипта
+console.log('=== Начало теста отправки HTML-сообщений в Telegram ===');
+console.log(`Бот: ${TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 10) + '...' : 'Не указан'}`);
+console.log(`Чат ID: ${TELEGRAM_CHAT_ID}`);
+
+sendContentToTelegram()
+  .then(() => {
+    console.log('\n=== Завершение теста отправки HTML-сообщений в Telegram ===');
+  })
+  .catch(error => {
+    console.error('Критическая ошибка:', error.message);
+  });
