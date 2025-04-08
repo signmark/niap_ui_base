@@ -285,6 +285,19 @@ export class TelegramService extends BaseSocialService {
       // Применяем HTML-форматирование для Telegram
       let formattedText = this.formatTextForTelegram(content);
       
+      // Дополнительно применяем агрессивный исправитель тегов для гарантированного закрытия всех тегов
+      formattedText = this.aggressiveTagFixer(formattedText);
+      log(`Telegram текст после агрессивного исправления тегов: ${formattedText.substring(0, Math.min(100, formattedText.length))}...`, 'social-publishing');
+      
+      // Подсчитываем открывающие/закрывающие теги для диагностики
+      const openingTags = (formattedText.match(/<[a-z][^>]*>/gi) || []).length;
+      const closingTags = (formattedText.match(/<\/[a-z][^>]*>/gi) || []).length;
+      log(`Теги в тексте после обработки: открывающих ${openingTags}, закрывающих ${closingTags}`, 'social-publishing');
+      
+      if (openingTags !== closingTags) {
+        log(`Внимание: количество открывающих (${openingTags}) и закрывающих (${closingTags}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
+      }
+      
       // Проверка длины и обрезка
       if (formattedText.length > maxLength) {
         log(`Текст для Telegram превышает ${maxLength} символов, обрезаем...`, 'social-publishing');
@@ -332,6 +345,11 @@ export class TelegramService extends BaseSocialService {
       
       // Сначала форматируем текст для Telegram включая обработку HTML тегов
       let formattedText = this.formatTextForTelegram(text);
+      
+      // Дополнительно применяем агрессивный исправитель тегов
+      // для гарантированного закрытия всех тегов
+      formattedText = this.aggressiveTagFixer(formattedText);
+      log(`Текст после агрессивного исправления тегов перед отправкой: ${formattedText.substring(0, Math.min(100, formattedText.length))}...`, 'social-publishing');
       
       // Проверяем длину после форматирования
       const finalText = formattedText.length > 4096 ? formattedText.substring(0, 4093) + '...' : formattedText;
@@ -479,7 +497,10 @@ export class TelegramService extends BaseSocialService {
           // Если есть текст подписи, добавляем его и форматируем
           if (caption && caption.trim() !== '') {
             // Форматируем подпись с помощью нашего метода для HTML-тегов
-            const formattedCaption = this.formatTextForTelegram(caption);
+            let formattedCaption = this.formatTextForTelegram(caption);
+            // Дополнительно применяем агрессивный исправитель тегов
+            formattedCaption = this.aggressiveTagFixer(formattedCaption);
+            log(`Подпись после агрессивного исправления тегов: ${formattedCaption.substring(0, Math.min(100, formattedCaption.length))}...`, 'social-publishing');
             requestBody.caption = formattedCaption;
             requestBody.parse_mode = 'HTML';
             log(`Добавляем форматированную текстовую подпись к изображению (${formattedCaption.length} символов)`, 'social-publishing');
@@ -540,7 +561,10 @@ export class TelegramService extends BaseSocialService {
               // Добавляем подпись только к первому изображению в первой группе
               if (i === 0 && index === 0 && caption && caption.trim() !== '') {
                 // Форматируем подпись с помощью нашего метода для HTML-тегов
-                const formattedCaption = this.formatTextForTelegram(caption);
+                let formattedCaption = this.formatTextForTelegram(caption);
+                // Дополнительно применяем агрессивный исправитель тегов
+                formattedCaption = this.aggressiveTagFixer(formattedCaption);
+                log(`Подпись к группе изображений после агрессивного исправления тегов: ${formattedCaption.substring(0, Math.min(100, formattedCaption.length))}...`, 'social-publishing');
                 return {
                   type: 'photo',
                   media: imageUrl,
@@ -679,7 +703,7 @@ export class TelegramService extends BaseSocialService {
       // Список поддерживаемых Telegram тегов
       const supportedTags = ['b', 'strong', 'i', 'em', 'u', 'ins', 's', 'strike', 'del', 'code', 'pre'];
       
-      // 1. Удаляем все неподдерживаемые теги
+      // 1. Удаляем все неподдерживаемые теги и заменяем стандартные на эквиваленты Telegram
       let fixedText = text;
       
       // Заменяем все стандартные теги на их Telegram-эквиваленты
@@ -690,53 +714,85 @@ export class TelegramService extends BaseSocialService {
         .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
         .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
       
-      // 2. Находим все открывающие теги
-      const openTags: string[] = [];
-      const tagPattern = /<([a-z]+)[^>]*>|<\/([a-z]+)>/gi;
-      let match;
+      // 2. Находим все теги в тексте
+      const tags = [];
+      const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+      let tagMatch;
       
-      while ((match = tagPattern.exec(fixedText)) !== null) {
-        // Это открывающий тег
-        if (match[1] && supportedTags.includes(match[1].toLowerCase())) {
-          openTags.push(match[1].toLowerCase());
+      while ((tagMatch = tagRegex.exec(fixedText)) !== null) {
+        const fullTag = tagMatch[0];
+        const tagName = tagMatch[1].toLowerCase();
+        const isClosing = fullTag.startsWith('</');
+        
+        // Проверяем, что это поддерживаемый тег
+        if (supportedTags.includes(tagName)) {
+          tags.push({
+            fullTag,
+            tagName,
+            isClosing,
+            position: tagMatch.index
+          });
         }
-        // Это закрывающий тег
-        else if (match[2] && supportedTags.includes(match[2].toLowerCase())) {
-          // Найдем последний открытый тег такого же типа
-          const lastIndex = openTags.lastIndexOf(match[2].toLowerCase());
-          if (lastIndex !== -1) {
-            // Удаляем этот тег из стека открытых тегов
-            openTags.splice(lastIndex, 1);
+      }
+      
+      // 3. Для каждого тега проверяем его закрытие
+      const stack = [];
+      const tagsToAdd = [];
+      
+      for (const tag of tags) {
+        if (!tag.isClosing) {
+          // Открывающий тег - добавляем в стек
+          stack.push(tag);
+        } else {
+          // Закрывающий тег - ищем соответствующий открывающий
+          let foundOpeningTag = false;
+          
+          // Перебираем стек с конца и ищем первый соответствующий открывающий тег
+          for (let i = stack.length - 1; i >= 0; i--) {
+            if (stack[i].tagName === tag.tagName) {
+              // Удаляем его из стека
+              stack.splice(i, 1);
+              foundOpeningTag = true;
+              break;
+            }
+          }
+          
+          // Если не нашли открывающий тег, это лишний закрывающий - игнорируем его
+          if (!foundOpeningTag) {
+            // Не нужно ничего делать, игнорируем лишний закрывающий тег
           }
         }
       }
       
-      // 3. Добавляем закрывающие теги для всех незакрытых
-      if (openTags.length > 0) {
-        // Закрываем их в обратном порядке (LIFO)
-        for (let i = openTags.length - 1; i >= 0; i--) {
-          fixedText += `</${openTags[i]}>`;
+      // 4. Для всех незакрытых тегов добавляем закрывающие
+      if (stack.length > 0) {
+        // Сначала сортируем по позиции, чтобы закрывать последние открытые теги первыми
+        stack.sort((a, b) => b.position - a.position);
+        
+        // Добавляем закрывающие теги в конец текста
+        for (const tag of stack) {
+          fixedText += `</${tag.tagName}>`;
         }
       }
       
-      // 4. Разбираемся с вложенными тегами
-      // Заменим любой паттерн <tag1><tag2>text</tag1></tag2> -> <tag1>text</tag1><tag2>text</tag2>
-      supportedTags.forEach(outer => {
-        supportedTags.forEach(inner => {
-          if (outer !== inner) {
-            // Паттерн: <outer><inner>text</outer></inner>
-            const pattern = new RegExp(`<${outer}>(.*?)<${inner}>(.*?)<\/${outer}>(.*?)<\/${inner}>`, 'gi');
-            fixedText = fixedText.replace(pattern, `<${outer}>$1$2$3</${outer}><${inner}>$2$3</${inner}>`);
-          }
-        });
-      });
+      // Упрощенная проверка на баланс тегов
+      const openingCount = (fixedText.match(/<[a-z][^>]*>/gi) || []).length;
+      const closingCount = (fixedText.match(/<\/[a-z][^>]*>/gi) || []).length;
+      
+      if (openingCount !== closingCount) {
+        // Перестраховка - более агрессивная стратегия
+        // Удаляем все теги, если они не сбалансированы
+        log(`Критическая ошибка в балансе тегов: открывающих ${openingCount}, закрывающих ${closingCount}. Удаляем все теги.`, 'social-publishing');
+        return text.replace(/<[^>]*>/g, '');
+      }
       
       log(`Текст после агрессивного исправления HTML: ${fixedText.substring(0, Math.min(100, fixedText.length))}...`, 'social-publishing');
       
       return fixedText;
     } catch (error) {
       log(`Ошибка в aggressiveTagFixer: ${error}`, 'social-publishing');
-      return text; // Возвращаем исходный текст в случае ошибки
+      // В случае любой ошибки возвращаем текст без HTML-разметки
+      return text.replace(/<[^>]*>/g, '');
     }
   }
   
