@@ -1027,14 +1027,17 @@ testRouter.get('/get-content/:contentId', async (req: Request, res: Response) =>
     log(`[Test API] Содержимое контента: ${JSON.stringify(content, null, 2)}`, 'test');
     log(`[Test API] Извлеченные социальные публикации: ${JSON.stringify(socialPublications, null, 2)}`, 'test');
     
+    // Формируем объект ответа с дополнительной информацией о публикациях
     return res.json({
       success: true,
       content: {
         id: content.id,
         title: content.title,
         status: content.status,
-        platforms: content.socialPlatforms || [],
-        publications: socialPublications
+        // Для обратной совместимости сохраняем старое поле
+        platforms: content.socialPlatforms || {},
+        // Добавляем поле publications для передачи информации о URL опубликованных постов
+        publications: socialPublications || {}
       }
     });
   } catch (error: any) {
