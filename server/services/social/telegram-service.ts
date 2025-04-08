@@ -63,13 +63,37 @@ export class TelegramService extends BaseSocialService {
         // Обрабатываем ссылки по формату Telegram - важно для корректной работы с разными атрибутами в тегах ссылок
         .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
-      // Telegram не поддерживает вложенные теги одного типа, исправляем это
+      // Обработка вложенных тегов для Telegram
+      // 1. Сначала обрабатываем вложенные теги одного типа
       // Например: <b>жирный <b>вложенный</b> текст</b> -> <b>жирный вложенный текст</b>
       formattedText = formattedText
         .replace(/<(b|i|u|s|strike|code)>(.*?)<\/\1>.*?<\1>(.*?)<\/\1>/g, '<$1>$2 $3</$1>')
         .replace(/<(b|i|u|s|strike|code)>(.*?)<\1>(.*?)<\/\1>(.*?)<\/\1>/g, '<$1>$2$3$4</$1>');
-        
-      // Удаляем все неподдерживаемые HTML-теги, но сохраняем их содержимое
+      
+      // 2. Затем обрабатываем вложенные теги разных типов
+      // В Telegram нельзя вкладывать одни теги в другие, поэтому развертываем их
+      // Например: <b><u>текст</u></b> -> <b>текст</b><u>текст</u>
+      const supportedTagPairs = [
+        { outer: 'b', inner: 'u' },
+        { outer: 'b', inner: 'i' },
+        { outer: 'b', inner: 's' },
+        { outer: 'i', inner: 'u' },
+        { outer: 'i', inner: 'b' },
+        { outer: 'i', inner: 's' },
+        { outer: 'u', inner: 'b' },
+        { outer: 'u', inner: 'i' },
+        { outer: 'u', inner: 's' },
+        { outer: 's', inner: 'b' },
+        { outer: 's', inner: 'i' },
+        { outer: 's', inner: 'u' }
+      ];
+      
+      supportedTagPairs.forEach(pair => {
+        const pattern = new RegExp(`<${pair.outer}>(<${pair.inner}>(.*?)<\/${pair.inner}>)<\/${pair.outer}>`, 'g');
+        formattedText = formattedText.replace(pattern, `<${pair.outer}>$2</${pair.outer}><${pair.inner}>$2</${pair.inner}>`);
+      });
+      
+      // 3. Удаляем все неподдерживаемые HTML-теги, но сохраняем их содержимое
       formattedText = formattedText.replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
       
       // Исправляем незакрытые теги
