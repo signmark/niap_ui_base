@@ -230,6 +230,9 @@ export class PublishScheduler {
 
   // Хранит список уже обработанных публикаций для предотвращения дублирования
   private processedContentIds: Set<string> = new Set();
+  
+  // Список ID контента, который нужно полностью исключить из обработки
+  private excludedContentIds: Set<string> = new Set(['a5bf4171-27cc-4f54-9fca-6b31aa962cf3']);
 
   async checkScheduledContent() {
     try {
@@ -243,6 +246,11 @@ export class PublishScheduler {
       
       // Пытаемся получить запланированные публикации
       let scheduledContent: CampaignContent[] = [];
+      
+      // Лог исключенных ID контента для диагностики
+      if (this.excludedContentIds.size > 0) {
+        log(`Следующие ID контента исключены из планировщика: ${Array.from(this.excludedContentIds).join(', ')}`, 'scheduler');
+      }
       
       if (systemToken) {
         log('Поиск запланированных публикаций через API с системным токеном', 'scheduler');
@@ -413,6 +421,12 @@ export class PublishScheduler {
       const contentToPublish = scheduledContent.filter(content => {
         if (!content.scheduledAt) return false;
         
+        // Проверяем, находится ли контент в списке исключенных
+        if (content.id && this.excludedContentIds.has(content.id)) {
+          log(`Контент ID ${content.id} "${content.title}" находится в списке исключенных, полностью пропускаем`, 'scheduler');
+          return false;
+        }
+        
         // Проверяем, что статус не "published"
         if (content.status === 'published') {
           log(`Контент ID ${content.id} "${content.title}" уже опубликован, пропускаем`, 'scheduler');
@@ -448,6 +462,12 @@ export class PublishScheduler {
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
+        return;
+      }
+      
+      // Проверяем, находится ли ID контента в списке исключенных
+      if (content.id && this.excludedContentIds.has(content.id)) {
+        log(`Контент ${content.id}: "${content.title}" находится в списке исключенных, полностью пропускаем публикацию`, 'scheduler');
         return;
       }
       
