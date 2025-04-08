@@ -14,7 +14,9 @@ export class TelegramService extends BaseSocialService {
    * @param content Исходный текст контента
    * @returns Отформатированный текст для Telegram с поддержкой HTML
    */
-  private formatTextForTelegram(content: string): string {
+  public formatTextForTelegram(content: string): string {
+    // Логируем начало обработки
+    log(`Начало форматирования текста для Telegram, размер: ${content?.length || 0} символов`, 'social-publishing');
     if (!content || typeof content !== 'string') {
       return '';
     }
@@ -151,7 +153,7 @@ export class TelegramService extends BaseSocialService {
    * @param text Текст с HTML-разметкой
    * @returns Текст с исправленными незакрытыми тегами
    */
-  private fixUnclosedTags(text: string): string {
+  public fixUnclosedTags(text: string): string {
     // Расширенный список поддерживаемых Telegram тегов и их синонимов
     const tagMapping: { [key: string]: string } = {
       'b': 'b', 'strong': 'b',
@@ -328,7 +330,11 @@ export class TelegramService extends BaseSocialService {
         return { success: false, error: 'Empty text' };
       }
       
-      const finalText = text.length > 4096 ? text.substring(0, 4093) + '...' : text;
+      // Сначала форматируем текст для Telegram включая обработку HTML тегов
+      let formattedText = this.formatTextForTelegram(text);
+      
+      // Проверяем длину после форматирования
+      const finalText = formattedText.length > 4096 ? formattedText.substring(0, 4093) + '...' : formattedText;
       
       // Преобразуем текст с HTML-тегами, если он есть
       if (finalText.includes('<') && finalText.includes('>')) {
@@ -470,11 +476,13 @@ export class TelegramService extends BaseSocialService {
             photo: images[0]
           };
           
-          // Если есть текст подписи, добавляем его
+          // Если есть текст подписи, добавляем его и форматируем
           if (caption && caption.trim() !== '') {
-            requestBody.caption = caption;
+            // Форматируем подпись с помощью нашего метода для HTML-тегов
+            const formattedCaption = this.formatTextForTelegram(caption);
+            requestBody.caption = formattedCaption;
             requestBody.parse_mode = 'HTML';
-            log(`Добавляем текстовую подпись к изображению (${caption.length} символов)`, 'social-publishing');
+            log(`Добавляем форматированную текстовую подпись к изображению (${formattedCaption.length} символов)`, 'social-publishing');
           }
           
           const response = await axios.post(`${baseUrl}/sendPhoto`, requestBody, {
@@ -531,10 +539,12 @@ export class TelegramService extends BaseSocialService {
               
               // Добавляем подпись только к первому изображению в первой группе
               if (i === 0 && index === 0 && caption && caption.trim() !== '') {
+                // Форматируем подпись с помощью нашего метода для HTML-тегов
+                const formattedCaption = this.formatTextForTelegram(caption);
                 return {
                   type: 'photo',
                   media: imageUrl,
-                  caption: caption,
+                  caption: formattedCaption,
                   parse_mode: 'HTML'
                 };
               } else {
