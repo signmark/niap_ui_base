@@ -741,27 +741,6 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
     log(`[Instagram Test API] Business Account ID: ${businessAccountId}`, 'test');
     log(`[Instagram Test API] Image URL: ${imageUrl?.substring(0, 30)}...`, 'test');
     
-    // Имитируем успешную публикацию для тестирования API
-    const mockResult = {
-      success: true,
-      platform: 'instagram',
-      status: 'published',
-      postUrl: `https://www.instagram.com/p/mock-${Date.now()}/`,
-      error: null,
-      result: {
-        platform: 'instagram',
-        status: 'published',
-        publishedAt: new Date(),
-        postUrl: `https://www.instagram.com/p/mock-${Date.now()}/`
-      }
-    };
-    
-    // Отправляем JSON напрямую (без использования res.json())
-    return res.status(200).end(JSON.stringify(mockResult));
-    
-    /*
-    // РЕАЛЬНАЯ ПУБЛИКАЦИЯ - ВРЕМЕННО ОТКЛЮЧЕНА ДЛЯ ТЕСТИРОВАНИЯ API
-    
     // Создаем тестовый контент с обязательными полями
     const testContent = {
       id: 'instagram-test-' + Date.now(),
@@ -805,7 +784,6 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       error: result.error || null,
       result
     });
-    */
   } catch (error: any) {
     // Логируем ошибку
     log(`[Instagram Test API] Ошибка при публикации: ${error.message}`, 'test');
