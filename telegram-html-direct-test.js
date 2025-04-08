@@ -4,8 +4,9 @@
  * Запуск: node telegram-html-direct-test.js
  */
 
-const axios = require('axios');
-require('dotenv').config();
+import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Настройки Telegram из переменных среды
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
