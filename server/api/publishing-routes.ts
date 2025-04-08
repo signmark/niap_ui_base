@@ -156,7 +156,7 @@ export function registerPublishingRoutes(app: Express): void {
       }
 
       // Получаем кампанию для настроек социальных сетей
-      const campaign = await storage.getCampaign(content.userId, content.campaignId);
+      const campaign = await storage.getCampaignById(content.campaignId);
       if (!campaign) {
         log(`Кампания ${content.campaignId} не найдена при попытке публикации контента ${contentId}`, 'api');
         return res.status(404).json({ error: 'Кампания не найдена' });
