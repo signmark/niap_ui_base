@@ -98,7 +98,7 @@ function log(message) {
 async function publishThroughAPI(testCase) {
   try {
     // Формируем тестовый контент для публикации
-    const campaignId = '46868c44-c6a4-4bed-accf-9ad07bba790e'; // ID вашей кампании
+    const campaignId = 'fde4ae82-e492-4c94-965d-902bfe721d97'; // ID тестовой кампании "Правильное питание"
     const publishRequest = {
       content: {
         id: `test-${Date.now()}`, // Уникальный ID для тестирования

@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Настройки для тестирования
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:5000/api';
 const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e';
 const USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
 

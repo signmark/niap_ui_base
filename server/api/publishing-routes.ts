@@ -15,6 +15,122 @@ import { directusStorageAdapter } from '../services/directus';
  */
 export function registerPublishingRoutes(app: Express): void {
   console.log('[publishing-routes] Регистрация маршрутов управления публикациями...');
+  
+  // Публикация контента через API для тестирования
+  app.post('/api/publish/content', async (req: Request, res: Response) => {
+    try {
+      log(`Запрос на публикацию контента через API`, 'api');
+      
+      // Получаем объект контента и список платформ из запроса
+      const { content, platforms, userId, force = false } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Объект контента не предоставлен' });
+      }
+      
+      if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+        return res.status(400).json({ error: 'Не указаны платформы для публикации' });
+      }
+      
+      log(`Публикация контента ${content.id || 'без ID'} в платформы: ${JSON.stringify(platforms)}`, 'api');
+      
+      // Получаем настройки кампании
+      const campaign = await storage.getCampaign(userId || content.userId, content.campaignId);
+      if (!campaign) {
+        log(`Кампания ${content.campaignId} не найдена при попытке публикации контента`, 'api');
+        return res.status(404).json({ error: 'Кампания не найдена' });
+      }
+      
+      // Настройки социальных сетей
+      const socialSettings = campaign.socialMediaSettings || {};
+      log(`Получены настройки социальных сетей для кампании: ${JSON.stringify(Object.keys(socialSettings))}`, 'api');
+      
+      // Результаты публикации
+      const results: Record<string, any> = {};
+      const publications: any[] = [];
+      
+      // Публикуем в каждую из указанных платформ
+      for (const platform of platforms) {
+        try {
+          log(`Публикация в ${platform}...`, 'api');
+          
+          // Публикуем в указанную платформу через модульный сервис
+          const result = await socialPublishingService.publishToPlatform(
+            content,
+            platform as SocialPlatform,
+            socialSettings
+          );
+          
+          log(`Публикация в ${platform} выполнена: ${JSON.stringify(result)}`, 'api');
+          
+          // Добавляем результат в массив публикаций
+          publications.push({
+            platform,
+            status: result.status || 'published',
+            publishedAt: result.publishedAt || new Date().toISOString(),
+            // Дополнительные поля, которые могут быть в результате, но не в типе SocialPublication
+            ...(result.messageId ? { messageId: result.messageId } : {}),
+            ...(result.postId ? { postId: result.postId } : {}),
+            ...(result.url ? { url: result.url } : {}),
+            ...(result.error ? { error: result.error } : {})
+          });
+          
+          // Обновляем статус публикации через модульный сервис
+          await socialPublishingService.updatePublicationStatus(
+            content.id,
+            platform as SocialPlatform,
+            result
+          );
+          
+          // Сохраняем результат
+          results[platform] = result;
+        } catch (platformError: any) {
+          log(`Ошибка при публикации в ${platform}: ${platformError.message}`, 'api');
+          results[platform] = { 
+            status: 'failed',
+            error: platformError.message
+          };
+          
+          // Добавляем ошибку в массив публикаций
+          publications.push({
+            platform,
+            status: 'failed',
+            publishedAt: null,
+            error: platformError.message
+          });
+          
+          // Обновляем статус публикации как неудачный через модульный сервис
+          if (content.id) {
+            await socialPublishingService.updatePublicationStatus(
+              content.id,
+              platform as SocialPlatform,
+              {
+                platform: platform as SocialPlatform,
+                status: 'failed',
+                error: platformError.message,
+                publishedAt: null
+              }
+            );
+          }
+        }
+      }
+      
+      // Возвращаем результат
+      log(`Публикация контента завершена. Результаты: ${JSON.stringify(results)}`, 'api');
+      return res.status(200).json({ 
+        success: true, 
+        publications,
+        results
+      });
+    } catch (error: any) {
+      log(`Ошибка при публикации через API: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при публикации контента',
+        message: error.message
+      });
+    }
+  });
+  
   // Публикация контента вручную
   app.post('/api/publish/:contentId', async (req: Request, res: Response) => {
     try {
@@ -40,7 +156,7 @@ export function registerPublishingRoutes(app: Express): void {
       }
 
       // Получаем кампанию для настроек социальных сетей
-      const campaign = await storage.getCampaign(content.campaignId);
+      const campaign = await storage.getCampaign(content.userId, content.campaignId);
       if (!campaign) {
         log(`Кампания ${content.campaignId} не найдена при попытке публикации контента ${contentId}`, 'api');
         return res.status(404).json({ error: 'Кампания не найдена' });
@@ -97,8 +213,10 @@ export function registerPublishingRoutes(app: Express): void {
             contentId,
             platform as SocialPlatform,
             {
+              platform: platform as SocialPlatform,
               status: 'failed',
-              error: platformError.message
+              error: platformError.message,
+              publishedAt: null
             }
           );
         }

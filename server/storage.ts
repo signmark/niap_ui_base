@@ -31,7 +31,7 @@ export interface IStorage {
   
   // Campaigns
   getCampaigns(userId: string): Promise<Campaign[]>;
-  getCampaign(id: number): Promise<Campaign | undefined>;
+  getCampaign(userId: string, campaignId: string): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
 
@@ -340,13 +340,10 @@ export class DatabaseStorage implements IStorage {
       let userId: string | null = null;
       
       if (params.campaignId) {
-        // Преобразуем строковый id в number для совместимости с getCampaign
-        const campaignIdNum = parseInt(params.campaignId, 10);
-        if (!isNaN(campaignIdNum)) {
-          const campaign = await this.getCampaign(campaignIdNum);
-          if (campaign) {
-            userId = campaign.userId;
-          }
+        // Используем getCampaignById вместо getCampaign, так как он не требует userId
+        const campaign = await this.getCampaignById(params.campaignId);
+        if (campaign) {
+          userId = campaign.userId;
         }
       }
       
@@ -605,22 +602,25 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getCampaign(id: number): Promise<Campaign | undefined> {
+  async getCampaign(userId: string, campaignId: string): Promise<Campaign | undefined> {
     try {
-      const response = await directusApi.get(`/items/user_campaigns/${id}`);
+      console.log(`[DatabaseStorage] Getting campaign with userId: ${userId}, campaignId: ${campaignId}`);
       
-      if (!response.data?.data) {
+      // Используем существующий метод getCampaignById, который получает полные настройки кампании
+      const campaign = await this.getCampaignById(campaignId);
+      
+      if (!campaign) {
+        console.error(`Campaign with ID ${campaignId} not found`);
         return undefined;
       }
       
-      const item = response.data.data;
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        userId: item.user_id,
-        createdAt: new Date(item.created_at)
-      };
+      // Проверяем, что кампания принадлежит указанному пользователю
+      if (campaign.userId !== userId) {
+        console.error(`Campaign ${campaignId} does not belong to user ${userId}`);
+        return undefined;
+      }
+      
+      return campaign;
     } catch (error) {
       console.error('Error getting campaign from Directus:', error);
       return undefined;
@@ -719,8 +719,10 @@ export class DatabaseStorage implements IStorage {
   async deleteCampaign(id: number): Promise<void> {
     try {
       // Нам нужен токен пользователя для этой операции
-      // В реальной реализации нужно получить токен пользователя на основе ID кампании
-      const campaign = await this.getCampaign(id);
+      // Сначала получаем кампанию через метод getCampaignById, который не требует userId
+      
+      // Преобразуем числовой id в строку для getCampaignById
+      const campaign = await this.getCampaignById(id.toString());
       if (!campaign) {
         throw new Error('Campaign not found');
       }
