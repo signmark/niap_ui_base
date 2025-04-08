@@ -2058,40 +2058,34 @@ export class TelegramService extends BaseSocialService {
             images.push(...imgurContent.additionalImages);
           }
           
+          // Определяем, как отправлять контент, в зависимости от длины текста
+          // Если текст короткий - отправляем как подпись к изображению
+          // Если текст длинный - отправляем изображения отдельно, затем текст
+          
+          // Формируем chatId для API Telegram
+          const chatIdValue = telegramSettings.chatId!;
+          let formattedChatId = chatIdValue;
+          if (!chatIdValue.startsWith('-100') && !isNaN(Number(chatIdValue)) && !chatIdValue.startsWith('@')) {
+            formattedChatId = `-100${chatIdValue}`;
+          }
+          
+          // Базовый URL для API Telegram
+          const baseUrl = `https://api.telegram.org/bot${telegramSettings.token!}`;
+          
           // Если текст короткий, отправляем как подпись к изображению
           if (textLength <= smallTextThreshold) {
             log(`Текст короткий (${textLength} <= ${smallTextThreshold}), отправляем как подпись к изображению`, 'telegram');
             
-            // Формируем chatId для API Telegram
-            const chatIdValue = telegramSettings.chatId!;
-            let formattedChatId = chatIdValue;
-            if (!chatIdValue.startsWith('-100') && !isNaN(Number(chatIdValue)) && !chatIdValue.startsWith('@')) {
-              formattedChatId = `-100${chatIdValue}`;
-            }
-            
-            // Базовый URL для API Telegram
-            const baseUrl = `https://api.telegram.org/bot${telegramSettings.token!}`;
-            
             // Отправляем изображения с текстом как подпись
             result = await this.sendImagesToTelegram(formattedChatId, telegramSettings.token!, images, baseUrl, htmlText);
           } else {
-            // Для длинного текста, сначала отправляем изображения, затем текст отдельно
+            // Для длинного текста сначала отправляем изображения, затем текст отдельно
             log(`Текст длинный (${textLength} > ${smallTextThreshold}), отправляем изображения и текст отдельно`, 'telegram');
-            
-            // Формируем chatId для API Telegram
-            const chatIdValue = telegramSettings.chatId!;
-            let formattedChatId = chatIdValue;
-            if (!chatIdValue.startsWith('-100') && !isNaN(Number(chatIdValue)) && !chatIdValue.startsWith('@')) {
-              formattedChatId = `-100${chatIdValue}`;
-            }
-            
-            // Базовый URL для API Telegram
-            const baseUrl = `https://api.telegram.org/bot${telegramSettings.token!}`;
             
             // Отправляем изображения без подписи
             const imagesResult = await this.sendImagesToTelegram(formattedChatId, telegramSettings.token!, images, baseUrl);
             
-            // Затем отправляем текст отдельным сообщением
+            // Затем отправляем текст отдельным сообщением с сохранением форматирования
             const textResult = await this.sendRawHtmlToTelegram(htmlText, telegramSettings.chatId!, telegramSettings.token!);
             
             // Используем результат последней операции (отправки текста)
