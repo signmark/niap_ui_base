@@ -112,27 +112,63 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
         // Telegram поддерживает только <b>, <i>, <u>, <s>, <code>, <pre>, <a href>
         let formattedHtml = baseContent;
         
-        // 1. Заменяем эквивалентные теги на поддерживаемые Telegram форматы
+        // 1. Обработка ссылок - сначала обрабатываем их, чтобы сохранить href атрибуты
+        const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        formattedHtml = formattedHtml.replace(linkRegex, (match, url, text) => {
+          return `<a href="${url}">${text}</a>`;
+        });
+        
+        // 2. Заменяем эквивалентные теги на поддерживаемые Telegram форматы
         formattedHtml = formattedHtml
           .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+          .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
           .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+          .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
           .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+          .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
           .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
+          .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
           .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
         
-        // 2. Обрабатываем блочные элементы, добавляя переносы строк
+        // 3. Обрабатываем блочные элементы, добавляя переносы строк
         formattedHtml = formattedHtml
           .replace(/<br\s*\/?>/gi, '\n')
           .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
           .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
           .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
         
-        // 3. Обрабатываем списки
+        // 4. Обрабатываем списки
         formattedHtml = formattedHtml
           .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
           .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n');
         
-        // 4. Убираем лишние переносы строк (более 2 подряд)
+        // 5. Удаляем все оставшиеся HTML-теги, которые не поддерживаются Telegram
+        const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+        const tagRegex = new RegExp(`<(?!\/?(?:${supportedTags.join('|')})(?:\\s|>))[^>]*>`, 'gi');
+        formattedHtml = formattedHtml.replace(tagRegex, '');
+        
+        // 6. Проверяем баланс открывающих и закрывающих тегов
+        const fixUnclosedTags = (html: string): string => {
+          let result = html;
+          
+          // Простая проверка на балансировку тегов
+          supportedTags.forEach(tag => {
+            const openingTags = (result.match(new RegExp(`<${tag}(?:\\s[^>]*)?>`,'gi')) || []).length;
+            const closingTags = (result.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
+            
+            // Если открывающих тегов больше, добавляем закрывающие
+            if (openingTags > closingTags) {
+              const diff = openingTags - closingTags;
+              result += `${Array(diff).fill(`</${tag}>`).join('')}`;
+            }
+          });
+          
+          return result;
+        };
+        
+        formattedHtml = fixUnclosedTags(formattedHtml);
+        
+        // 7. Убираем лишние переносы строк (более 2 подряд)
         formattedHtml = formattedHtml.replace(/\n{3,}/g, '\n\n');
         
         return formattedHtml;

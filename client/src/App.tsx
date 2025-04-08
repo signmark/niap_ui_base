@@ -25,6 +25,7 @@ import TimeDisplayTest from "@/pages/test/time-display-test";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
+import TelegramTestPage from "@/pages/telegram-test";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/test/universal-image-gen" component={() => <Layout><UniversalImageGenTest /></Layout>} />
       <Route path="/test/imgur" component={() => <Layout><TestImgur /></Layout>} />
       <Route path="/test/html-tags" component={() => <Layout><HtmlTagsTestPage /></Layout>} />
+      <Route path="/test/telegram" component={TelegramTestPage} />
       <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
