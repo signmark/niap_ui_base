@@ -118,6 +118,59 @@ testRouter.get('/telegram-url', (req: Request, res: Response) => {
 });
 
 /**
+ * Тестовый маршрут для проверки исправления незакрытых HTML-тегов
+ * POST /api/test/fix-html-tags
+ */
+testRouter.post('/fix-html-tags', async (req: Request, res: Response) => {
+  try {
+    const { text } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательный параметр: text'
+      });
+    }
+    
+    console.log(`[Test API] Запрос на исправление HTML-тегов`);
+    console.log(`[Test API] Исходный текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+    
+    // Используем функцию из сервиса для исправления тегов
+    // Создаем временный экземпляр TelegramService для доступа к приватным методам
+    const tempTelegramService = telegramService as any;
+    
+    // Применяем оба метода исправления тегов для сравнения
+    const fixedWithBasic = tempTelegramService.fixUnclosedTags(text);
+    const fixedWithAggressive = tempTelegramService.aggressiveTagFixer(text);
+    
+    // Форматируем текст для Telegram
+    const preparedForTelegram = tempTelegramService.prepareTelegramText(text);
+    
+    // Возвращаем результаты всех трех методов
+    return res.json({
+      success: true,
+      originalText: text,
+      fixedWithBasic,
+      fixedWithAggressive,
+      preparedForTelegram,
+      comparison: {
+        originalLength: text.length,
+        basicFixLength: fixedWithBasic.length,
+        aggressiveFixLength: fixedWithAggressive.length,
+        preparedForTelegramLength: preparedForTelegram.length
+      }
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при исправлении HTML-тегов:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
  * Тестовый маршрут для проверки HTML-форматирования с использованием настроек кампании
  * POST /api/test/telegram-html
  */

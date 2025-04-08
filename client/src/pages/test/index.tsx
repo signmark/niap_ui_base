@@ -47,12 +47,15 @@ export default function TestPage() {
             <p className="text-sm text-muted-foreground mb-2">
               Для корректной работы убедитесь, что вы добавили API ключи в настройках профиля.
             </p>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={() => setLocation("/settings")}>
                 Перейти к настройкам API ключей
               </Button>
               <Button variant="outline" size="sm" onClick={() => setLocation("/test/imgur")}>
                 Тестировать Imgur интеграцию
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setLocation("/test/html-tags")}>
+                Тестировать исправление HTML-тегов
               </Button>
             </div>
           </CardContent>
