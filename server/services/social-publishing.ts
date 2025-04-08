@@ -6,11 +6,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import FormData from 'form-data';
+import { TelegramService } from './social/telegram-service';
+import { DirectusAuthManager } from './directus-auth-manager';
 
 /**
  * Сервис для публикации контента в социальные сети
  */
 export class SocialPublishingService {
+  /**
+   * Менеджер авторизации для Directus API
+   */
+  private authManager: DirectusAuthManager;
+
+  /**
+   * Создает экземпляр сервиса
+   * @param authManager Менеджер авторизации для Directus API
+   */
+  constructor(authManager: DirectusAuthManager) {
+    this.authManager = authManager;
+  }
 
   /**
    * Обрабатывает поле дополнительных изображений в контенте, проверяя и преобразуя его при необходимости
@@ -123,44 +137,55 @@ export class SocialPublishingService {
       // Подготовка сообщения с сохранением HTML-форматирования
       let text = processedContent.title ? `<b>${processedContent.title}</b>\n\n` : '';
       
-      // Telegram поддерживает только ограниченный набор HTML-тегов:
-      // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
-      // Нужно преобразовать все HTML-теги к поддерживаемым Telegram форматам
-      // и при этом избежать лишних переносов строк
+      // ВАЖНО: Создаем экземпляр TelegramService для использования его методов форматирования
+      const telegramService = new TelegramService();
       
       // Сначала собираем исходный текст
       let contentText = processedContent.content;
       
-      // Заменяем последовательные блочные элементы более компактным форматом
-      // без избыточных переносов строк
-      contentText = contentText
-        // Заменяем <br> на одиночный перенос строки
-        .replace(/<br\s*\/?>/g, '\n')
+      // Используем специальные методы TelegramService для форматирования
+      // В зависимости от наличия методов в конкретном экземпляре
+      if (typeof (telegramService as any).formatTextForTelegram === 'function') {
+        // Используем метод из TelegramService
+        contentText = (telegramService as any).formatTextForTelegram(contentText);
+        log(`Использован formatTextForTelegram для форматирования текста`, 'social-publishing');
+      } else {
+        // Запасной вариант - базовое форматирование
+        contentText = contentText
+          // Заменяем <br> на одиночный перенос строки
+          .replace(/<br\s*\/?>/g, '\n')
+          
+          // Обрабатываем абзацы без добавления лишних переносов
+          .replace(/<p>(.*?)<\/p>\s*<p>/g, '<p>$1</p><p>') 
+          .replace(/<p>(.*?)<\/p>/g, '$1\n')
+          
+          // Аналогично с div
+          .replace(/<div>(.*?)<\/div>\s*<div>/g, '<div>$1</div><div>')
+          .replace(/<div>(.*?)<\/div>/g, '$1\n')
+          
+          // Заголовки как жирный текст с одиночным переносом
+          .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
+          
+          // Стандартизируем теги форматирования (HTML-теги, которые Telegram поддерживает)
+          .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+          .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+          .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+          
+          // Приводим ссылки к простому формату href
+          .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
+          
+          // Удаляем все прочие неподдерживаемые теги (но сохраняем их содержимое)
+          .replace(/<(?!\/?(b|strong|i|em|u|s|strike|code|pre|a)(?=>|\s.*>))\/?.*?>/gi, '');
+          
+        // Удаляем множественные переносы строк (более двух подряд)
+        contentText = contentText.replace(/\n{3,}/g, '\n\n');
         
-        // Обрабатываем абзацы без добавления лишних переносов
-        .replace(/<p>(.*?)<\/p>\s*<p>/g, '<p>$1</p><p>') // Убираем пробельные символы между абзацами
-        .replace(/<p>(.*?)<\/p>/g, '$1\n') // Один перенос в конце каждого абзаца
-        
-        // Аналогично с div
-        .replace(/<div>(.*?)<\/div>\s*<div>/g, '<div>$1</div><div>')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        
-        // Заголовки как жирный текст с одиночным переносом
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
-        
-        // Стандартизируем теги форматирования (HTML-теги, которые Telegram поддерживает)
-        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
-        
-        // Приводим ссылки к простому формату href
-        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>')
-        
-        // Удаляем все прочие неподдерживаемые теги (но сохраняем их содержимое)
-        .replace(/<(?!\/?(b|strong|i|em|u|s|strike|code|pre|a)(?=>|\s.*>))\/?.*?>/gi, '');
-      
-      // Удаляем множественные переносы строк (более двух подряд)
-      contentText = contentText.replace(/\n{3,}/g, '\n\n');
+        // Исправляем незакрытые теги с помощью специального метода
+        if (typeof (telegramService as any).fixUnclosedTags === 'function') {
+          contentText = (telegramService as any).fixUnclosedTags(contentText);
+          log(`Использован fixUnclosedTags для исправления незакрытых HTML-тегов`, 'social-publishing');
+        }
+      }
       
       log(`Оптимизированный HTML для Telegram: ${contentText.substring(0, 100)}...`, 'social-publishing');
       
