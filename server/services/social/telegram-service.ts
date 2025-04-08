@@ -209,17 +209,17 @@ export class TelegramService extends BaseSocialService {
     
     try {
       // Используем улучшенный обработчик HTML для Telegram из shared/telegram-html-processor.js
-      // Импортируем модуль и используем функцию processHTMLForTelegram, которая обеспечивает:
+      // Импортируем модуль и используем функцию processHtmlForTelegram, которая обеспечивает:
       // - Правильную обработку вложенных списков
       // - Конвертацию заголовков в жирный текст
       // - Сохранение отступов и структуры списков
       // - Обработку сложных случаев с вложенными разнотипными списками
-      const { processHTMLForTelegram } = require('../../../shared/telegram-html-processor');
+      const { processHtmlForTelegram } = require('../../../shared/telegram-html-processor');
       
       log(`Форматирование текста для Telegram с использованием улучшенного процессора, исходная длина: ${originalLength} символов`, 'social-publishing');
       
       // Используем улучшенную функцию обработки HTML
-      let formattedText = processHTMLForTelegram(content);
+      let formattedText = processHtmlForTelegram(content, { debug: true });
       
       // Удаление невидимых символов (сохраняем для совместимости)
       formattedText = formattedText
@@ -2005,9 +2005,12 @@ export class TelegramService extends BaseSocialService {
         htmlText += `<b>${content.title}</b>\n\n`;
       }
       
-      // Добавляем основной контент
+      // Добавляем основной контент с обработкой HTML
       if (content.content) {
-        htmlText += content.content;
+        // Импортируем процессор HTML для корректного форматирования в Telegram
+        const { processHtmlForTelegram } = require('../../../shared/telegram-html-processor');
+        const processedContent = processHtmlForTelegram(content.content, { debug: true });
+        htmlText += processedContent;
       }
       
       // Добавляем хэштеги, если они есть
