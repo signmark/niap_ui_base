@@ -485,12 +485,19 @@ export class SocialPublishingWithImgurService {
           
           log(`Отправка обычного текста в Telegram (без HTML), длина: ${processedPlainText.length} символов`, 'social-publishing');
           
-          // Тело запроса без указания parse_mode
+          // Вместо полного удаления HTML-тегов, пробуем еще раз исправить разметку
+          // и отправить с правильно обработанными тегами
+          
+          // Создаем обработанную версию HTML
+          const processedHtml = this.fixUnclosedTags(text);
+          
+          // Данные запроса с HTML, но после исправления
           const plainMessageBody = {
             chat_id: formattedChatId,
-            text: processedPlainText,
-            disable_web_page_preview: true
-          , parse_mode: "HTML"};
+            text: processedHtml,
+            disable_web_page_preview: true,
+            parse_mode: "HTML"
+          };
           
           // Отправляем запрос без HTML форматирования
           const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
@@ -694,6 +701,99 @@ export class SocialPublishingWithImgurService {
    * @param messageId Опциональный ID сообщения для создания прямой ссылки
    * @returns Корректно форматированный URL
    */
+  /**
+   * Исправляет незакрытые HTML-теги в тексте
+   * @param {string} html HTML-текст для исправления
+   * @returns {string} Исправленный HTML-текст
+   */
+  private fixUnclosedTags(html: string): string {
+    if (!html) return '';
+    
+    log(`Исправление незакрытых тегов в HTML: ${html.substring(0, 50)}...`, 'social-publishing');
+    
+    // Список поддерживаемых в Telegram тегов
+    const supportedTags = ['b', 'strong', 'i', 'em', 'u', 'ins', 'code', 'pre', 's', 'strike', 'del', 'a'];
+    
+    // Соответствие тегов (для стандартизации)
+    const tagMapping: {[key: string]: string} = {
+      'strong': 'b',
+      'em': 'i',
+      'ins': 'u',
+      'strike': 's',
+      'del': 's'
+    };
+    
+    // Стек для отслеживания открытых тегов
+    const openTags: string[] = [];
+    
+    // Регулярное выражение для поиска всех HTML-тегов
+    const tagRegex = /<\/?([a-z][a-z0-9]*)(?: [^>]*)?>/gi;
+    
+    // Подсчет открывающих и закрывающих тегов
+    const openingTagsCount = (html.match(/<[a-z][a-z0-9]*(?:\s[^>]*)?>+/gi) || []).length;
+    const closingTagsCount = (html.match(/<\/[a-z][a-z0-9]*>/gi) || []).length;
+    
+    log(`Исходное количество тегов: открывающие=${openingTagsCount}, закрывающие=${closingTagsCount}`, 'social-publishing');
+    
+    // Если количество открывающих и закрывающих тегов не совпадает,
+    // значит есть незакрытые теги и нужно их исправить
+    if (openingTagsCount !== closingTagsCount) {
+      log(`Внимание: количество открывающих (${openingTagsCount}) и закрывающих (${closingTagsCount}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
+      
+      // Проходим по всем тегам и собираем информацию об открытых/закрытых
+      let match;
+      const matches: {full: string, name: string, isClosing: boolean, index: number}[] = [];
+      while ((match = tagRegex.exec(html)) !== null) {
+        matches.push({
+          full: match[0],
+          name: match[1].toLowerCase(),
+          isClosing: match[0].startsWith('</'),
+          index: match.index
+        });
+      }
+      
+      // Находим незакрытые теги
+      const unclosedTags: string[] = [];
+      for (const tag of matches) {
+        if (!tag.isClosing) {
+          // Это открывающий тег
+          // Проверяем, поддерживается ли он в Telegram
+          if (supportedTags.includes(tag.name) || supportedTags.includes(tagMapping[tag.name])) {
+            // Стандартизируем имя тега
+            const standardTag = tagMapping[tag.name] || tag.name;
+            unclosedTags.push(standardTag);
+          }
+        } else {
+          // Это закрывающий тег
+          // Находим соответствующий открывающий тег и удаляем его из списка незакрытых
+          const standardTag = tagMapping[tag.name] || tag.name;
+          const index = unclosedTags.lastIndexOf(standardTag);
+          if (index !== -1) {
+            unclosedTags.splice(index, 1);
+          }
+        }
+      }
+      
+      // Если остались незакрытые теги, добавляем закрывающие теги в конец
+      if (unclosedTags.length > 0) {
+        log(`Обнаружены незакрытые теги: ${unclosedTags.join(', ')}`, 'social-publishing');
+        
+        let fixedHtml = html;
+        
+        // Добавляем закрывающие теги в обратном порядке
+        for (let i = unclosedTags.length - 1; i >= 0; i--) {
+          fixedHtml += `</${unclosedTags[i]}>`;
+        }
+        
+        return fixedHtml;
+      }
+    }
+    
+    // Если количество тегов совпадает или нет поддерживаемых незакрытых тегов,
+    // возвращаем исходный HTML
+    return html;
+  }
+
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
     // Определяем базовый URL для публичных каналов или приватных чатов
     let baseUrl = '';

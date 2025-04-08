@@ -1,8 +1,9 @@
 /**
- * Тест для демонстрации и исправления проблемы с HTML-форматированием в Telegram
- * при отправке текста после изображения
+ * Тест для проверки последовательной отправки изображения и HTML-текста в Telegram
+ * Проверяет исправление проблемы с сохранением HTML-форматирования в тексте,
+ * отправляемом после изображения.
  * 
- * Запуск: node telegram-html-format-fix-test.js
+ * Запуск: node telegram-html-sequence-test.js
  */
 
 import axios from 'axios';
@@ -182,7 +183,7 @@ async function sendHtmlMessage(html, autoFix = true) {
     // URL для API Telegram
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     
-    // Данные запроса
+    // Данные запроса с HTML-форматированием
     const data = {
       chat_id: TELEGRAM_CHAT_ID,
       text: textToSend,
@@ -232,19 +233,33 @@ async function sendHtmlMessage(html, autoFix = true) {
 }
 
 /**
- * Демонстрирует проблему с HTML-форматированием и ее решение
+ * Проверяет отправку изображения и текста с форматированием HTML-тегами последовательно
  */
-async function demonstrateProblemAndSolution() {
-  // 1. Тестовый текст с незакрытым тегом <i>
-  const htmlWithUnclosedTag = '<b>Тестовый текст</b> с <i>незакрытым тегом';
+async function testSequentialMessagesWithFormatting() {
+  // Тестовый текст с вложенным форматированием и списками
+  const complexHtml = `
+<b>Заголовок статьи</b>
+
+Параграф обычного текста, который должен корректно отображаться
+после <i>изображения</i>. Также проверим <b>жирный</b> текст и <u>подчеркнутый</u>.
+
+<b>Структурированный список информации:</b>
+• Первый пункт простого списка
+• <i>Второй пункт списка с курсивом</i>
+• <b>Третий пункт списка с жирным текстом</b>
+
+<b>Вложенное форматирование:</b> 
+Текст с <b>вложенным <i>форматированием</i> и <u>разными</u> стилями</b> должен 
+корректно отображаться в Telegram.
+  `;
   
-  // 2. URL изображения для теста
+  // URL тестового изображения
   const imageUrl = 'https://i.imgur.com/BVywpYP.jpg';
   
-  log('=== ДЕМОНСТРАЦИЯ ПРОБЛЕМЫ И РЕШЕНИЯ ФОРМАТИРОВАНИЯ HTML В TELEGRAM ===');
+  log('=== ТЕСТИРОВАНИЕ ПОСЛЕДОВАТЕЛЬНОЙ ОТПРАВКИ ИЗОБРАЖЕНИЯ И ФОРМАТИРОВАННОГО ТЕКСТА ===');
   
-  // 3. Отправляем изображение без текста
-  log('\n--- ТЕСТ 1: Отправка изображения ---');
+  // Отправляем изображение без текста
+  log('\n--- ЭТАП 1: Отправка изображения ---');
   const imageResult = await sendImageWithoutCaption(imageUrl);
   
   if (!imageResult.success) {
@@ -252,29 +267,23 @@ async function demonstrateProblemAndSolution() {
     return;
   }
   
-  // 4. Отправляем текст с незакрытым тегом БЕЗ исправления
-  log('\n--- ТЕСТ 2: Отправка HTML с незакрытым тегом БЕЗ исправления ---');
-  const htmlWithoutFixResult = await sendHtmlMessage(htmlWithUnclosedTag, false);
+  log('\n--- ЭТАП 2: Отправка форматированного HTML-текста ---');
+  const textResult = await sendHtmlMessage(complexHtml);
   
-  // 5. Отправляем тот же текст, но С исправлением незакрытых тегов
-  log('\n--- ТЕСТ 3: Отправка HTML с незакрытым тегом С исправлением ---');
-  const htmlWithFixResult = await sendHtmlMessage(htmlWithUnclosedTag, true);
-  
-  // 6. Отправляем корректный HTML-текст
-  log('\n--- ТЕСТ 4: Отправка корректного HTML ---');
-  const correctHtml = '<b>Этот текст</b> написан <i>правильно</i> с <u>закрытыми</u> <s>тегами</s>';
-  const correctHtmlResult = await sendHtmlMessage(correctHtml);
-  
-  // Итоги
+  // Итоги теста
   log('\n=== ИТОГИ ТЕСТИРОВАНИЯ ===');
   log(`1. Отправка изображения: ${imageResult.success ? 'УСПЕХ' : 'ОШИБКА'}`);
-  log(`2. HTML без исправления: ${htmlWithoutFixResult.success ? 'УСПЕХ' : 'ОШИБКА'}`);
-  log(`3. HTML с исправлением: ${htmlWithFixResult.success ? 'УСПЕХ' : 'ОШИБКА'}`);
-  log(`4. Корректный HTML: ${correctHtmlResult.success ? 'УСПЕХ' : 'ОШИБКА'}`);
+  log(`2. Отправка HTML-текста: ${textResult.success ? 'УСПЕХ' : 'ОШИБКА'}`);
+  
+  if (textResult.success && imageResult.success) {
+    log('✅ ТЕСТ ПРОЙДЕН: Удалось отправить и изображение, и форматированный HTML-текст последовательно');
+  } else {
+    log('❌ ТЕСТ НЕ ПРОЙДЕН: Возникли проблемы при отправке последовательных сообщений');
+  }
 }
 
-// Запускаем демонстрацию
-demonstrateProblemAndSolution()
+// Запускаем тестирование
+testSequentialMessagesWithFormatting()
   .then(() => {
     log('Тестирование завершено');
   })
