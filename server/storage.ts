@@ -31,7 +31,7 @@ export interface IStorage {
   
   // Campaigns
   getCampaigns(userId: string): Promise<Campaign[]>;
-  getCampaign(userId: string, campaignId: string): Promise<Campaign | undefined>;
+  getCampaign(id: number): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
 
@@ -602,25 +602,22 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getCampaign(userId: string, campaignId: string): Promise<Campaign | undefined> {
+  async getCampaign(id: number): Promise<Campaign | undefined> {
     try {
-      console.log(`[DatabaseStorage] Getting campaign with userId: ${userId}, campaignId: ${campaignId}`);
+      const response = await directusApi.get(`/items/user_campaigns/${id}`);
       
-      // Используем существующий метод getCampaignById, который получает полные настройки кампании
-      const campaign = await this.getCampaignById(campaignId);
-      
-      if (!campaign) {
-        console.error(`Campaign with ID ${campaignId} not found`);
+      if (!response.data?.data) {
         return undefined;
       }
       
-      // Проверяем, что кампания принадлежит указанному пользователю
-      if (campaign.userId !== userId) {
-        console.error(`Campaign ${campaignId} does not belong to user ${userId}`);
-        return undefined;
-      }
-      
-      return campaign;
+      const item = response.data.data;
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        userId: item.user_id,
+        createdAt: new Date(item.created_at)
+      };
     } catch (error) {
       console.error('Error getting campaign from Directus:', error);
       return undefined;
