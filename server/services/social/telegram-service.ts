@@ -1070,6 +1070,12 @@ export class TelegramService extends BaseSocialService {
       
       // 2. Стандартизируем все типы HTML-тегов к поддерживаемым Telegram форматам
       let fixedText = cleanedText
+        // Сначала обрабатываем блочные элементы, которые не поддерживаются Telegram
+        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+        .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        // Затем стандартизируем форматирование
         .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
         .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
         .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
