@@ -406,9 +406,15 @@ export class PublishScheduler {
         }
       });
       
-      // Фильтруем контент, который пора публиковать
+      // Фильтруем контент, который пора публиковать и еще не опубликован
       const contentToPublish = scheduledContent.filter(content => {
         if (!content.scheduledAt) return false;
+        
+        // Проверяем, что статус не "published"
+        if (content.status === 'published') {
+          log(`Контент ID ${content.id} "${content.title}" уже опубликован, пропускаем`, 'scheduler');
+          return false;
+        }
         
         const scheduledTime = new Date(content.scheduledAt);
         return scheduledTime <= now;
@@ -433,6 +439,12 @@ export class PublishScheduler {
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
+        return;
+      }
+      
+      // Пропускаем уже опубликованный контент
+      if (content.status === 'published') {
+        log(`Контент ${content.id}: "${content.title}" уже имеет статус published, пропускаем публикацию`, 'scheduler');
         return;
       }
 
