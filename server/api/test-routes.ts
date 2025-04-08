@@ -4,7 +4,9 @@
  */
 import express, { Request, Response } from 'express';
 import { telegramService } from '../services/social/telegram-service';
+import { socialPublishingService } from '../services/social/index';
 import { DatabaseStorage } from '../storage';
+import { log } from '../utils/logger';
 
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
@@ -298,6 +300,106 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Test API] Ошибка при тестировании HTML-форматирования:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки форматирования HTML для Telegram на стороне клиента
+ * POST /api/test/format-client-html
+ */
+testRouter.post('/format-client-html', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    // Проверяем наличие обязательного параметра
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательный параметр: html'
+      });
+    }
+    
+    log(`[Test API] Запрос на проверку форматирования HTML для Telegram на стороне клиента`, 'test');
+    log(`[Test API] Исходный HTML: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`, 'test');
+    
+    // 1. Серверный формат - TelegramService.formatTextForTelegram
+    const serverFormatted = telegramService.formatTextForTelegram(html);
+    
+    // 2. Серверный формат с агрессивным исправлением
+    const serverFormattedAggressive = telegramService.aggressiveTagFixer(serverFormatted);
+    
+    // 3. Клиентский формат (имитация того, что мы делаем в компоненте)
+    let clientFormatted = html;
+    
+    // Заменяем эквивалентные теги на поддерживаемые Telegram форматы
+    clientFormatted = clientFormatted
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+      .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+      .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
+      .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
+    
+    // Обрабатываем блочные элементы, добавляя переносы строк
+    clientFormatted = clientFormatted
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+      .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+      .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
+    
+    // Обрабатываем списки
+    clientFormatted = clientFormatted
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+      .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n');
+    
+    // Убираем лишние переносы строк (более 2 подряд)
+    clientFormatted = clientFormatted.replace(/\n{3,}/g, '\n\n');
+    
+    // 4. Серверный формат через агрессивный isSuccess
+    const isHtmlValid = telegramService.isValidHtmlForTelegram(html);
+    
+    // Отладочный вывод
+    const debugInfo = {
+      originalLength: html.length,
+      serverFormattedLength: serverFormatted.length,
+      serverFormattedAggressiveLength: serverFormattedAggressive.length,
+      clientFormattedLength: clientFormatted.length,
+      containsHtmlTags: html.includes('<') && html.includes('>'),
+      serverFormattedContainsHtmlTags: serverFormatted.includes('<') && serverFormatted.includes('>'),
+      serverFormattedAggressiveContainsHtmlTags: serverFormattedAggressive.includes('<') && serverFormattedAggressive.includes('>'),
+      clientFormattedContainsHtmlTags: clientFormatted.includes('<') && clientFormatted.includes('>')
+    };
+    
+    // Анализ проблем
+    const problems = [];
+    
+    // Проверяем незакрытые теги
+    const openTagCount = (text: string) => (text.match(/<[^\/][^>]*>/g) || []).length;
+    const closeTagCount = (text: string) => (text.match(/<\/[^>]*>/g) || []).length;
+    
+    const originalOpenTags = openTagCount(html);
+    const originalCloseTags = closeTagCount(html);
+    
+    if (originalOpenTags !== originalCloseTags) {
+      problems.push(`Незакрытые теги в исходном HTML: открывающих ${originalOpenTags}, закрывающих ${originalCloseTags}`);
+    }
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      original: html,
+      serverFormatted,
+      serverFormattedAggressive,
+      clientFormatted,
+      isHtmlValid,
+      debug: debugInfo,
+      problems
+    });
+  } catch (error: any) {
+    log(`[Test API] Ошибка при проверке форматирования HTML: ${error.message}`, 'test');
     return res.status(500).json({
       success: false,
       error: error.message || 'Неизвестная ошибка'
