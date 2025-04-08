@@ -1970,9 +1970,13 @@ export class TelegramService extends BaseSocialService {
     // Проверяем, используем ли мы упрощенный режим отправки HTML
     const useDirectHtmlSending = true; // Включаем новый метод отправки
     
+    // Проверяем наличие изображений
+    const hasImages = content.imageUrl || 
+      (content.additionalImages && content.additionalImages.length > 0);
+      
     if (useDirectHtmlSending) {
       // Используем оптимизированный метод прямой отправки HTML
-      log(`Используем оптимизированный метод прямой отправки HTML`, 'telegram');
+      log(`Используем оптимизированный метод прямой отправки HTML. Наличие изображений: ${hasImages}`, 'telegram');
       
       // Подготавливаем HTML-текст
       let htmlText = '';
@@ -1998,16 +2002,93 @@ export class TelegramService extends BaseSocialService {
         }
       }
       
-      // Отправляем HTML напрямую через новый метод
       try {
-        const result = await this.sendRawHtmlToTelegram(
-          htmlText, 
-          telegramSettings.chatId!, 
-          telegramSettings.token!
-        );
+        let result;
         
-        if (result.success) {
-          log(`Публикация с прямой отправкой HTML успешно отправлена в Telegram, ID сообщения: ${result.messageId}`, 'telegram');
+        // Если есть изображения, используем логику с проверкой длины текста
+        if (hasImages) {
+          log(`Обнаружены изображения в контенте. Применяем стратегию с изображениями.`, 'telegram');
+          
+          // Обрабатываем контент для изображений
+          const processedContent = this.processAdditionalImages(content, 'telegram');
+          
+          // Загружаем локальные изображения на Imgur, если необходимо
+          const imgurContent = await this.uploadImagesToImgur(processedContent);
+          
+          // Длина текста для определения стратегии отправки
+          const textLength = htmlText.length;
+          const smallTextThreshold = 1000; // Порог для определения "маленького" текста
+          
+          log(`Длина текста: ${textLength} символов, порог: ${smallTextThreshold}`, 'telegram');
+          
+          // Собираем все изображения для отправки через универсальный метод
+          const images: string[] = [];
+          
+          // Добавляем основное изображение, если оно есть
+          if (imgurContent.imageUrl) {
+            log(`Добавляем основное изображение: ${imgurContent.imageUrl}`, 'telegram');
+            images.push(imgurContent.imageUrl);
+          }
+          
+          // Добавляем дополнительные изображения в общий список
+          if (imgurContent.additionalImages && imgurContent.additionalImages.length > 0) {
+            log(`Добавляем ${imgurContent.additionalImages.length} дополнительных изображений`, 'telegram');
+            images.push(...imgurContent.additionalImages);
+          }
+          
+          // Если текст короткий, отправляем как подпись к изображению
+          if (textLength <= smallTextThreshold) {
+            log(`Текст короткий (${textLength} <= ${smallTextThreshold}), отправляем как подпись к изображению`, 'telegram');
+            
+            // Формируем chatId для API Telegram
+            const chatIdValue = telegramSettings.chatId!;
+            let formattedChatId = chatIdValue;
+            if (!chatIdValue.startsWith('-100') && !isNaN(Number(chatIdValue)) && !chatIdValue.startsWith('@')) {
+              formattedChatId = `-100${chatIdValue}`;
+            }
+            
+            // Базовый URL для API Telegram
+            const baseUrl = `https://api.telegram.org/bot${telegramSettings.token!}`;
+            
+            // Отправляем изображения с текстом как подпись
+            result = await this.sendImagesToTelegram(formattedChatId, telegramSettings.token!, images, baseUrl, htmlText);
+          } else {
+            // Для длинного текста, сначала отправляем изображения, затем текст отдельно
+            log(`Текст длинный (${textLength} > ${smallTextThreshold}), отправляем изображения и текст отдельно`, 'telegram');
+            
+            // Формируем chatId для API Telegram
+            const chatIdValue = telegramSettings.chatId!;
+            let formattedChatId = chatIdValue;
+            if (!chatIdValue.startsWith('-100') && !isNaN(Number(chatIdValue)) && !chatIdValue.startsWith('@')) {
+              formattedChatId = `-100${chatIdValue}`;
+            }
+            
+            // Базовый URL для API Telegram
+            const baseUrl = `https://api.telegram.org/bot${telegramSettings.token!}`;
+            
+            // Отправляем изображения без подписи
+            const imagesResult = await this.sendImagesToTelegram(formattedChatId, telegramSettings.token!, images, baseUrl);
+            
+            // Затем отправляем текст отдельным сообщением
+            const textResult = await this.sendRawHtmlToTelegram(htmlText, telegramSettings.chatId!, telegramSettings.token!);
+            
+            // Используем результат последней операции (отправки текста)
+            result = textResult;
+            
+            // Но для URL используем результат отправки изображений, если он успешен
+            if (imagesResult.success && imagesResult.messageUrl) {
+              log(`Используем URL от сообщения с изображениями: ${imagesResult.messageUrl}`, 'telegram');
+              result.messageUrl = imagesResult.messageUrl;
+            }
+          }
+        } else {
+          // Если изображений нет, просто отправляем HTML-текст
+          log(`Изображения не обнаружены. Отправляем только HTML-текст.`, 'telegram');
+          result = await this.sendRawHtmlToTelegram(htmlText, telegramSettings.chatId!, telegramSettings.token!);
+        }
+        
+        if (result && result.success) {
+          log(`Публикация успешно отправлена в Telegram, ID сообщения: ${result.messageId}`, 'telegram');
           return {
             platform: 'telegram',
             status: 'published',
@@ -2015,23 +2096,24 @@ export class TelegramService extends BaseSocialService {
             postUrl: result.messageUrl
           };
         } else {
-          log(`Ошибка при прямой отправке HTML в Telegram: ${result.error}`, 'telegram');
+          const errorMessage = result ? result.error : 'Неизвестная ошибка';
+          log(`Ошибка при отправке в Telegram: ${errorMessage}`, 'telegram');
           return {
             platform: 'telegram',
             status: 'failed',
             publishedAt: null,
             postUrl: null,
-            error: `Ошибка при прямой отправке HTML в Telegram: ${result.error}`
+            error: `Ошибка при отправке в Telegram: ${errorMessage}`
           };
         }
       } catch (error: any) {
-        log(`Исключение при прямой отправке HTML в Telegram: ${error.message}`, 'telegram');
+        log(`Исключение при публикации в Telegram: ${error.message}`, 'telegram');
         return {
           platform: 'telegram',
           status: 'failed',
           publishedAt: null,
           postUrl: null,
-          error: `Исключение при прямой отправке HTML в Telegram: ${error.message}`
+          error: `Исключение при публикации в Telegram: ${error.message}`
         };
       }
     }
