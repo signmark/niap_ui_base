@@ -15,7 +15,7 @@ export abstract class BaseSocialService {
    * Получает системный токен для доступа к API Directus
    * @returns Токен доступа или null в случае ошибки
    */
-  protected async getSystemToken(): Promise<string | null> {
+  public async getSystemToken(): Promise<string | null> {
     try {
       const directusAuthManager = await import('../directus-auth-manager').then(m => m.directusAuthManager);
       const directusCrud = await import('../directus-crud').then(m => m.directusCrud);
@@ -28,10 +28,11 @@ export abstract class BaseSocialService {
       if (email && password) {
         log(`Попытка авторизации администратора с учетными данными из env`, 'social-publishing');
         try {
-          const adminSession = await directusAuthManager.loginUserWithCredentials(email, password);
+          // Используем метод login вместо loginUserWithCredentials
+          const adminSession = await directusAuthManager.login(email, password);
           if (adminSession) {
             log(`Авторизация администратора успешна через прямой API запрос`, 'social-publishing');
-            return adminSession.accessToken;
+            return adminSession.token; // Используем token вместо accessToken
           }
         } catch (e) {
           log(`Ошибка авторизации администратора: ${e}`, 'social-publishing');
@@ -40,13 +41,25 @@ export abstract class BaseSocialService {
       
       // 2. Вариант - использовать хранящуюся сессию администратора
       try {
-        const adminSession = directusAuthManager.getUserSession(adminUserId);
-        if (adminSession && adminSession.accessToken) {
+        // Используем метод getSession вместо getUserSession
+        const adminSession = directusAuthManager.getSession(adminUserId);
+        if (adminSession && adminSession.token) {
           log(`Использование существующей авторизации администратора`, 'social-publishing');
-          return adminSession.accessToken;
+          return adminSession.token; // Используем token вместо accessToken
         }
       } catch (e) {
         log(`Не удалось получить существующую сессию администратора: ${e}`, 'social-publishing');
+      }
+      
+      // 3. Последний вариант - использовать getAuthToken напрямую
+      try {
+        const token = await directusAuthManager.getAuthToken(adminUserId);
+        if (token) {
+          log(`Получен токен администратора через getAuthToken`, 'social-publishing');
+          return token;
+        }
+      } catch (e) {
+        log(`Не удалось получить токен через getAuthToken: ${e}`, 'social-publishing');
       }
       
       return null;
