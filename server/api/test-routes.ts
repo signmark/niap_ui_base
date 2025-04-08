@@ -393,4 +393,165 @@ router.post('/fix-html', (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Маршрут для получения списка доступных ID контента
+ * который может использоваться для тестирования публикации
+ */
+router.get('/list-content-ids', async (req: Request, res: Response) => {
+  try {
+    console.log(`[Test API] Запрос на получение списка ID контента`);
+    
+    // Получаем контент напрямую через API Directus
+    // Используем учетные данные администратора из .env
+    const { directusApiManager } = await import('../directus');
+    
+    // Пробуем авторизоваться как администратор
+    try {
+      await directusApiManager.login({
+        email: process.env.DIRECTUS_ADMIN_EMAIL,
+        password: process.env.DIRECTUS_ADMIN_PASSWORD
+      });
+      
+      console.log(`[Test API] Успешная авторизация в Directus как администратор`);
+      
+      // Получаем последние 20 элементов контента
+      const response = await directusApiManager.request({
+        url: '/items/campaign_content',
+        method: 'get',
+        params: {
+          sort: '-date_created',
+          limit: 20,
+          fields: ['id', 'title', 'status', 'content', 'content_type', 'image_url']
+        }
+      });
+      
+      if (response.data && response.data.data) {
+        const contentList = response.data.data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          status: item.status,
+          contentType: item.content_type,
+          hasImage: !!item.image_url,
+          contentPreview: item.content ? item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '') : null
+        }));
+        
+        console.log(`[Test API] Получено ${contentList.length} элементов контента`);
+        
+        return res.json({
+          success: true,
+          count: contentList.length,
+          data: contentList
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          error: 'Элементы контента не найдены'
+        });
+      }
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации в Directus: ${authError.message}`);
+      return res.status(401).json({
+        success: false,
+        error: 'Ошибка авторизации в Directus',
+        message: authError.message
+      });
+    }
+  } catch (error: any) {
+    console.error(`[Test API] Ошибка при получении списка ID контента: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при получении списка ID контента',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для получения контента по ID с последующей публикацией в Telegram
+ * Этот маршрут получает контент из Directus и публикует его в Telegram,
+ * используя настройки из .env или переданные в запросе
+ */
+router.post('/publish-content-by-id', async (req: Request, res: Response) => {
+  try {
+    const { contentId, telegramToken, telegramChatId } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать ID контента (contentId)'
+      });
+    }
+    
+    // Используем переданные настройки или берем из .env
+    const token = telegramToken || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = telegramChatId || process.env.TELEGRAM_CHAT_ID;
+    
+    if (!token || !chatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Не указаны настройки Telegram (token и chatId). Передайте их в запросе или задайте в .env'
+      });
+    }
+    
+    console.log(`[Test API] Получение контента по ID: ${contentId}`);
+    console.log(`[Test API] Использование настроек: chatId=${chatId}`);
+    
+    // Получаем контент напрямую из хранилища
+    const { storage } = await import('../storage');
+    const content = await storage.getCampaignContentById(contentId);
+    
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: `Контент с ID ${contentId} не найден`
+      });
+    }
+    
+    console.log(`[Test API] Контент получен: ${content.title}`);
+    console.log(`[Test API] Тип контента: ${content.contentType}`);
+    console.log(`[Test API] HTML текст: ${content.content.substring(0, 100)}${content.content.length > 100 ? '...' : ''}`);
+    
+    // Инициализируем telegramService с нашими настройками
+    telegramService.initialize(token, chatId);
+    
+    // Публикуем контент с использованием метода publishToPlatform
+    const result = await telegramService.publishToPlatform(content);
+    
+    if (!result) {
+      return res.status(500).json({
+        success: false,
+        error: 'Не удалось опубликовать контент в Telegram',
+        details: 'Нет ответа от сервиса публикации'
+      });
+    }
+    
+    console.log(`[Test API] Публикация успешно отправлена, URL: ${result.postUrl}`);
+    
+    // Обновляем статус публикации в хранилище
+    const { socialPublishingService } = await import('../services/social/index');
+    await socialPublishingService.updatePublicationStatus(
+      contentId,
+      'telegram',
+      result
+    );
+    
+    return res.json({
+      success: true,
+      contentId: contentId,
+      messageId: result.messageId,
+      postUrl: result.postUrl,
+      chatId: chatId,
+      result: result
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при публикации контента в Telegram:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
 export default router;
