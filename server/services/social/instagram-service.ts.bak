@@ -262,73 +262,83 @@ export class InstagramService extends BaseSocialService {
       // Получаем ID публикации
       const igMediaId = publishResponse.data.id;
         
-      // Для получения permalink нужен отдельный запрос
-      log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'instagram');
-      
-      // Формируем URL запроса для получения информации о публикации
-      const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
-      
-      // Отправляем запрос
-      const mediaInfoResponse = await axios.get(`${mediaInfoUrl}`, {
-        params: {
-          fields: 'permalink',
-          access_token: token
-        },
-        timeout: 30000
-      });
-      
-      log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'instagram');
-      
-      // Проверяем успешность получения информации
-      let postUrl = '';
-      
-      if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
-        postUrl = mediaInfoResponse.data.permalink;
-        log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
-      } else {
-        // Если не удалось получить permalink, используем стандартную форму ссылки
-        postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-        log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
-      }
-      
-      log(`[Instagram] Публикация успешно завершена!`, 'instagram');
-      
-      return {
-        platform: 'instagram',
-        status: 'published',
-        publishedAt: new Date(),
-        postUrl: postUrl
-      };
-    } catch (error: any) {
-      log(`[Instagram] Исключение при публикации: ${error.message}`, 'instagram');
-      
-      // Дополнительное логирование для ответа API
-      if (error.response && error.response.data) {
-        log(`[Instagram] Детали ошибки API: ${JSON.stringify(error.response.data)}`, 'instagram');
-      }
-      
-      // Обработка распространенных ошибок
-      let errorMessage = `Ошибка при публикации в Instagram: ${error.message}`;
-      
-      if (error.response?.data?.error) {
-        const apiError = error.response.data.error;
+        // Для получения permalink нужен отдельный запрос
+        log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'instagram');
         
-        if (apiError.code === 190) {
-          errorMessage = 'Недействительный токен доступа. Пожалуйста, обновите токен в настройках.';
-        } else if (apiError.code === 4) {
-          errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
-        } else if (apiError.code === 10) {
-          errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
+        // Формируем URL запроса для получения информации о публикации
+        const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
+        
+        // Отправляем запрос
+        const mediaInfoResponse = await axios.get(`${mediaInfoUrl}`, {
+          params: {
+            fields: 'permalink',
+            access_token: token
+          },
+          timeout: 30000
+        });
+        
+        log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'instagram');
+        
+        // Проверяем успешность получения информации
+        let postUrl = '';
+        
+        if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
+          postUrl = mediaInfoResponse.data.permalink;
+          log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
         } else {
-          errorMessage = `Ошибка API Instagram: ${apiError.message} (код ${apiError.code})`;
+          // Если не удалось получить permalink, используем стандартную форму ссылки
+          postUrl = `https://www.instagram.com/p/${igMediaId}/`;
+          log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
         }
+        
+        log(`[Instagram] Публикация успешно завершена!`, 'instagram');
+        
+        return {
+          platform: 'instagram',
+          status: 'published',
+          publishedAt: new Date(),
+          postUrl: postUrl
+        };
+      } catch (error: any) {
+        log(`[Instagram] Исключение при публикации: ${error.message}`, 'instagram');
+        
+        // Дополнительное логирование для ответа API
+        if (error.response && error.response.data) {
+          log(`[Instagram] Детали ошибки API: ${JSON.stringify(error.response.data)}`, 'instagram');
+        }
+        
+        // Обработка распространенных ошибок
+        let errorMessage = `Ошибка при публикации в Instagram: ${error.message}`;
+        
+        if (error.response?.data?.error) {
+          const apiError = error.response.data.error;
+          
+          if (apiError.code === 190) {
+            errorMessage = 'Недействительный токен доступа. Пожалуйста, обновите токен в настройках.';
+          } else if (apiError.code === 4) {
+            errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
+          } else if (apiError.code === 10) {
+            errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
+          } else {
+            errorMessage = `Ошибка API Instagram: ${apiError.message} (код ${apiError.code})`;
+          }
+        }
+        
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: errorMessage
+        };
       }
+    } catch (error: any) {
+      log(`[Instagram] Общая ошибка при публикации: ${error.message}`, 'instagram');
       
       return {
         platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        error: errorMessage
+        error: `Общая ошибка при публикации: ${error.message}`
       };
     }
   }
