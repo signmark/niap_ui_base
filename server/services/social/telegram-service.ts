@@ -2,9 +2,20 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import FormData from 'form-data';
+
+// Константы для Telegram
+const MAX_CAPTION_LENGTH = 1024; // Максимальная длина подписи для изображений в Telegram
+const MAX_MESSAGE_LENGTH = 4096; // Максимальная длина сообщения в Telegram
+const SMALL_MESSAGE_THRESHOLD = 1000; // Порог для определения "маленьких" сообщений
+const MAX_MEDIA_GROUP_SIZE = 10; // Максимальное количество изображений в медиагруппе
 
 /**
- * Сервис для публикации контента в Telegram
+ * Сервис для публикации контента в Telegram с поддержкой корректного HTML-форматирования
+ * и обработкой длинных сообщений
  */
 export class TelegramService extends BaseSocialService {
   // Храним username канала, полученный в процессе публикации
@@ -279,6 +290,99 @@ export class TelegramService extends BaseSocialService {
   }
 
   /**
+   * Делит длинный текст на части, соблюдая целостность форматирования 
+   * и учитывая ограничения Telegram по максимальной длине сообщения
+   * @param text Исходный текст (может содержать HTML-теги)
+   * @param maxChunkSize Максимальный размер одной части (по умолчанию 4000 символов)
+   * @returns Массив частей текста с корректно закрытыми HTML-тегами
+   */
+  private splitLongText(text: string, maxChunkSize: number = 4000): string[] {
+    if (!text || text.length <= maxChunkSize) {
+      return [text];
+    }
+    
+    // Результирующий массив частей
+    const chunks: string[] = [];
+    // Оставшийся текст для обработки
+    let remainingText = text;
+    
+    while (remainingText.length > 0) {
+      // Если оставшийся текст короче максимального размера части, просто добавляем его
+      if (remainingText.length <= maxChunkSize) {
+        chunks.push(remainingText);
+        break;
+      }
+      
+      // Ищем хорошее место для разделения (конец предложения или абзаца)
+      // Стараемся найти точку, за которой следует пробел или перенос строки
+      let cutIndex = remainingText.substring(0, maxChunkSize).lastIndexOf('. ');
+      if (cutIndex === -1 || cutIndex < maxChunkSize * 0.5) {
+        // Если точка не найдена или она слишком близко к началу,
+        // используем последний перенос строки
+        cutIndex = remainingText.substring(0, maxChunkSize).lastIndexOf('\n');
+      }
+      
+      if (cutIndex === -1 || cutIndex < maxChunkSize * 0.5) {
+        // Если не нашли хорошее место, ищем последний пробел
+        cutIndex = remainingText.substring(0, maxChunkSize).lastIndexOf(' ');
+      }
+      
+      // Если не нашли подходящее место, просто разрезаем по максимальной длине
+      if (cutIndex === -1 || cutIndex < maxChunkSize * 0.5) {
+        cutIndex = maxChunkSize - 1;
+      }
+      
+      // Получаем текущую часть текста
+      let currentChunk = remainingText.substring(0, cutIndex + 1);
+      
+      // Проверяем наличие незакрытых тегов в текущей части
+      const openTags: string[] = [];
+      const openTagMatches = currentChunk.matchAll(/<([a-z][^>\s]*)[^>]*>/gi);
+      const closedTagMatches = currentChunk.matchAll(/<\/([a-z][^>\s]*)[^>]*>/gi);
+      
+      // Собираем все открывающие теги
+      for (const match of openTagMatches) {
+        const tagName = match[1].toLowerCase();
+        openTags.push(tagName);
+      }
+      
+      // Удаляем закрытые теги
+      for (const match of closedTagMatches) {
+        const tagName = match[1].toLowerCase();
+        const index = openTags.lastIndexOf(tagName);
+        if (index !== -1) {
+          openTags.splice(index, 1);
+        }
+      }
+      
+      // Если остались незакрытые теги, закрываем их в конце текущей части
+      // и открываем в начале следующей части
+      if (openTags.length > 0) {
+        // Закрываем теги в обратном порядке
+        for (let i = openTags.length - 1; i >= 0; i--) {
+          currentChunk += `</${openTags[i]}>`;
+        }
+      }
+      
+      // Добавляем текущую часть в результат
+      chunks.push(currentChunk);
+      
+      // Обновляем оставшийся текст
+      remainingText = remainingText.substring(cutIndex + 1);
+      
+      // Если остались незакрытые теги, добавляем их в начало оставшегося текста
+      if (openTags.length > 0) {
+        // Открываем теги в прямом порядке
+        for (let i = 0; i < openTags.length; i++) {
+          remainingText = `<${openTags[i]}>` + remainingText;
+        }
+      }
+    }
+    
+    return chunks;
+  }
+
+  /**
    * Подготавливает текст для отправки в Telegram: форматирует и обрезает при необходимости
    * @param content Исходный текст контента
    * @param maxLength Максимальная длина текста (по умолчанию 4000 для защиты от превышения лимита в 4096)
@@ -289,22 +393,24 @@ export class TelegramService extends BaseSocialService {
       // Применяем HTML-форматирование для Telegram
       let formattedText = this.formatTextForTelegram(content);
       
-      // Дополнительно применяем агрессивный исправитель тегов для гарантированного закрытия всех тегов
-      formattedText = this.aggressiveTagFixer(formattedText);
-      log(`Telegram текст после агрессивного исправления тегов: ${formattedText.substring(0, Math.min(100, formattedText.length))}...`, 'social-publishing');
+      // Дополнительно применяем исправитель тегов для гарантированного закрытия всех тегов
+      formattedText = this.fixUnclosedTags(formattedText);
+      log(`Telegram текст после исправления тегов: ${formattedText.substring(0, Math.min(100, formattedText.length))}...`, 'telegram');
       
       // Подсчитываем открывающие/закрывающие теги для диагностики
       const openingTags = (formattedText.match(/<[a-z][^>]*>/gi) || []).length;
       const closingTags = (formattedText.match(/<\/[a-z][^>]*>/gi) || []).length;
-      log(`Теги в тексте после обработки: открывающих ${openingTags}, закрывающих ${closingTags}`, 'social-publishing');
+      log(`Теги в тексте после обработки: открывающих ${openingTags}, закрывающих ${closingTags}`, 'telegram');
       
       if (openingTags !== closingTags) {
-        log(`Внимание: количество открывающих (${openingTags}) и закрывающих (${closingTags}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
+        log(`Внимание: количество открывающих (${openingTags}) и закрывающих (${closingTags}) HTML-тегов не совпадает. Исправляем...`, 'telegram');
+        // Дополнительная коррекция - повторно применяем исправитель
+        formattedText = this.fixUnclosedTags(formattedText);
       }
       
       // Проверка длины и обрезка
       if (formattedText.length > maxLength) {
-        log(`Текст для Telegram превышает ${maxLength} символов, обрезаем...`, 'social-publishing');
+        log(`Текст для Telegram превышает ${maxLength} символов, обрезаем...`, 'telegram');
         
         // Находим ближайший конец предложения для более аккуратной обрезки
         const sentenceEndPos = formattedText.substring(0, maxLength - 3).lastIndexOf('.');
@@ -317,12 +423,12 @@ export class TelegramService extends BaseSocialService {
         );
         
         formattedText = formattedText.substring(0, cutPosition) + '...';
-        log(`Текст обрезан до ${formattedText.length} символов`, 'social-publishing');
+        log(`Текст обрезан до ${formattedText.length} символов`, 'telegram');
       }
       
       return formattedText;
     } catch (error) {
-      log(`Ошибка при подготовке текста для Telegram: ${error}`, 'social-publishing');
+      log(`Ошибка при подготовке текста для Telegram: ${error}`, 'telegram');
       
       // В случае ошибки возвращаем простой обрезанный текст
       if (content && content.length > maxLength) {
@@ -330,6 +436,63 @@ export class TelegramService extends BaseSocialService {
       }
       return content || '';
     }
+  }
+  
+  /**
+   * Получает общий URL приложения из переменных окружения
+   * @returns URL приложения или значение по умолчанию
+   */
+  private getAppBaseUrl(): string {
+    const baseUrl = process.env.BASE_URL || process.env.VITE_APP_URL || 'https://workspace-dzhdanov1985.replit.app';
+    return baseUrl;
+  }
+  
+  /**
+   * Получает информацию о чате Telegram
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @returns Информация о чате
+   */
+  private async getChatInfo(chatId: string, token: string): Promise<any> {
+    try {
+      const formattedChatId = chatId.startsWith('@') ? chatId : chatId;
+      const url = `https://api.telegram.org/bot${token}/getChat`;
+      const response = await axios.post(url, { chat_id: formattedChatId });
+      
+      if (response.data && response.data.ok && response.data.result) {
+        log(`Получена информация о чате Telegram: ${JSON.stringify(response.data.result)}`, 'telegram');
+        return response.data.result;
+      } else {
+        log(`Не удалось получить информацию о чате: ${JSON.stringify(response.data)}`, 'telegram');
+        return null;
+      }
+    } catch (error: any) {
+      log(`Ошибка при получении информации о чате: ${error.message}`, 'telegram');
+      return null;
+    }
+  }
+  
+  /**
+   * Генерирует URL для сообщения в Telegram
+   * @param chatId ID чата (может быть ID или username с @)
+   * @param numericChatId Числовой ID чата (для случаев без username)
+   * @param messageId ID сообщения
+   * @returns URL сообщения
+   */
+  private generatePostUrl(chatId: string, numericChatId: string, messageId: string | number): string {
+    // Если у нас есть сохраненный username чата, используем его
+    if (this.currentChatUsername) {
+      return `https://t.me/${this.currentChatUsername}/${messageId}`;
+    }
+    
+    // Если chatId начинается с @, это username
+    if (chatId.startsWith('@')) {
+      const username = chatId.substring(1); // Убираем @
+      return `https://t.me/${username}/${messageId}`;
+    }
+    
+    // В остальных случаях используем ссылку на приватный чат
+    return `https://t.me/c/${numericChatId.replace(/^-100/, '')}/${messageId}`;
   }
 
   /**
@@ -949,6 +1112,16 @@ export class TelegramService extends BaseSocialService {
    * @param telegramSettings Настройки Telegram API
    * @returns Результат публикации
    */
+  /**
+   * Публикует контент в Telegram с сохранением HTML-форматирования.
+   * Учитывает размер текста и выбирает оптимальный метод публикации:
+   * - Для маленьких сообщений (до 1000 символов) - в caption к изображению
+   * - Для больших сообщений - отдельное сообщение с текстом после изображения
+   * 
+   * @param content Контент для публикации
+   * @param telegramSettings Настройки Telegram API (токен и ID чата)
+   * @returns Результат публикации
+   */
   async publishToTelegram(
     content: CampaignContent,
     telegramSettings: { token: string | null; chatId: string | null }
@@ -958,44 +1131,52 @@ export class TelegramService extends BaseSocialService {
     // Храним username канала, если его удастся получить
     let chatUsername: string | undefined;
     
+    log(`Начало публикации в Telegram: ${content.id}`, 'telegram');
+    
     try {
       // Проверяем наличие необходимых параметров
       if (!telegramSettings.token || !telegramSettings.chatId) {
-        log(`Ошибка публикации в Telegram: отсутствуют настройки. Token: ${telegramSettings.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
+        log(`Ошибка публикации в Telegram: отсутствуют настройки. Token: ${telegramSettings.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings.chatId ? 'задан' : 'отсутствует'}`, 'telegram');
         return {
           platform: 'telegram',
           status: 'failed',
           publishedAt: null,
-          error: 'Missing Telegram API settings (token or chatId)'
+          postUrl: null,
+          error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании.'
         };
       }
       
       // Извлекаем параметры
       const token = telegramSettings.token;
-      const chatId = telegramSettings.chatId;
+      let chatId = telegramSettings.chatId;
       
-      // Форматируем ID чата для API Telegram (удаляем @ для username)
-      const formattedChatId = chatId.startsWith('@') ? chatId : chatId;
+      // Проверяем и форматируем ID чата для API Telegram
+      if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+        chatId = `-100${chatId}`;
+        log(`Переформатирован ID чата для Telegram: ${chatId}`, 'telegram');
+      } else if (chatId.startsWith('@')) {
+        log(`Использован username чата для Telegram: ${chatId}`, 'telegram');
+      }
       
       // Пытаемся получить информацию о чате для корректного формирования URL
       try {
-        const chatInfo = await this.getChatInfo(formattedChatId, token);
+        const chatInfo = await this.getChatInfo(chatId, token);
         if (chatInfo && chatInfo.username) {
           chatUsername = chatInfo.username;
           // Сохраняем username чата в свойстве класса для дальнейшего использования
           this.currentChatUsername = chatUsername;
-          log(`Получен username чата: ${chatUsername}`, 'social-publishing');
+          log(`Получен username чата: ${chatUsername}`, 'telegram');
         } else {
-          log(`Не удалось получить username чата или у чата нет публичного username`, 'social-publishing');
+          log(`Не удалось получить username чата или у чата нет публичного username`, 'telegram');
         }
       } catch (error) {
-        log(`Ошибка при запросе информации о чате: ${error instanceof Error ? error.message : String(error)}`, 'social-publishing');
+        log(`Ошибка при запросе информации о чате: ${error instanceof Error ? error.message : String(error)}`, 'telegram');
       }
       
       // Обрабатываем контент
       const processedContent = this.processAdditionalImages(content, 'telegram');
       
-      // Загружаем локальные изображения на Imgur
+      // Загружаем локальные изображения на Imgur, если необходимо
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
       // Подготавливаем текст для отправки
