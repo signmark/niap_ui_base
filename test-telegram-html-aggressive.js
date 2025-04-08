@@ -10,7 +10,7 @@
 import axios from 'axios';
 
 // Используем локальный URL сервера
-const API_BASE_URL = 'http://localhost:3000'; // Порт 3000 используется в проекте
+const API_BASE_URL = 'http://localhost:5000'; // Порт 5000 указан пользователем
 
 // Массив тестовых примеров с проблемными HTML-тегами
 const TEST_CASES = [
