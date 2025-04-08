@@ -1054,6 +1054,11 @@ export class TelegramService extends BaseSocialService {
     if (!text) return text;
     
     try {
+      // Вспомогательная функция для удаления всех HTML-тегов из текста
+      const stripAllTags = (htmlContent: string): string => {
+        return htmlContent.replace(/<[^>]+>/g, '');
+      };
+      
       // Список поддерживаемых Telegram тегов и их стандартизированные эквиваленты
       const tagMap: Record<string, string> = {
         'b': 'b', 'strong': 'b',
@@ -1063,157 +1068,200 @@ export class TelegramService extends BaseSocialService {
         'code': 'code', 'pre': 'pre'
       };
       
-      const supportedTags = Object.keys(tagMap);
+      // Шаг 1: Очищаем HTML от комментариев и опасных конструкций
+      let cleanedHtml = text
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<\?([\s\S]*?)\?>/g, '')
+        .replace(/<!DOCTYPE[^>]*>/i, '')
+        .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '')
+        .replace(/Подсознание наизнанку/g, ''); // Специфичное для проекта
       
-      // 1. Удаляем нежелательный текст, который иногда появляется
-      let cleanedText = text.replace(/Подсознание наизнанку/g, '');
-      
-      // 2. Стандартизируем все типы HTML-тегов к поддерживаемым Telegram форматам
-      let fixedText = cleanedText
-        // Сначала обрабатываем блочные элементы, которые не поддерживаются Telegram
+      // Шаг 2: Заменяем блочные элементы на текст с переносами строк
+      cleanedHtml = cleanedHtml
         .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
         .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
         .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
         .replace(/<br\s*\/?>/gi, '\n')
-        // Затем стандартизируем форматирование
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+        .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n')
+        .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, '$1\n');
+      
+      // Шаг 3: Стандартизируем теги в поддерживаемые Telegram форматы
+      cleanedHtml = cleanedHtml
         .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+        .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
         .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+        .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
+        .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
         .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+        .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
         .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
         .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
       
-      // 3. Удаляем все неподдерживаемые теги, сохраняя их содержимое
-      const unsupportedTagPattern = new RegExp(`<\\/?(?!${supportedTags.join('|')}|a\\b)[^>]+>`, 'gi');
-      fixedText = fixedText.replace(unsupportedTagPattern, '');
+      // Шаг 4: Специальная обработка ссылок - удаляем вложенные теги в тексте ссылки
+      cleanedHtml = cleanedHtml.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, 
+        (match, url, text) => {
+          const cleanText = stripAllTags(text);
+          return `<a href="${url}">${cleanText}</a>`;
+        }
+      );
       
-      // 4. Обработка тегов ссылок
-      fixedText = fixedText.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
+      // Шаг 5: Удаляем все теги, кроме поддерживаемых Telegram
+      const supportedTagList = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+      const unsupportedTagPattern = new RegExp(`<\\/?(?!${supportedTagList.join('|')}\\b)[^>]+>`, 'gi');
+      cleanedHtml = cleanedHtml.replace(unsupportedTagPattern, '');
       
-      // 5. Находим и анализируем все оставшиеся HTML-теги
-      const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+      // Шаг 6: Нормализуем атрибуты тегов
+      cleanedHtml = cleanedHtml
+        .replace(/<(b|i|u|s|code|pre)\s+[^>]*>/gi, '<$1>')
+        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>/gi, '<a href="$1">');
       
-      let match: RegExpExecArray | null;
-      const tagMatches: Array<{index: number, fullTag: string, tagName: string}> = [];
+      // Шаг 7: Правильное форматирование для Telegram - последовательная обработка тегов
+      // Разбиваем на параграфы
+      const paragraphs = cleanedHtml.split(/\n{2,}/);
+      let formattedHtml = '';
       
-      while ((match = tagPattern.exec(fixedText)) !== null) {
-        tagMatches.push({
-          index: match.index,
-          fullTag: match[0],
-          tagName: match[1].toLowerCase()
+      for (const paragraph of paragraphs) {
+        if (!paragraph.trim()) continue;
+        
+        // Простой текст без форматирования
+        if (!/<[^>]+>/.test(paragraph)) {
+          formattedHtml += paragraph.trim() + '\n\n';
+          continue;
+        }
+        
+        // Текст с форматированием требует особой обработки
+        // Для Telegram важно, чтобы теги не перекрывались неправильно
+        
+        // 1. Выделение жирным
+        let boldText = paragraph.replace(/<b>([\s\S]*?)<\/b>/gi, (match, content) => {
+          // Удаляем вложенные теги того же типа
+          const cleanContent = content
+            .replace(/<\/?b>/gi, '')
+            .replace(/<\/?strong>/gi, '');
+          return `<b>${cleanContent}</b>`;
         });
+        
+        // 2. Выделение курсивом
+        let italicText = boldText.replace(/<i>([\s\S]*?)<\/i>/gi, (match, content) => {
+          // Удаляем вложенные теги того же типа
+          const cleanContent = content
+            .replace(/<\/?i>/gi, '')
+            .replace(/<\/?em>/gi, '');
+          return `<i>${cleanContent}</i>`;
+        });
+        
+        // 3. Подчеркивание
+        let underlineText = italicText.replace(/<u>([\s\S]*?)<\/u>/gi, (match, content) => {
+          // Удаляем вложенные теги того же типа
+          const cleanContent = content
+            .replace(/<\/?u>/gi, '')
+            .replace(/<\/?ins>/gi, '');
+          return `<u>${cleanContent}</u>`;
+        });
+        
+        // 4. Зачеркивание
+        let strikeText = underlineText.replace(/<s>([\s\S]*?)<\/s>/gi, (match, content) => {
+          // Удаляем вложенные теги того же типа
+          const cleanContent = content
+            .replace(/<\/?s>/gi, '')
+            .replace(/<\/?strike>/gi, '')
+            .replace(/<\/?del>/gi, '');
+          return `<s>${cleanContent}</s>`;
+        });
+        
+        formattedHtml += strikeText.trim() + '\n\n';
       }
       
-      if (tagMatches.length === 0) {
-        // Если тегов нет, просто возвращаем текст
-        return fixedText;
-      }
+      // Шаг 8: Проверка и исправление оставшихся незакрытых тегов
+      const tagStack: string[] = [];
+      let tempHtml = '';
+      let i = 0;
       
-      // 6. Создаем структуру для анализа открытия/закрытия тегов
-      const stack: string[] = [];
-      const resultParts: string[] = [];
-      let lastIndex = 0;
-      
-      for (const match of tagMatches) {
-        const fullTag = match.fullTag;
-        const tagName = match.tagName;
-        const isClosing = fullTag.startsWith('</');
-        const position = match.index;
-        
-        // Добавляем текст до текущего тега
-        resultParts.push(fixedText.substring(lastIndex, position));
-        lastIndex = position + fullTag.length;
-        
-        // Обрабатываем только поддерживаемые теги
-        if (supportedTags.includes(tagName) || tagName === 'a') {
-          if (!isClosing) {
-            // Открывающий тег
-            if (tagName === 'a') {
-              // Для ссылок сохраняем href атрибут
-              const hrefMatch = fullTag.match(/href=["']([^"']*)["']/i);
-              const href = hrefMatch ? hrefMatch[1] : '';
-              resultParts.push(`<a href="${href}">`);
-            } else {
-              // Для других тегов используем стандартизированную форму
-              resultParts.push(`<${tagMap[tagName] || tagName}>`);
-            }
-            stack.push(tagName);
-          } else {
+      while (i < formattedHtml.length) {
+        if (formattedHtml[i] === '<') {
+          if (formattedHtml[i + 1] === '/') {
             // Закрывающий тег
-            if (stack.length > 0) {
-              // Если стек не пуст, проверяем соответствие
-              let foundMatchingTag = false;
+            const closeTagMatch = formattedHtml.substring(i).match(/<\/([a-z]+)>/i);
+            if (closeTagMatch) {
+              const closeTag = closeTagMatch[1].toLowerCase();
               
-              // Ищем соответствующий открывающий тег, начиная с конца стека
-              for (let i = stack.length - 1; i >= 0; i--) {
-                const openTag = stack[i];
-                // Проверяем совпадение (прямое или через отображение)
-                if (openTag === tagName || (tagMap[openTag] === tagMap[tagName] && tagMap[openTag])) {
-                  // Найден соответствующий тег
-                  foundMatchingTag = true;
-                  
-                  // Закрываем все теги до найденного
-                  for (let j = stack.length - 1; j >= i; j--) {
-                    const tagToClose = stack[j];
-                    if (tagToClose === 'a') {
-                      resultParts.push('</a>');
-                    } else {
-                      resultParts.push(`</${tagMap[tagToClose] || tagToClose}>`);
-                    }
-                  }
-                  
-                  // Обновляем стек
-                  stack.splice(i);
-                  break;
-                }
-              }
-              
-              // Если не нашли соответствующий тег, добавляем закрывающий
-              if (!foundMatchingTag) {
-                if (tagName === 'a') {
-                  resultParts.push('</a>');
-                } else {
-                  resultParts.push(`</${tagMap[tagName] || tagName}>`);
-                }
+              if (tagStack.length > 0 && tagStack[tagStack.length - 1] === closeTag) {
+                // Правильный закрывающий тег
+                tagStack.pop();
+                tempHtml += closeTagMatch[0];
+                i += closeTagMatch[0].length;
+              } else {
+                // Неправильный закрывающий тег, пропускаем его
+                i += closeTagMatch[0].length;
               }
             } else {
-              // Если стек пуст, просто добавляем закрывающий тег
-              if (tagName === 'a') {
-                resultParts.push('</a>');
+              // Некорректный закрывающий тег
+              i++;
+            }
+          } else {
+            // Открывающий тег
+            const openTagMatch = formattedHtml.substring(i).match(/<([a-z]+)(\s+[^>]*)?>/i);
+            if (openTagMatch) {
+              const openTag = openTagMatch[1].toLowerCase();
+              
+              if (supportedTagList.includes(openTag)) {
+                // Поддерживаемый тег
+                tagStack.push(openTag);
+                tempHtml += openTagMatch[0];
+                i += openTagMatch[0].length;
               } else {
-                resultParts.push(`</${tagMap[tagName] || tagName}>`);
+                // Неподдерживаемый тег, пропускаем
+                i += openTagMatch[0].length;
               }
+            } else {
+              tempHtml += formattedHtml[i];
+              i++;
             }
           }
-        }
-        // Иначе тег игнорируется
-      }
-      
-      // Добавляем оставшийся текст
-      resultParts.push(fixedText.substring(lastIndex));
-      
-      // Закрываем все оставшиеся открытые теги
-      for (let i = stack.length - 1; i >= 0; i--) {
-        const tagToClose = stack[i];
-        if (tagToClose === 'a') {
-          resultParts.push('</a>');
         } else {
-          resultParts.push(`</${tagMap[tagToClose] || tagToClose}>`);
+          tempHtml += formattedHtml[i];
+          i++;
         }
       }
       
-      // Собираем результат
-      let result = resultParts.join('');
+      // Закрываем все незакрытые теги
+      const reversedStack = [...tagStack].reverse();
+      for (const tag of reversedStack) {
+        if (tag !== 'a') { // Специальная обработка для ссылок
+          tempHtml += `</${tag}>`;
+        }
+      }
       
-      // Финальная проверка и упрощение, если что-то пошло не так
+      // Финальная очистка от лишних переносов строк и пробелов
+      let result = tempHtml
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/^\s+|\s+$/g, '')
+        .replace(/<\/b><b>/g, '')
+        .replace(/<\/i><i>/g, '')
+        .replace(/<\/u><u>/g, '')
+        .replace(/<\/s><s>/g, '');
+      
+      // Финальная проверка на баланс тегов
       const openingCount = (result.match(/<[a-z][^>]*>/gi) || []).length;
       const closingCount = (result.match(/<\/[a-z][^>]*>/gi) || []).length;
       
       if (openingCount !== closingCount) {
-        log(`Критическая ошибка в балансе тегов после исправления: открывающих ${openingCount}, закрывающих ${closingCount}. Удаляем все теги.`, 'social-publishing');
-        return text.replace(/<[^>]*>/g, '');
+        log(`Предупреждение: баланс тегов после исправления не идеален: открывающих ${openingCount}, закрывающих ${closingCount}`, 'social-publishing');
+        
+        // Возможно, стоит применить более радикальное решение, если разница слишком большая
+        if (Math.abs(openingCount - closingCount) > 3) {
+          log(`Критическая ошибка в балансе тегов после исправления. Удаляем все теги.`, 'social-publishing');
+          return text.replace(/<[^>]*>/g, '');
+        }
       }
       
-      log(`Текст после агрессивного исправления HTML: ${result.substring(0, Math.min(100, result.length))}...`, 'social-publishing');
+      // Финальное обрезание до максимальной длины Telegram
+      if (result.length > MAX_MESSAGE_LENGTH) {
+        result = result.substring(0, MAX_MESSAGE_LENGTH - 3) + '...';
+      }
+      
+      log(`Текст после улучшенного исправления HTML: ${result.substring(0, Math.min(100, result.length))}...`, 'social-publishing');
       
       return result;
     } catch (error) {
