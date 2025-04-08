@@ -115,6 +115,44 @@ export class TelegramService extends BaseSocialService {
   }
   
   /**
+   * Проверяет, является ли HTML-код валидным для Telegram
+   * @param text Текст с HTML-разметкой
+   * @returns true, если HTML валиден для Telegram
+   */
+  public isValidHtmlForTelegram(text: string): boolean {
+    // Если текст не содержит HTML, считаем его валидным
+    if (!text.includes('<') || !text.includes('>')) {
+      return true;
+    }
+    
+    // Проверяем количество открывающих и закрывающих тегов
+    const openTagRegex = /<(b|strong|i|em|u|ins|s|strike|del|code|pre|a)(?:\s+[^>]*)?>/gi;
+    const closeTagRegex = /<\/(b|strong|i|em|u|ins|s|strike|del|code|pre|a)>/gi;
+    
+    const openMatches = text.match(openTagRegex) || [];
+    const closeMatches = text.match(closeTagRegex) || [];
+    
+    // Если количество не совпадает, значит есть незакрытые теги
+    if (openMatches.length !== closeMatches.length) {
+      log(`HTML не валиден для Telegram: открывающих тегов ${openMatches.length}, закрывающих ${closeMatches.length}`, 'social-publishing');
+      return false;
+    }
+    
+    // Проверяем наличие неподдерживаемых тегов
+    const unsupportedTagRegex = /<(?!\/?(b|strong|i|em|u|ins|s|strike|del|code|pre|a))[a-z][^>]*>/gi;
+    const unsupportedMatches = text.match(unsupportedTagRegex) || [];
+    
+    if (unsupportedMatches.length > 0) {
+      log(`HTML содержит неподдерживаемые Telegram теги: ${unsupportedMatches.slice(0, 5).join(', ')}${unsupportedMatches.length > 5 ? '...' : ''}`, 'social-publishing');
+      return false;
+    }
+    
+    // Базовая проверка на корректное вложение тегов (в идеале нужен полноценный парсер)
+    // Но для простых случаев это может быть достаточно
+    return true;
+  }
+  
+  /**
    * Исправляет незакрытые HTML-теги в тексте
    * @param text Текст с HTML-разметкой
    * @returns Текст с исправленными незакрытыми тегами

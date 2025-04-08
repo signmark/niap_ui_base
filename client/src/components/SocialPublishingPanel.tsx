@@ -108,8 +108,34 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
         return `${baseContent}\n\n#content #socialmedia`;
         
       case 'telegram':
-        // Telegram: форматирование с markdown
-        return baseContent;
+        // Telegram: сохраняем форматирование HTML, которое поддерживается в Telegram
+        // Telegram поддерживает только <b>, <i>, <u>, <s>, <code>, <pre>, <a href>
+        let formattedHtml = baseContent;
+        
+        // 1. Заменяем эквивалентные теги на поддерживаемые Telegram форматы
+        formattedHtml = formattedHtml
+          .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+          .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+          .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+          .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
+          .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
+        
+        // 2. Обрабатываем блочные элементы, добавляя переносы строк
+        formattedHtml = formattedHtml
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+          .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+          .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
+        
+        // 3. Обрабатываем списки
+        formattedHtml = formattedHtml
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+          .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n');
+        
+        // 4. Убираем лишние переносы строк (более 2 подряд)
+        formattedHtml = formattedHtml.replace(/\n{3,}/g, '\n\n');
+        
+        return formattedHtml;
         
       case 'vk':
         // VK: стандартный текст
