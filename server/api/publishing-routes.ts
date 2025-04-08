@@ -35,7 +35,7 @@ export function registerPublishingRoutes(app: Express): void {
       log(`Публикация контента ${content.id || 'без ID'} в платформы: ${JSON.stringify(platforms)}`, 'api');
       
       // Получаем настройки кампании
-      const campaign = await storage.getCampaign(userId || content.userId, content.campaignId);
+      const campaign = await storage.getCampaignById(content.campaignId);
       if (!campaign) {
         log(`Кампания ${content.campaignId} не найдена при попытке публикации контента`, 'api');
         return res.status(404).json({ error: 'Кампания не найдена' });
