@@ -20,6 +20,79 @@ const MAX_MEDIA_GROUP_SIZE = 10; // Максимальное количеств�
 export class TelegramService extends BaseSocialService {
   // Храним username канала, полученный в процессе публикации
   private currentChatUsername?: string;
+  
+  /**
+   * Отправляет HTML-форматированный текст напрямую в Telegram без дополнительной обработки
+   * @param text HTML-текст для отправки
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @returns Результат отправки сообщения
+   */
+  public async sendRawHtmlToTelegram(text: string, chatId: string, token: string): Promise<any> {
+    try {
+      if (!text || text.trim() === '') {
+        log(`Пустой текст для отправки в Telegram`, 'telegram');
+        return { success: false, error: 'Empty text' };
+      }
+      
+      log(`Отправка необработанного HTML-текста в Telegram (${text.length} символов)`, 'telegram');
+      log(`Первые 100 символов: ${text.substring(0, Math.min(100, text.length))}...`, 'telegram');
+      
+      // Форматируем chatId, если нужно
+      let formattedChatId = chatId;
+      if (!chatId.startsWith('-100') && !isNaN(Number(chatId)) && !chatId.startsWith('@')) {
+        formattedChatId = `-100${chatId}`;
+      }
+      
+      // Отправляем запрос напрямую к API Telegram
+      const url = `https://api.telegram.org/bot${token}/sendMessage`;
+      const response = await axios.post(url, {
+        chat_id: formattedChatId,
+        text: text,
+        parse_mode: 'HTML'
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000,
+        validateStatus: () => true // Всегда возвращаем ответ, даже если это ошибка
+      });
+      
+      // Расширенное логирование ответа
+      log(`Ответ от Telegram API: код ${response.status}, body: ${JSON.stringify(response.data)}`, 'telegram');
+      
+      if (response.status === 200 && response.data && response.data.ok) {
+        const messageId = response.data.result.message_id;
+        const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, messageId);
+        
+        log(`Сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
+        log(`URL сообщения: ${messageUrl}`, 'telegram');
+        
+        return {
+          success: true,
+          messageId,
+          messageUrl,
+          result: response.data.result
+        };
+      } else {
+        const errorMessage = response.data?.description || 'Unknown error';
+        log(`Ошибка при отправке HTML-текста в Telegram: ${errorMessage}`, 'telegram');
+        
+        return {
+          success: false,
+          error: errorMessage,
+          status: response.status,
+          data: response.data
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Unknown error';
+      log(`Исключение при отправке HTML-текста в Telegram: ${errorMessage}`, 'telegram');
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  }
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
@@ -164,129 +237,144 @@ export class TelegramService extends BaseSocialService {
   }
   
   /**
-   * Исправляет незакрытые HTML-теги в тексте
+   * Исправляет незакрытые HTML-теги в тексте для Telegram
    * @param text Текст с HTML-разметкой
    * @returns Текст с исправленными незакрытыми тегами
    */
   public fixUnclosedTags(text: string): string {
-    // Расширенный список поддерживаемых Telegram тегов и их синонимов
-    const tagMapping: { [key: string]: string } = {
-      'b': 'b', 'strong': 'b',
-      'i': 'i', 'em': 'i',
-      'u': 'u', 'ins': 'u',
-      's': 's', 'strike': 's', 'del': 's',
-      'code': 'code', 'pre': 'pre', 'a': 'a'
-    };
+    // Подробное логирование входных данных
+    log(`[HTML DEBUG] Входной текст для fixUnclosedTags (${text.length} символов): ${text.substring(0, 100)}...`, 'telegram-html');
     
-    // Список поддерживаемых тегов для проверки
-    const supportedTags = Object.keys(tagMapping);
-    
-    // Подсчитываем количество открывающих и закрывающих тегов
-    const openTagRegex = /<(b|strong|i|em|u|ins|s|strike|del|code|pre|a)(?:\s+[^>]*)?>/gi;
-    const closeTagRegex = /<\/(b|strong|i|em|u|ins|s|strike|del|code|pre|a)>/gi;
-    
-    const openMatches = text.match(openTagRegex) || [];
-    const closeMatches = text.match(closeTagRegex) || [];
-    
-    // Проверяем несоответствие в количестве тегов
-    if (openMatches.length !== closeMatches.length) {
-      log(`Внимание: количество открывающих (${openMatches.length}) и закрывающих (${closeMatches.length}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
+    if (!text || !text.includes('<') || !text.includes('>')) {
+      log(`[HTML DEBUG] Текст не содержит HTML-тегов, возвращаем без изменений`, 'telegram-html');
+      return text;
     }
     
-    // Преобразуем текст с помощью DOMParser для правильной обработки тегов
-    // Но так как это серверный JS, используем регулярные выражения
+    // Список поддерживаемых в Telegram тегов
+    const supportedTags = ['b', 'strong', 'i', 'em', 'u', 'ins', 'code', 'pre', 's', 'strike', 'del', 'a'];
     
-    // Создаем стек для отслеживания открытых тегов
-    const stack: string[] = [];
+    // Соответствие тегов (стандартизация)
+    const tagMapping: { [key: string]: string } = {
+      'strong': 'b',
+      'em': 'i',
+      'ins': 'u',
+      'strike': 's',
+      'del': 's'
+    };
     
-    // Регулярное выражение для поиска всех HTML-тегов, включая атрибуты
-    const tagRegex = /<\/?([a-z]+)(?:\s+[^>]*)?>/gi;
-    let match;
-    let processedText = text;
+    // Проверка поддерживаемости тега
+    const isSupportedTag = (tag: string): boolean => {
+      return supportedTags.includes(tag.toLowerCase());
+    };
+    
+    // Стандартизация имени тега
+    const standardizeTagName = (tag: string): string => {
+      const lowerTag = tag.toLowerCase();
+      return tagMapping[lowerTag] || lowerTag;
+    };
+    
+    // Регулярное выражение для поиска всех HTML-тегов
+    const tagRegex = /<\/?([a-z][a-z0-9]*)(?: [^>]*)?>/gi;
+    
+    // Стек для отслеживания открытых тегов
+    const openTags: string[] = [];
+    
+    // Для отладки - подсчет тегов до обработки
+    const openingTagsCount = (text.match(/<[a-z][a-z0-9]*(?:\s[^>]*)?>+/gi) || []).length;
+    const closingTagsCount = (text.match(/<\/[a-z][a-z0-9]*>/gi) || []).length;
+    log(`[HTML DEBUG] Исходное количество тегов: открывающие=${openingTagsCount}, закрывающие=${closingTagsCount}`, 'telegram-html');
+    
+    // Результирующий текст
+    let result = '';
     let lastIndex = 0;
+    let match;
     
-    // Временная строка для построения обработанного текста
-    let resultText = '';
-    
-    // Выполняем проход по всем тегам в тексте
+    // Обрабатываем каждый тег
     while ((match = tagRegex.exec(text)) !== null) {
+      // Добавляем текст до тега
+      result += text.substring(lastIndex, match.index);
+      lastIndex = match.index + match[0].length;
+      
+      // Получаем имя тега
       const fullTag = match[0];
       const tagName = match[1].toLowerCase();
-      const mappedTag = tagMapping[tagName];
+      const isClosingTag = fullTag.startsWith('</');
       
-      // Проверяем, является ли тег поддерживаемым
-      if (!supportedTags.includes(tagName)) {
-        continue; // Пропускаем неподдерживаемые теги
+      // Логируем для отладки
+      log(`[HTML DEBUG] Найден тег: ${fullTag}, поддерживается: ${isSupportedTag(tagName)}`, 'telegram-html');
+      
+      // Если тег не поддерживается Telegram, его нужно удалить
+      if (!isSupportedTag(tagName)) {
+        log(`[HTML DEBUG] Пропускаем неподдерживаемый тег: ${fullTag}`, 'telegram-html');
+        continue;
       }
       
-      // Получаем текст до текущего тега
-      const textBeforeTag = text.substring(lastIndex, match.index);
-      resultText += textBeforeTag;
+      // Стандартизированное имя тега
+      const standardTag = standardizeTagName(tagName);
       
-      const isClosing = fullTag.startsWith('</');
-      
-      if (isClosing) {
-        // Если это закрывающий тег
-        if (stack.length > 0) {
-          // Проверяем, соответствует ли он последнему открытому или его синониму
-          const lastOpenTag = stack[stack.length - 1];
-          const lastOpenMapped = tagMapping[lastOpenTag];
-          const currentMapped = tagMapping[tagName];
+      if (isClosingTag) {
+        // Обработка закрывающего тега
+        const matchingOpenTagIndex = openTags.lastIndexOf(standardTag);
+        
+        if (matchingOpenTagIndex !== -1) {
+          // Если есть соответствующий открывающий тег, закрываем его
+          // и все теги, открытые после него (для корректного вложения)
+          for (let i = openTags.length - 1; i >= matchingOpenTagIndex; i--) {
+            result += `</${openTags[i]}>`;
+          }
           
-          if (lastOpenMapped === currentMapped) {
-            // Правильное закрытие, добавляем тег в стандартизированной форме
-            resultText += `</${currentMapped}>`;
-            stack.pop();
-          } else {
-            // Неправильный порядок закрытия, закрываем текущий тег так, как он был открыт
-            resultText += `</${currentMapped}>`;
-            // Находим и удаляем соответствующий тег из стека
-            const indexInStack = stack.findIndex(t => tagMapping[t] === currentMapped);
-            if (indexInStack >= 0) {
-              stack.splice(indexInStack, 1);
-            }
+          // Удаляем из стека все закрытые теги
+          openTags.splice(matchingOpenTagIndex);
+          
+          // Восстанавливаем все незакрытые теги
+          for (let i = matchingOpenTagIndex - 1; i >= 0; i--) {
+            result += `<${openTags[i]}>`;
           }
         } else {
-          // Закрывающий тег без открывающего - пропускаем его
-          log(`Обнаружен закрывающий тег </${tagName}> без соответствующего открывающего`, 'social-publishing');
+          // Если нет соответствующего открывающего тега, игнорируем этот закрывающий тег
+          log(`[HTML DEBUG] Игнорируем закрывающий тег без соответствующего открывающего: ${fullTag}`, 'telegram-html');
         }
       } else {
-        // Это открывающий тег, добавляем его в стек и в результат
-        // Преобразуем теги к стандартной форме для Telegram
+        // Обработка открывающего тега
         if (tagName === 'a') {
           // Для тегов ссылок сохраняем href
           const hrefMatch = fullTag.match(/href=["']([^"']*)["']/i);
           const href = hrefMatch ? hrefMatch[1] : '';
-          resultText += `<a href="${href}">`;
+          result += `<a href="${href}">`;
         } else {
-          // Для других тегов используем стандартную форму
-          resultText += `<${tagMapping[tagName]}>`;
+          // Используем стандартную форму для других тегов
+          result += `<${standardTag}>`;
         }
-        stack.push(tagName);
-      }
-      
-      lastIndex = match.index + fullTag.length;
-    }
-    
-    // Добавляем оставшийся текст после последнего тега
-    resultText += text.substring(lastIndex);
-    
-    // Закрываем все оставшиеся открытые теги в обратном порядке
-    if (stack.length > 0) {
-      log(`Обнаружены незакрытые HTML теги: ${stack.join(', ')}. Автоматически закрываем их.`, 'social-publishing');
-      
-      // Закрываем теги в обратном порядке (LIFO)
-      for (let i = stack.length - 1; i >= 0; i--) {
-        const mappedTag = tagMapping[stack[i]];
-        resultText += `</${mappedTag}>`;
+        
+        // Добавляем тег в стек открытых
+        openTags.unshift(standardTag);
       }
     }
     
-    if (resultText !== text) {
-      log(`Исправлены незакрытые HTML-теги. Фрагмент исправленного текста: ${resultText.substring(0, Math.min(100, resultText.length))}...`, 'social-publishing');
+    // Добавляем оставшийся текст
+    result += text.substring(lastIndex);
+    
+    // Закрываем все оставшиеся открытые теги
+    if (openTags.length > 0) {
+      log(`[HTML DEBUG] Закрываем оставшиеся открытые теги: ${openTags.join(', ')}`, 'telegram-html');
+      for (const tag of openTags) {
+        result += `</${tag}>`;
+      }
     }
     
-    return resultText;
+    // Финальная проверка форматирования
+    const finalOpeningTagsCount = (result.match(/<[a-z][a-z0-9]*(?:\s[^>]*)?>+/gi) || []).length;
+    const finalClosingTagsCount = (result.match(/<\/[a-z][a-z0-9]*>/gi) || []).length;
+    log(`[HTML DEBUG] Итоговое количество тегов: открывающие=${finalOpeningTagsCount}, закрывающие=${finalClosingTagsCount}`, 'telegram-html');
+    
+    // Проверка на изменения
+    if (result !== text) {
+      log(`[HTML DEBUG] Текст исправлен. Результат (${result.length} символов): ${result.substring(0, 100)}...`, 'telegram-html');
+    } else {
+      log(`[HTML DEBUG] Текст не изменен`, 'telegram-html');
+    }
+    
+    return result;
   }
 
   /**
@@ -1114,9 +1202,7 @@ export class TelegramService extends BaseSocialService {
    */
   /**
    * Публикует контент в Telegram с сохранением HTML-форматирования.
-   * Учитывает размер текста и выбирает оптимальный метод публикации:
-   * - Для маленьких сообщений (до 1000 символов) - в caption к изображению
-   * - Для больших сообщений - отдельное сообщение с текстом после изображения
+   * ОПТИМИЗИРОВАНО: минимальная обработка HTML для максимальной совместимости
    * 
    * @param content Контент для публикации
    * @param telegramSettings Настройки Telegram API (токен и ID чата)
@@ -1728,6 +1814,76 @@ export class TelegramService extends BaseSocialService {
       };
     }
 
+    // Проверяем, используем ли мы упрощенный режим отправки HTML
+    const useDirectHtmlSending = true; // Включаем новый метод отправки
+    
+    if (useDirectHtmlSending) {
+      // Используем оптимизированный метод прямой отправки HTML
+      log(`Используем оптимизированный метод прямой отправки HTML`, 'telegram');
+      
+      // Подготавливаем HTML-текст
+      let htmlText = '';
+      
+      // Добавляем заголовок, если он есть
+      if (content.title) {
+        htmlText += `<b>${content.title}</b>\n\n`;
+      }
+      
+      // Добавляем основной контент
+      if (content.content) {
+        htmlText += content.content;
+      }
+      
+      // Добавляем хэштеги, если они есть
+      if (content.hashtags && Array.isArray(content.hashtags) && content.hashtags.length > 0) {
+        const hashtags = content.hashtags
+          .filter(tag => tag && typeof tag === 'string' && tag.trim() !== '')
+          .map(tag => tag.trim().startsWith('#') ? tag.trim() : `#${tag.trim()}`);
+        
+        if (hashtags.length > 0) {
+          htmlText += '\n\n' + hashtags.join(' ');
+        }
+      }
+      
+      // Отправляем HTML напрямую через новый метод
+      try {
+        const result = await this.sendRawHtmlToTelegram(
+          htmlText, 
+          telegramSettings.chatId!, 
+          telegramSettings.token!
+        );
+        
+        if (result.success) {
+          log(`Публикация с прямой отправкой HTML успешно отправлена в Telegram, ID сообщения: ${result.messageId}`, 'telegram');
+          return {
+            platform: 'telegram',
+            status: 'published',
+            publishedAt: new Date(),
+            postUrl: result.messageUrl
+          };
+        } else {
+          log(`Ошибка при прямой отправке HTML в Telegram: ${result.error}`, 'telegram');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            postUrl: null,
+            error: `Ошибка при прямой отправке HTML в Telegram: ${result.error}`
+          };
+        }
+      } catch (error: any) {
+        log(`Исключение при прямой отправке HTML в Telegram: ${error.message}`, 'telegram');
+        return {
+          platform: 'telegram',
+          status: 'failed',
+          publishedAt: null,
+          postUrl: null,
+          error: `Исключение при прямой отправке HTML в Telegram: ${error.message}`
+        };
+      }
+    }
+    
+    // Если не используем прямую отправку HTML, используем стандартный метод
     // Для Telegram НЕ добавляем флаг принудительного разделения,
     // чтобы короткий текст без форматирования отправлялся как подпись к изображениям
     const contentWithMetadata = {

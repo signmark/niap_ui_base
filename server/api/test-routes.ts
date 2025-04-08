@@ -356,6 +356,85 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
 });
 
 /**
+ * Тестовый маршрут для прямой отправки HTML-форматированного текста в Telegram без какой-либо обработки
+ * POST /api/test/direct-telegram-html
+ * 
+ * Пример использования:
+ * POST /api/test/direct-telegram-html
+ * Body: {
+ *   "text": "<b>Жирный текст</b> и <i>курсив</i>",
+ *   "token": "TELEGRAM_BOT_TOKEN",
+ *   "chatId": "CHAT_ID"
+ * }
+ */
+testRouter.post('/direct-telegram-html', async (req: Request, res: Response) => {
+  try {
+    // Получаем параметры из запроса
+    const { text, token, chatId } = req.body;
+    
+    if (!text || !token || !chatId) {
+      console.log(`[DEBUG] Отсутствуют обязательные параметры для теста HTML: text=${!!text}, token=${!!token}, chatId=${!!chatId}`);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Пожалуйста, предоставьте text, token и chatId' 
+      });
+    }
+
+    console.log(`[DEBUG] Прямая отправка HTML-форматированного текста в Telegram`);
+    console.log(`[DEBUG] HTML текст для отправки (${text.length} символов): ${text.substring(0, 100)}...`);
+    
+    try {
+      // Отправляем сообщение напрямую, без какой-либо обработки текста
+      const url = `https://api.telegram.org/bot${token}/sendMessage`;
+      const response = await axios.post(url, {
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML'  // Важный параметр для включения HTML-форматирования
+      });
+      
+      if (response.data && response.data.ok) {
+        console.log(`[DEBUG] Сообщение успешно отправлено с ID: ${response.data.result.message_id}`);
+        return res.json({ 
+          success: true, 
+          message_id: response.data.result.message_id,
+          result: response.data.result,
+          original_text: text
+        });
+      } else {
+        console.error(`[DEBUG] Ошибка при отправке сообщения: ${JSON.stringify(response.data)}`);
+        return res.status(500).json({ 
+          success: false, 
+          error: response.data.description || 'Неизвестная ошибка',
+          original_text: text
+        });
+      }
+    } catch (error: any) {
+      console.error(`[DEBUG] Исключение при отправке HTML в Telegram: ${error.message}`);
+      
+      // Добавляем дополнительную информацию об ошибке, если она доступна
+      const errorDetails = error.response?.data 
+        ? JSON.stringify(error.response.data) 
+        : 'Нет дополнительной информации';
+      
+      console.error(`[DEBUG] Детали ошибки: ${errorDetails}`);
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        details: errorDetails,
+        original_text: text
+      });
+    }
+  } catch (error: any) {
+    console.error('Ошибка при обработке запроса:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
  * Тестовый маршрут для проверки форматирования HTML для Telegram на стороне клиента
  * POST /api/test/format-client-html
  * 
@@ -560,6 +639,202 @@ testRouter.post('/instagram-ui-test', async (req: Request, res: Response) => {
       success: false,
       error: error.message || 'Неизвестная ошибка'
     });
+  }
+});
+
+/**
+ * Тестовый маршрут для отправки HTML с использованием оптимизированного метода TelegramService
+ * GET /api/test/raw-html-telegram - отображает интерфейс для тестирования
+ * POST /api/test/raw-html-telegram - выполняет отправку
+ * 
+ * Пример использования:
+ * POST /api/test/raw-html-telegram
+ * Body: {
+ *   "text": "<b>Жирный текст</b> и <i>курсив</i>",
+ *   "token": "TELEGRAM_BOT_TOKEN",
+ *   "chatId": "CHAT_ID",
+ *   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e" (опционально)
+ * }
+ */
+testRouter.get('/raw-html-telegram', (req: Request, res: Response) => {
+  // Отображаем интерфейс для тестирования отправки HTML в Telegram
+  res.send(`
+    <html>
+      <head>
+        <title>Тестирование прямой отправки HTML в Telegram</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #333; }
+          form { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+          input, textarea { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+          button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+          .response { margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #fff; white-space: pre-wrap; }
+          .tips { margin-top: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px; }
+          .tips h3 { margin-top: 0; }
+          .tips code { background: #fff; padding: 2px 4px; border-radius: 3px; }
+        </style>
+      </head>
+      <body>
+        <h1>Тест прямой отправки HTML в Telegram</h1>
+        <p>Этот инструмент использует оптимизированный метод отправки HTML-текста в Telegram, который не выполняет дополнительных преобразований и обеспечивает корректное сохранение форматирования.</p>
+        
+        <form id="testForm">
+          <div>
+            <label for="token">Telegram Bot Token:</label>
+            <input type="text" id="token" name="token" required>
+          </div>
+          <div>
+            <label for="chatId">Chat ID (включая @ для каналов):</label>
+            <input type="text" id="chatId" name="chatId" required>
+          </div>
+          <div>
+            <label for="campaignId">Campaign ID (опционально):</label>
+            <input type="text" id="campaignId" name="campaignId" placeholder="46868c44-c6a4-4bed-accf-9ad07bba790e">
+          </div>
+          <div>
+            <label for="text">HTML текст для отправки:</label>
+            <textarea id="text" name="text" rows="8" required><b>Жирный текст</b> и <i>курсив</i> с <u>подчеркиванием</u>
+
+<b>Поддерживаются списки:</b>
+• Пункт 1
+• Пункт 2 <i>с курсивом</i>
+
+А также <a href="https://t.me/yourtestchannel">ссылки</a> и эмодзи 🎉</textarea>
+          </div>
+          <button type="submit">Отправить в Telegram</button>
+        </form>
+        
+        <div class="tips">
+          <h3>Поддерживаемые HTML-теги в Telegram:</h3>
+          <p>
+            <code>&lt;b&gt;</code> или <code>&lt;strong&gt;</code> - жирный текст<br>
+            <code>&lt;i&gt;</code> или <code>&lt;em&gt;</code> - курсив<br>
+            <code>&lt;u&gt;</code> - подчеркнутый текст<br>
+            <code>&lt;s&gt;</code> или <code>&lt;strike&gt;</code> или <code>&lt;del&gt;</code> - зачеркнутый текст<br>
+            <code>&lt;a&gt;</code> - ссылка (атрибут href обязателен)<br>
+            <code>&lt;code&gt;</code> - моноширинный текст<br>
+            <code>&lt;pre&gt;</code> - блок предформатированного текста<br>
+            <code>&lt;blockquote&gt;</code> - цитата<br>
+          </p>
+        </div>
+        <div class="response" id="response">Результат будет отображен здесь</div>
+        
+        <script>
+          document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const responseDiv = document.getElementById('response');
+            
+            responseDiv.textContent = 'Отправка запроса...';
+            
+            // Собираем данные формы
+            const data = {
+              token: form.token.value,
+              chatId: form.chatId.value,
+              text: form.text.value
+            };
+            
+            // Если указан campaignId, добавляем его
+            if (form.campaignId.value) {
+              data.campaignId = form.campaignId.value;
+            }
+            
+            try {
+              const response = await fetch('/api/test/raw-html-telegram', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+              });
+              
+              const result = await response.json();
+              responseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+              responseDiv.textContent = 'Ошибка: ' + error.message;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+testRouter.post('/raw-html-telegram', async (req: Request, res: Response) => {
+  try {
+    // Получаем параметры запроса
+    const { text, campaignId, token, chatId } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Отсутствует обязательный параметр text' 
+      });
+    }
+    
+    console.log(`[DEBUG] Отправка HTML через оптимизированный метод TelegramService`);
+    console.log(`[DEBUG] HTML текст для отправки (${text.length} символов): ${text.substring(0, 100)}...`);
+    
+    // Если указан campaignId, пытаемся получить настройки из него
+    let telegramToken = token;
+    let telegramChatId = chatId;
+    
+    if (campaignId && (!telegramToken || !telegramChatId)) {
+      try {
+        // Получаем настройки из кампании
+        const campaignService = req.app.get('campaignService');
+        if (campaignService) {
+          const settings = await campaignService.getSocialMediaSettings(campaignId);
+          if (settings && settings.telegram) {
+            telegramToken = telegramToken || settings.telegram.token;
+            telegramChatId = telegramChatId || settings.telegram.chatId;
+            console.log(`[DEBUG] Получены настройки Telegram из кампании: token=${!!telegramToken}, chatId=${!!telegramChatId}`);
+          }
+        }
+      } catch (error) {
+        console.error(`[DEBUG] Ошибка при получении настроек из кампании: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    
+    // Проверяем наличие обязательных параметров
+    if (!telegramToken || !telegramChatId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Необходимо указать token и chatId или предоставить валидный campaignId' 
+      });
+    }
+    
+    // Используем оптимизированный метод из TelegramService
+    try {
+      const result = await telegramService.sendRawHtmlToTelegram(text, telegramChatId, telegramToken);
+      
+      console.log(`[DEBUG] Результат отправки: ${JSON.stringify(result)}`);
+      
+      if (result.success) {
+        return res.json({
+          success: true,
+          message_id: result.messageId,
+          message_url: result.messageUrl,
+          result: result.result
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+          status: result.status,
+          data: result.data
+        });
+      }
+    } catch (error: any) {
+      console.error(`[DEBUG] Исключение при использовании TelegramService: ${error.message}`);
+      return res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  } catch (error: any) {
+    console.error('Ошибка в маршруте raw-html-telegram:', error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -977,6 +1252,176 @@ testRouter.post('/save-publication-url', async (req: Request, res: Response) => 
       stack: error.stack
     });
   }
+});
+
+/**
+ * Тестовый маршрут для проверки оптимизированного метода publishToPlatform
+ * POST /api/test/optimized-platform-publish
+ * 
+ * Пример использования:
+ * POST /api/test/optimized-platform-publish
+ * Body: {
+ *   "token": "TELEGRAM_BOT_TOKEN",
+ *   "chatId": "CHAT_ID",
+ *   "title": "Заголовок поста",
+ *   "content": "<b>Форматированный</b> <i>HTML</i> контент",
+ *   "hashtags": ["тест", "html", "telegram"]
+ * }
+ */
+testRouter.post('/optimized-platform-publish', async (req: Request, res: Response) => {
+  try {
+    // Получаем данные из запроса
+    const { token, chatId, title, content, hashtags } = req.body;
+    
+    if (!token || !chatId || !content) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать token, chatId и content'
+      });
+    }
+    
+    // Создаем фейковый объект CampaignContent
+    const testContent = {
+      id: 'test-' + Date.now(),
+      userId: 'test-user',
+      campaignId: 'test-campaign',
+      title: title || null,
+      content: content,
+      contentType: 'html',
+      imageUrl: null,
+      additionalImages: null,
+      status: 'published',
+      createdAt: new Date(),
+      socialPlatforms: [],
+      socialPublications: {},
+      hashtags: hashtags || [],
+      links: [],
+      videoUrl: null,
+      prompt: null,
+      keywords: null,
+      scheduledAt: null,
+      publishedAt: null,
+      metadata: {}
+    };
+    
+    // Создаем настройки для Telegram
+    const telegramSettings = {
+      telegram: {
+        token: token,
+        chatId: chatId
+      }
+    };
+    
+    // Вызываем оптимизированный метод publishToPlatform
+    console.log('[TEST] Вызываем optimized publishToPlatform для Telegram');
+    const result = await telegramService.publishToPlatform(testContent, 'telegram', telegramSettings);
+    
+    console.log('[TEST] Результат отправки:', JSON.stringify(result));
+    
+    return res.json({
+      success: result.status === 'published',
+      result: result
+    });
+  } catch (error: any) {
+    console.error('[TEST] Ошибка при выполнении optimized-platform-publish:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для отображения UI для тестирования оптимизированного publishToPlatform
+ * GET /api/test/optimized-platform-publish
+ */
+testRouter.get('/optimized-platform-publish', (req: Request, res: Response) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Тестирование оптимизированного publishToPlatform для Telegram</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #333; }
+          form { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+          input, textarea { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+          button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+          .response { margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #fff; white-space: pre-wrap; }
+        </style>
+      </head>
+      <body>
+        <h1>Тест оптимизированного publishToPlatform</h1>
+        <p>Этот инструмент позволяет проверить новую реализацию метода publishToPlatform в TelegramService, который использует прямую отправку HTML без дополнительных преобразований.</p>
+        
+        <form id="testForm">
+          <div>
+            <label for="token">Telegram Bot Token:</label>
+            <input type="text" id="token" name="token" required>
+          </div>
+          <div>
+            <label for="chatId">Chat ID (включая @ для каналов):</label>
+            <input type="text" id="chatId" name="chatId" required>
+          </div>
+          <div>
+            <label for="title">Заголовок:</label>
+            <input type="text" id="title" name="title" value="Тестовый заголовок">
+          </div>
+          <div>
+            <label for="content">HTML-содержимое:</label>
+            <textarea id="content" name="content" rows="8" required><b>Жирный текст</b> и <i>курсив</i>
+
+HTML форматирование <u>работает</u> корректно через новый метод.
+
+Текст <b>сохраняет</b> все <i>теги</i> и <u>форматирование</u>.</textarea>
+          </div>
+          <div>
+            <label for="hashtags">Хэштеги (через запятую):</label>
+            <input type="text" id="hashtags" name="hashtags" value="тест, html, telegram">
+          </div>
+          <button type="submit">Опубликовать</button>
+        </form>
+        
+        <div class="response" id="response">Результат будет отображен здесь</div>
+        
+        <script>
+          document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const responseDiv = document.getElementById('response');
+            
+            responseDiv.textContent = 'Отправка запроса...';
+            
+            // Парсим хэштеги
+            const hashtags = form.hashtags.value
+              .split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag);
+            
+            try {
+              const response = await fetch('/api/test/optimized-platform-publish', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  token: form.token.value,
+                  chatId: form.chatId.value,
+                  title: form.title.value,
+                  content: form.content.value,
+                  hashtags: hashtags
+                })
+              });
+              
+              const result = await response.json();
+              responseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+              responseDiv.textContent = 'Ошибка: ' + error.message;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
 });
 
 /**
