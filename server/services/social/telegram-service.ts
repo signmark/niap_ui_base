@@ -660,9 +660,9 @@ export class TelegramService extends BaseSocialService {
    * Агрессивный исправитель HTML-тегов для обработки всех возможных случаев
    * @param text Исходный HTML-текст
    * @returns Исправленный HTML-текст с правильными закрытыми тегами
-   * @private
+   * @public
    */
-  private aggressiveTagFixer(text: string): string {
+  public aggressiveTagFixer(text: string): string {
     if (!text) return text;
     
     try {
