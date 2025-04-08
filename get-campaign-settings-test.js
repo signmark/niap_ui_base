@@ -5,22 +5,22 @@
  * Запуск: node get-campaign-settings-test.js <campaign_id>
  */
 
-const axios = require('axios');
-require('dotenv').config();
+import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// ID кампании можно передать в аргументах или использовать это значение по умолчанию
-const DEFAULT_CAMPAIGN_ID = '721e966b-98d7-4c9b-9db5-562dfdc0b042';
-const campaignId = process.argv[2] || DEFAULT_CAMPAIGN_ID;
+// Базовый URL для API Directus
+const DIRECTUS_API_URL = 'https://directus.nplanner.ru';
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-const DIRECTUS_ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL;
-const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD;
+// ID кампании и контента для тестирования
+const CAMPAIGN_ID = process.argv[2] || '46868c44-c6a4-4bed-accf-9ad07bba790e';
+const CONTENT_ID = '094bb372-d8ae-4759-8d0e-1c6c63391a04';
 
 /**
  * Выводит сообщение в консоль с временной меткой
  */
 function log(message) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
+  console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
 }
 
 /**
@@ -29,22 +29,85 @@ function log(message) {
  */
 async function getAdminToken() {
   try {
-    log(`Авторизация в Directus как администратор (${DIRECTUS_ADMIN_EMAIL})...`);
+    log('Авторизация в Directus...');
     
-    const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-      email: DIRECTUS_ADMIN_EMAIL,
-      password: DIRECTUS_ADMIN_PASSWORD
-    });
+    // Порядок приоритета:
+    // 1. Прямая авторизация по email/password
+    // 2. Использование токена из DIRECTUS_ADMIN_TOKEN
+    // 3. Использование токена из DIRECTUS_TOKEN
     
-    if (response.data && response.data.data && response.data.data.access_token) {
-      log('Авторизация успешна');
-      return response.data.data.access_token;
-    } else {
-      log('Ошибка: неверный формат ответа при авторизации');
-      return null;
+    // Пробуем сначала получить токен через прямую авторизацию
+    const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+    
+    log(`Авторизация с учетными данными: ${email}`);
+    log(`Пароль: ${password ? '*******' + password.substr(-3) : 'отсутствует'}`);
+    
+    try {
+      const response = await axios.post(`${DIRECTUS_API_URL}/auth/login`, {
+        email,
+        password
+      });
+      
+      if (response.data && response.data.data && response.data.data.access_token) {
+        log('✅ Успешная авторизация через API');
+        return response.data.data.access_token;
+      } else {
+        log('⚠️ Неправильный формат ответа при авторизации');
+        log(`Структура ответа: ${Object.keys(response.data).join(', ')}`);
+      }
+    } catch (authError) {
+      log(`⚠️ Ошибка при прямой авторизации: ${authError.message}`);
+      if (authError.response && authError.response.data) {
+        log(`Детали ошибки: ${JSON.stringify(authError.response.data)}`);
+      }
     }
+    
+    // Если прямая авторизация не сработала, пробуем использовать токен из переменных окружения
+    if (process.env.DIRECTUS_ADMIN_TOKEN) {
+      log('Проверка токена DIRECTUS_ADMIN_TOKEN из переменных окружения');
+      
+      try {
+        const testResponse = await axios.get(`${DIRECTUS_API_URL}/users/me`, {
+          headers: {
+            Authorization: `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`
+          }
+        });
+        
+        if (testResponse.status === 200) {
+          log('✅ DIRECTUS_ADMIN_TOKEN валиден, используем его');
+          return process.env.DIRECTUS_ADMIN_TOKEN;
+        }
+      } catch (tokenError) {
+        log(`⚠️ DIRECTUS_ADMIN_TOKEN недействителен: ${tokenError.message}`);
+      }
+    }
+    
+    // В крайнем случае пробуем DIRECTUS_TOKEN
+    if (process.env.DIRECTUS_TOKEN) {
+      log('Проверка токена DIRECTUS_TOKEN из переменных окружения');
+      
+      try {
+        const testResponse = await axios.get(`${DIRECTUS_API_URL}/users/me`, {
+          headers: {
+            Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`
+          }
+        });
+        
+        if (testResponse.status === 200) {
+          log('✅ DIRECTUS_TOKEN валиден, используем его');
+          return process.env.DIRECTUS_TOKEN;
+        }
+      } catch (tokenError) {
+        log(`⚠️ DIRECTUS_TOKEN недействителен: ${tokenError.message}`);
+      }
+    }
+    
+    // Если все методы не сработали
+    log('❌ Не удалось получить действительный токен авторизации');
+    return null;
   } catch (error) {
-    log(`Ошибка при получении токена администратора: ${error.message}`);
+    log(`❌ Критическая ошибка при авторизации: ${error.message}`);
     return null;
   }
 }
@@ -57,23 +120,58 @@ async function getAdminToken() {
  */
 async function getCampaignSettings(adminToken, id) {
   try {
-    log(`Получение настроек кампании с ID: ${id}`);
+    log(`Получение настроек кампании ${id}...`);
     
-    const response = await axios.get(`${DIRECTUS_URL}/items/user_campaigns/${id}`, {
+    const response = await axios.get(`${DIRECTUS_API_URL}/items/user_campaigns/${id}`, {
       headers: {
         Authorization: `Bearer ${adminToken}`
       }
     });
     
     if (response.data && response.data.data) {
-      log('Настройки кампании получены успешно');
+      log('Настройки кампании успешно получены');
       return response.data.data;
     } else {
-      log('Настройки кампании не найдены');
+      log('Ошибка: неправильный формат ответа при получении настроек кампании');
       return null;
     }
   } catch (error) {
-    log(`Ошибка при получении настроек кампании: ${error.message}`);
+    log(`Ошибка получения настроек кампании: ${error.message}`);
+    if (error.response && error.response.data) {
+      console.error('Детали ошибки:', JSON.stringify(error.response.data));
+    }
+    return null;
+  }
+}
+
+/**
+ * Получает данные контента по ID
+ * @param {string} adminToken Токен администратора Directus
+ * @param {string} id ID контента
+ * @returns {Promise<object|null>} Данные контента или null в случае ошибки
+ */
+async function getContentData(adminToken, id) {
+  try {
+    log(`Получение данных контента ${id}...`);
+    
+    const response = await axios.get(`${DIRECTUS_API_URL}/items/campaign_content/${id}`, {
+      headers: {
+        Authorization: `Bearer ${adminToken}`
+      }
+    });
+    
+    if (response.data && response.data.data) {
+      log('Данные контента успешно получены');
+      return response.data.data;
+    } else {
+      log('Ошибка: неправильный формат ответа при получении данных контента');
+      return null;
+    }
+  } catch (error) {
+    log(`Ошибка получения данных контента: ${error.message}`);
+    if (error.response && error.response.data) {
+      console.error('Детали ошибки:', JSON.stringify(error.response.data));
+    }
     return null;
   }
 }
@@ -85,101 +183,84 @@ async function getCampaignSettings(adminToken, id) {
  */
 function extractSocialSettings(campaign) {
   try {
-    const settingsField = campaign.social_media_settings || {};
+    log('Извлечение настроек социальных сетей из кампании...');
     
-    // Пытаемся распарсить строковые настройки, если они в формате JSON
-    let settings = settingsField;
-    if (typeof settingsField === 'string') {
-      try {
-        settings = JSON.parse(settingsField);
-      } catch (e) {
-        log(`Предупреждение: не удалось распарсить JSON настроек: ${e.message}`);
+    let socialSettings = {};
+    
+    // Получаем настройки из поля social_media_settings, если оно есть
+    if (campaign.social_media_settings) {
+      let settings;
+      
+      // Проверяем, является ли поле строкой (JSON) или объектом
+      if (typeof campaign.social_media_settings === 'string') {
+        try {
+          settings = JSON.parse(campaign.social_media_settings);
+        } catch (e) {
+          log(`Ошибка парсинга JSON в поле social_media_settings: ${e.message}`);
+          settings = {};
+        }
+      } else {
+        settings = campaign.social_media_settings;
       }
+      
+      // Извлекаем настройки для каждой платформы
+      if (settings.telegram) socialSettings.telegram = settings.telegram;
+      if (settings.instagram) socialSettings.instagram = settings.instagram;
+      if (settings.facebook) socialSettings.facebook = settings.facebook;
+      if (settings.vk) socialSettings.vk = settings.vk;
+      if (settings.youtube) socialSettings.youtube = settings.youtube;
     }
     
-    // Извлекаем настройки Telegram
-    const telegramSettings = {
-      token: settings.telegram?.token || settings.telegramToken,
-      chatId: settings.telegram?.chatId || settings.telegramChatId
-    };
-    
-    // Извлекаем настройки других социальных сетей
-    const vkSettings = {
-      token: settings.vk?.token || settings.vkToken,
-      groupId: settings.vk?.groupId || settings.vkGroupId
-    };
-    
-    const instagramSettings = {
-      token: settings.instagram?.token || settings.instagramToken,
-      businessAccountId: settings.instagram?.businessAccountId || settings.instagramBusinessAccountId
-    };
-    
-    const facebookSettings = {
-      token: settings.facebook?.token || settings.facebookToken,
-      pageId: settings.facebook?.pageId || settings.facebookPageId
-    };
-    
-    return {
-      telegram: telegramSettings,
-      vk: vkSettings,
-      instagram: instagramSettings,
-      facebook: facebookSettings,
-      raw: settings
-    };
+    log('Настройки социальных сетей получены');
+    return socialSettings;
   } catch (error) {
-    log(`Ошибка при извлечении настроек социальных сетей: ${error.message}`);
-    return {
-      telegram: {},
-      vk: {},
-      instagram: {},
-      facebook: {},
-      raw: {}
-    };
+    log(`Ошибка при извлечении настроек: ${error.message}`);
+    return {};
   }
 }
 
 /**
  * Отправляет тестовое сообщение в Telegram с HTML форматированием
  * @param {object} settings Настройки Telegram
+ * @param {string} html HTML текст для отправки
  * @returns {Promise<object|null>} Результат отправки или null в случае ошибки
  */
-async function sendTestTelegramMessage(settings) {
-  if (!settings.token || !settings.chatId) {
-    log('Ошибка: отсутствуют настройки Telegram (токен или ID чата)');
-    return null;
-  }
-  
+async function sendTestTelegramMessage(settings, html) {
   try {
-    log(`Отправка тестового сообщения в Telegram (чат ID: ${settings.chatId})...`);
+    if (!settings || !settings.token || !settings.chatId) {
+      log('Ошибка: отсутствуют необходимые настройки Telegram (токен или ID чата)');
+      return null;
+    }
     
-    const message = `
-<b>Тестовое HTML форматирование</b>
-
-Это <i>курсивный</i> текст, а это <b>жирный</b> текст.
-Также поддерживается <u>подчеркнутый</u> текст и <code>код</code>.
-
-<a href="https://t.me">Ссылка на Telegram</a>
-
-Время отправки: ${new Date().toISOString()}
-`;
+    log(`Отправка HTML-сообщения в Telegram...`);
+    log(`Используем токен: ${settings.token.substring(0, 10)}... и чат ID: ${settings.chatId}`);
+    log(`Текст сообщения: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
     
     const response = await axios.post(`https://api.telegram.org/bot${settings.token}/sendMessage`, {
       chat_id: settings.chatId,
-      text: message,
+      text: html,
       parse_mode: 'HTML'
     });
     
     if (response.data && response.data.ok) {
-      log('Сообщение успешно отправлено в Telegram');
+      log('✅ Сообщение успешно отправлено в Telegram');
+      log(`ID сообщения: ${response.data.result.message_id}`);
+      
+      // Добавляем URL поста, если есть имя пользователя чата
+      if (settings.username) {
+        log(`URL поста: https://t.me/${settings.username}/${response.data.result.message_id}`);
+      }
+      
       return response.data;
     } else {
-      log(`Ошибка при отправке сообщения: ${JSON.stringify(response.data)}`);
+      log('❌ Ошибка при отправке сообщения в Telegram');
+      log(`Ответ API: ${JSON.stringify(response.data)}`);
       return null;
     }
   } catch (error) {
-    log(`Ошибка при отправке сообщения в Telegram: ${error.message}`);
-    if (error.response) {
-      log(`Детали ошибки: ${JSON.stringify(error.response.data || {})}`);
+    log(`❌ Ошибка при отправке сообщения в Telegram: ${error.message}`);
+    if (error.response && error.response.data) {
+      log(`Детали ошибки: ${JSON.stringify(error.response.data)}`);
     }
     return null;
   }
@@ -188,43 +269,72 @@ async function sendTestTelegramMessage(settings) {
 /**
  * Выполняет тесты отправки HTML в Telegram
  * @param {object} telegramSettings Настройки Telegram
+ * @param {string} contentHtml HTML-текст из контента
  */
-async function runTelegramHtmlTests(telegramSettings) {
-  try {
-    log('=== Начало тестирования HTML в Telegram ===');
-    
-    // Простое сообщение с базовым форматированием
-    const basicResult = await sendTestTelegramMessage(telegramSettings);
-    log(`Результат отправки базового сообщения: ${basicResult ? 'Успешно' : 'Ошибка'}`);
-    
-    // Сообщение с незакрытыми тегами - должно автоматически исправляться API Telegram
-    const unclosedTagsMessage = `
-<b>Тест с незакрытыми тегами
-<i>Этот текст должен быть курсивным и жирным
-<code>А этот текст должен быть кодом, курсивным и жирным
+async function runTelegramHtmlTests(telegramSettings, contentHtml) {
+  log('\n=== Тестирование отправки HTML в Telegram ===');
+  
+  // Тест 1: Отправка оригинального контента
+  log('\nТест #1: Отправка оригинального контента');
+  const result1 = await sendTestTelegramMessage(telegramSettings, contentHtml);
+  
+  // Тест 2: Отправка сообщения с вложенными тегами
+  log('\nТест #2: Отправка сообщения с вложенными тегами');
+  const nestedTags = `
+<b>Заголовок</b>
 
-<a href="https://example.com">Ссылка без закрывающего тега
+<i>Курсивный текст с <a href="https://example.com">ссылкой</a></i>
+
+Обычный текст и <code>моноширинный код</code>.
+
+<u>Подчеркнутый список</u>:
+• Первый пункт
+• Второй <b>жирный</b> пункт
+• Третий <i>курсивный</i> пункт
+
+<b><i>Жирный и курсивный одновременно!</i></b>
 `;
+  const result2 = await sendTestTelegramMessage(telegramSettings, nestedTags);
+  
+  log('\n=== Завершение тестирования отправки HTML в Telegram ===');
+}
+
+/**
+ * Обновляет поле social_publications в контенте
+ * @param {string} adminToken Токен администратора
+ * @param {string} contentId ID контента
+ * @param {object} publicationData Данные публикации
+ * @returns {Promise<boolean>} Успешность обновления
+ */
+async function updateContentPublications(adminToken, contentId, publicationData) {
+  try {
+    log(`Обновление информации о публикации для контента ${contentId}...`);
     
-    try {
-      log('Отправка сообщения с незакрытыми тегами...');
-      const unclosedTagsResult = await axios.post(`https://api.telegram.org/bot${telegramSettings.token}/sendMessage`, {
-        chat_id: telegramSettings.chatId,
-        text: unclosedTagsMessage,
-        parse_mode: 'HTML'
-      });
-      
-      log(`Результат отправки сообщения с незакрытыми тегами: ${unclosedTagsResult.data.ok ? 'Успешно' : 'Ошибка'}`);
-    } catch (error) {
-      log(`Ошибка при отправке сообщения с незакрытыми тегами: ${error.message}`);
-      if (error.response) {
-        log(`Детали ошибки: ${JSON.stringify(error.response.data || {})}`);
+    const response = await axios.patch(
+      `${DIRECTUS_API_URL}/items/campaign_content/${contentId}`,
+      {
+        social_publications: publicationData
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${adminToken}`
+        }
       }
-    }
+    );
     
-    log('=== Завершение тестирования HTML в Telegram ===');
+    if (response.status === 200) {
+      log('✅ Информация о публикации успешно обновлена');
+      return true;
+    } else {
+      log('❌ Ошибка при обновлении информации о публикации');
+      return false;
+    }
   } catch (error) {
-    log(`Ошибка при тестировании HTML в Telegram: ${error.message}`);
+    log(`❌ Ошибка при обновлении информации о публикации: ${error.message}`);
+    if (error.response && error.response.data) {
+      log(`Детали ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    return false;
   }
 }
 
@@ -232,57 +342,79 @@ async function runTelegramHtmlTests(telegramSettings) {
  * Основная функция скрипта
  */
 async function main() {
-  try {
-    log(`Запуск скрипта с ID кампании: ${campaignId}`);
-    
-    // Получаем токен администратора
-    const adminToken = await getAdminToken();
-    if (!adminToken) {
-      log('Ошибка: не удалось получить токен администратора');
-      return;
-    }
-    
-    // Получаем настройки кампании
-    const campaign = await getCampaignSettings(adminToken, campaignId);
-    if (!campaign) {
-      log(`Ошибка: не удалось получить кампанию с ID ${campaignId}`);
-      return;
-    }
-    
-    log(`Кампания найдена: ${campaign.name}`);
-    
-    // Извлекаем настройки социальных сетей
-    const socialSettings = extractSocialSettings(campaign);
-    
-    // Выводим найденные настройки
-    log('Настройки Telegram:');
-    log(`- Token: ${socialSettings.telegram.token ? 'найден' : 'отсутствует'}`);
-    log(`- Chat ID: ${socialSettings.telegram.chatId || 'отсутствует'}`);
-    
-    log('Настройки VK:');
-    log(`- Token: ${socialSettings.vk.token ? 'найден' : 'отсутствует'}`);
-    log(`- Group ID: ${socialSettings.vk.groupId || 'отсутствует'}`);
-    
-    log('Настройки Instagram:');
-    log(`- Token: ${socialSettings.instagram.token ? 'найден' : 'отсутствует'}`);
-    log(`- Business Account ID: ${socialSettings.instagram.businessAccountId || 'отсутствует'}`);
-    
-    log('Настройки Facebook:');
-    log(`- Token: ${socialSettings.facebook.token ? 'найден' : 'отсутствует'}`);
-    log(`- Page ID: ${socialSettings.facebook.pageId || 'отсутствует'}`);
-    
-    // Проверяем наличие настроек Telegram
-    if (socialSettings.telegram.token && socialSettings.telegram.chatId) {
-      // Запускаем тесты отправки HTML в Telegram
-      await runTelegramHtmlTests(socialSettings.telegram);
-    } else {
-      log('Отсутствуют полные настройки для Telegram, тестирование невозможно');
-    }
-    
-  } catch (error) {
-    log(`Ошибка при выполнении скрипта: ${error.message}`);
+  log('=== Начало тестирования настроек кампании ===');
+  log(`ID кампании: ${CAMPAIGN_ID}`);
+  log(`ID контента: ${CONTENT_ID}`);
+  
+  // Получаем токен администратора
+  const adminToken = await getAdminToken();
+  if (!adminToken) {
+    log('Ошибка: не удалось получить токен администратора');
+    return;
   }
+  
+  // Получаем настройки кампании
+  const campaign = await getCampaignSettings(adminToken, CAMPAIGN_ID);
+  if (!campaign) {
+    log('Ошибка: не удалось получить настройки кампании');
+    return;
+  }
+  
+  // Получаем данные контента
+  const content = await getContentData(adminToken, CONTENT_ID);
+  if (!content) {
+    log('Ошибка: не удалось получить данные контента');
+    return;
+  }
+  
+  // Извлекаем настройки социальных сетей
+  const socialSettings = extractSocialSettings(campaign);
+  
+  // Выводим найденные настройки
+  log('\n=== Найденные настройки социальных сетей ===');
+  if (socialSettings.telegram) {
+    log('Telegram:');
+    log(`  Token: ${socialSettings.telegram.token ? '✅ Установлен' : '❌ Отсутствует'}`);
+    log(`  Chat ID: ${socialSettings.telegram.chatId || 'Не указан'}`);
+    log(`  Username: ${socialSettings.telegram.username || 'Не указан'}`);
+  } else {
+    log('Telegram: настройки не найдены');
+  }
+  
+  if (socialSettings.instagram) {
+    log('Instagram:');
+    log(`  Token: ${socialSettings.instagram.token ? '✅ Установлен' : '❌ Отсутствует'}`);
+    log(`  Business Account ID: ${socialSettings.instagram.businessAccountId || 'Не указан'}`);
+  } else {
+    log('Instagram: настройки не найдены');
+  }
+  
+  // Тестируем отправку HTML в Telegram, если есть настройки
+  if (socialSettings.telegram && socialSettings.telegram.token && socialSettings.telegram.chatId) {
+    await runTelegramHtmlTests(socialSettings.telegram, content.content || '');
+    
+    // Сохраняем данные о публикации в content.social_publications
+    const now = new Date().toISOString();
+    const publicationData = {
+      ...(content.social_publications || {}),
+      telegram: {
+        status: 'published',
+        publishedAt: now,
+        postUrl: socialSettings.telegram.username ? 
+          `https://t.me/${socialSettings.telegram.username}/` : null,
+        error: null
+      }
+    };
+    
+    await updateContentPublications(adminToken, CONTENT_ID, publicationData);
+  } else {
+    log('\n❌ Тестирование Telegram не выполнено: отсутствуют настройки');
+  }
+  
+  log('\n=== Завершение тестирования настроек кампании ===');
 }
 
-// Запускаем основную функцию
-main();
+// Запуск скрипта
+main().catch(error => {
+  log(`Критическая ошибка: ${error.message}`);
+});

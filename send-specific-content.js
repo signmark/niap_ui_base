@@ -24,10 +24,17 @@ async function getAuthToken() {
   try {
     console.log('Попытка авторизации с заданными учетными данными...');
     
-    // Используем заданные учетные данные
+    // Используем переменные окружения, если они доступны
+    const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+    
+    console.log(`Авторизация с учетными данными: ${email}`);
+    console.log(`Пароль: ${password ? '*******' + password.substr(-3) : 'отсутствует'}`);
+    
+    // Используем учетные данные из переменных окружения
     const loginResponse = await axios.post(`${API_BASE_URL}/auth/login`, {
-      email: 'lbrspb@gmail.com',
-      password: 'Qtzp3dh7'
+      email,
+      password
     });
     
     console.log('Ответ от сервера авторизации:', loginResponse.status);
@@ -49,13 +56,35 @@ async function getAuthToken() {
       }
     }
     
+    // Пробуем использовать статический токен из переменных окружения
+    if (process.env.DIRECTUS_ADMIN_TOKEN) {
+      console.log('Использование DIRECTUS_ADMIN_TOKEN из переменных окружения');
+      
+      try {
+        // Проверяем валидность токена
+        const testResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/users/me`, {
+          headers: {
+            Authorization: `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`
+          }
+        });
+        
+        if (testResponse.status === 200) {
+          console.log('DIRECTUS_ADMIN_TOKEN валиден, используем его');
+          return process.env.DIRECTUS_ADMIN_TOKEN;
+        }
+      } catch (tokenError) {
+        console.error('Ошибка проверки DIRECTUS_ADMIN_TOKEN:', tokenError.message);
+      }
+    }
+    
     // Специфичный для Directus запрос на прямое получение токена
     try {
       console.log('Попытка прямого запроса к Directus API...');
       
-      const directusResponse = await axios.post('https://directus.nplanner.ru/auth/login', {
-        email: 'lbrspb@gmail.com',
-        password: 'Qtzp3dh7'
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusResponse = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
       });
       
       if (directusResponse.data && directusResponse.data.data && directusResponse.data.data.access_token) {
