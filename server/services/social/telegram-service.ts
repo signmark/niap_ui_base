@@ -800,14 +800,18 @@ export class TelegramService extends BaseSocialService {
         if (finalText.includes('<') && finalText.includes('>')) {
           log(`Пробуем отправить как обычный текст без HTML...`, 'social-publishing');
           
-          // Удаляем все HTML-теги и создаем новое тело запроса
-          const plainText = text.replace(/<[^>]*>/g, '');
+          // Вместо полного удаления HTML-тегов, попробуем еще раз применить
+          // агрессивное исправление HTML и отправить с правильной разметкой
+          const ultraFixedHtml = this.aggressiveTagFixer(this.aggressiveTagFixer(text));
+          
+          // Последняя попытка отправить HTML
           const plainMessageBody = {
             chat_id: chatId,
-            text: plainText.length > 4096 ? plainText.substring(0, 4093) + '...' : plainText,
+            text: ultraFixedHtml.length > 4096 ? ultraFixedHtml.substring(0, 4093) + '...' : ultraFixedHtml,
             protect_content: false,
-            disable_notification: false
-          , parse_mode: "HTML"};
+            disable_notification: false,
+            parse_mode: "HTML"
+          };
           
           // Отправляем повторный запрос без HTML
           const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
