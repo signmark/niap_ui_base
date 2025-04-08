@@ -1783,267 +1783,49 @@ export class SocialPublishingWithImgurService {
       businessAccountId: instagramSettings?.businessAccountId || 'отсутствует'
     })}`, 'social-publishing');
     
-    // Проверяем наличие необходимых параметров
-    if (!instagramSettings || !instagramSettings.token || !instagramSettings.businessAccountId) {
-      log(`Ошибка публикации в Instagram: отсутствуют настройки. Token: ${instagramSettings?.token ? 'задан' : 'отсутствует'}, Business Account ID: ${instagramSettings?.businessAccountId ? 'задан' : 'отсутствует'}`, 'social-publishing');
-      return {
-        platform: 'instagram',
-        status: 'failed',
-        publishedAt: null,
-        error: 'Отсутствуют настройки для Instagram (токен или ID бизнес-аккаунта). Убедитесь, что настройки заданы в кампании.'
-      };
-    }
-
     try {
-      // Извлекаем параметры
-      const token = instagramSettings.token;
-      const businessAccountId = instagramSettings.businessAccountId;
+      // Напрямую используем реализацию из отдельного сервиса Instagram
+      // который содержит правильную реализацию публикации
+      log(`Делегирование публикации в Instagram специализированному сервису`, 'social-publishing');
       
-      log(`[Instagram] Начинаем публикацию в Instagram с использованием бизнес-аккаунта: ${businessAccountId}`, 'social-publishing');
+      // Импортируем сервис Instagram и вызываем его метод
+      const { instagramService } = await import('./social/instagram-service');
       
-      // Обработка дополнительных изображений
-      let processedContent = this.processAdditionalImages(content, 'Instagram');
+      if (!instagramSettings) {
+        log(`Ошибка: instagramSettings не определен, создаём пустые настройки`, 'social-publishing');
+        // Создаем пустой объект настроек
+        instagramSettings = {
+          token: null,
+          accessToken: null,
+          businessAccountId: null
+        };
+      }
       
-      // Загрузка изображений на Imgur перед публикацией
-      processedContent = await this.uploadImagesToImgur(processedContent);
-
-      // Проверяем наличие изображения (для Instagram обязательно)
-      if (!processedContent.imageUrl) {
-        log(`[Instagram] Ошибка публикации: отсутствует основное изображение`, 'social-publishing');
+      // Передаем параметры в специализированный сервис
+      log(`Вызываем instagramService.publishToInstagram с параметрами token=${!!instagramSettings.token}, businessAccountId=${!!instagramSettings.businessAccountId}`, 'social-publishing');
+      const result = await instagramService.publishToInstagram(content, instagramSettings);
+      
+      log(`Instagram-сервис вернул результат: status=${result.status}, error=${result.error || 'нет'}`, 'social-publishing');
+      
+      // Возвращаем результат, добавляя ID публикации, если она успешна
+      if (result.status === 'published') {
+        log(`Instagram публикация успешна, URL: ${result.postUrl}`, 'social-publishing');
         return {
-          platform: 'instagram',
-          status: 'failed',
-          publishedAt: null,
-          error: 'Отсутствует изображение для публикации в Instagram. Необходимо добавить изображение.'
+          ...result,
+          // Добавляем postId для совместимости
+          postId: result.postId || result.postUrl?.split('/').filter(Boolean).pop() || null
         };
       }
       
-      // Подготавливаем текст для отправки
-      let caption = '';
-      
-      // Если есть заголовок, добавляем его в начало сообщения
-      if (processedContent.title) {
-        caption += `${processedContent.title}\n\n`;
-      }
-      
-      // Instagram не поддерживает HTML, форматируем текст
-      let contentText = processedContent.content || '';
-      contentText = contentText
-        // Обработка абзацев и переносов строк
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '$1\n\n')
-        .replace(/<li>(.*?)<\/li>/g, '• $1\n')
-        .replace(/<ul>(.*?)<\/ul>/g, '$1\n')
-        .replace(/<ol>(.*?)<\/ol>/g, '$1\n')
-        
-        // Замена HTML-тегов форматирования на обычный текст
-        .replace(/<b>(.*?)<\/b>/g, '$1')
-        .replace(/<strong>(.*?)<\/strong>/g, '$1')
-        .replace(/<i>(.*?)<\/i>/g, '$1')
-        .replace(/<em>(.*?)<\/em>/g, '$1')
-        
-        // Преобразуем ссылки в обычный текст
-        .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, '$2 ($1)')
-        
-        // Удаляем все остальные HTML-теги
-        .replace(/<[^>]*>/g, '');
-      
-      // Нормализуем переносы строк (не более 2 подряд)
-      contentText = contentText.replace(/\n{3,}/g, '\n\n');
-      
-      // Instagram имеет ограничение на длину текста (2200 символов)
-      if (contentText.length > 2200) {
-        contentText = contentText.substring(0, 2197) + '...';
-        log(`Текст для Instagram был обрезан до 2200 символов`, 'social-publishing');
-      }
-      
-      caption += contentText;
-      
-      // Если есть хэштеги, добавляем их в конец сообщения
-      if (processedContent.hashtags && Array.isArray(processedContent.hashtags) && processedContent.hashtags.length > 0) {
-        const hashtags = processedContent.hashtags
-          .filter(tag => tag && typeof tag === 'string' && tag.trim() !== '')
-          .map(tag => tag.trim().startsWith('#') ? tag.trim() : `#${tag.trim()}`);
-        
-        if (hashtags.length > 0) {
-          caption += '\n\n' + hashtags.join(' ');
-        }
-      }
-      
-      // Публикация в Instagram выполняется в 3 этапа:
-      // 1. Отправка запроса на создание контейнера для медиа
-      // 2. Публикация контейнера
-      // 3. Получение permalink (URL поста)
-      
-      try {
-        log(`[Instagram] Этап 1 - создание контейнера для медиа`, 'social-publishing');
-        
-        // Создаем URL для Instagram Graph API
-        const baseUrl = 'https://graph.facebook.com/v17.0';
-        
-        // Формируем URL запроса для создания контейнера
-        const containerUrl = `${baseUrl}/${businessAccountId}/media`;
-        
-        // Подготавливаем параметры запроса
-        const containerParams = {
-          image_url: processedContent.imageUrl,
-          caption: caption,
-          access_token: token
-        };
-        
-        // Отправляем запрос на создание контейнера
-        log(`[Instagram] Отправка запроса на создание контейнера с URL изображения: ${processedContent.imageUrl.substring(0, 50)}...`, 'social-publishing');
-        const containerResponse = await axios.post(
-          containerUrl, 
-          containerParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
-          }
-        );
-        
-        log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'social-publishing');
-        
-        // Проверяем успешность создания контейнера
-        if (!containerResponse.data || !containerResponse.data.id) {
-          const errorMsg = containerResponse.data.error ? 
-            `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
-            'Неизвестная ошибка при создании контейнера';
-          
-          log(`[Instagram] Ошибка при создании контейнера: ${errorMsg}`, 'social-publishing');
-          
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: errorMsg
-          };
-        }
-        
-        // Получаем ID контейнера
-        const containerId = containerResponse.data.id;
-        
-        log(`[Instagram] Этап 2 - публикация контейнера ${containerId}`, 'social-publishing');
-        
-        // Формируем URL запроса для публикации
-        const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
-        
-        // Подготавливаем параметры запроса
-        const publishParams = {
-          creation_id: containerId,
-          access_token: token
-        };
-        
-        // Отправляем запрос на публикацию
-        const publishResponse = await axios.post(
-          publishUrl, 
-          publishParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
-          }
-        );
-        
-        log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'social-publishing');
-        
-        // Проверяем успешность публикации
-        if (!publishResponse.data || !publishResponse.data.id) {
-          const errorMsg = publishResponse.data.error ? 
-            `${publishResponse.data.error.code}: ${publishResponse.data.error.message}` : 
-            'Неизвестная ошибка при публикации';
-          
-          log(`[Instagram] Ошибка при публикации: ${errorMsg}`, 'social-publishing');
-          
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: errorMsg
-          };
-        }
-        
-        // Получаем ID публикации
-        const igMediaId = publishResponse.data.id;
-        
-        // Для получения permalink нужен отдельный запрос
-        log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'social-publishing');
-        
-        // Формируем URL запроса для получения информации о публикации
-        const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
-        
-        // Отправляем запрос
-        const mediaInfoResponse = await axios.get(`${mediaInfoUrl}`, {
-          params: {
-            fields: 'permalink',
-            access_token: token
-          },
-          timeout: 30000
-        });
-        
-        log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'social-publishing');
-        
-        // Проверяем успешность получения информации
-        let postUrl = '';
-        
-        if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
-          postUrl = mediaInfoResponse.data.permalink;
-          log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'social-publishing');
-        } else {
-          // Если не удалось получить permalink, используем стандартную форму ссылки
-          postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-          log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'social-publishing');
-        }
-        
-        log(`[Instagram] Публикация успешно завершена!`, 'social-publishing');
-        
-        return {
-          platform: 'instagram',
-          status: 'published',
-          publishedAt: new Date(),
-          postUrl: postUrl,
-          postId: igMediaId
-        };
-      } catch (apiError: any) {
-        log(`[Instagram] Исключение при публикации: ${apiError.message}`, 'social-publishing');
-        
-        // Дополнительное логирование для ответа API
-        if (apiError.response && apiError.response.data) {
-          log(`[Instagram] Детали ошибки API: ${JSON.stringify(apiError.response.data)}`, 'social-publishing');
-        }
-        
-        // Обработка распространенных ошибок
-        let errorMessage = `Ошибка при публикации в Instagram: ${apiError.message}`;
-        
-        if (apiError.response?.data?.error) {
-          const apiErrorData = apiError.response.data.error;
-          
-          if (apiErrorData.code === 190) {
-            errorMessage = 'Недействительный токен доступа. Пожалуйста, обновите токен в настройках.';
-          } else if (apiErrorData.code === 4) {
-            errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
-          } else if (apiErrorData.code === 10) {
-            errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
-          } else {
-            errorMessage = `Ошибка API Instagram: ${apiErrorData.message} (код ${apiErrorData.code})`;
-          }
-        }
-        
-        return {
-          platform: 'instagram',
-          status: 'failed',
-          publishedAt: null,
-          error: errorMessage
-        };
-      }
+      // Возвращаем ошибку, если публикация не удалась
+      return result;
     } catch (error: any) {
-      log(`[Instagram] Общая ошибка при публикации: ${error.message}`, 'social-publishing');
+      log(`[Instagram] Общая ошибка при публикации через сервис: ${error.message}`, 'social-publishing');
       return {
         platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        error: `Ошибка при публикации в Instagram: ${error.message}`
+        error: `Ошибка при делегировании публикации в Instagram: ${error.message}`
       };
     }
   }
