@@ -44,6 +44,74 @@ export class TelegramService extends BaseSocialService {
    * @param token Токен бота Telegram (опционально, если не задан, используется из настроек)
    * @returns Результат отправки сообщения
    */
+  /**
+   * Исправляет незакрытые HTML-теги в тексте
+   * @param text HTML-текст, который может содержать незакрытые теги
+   * @returns HTML-текст с исправленными (закрытыми) тегами
+   */
+  private fixUnclosedHtmlTags(text: string): string {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
+    
+    // Массив поддерживаемых Telegram HTML-тегов
+    const supportedTags = ['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'code', 'pre', 'a'];
+    
+    // Стек для отслеживания открытых тегов
+    const openTags: string[] = [];
+    
+    // Регулярное выражение для поиска HTML-тегов
+    const tagRegex = /<\/?([a-z0-9]+)(?:\s+[^>]*)?>/gi;
+    
+    // Заменяем неправильные теги
+    let processedText = text.replace(tagRegex, (match, tagName) => {
+      // Приводим имя тега к нижнему регистру для сравнения
+      const lowerTagName = tagName.toLowerCase();
+      
+      // Если это не поддерживаемый Telegram тег, просто удаляем его
+      if (!supportedTags.includes(lowerTagName)) {
+        return '';
+      }
+      
+      // Проверяем, открывающий или закрывающий тег
+      if (match.startsWith('</')) {
+        // Если это закрывающий тег
+        // Ищем соответствующий открывающий тег в стеке
+        const index = openTags.lastIndexOf(lowerTagName);
+        
+        if (index !== -1) {
+          // Удаляем из стека все теги до найденного
+          openTags.splice(index);
+          return match; // Возвращаем тег без изменений
+        } else {
+          // Если не нашли открывающий тег, удаляем лишний закрывающий
+          return '';
+        }
+      } else {
+        // Если это открывающий тег
+        // Для тега <a> проверяем, что есть атрибут href
+        if (lowerTagName === 'a' && !match.includes('href=')) {
+          return ''; // Удаляем тег <a> без href
+        }
+        
+        // Добавляем тег в стек открытых тегов
+        openTags.push(lowerTagName);
+        return match; // Возвращаем тег без изменений
+      }
+    });
+    
+    // Закрываем все оставшиеся открытые теги в обратном порядке
+    let closingTags = '';
+    for (let i = openTags.length - 1; i >= 0; i--) {
+      // Не закрываем теги <a> автоматически, т.к. они требуют правильного атрибута href
+      if (openTags[i] !== 'a') {
+        closingTags += `</${openTags[i]}>`;
+      }
+    }
+    
+    return processedText + closingTags;
+  }
+
   public async sendRawHtmlToTelegram(text: string): Promise<any>;
   public async sendRawHtmlToTelegram(text: string, chatId: string): Promise<any>;
   public async sendRawHtmlToTelegram(text: string, chatId: string, token: string): Promise<any>;
@@ -63,8 +131,11 @@ export class TelegramService extends BaseSocialService {
         return { success: false, error: 'Empty text' };
       }
       
-      log(`Отправка необработанного HTML-текста в Telegram (${text.length} символов)`, 'telegram');
-      log(`Первые 100 символов: ${text.substring(0, Math.min(100, text.length))}...`, 'telegram');
+      // Используем более агрессивное исправление незакрытых HTML-тегов
+      const fixedText = this.aggressiveTagFixer(text);
+      
+      log(`Отправка необработанного HTML-текста в Telegram (${fixedText.length} символов)`, 'telegram');
+      log(`Первые 100 символов: ${fixedText.substring(0, Math.min(100, fixedText.length))}...`, 'telegram');
       
       // Форматируем chatId, если нужно
       let formattedChatId = actualChatId;
@@ -76,7 +147,7 @@ export class TelegramService extends BaseSocialService {
       const url = `https://api.telegram.org/bot${actualToken}/sendMessage`;
       const response = await axios.post(url, {
         chat_id: formattedChatId,
-        text: text,
+        text: fixedText,
         parse_mode: 'HTML'
       }, {
         headers: { 'Content-Type': 'application/json' },
