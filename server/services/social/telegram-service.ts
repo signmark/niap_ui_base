@@ -36,22 +36,44 @@ export class TelegramService extends BaseSocialService {
       // Сразу начинаем обработку HTML
       let formattedText = cleanedContent;
         
+      // Обработка многострочных блочных элементов
       formattedText = formattedText
-        // Преобразуем блочные элементы в понятный Telegram формат
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>(.*?)<\/p>/g, '$1\n')
-        .replace(/<div>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
+        // Преобразуем разрывы строк
+        .replace(/<br\s*\/?>/gi, '\n')
+        // Двойной проход с использованием выражений для поддержки многострочных тегов
+        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+        .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
+        
+        // Преобразуем все остальные блочные элементы, которые не поддерживаются Telegram
+        .replace(/<(?:article|section|aside|header|footer|nav|main)[^>]*>([\s\S]*?)<\/(?:article|section|aside|header|footer|nav|main)>/gi, '$1\n')
+        
+        // Обработка списков
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+        .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n')
+        
+        // Обработка таблиц
+        .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, '$1\n')
+        .replace(/<(?:table|thead|tbody|tfoot)[^>]*>([\s\S]*?)<\/(?:table|thead|tbody|tfoot)>/gi, '$1\n\n')
         
         // Приводим HTML-теги к поддерживаемым в Telegram форматам
-        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-        .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
-        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
-        .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
+        .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+        .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
+        .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+        .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
+        .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
+        .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+        .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
+        .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
+        .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>')
+        .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '<code>$1</code>')
+        .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '<pre>$1</pre>')
         
         // Обрабатываем ссылки по формату Telegram
-        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
+        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, '<a href="$1">$2</a>');
+      
+      // Убираем лишние переносы строк (более 2 подряд)
+      formattedText = formattedText.replace(/\n{3,}/g, '\n\n');
       
       // Сохраняем поддерживаемые HTML-теги и удаляем только неподдерживаемые
       formattedText = formattedText.replace(/<(?!\/?(?:b|i|u|s|code|pre|a\b)[^>]*>)[^>]+>/gi, '');
