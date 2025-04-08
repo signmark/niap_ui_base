@@ -350,6 +350,75 @@ router.post('/instagram-post', async (req: Request, res: Response) => {
 });
 
 /**
+ * Маршрут для тестирования HTML форматирования через Telegram API с отправкой
+ * Использует наш улучшенный метод агрессивного исправления HTML-тегов
+ * и поддерживает передачу credentials напрямую в запросе для легкости тестирования
+ */
+router.post('/telegram-html', async (req: Request, res: Response) => {
+  try {
+    const { html, token, chatId } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML для отправки (параметр html)'
+      });
+    }
+    
+    // Используем переданные токен/chatId или значения из переменных окружения
+    const telegramToken = token || process.env.TELEGRAM_TEST_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+    const telegramChatId = chatId || process.env.TELEGRAM_TEST_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+    
+    if (!telegramToken || !telegramChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствуют учетные данные Telegram. Укажите token и chatId в запросе или настройте переменные окружения'
+      });
+    }
+    
+    console.log(`[Test API] Запрос на отправку HTML в Telegram`);
+    console.log(`[Test API] Chat ID: ${telegramChatId}`);
+    console.log(`[Test API] HTML (первые 100 символов): ${html.substring(0, 100)}...`);
+    
+    // Инициализируем сервис с токеном и ID чата
+    telegramService.initialize(telegramToken, telegramChatId);
+    
+    // Используем агрессивный метод исправления HTML перед отправкой
+    const processedHtml = telegramService.aggressiveTagFixer(html);
+    console.log(`[Test API] Обработанный HTML (первые 100 символов): ${processedHtml.substring(0, 100)}...`);
+    
+    // Отправляем сообщение в Telegram
+    const result = await telegramService.sendRawHtmlToTelegram(processedHtml);
+    
+    if (!result.success) {
+      console.log(`[Test API] Ошибка при отправке в Telegram: ${result.error}`);
+      return res.json({
+        success: false,
+        error: result.error || 'Ошибка при отправке HTML в Telegram'
+      });
+    }
+    
+    console.log(`[Test API] Сообщение успешно отправлено в Telegram, ID: ${result.messageId}`);
+    
+    return res.json({
+      success: true,
+      messageId: result.messageId,
+      postUrl: result.messageUrl,
+      originalHtml: html,
+      processedHtml: processedHtml
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при отправке HTML в Telegram:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
  * Специальный маршрут для тестирования функции агрессивного исправления HTML тегов
  */
 router.post('/fix-html', (req: Request, res: Response) => {

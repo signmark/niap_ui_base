@@ -1,83 +1,147 @@
 /**
- * Типы для социальных платформ и API интеграций
+ * Общие типы для всего приложения
+ * 
+ * Этот файл содержит типы данных, используемые в приложении
+ * как на стороне сервера, так и на стороне клиента.
  */
 
-// Список поддерживаемых социальных платформ
-export type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk' | 'twitter' | 'youtube';
+// Типы социальных платформ
+export type SocialPlatform = 
+  | 'telegram' 
+  | 'instagram' 
+  | 'facebook' 
+  | 'vk' 
+  | 'youtube' 
+  | 'dzen'
+  | 'pinterest'
+  | 'site'
+  | 'rss';
 
-// Типы контента для публикаций
-export type ContentType = 'text' | 'image' | 'video' | 'carousel' | 'story';
+// Типы контента
+export type ContentType = 'text' | 'image' | 'video' | 'mixed';
 
-// Статусы публикации
-export type PublicationStatus = 'published' | 'failed' | 'scheduled' | 'cancelled';
+// Статусы контента
+export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'archived';
 
-// Интерфейс для результата публикации в социальные сети
-export interface SocialPublication {
-  // Платформа, в которую был опубликован контент
-  platform: SocialPlatform;
-  
-  // Статус публикации ('published', 'failed', 'scheduled' и т.д.)
-  status: PublicationStatus;
-  
-  // Временная метка публикации (null, если публикация не состоялась)
-  publishedAt: Date | null;
-  
-  // URL опубликованного поста (null, если публикация не состоялась)
-  postUrl?: string | null;
-  
-  // ID поста в социальной сети (null, если публикация не состоялась)
-  postId?: string | null;
-  
-  // Сообщение об ошибке, если публикация не удалась
-  error?: string | null;
-  
-  // Дополнительные данные, специфичные для платформы (опционально)
-  meta?: Record<string, any>;
-}
-
-// Интерфейс для настроек Instagram
-export interface InstagramSettings {
-  token: string;
-  businessAccountId: string;
-  accessToken?: string | null;
-}
-
-// Интерфейс для настроек Telegram
-export interface TelegramSettings {
-  token: string;
-  chatId: string;
-  chatUsername?: string;
-}
-
-// Интерфейс для настроек VK
-export interface VkSettings {
-  token: string;
-  groupId: string;
-}
-
-// Интерфейс для настроек Facebook
-export interface FacebookSettings {
-  token: string;
-  pageId: string;
-}
-
-// Объединенный интерфейс всех настроек социальных сетей
+// Структура настроек социальных сетей
 export interface SocialMediaSettings {
-  instagram?: InstagramSettings;
-  telegram?: TelegramSettings;
-  vk?: VkSettings;
-  facebook?: FacebookSettings;
+  telegram?: {
+    token: string;
+    chatId: string;
+  };
+  instagram?: {
+    token: string;
+    businessAccountId: string;
+  };
+  facebook?: {
+    token: string;
+    pageId: string;
+  };
+  vk?: {
+    token: string;
+    groupId: string;
+  };
+  youtube?: {
+    token: string;
+    channelId: string;
+  };
+  dzen?: {
+    token: string;
+    channelId: string;
+  };
+  pinterest?: {
+    token: string;
+    boardId: string;
+  };
+  site?: {
+    url: string;
+  };
+  rss?: {
+    url: string;
+  };
 }
 
-// Интерфейс для информации о публикации на платформе
-export interface PlatformPublishInfo {
-  status: PublicationStatus;
-  scheduledAt?: string | null;
-  publishedAt?: string | null;
-  postUrl?: string | null;
-  postId?: string | null;
+// Структура публикации в социальных сетях
+export interface SocialPublication {
+  status: 'published' | 'failed' | 'scheduled' | 'pending';
+  publishedAt: Date | null;
+  postUrl: string | null;
   error?: string | null;
+  messageId?: string | number;
+  result?: any;
 }
 
-// Интерфейс для хранения статусов публикаций по платформам
-export type SocialPublications = Record<SocialPlatform, PlatformPublishInfo>;
+// Структура социальных публикаций по платформам
+export interface SocialPublications {
+  [key: string]: SocialPublication;
+}
+
+// Структура контента кампании
+export interface CampaignContent {
+  id: string;
+  userId: string;
+  campaignId: string;
+  title: string | null;
+  content: string;
+  contentType: string;
+  imageUrl: string | null;
+  additionalImages: string[] | null;
+  videoUrl?: string | null;
+  status: string;
+  prompt?: string | null;
+  hashtags: string[];
+  keywords?: string[];
+  links: string[];
+  scheduledAt?: Date | null;
+  publishedAt?: Date | null;
+  createdAt: Date | null;
+  socialPlatforms: string[];
+  socialPublications?: SocialPublications | null;
+  metadata: unknown;
+}
+
+// Структура кампании
+export interface Campaign {
+  id: string;
+  name: string;
+  description: string | null;
+  userId: string;
+  createdAt: Date | null;
+  socialMediaSettings: SocialMediaSettings;
+  trendAnalysisSettings?: unknown;
+}
+
+// Аутентификация пользователя
+export interface AuthResult {
+  token: string;
+  refreshToken: string;
+  userId: string;
+  email: string;
+  role: string;
+}
+
+// Параметры для публикации контента
+export interface PublishContentParams {
+  contentId: string;
+  platform: SocialPlatform;
+  credentials?: {
+    telegram?: {
+      token: string;
+      chatId: string;
+    };
+    instagram?: {
+      token: string;
+      businessAccountId: string;
+    };
+    // Добавить другие платформы по мере необходимости
+  };
+}
+
+// Результат публикации контента
+export interface PublishContentResult {
+  success: boolean;
+  platform: SocialPlatform;
+  messageId?: string | number;
+  postUrl?: string;
+  error?: string;
+}
