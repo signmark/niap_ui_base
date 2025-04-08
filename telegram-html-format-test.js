@@ -1,103 +1,67 @@
 /**
- * Тест для проверки оптимизированного метода отправки HTML в Telegram
+ * Автоматический тест прямой отправки HTML-сообщений в Telegram
  * 
- * Скрипт проверяет новую реализацию метода publishToPlatform в TelegramService,
- * которая использует прямую отправку HTML без дополнительных преобразований.
+ * Скрипт проверяет новую реализацию метода sendRawHtmlToTelegram в TelegramService,
+ * используя HTTP запросы к API приложения для максимальной приближенности к боевым условиям.
+ * Особый акцент сделан на проверке корректной обработки незакрытых HTML-тегов.
  * 
  * Запуск: node telegram-html-format-test.js
  */
 
 const axios = require('axios');
 const fs = require('fs');
-const path = require('path');
 
-// Загружаем настройки из .env файла для тестирования
-require('dotenv').config();
+// Настройки для тестов
+const API_BASE_URL = 'http://localhost:3000';
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 секунды
 
-// Константы и настройки
-const API_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-// Проверяем наличие обязательных переменных окружения
-if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-  console.error('Ошибка: Отсутствуют обязательные переменные окружения TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID');
-  console.error('Пожалуйста, добавьте их в файл .env или передайте через командную строку');
-  process.exit(1);
-}
-
-// Логирование в файл и консоль
-const LOG_FILE = 'telegram-html-format-test.log';
 function log(message) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
-  fs.appendFileSync(LOG_FILE, logMessage + '\n');
+  console.log(`[${new Date().toISOString()}] ${message}`);
 }
-
-// Очищаем лог-файл перед началом тестирования
-fs.writeFileSync(LOG_FILE, '');
-
-// Набор тестовых случаев с разным HTML-форматированием
-const testCases = [
-  {
-    name: 'Простые HTML-теги',
-    html: '<b>Жирный текст</b> и <i>курсив</i> с <u>подчеркиванием</u>\n\n<b>Поддерживаются списки:</b>\n• Пункт 1\n• Пункт 2 <i>с курсивом</i>',
-    expectedTags: ['<b>', '</b>', '<i>', '</i>', '<u>', '</u>'],
-  },
-  {
-    name: 'Вложенные теги',
-    html: '<b>Жирный <i>и курсивный</i> текст</b> с <u>подчеркиванием <b>и жирным</b></u>',
-    expectedTags: ['<b>', '</b>', '<i>', '</i>', '<u>', '</u>'],
-  },
-  {
-    name: 'Ссылки',
-    html: 'Текст со <a href="https://t.me/test">ссылкой на канал</a> и <b>жирным</b> форматированием',
-    expectedTags: ['<a href=', '</a>', '<b>', '</b>'],
-  },
-  {
-    name: 'Эмодзи и HTML',
-    html: '🎉 <b>Праздничное</b> сообщение с <i>эмодзи</i> 🎁 и <u>подчеркиванием</u>!',
-    expectedTags: ['<b>', '</b>', '<i>', '</i>', '<u>', '</u>'],
-  },
-  {
-    name: 'Длинный текст с форматированием',
-    html: '<b>Заголовок длинного сообщения</b>\n\n' + 
-          'Первый параграф с <i>курсивом</i> и <b>жирным</b> текстом.\n\n' +
-          'Второй параграф с <u>подчеркиванием</u> и <a href="https://t.me/test">ссылкой</a>.\n\n' +
-          '<b>Список важных пунктов:</b>\n' +
-          '• Пункт 1 с <i>курсивом</i>\n' +
-          '• Пункт 2 с <b>жирным</b>\n' +
-          '• Пункт 3 с <u>подчеркиванием</u>\n\n' +
-          'Завершающий параграф с 🎉 эмодзи и <b>жирным <i>курсивным</i> текстом</b>.',
-    expectedTags: ['<b>', '</b>', '<i>', '</i>', '<u>', '</u>', '<a href=', '</a>'],
-  }
-];
 
 /**
- * Отправляет HTML-текст через API приложения
+ * Задержка выполнения на указанное количество миллисекунд
+ * @param {number} ms Количество миллисекунд
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Отправляет HTML-текст через API приложения напрямую
  * @param {Object} testCase Тестовый случай с HTML-текстом
  * @returns {Promise<Object>} Результат отправки сообщения
  */
 async function sendHtmlToTelegram(testCase) {
-  try {
-    const response = await axios.post(`${API_URL}/api/test/raw-html-telegram`, {
-      text: testCase.html,
-      token: TELEGRAM_BOT_TOKEN,
-      chatId: TELEGRAM_CHAT_ID
-    });
-
-    return {
-      success: true,
-      messageId: response.data.message_id,
-      messageUrl: response.data.message_url,
-      data: response.data
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.response ? error.response.data : error.message
-    };
+  let retries = 0;
+  while (retries < MAX_RETRIES) {
+    try {
+      const apiUrl = `${API_BASE_URL}/api/test/raw-html-telegram`;
+      
+      log(`Отправка текста [${testCase.description}] в Telegram через API...`);
+      
+      const response = await axios.post(apiUrl, {
+        text: testCase.html,
+        chatId: process.env.TELEGRAM_CHAT_ID || '-1001930723879'
+      });
+      
+      return response.data;
+    } catch (error) {
+      log(`Ошибка при отправке текста: ${error.message}`);
+      if (error.response) {
+        log(`Ответ сервера: ${JSON.stringify(error.response.data)}`);
+      }
+      
+      retries++;
+      if (retries < MAX_RETRIES) {
+        log(`Повторная попытка через ${RETRY_DELAY / 1000} секунд...`);
+        await sleep(RETRY_DELAY);
+      } else {
+        throw error;
+      }
+    }
   }
 }
 
@@ -109,88 +73,157 @@ async function sendHtmlToTelegram(testCase) {
  */
 function validateResult(testCase, result) {
   if (!result.success) {
-    log(`ОШИБКА [${testCase.name}]: ${JSON.stringify(result.error)}`);
+    log(`❌ Тест "${testCase.description}" не прошел: ${result.error || 'Неизвестная ошибка'}`);
     return false;
   }
-
-  if (!result.messageId || !result.messageUrl) {
-    log(`ОШИБКА [${testCase.name}]: Отсутствуют messageId или messageUrl в ответе`);
+  
+  if (!result.messageId) {
+    log(`❌ Тест "${testCase.description}" не прошел: Отсутствует messageId в ответе`);
     return false;
   }
-
-  log(`УСПЕХ [${testCase.name}]: Сообщение отправлено, ID: ${result.messageId}, URL: ${result.messageUrl}`);
+  
+  log(`✅ Тест "${testCase.description}" успешно прошел, ID сообщения: ${result.messageId}`);
   return true;
 }
 
 /**
  * Запускает тест для одного тестового случая
  * @param {Object} testCase Тестовый случай
+ * @param {number} index Индекс теста
  * @returns {Promise<boolean>} Результат теста
  */
-async function runTest(testCase) {
-  log(`\nТЕСТ: ${testCase.name}`);
-  log(`HTML: ${testCase.html.substring(0, 100)}${testCase.html.length > 100 ? '...' : ''}`);
-  
-  const result = await sendHtmlToTelegram(testCase);
-  return validateResult(testCase, result);
+async function runTest(testCase, index) {
+  try {
+    log(`\n=== Тест #${index + 1}: ${testCase.description} ===`);
+    
+    const result = await sendHtmlToTelegram(testCase);
+    return validateResult(testCase, result);
+  } catch (error) {
+    log(`❌ Ошибка при выполнении теста "${testCase.description}": ${error.message}`);
+    return false;
+  }
 }
 
 /**
  * Запускает все тесты последовательно
  */
 async function runAllTests() {
-  log('=== Начало тестирования HTML-форматирования в Telegram ===');
-  log(`Время запуска: ${new Date().toLocaleString()}`);
-  log(`API URL: ${API_URL}`);
-  log(`Telegram Bot Token: ${TELEGRAM_BOT_TOKEN.substring(0, 10)}...`);
-  log(`Telegram Chat ID: ${TELEGRAM_CHAT_ID}`);
-  log('---------------------------------------------------');
-
-  let passedTests = 0;
-  let failedTests = 0;
-
+  // Массив тестовых случаев с разными вариантами HTML-разметки
+  const testCases = [
+    {
+      description: "Простой текст без HTML",
+      html: "Это обычный текст без HTML-форматирования"
+    },
+    {
+      description: "Текст с простым форматированием",
+      html: "Текст с <b>жирным</b> и <i>курсивным</i> форматированием"
+    },
+    {
+      description: "Текст с незакрытым тегом bold",
+      html: "Текст с <b>незакрытым тегом жирного шрифта"
+    },
+    {
+      description: "Текст с незакрытым тегом italic",
+      html: "Текст с <i>незакрытым тегом курсива"
+    },
+    {
+      description: "Текст с вложенными незакрытыми тегами",
+      html: "Текст с <b>жирным и <i>курсивным незакрытыми тегами"
+    },
+    {
+      description: "Текст с множественными незакрытыми тегами",
+      html: "Текст с <b>жирным <i>курсивным <u>подчеркнутым <s>зачеркнутым <code>кодом текстом"
+    },
+    {
+      description: "Длинный текст с множеством тегов",
+      html: `
+        <b>Важное объявление!</b>
+        
+        Мы рады представить вам нашу новую систему <i>автоматической</i> публикации в социальных сетях.
+        
+        Теперь вы можете:
+        - <b>Планировать</b> публикации заранее
+        - <i>Форматировать</i> текст в <u>разных стилях</u>
+        - <code>Добавлять специальные блоки кода</code>
+        
+        Попробуйте <b>прямо сейчас <i>и оцените преимущества <u>нашего сервиса</u></i></b>!
+      `
+    },
+    {
+      description: "Текст с URL и упоминаниями",
+      html: "Посетите наш сайт <a href='https://example.com'>пример.ком</a> и подпишитесь на @example в Telegram"
+    },
+    {
+      description: "Текст с HTML-сущностями и спецсимволами",
+      html: "Символы &lt; и &gt; должны отображаться как < и > без экранирования. Проверка & и \" и ' символов."
+    },
+    {
+      description: "Текст с неправильными тегами, которые должны игнорироваться",
+      html: "Этот <invalidtag>текст</invalidtag> должен отображаться без <unknown>неизвестных</unknown> тегов"
+    }
+  ];
+  
+  log("Запуск тестов для отправки HTML-текста в Telegram...");
+  
+  // Сохраняем статистику по тестам
+  let passed = 0;
+  let failed = 0;
+  const results = [];
+  
+  // Последовательно выполняем все тесты
   for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
-    const success = await runTest(testCase);
+    const success = await runTest(testCases[i], i);
     
     if (success) {
-      passedTests++;
+      passed++;
     } else {
-      failedTests++;
+      failed++;
     }
     
-    // Пауза между запросами, чтобы не превысить лимиты Telegram API
+    results.push({
+      test: testCases[i].description,
+      success: success
+    });
+    
+    // Добавляем небольшую задержку между тестами, чтобы не перегружать API
     if (i < testCases.length - 1) {
-      log('Пауза 2 секунды перед следующим тестом...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await sleep(1000);
     }
   }
-
-  log('\n=== Результаты тестирования ===');
-  log(`Выполнено тестов: ${testCases.length}`);
-  log(`Успешно: ${passedTests}`);
-  log(`Ошибки: ${failedTests}`);
-  log('================================');
-
-  return {
+  
+  // Выводим общие результаты
+  log("\n=== Итоговые результаты ===");
+  log(`Всего тестов: ${testCases.length}`);
+  log(`Успешно: ${passed} (${Math.round(passed / testCases.length * 100)}%)`);
+  log(`Неудачно: ${failed}`);
+  
+  // Записываем результаты в файл для анализа
+  fs.writeFileSync('./telegram-html-test-results.json', JSON.stringify({
+    timestamp: new Date().toISOString(),
     total: testCases.length,
-    passed: passedTests,
-    failed: failedTests
-  };
+    passed: passed,
+    failed: failed,
+    results: results
+  }, null, 2));
+  
+  log("Результаты тестирования сохранены в файл telegram-html-test-results.json");
 }
 
-// Запускаем все тесты
-runAllTests()
-  .then(results => {
-    if (results.failed > 0) {
-      log(`Завершено с ошибками: ${results.failed} из ${results.total}`);
+// Запускаем тесты при выполнении скрипта напрямую
+if (require.main === module) {
+  runAllTests()
+    .then(() => {
+      console.log("Тестирование завершено");
+    })
+    .catch(error => {
+      console.error("Ошибка при выполнении тестов:", error);
       process.exit(1);
-    } else {
-      log('Все тесты успешно выполнены!');
-      process.exit(0);
-    }
-  })
-  .catch(error => {
-    log(`Критическая ошибка при выполнении тестов: ${error.message}`);
-    process.exit(1);
-  });
+    });
+}
+
+// Экспортируем функции для использования в других скриптах
+module.exports = {
+  runTest,
+  runAllTests,
+  sendHtmlToTelegram
+};

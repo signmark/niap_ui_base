@@ -21,14 +21,42 @@ export class TelegramService extends BaseSocialService {
   // Храним username канала, полученный в процессе публикации
   private currentChatUsername?: string;
   
+  // Настройки для отправки сообщений
+  private settings?: {
+    token: string;
+    chatId: string;
+  };
+  
+  /**
+   * Инициализирует настройки для отправки сообщений в Telegram
+   * @param token Токен бота Telegram
+   * @param chatId ID чата Telegram
+   */
+  public initialize(token: string, chatId: string): void {
+    this.settings = { token, chatId };
+    log(`Инициализированы настройки Telegram: chatId=${chatId}`, 'telegram');
+  }
+  
   /**
    * Отправляет HTML-форматированный текст напрямую в Telegram без дополнительной обработки
    * @param text HTML-текст для отправки
-   * @param chatId ID чата Telegram
-   * @param token Токен бота Telegram
+   * @param chatId ID чата Telegram (опционально, если не задан, используется из настроек)
+   * @param token Токен бота Telegram (опционально, если не задан, используется из настроек)
    * @returns Результат отправки сообщения
    */
-  public async sendRawHtmlToTelegram(text: string, chatId: string, token: string): Promise<any> {
+  public async sendRawHtmlToTelegram(text: string): Promise<any>;
+  public async sendRawHtmlToTelegram(text: string, chatId: string): Promise<any>;
+  public async sendRawHtmlToTelegram(text: string, chatId: string, token: string): Promise<any>;
+  public async sendRawHtmlToTelegram(text: string, chatId?: string, token?: string): Promise<any> {
+    // Используем настройки класса, если не заданы явно
+    const actualChatId = chatId || this.settings?.chatId;
+    const actualToken = token || this.settings?.token;
+    
+    // Проверяем наличие настроек
+    if (!actualChatId || !actualToken) {
+      log('Отсутствуют настройки для отправки сообщения в Telegram (chatId или token)', 'telegram');
+      return { success: false, error: 'Missing settings (chatId or token)' };
+    }
     try {
       if (!text || text.trim() === '') {
         log(`Пустой текст для отправки в Telegram`, 'telegram');
@@ -39,13 +67,13 @@ export class TelegramService extends BaseSocialService {
       log(`Первые 100 символов: ${text.substring(0, Math.min(100, text.length))}...`, 'telegram');
       
       // Форматируем chatId, если нужно
-      let formattedChatId = chatId;
-      if (!chatId.startsWith('-100') && !isNaN(Number(chatId)) && !chatId.startsWith('@')) {
-        formattedChatId = `-100${chatId}`;
+      let formattedChatId = actualChatId;
+      if (!actualChatId.startsWith('-100') && !isNaN(Number(actualChatId)) && !actualChatId.startsWith('@')) {
+        formattedChatId = `-100${actualChatId}`;
       }
       
       // Отправляем запрос напрямую к API Telegram
-      const url = `https://api.telegram.org/bot${token}/sendMessage`;
+      const url = `https://api.telegram.org/bot${actualToken}/sendMessage`;
       const response = await axios.post(url, {
         chat_id: formattedChatId,
         text: text,
@@ -61,7 +89,7 @@ export class TelegramService extends BaseSocialService {
       
       if (response.status === 200 && response.data && response.data.ok) {
         const messageId = response.data.result.message_id;
-        const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, messageId);
+        const messageUrl = this.formatTelegramUrl(actualChatId, formattedChatId, messageId);
         
         log(`Сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
         log(`URL сообщения: ${messageUrl}`, 'telegram');
