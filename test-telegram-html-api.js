@@ -15,7 +15,7 @@ import { config } from 'dotenv';
 dotenv.config();
 
 // Настройки тестирования
-const BASE_URL = 'http://localhost:3000/api/test';
+const BASE_URL = 'https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/test';
 
 // Токен и ID чата из переменных окружения
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TEST_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
