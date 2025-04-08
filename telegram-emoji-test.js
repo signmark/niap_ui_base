@@ -5,7 +5,7 @@
 
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-import { processHTMLForTelegram } from './shared/telegram-html-processor.js';
+import { processHtmlForTelegram } from './shared/telegram-html-processor.js';
 
 // Загружаем переменные окружения
 dotenv.config();
@@ -27,7 +27,7 @@ function log(message) {
  */
 async function sendTelegramMessage(html) {
   // Обрабатываем HTML для совместимости с Telegram
-  const processedHtml = processHTMLForTelegram(html);
+  const processedHtml = processHtmlForTelegram(html);
   
   try {
     // Отправляем сообщение через Telegram Bot API
