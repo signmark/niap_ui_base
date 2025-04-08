@@ -2,8 +2,13 @@
  * Интеграционный тест для проверки HTML-форматирования при публикации в Telegram через основное API
  * Запустите: node test-integration-telegram-html.js
  */
-const axios = require('axios');
-const fs = require('fs');
+import axios from 'axios';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Настройки для тестирования
 const API_URL = 'http://localhost:3000/api';
