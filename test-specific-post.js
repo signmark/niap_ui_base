@@ -120,6 +120,62 @@ async function publishToTelegram(content, token) {
 }
 
 /**
+ * Отправляет контент с изображением в Telegram
+ */
+async function publishImageToTelegram(content, token, imageUrl) {
+  try {
+    log('Отправка контента с изображением в Telegram...');
+    log(`Используемый URL изображения: ${imageUrl}`);
+    
+    // Создаем копию контента и добавляем изображение
+    const contentWithImage = {
+      ...content,
+      imageUrl: imageUrl
+    };
+    
+    // Проверяем данные для отладки
+    log(`Контент для отправки: ID=${contentWithImage.id}, title=${contentWithImage.title?.substring(0, 30) || 'Без заголовка'}`);
+    log(`Изображение: ${contentWithImage.imageUrl}`);
+    
+    const response = await axios.post(`${BASE_URL}/publish`, {
+      contentId: CONTENT_ID,
+      platforms: ['telegram'],
+      forcePublish: true,
+      telegramSettings: {
+        token: TELEGRAM_BOT_TOKEN,
+        chatId: TELEGRAM_CHAT_ID
+      },
+      // Передаем контент напрямую, чтобы включить изображение
+      content: contentWithImage
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.data && response.data.success) {
+      log('Контент с изображением успешно опубликован в Telegram');
+      
+      if (response.data.results && response.data.results.telegram) {
+        const telegramResult = response.data.results.telegram;
+        log(`Telegram message ID: ${telegramResult.messageId}`);
+        log(`Telegram URL: ${telegramResult.postUrl}`);
+      }
+      
+      return true;
+    } else {
+      throw new Error(`Ошибка при публикации с изображением: ${response.data.error || 'Неизвестная ошибка'}`);
+    }
+  } catch (error) {
+    log(`Ошибка при публикации с изображением в Telegram: ${error.message}`);
+    if (error.response) {
+      log(`Ответ сервера: ${JSON.stringify(error.response.data)}`);
+    }
+    return false;
+  }
+}
+
+/**
  * Прямая отправка HTML-контента в Telegram
  */
 async function sendDirectToTelegram(content) {
@@ -254,6 +310,17 @@ async function main() {
     // Вариант 2: Прямая отправка в Telegram
     log('\n--- Тест 2.2: Прямая отправка в Telegram ---');
     await sendDirectToTelegram(content);
+    
+    // Тест 3: Отправка контента с изображением
+    log('\n--- Тест 3: Отправка контента с изображением через API ---');
+    // Использовать URL изображения из ваших ресурсов
+    const testImageUrl = 'https://i.ibb.co/RT55ybv/1744101904073-307934231.png';
+    await publishImageToTelegram(content, token, testImageUrl);
+    
+    // Тест 4: Отправка с другим изображением
+    log('\n--- Тест 4: Отправка контента с другим изображением ---');
+    const anotherImageUrl = 'https://picsum.photos/800/600?random=1';
+    await publishImageToTelegram(content, token, anotherImageUrl);
   }
   
   log('\n=== Тестирование завершено ===');
