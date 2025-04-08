@@ -8,8 +8,8 @@
  * Запуск: node telegram-html-format-test.js
  */
 
-const axios = require('axios');
-const fs = require('fs');
+import axios from 'axios';
+import fs from 'fs';
 
 // Настройки для тестов
 const API_BASE_URL = 'http://localhost:3000';
@@ -209,20 +209,18 @@ async function runAllTests() {
   log("Результаты тестирования сохранены в файл telegram-html-test-results.json");
 }
 
-// Запускаем тесты при выполнении скрипта напрямую
-if (require.main === module) {
-  runAllTests()
-    .then(() => {
-      console.log("Тестирование завершено");
-    })
-    .catch(error => {
-      console.error("Ошибка при выполнении тестов:", error);
-      process.exit(1);
-    });
-}
+// Запускаем тесты при выполнении скрипта
+runAllTests()
+  .then(() => {
+    console.log("Тестирование завершено");
+  })
+  .catch(error => {
+    console.error("Ошибка при выполнении тестов:", error);
+    process.exit(1);
+  });
 
 // Экспортируем функции для использования в других скриптах
-module.exports = {
+export {
   runTest,
   runAllTests,
   sendHtmlToTelegram
