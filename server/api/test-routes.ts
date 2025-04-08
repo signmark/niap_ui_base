@@ -394,19 +394,17 @@ router.post('/fix-html', (req: Request, res: Response) => {
 });
 
 /**
- * Маршрут для получения списка доступных ID контента
- * который может использоваться для тестирования публикации
+ * Маршрут для получения списка кампаний пользователя
  */
-router.get('/list-content-ids', async (req: Request, res: Response) => {
+router.get('/list-campaigns', async (req: Request, res: Response) => {
   try {
-    console.log(`[Test API] Запрос на получение списка ID контента`);
+    console.log('[Test API] Запрос на получение списка кампаний');
     
-    // Используем DirectusAuthManager для авторизации
+    // Импортируем необходимые модули
     const { directusAuthManager } = await import('../services/directus');
-    const { directusCrud } = await import('../services/directus');
     
-    // Пробуем авторизоваться как администратор
     try {
+      // Получаем данные авторизации
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
@@ -421,20 +419,82 @@ router.get('/list-content-ids', async (req: Request, res: Response) => {
       const authResult = await directusAuthManager.login(email, password);
       console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
       
-      // Получаем последние 20 элементов контента через directusCrud
-      const contentItems = await directusCrud.list('campaign_content', {
-        sort: ['-created_at'], // Используем поле created_at для сортировки по дате создания
-        limit: 20,
-        authToken: authResult.token
+      // Получаем список кампаний через storage
+      const { storage } = await import('../storage');
+      const campaigns = await storage.getCampaigns(authResult.userId);
+      
+      console.log(`[Test API] Получено ${campaigns.length} кампаний`);
+      
+      return res.json({
+        success: true,
+        count: campaigns.length,
+        data: campaigns
       });
+      
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации в Directus: ${authError.message}`);
+      return res.status(401).json({
+        success: false,
+        error: 'Ошибка авторизации в Directus',
+        message: authError.message
+      });
+    }
+  } catch (error: any) {
+    console.error(`[Test API] Ошибка при получении списка кампаний: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при получении списка кампаний',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для получения списка доступных ID контента
+ * который может использоваться для тестирования публикации
+ */
+router.get('/list-content-ids', async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.query;
+    console.log(`[Test API] Запрос на получение списка ID контента для кампании ${campaignId || 'не указана'}`);
+    
+    if (!campaignId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать ID кампании (campaignId) в параметрах запроса'
+      });
+    }
+    
+    // Импортируем необходимые модули
+    const { directusAuthManager } = await import('../services/directus');
+    
+    try {
+      // Получаем данные авторизации
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
+      }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем контент через storage
+      const { storage } = await import('../storage');
+      const contentItems = await storage.getCampaignContent(authResult.userId, campaignId as string);
       
       if (contentItems && contentItems.length > 0) {
         const contentList = contentItems.map((item: any) => ({
           id: item.id,
-          title: item.title,
+          title: item.title || 'Без названия',
           status: item.status,
-          contentType: item.content_type,
-          hasImage: !!item.image_url,
+          contentType: item.contentType,
+          hasImage: !!item.imageUrl,
           contentPreview: item.content ? item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '') : null
         }));
         
@@ -448,7 +508,7 @@ router.get('/list-content-ids', async (req: Request, res: Response) => {
       } else {
         return res.status(404).json({
           success: false,
-          error: 'Элементы контента не найдены'
+          error: `Элементы контента не найдены для кампании ${campaignId}`
         });
       }
     } catch (authError: any) {
