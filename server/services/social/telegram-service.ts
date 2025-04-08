@@ -667,7 +667,7 @@ export class TelegramService extends BaseSocialService {
     
     try {
       // Список поддерживаемых Telegram тегов и их стандартизированные эквиваленты
-      const tagMap = {
+      const tagMap: Record<string, string> = {
         'b': 'b', 'strong': 'b',
         'i': 'i', 'em': 'i',
         'u': 'u', 'ins': 'u',
@@ -697,7 +697,17 @@ export class TelegramService extends BaseSocialService {
       
       // 5. Находим и анализируем все оставшиеся HTML-теги
       const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
-      const tagMatches = [...fixedText.matchAll(tagPattern)];
+      
+      let match: RegExpExecArray | null;
+      const tagMatches: Array<{index: number, fullTag: string, tagName: string}> = [];
+      
+      while ((match = tagPattern.exec(fixedText)) !== null) {
+        tagMatches.push({
+          index: match.index,
+          fullTag: match[0],
+          tagName: match[1].toLowerCase()
+        });
+      }
       
       if (tagMatches.length === 0) {
         // Если тегов нет, просто возвращаем текст
@@ -705,13 +715,13 @@ export class TelegramService extends BaseSocialService {
       }
       
       // 6. Создаем структуру для анализа открытия/закрытия тегов
-      const stack = [];
-      const resultParts = [];
+      const stack: string[] = [];
+      const resultParts: string[] = [];
       let lastIndex = 0;
       
       for (const match of tagMatches) {
-        const fullTag = match[0];
-        const tagName = match[1].toLowerCase();
+        const fullTag = match.fullTag;
+        const tagName = match.tagName;
         const isClosing = fullTag.startsWith('</');
         const position = match.index;
         
