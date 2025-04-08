@@ -459,6 +459,110 @@ testRouter.post('/format-client-html', async (req: Request, res: Response) => {
 });
 
 /**
+ * Тестовый маршрут для тестирования публикации в Instagram через UI
+ * POST /api/test/instagram-ui-test
+ * 
+ * Пример использования:
+ * POST /api/test/instagram-ui-test
+ * Body: {
+ *   "text": "Тестовый пост для Instagram",
+ *   "imageUrl": "https://picsum.photos/800/800",
+ *   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e"
+ * }
+ */
+testRouter.post('/instagram-ui-test', async (req: Request, res: Response) => {
+  try {
+    const { text, imageUrl, campaignId } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!text || !imageUrl || !campaignId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: text, imageUrl и campaignId'
+      });
+    }
+    
+    log(`[Instagram UI Test API] Запрос на публикацию в Instagram через UI`, 'test');
+    log(`[Instagram UI Test API] Текст (начало): ${text?.substring(0, 50)}...`, 'test');
+    log(`[Instagram UI Test API] Campaign ID: ${campaignId}`, 'test');
+    log(`[Instagram UI Test API] Image URL: ${imageUrl?.substring(0, 30)}...`, 'test');
+    
+    // Получаем настройки кампании и токен администратора
+    const adminToken = await storage.getAdminToken();
+    log(`[Instagram UI Test API] Токен администратора: ${adminToken ? 'получен' : 'не получен'}`, 'test');
+    
+    const campaign = await storage.getCampaignById(campaignId);
+    
+    if (!campaign || !campaign.settings) {
+      return res.status(404).json({
+        success: false,
+        error: 'Кампания не найдена или не имеет настроек'
+      });
+    }
+    
+    log(`[Instagram UI Test API] Получены настройки кампании: ${JSON.stringify(campaign.settings)}`, 'test');
+    
+    // Проверяем настройки Instagram
+    if (!campaign.settings.instagram || !campaign.settings.instagram.token || !campaign.settings.instagram.businessAccountId) {
+      return res.status(400).json({
+        success: false,
+        error: 'В настройках кампании отсутствуют настройки Instagram'
+      });
+    }
+    
+    // Создаем уникальный ID для контента
+    const contentId = `instagram-ui-test-${Date.now()}`;
+    
+    // Создаем тестовый контент с обязательными полями
+    const testContent = {
+      id: contentId,
+      userId: 'test-user',
+      campaignId: campaignId,
+      title: 'Instagram UI Test',
+      content: text,
+      contentType: 'image',
+      imageUrl: imageUrl,
+      additionalImages: [],
+      status: 'draft',
+      socialPlatforms: ['instagram'],
+      createdAt: new Date(),
+      publishedAt: null,
+      scheduledAt: null,
+      hashtags: [],
+      links: [],
+      videoUrl: null,
+      prompt: null,
+      keywords: [],
+      metadata: {}
+    };
+    
+    // Используем socialPublishingService для симуляции вызова из UI
+    const result = await socialPublishingService.publishToPlatform(
+      testContent, 
+      'instagram', 
+      campaign.settings
+    );
+    
+    // Возвращаем результат
+    return res.json({
+      success: result.status === 'published',
+      platform: 'instagram',
+      status: result.status,
+      postUrl: result.postUrl || null,
+      error: result.error || null,
+      contentId: contentId,
+      result
+    });
+  } catch (error: any) {
+    log(`[Instagram UI Test API] Ошибка: ${error.message}`, 'test');
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
  * Тестовый маршрут для прямой отправки HTML и эмодзи в Telegram
  * POST /api/test/telegram-emoji-html
  * 
