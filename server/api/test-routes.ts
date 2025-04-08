@@ -10,6 +10,49 @@ import { DatabaseStorage } from '../storage';
 const testRouter = express.Router();
 
 /**
+ * Тестовый маршрут для проверки форматирования текста для Telegram
+ * POST /api/test/format-telegram
+ */
+testRouter.post('/format-telegram', async (req: Request, res: Response) => {
+  try {
+    const { text } = req.body;
+    
+    // Проверяем наличие обязательного параметра
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательный параметр: text'
+      });
+    }
+    
+    console.log(`[Test API] Запрос на форматирование текста для Telegram`);
+    console.log(`[Test API] Исходный текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+    
+    // Используем функцию из сервиса для форматирования текста
+    let formattedText = telegramService.formatTextForTelegram(text);
+    
+    // Применяем агрессивный исправитель тегов для закрытия всех тегов
+    formattedText = telegramService.aggressiveTagFixer(formattedText);
+    
+    console.log(`[Test API] Отформатированный текст: ${formattedText.substring(0, 100)}${formattedText.length > 100 ? '...' : ''}`);
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      originalText: text,
+      formattedText: formattedText,
+      containsHtml: formattedText.includes('<') && formattedText.includes('>')
+    });
+  } catch (error: any) {
+    console.error('Ошибка при форматировании текста для Telegram:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
  * Тестовый маршрут для проверки отправки сообщений в Telegram
  * POST /api/test/telegram-post
  */
@@ -25,17 +68,22 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
       });
     }
     
-    // Формируем тестовый контент
+    // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
     const testContent = {
       id: 'test-id',
       title: 'Тестовый заголовок',
-      text,
-      image_url: imageUrl || '',
-      additional_images: additionalImages || [],
+      content: text, // Используем content вместо text
+      contentType: 'text',
+      imageUrl: imageUrl || '',
+      additionalImages: additionalImages || [],
       status: 'draft',
-      user_id: 'test-user',
-      campaign_id: 'test-campaign',
-      social_platforms: ['telegram'],
+      userId: 'test-user',
+      campaignId: 'test-campaign',
+      socialPlatforms: ['telegram'],
+      createdAt: new Date(),
+      hashtags: [],
+      links: [],
+      metadata: {}
     };
     
     // Отправляем тестовое сообщение в Telegram
@@ -138,27 +186,24 @@ testRouter.post('/fix-html-tags', async (req: Request, res: Response) => {
     
     // Используем функцию из сервиса для исправления тегов
     // Создаем временный экземпляр TelegramService для доступа к приватным методам
-    const tempTelegramService = telegramService as any;
+    const tempTelegramService = telegramService;
     
-    // Применяем оба метода исправления тегов для сравнения
+    // Применяем метод исправления тегов
     const fixedWithBasic = tempTelegramService.fixUnclosedTags(text);
-    const fixedWithAggressive = tempTelegramService.aggressiveTagFixer(text);
     
-    // Форматируем текст для Telegram
-    const preparedForTelegram = tempTelegramService.prepareTelegramText(text);
+    // Форматируем текст для Telegram через публичный API метод
+    const formattedText = tempTelegramService.formatTextForTelegram(text);
     
-    // Возвращаем результаты всех трех методов
+    // Возвращаем результаты обработки
     return res.json({
       success: true,
       originalText: text,
       fixedWithBasic,
-      fixedWithAggressive,
-      preparedForTelegram,
+      formattedText,
       comparison: {
         originalLength: text.length,
         basicFixLength: fixedWithBasic.length,
-        aggressiveFixLength: fixedWithAggressive.length,
-        preparedForTelegramLength: preparedForTelegram.length
+        formattedTextLength: formattedText.length
       }
     });
   } catch (error: any) {
