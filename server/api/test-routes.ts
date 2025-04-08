@@ -636,14 +636,16 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
 });
 
 /**
- * Тестовый маршрут для проверки отправки изображений в Instagram
+ * Тестовый маршрут для публикации в Instagram
  * POST /api/test/instagram-post
+ * 
+ * Используется для прямого тестирования публикации в Instagram без авторизации
  */
 testRouter.post('/instagram-post', async (req: Request, res: Response) => {
   try {
     const { text, token, businessAccountId, imageUrl } = req.body;
     
-    // Проверяем наличие обязательных параметров
+    // Проверяем обязательные параметры
     if (!text || !token || !businessAccountId || !imageUrl) {
       return res.status(400).json({
         success: false,
@@ -651,23 +653,22 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       });
     }
     
-    log(`[Test API] Запрос на публикацию в Instagram`, 'test');
-    log(`[Test API] Текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`, 'test');
-    log(`[Test API] Токен: ${token.substring(0, 8)}...`, 'test');
-    log(`[Test API] Business ID: ${businessAccountId}`, 'test');
-    log(`[Test API] URL изображения: ${imageUrl}`, 'test');
+    // Логируем входные данные (без токенов)
+    log(`[Instagram Test API] Запрос на публикацию в Instagram`, 'test');
+    log(`[Instagram Test API] Текст (начало): ${text?.substring(0, 50)}...`, 'test');
+    log(`[Instagram Test API] Business Account ID: ${businessAccountId}`, 'test');
     
-    // Формируем тестовый контент для публикации в Instagram
+    // Создаем тестовый контент с обязательными полями
     const testContent = {
-      id: 'test-id-' + Date.now(),
-      title: 'Тестовый заголовок Instagram',
+      id: 'instagram-test-' + Date.now(),
+      userId: 'test-user',
+      campaignId: 'test-campaign',
+      title: 'Instagram Test',
       content: text,
       contentType: 'image',
       imageUrl: imageUrl,
       additionalImages: [],
       status: 'draft',
-      userId: 'test-user',
-      campaignId: 'test-campaign',
       socialPlatforms: ['instagram'],
       createdAt: new Date(),
       publishedAt: null,
@@ -680,29 +681,37 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       metadata: {}
     };
     
-    // Отправляем тестовый пост в Instagram
-    const result = await instagramService.publishToInstagram(testContent, {
+    // Создаем настройки Instagram
+    const instagramSettings = {
       token,
       accessToken: null,
       businessAccountId
-    });
+    };
     
-    // Логируем результат для отладки
-    log(`[Test API] Результат отправки в Instagram: ${JSON.stringify(result)}`, 'test');
+    // Публикуем с использованием сервиса Instagram
+    log(`[Instagram Test API] Отправка запроса в Instagram API`, 'test');
+    const result = await instagramService.publishToInstagram(testContent, instagramSettings);
     
-    // Возвращаем обработанный результат
+    // Возвращаем результат
     return res.json({
       success: result.status === 'published',
-      postUrl: result.postUrl,
-      platform: result.platform,
+      platform: 'instagram',
       status: result.status,
-      data: result
+      postUrl: result.postUrl || null,
+      error: result.error || null,
+      result
     });
   } catch (error: any) {
-    console.error('Ошибка при отправке изображения в Instagram:', error);
+    // Логируем ошибку
+    log(`[Instagram Test API] Ошибка при публикации: ${error.message}`, 'test');
+    if (error.response) {
+      log(`[Instagram Test API] Ответ API: ${JSON.stringify(error.response.data)}`, 'test');
+    }
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Неизвестная ошибка'
+      error: error.message,
+      details: error.response?.data || null
     });
   }
 });
