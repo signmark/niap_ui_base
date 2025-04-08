@@ -30,67 +30,36 @@ export class TelegramService extends BaseSocialService {
       
       log(`Форматирование текста для Telegram, исходная длина: ${originalLength} символов`, 'social-publishing');
       
-      // Проверка наличия тегов и их сбалансированности
-      const openTagCount = (content.match(/<[a-z]+[^>]*>/gi) || []).length;
-      const closeTagCount = (content.match(/<\/[a-z]+>/gi) || []).length;
+      // Удаление нежелательного текста
+      let cleanedContent = content.replace(/Подсознание наизнанку/g, '');
       
-      if (openTagCount !== closeTagCount) {
-        log(`Внимание: количество открывающих (${openTagCount}) и закрывающих (${closeTagCount}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
-      }
-      
-      // Сначала преобразуем маркдаун в HTML для Telegram с использованием неперекрывающихся паттернов
-      let formattedText = content
-        // Обработка маркдаун-разметки (должна происходить ДО обработки HTML)
-        .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>') // **жирный**
-        .replace(/\*([^*]+)\*/g, '<i>$1</i>') // *курсив*
-        .replace(/__([^_]+)__/g, '<u>$1</u>') // __подчеркнутый__
-        .replace(/~~([^~]+)~~/g, '<s>$1</s>') // ~~зачеркнутый~~
-        .replace(/`([^`]+)`/g, '<code>$1</code>') // `код`
-        
+      // Используем более простой и надежный подход из старой версии
+      let formattedText = cleanedContent
         // Преобразуем блочные элементы в понятный Telegram формат
         .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p>([^]*?)<\/p>/g, '$1\n\n')
-        .replace(/<div>([^]*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6]>([^]*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n')
         
         // Приводим HTML-теги к поддерживаемым в Telegram форматам
         .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
         .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
         .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
-        .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
-        
-        // Улучшенная обработка списков
-        .replace(/<ul>([^]*?)<\/ul>/g, function(match: string, p1: string) {
-            return p1.replace(/<li>(.*?)<\/li>/g, '• $1\n');
-        })
-        .replace(/<ol>([^]*?)<\/ol>/g, function(match: string, p1: string) {
-            let index = 1;
-            return p1.replace(/<li>(.*?)<\/li>/g, function(m: string, li: string) {
-                return (index++) + '. ' + li + '\n';
-            });
-        })
-        .replace(/<li>(.*?)<\/li>/g, '• $1\n')
         
         // Обрабатываем ссылки по формату Telegram
         .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
-      // Обработка вложенных тегов для Telegram не работает корректно, 
-      // поэтому их лучше сохранить в простом виде
+      // Удаляем все оставшиеся неподдерживаемые HTML-теги, но сохраняем их содержимое
+      formattedText = formattedText.replace(/<\/?[^>]+(>|$)/g, '');
       
-      // 3. Удаляем все неподдерживаемые HTML-теги, но сохраняем их содержимое
-      formattedText = formattedText.replace(/<(\/?(?!b|i|u|s|code|pre|a\b)[^>]+)>/gi, '');
-      
-      // Исправляем незакрытые теги
-      formattedText = this.fixUnclosedTags(formattedText);
-      
-      // Удаление невидимых символов и специфического текста, который иногда появляется
+      // Удаление невидимых символов
       formattedText = formattedText
         .replace(/\u200B/g, '') // Zero-width space
         .replace(/\u200C/g, '') // Zero-width non-joiner
         .replace(/\u200D/g, '') // Zero-width joiner
-        .replace(/\uFEFF/g, '') // Zero-width no-break space
-        .replace(/Подсознание наизнанку/g, ''); // Удаляем нежелательный текст
+        .replace(/\uFEFF/g, ''); // Zero-width no-break space
       
       // Проверка на длинные слова
       const longWordsFound = formattedText.match(/[^\s]{100,}/g);
