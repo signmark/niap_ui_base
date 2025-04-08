@@ -270,7 +270,7 @@ export class SocialPublishingService {
         const requestBody = {
           chat_id: formattedChatId,
           media: mediaGroup
-        , parse_mode: "HTML"};
+        };
         
         log(`Отправляем запрос к Telegram API (sendMediaGroup): ${JSON.stringify(requestBody)}`, 'social-publishing');
         
@@ -283,7 +283,7 @@ export class SocialPublishingService {
         
         const photoRequestBody = {
           chat_id: formattedChatId, 
-          photo: images[0], parse_mode: "HTML"13560,
+          photo: images[0],
           caption: truncatedCaption,
           parse_mode: 'HTML'
         };
