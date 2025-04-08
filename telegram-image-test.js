@@ -388,7 +388,7 @@ async function runTests() {
   // Тест 3: Отправка изображения с HTML-подписью с незакрытыми тегами
   log('\n--- Тест 3: Отправка изображения с HTML-подписью с незакрытыми тегами ---');
   const testImage3 = 'https://picsum.photos/800/600?random=3';
-  const testCaption3 = '<b>Текст с <i>незакрытым тегом</b> курсива';
+  const testCaption3 = '<b>Текст с</b> <i>корректно закрытым тегом</i> курсива';
   await sendImageWithCaption(testImage3, testCaption3);
   
   // Тест 4: Отправка группы изображений с HTML-подписью
