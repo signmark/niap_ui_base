@@ -203,7 +203,7 @@ export class SocialPublishingWithImgurService {
         const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
           chat_id: formattedChatId,
           media: mediaGroup
-        }, {
+        , parse_mode: "HTML"}, {
           headers: { 'Content-Type': 'application/json' },
           timeout: 60000,
           validateStatus: () => true
@@ -490,7 +490,7 @@ export class SocialPublishingWithImgurService {
             chat_id: formattedChatId,
             text: processedPlainText,
             disable_web_page_preview: true
-          };
+          , parse_mode: "HTML"};
           
           // Отправляем запрос без HTML форматирования
           const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
@@ -1171,7 +1171,7 @@ export class SocialPublishingWithImgurService {
                   const imageOnlyResponse = await axios.post(`${baseUrl}/sendPhoto`, {
                     chat_id: formattedChatId,
                     photo: imageUrl
-                  }, {
+                  , parse_mode: "HTML"}, {
                     headers: { 'Content-Type': 'application/json' },
                     timeout: 30000,
                     validateStatus: () => true
@@ -1225,7 +1225,7 @@ export class SocialPublishingWithImgurService {
             await axios.post(`${baseUrl}/sendPhoto`, {
               chat_id: formattedChatId,
               photo: processedContent.imageUrl
-            }, {
+            , parse_mode: "HTML"}, {
               validateStatus: () => true,
               timeout: 30000
             });
@@ -1323,7 +1323,7 @@ export class SocialPublishingWithImgurService {
                 const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
                   chat_id: formattedChatId,
                   media: mediaGroup
-                }, {
+                , parse_mode: "HTML"}, {
                   headers: { 'Content-Type': 'application/json' },
                   timeout: 30000
                 });

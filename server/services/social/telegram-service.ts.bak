@@ -788,7 +788,7 @@ export class TelegramService extends BaseSocialService {
             text: plainText.length > 4096 ? plainText.substring(0, 4093) + '...' : plainText,
             protect_content: false,
             disable_notification: false
-          , parse_mode: "HTML"};
+          };
           
           // Отправляем повторный запрос без HTML
           const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
@@ -846,7 +846,7 @@ export class TelegramService extends BaseSocialService {
           const requestBody: any = {
             chat_id: chatId,
             photo: images[0]
-          , parse_mode: "HTML"};
+          };
           
           // Если есть текст подписи, добавляем его и форматируем
           if (caption && caption.trim() !== '') {
@@ -1604,7 +1604,7 @@ export class TelegramService extends BaseSocialService {
                   const imageOnlyResponse = await axios.post(`${baseUrl}/sendPhoto`, {
                     chat_id: formattedChatId,
                     photo: imageUrl
-                  , parse_mode: "HTML"}, {
+                  }, {
                     headers: { 'Content-Type': 'application/json' },
                     timeout: 30000,
                     validateStatus: () => true
@@ -1658,7 +1658,7 @@ export class TelegramService extends BaseSocialService {
             await axios.post(`${baseUrl}/sendPhoto`, {
               chat_id: formattedChatId,
               photo: processedContent.imageUrl
-            , parse_mode: "HTML"}, {
+            }, {
               validateStatus: () => true,
               timeout: 30000
             });
@@ -1762,7 +1762,7 @@ export class TelegramService extends BaseSocialService {
                 const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
                   chat_id: formattedChatId,
                   media: mediaItems
-                , parse_mode: "HTML"}, {
+                }, {
                   headers: { 'Content-Type': 'application/json' },
                   timeout: 60000, // Увеличенный таймаут для группы изображений
                   validateStatus: () => true

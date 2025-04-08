@@ -49,66 +49,35 @@ async function sendToTelegram(text, parse_mode) {
     // Выполняем запрос
     const response = await axios.post(
       `https://api.telegram.org/bot${token}/sendMessage`, 
-      requestBody,
-      { headers: { 'Content-Type': 'application/json' } }
+      requestBody
     );
     
+    console.log('Ответ от Telegram API:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Ошибка при отправке:', error.message);
+    console.error('Ошибка при отправке в Telegram:', error.message);
     if (error.response) {
-      console.error('Данные ошибки:', error.response.data);
+      console.error('Данные ответа:', error.response.data);
     }
     return { ok: false, error: error.message };
   }
 }
 
 /**
- * Запускает все тесты
+ * Выполняет все тестовые случаи
  */
 async function runTests() {
-  console.log('=== Тестирование parse_mode для Telegram API ===\n');
+  console.log('=== Тест отправки сообщений в Telegram с разными настройками parse_mode ===\n');
   
-  for (let i = 0; i < testCases.length; i++) {
-    const test = testCases[i];
-    console.log(`\n[Тест ${i+1}] ${test.name}`);
-    
-    const result = await sendToTelegram(test.text, test.parse_mode);
-    
-    if (result.ok) {
-      console.log('✅ Сообщение успешно отправлено');
-      console.log('Message ID:', result.result.message_id);
-      
-      // Получаем информацию о чате для URL
-      try {
-        const chatInfo = await axios.post(
-          `https://api.telegram.org/bot${token}/getChat`,
-          { chat_id: chatId },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
-        
-        if (chatInfo.data.ok) {
-          let messageUrl;
-          if (chatInfo.data.result.username) {
-            messageUrl = `https://t.me/${chatInfo.data.result.username}/${result.result.message_id}`;
-          } else {
-            const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
-            messageUrl = `https://t.me/c/${formattedChatId}/${result.result.message_id}`;
-          }
-          console.log('URL сообщения:', messageUrl);
-        }
-      } catch (error) {
-        console.log('Не удалось получить URL сообщения');
-      }
-    } else {
-      console.log('❌ Ошибка при отправке:', result.error || result.description);
-    }
+  for (const testCase of testCases) {
+    console.log(`\n----- Тест: ${testCase.name} -----`);
+    await sendToTelegram(testCase.text, testCase.parse_mode);
+    // Ждем 2 секунды между отправками
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
   
-  console.log('\n=== Тестирование завершено ===');
+  console.log('\nТестирование завершено!');
 }
 
-// Запускаем тесты
-runTests().catch(error => {
-  console.error('Ошибка при выполнении тестов:', error);
-});
+// Запуск тестов
+runTests().catch(console.error);
