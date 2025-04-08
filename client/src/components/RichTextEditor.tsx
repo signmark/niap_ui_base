@@ -58,9 +58,24 @@ export default function RichTextEditor({
   const [selectedColor, setSelectedColor] = useState('#000000')
   const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false)
 
+  // Создаем кастомное расширение для обработки текста без добавления параграфов
+  // Используем только элементы, совместимые с форматированием Telegram
+  const CustomDocument = Document.extend({
+    content: 'inline*',
+  })
+
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      // Используем только базовые расширения, совместимые с Telegram
+      // Не включаем StarterKit, т.к. он добавляет параграфы и другие блочные элементы
+      CustomDocument,
+      Text,
+      Bold,
+      Italic,
+      Strike,
+      Code,
+      Underline,
+      HardBreak,
       Link.configure({
         openOnClick: false,
         linkOnPaste: true,
@@ -68,17 +83,28 @@ export default function RichTextEditor({
       Image,
       TextStyle,
       Color,
-      Underline,
       Placeholder.configure({
         placeholder,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
       }),
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      // Форматирует HTML специально для Telegram
+      let html = editor.getHTML();
+      
+      // Очистка HTML для Telegram:
+      html = html
+        // Удаляем div-обертки, которые могут появиться
+        .replace(/<div>(.*?)<\/div>/g, '$1')
+        // Добавляем переносы строк для лучшей читаемости в Telegram
+        .replace(/<br\s*\/?>/g, '\n')
+        // Очищаем любые теги параграфов
+        .replace(/<\/?p>/g, '')
+        // Преобразуем многочисленные пробелы в один
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      onChange(html);
     },
   })
 
@@ -168,152 +194,8 @@ export default function RichTextEditor({
         
           <div className="mx-1 h-full w-px bg-border" />
 
-          <ToggleGroup type="single" variant="outline" className="flex flex-wrap gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="left" 
-                  size="sm"
-                  aria-label="По левому краю" 
-                  onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                  data-state={editor.isActive({ textAlign: 'left' }) ? 'on' : 'off'}
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>По левому краю</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="center" 
-                  size="sm"
-                  aria-label="По центру" 
-                  onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                  data-state={editor.isActive({ textAlign: 'center' }) ? 'on' : 'off'}
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>По центру</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="right" 
-                  size="sm"
-                  aria-label="По правому краю" 
-                  onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                  data-state={editor.isActive({ textAlign: 'right' }) ? 'on' : 'off'}
-                >
-                  <AlignRight className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>По правому краю</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="justify" 
-                  size="sm"
-                  aria-label="По ширине" 
-                  onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-                  data-state={editor.isActive({ textAlign: 'justify' }) ? 'on' : 'off'}
-                >
-                  <AlignJustify className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>По ширине</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-
-          <div className="mx-1 h-full w-px bg-border" />
-
-          <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h1" 
-                  size="sm"
-                  aria-label="Заголовок 1" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                  data-state={editor.isActive('heading', { level: 1 }) ? 'on' : 'off'}
-                >
-                  <Heading1 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 1</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h2" 
-                  size="sm"
-                  aria-label="Заголовок 2" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  data-state={editor.isActive('heading', { level: 2 }) ? 'on' : 'off'}
-                >
-                  <Heading2 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 2</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h3" 
-                  size="sm"
-                  aria-label="Заголовок 3" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                  data-state={editor.isActive('heading', { level: 3 }) ? 'on' : 'off'}
-                >
-                  <Heading3 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 3</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-        
-          <div className="mx-1 h-full w-px bg-border" />
-
-          <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="bulletList" 
-                  size="sm"
-                  aria-label="Маркированный список" 
-                  onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  data-state={editor.isActive('bulletList') ? 'on' : 'off'}
-                >
-                  <List className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Маркированный список</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="orderedList" 
-                  size="sm"
-                  aria-label="Нумерованный список" 
-                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  data-state={editor.isActive('orderedList') ? 'on' : 'off'}
-                >
-                  <ListOrdered className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Нумерованный список</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-
-          <div className="mx-1 h-full w-px bg-border" />
+          {/* Удалены элементы управления выравниванием текста, заголовками и списками,
+              так как они не поддерживаются в Telegram */}
 
           {/* Link Button */}
           <Popover open={isLinkPopoverOpen} onOpenChange={setIsLinkPopoverOpen}>
