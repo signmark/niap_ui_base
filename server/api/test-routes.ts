@@ -423,7 +423,7 @@ router.get('/list-content-ids', async (req: Request, res: Response) => {
       
       // Получаем последние 20 элементов контента через directusCrud
       const contentItems = await directusCrud.list('campaign_content', {
-        sort: ['-date_created'], // Directus использует date_created как стандартное поле даты создания
+        sort: ['-created_at'], // Используем поле created_at для сортировки по дате создания
         limit: 20,
         authToken: authResult.token
       });
