@@ -34,6 +34,142 @@ import {
   Wand2
 } from 'lucide-react'
 
+/**
+ * Преобразует HTML-контент в совместимый с Telegram формат
+ * Telegram поддерживает только ограниченный набор тегов: <b>, <i>, <u>, <s>, <a>, <code>, <pre>
+ * Эта функция обеспечивает правильную обработку списков, заголовков и других HTML-элементов
+ * 
+ * @param {string} html HTML-текст для обработки
+ * @returns {string} Обработанный HTML-текст, совместимый с Telegram
+ */
+function processLists(html: string): string {
+  if (!html) return '';
+  
+  // Предварительная обработка - удаление нестандартных тегов
+  let processedHtml = html;
+  
+  // Сначала заменяем заголовки на жирный текст 
+  processedHtml = processedHtml
+    .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+    // Удаляем div, section и другие блочные элементы
+    .replace(/<(div|section|article|header|footer|nav|aside)[^>]*>/g, '')
+    .replace(/<\/(div|section|article|header|footer|nav|aside)>/g, '\n');
+  
+  // Перед началом обработки структурированных списков - сначала обрабатываем весь сложный HTML внутри элементов списка
+  processedHtml = processedHtml.replace(/<li>(.*?)<\/li>/gs, (match, content) => {
+    // Вложенные теги внутри <li> обрабатываем отдельно
+    let processedContent = content
+      // Обработка параграфов внутри <li>
+      .replace(/<p>(.*?)<\/p>/g, '$1')
+      // Преобразование <em> в <i>
+      .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+      // Преобразование <strong> в <b>
+      .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+      // Удаление других ненужных тегов
+      .replace(/<\/?span[^>]*>/g, '')
+      // Удаляем лишние пробелы
+      .trim();
+      
+    return `<li>${processedContent}</li>`;
+  });
+  
+  // Полная обработка вложенных списков - мы обрабатываем их рекурсивно
+  // Сначала вложенные (дочерние) списки, затем родительские
+  
+  // Обрабатываем вложенные списки с помощью дополнительных отступов
+  // Обрабатываем неупорядоченные списки внутри элементов списка
+  processedHtml = processedHtml.replace(/<li>.*?<ul>(.*?)<\/ul>.*?<\/li>/gs, (match, nestedListContent) => {
+    const nestedItems = nestedListContent.match(/<li>(.*?)<\/li>/gs);
+    if (!nestedItems) return match;
+    
+    let formattedNestedList = '';
+    nestedItems.forEach(item => {
+      const content = item.replace(/<li>(.*?)<\/li>/, '$1').trim();
+      formattedNestedList += `\n          • ${content}`;
+    });
+    
+    // Заменяем вложенный список на обработанный текст с маркерами
+    return match.replace(/<ul>.*?<\/ul>/s, formattedNestedList);
+  });
+  
+  // Обрабатываем вложенные нумерованные списки
+  processedHtml = processedHtml.replace(/<li>.*?<ol>(.*?)<\/ol>.*?<\/li>/gs, (match, nestedListContent) => {
+    const nestedItems = nestedListContent.match(/<li>(.*?)<\/li>/gs);
+    if (!nestedItems) return match;
+    
+    let formattedNestedList = '';
+    nestedItems.forEach((item, index) => {
+      const content = item.replace(/<li>(.*?)<\/li>/, '$1').trim();
+      formattedNestedList += `\n          ${index + 1}. ${content}`;
+    });
+    
+    // Заменяем вложенный список на обработанный текст с нумерацией
+    return match.replace(/<ol>.*?<\/ol>/s, formattedNestedList);
+  });
+  
+  // Теперь обрабатываем корневые списки
+  
+  // Обработка неупорядоченных списков (буллеты)
+  processedHtml = processedHtml.replace(/<ul>(.*?)<\/ul>/gs, (match, listContent) => {
+    // Заменяем каждый <li> на строку с маркером •
+    const formattedList = listContent
+      .replace(/<li>(.*?)<\/li>/gs, (liMatch, liContent) => {
+        // Проверяем, есть ли внутри уже обработанные вложенные списки
+        if (liContent.includes('•') || liContent.includes('1.')) {
+          return `\n      • ${liContent.replace(/^\s+/, '')}`;
+        }
+        return `\n      • ${liContent}`;
+      })
+      .trim() + '\n\n';
+    
+    return formattedList;
+  });
+  
+  // Обработка упорядоченных списков (с цифрами)
+  processedHtml = processedHtml.replace(/<ol>(.*?)<\/ol>/gs, (match, listContent) => {
+    const items = listContent.match(/<li>(.*?)<\/li>/gs);
+    if (!items) return match;
+    
+    let numberedList = '';
+    items.forEach((item, index) => {
+      // Извлекаем содержимое между <li> и </li>
+      const liContent = item.replace(/<li>(.*?)<\/li>/s, '$1');
+      // Проверяем, есть ли внутри уже обработанные вложенные списки
+      if (liContent.includes('•') || liContent.includes('1.')) {
+        numberedList += `\n      ${index + 1}. ${liContent.replace(/^\s+/, '')}`;
+      } else {
+        numberedList += `\n      ${index + 1}. ${liContent}`;
+      }
+    });
+    
+    return numberedList.trim() + '\n\n';
+  });
+  
+  // Удаляем все оставшиеся теги от списков, которые могли не обработаться
+  processedHtml = processedHtml
+    .replace(/<\/?[uo]l>|<\/?li>/g, '')
+    
+    // Преобразуем стандартные форматы текста в Telegram-совместимые
+    .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+    .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+    .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
+    .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+    
+    // Обработка параграфов
+    .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+    
+    // Удаляем все оставшиеся неподдерживаемые теги, но сохраняем их содержимое
+    .replace(/<(?!b|\/b|i|\/i|u|\/u|s|\/s|code|\/code|pre|\/pre|a|\/a)[^>]+>/g, '')
+    
+    // Заменяем множественные переносы строк на не более двух
+    .replace(/\n{3,}/g, '\n\n')
+    
+    // Очищаем пробелы в начале и конце
+    .trim();
+  
+  return processedHtml;
+}
+
 interface RichTextEditorProps {
   content: string
   onChange: (html: string) => void
@@ -92,6 +228,10 @@ export default function RichTextEditor({
     onUpdate: ({ editor }) => {
       // Получаем HTML из редактора
       let html = editor.getHTML();
+      
+      // Обработка списков (не поддерживаются в Telegram)
+      // Сначала обрабатываем вложенные списки и элементы, до обработки родительских элементов
+      html = processLists(html);
       
       // Первичная очистка - удаляем div и другие ненужные обертки
       html = html

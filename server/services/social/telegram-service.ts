@@ -208,58 +208,18 @@ export class TelegramService extends BaseSocialService {
     const originalLength = content.length;
     
     try {
-      // Telegram поддерживает только ограниченный набор HTML-тегов:
-      // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
+      // Используем улучшенный обработчик HTML для Telegram из shared/telegram-html-processor.js
+      // Импортируем модуль и используем функцию processHTMLForTelegram, которая обеспечивает:
+      // - Правильную обработку вложенных списков
+      // - Конвертацию заголовков в жирный текст
+      // - Сохранение отступов и структуры списков
+      // - Обработку сложных случаев с вложенными разнотипными списками
+      const { processHTMLForTelegram } = require('../../../shared/telegram-html-processor');
       
-      log(`Форматирование текста для Telegram, исходная длина: ${originalLength} символов`, 'social-publishing');
+      log(`Форматирование текста для Telegram с использованием улучшенного процессора, исходная длина: ${originalLength} символов`, 'social-publishing');
       
-      // Используем исходный контент HTML
-      let cleanedContent = content;
-      
-      // Сразу начинаем обработку HTML
-      let formattedText = cleanedContent;
-        
-      // Обработка многострочных блочных элементов
-      formattedText = formattedText
-        // Преобразуем разрывы строк
-        .replace(/<br\s*\/?>/gi, '\n')
-        // Двойной проход с использованием выражений для поддержки многострочных тегов
-        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
-        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
-        .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
-        
-        // Преобразуем все остальные блочные элементы, которые не поддерживаются Telegram
-        .replace(/<(?:article|section|aside|header|footer|nav|main)[^>]*>([\s\S]*?)<\/(?:article|section|aside|header|footer|nav|main)>/gi, '$1\n')
-        
-        // Обработка списков
-        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
-        .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n')
-        
-        // Обработка таблиц
-        .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, '$1\n')
-        .replace(/<(?:table|thead|tbody|tfoot)[^>]*>([\s\S]*?)<\/(?:table|thead|tbody|tfoot)>/gi, '$1\n\n')
-        
-        // Приводим HTML-теги к поддерживаемым в Telegram форматам
-        .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
-        .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
-        .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
-        .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
-        .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
-        .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
-        .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
-        .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
-        .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>')
-        .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '<code>$1</code>')
-        .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '<pre>$1</pre>')
-        
-        // Обрабатываем ссылки по формату Telegram
-        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, '<a href="$1">$2</a>');
-      
-      // Убираем лишние переносы строк (более 2 подряд)
-      formattedText = formattedText.replace(/\n{3,}/g, '\n\n');
-      
-      // Сохраняем поддерживаемые HTML-теги и удаляем только неподдерживаемые
-      formattedText = formattedText.replace(/<(?!\/?(?:b|i|u|s|code|pre|a\b)[^>]*>)[^>]+>/gi, '');
+      // Используем улучшенную функцию обработки HTML
+      let formattedText = processHTMLForTelegram(content);
       
       // Удаление невидимых символов (сохраняем для совместимости)
       formattedText = formattedText
@@ -289,11 +249,70 @@ export class TelegramService extends BaseSocialService {
       
     } catch (error) {
       log(`Ошибка при форматировании текста для Telegram: ${error}`, 'social-publishing');
-      // В случае ошибки возвращаем обычный текст без форматирования
-      if (content.length > 4096) {
-        return content.substring(0, 4093) + '...';
+      // В случае ошибки пробуем использовать старый метод форматирования
+      try {
+        // Используем исходный контент HTML
+        let cleanedContent = content;
+        
+        // Сразу начинаем обработку HTML
+        let formattedText = cleanedContent;
+          
+        // Обработка многострочных блочных элементов
+        formattedText = formattedText
+          // Преобразуем разрывы строк
+          .replace(/<br\s*\/?>/gi, '\n')
+          // Двойной проход с использованием выражений для поддержки многострочных тегов
+          .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+          .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+          .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
+          
+          // Преобразуем все остальные блочные элементы
+          .replace(/<(?:article|section|aside|header|footer|nav|main)[^>]*>([\s\S]*?)<\/(?:article|section|aside|header|footer|nav|main)>/gi, '$1\n')
+          
+          // Обработка списков
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+          .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n')
+          
+          // Обработка таблиц
+          .replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, '$1\n')
+          .replace(/<(?:table|thead|tbody|tfoot)[^>]*>([\s\S]*?)<\/(?:table|thead|tbody|tfoot)>/gi, '$1\n\n')
+          
+          // Приводим HTML-теги к поддерживаемым в Telegram форматам
+          .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
+          .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
+          .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
+          .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
+          .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
+          .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
+          .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
+          .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
+          .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>')
+          .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '<code>$1</code>')
+          .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '<pre>$1</pre>')
+          
+          // Обрабатываем ссылки по формату Telegram
+          .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, '<a href="$1">$2</a>');
+        
+        // Убираем лишние переносы строк (более 2 подряд)
+        formattedText = formattedText.replace(/\n{3,}/g, '\n\n');
+        
+        // Сохраняем поддерживаемые HTML-теги и удаляем только неподдерживаемые
+        formattedText = formattedText.replace(/<(?!\/?(?:b|i|u|s|code|pre|a\b)[^>]*>)[^>]+>/gi, '');
+        
+        // Обрезаем текст до 4096 символов (максимальное количество для Telegram)
+        if (formattedText.length > 4096) {
+          formattedText = formattedText.substring(0, 4093) + '...';
+        }
+        
+        return formattedText;
+      } catch (fallbackError) {
+        log(`Ошибка при резервном форматировании текста для Telegram: ${fallbackError}`, 'social-publishing');
+        // В случае всех ошибок возвращаем обычный текст без форматирования
+        if (content.length > 4096) {
+          return content.substring(0, 4093) + '...';
+        }
+        return content;
       }
-      return content;
     }
   }
   
