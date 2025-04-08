@@ -4,6 +4,7 @@
  */
 import express, { Request, Response } from 'express';
 import { telegramService } from '../services/social/telegram-service';
+import { instagramService } from '../services/social/instagram-service';
 import { socialPublishingService } from '../services/social/index';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
@@ -627,6 +628,78 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     log(`[Test API] Исключение при отправке сообщения в Telegram: ${error.message}`, 'test');
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки отправки изображений в Instagram
+ * POST /api/test/instagram-post
+ */
+testRouter.post('/instagram-post', async (req: Request, res: Response) => {
+  try {
+    const { text, token, businessAccountId, imageUrl } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!text || !token || !businessAccountId || !imageUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: text, token, businessAccountId и imageUrl'
+      });
+    }
+    
+    log(`[Test API] Запрос на публикацию в Instagram`, 'test');
+    log(`[Test API] Текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`, 'test');
+    log(`[Test API] Токен: ${token.substring(0, 8)}...`, 'test');
+    log(`[Test API] Business ID: ${businessAccountId}`, 'test');
+    log(`[Test API] URL изображения: ${imageUrl}`, 'test');
+    
+    // Формируем тестовый контент для публикации в Instagram
+    const testContent = {
+      id: 'test-id-' + Date.now(),
+      title: 'Тестовый заголовок Instagram',
+      content: text,
+      contentType: 'image',
+      imageUrl: imageUrl,
+      additionalImages: [],
+      status: 'draft',
+      userId: 'test-user',
+      campaignId: 'test-campaign',
+      socialPlatforms: ['instagram'],
+      createdAt: new Date(),
+      publishedAt: null,
+      scheduledAt: null,
+      hashtags: [],
+      links: [],
+      videoUrl: null,
+      prompt: null,
+      keywords: [],
+      metadata: {}
+    };
+    
+    // Отправляем тестовый пост в Instagram
+    const result = await instagramService.publishToInstagram(testContent, {
+      token,
+      accessToken: null,
+      businessAccountId
+    });
+    
+    // Логируем результат для отладки
+    log(`[Test API] Результат отправки в Instagram: ${JSON.stringify(result)}`, 'test');
+    
+    // Возвращаем обработанный результат
+    return res.json({
+      success: result.status === 'published',
+      postUrl: result.postUrl,
+      platform: result.platform,
+      status: result.status,
+      data: result
+    });
+  } catch (error: any) {
+    console.error('Ошибка при отправке изображения в Instagram:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Неизвестная ошибка'
