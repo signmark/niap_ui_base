@@ -30,11 +30,13 @@ export class TelegramService extends BaseSocialService {
       
       log(`Форматирование текста для Telegram, исходная длина: ${originalLength} символов`, 'social-publishing');
       
-      // Удаление нежелательного текста
-      let cleanedContent = content.replace(/Подсознание наизнанку/g, '');
+      // Используем исходный контент HTML
+      let cleanedContent = content;
       
-      // Используем более простой и надежный подход из старой версии
-      let formattedText = cleanedContent
+      // Сразу начинаем обработку HTML
+      let formattedText = cleanedContent;
+        
+      formattedText = formattedText
         // Преобразуем блочные элементы в понятный Telegram формат
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>(.*?)<\/p>/g, '$1\n')
@@ -51,10 +53,10 @@ export class TelegramService extends BaseSocialService {
         // Обрабатываем ссылки по формату Telegram
         .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
-      // Удаляем все оставшиеся неподдерживаемые HTML-теги, но сохраняем их содержимое
-      formattedText = formattedText.replace(/<\/?[^>]+(>|$)/g, '');
+      // Сохраняем поддерживаемые HTML-теги и удаляем только неподдерживаемые
+      formattedText = formattedText.replace(/<(?!\/?(?:b|i|u|s|code|pre|a\b)[^>]*>)[^>]+>/gi, '');
       
-      // Удаление невидимых символов
+      // Удаление невидимых символов (сохраняем для совместимости)
       formattedText = formattedText
         .replace(/\u200B/g, '') // Zero-width space
         .replace(/\u200C/g, '') // Zero-width non-joiner
