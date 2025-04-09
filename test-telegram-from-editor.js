@@ -1,6 +1,6 @@
 /**
- * Скрипт для проверки отправки полного поста в Telegram напрямую через Telegram Bot API
- * Запуск: node telegram-complete-post-test.js
+ * Тестовый скрипт для проверки отправки HTML из редактора в Telegram
+ * Запустите: node test-telegram-from-editor.js
  */
 
 import axios from 'axios';
@@ -9,8 +9,8 @@ import axios from 'axios';
 const telegramToken = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
 const chatId = '-1002302366310';
 
-// HTML-контент для отправки
-const contentHTML = `<p><em>В ходе предыдущего обсуждения мы разобрали, почему завтрак – это король дня, и как он влияет на нашу энергию, метаболизм и контроль аппетита. 👑 Сегодня пришло время осветить тему перекусов – этих маленьких, но важных спутников нашего дня. 🍭</em></p>
+// Пример HTML из редактора
+const htmlFromEditor = `<p><em>В ходе предыдущего обсуждения мы разобрали, почему завтрак – это король дня, и как он влияет на нашу энергию, метаболизм и контроль аппетита. 👑 Сегодня пришло время осветить тему перекусов – этих маленьких, но важных спутников нашего дня. 🍭</em></p>
 
 <p><strong>Перекусы могут быть как союзниками в деле поддержания здоровья и стройности 💪, так и коварными врагами, незаметно подрывающими наши усилия. 😈</strong> Правильные перекусы помогают избежать резких скачков сахара в крови, обеспечивают стабильный приток энергии и не позволяют голоду взять верх, что часто приводит к переедания на основных приемах пищи. ⏱️ <strong>Но не все перекусы одинаково полезны – есть те, что лучше обходить стороной! ☝️</strong></p>
 
@@ -112,7 +112,7 @@ function fixUnclosedTags(text) {
  * @returns {string} HTML, готовый для отправки в Telegram
  */
 function formatHtmlForTelegram(html) {
-  console.log('Начинаю обработку HTML для Telegram...');
+  console.log('Форматирую HTML для Telegram...');
   
   // 1. Сначала обрабатываем блочные элементы
   let result = html
@@ -145,29 +145,36 @@ function formatHtmlForTelegram(html) {
     .replace(/^\n+/, '')
     .replace(/\n+$/, '');
   
-  console.log('HTML обработан и готов к отправке.');
+  console.log('Форматирование завершено');
   return result;
 }
 
 /**
- * Отправляет форматированный HTML в Telegram
- * @param {string} html HTML-контент
- * @returns {Promise<object>} Результат отправки
+ * Отправляет HTML-сообщение в Telegram
+ * @param {string} html HTML для отправки
+ * @param {string} description Описание отправки
+ * @returns {Promise<void>}
  */
-async function sendToTelegram(html) {
+async function sendToTelegram(html, description) {
   try {
-    console.log('=== Отправка HTML-контента в Telegram ===');
+    console.log(`\n--- ${description} ---`);
     
     const formattedHtml = formatHtmlForTelegram(html);
     
-    console.log('\nОтформатированный HTML (первые 100 символов):');
-    console.log(formattedHtml.substring(0, 100) + '...');
+    console.log('\nИсходный HTML (первые 200 символов):');
+    console.log(html.substring(0, 200) + '...');
+    console.log('\nФорматированный HTML для Telegram (первые 200 символов):');
+    console.log(formattedHtml.substring(0, 200) + '...');
     
     const response = await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
       chat_id: chatId,
       text: formattedHtml,
       parse_mode: 'HTML',
-      disable_web_page_preview: false
+      protect_content: false,
+      disable_notification: false
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 30000,
     });
     
     if (response.data && response.data.ok) {
@@ -178,14 +185,15 @@ async function sendToTelegram(html) {
       try {
         const chatInfo = await axios.post(
           `https://api.telegram.org/bot${telegramToken}/getChat`,
-          { chat_id: chatId }
+          { chat_id: chatId },
+          { headers: { 'Content-Type': 'application/json' } }
         );
         
         if (chatInfo.data.ok) {
           let messageUrl;
           if (chatInfo.data.result.username) {
             messageUrl = `https://t.me/${chatInfo.data.result.username}/${response.data.result.message_id}`;
-            console.log(`Канал: ${chatInfo.data.result.username}`);
+            console.log(`Публичный канал: ${chatInfo.data.result.username}`);
           } else {
             const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
             messageUrl = `https://t.me/c/${formattedChatId}/${response.data.result.message_id}`;
@@ -194,21 +202,30 @@ async function sendToTelegram(html) {
           console.log(`URL сообщения: ${messageUrl}`);
         }
       } catch (error) {
-        console.error('Ошибка при получении URL сообщения:', error.message);
+        console.error('Ошибка при получении URL сообщения:', error);
       }
-      
-      return response.data;
     } else {
       console.error('\n❌ Ошибка при отправке:', response.data);
-      throw new Error(`Ошибка Telegram API: ${JSON.stringify(response.data)}`);
     }
   } catch (error) {
-    console.error('\n❌ Ошибка при отправке:', error.message);
-    throw error;
+    console.error('\n❌ Ошибка при отправке:', error);
+    if (error.response) {
+      console.error('Данные ошибки:', error.response.data);
+    }
   }
 }
 
+/**
+ * Основная функция запуска теста
+ */
+async function runTest() {
+  console.log('=== Тест отправки HTML из редактора в Telegram ===\n');
+  
+  // Отправляем HTML из редактора
+  await sendToTelegram(htmlFromEditor, 'Отправка HTML из редактора');
+  
+  console.log('\n=== Тестирование завершено ===');
+}
+
 // Запускаем тест
-sendToTelegram(contentHTML)
-  .then(() => console.log('\n=== Тест успешно завершен ==='))
-  .catch(error => console.error('\n⚠️ Тест завершен с ошибкой:', error.message));
+runTest().catch(console.error);
