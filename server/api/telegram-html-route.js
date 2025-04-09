@@ -1,112 +1,96 @@
 /**
- * Маршруты для тестирования отправки HTML-контента в Telegram
+ * API-маршрут для форматирования HTML для Telegram
  */
-
-import express from 'express';
-import { telegramService } from '../services/social/telegram-service.js';
-import { log } from '../utils/logger.js';
-
+const express = require('express');
 const router = express.Router();
+const { formatHtmlForTelegram } = require('../utils/telegram-formatter');
 
 /**
- * Тестовый маршрут для отправки HTML-контента в Telegram
- * Позволяет проверить корректность обработки HTML-тегов
+ * Маршрут для форматирования HTML-текста для Telegram
+ * POST /api/telegram-html/format-html
  */
-router.post('/send-html', async (req, res) => {
-  try {
-    const { html, token, chatId } = req.body;
-    
-    if (!html) {
-      // Явно устанавливаем заголовок Content-Type для JSON
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(400).json({
-        success: false,
-        error: 'HTML content is required'
-      });
-    }
-    
-    // Используем предоставленные token и chatId или берем из переменных окружения
-    const botToken = token || process.env.TELEGRAM_BOT_TOKEN;
-    const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID;
-    
-    if (!botToken || !targetChatId) {
-      // Явно устанавливаем заголовок Content-Type для JSON
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(400).json({
-        success: false,
-        error: 'Telegram bot token and chat ID are required'
-      });
-    }
-    
-    log(`Отправка HTML контента в Telegram [${targetChatId}]`, 'telegram-test');
-    
-    // Инициализируем сервис с предоставленными токеном и ID чата
-    telegramService.initialize(botToken, targetChatId);
-    
-    // Отправляем сообщение с HTML-форматированием
-    const result = await telegramService.sendTextMessage(html);
-    
-    // Явно устанавливаем заголовок Content-Type для JSON
-    res.setHeader('Content-Type', 'application/json');
-    
-    return res.status(200).json({
-      success: true,
-      messageId: result.messageId,
-      messageUrl: result.messageUrl,
-      result
-    });
-  } catch (error) {
-    log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'telegram-test');
-    
-    // Явно устанавливаем заголовок Content-Type для JSON
-    res.setHeader('Content-Type', 'application/json');
-    
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки форматирования HTML-контента без отправки
- * Позволяет увидеть как HTML будет преобразован для Telegram
- */
-router.post('/format-html', (req, res) => {
+router.post('/format-html', async (req, res) => {
   try {
     const { html } = req.body;
     
     if (!html) {
       return res.status(400).json({
         success: false,
-        error: 'HTML content is required'
+        error: 'HTML-текст не предоставлен'
       });
     }
     
-    log(`Форматирование HTML для Telegram`, 'telegram-test');
+    const formattedHtml = formatHtmlForTelegram(html);
     
-    // Используем сервис для преобразования HTML-тегов
-    const formattedHtml = telegramService.standardizeTelegramTags(html);
-    
-    // Явно устанавливаем заголовок Content-Type для JSON
-    res.setHeader('Content-Type', 'application/json');
-    
-    return res.status(200).json({
+    return res.json({
       success: true,
-      originalHtml: html,
       formattedHtml
     });
   } catch (error) {
-    log(`Ошибка при форматировании HTML для Telegram: ${error.message}`, 'telegram-test');
-    
-    // Явно устанавливаем заголовок Content-Type для JSON
-    res.setHeader('Content-Type', 'application/json');
-    
+    console.error('Ошибка при форматировании HTML для Telegram:', error);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Ошибка при обработке запроса'
     });
   }
 });
 
-export default router;
+/**
+ * Маршрут для отправки HTML-текста в Telegram
+ * POST /api/telegram-html/send-html
+ */
+router.post('/send-html', async (req, res) => {
+  try {
+    const { html, token, chatId } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'HTML-текст не предоставлен'
+      });
+    }
+    
+    // Используем сервис Telegram для отправки
+    const { telegramService } = require('../services/social/telegram-service');
+    
+    // Инициализация с предоставленными или использование env значений по умолчанию
+    const botToken = token || process.env.TELEGRAM_BOT_TOKEN;
+    const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID;
+    
+    if (!botToken || !targetChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Не указаны токен бота или ID чата'
+      });
+    }
+    
+    telegramService.initialize(botToken, targetChatId);
+    
+    // Форматируем HTML перед отправкой
+    const formattedHtml = formatHtmlForTelegram(html);
+    
+    // Отправка сообщения
+    const result = await telegramService.sendRawHtmlToTelegram(formattedHtml);
+    
+    // Генерируем URL сообщения, если есть messageId
+    let messageUrl = null;
+    if (result.messageId) {
+      messageUrl = telegramService.generateMessageUrl(result.messageId);
+    }
+    
+    return res.json({
+      success: true,
+      messageId: result.messageId,
+      messageUrl,
+      result
+    });
+  } catch (error) {
+    console.error('Ошибка при отправке HTML в Telegram:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Ошибка при отправке сообщения'
+    });
+  }
+});
+
+module.exports = router;

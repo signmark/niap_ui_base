@@ -57,6 +57,9 @@ export default function TestPage() {
               <Button variant="outline" size="sm" onClick={() => setLocation("/test/html-tags")}>
                 Тестировать исправление HTML-тегов
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setLocation("/test/telegram-html")}>
+                Форматировать HTML для Telegram
+              </Button>
             </div>
           </CardContent>
         </Card>
