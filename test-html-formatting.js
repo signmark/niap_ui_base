@@ -1,144 +1,123 @@
 /**
- * Тест для проверки правильного форматирования HTML в Telegram
+ * Скрипт для тестирования форматирования HTML в сообщениях Telegram
+ * Использует новый модуль telegram-publisher.ts
+ * 
  * Запуск: node test-html-formatting.js
  */
 
-const axios = require('axios');
-require('dotenv').config();
+// Импортируем функции для обработки контента из модуля
+import { processContentForTelegram, truncateTextSafely, fixUnclosedTags } 
+  from './server/utils/telegram-content-processor.js';
 
-// Данные для тестирования HTML форматирования
+// Создаем объект для доступа к функциям в том же формате, что и раньше
+const telegramProcessor = {
+  processContentForTelegram,
+  truncateTextSafely,
+  fixUnclosedTags
+};
+
+// Добавляем функцию логирования
+const log = (message) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
+};
+
+// Примеры HTML-контента из редактора
 const testCases = [
   {
-    name: "Базовые теги форматирования",
-    text: "<b>Жирный текст</b> и <i>курсив</i> <u>подчеркнутый</u> <s>зачеркнутый</s>",
-    expectedRendering: true
+    title: 'Простое форматирование',
+    content: `
+    <p>Это обычный текст с <strong>жирным</strong> выделением и <em>курсивом</em>.</p>
+    <p>Также есть <u>подчеркнутый</u> и <s>зачеркнутый</s> текст.</p>
+    `
   },
   {
-    name: "Вложенные теги",
-    text: "<b>Жирный текст с <i>курсивом</i> внутри</b>",
-    expectedRendering: true
+    title: 'Списки и отступы',
+    content: `
+    <p>Пример списка:</p>
+    <ul>
+      <li>Первый пункт</li>
+      <li>Второй пункт с <b>выделением</b></li>
+      <li>Третий пункт</li>
+    </ul>
+    <p>Нумерованный список:</p>
+    <ol>
+      <li>Первый элемент</li>
+      <li>Второй элемент</li>
+    </ol>
+    `
   },
   {
-    name: "Гиперссылки",
-    text: "Посетите <a href='https://example.com'>наш сайт</a> для получения дополнительной информации",
-    expectedRendering: true
+    title: 'Смешанное форматирование',
+    content: `
+    <p>Комбинированное <strong><em>жирное и курсивное</em></strong> выделение.</p>
+    <p>Несколько <span style="font-weight: bold;">способов выделения</span> текста.</p>
+    <div>Это блочный <a href="https://telegram.org">элемент с ссылкой</a>.</div>
+    `
   },
   {
-    name: "Незакрытые теги (должны автоматически закрываться)",
-    text: "<b>Жирный текст <i>курсив <u>подчеркнутый",
-    expectedRendering: true
+    title: 'Текст с неподдерживаемыми тегами',
+    content: `
+    <p>Текст с <span style="color: red;">цветным</span> выделением.</p>
+    <div style="background-color: #f0f0f0; padding: 10px;">
+      <p>Блок со стилями.</p>
+      <p>Дополнительный параграф.</p>
+    </div>
+    <table>
+      <tr><td>Ячейка таблицы</td></tr>
+    </table>
+    `
   },
   {
-    name: "Списки с эмодзи",
-    text: "• 🍎 Яблоки\n• 🍌 Бананы\n• 🍇 Виноград",
-    expectedRendering: true
+    title: 'Длинный текст для проверки обрезки',
+    content: `
+    <p>${'Очень длинный текст. '.repeat(200)}</p>
+    <p>Этот текст не должен попасть в итоговое сообщение из-за обрезки.</p>
+    `
   },
   {
-    name: "Экранирование HTML-символов",
-    text: "Символы < > & должны отображаться корректно",
-    expectedRendering: true
-  },
-  {
-    name: "Фильтр неприемлемого контента",
-    text: "Нормальный текст без ругательств и оскорблений",
-    expectedRendering: true
+    title: 'Незакрытые теги',
+    content: `
+    <p>Текст с <strong>незакрытым жирным выделением.</p>
+    <p>Еще текст с <b>жирным выделением и <i>вложенным курсивом без закрытия тегов.</p>
+    `
   }
 ];
 
-// Функция для отправки текста
-async function sendMessage(text) {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-    console.error("ERROR: Необходимо задать переменные окружения TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID");
-    process.exit(1);
-  }
-
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+/**
+ * Тестирует обработку HTML-контента
+ */
+function testHtmlProcessing() {
+  log('Запуск тестов обработки HTML-контента для Telegram');
   
-  // Вызываем наш API-метод для отправки сообщения через сервис приложения
-  try {
-    const response = await axios.post('http://localhost:3000/api/test/telegram-post', {
-      text: text,
-      token: token,
-      chatId: chatId
-    });
+  testCases.forEach((testCase, index) => {
+    log(`\nТест ${index + 1}: ${testCase.title}`);
     
-    console.log(`✅ Успешная отправка, message_id: ${response.data?.messageId || 'N/A'}`);
-    return {
-      success: true,
-      messageId: response.data?.messageId,
-      postUrl: response.data?.postUrl
-    };
-  } catch (error) {
-    console.error(`❌ Ошибка при отправке: ${error.message}`);
-    if (error.response) {
-      console.error(`Статус ошибки: ${error.response.status}`);
-      console.error(`Данные ошибки: ${JSON.stringify(error.response.data)}`);
+    // Создаем полный HTML с заголовком в виде жирного текста
+    const fullHtml = testCase.title 
+      ? `<b>${testCase.title}</b>\n\n${testCase.content}`
+      : testCase.content;
+    
+    // Обрабатываем HTML
+    const processedHtml = telegramProcessor.processContentForTelegram(fullHtml);
+    
+    // Выводим результат
+    log(`Исходный размер: ${fullHtml.length} символов`);
+    log(`Обработанный размер: ${processedHtml.length} символов`);
+    log(`Результат обработки:\n${processedHtml}`);
+    
+    // Проверяем, были ли исправлены незакрытые теги
+    const hasUnclosedTags = (fullHtml.match(/<[^\/][^>]*>/g) || []).length !== 
+                          (fullHtml.match(/<\/[^>]*>/g) || []).length;
+    const hasProcessedUnclosedTags = (processedHtml.match(/<[^\/][^>]*>/g) || []).length !== 
+                                  (processedHtml.match(/<\/[^>]*>/g) || []).length;
+    
+    if (hasUnclosedTags) {
+      log(`Обнаружены незакрытые теги в исходном HTML: ${hasProcessedUnclosedTags ? 'НЕ ИСПРАВЛЕНЫ!' : 'исправлены'}`);
     }
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-// Функция для исправления нежелательного контента
-function sanitizeText(text) {
-  // Фильтрация нежелательной лексики
-  const unwantedWords = ['дичь', 'пездула', 'умри', 'нахуй'];
-  let sanitized = text;
-  
-  unwantedWords.forEach(word => {
-    // Заменяем на звездочки
-    const stars = '*'.repeat(word.length);
-    sanitized = sanitized.replace(new RegExp(word, 'gi'), stars);
   });
   
-  return sanitized;
+  log('\nТестирование завершено');
 }
 
-// Функция для запуска всех тестов
-async function runTests() {
-  console.log("=== НАЧАЛО ТЕСТИРОВАНИЯ HTML-ФОРМАТИРОВАНИЯ В TELEGRAM ===\n");
-  
-  let successful = 0;
-  let failed = 0;
-  
-  for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
-    console.log(`\n[ТЕСТ ${i+1}] ${testCase.name}`);
-    console.log(`Текст: ${testCase.text}`);
-    
-    // Проверяем и исправляем нежелательный контент
-    const sanitizedText = sanitizeText(testCase.text);
-    if (sanitizedText !== testCase.text) {
-      console.log(`⚠️ Текст был отфильтрован: ${sanitizedText}`);
-    }
-    
-    // Отправляем сообщение
-    const result = await sendMessage(sanitizedText);
-    
-    if (result.success) {
-      console.log(`✅ ТЕСТ ${i+1} ПРОЙДЕН!`);
-      console.log(`Ссылка на сообщение: ${result.postUrl || 'N/A'}`);
-      successful++;
-    } else {
-      console.log(`❌ ТЕСТ ${i+1} ПРОВАЛЕН: ${result.error}`);
-      failed++;
-    }
-    
-    // Пауза между тестами, чтобы избежать ограничений Telegram API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-  }
-  
-  console.log("\n=== РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ ===");
-  console.log(`✅ Успешно: ${successful}`);
-  console.log(`❌ Провалено: ${failed}`);
-  console.log(`Всего тестов: ${testCases.length}`);
-}
-
-// Запуск тестов
-runTests().catch(error => {
-  console.error('Ошибка при выполнении тестов:', error);
-  process.exit(1);
-});
+// Запускаем тесты
+testHtmlProcessing();

@@ -1,310 +1,354 @@
 /**
- * Новый процессор контента для Telegram
- * Оптимизированный для правильного форматирования HTML и работы с изображениями
+ * Утилита для обработки контента перед публикацией в Telegram
+ * Обеспечивает корректное преобразование HTML формата в поддерживаемые Telegram теги
+ * и обрабатывает изображения в соответствии с требованиями платформы
  */
-
-import { log } from './logger.js';
 
 /**
- * Преобразует HTML-контент в формат, совместимый с Telegram
- * @param {string} html Исходный HTML-контент
- * @returns {string} Контент, отформатированный для Telegram
+ * Преобразует HTML контент в формат, поддерживаемый Telegram
+ * @param {string} html - HTML текст для преобразования
+ * @param {number} maxLength - Максимальная длина текста (Telegram ограничение = 4096)
+ * @returns {string} - Отформатированный текст для Telegram
  */
-export function formatHtmlForTelegram(html) {
+function processContentForTelegram(html, maxLength = 4096) {
   if (!html) return '';
   
   try {
-    // Сохраняем исходный HTML для логирования
-    const originalHtml = html;
+    console.log(`Обработка HTML для Telegram: исходный текст длиной ${html.length} символов`);
     
-    // Преобразуем специальные символы
-    let result = html
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&quot;/g, '"')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
+    // Преобразуем маркдаун разметку в HTML
+    let processedText = html
+      // Обработка маркдаун-разметки
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **жирный**
+      .replace(/\*(.*?)\*/g, '<i>$1</i>') // *курсив*
+      .replace(/__(.*?)__/g, '<u>$1</u>') // __подчеркнутый__
+      .replace(/~~(.*?)~~/g, '<s>$1</s>') // ~~зачеркнутый~~
       
-    // Обрабатываем абзацы (p) - заменяем на перенос строки
-    result = result.replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-                   .replace(/<\/?p[^>]*>/gi, '');
+      // Преобразуем блочные элементы в понятный Telegram формат
+      .replace(/<br\s*\/?>/g, '\n')
+      .replace(/<p[^>]*>(.*?)<\/p>/gs, '$1\n\n')
+      .replace(/<div[^>]*>(.*?)<\/div>/gs, '$1\n')
+      .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gs, '<b>$1</b>\n\n')
+      
+      // Приводим HTML-теги к поддерживаемым в Telegram форматам
+      .replace(/<strong[^>]*>(.*?)<\/strong>/gs, '<b>$1</b>')
+      .replace(/<em[^>]*>(.*?)<\/em>/gs, '<i>$1</i>')
+      .replace(/<strike[^>]*>(.*?)<\/strike>/gs, '<s>$1</s>')
+      .replace(/<del[^>]*>(.*?)<\/del>/gs, '<s>$1</s>')
+      .replace(/<ins[^>]*>(.*?)<\/ins>/gs, '<u>$1</u>')
+      
+      // Обработка span с inline-стилями
+      .replace(/<span[^>]*?style\s*=\s*["'][^"']*?font-style\s*:\s*italic[^"']*?["'][^>]*>(.*?)<\/span>/gi, '<i>$1</i>')
+      .replace(/<span[^>]*?style\s*=\s*["'][^"']*?font-weight\s*:\s*(bold|[6-9]00)[^"']*?["'][^>]*>(.*?)<\/span>/gi, '<b>$2</b>')
+      
+      // Улучшенная обработка списков
+      .replace(/<ul[^>]*>([^]*?)<\/ul>/gs, '$1')
+      .replace(/<ol[^>]*>([^]*?)<\/ol>/gs, '$1')
+      .replace(/<li[^>]*>(.*?)<\/li>/gs, '• $1\n')
+      
+      // Обрабатываем ссылки по формату Telegram
+      .replace(/<a\s+href\s*=\s*["'](.*?)["'].*?>(.*?)<\/a>/gs, '<a href="$1">$2</a>');
     
-    // Обрабатываем списки
-    // Нумерованные списки
-    result = result.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, function(match, content) {
-      let listItems = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-      if (!listItems) return content;
+    // Telegram не поддерживает вложенные теги одного типа, исправляем это
+    // Например: <b>жирный <b>вложенный</b> текст</b> -> <b>жирный вложенный текст</b>
+    processedText = processedText
+      .replace(/<(b|i|u|s|strike|code)>(.*?)<\/\1>.*?<\1>(.*?)<\/\1>/gs, '<$1>$2 $3</$1>')
+      .replace(/<(b|i|u|s|strike|code)>(.*?)<\1>(.*?)<\/\1>(.*?)<\/\1>/gs, '<$1>$2$3$4</$1>');
       
-      let formattedList = '';
-      listItems.forEach((item, index) => {
-        const itemContent = item.replace(/<li[^>]*>([\s\S]*?)<\/li>/i, '$1');
-        formattedList += `${index + 1}. ${itemContent}\n`;
-      });
-      
-      return formattedList;
-    });
+    // Удаляем все неподдерживаемые HTML-теги, но сохраняем их содержимое
+    processedText = processedText.replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
     
-    // Ненумерованные списки
-    result = result.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, function(match, content) {
-      let listItems = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-      if (!listItems) return content;
-      
-      let formattedList = '';
-      listItems.forEach(item => {
-        const itemContent = item.replace(/<li[^>]*>([\s\S]*?)<\/li>/i, '$1');
-        formattedList += `• ${itemContent}\n`;
-      });
-      
-      return formattedList;
-    });
+    // Проверяем правильность HTML (закрытые теги)
+    const hasBalancedTags = checkTagsBalance(processedText);
     
-    // Удаляем оставшиеся li теги
-    result = result.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n');
+    if (!hasBalancedTags) {
+      console.log('Внимание: HTML-теги не сбалансированы. Применяем исправление.');
+      // Применяем исправление незакрытых тегов
+      processedText = fixUnclosedTags(processedText);
+    }
     
-    // Обрабатываем форматирование для Telegram
-    result = result
-      // Форматирование текста: жирный, курсив, подчеркнутый, зачеркнутый
-      .replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, '<b>$2</b>')
-      .replace(/<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi, '<i>$2</i>')
-      .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$2</u>')
-      .replace(/<(s|strike|del)[^>]*>([\s\S]*?)<\/\1>/gi, '<s>$2</s>')
-      
-      // Обрабатываем ссылки, сохраняя только href
-      .replace(/<a[^>]*href\s*=\s*["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, '<a href="$1">$2</a>')
-      
-      // Обрабатываем блоки кода
-      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '<code>$1</code>')
-      .replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '<pre>$1</pre>')
-      
-      // Заменяем заголовки на жирный текст
-      .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n')
-      
-      // Заменяем <br> и переносы строк
-      .replace(/<br\s*\/?>/gi, '\n')
-      
-      // Удаляем div и сохраняем их содержимое
-      .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1');
-      
-    // Удаляем все остальные HTML-теги, которые не поддерживаются Telegram
-    // Но сохраняем теги Telegram: b, i, u, s, code, pre, a
-    const telegramTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
-    result = result.replace(/<\/?([a-z][a-z0-9]*)[^>]*>/gi, (match, tagName) => {
-      const lowerTagName = tagName.toLowerCase();
-      if (telegramTags.includes(lowerTagName)) {
-        if (match.startsWith('</')) {
-          return `</${lowerTagName}>`;
-        } else if (lowerTagName === 'a' && match.includes('href')) {
-          // Обрабатываем ссылки отдельно, так как они могут иметь атрибуты
-          const hrefMatch = match.match(/href\s*=\s*["']([^"']*)["']/i);
-          if (hrefMatch) {
-            return `<a href="${hrefMatch[1]}">`;
-          }
-        }
-        return `<${lowerTagName}>`;
-      }
-      return '';
-    });
+    // Если текст слишком длинный, обрезаем его
+    if (processedText.length > maxLength) {
+      processedText = truncateTextSafely(processedText, maxLength);
+    }
     
-    // Исправляем незакрытые теги
-    result = fixUnclosedTags(result);
-    
-    // Исправляем избыточные переносы строк
-    result = result.replace(/\n{3,}/g, '\n\n').trim();
-    
-    log(`Форматирование HTML для Telegram: длина оригинала ${originalHtml.length}, длина результата ${result.length}`, 'telegram');
-    return result;
+    console.log(`Обработка HTML для Telegram завершена: результат ${processedText.length} символов`);
+    return processedText;
   } catch (error) {
-    log(`Ошибка при форматировании HTML для Telegram: ${error.message}`, 'telegram');
-    return html; // В случае ошибки возвращаем исходный текст
+    console.error(`Ошибка при обработке HTML для Telegram: ${error.message}`);
+    // В случае ошибки возвращаем очищенный от HTML тегов текст
+    return html.replace(/<[^>]*>/g, '');
   }
 }
 
 /**
- * Исправляет незакрытые HTML-теги в тексте
- * @param {string} html HTML-текст для исправления
- * @returns {string} Исправленный HTML-текст
+ * Проверяет и исправляет незакрытые HTML теги в тексте
+ * @param {string} html - HTML текст для проверки
+ * @returns {string} - Исправленный HTML текст
  */
-export function fixUnclosedTags(html) {
-  const stack = [];
-  const telegramTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+function fixUnclosedTags(html) {
+  if (!html) return '';
   
-  // Анализируем теги и ищем незакрытые
-  const regex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
-  let match;
-  let result = html;
-  let lastIndex = 0;
+  // Получение всех тегов, поддерживаемых Telegram
+  // Используем для скобочной структуры - для каждого открывающего тега должен быть закрывающий
+  const tagPattern = /<\/?(?:b|strong|i|em|u|s|strike|code|pre|a)(?:\s+[^>]*)?>/g;
   
-  while ((match = regex.exec(html)) !== null) {
-    const fullTag = match[0];
-    const tagName = match[1].toLowerCase();
-    
-    // Проверяем, поддерживается ли тег в Telegram
-    if (!telegramTags.includes(tagName)) continue;
-    
-    // Если закрывающий тег
-    if (fullTag.startsWith('</')) {
-      if (stack.length > 0 && stack[stack.length - 1] === tagName) {
-        // Правильно закрытый тег
-        stack.pop();
-      } else {
-        // Закрывающий тег без открывающего - удаляем его
-        result = result.substring(0, match.index) + result.substring(match.index + fullTag.length);
-        regex.lastIndex -= fullTag.length;
+  // Извлекаем все теги из текста
+  const tags = html.match(tagPattern) || [];
+  
+  // Стек для отслеживания открытых тегов
+  const openTags = [];
+  
+  // Здесь мы отслеживаем все незакрытые теги
+  const unclosedTags = [];
+  
+  // Обход всех найденных тегов
+  for (const tag of tags) {
+    // Определяем, закрывающий это тег или открывающий
+    if (tag.startsWith('</')) {
+      // Это закрывающий тег
+      const tagName = tag.match(/<\/([a-z]+)/i)[1];
+      
+      // Ищем соответствующий открывающий тег в стеке, начиная с конца
+      let found = false;
+      for (let i = openTags.length - 1; i >= 0; i--) {
+        const openTag = openTags[i];
+        const openTagName = openTag.match(/<([a-z]+)/i)[1];
+        
+        if (tagName === openTagName || 
+            (tagName === 'b' && openTagName === 'strong') || 
+            (tagName === 'strong' && openTagName === 'b') ||
+            (tagName === 'i' && openTagName === 'em') || 
+            (tagName === 'em' && openTagName === 'i') ||
+            (tagName === 's' && openTagName === 'strike') || 
+            (tagName === 'strike' && openTagName === 's')) {
+          // Найден соответствующий открывающий тег, удаляем его из стека
+          openTags.splice(i, 1);
+          found = true;
+          break;
+        }
       }
-    } else if (!fullTag.endsWith('/>')) {
-      // Открывающий тег - добавляем в стек
-      stack.push(tagName);
+      
+      // Если закрывающий тег не имеет соответствующего открывающего
+      if (!found) {
+        // Это лишний закрывающий тег, игнорируем его
+      }
+    } else {
+      // Это открывающий тег
+      // Проверяем, не является ли это тегом ссылки без закрывающей части
+      if (tag.includes('href') && !tag.endsWith('/>')) {
+        // Добавляем в стек открытых тегов
+        openTags.push(tag);
+      }
+      // Проверяем, не является ли это другим открывающим тегом
+      else if (/<(b|strong|i|em|u|s|strike|code|pre)(\s|>)/i.test(tag)) {
+        // Добавляем в стек открытых тегов
+        openTags.push(tag);
+      }
     }
-    
-    lastIndex = regex.lastIndex;
   }
   
-  // Закрываем все незакрытые теги
-  if (stack.length > 0) {
-    log(`Обнаружены незакрытые теги: ${stack.join(', ')}`, 'telegram');
+  // Теперь у нас в openTags остались только незакрытые теги
+  // Добавляем их в список незакрытых тегов в обратном порядке
+  for (let i = openTags.length - 1; i >= 0; i--) {
+    const openTag = openTags[i];
+    const tagName = openTag.match(/<([a-z]+)/i)[1];
     
-    // Добавляем закрывающие теги в обратном порядке
-    for (let i = stack.length - 1; i >= 0; i--) {
-      result += `</${stack[i]}>`;
-    }
+    // Добавляем соответствующий закрывающий тег
+    unclosedTags.push(`</${tagName}>`);
+  }
+  
+  // Добавляем все закрывающие теги в конец текста
+  let result = html;
+  if (unclosedTags.length > 0) {
+    result += unclosedTags.join('');
   }
   
   return result;
 }
 
 /**
- * Обрабатывает контент для отправки в Telegram
- * Выполняет форматирование, проверку длины и обрезку контента при необходимости
- * @param {string} content Исходное содержимое
- * @param {number} maxLength Максимальная длина текста (по умолчанию 4093 символа для Telegram)
- * @returns {string} Отформатированный и обрезанный текст
+ * Проверяет наличие баланса открывающих и закрывающих тегов
+ * @param {string} html - HTML текст для проверки
+ * @returns {boolean} - true, если теги сбалансированы, иначе false
  */
-export function processContentForTelegram(content, maxLength = 4093) {
-  if (!content) return '';
+function checkTagsBalance(html) {
+  // Получение всех тегов, поддерживаемых Telegram
+  const tagPattern = /<\/?(?:b|strong|i|em|u|s|strike|code|pre|a)(?:\s+[^>]*)?>/g;
   
-  // Форматируем HTML для Telegram
-  let processedContent = formatHtmlForTelegram(content);
+  // Извлекаем все теги из текста
+  const tags = html.match(tagPattern) || [];
   
-  // Проверяем длину и обрезаем при необходимости
-  if (processedContent.length > maxLength) {
-    log(`Контент превышает максимальную длину ${maxLength}. Исходная длина: ${processedContent.length}, будет обрезан`, 'telegram');
-    
-    // Обрезаем с запасом для добавления многоточия
-    let truncatedContent = processedContent.substring(0, maxLength - 3);
-    
-    // Ищем последний полный абзац или предложение для корректной обрезки
-    const lastBreakIndex = Math.max(
-      truncatedContent.lastIndexOf('. '),
-      truncatedContent.lastIndexOf('! '),
-      truncatedContent.lastIndexOf('? '),
-      truncatedContent.lastIndexOf('.\n'),
-      truncatedContent.lastIndexOf('!\n'),
-      truncatedContent.lastIndexOf('?\n'),
-      truncatedContent.lastIndexOf('\n\n')
-    );
-    
-    // Если нашли подходящее место для разрыва, обрезаем там
-    if (lastBreakIndex > maxLength * 0.8) {
-      truncatedContent = truncatedContent.substring(0, lastBreakIndex + 1);
+  // Стек для отслеживания открытых тегов
+  const openTags = [];
+  
+  // Обход всех найденных тегов
+  for (const tag of tags) {
+    // Определяем, закрывающий это тег или открывающий
+    if (tag.startsWith('</')) {
+      // Это закрывающий тег
+      const tagName = tag.match(/<\/([a-z]+)/i)[1];
+      
+      // Если стек пуст, значит у нас закрывающий тег без соответствующего открывающего
+      if (openTags.length === 0) {
+        return false;
+      }
+      
+      // Проверяем соответствие последнего открытого тега
+      const lastOpenTag = openTags.pop();
+      const lastOpenTagName = lastOpenTag.match(/<([a-z]+)/i)[1];
+      
+      // Проверяем соответствие (учитываем эквивалентные теги)
+      if (tagName !== lastOpenTagName && 
+          !(tagName === 'b' && lastOpenTagName === 'strong') && 
+          !(tagName === 'strong' && lastOpenTagName === 'b') &&
+          !(tagName === 'i' && lastOpenTagName === 'em') && 
+          !(tagName === 'em' && lastOpenTagName === 'i') &&
+          !(tagName === 's' && lastOpenTagName === 'strike') && 
+          !(tagName === 'strike' && lastOpenTagName === 's')) {
+        return false;
+      }
+    } else {
+      // Это открывающий тег
+      // Проверяем, не является ли это тегом ссылки без закрывающей части
+      if (tag.includes('href') && !tag.endsWith('/>')) {
+        // Добавляем в стек открытых тегов
+        openTags.push(tag);
+      }
+      // Проверяем, не является ли это другим открывающим тегом
+      else if (/<(b|strong|i|em|u|s|strike|code|pre)(\s|>)/i.test(tag)) {
+        // Добавляем в стек открытых тегов
+        openTags.push(tag);
+      }
     }
-    
-    // Исправляем незакрытые теги в обрезанном контенте
-    truncatedContent = fixUnclosedTags(truncatedContent);
-    
-    // Добавляем многоточие
-    processedContent = truncatedContent + '...';
-    
-    log(`Контент обрезан до ${processedContent.length} символов`, 'telegram');
   }
   
-  return processedContent;
+  // Если после прохода по всем тегам стек не пуст, значит есть незакрытые теги
+  return openTags.length === 0;
+}
+
+/**
+ * Обрабатывает список дополнительных изображений
+ * @param {Array} additionalImages - Массив URL-адресов дополнительных изображений
+ * @returns {Array} - Обработанный массив URL-адресов изображений
+ */
+function processAdditionalImages(additionalImages) {
+  if (!additionalImages || !Array.isArray(additionalImages)) {
+    return [];
+  }
+  
+  // Фильтруем пустые URL и проверяем формат
+  return additionalImages
+    .filter(url => url && typeof url === 'string' && url.trim() !== '')
+    .map(url => {
+      // Проверяем, является ли URL абсолютным
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      
+      // Относительные URLs должны быть преобразованы в абсолютные
+      // (в контексте этого модуля предполагаем, что они уже абсолютные)
+      return url;
+    });
 }
 
 /**
  * Определяет, нужно ли отправлять изображения отдельно от текста
- * @param {string} content Содержимое сообщения
- * @param {number} threshold Порог длины текста (по умолчанию 1024 символа)
- * @returns {boolean} true, если изображения нужно отправлять отдельно
+ * @param {string} text - Текст для отправки
+ * @param {number} thresholdLength - Пороговая длина текста (1024 для Telegram)
+ * @returns {boolean} - true, если изображения нужно отправлять отдельно
  */
-export function shouldSendImagesBeforeText(content, threshold = 1024) {
-  const formattedContent = formatHtmlForTelegram(content);
-  return formattedContent.length > threshold;
+function shouldSendImagesBeforeText(text, thresholdLength = 1024) {
+  return text.length > thresholdLength;
 }
 
 /**
- * Проверяет наличие и обрабатывает массив дополнительных изображений
- * @param {Array|string|null} additionalImages Массив URL дополнительных изображений или строка JSON
- * @returns {Array<string>} Массив корректных URL изображений
+ * Безопасно обрезает текст, сохраняя целостность предложений и форматирования
+ * @param {string} text - Текст для обрезки
+ * @param {number} maxLength - Максимальная длина
+ * @returns {string} - Обрезанный текст
  */
-export function processAdditionalImages(additionalImages) {
-  if (!additionalImages) return [];
-  
-  let imagesArray = [];
-  
-  // Если это строка, пытаемся распарсить как JSON
-  if (typeof additionalImages === 'string') {
-    try {
-      const trimmedStr = additionalImages.trim();
-      if (trimmedStr.startsWith('[') || trimmedStr.startsWith('{')) {
-        const parsedImages = JSON.parse(additionalImages);
-        imagesArray = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
-      } else {
-        // Это не JSON, а просто строка URL
-        imagesArray = [additionalImages];
-      }
-    } catch (e) {
-      // Не удалось распарсить как JSON
-      log(`Не удалось распарсить additionalImages как JSON: ${e.message}`, 'telegram');
-      if (additionalImages.trim() !== '') {
-        imagesArray = [additionalImages];
-      }
-    }
-  } else if (Array.isArray(additionalImages)) {
-    // Это уже массив
-    imagesArray = additionalImages;
+function truncateTextSafely(text, maxLength) {
+  if (text.length <= maxLength) {
+    return text;
   }
   
-  // Фильтруем невалидные URL
-  const validImages = imagesArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
+  console.log(`Обрезаем текст с ${text.length} до ${maxLength} символов`);
   
-  log(`Обработано дополнительных изображений: ${validImages.length}`, 'telegram');
-  return validImages;
+  // Оставляем немного места для многоточия
+  const targetLength = maxLength - 3;
+  
+  // Находим последний полный предложение в пределах нужной длины
+  let truncated = text.substring(0, targetLength);
+  
+  // Ищем последний разделитель предложения (точка, вопросительный или восклицательный знак)
+  const lastSentenceEnd = Math.max(
+    truncated.lastIndexOf('. '),
+    truncated.lastIndexOf('? '),
+    truncated.lastIndexOf('! ')
+  );
+  
+  // Если найден разделитель предложения, обрезаем по нему
+  if (lastSentenceEnd > targetLength * 0.7) { // Не обрезаем, если точка слишком близко к началу
+    truncated = truncated.substring(0, lastSentenceEnd + 1);
+  }
+  
+  // Проверяем, не оборвана ли HTML-разметка
+  const openTagsCount = (truncated.match(/<[^\/](?:[^>'"]*|['"][^'"]*['"])*>/g) || []).length;
+  const closeTagsCount = (truncated.match(/<\/[^>]*>/g) || []).length;
+  
+  // Если разметка оборвана, применяем более безопасный вариант обрезки
+  if (openTagsCount > closeTagsCount) {
+    // Обрезаем текст без учета HTML-тегов
+    const text = truncated.replace(/<[^>]*>/g, '');
+    if (text.length > targetLength * 0.8) {
+      // Если текст все еще длинный, используем его без тегов
+      truncated = text;
+    } else {
+      // Иначе применяем фиксацию тегов
+      truncated = fixUnclosedTags(truncated);
+    }
+  }
+  
+  // Добавляем многоточие
+  return truncated + '...';
 }
 
 /**
- * Форматирует ID чата Telegram в правильный формат
- * @param {string} chatId ID чата или канала Telegram
- * @returns {string} Форматированный ID чата
+ * Форматирует chat_id в соответствии с требованиями Telegram API
+ * @param {string|number} chatId - ID чата/канала Telegram
+ * @returns {string} - Правильно форматированный chat_id
  */
-export function formatChatId(chatId) {
+function formatChatId(chatId) {
   if (!chatId) return '';
   
-  let formattedChatId = chatId;
+  // Преобразуем в строку и удаляем лишние пробелы
+  let formattedChatId = String(chatId).trim();
   
-  // Обрабатываем различные форматы ID чатов
-  if (chatId.startsWith('@')) {
-    // Имя канала начинается с @, оставляем как есть
-    formattedChatId = chatId;
-  } else if (chatId.startsWith('-100')) {
-    // ID суперчата/канала с префиксом -100, оставляем как есть
-    formattedChatId = chatId;
-  } else if (chatId.startsWith('-')) {
-    // ID группы с префиксом -, конвертируем в формат суперчата
-    formattedChatId = `-100${chatId.replace(/^-/, '')}`;
-  } else if (!isNaN(Number(chatId))) {
-    // Числовой ID, добавляем префикс -100
-    formattedChatId = `-100${chatId}`;
+  // Если это имя пользователя без префикса @, добавляем его
+  if (!formattedChatId.startsWith('@') && 
+      !formattedChatId.match(/^-?\d+$/) && 
+      !formattedChatId.includes('.')) {
+    formattedChatId = `@${formattedChatId}`;
+  }
+  // Если это ID группы или канала без префикса -100, добавляем его
+  else if (!formattedChatId.startsWith('-100') && formattedChatId.startsWith('-')) {
+    formattedChatId = `-100${formattedChatId.replace(/^-/, '')}`;
+  }
+  // Если это числовой ID канала длиной >= 10 цифр, добавляем префикс -100
+  else if (!formattedChatId.startsWith('-') && !isNaN(Number(formattedChatId)) && formattedChatId.length >= 10) {
+    formattedChatId = `-100${formattedChatId}`;
   }
   
-  log(`Форматирование chat ID: исходный "${chatId}" -> форматированный "${formattedChatId}"`, 'telegram');
   return formattedChatId;
 }
 
-export default {
-  formatHtmlForTelegram,
-  fixUnclosedTags,
+export {
   processContentForTelegram,
-  shouldSendImagesBeforeText,
+  fixUnclosedTags,
   processAdditionalImages,
-  formatChatId
+  shouldSendImagesBeforeText,
+  truncateTextSafely,
+  formatChatId,
+  checkTagsBalance
 };

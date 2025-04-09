@@ -1062,35 +1062,51 @@ export class SocialPublishingWithImgurService {
    * @param telegramSettings Настройки Telegram API
    * @returns Результат публикации
    */
+  /**
+   * Публикует контент в Telegram с использованием нового сервиса
+   * Полная переработка с новой логикой форматирования и отправки сообщений
+   */
   async publishToTelegram(
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    // Переменная для хранения ID последнего отправленного сообщения
-    let lastMessageId: string | number | undefined;
-    // Добавляем расширенное логирование для отладки
-    log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram-debug');
-    log(`Telegram настройки: ${JSON.stringify({
-      hasSettings: !!telegramSettings,
-      hasToken: !!telegramSettings?.token,
-      hasChatId: !!telegramSettings?.chatId,
-      token: telegramSettings?.token ? `${telegramSettings.token.substring(0, 6)}...` : 'отсутствует',
-      chatId: telegramSettings?.chatId || 'отсутствует',
-      campaignId: content.campaignId
-    })}`, 'telegram-debug');
-    
-    // Расширенное логирование для отладки
-    log(`publishToTelegram вызван для контента ID: ${content.id}, Title: "${content.title}"`, 'social-publishing');
-    log(`Параметры Telegram: ${JSON.stringify({
-      settingsProvided: !!telegramSettings,
-      tokenProvided: !!telegramSettings?.token,
-      chatIdProvided: !!telegramSettings?.chatId,
-      tokenLength: telegramSettings?.token ? telegramSettings.token.length : 0,
-      chatIdValue: telegramSettings?.chatId || 'не задан'
-    })}`, 'social-publishing');
+    // Импортируем новый сервис для работы с Telegram
+    // @ts-ignore
+    const telegramService = require('./telegram-service-new.js');
     
     // Проверяем наличие настроек кампании
     if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
+      log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании.'
+      };
+    }
+    
+    // Расширенное логирование для отладки
+    log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram');
+    
+    try {
+      // Обработка дополнительных изображений и загрузка на Imgur
+      let processedContent = this.processAdditionalImages(content, 'telegram');
+      processedContent = await this.uploadImagesToImgur(processedContent);
+      
+      // Делегируем всю работу новому сервису
+      const result = await telegramService.publishContent(processedContent, telegramSettings);
+      
+      return result;
+    } catch (error: any) {
+      log(`Ошибка при публикации в Telegram: ${error.message}`, 'telegram');
+      return {
+        platform: 'telegram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации в Telegram: ${error.message}`
+      };
+    }
+  }
       log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
         platform: 'telegram',
