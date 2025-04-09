@@ -28,10 +28,11 @@ export abstract class BaseSocialService {
       if (email && password) {
         log(`Попытка авторизации администратора с учетными данными из env`, 'social-publishing');
         try {
-          const adminSession = await directusAuthManager.loginUserWithCredentials(email, password);
+          // Используем метод login вместо loginUserWithCredentials
+          const adminSession = await directusAuthManager.login(email, password);
           if (adminSession) {
             log(`Авторизация администратора успешна через прямой API запрос`, 'social-publishing');
-            return adminSession.accessToken;
+            return adminSession.token;
           }
         } catch (e) {
           log(`Ошибка авторизации администратора: ${e}`, 'social-publishing');
@@ -40,10 +41,11 @@ export abstract class BaseSocialService {
       
       // 2. Вариант - использовать хранящуюся сессию администратора
       try {
-        const adminSession = directusAuthManager.getUserSession(adminUserId);
-        if (adminSession && adminSession.accessToken) {
+        // Используем метод getSession вместо getUserSession
+        const adminSession = directusAuthManager.getSession(adminUserId);
+        if (adminSession && adminSession.token) {
           log(`Использование существующей авторизации администратора`, 'social-publishing');
-          return adminSession.accessToken;
+          return adminSession.token;
         }
       } catch (e) {
         log(`Не удалось получить существующую сессию администратора: ${e}`, 'social-publishing');
@@ -103,8 +105,10 @@ export abstract class BaseSocialService {
             }
           } catch (error) {
             // Если не удалось распарсить JSON, считаем это одиночным URL и создаем массив с одним элементом
-            if (updatedContent.additionalImages.trim().startsWith('http')) {
-              updatedContent.additionalImages = [updatedContent.additionalImages.trim()];
+            // Обработка строки url
+            const additionalImage = updatedContent.additionalImages as string;
+            if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim().startsWith('http')) {
+              updatedContent.additionalImages = [additionalImage.trim()];
               log(`additionalImages в виде строки URL преобразован в массив с одним элементом для ${platform}`, 'social-publishing');
             } else {
               // Иначе создаем пустой массив
