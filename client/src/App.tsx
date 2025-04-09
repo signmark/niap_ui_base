@@ -26,7 +26,6 @@ import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
 import TelegramTestPage from "@/pages/telegram-test";
-import TelegramHtmlFormatter from "@/pages/TelegramHtmlFormatter";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -58,7 +57,6 @@ function Router() {
       <Route path="/test/imgur" component={() => <Layout><TestImgur /></Layout>} />
       <Route path="/test/html-tags" component={() => <Layout><HtmlTagsTestPage /></Layout>} />
       <Route path="/test/telegram" component={TelegramTestPage} />
-      <Route path="/test/telegram-html" component={() => <Layout><TelegramHtmlFormatter /></Layout>} />
       <Route path="/test/telegram-post">
         {() => {
           window.location.href = '/src/test/telegram-post-test.html';

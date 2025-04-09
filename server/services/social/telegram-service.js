@@ -85,22 +85,11 @@ export class TelegramService {
    */
   async sendTextMessage(text, options = {}) {
     try {
-      // Логируем входные данные для отладки
-      log(`Отправка текстового сообщения в Telegram [${this.chatId}]`, 'telegram');
-      log(`Оригинальный текст (первые 100 символов): ${text.substring(0, 100)}...`, 'telegram');
-      log(`HTML теги в оригинальном тексте: ${(text.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
-      
       // Преобразуем только основные теги (strong -> b, em -> i)
       const processedText = this.standardizeTelegramTags(text);
       
-      // Логируем обработанный текст
-      log(`Обработанный текст (первые 100 символов): ${processedText.substring(0, 100)}...`, 'telegram');
-      log(`HTML теги в обработанном тексте: ${(processedText.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
-      
       // Проверяем длину сообщения
       if (processedText.length > 4096) {
-        log(`Сообщение превышает лимит Telegram (${processedText.length} символов), разбиваем на части`, 'telegram');
-        
         // Разбиваем длинное сообщение на части по 4000 символов
         const parts = [];
         for (let i = 0; i < processedText.length; i += 4000) {
@@ -273,9 +262,6 @@ export class TelegramService {
         parse_mode: 'HTML'
       };
       
-      // Добавляем детальное логирование для отладки
-      log(`Отправка изображения в Telegram с подписью (первые 200 символов): ${formattedCaption.substring(0, 200)}...`, 'telegram');
-      
       const response = await axios.post(url, params);
       
       if (response.data.ok) {
@@ -444,22 +430,6 @@ export class TelegramService {
       // Получаем информацию о чате для формирования URL
       await this.getChatInfo();
       
-      // Логируем тип и содержимое контента для отладки
-      log(`Тип контента.content: ${typeof content.content}`, 'telegram');
-      if (typeof content.content === 'string') {
-        log(`Первые 200 символов контента: ${content.content.substring(0, 200)}...`, 'telegram');
-        
-        // Проверяем наличие HTML тегов
-        const htmlTags = content.content.match(/<.*?>/g);
-        if (htmlTags) {
-          log(`HTML теги в контенте: ${htmlTags.slice(0, 10).join(', ')}`, 'telegram');
-        } else {
-          log(`В контенте не найдено HTML тегов`, 'telegram');
-        }
-      } else {
-        log(`Контент не является строкой: ${JSON.stringify(content.content)}`, 'telegram');
-      }
-      
       // Объединяем заголовок и содержимое
       let fullContent = '';
       if (content.title) {
@@ -470,8 +440,8 @@ export class TelegramService {
         fullContent += content.content;
       }
       
-      // Форматируем HTML-контент для Telegram с поддержкой вложенных списков
-      const formattedContent = formatHtmlForTelegram(fullContent);
+      // Используем контент как есть, без форматирования
+      const formattedContent = fullContent;
       
       // Определяем, есть ли у контента изображения
       const mainImageUrl = content.imageUrl || '';
@@ -645,80 +615,28 @@ export class TelegramService {
     try {
       if (!html) return '';
 
-      // Логируем текст перед заменой
-      log(`Форматирование HTML для Telegram: ${html.substring(0, 100)}...`, 'telegram');
-      log(`HTML теги перед обработкой: ${(html.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
-
+      // Обрабатываем списки, преобразуя их в читаемый текст для Telegram
       let result = html;
       
-      // Используем пошаговый подход для правильной обработки вложенных тегов
-      
-      // Шаг 1: Предварительная обработка вложенных комбинаций тегов
-      // Обрабатываем сложные вложенные комбинации до обработки основных тегов
-      
-      // Обрабатываем <strong><em>...</em></strong> и <em><strong>...</strong></em>
-      result = result
-        .replace(/<strong><em>([\s\S]*?)<\/em><\/strong>/g, '<b><i>$1</i></b>')
-        .replace(/<em><strong>([\s\S]*?)<\/strong><\/em>/g, '<i><b>$1</b></i>');
-      
-      // Шаг 2: Обработка параграфов (<p> тегов)
-      result = result
-        .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n')
-        .replace(/<\/?p[^>]*>/g, ''); // Удаляем любые незакрытые или оставшиеся p теги
-      
-      // Шаг 3: Обработка списков с сохранением форматирования внутри элементов списка
-      // Обрабатываем вложенные списки
-      result = result.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-        // Заменяем каждый li элемент, сохраняя форматирование внутри
+      // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
+      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+        // Заменяем каждый элемент списка на строку с маркером (• или -)
         const formattedList = listContent
-          .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '\n• $1')
-          .replace(/<\/?li[^>]*>/g, '') // Удаляем любые незакрытые li теги
+          .replace(/<li>([\s\S]*?)<\/li>/g, '\n• $1')
+          .replace(/<\/?[^>]+(>|$)/g, '') // Удаляем все оставшиеся HTML-теги внутри элементов списка
           .trim();
         
         return '\n' + formattedList + '\n';
       });
       
-      // Удаляем любые оставшиеся ul/li теги
+      // Заменяем стандартные HTML-теги на Telegram-совместимые
       result = result
-        .replace(/<\/?ul[^>]*>/g, '')
-        .replace(/<\/?li[^>]*>/g, '');
-        
-      // Шаг 4: Замена стандартных HTML-тегов на Telegram-совместимые
-      // Рекурсивно обрабатываем теги, чтобы не потерять вложенные конструкции
-      
-      // Заменяем <strong> на <b>
-      while (result.match(/<strong[^>]*>([\s\S]*?)<\/strong>/)) {
-        result = result.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/g, '<b>$1</b>');
-      }
-      
-      // Заменяем <em> на <i>
-      while (result.match(/<em[^>]*>([\s\S]*?)<\/em>/)) {
-        result = result.replace(/<em[^>]*>([\s\S]*?)<\/em>/g, '<i>$1</i>');
-      }
-      
-      // Шаг 5: Обработка <br> тегов и других специальных элементов
-      result = result
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<hr\s*\/?>/g, '\n---\n');
-        
-      // Логируем промежуточный результат после всех замен
-      log(`Промежуточный результат: ${result.substring(0, 100)}...`, 'telegram');
-      log(`HTML теги после замены: ${(result.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
-      
-      // Шаг 6: Очистка от неподдерживаемых тегов
-      // НЕ перезаписываем теги b/i/u/s/code/pre/a, которые уже присутствуют
-      // Удаляем другие HTML-теги, которые не поддерживаются в Telegram
-      result = result
+        .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
+        .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
+        // Удаляем другие HTML-теги, которые не поддерживаются в Telegram
         .replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
-      
-      // Шаг 7: Удаление лишних пробелов и переносов строк
-      result = result
-        .replace(/\n{3,}/g, '\n\n')    // Не более двух переносов подряд
-        .replace(/^\s+|\s+$/g, '');    // Удаляем начальные и конечные пробелы
-        
-      // Логируем результат после всех преобразований
-      log(`Финальный результат: ${result.substring(0, 100)}...`, 'telegram');
-      log(`HTML теги после всех преобразований: ${(result.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
         
       log(`HTML-теги успешно преобразованы в формат Telegram`, 'telegram');
       

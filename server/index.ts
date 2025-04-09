@@ -12,10 +12,8 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
-// Импортируем тестовые маршруты для Telegram и HTML форматтер
+// Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
-import telegramHtmlRouter from './api/telegram-html-route';
-import telegramHtmlTestRouter from './api/telegram-html-test-route';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -126,14 +124,6 @@ app.use((req, res, next) => {
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
-    // Регистрируем маршруты для тестирования HTML форматирования в Telegram
-    console.log("Registering Telegram HTML formatter routes...");
-    log("Registering Telegram HTML formatter routes...");
-    app.use('/api/telegram-html', telegramHtmlRouter);
-    app.use('/api/telegram-test', telegramHtmlTestRouter);
-    console.log("Telegram HTML formatter routes registered");
-    log("Telegram HTML formatter routes registered successfully");
-    
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes...");
@@ -179,16 +169,10 @@ app.use((req, res, next) => {
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
     
-    // Регистрируем тестовые маршруты для Telegram
-    log("Registering Telegram test routes...");
-    app.use('/api/test', testRouter);
-    log("Telegram test routes registered successfully");
-    
-    // Регистрируем маршруты для работы с HTML в Telegram
-    log("Registering Telegram HTML formatting routes...");
-    app.use('/api/telegram-html', telegramHtmlRouter);
-    app.use('/api/telegram-html-test', telegramHtmlTestRouter);
-    log("Telegram HTML formatting routes registered successfully");
+    // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
+    // log("Registering Telegram test routes...");
+    // app.use('/api/test', testRouter);
+    // log("Telegram test routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");
