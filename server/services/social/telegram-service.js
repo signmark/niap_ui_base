@@ -948,26 +948,26 @@ export class TelegramService {
     try {
       if (!html) return '';
       
-      // ПРОСТОЙ ПОДХОД: Минимально обрабатываем HTML, позволяя Telegram делать большую часть работы
+      // ОЧЕНЬ ПРОСТОЙ ПОДХОД, МИНИМАЛЬНАЯ ОБРАБОТКА
       
-      // Сначала обрабатываем только базовые замены тегов для совместимости с Telegram
+      // Используем точно такую же обработку, что и в тесте, который успешно отправляет
+      // Только самые необходимые замены тегов для совместимости с Telegram
       let result = html
         .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
+        .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
         .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
         .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
         .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
       
-      // Обрабатываем абзацы для улучшения читаемости в Telegram
-      result = result.replace(/<p>([\s\S]*?)<\/p>/g, function(match, content) {
-        if (!content.trim()) return '\n';
-        return content + '\n\n';
-      });
-      
-      // Обрабатываем списки для улучшения читаемости
-      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-        return listContent.replace(/<li>([\s\S]*?)<\/li>/g, '• $1\n');
-      });
+      // Обрабатываем абзацы и списки
+      result = result
+        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+        .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n');
       
       log(`HTML-теги преобразованы в формат Telegram`, 'telegram');
       
