@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { TextEnhancementDialog } from './TextEnhancementDialog'
 import { TelegramPreview } from './TelegramPreview'
+import { cleanHtmlForTelegram } from '@/utils/telegram-html-cleaner'
 import {
   Bold,
   Italic,
@@ -232,49 +233,54 @@ export default function RichTextEditor({
       // Получаем HTML из редактора
       let html = editor.getHTML();
       
-      // Обработка списков (не поддерживаются в Telegram)
-      // Сначала обрабатываем вложенные списки и элементы, до обработки родительских элементов
-      html = processLists(html);
-      
-      // Первичная очистка - удаляем div и другие ненужные обертки
-      html = html
-        // Удаляем div-обертки, которые могут появиться
-        .replace(/<div>(.*?)<\/div>/g, '$1')
-        // Добавляем переносы строк для лучшей читаемости в Telegram
-        .replace(/<br\s*\/?>/g, '\n')
+      if (telegramMode) {
+        // Если включен режим Telegram, используем нашу улучшенную функцию обработки
+        // Она гарантирует, что форматирование будет работать как на сервере
+        html = cleanHtmlForTelegram(html);
+      } else {
+        // Стандартная обработка для других платформ
+        html = processLists(html);
         
-        // Обработка параграфов - каждый параграф превращаем в простой текст с переносом строки
-        .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
-        .replace(/<p>/g, '')
-        .replace(/<\/p>/g, '\n\n')
-        
-        // Заменяем множественные переносы строк на не более двух
-        .replace(/\n{3,}/g, '\n\n')
-        
-        // Обработка нестандартных тегов, которые не поддерживаются в Telegram
-        .replace(/<(span|div|section|article|header|footer|nav|aside).*?>(.*?)<\/(span|div|section|article|header|footer|nav|aside)>/g, '$2')
-        
-        // Обеспечиваем, что все теги закрыты в правильном порядке
-        // Это важно для корректного отображения в Telegram
-        .replace(/<\/(b|strong|i|em|u|s|strike|code|pre)><\/(b|strong|i|em|u|s|strike|code|pre)>/g, function(match, p1, p2) {
-          // Правильный порядок закрытия тегов для вложенного форматирования
-          return `</${p2}></${p1}>`;
-        })
-        
-        // Удаляем лишние атрибуты из тегов (Telegram поддерживает только чистые теги)
-        .replace(/<(b|i|u|s|code)(.*?)>/g, '<$1>')
-        .replace(/<strong(.*?)>/g, '<b>')
-        .replace(/<\/strong>/g, '</b>')
-        .replace(/<em(.*?)>/g, '<i>')
-        .replace(/<\/em>/g, '</i>')
-        .replace(/<del(.*?)>/g, '<s>')
-        .replace(/<\/del>/g, '</s>')
-        .replace(/<strike(.*?)>/g, '<s>')
-        .replace(/<\/strike>/g, '</s>')
-        
-        // Очищаем лишние пробелы, но сохраняем переносы строк
-        .replace(/[ \t]+/g, ' ')
-        .trim();
+        // Первичная очистка - удаляем div и другие ненужные обертки
+        html = html
+          // Удаляем div-обертки, которые могут появиться
+          .replace(/<div>(.*?)<\/div>/g, '$1')
+          // Добавляем переносы строк для лучшей читаемости в Telegram
+          .replace(/<br\s*\/?>/g, '\n')
+          
+          // Обработка параграфов - каждый параграф превращаем в простой текст с переносом строки
+          .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+          .replace(/<p>/g, '')
+          .replace(/<\/p>/g, '\n\n')
+          
+          // Заменяем множественные переносы строк на не более двух
+          .replace(/\n{3,}/g, '\n\n')
+          
+          // Обработка нестандартных тегов, которые не поддерживаются в Telegram
+          .replace(/<(span|div|section|article|header|footer|nav|aside).*?>(.*?)<\/(span|div|section|article|header|footer|nav|aside)>/g, '$2')
+          
+          // Обеспечиваем, что все теги закрыты в правильном порядке
+          // Это важно для корректного отображения в Telegram
+          .replace(/<\/(b|strong|i|em|u|s|strike|code|pre)><\/(b|strong|i|em|u|s|strike|code|pre)>/g, function(match, p1, p2) {
+            // Правильный порядок закрытия тегов для вложенного форматирования
+            return `</${p2}></${p1}>`;
+          })
+          
+          // Удаляем лишние атрибуты из тегов (Telegram поддерживает только чистые теги)
+          .replace(/<(b|i|u|s|code)(.*?)>/g, '<$1>')
+          .replace(/<strong(.*?)>/g, '<b>')
+          .replace(/<\/strong>/g, '</b>')
+          .replace(/<em(.*?)>/g, '<i>')
+          .replace(/<\/em>/g, '</i>')
+          .replace(/<del(.*?)>/g, '<s>')
+          .replace(/<\/del>/g, '</s>')
+          .replace(/<strike(.*?)>/g, '<s>')
+          .replace(/<\/strike>/g, '</s>')
+          
+          // Очищаем лишние пробелы, но сохраняем переносы строк
+          .replace(/[ \t]+/g, ' ')
+          .trim();
+      }
       
       onChange(html);
     },
