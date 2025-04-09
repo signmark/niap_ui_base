@@ -693,18 +693,13 @@ export class TelegramService {
         throw new Error('ID чата не установлен');
       }
       
-      // Преобразуем HTML в формат, поддерживаемый Telegram
+      // ВАЖНОЕ ИЗМЕНЕНИЕ: ПРОСТО ОТПРАВЛЯЕМ HTML БЕЗ ОБРАБОТКИ
+      // Это позволит сохранить форматирование из редактора
       let processedHtml = html;
       
-      // Сначала стандартизируем теги для Telegram
-      if (!options.skipTagProcessing) {
-        log(`Стандартизация HTML-тегов для Telegram...`, 'telegram');
-        processedHtml = this.standardizeTelegramTags(processedHtml);
-        
-        // Исправляем незакрытые теги
-        log(`Проверка и исправление незакрытых HTML-тегов...`, 'telegram');
-        processedHtml = this.fixUnclosedTags(processedHtml);
-      }
+      // Исправляем только незакрытые теги
+      log(`Проверка и исправление незакрытых HTML-тегов...`, 'telegram');
+      processedHtml = this.fixUnclosedTags(processedHtml);
       
       // Проверяем длину сообщения
       const TELEGRAM_MESSAGE_LIMIT = 4096;
@@ -714,7 +709,7 @@ export class TelegramService {
       }
       
       // Отправляем обработанный HTML
-      log(`Отправка HTML-текста (${processedHtml.length} символов)`, 'telegram');
+      log(`[ВАЖНО] Отправка HTML НАПРЯМУЮ без обработки форматирования (${processedHtml.length} символов)`, 'telegram');
       
       const url = `${this.apiUrl}${this.token}/sendMessage`;
       
@@ -952,66 +947,32 @@ export class TelegramService {
   standardizeTelegramTags(html) {
     try {
       if (!html) return '';
-
-      // Обрабатываем списки, преобразуя их в читаемый текст для Telegram
-      let result = html;
       
-      // Обрабатываем параграфы <p> с сохранением внутреннего форматирования
-      result = result.replace(/<p>([\s\S]*?)<\/p>/g, function(match, content) {
-        // Если параграф пустой, просто возвращаем один перенос строки
-        if (!content.trim()) return '\n';
-        
-        // В противном случае, сохраняем внутреннее форматирование и добавляем один перенос строки
-        return content + '\n';
-      });
+      // ПРОСТОЙ ПОДХОД: Минимально обрабатываем HTML, позволяя Telegram делать большую часть работы
       
-      // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
-      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-        // Заменяем каждый элемент списка на строку с маркером (•)
-        const formattedList = listContent
-          .replace(/<li>([\s\S]*?)<\/li>/g, '• $1\n') // Перенос строки после каждого элемента списка
-          .replace(/<\/?[^>]+(>|$)/g, '') // Удаляем все оставшиеся HTML-теги внутри элементов списка
-          .trim();
-        
-        // Добавляем один перенос строки до и после списка
-        return '\n' + formattedList + '\n';
-      });
-      
-      // Улучшенная обработка HTML-тегов и их конвертация в Telegram-совместимый формат
-
-      // Сначала заменяем теги для форматирования, которые могут быть вложены в параграфы
-      result = result
+      // Сначала обрабатываем только базовые замены тегов для совместимости с Telegram
+      let result = html
         .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
-        .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
-        .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
-        .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')  // Поддержка подчеркивания
-        .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>'); // Поддержка зачеркивания
+        .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
+        .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
+        .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
       
-      // Исправляем вложенные теги с форматированием для предотвращения потери форматирования
-      // Находим сложные случаи, когда теги оказываются разорваны переносами строк
-      result = result
-        // Исправляем случаи, когда <b> тег разрывается из-за переноса строки
-        .replace(/<b>([\s\S]*?)\n\n([\s\S]*?)<\/b>/g, '<b>$1</b>\n\n<b>$2</b>')
-        // Исправляем случаи, когда <i> тег разрывается из-за переноса строки
-        .replace(/<i>([\s\S]*?)\n\n([\s\S]*?)<\/i>/g, '<i>$1</i>\n\n<i>$2</i>')
-        // Исправляем случаи, когда <u> тег разрывается из-за переноса строки
-        .replace(/<u>([\s\S]*?)\n\n([\s\S]*?)<\/u>/g, '<u>$1</u>\n\n<u>$2</u>')
-        // Исправляем случаи, когда <s> тег разрывается из-за переноса строки
-        .replace(/<s>([\s\S]*?)\n\n([\s\S]*?)<\/s>/g, '<s>$1</s>\n\n<s>$2</s>');
-        
-      // Удаляем лишние переносы строк, которые могли возникнуть при обработке
-      result = result
-        .replace(/\n{3,}/g, '\n')     // Три и более переносов -> один перенос
-        .replace(/\n\s+/g, '\n')      // Перенос + пробелы -> один перенос
-        .replace(/\n\n/g, '\n');      // Два переноса -> один перенос
+      // Обрабатываем абзацы для улучшения читаемости в Telegram
+      result = result.replace(/<p>([\s\S]*?)<\/p>/g, function(match, content) {
+        if (!content.trim()) return '\n';
+        return content + '\n\n';
+      });
       
-      // Удаляем все оставшиеся HTML-теги, которые не поддерживаются в Telegram
-      result = result.replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
-        
-      log(`HTML-теги успешно преобразованы в формат Telegram`, 'telegram');
+      // Обрабатываем списки для улучшения читаемости
+      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+        return listContent.replace(/<li>([\s\S]*?)<\/li>/g, '• $1\n');
+      });
+      
+      log(`HTML-теги преобразованы в формат Telegram`, 'telegram');
       
       return result;
+      
     } catch (error) {
       log(`Ошибка при преобразовании HTML-тегов: ${error.message}`, 'telegram');
       return html; // В случае ошибки возвращаем исходный текст
@@ -1019,100 +980,83 @@ export class TelegramService {
   }
   
   /**
-   * Исправляет незакрытые HTML-теги
-   * @param {string} html HTML-текст для исправления
-   * @returns {string} Исправленный HTML-текст
+   * Исправляет незакрытые HTML-теги в тексте - ровно такая же реализация как в успешном тесте
+   * @param {string} text Текст с HTML-разметкой
+   * @returns {string} Текст с исправленными незакрытыми тегами
    */
-  fixUnclosedTags(html) {
-    try {
-      if (!html) return '';
+  fixUnclosedTags(text) {
+    // Стек для отслеживания открытых тегов
+    const tagStack = [];
+    
+    // Регулярное выражение для поиска открывающих и закрывающих тегов
+    const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+    
+    // Находим все теги в тексте
+    let match;
+    let lastIndex = 0;
+    let result = '';
+    
+    while ((match = tagRegex.exec(text)) !== null) {
+      const fullTag = match[0];
+      const tagName = match[1].toLowerCase();
+      const isClosingTag = fullTag.startsWith('</');
       
-      // ВНИМАНИЕ: Используем алгоритм из telegram-html-fix-test.js, который успешно проходит тесты
+      // Добавляем текст до текущего тега
+      result += text.substring(lastIndex, match.index);
+      lastIndex = match.index + fullTag.length;
       
-      // Стек для отслеживания открытых тегов
-      const tagStack = [];
-      
-      // Регулярное выражение для поиска открывающих и закрывающих тегов
-      const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
-      
-      // Находим все теги в тексте
-      let match;
-      let lastIndex = 0;
-      let result = '';
-      
-      // Клонируем регулярное выражение для сброса lastIndex
-      const regex = new RegExp(tagRegex);
-      
-      while ((match = regex.exec(html)) !== null) {
-        const fullTag = match[0];
-        const tagName = match[1].toLowerCase();
-        const isClosingTag = fullTag.startsWith('</');
-        
-        // Добавляем текст до текущего тега
-        result += html.substring(lastIndex, match.index);
-        lastIndex = match.index + fullTag.length;
-        
-        if (isClosingTag) {
-          // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому тегу
-          if (tagStack.length > 0) {
-            const lastOpenTag = tagStack[tagStack.length - 1];
-            if (lastOpenTag === tagName) {
-              // Тег правильно закрыт, удаляем его из стека
-              tagStack.pop();
-              result += fullTag;
-            } else {
-              // Закрывающий тег не соответствует последнему открытому
-              // Добавляем закрывающие теги для всех открытых тегов до соответствующего
-              let found = false;
-              for (let i = tagStack.length - 1; i >= 0; i--) {
-                if (tagStack[i] === tagName) {
-                  found = true;
-                  // Закрываем все промежуточные теги
-                  for (let j = tagStack.length - 1; j >= i; j--) {
-                    result += `</${tagStack[j]}>`;
-                    tagStack.pop();
-                  }
-                  break;
+      if (isClosingTag) {
+        // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому тегу
+        if (tagStack.length > 0) {
+          const lastOpenTag = tagStack[tagStack.length - 1];
+          if (lastOpenTag === tagName) {
+            // Тег правильно закрыт, удаляем его из стека
+            tagStack.pop();
+            result += fullTag;
+          } else {
+            // Закрывающий тег не соответствует последнему открытому
+            // Добавляем закрывающие теги для всех открытых тегов до соответствующего
+            let found = false;
+            for (let i = tagStack.length - 1; i >= 0; i--) {
+              if (tagStack[i] === tagName) {
+                found = true;
+                // Закрываем все промежуточные теги
+                for (let j = tagStack.length - 1; j >= i; j--) {
+                  result += `</${tagStack[j]}>`;
+                  tagStack.pop();
                 }
-              }
-              
-              if (!found) {
-                // Если соответствующий открывающий тег не найден, игнорируем закрывающий тег
-                log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
-              } else {
-                // Добавляем текущий закрывающий тег
-                result += fullTag;
+                break;
               }
             }
-          } else {
-            // Если стек пуст, значит это закрывающий тег без открывающего
-            log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
+            
+            if (!found) {
+              // Если соответствующий открывающий тег не найден, игнорируем закрывающий тег
+              log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
+            } else {
+              // Добавляем текущий закрывающий тег
+              result += fullTag;
+            }
           }
         } else {
-          // Открывающий тег, добавляем в стек
-          // Проверка для самозакрывающихся тегов
-          if (!fullTag.endsWith('/>')) {
-            tagStack.push(tagName);
-          }
-          result += fullTag;
+          // Если стек пуст, значит это закрывающий тег без открывающего
+          log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
         }
+      } else {
+        // Открывающий тег, добавляем в стек
+        tagStack.push(tagName);
+        result += fullTag;
       }
-      
-      // Добавляем оставшийся текст
-      result += html.substring(lastIndex);
-      
-      // Закрываем все оставшиеся открытые теги в обратном порядке (LIFO)
-      for (let i = tagStack.length - 1; i >= 0; i--) {
-        result += `</${tagStack[i]}>`;
-      }
-      
-      log(`HTML-теги успешно исправлены`, 'telegram');
-      
-      return result;
-    } catch (error) {
-      log(`Ошибка при исправлении HTML-тегов: ${error.message}`, 'telegram');
-      return html; // В случае ошибки возвращаем исходный текст
     }
+    
+    // Добавляем оставшийся текст
+    result += text.substring(lastIndex);
+    
+    // Закрываем все оставшиеся открытые теги в обратном порядке (LIFO)
+    for (let i = tagStack.length - 1; i >= 0; i--) {
+      result += `</${tagStack[i]}>`;
+    }
+    
+    return result;
   }
   
   /**
