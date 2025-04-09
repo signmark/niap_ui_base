@@ -37,7 +37,7 @@ import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import testRouter from './api/test-routes';
-import telegramPostRouter from './api/telegram-post-route';
+import telegramPostRouter from './api/telegram-post-route.js';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 

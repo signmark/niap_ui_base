@@ -1,153 +1,226 @@
 /**
- * Common Utils
- * 
  * Общие утилиты для использования в различных модулях
  */
 
+import { log } from './logger.js';
+
+/**
+ * Возвращает текущую дату и время в формате ISO
+ * @returns {string} Текущая дата и время
+ */
+export function getCurrentIsoDate() {
+  return new Date().toISOString();
+}
+
+/**
+ * Возвращает текущую дату и время в локальном формате
+ * @returns {string} Текущая дата и время
+ */
+export function getCurrentLocalTime() {
+  return new Date().toLocaleString();
+}
+
+/**
+ * Генерирует случайный идентификатор указанной длины
+ * @param {number} length Длина идентификатора
+ * @returns {string} Случайный идентификатор
+ */
+export function generateRandomId(length = 8) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+  
+  return result;
+}
+
 /**
  * Задержка выполнения на указанное количество миллисекунд
- * @param {number} ms Миллисекунды
- * @returns {Promise<void>} Promise, который разрешится через указанное время
+ * @param {number} ms Количество миллисекунд для задержки
+ * @returns {Promise<void>} Promise, который разрешится после задержки
  */
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
- * Обрезает строку до указанной длины с добавлением многоточия
- * @param {string} str Строка для обрезки
- * @param {number} maxLength Максимальная длина
- * @param {string} suffix Суффикс для добавления (по умолчанию "...")
- * @returns {string} Обрезанная строка
+ * Безопасно извлекает значение из вложенного объекта
+ * @param {Object} obj Объект, из которого извлекается значение
+ * @param {string} path Путь к значению в формате 'a.b.c'
+ * @param {*} defaultValue Значение по умолчанию, если путь не существует
+ * @returns {*} Извлеченное значение или значение по умолчанию
  */
-export function truncateString(str, maxLength, suffix = '...') {
-  if (!str || str.length <= maxLength) return str;
-  return str.substring(0, maxLength - suffix.length) + suffix;
+export function safeGet(obj, path, defaultValue = null) {
+  if (!obj || !path) return defaultValue;
+  
+  const keys = path.split('.');
+  let result = obj;
+  
+  for (const key of keys) {
+    if (result === null || result === undefined || typeof result !== 'object') {
+      return defaultValue;
+    }
+    
+    result = result[key];
+  }
+  
+  return result !== undefined ? result : defaultValue;
 }
 
 /**
- * Генерирует случайную строку указанной длины
- * @param {number} length Длина строки
- * @returns {string} Случайная строка
+ * Проверяет, является ли значение пустым (null, undefined, пустая строка или пустой массив)
+ * @param {*} value Значение для проверки
+ * @returns {boolean} Является ли значение пустым
  */
-export function randomString(length = 8) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+export function isEmpty(value) {
+  if (value === null || value === undefined) {
+    return true;
   }
+  
+  if (typeof value === 'string') {
+    return value.trim() === '';
+  }
+  
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+  
+  if (typeof value === 'object') {
+    return Object.keys(value).length === 0;
+  }
+  
+  return false;
+}
+
+/**
+ * Проверяет, содержит ли строка многобайтовые символы (например, эмодзи)
+ * @param {string} str Строка для проверки
+ * @returns {boolean} Содержит ли строка многобайтовые символы
+ */
+export function containsMultibyteChars(str) {
+  if (!str) return false;
+  
+  // Проверяем, есть ли символы, которые занимают больше 1 байта
+  return str.split('').some(char => char.charCodeAt(0) > 127);
+}
+
+/**
+ * Обрезает строку до указанной длины, добавляя многоточие
+ * @param {string} str Исходная строка
+ * @param {number} maxLength Максимальная длина
+ * @returns {string} Обрезанная строка
+ */
+export function truncateString(str, maxLength) {
+  if (!str || str.length <= maxLength) {
+    return str;
+  }
+  
+  return str.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Объединяет несколько объектов в один, игнорируя пустые значения
+ * @param {...Object} objects Объекты для объединения
+ * @returns {Object} Объединенный объект
+ */
+export function mergeObjects(...objects) {
+  const result = {};
+  
+  for (const obj of objects) {
+    if (!obj || typeof obj !== 'object') {
+      continue;
+    }
+    
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== null && value !== undefined) {
+        result[key] = value;
+      }
+    }
+  }
+  
   return result;
 }
 
 /**
- * Удаляет дубликаты из массива
- * @param {Array} array Исходный массив
- * @returns {Array} Массив без дубликатов
+ * Форматирует число с разделителями тысяч
+ * @param {number} num Число для форматирования
+ * @returns {string} Отформатированное число
  */
-export function removeDuplicates(array) {
-  return [...new Set(array)];
-}
-
-/**
- * Группирует элементы массива по указанному ключу
- * @param {Array} array Массив объектов
- * @param {string|Function} key Ключ или функция извлечения ключа
- * @returns {Object} Объект с сгруппированными элементами
- */
-export function groupBy(array, key) {
-  return array.reduce((result, item) => {
-    const groupKey = typeof key === 'function' ? key(item) : item[key];
-    if (!result[groupKey]) {
-      result[groupKey] = [];
-    }
-    result[groupKey].push(item);
-    return result;
-  }, {});
-}
-
-/**
- * Безопасно получает вложенное свойство объекта
- * @param {Object} obj Исходный объект
- * @param {string} path Путь к свойству в формате "prop1.prop2.prop3"
- * @param {*} defaultValue Значение по умолчанию
- * @returns {*} Значение свойства или значение по умолчанию
- */
-export function getNestedProperty(obj, path, defaultValue = undefined) {
-  const keys = path.split('.');
-  let current = obj;
-  
-  for (const key of keys) {
-    if (current === null || current === undefined || typeof current !== 'object') {
-      return defaultValue;
-    }
-    current = current[key];
+export function formatNumber(num) {
+  if (num === null || num === undefined) {
+    return '';
   }
   
-  return current !== undefined ? current : defaultValue;
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 /**
- * Форматирует дату в указанный формат
- * @param {Date|string|number} date Дата для форматирования
- * @param {string} format Формат даты (например, "YYYY-MM-DD HH:mm:ss")
- * @returns {string} Отформатированная дата
- */
-export function formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
-  const d = new Date(date);
-  
-  const replacements = {
-    YYYY: d.getFullYear(),
-    MM: String(d.getMonth() + 1).padStart(2, '0'),
-    DD: String(d.getDate()).padStart(2, '0'),
-    HH: String(d.getHours()).padStart(2, '0'),
-    mm: String(d.getMinutes()).padStart(2, '0'),
-    ss: String(d.getSeconds()).padStart(2, '0')
-  };
-  
-  return format.replace(/YYYY|MM|DD|HH|mm|ss/g, match => replacements[match]);
-}
-
-/**
- * Проверяет, является ли строка валидным URL
- * @param {string} url Строка для проверки
- * @returns {boolean} true, если строка является валидным URL
+ * Валидирует URL
+ * @param {string} url URL для проверки
+ * @returns {boolean} Является ли строка корректным URL
  */
 export function isValidUrl(url) {
+  if (!url) return false;
+  
   try {
     new URL(url);
     return true;
-  } catch (e) {
+  } catch (error) {
     return false;
   }
 }
 
 /**
- * Преобразует первую букву строки в заглавную
- * @param {string} str Строка для преобразования
- * @returns {string} Строка с заглавной первой буквой
+ * Формирует URL с учетом базового URL
+ * @param {string} path Путь
+ * @param {string} baseUrl Базовый URL
+ * @returns {string} Полный URL
  */
-export function capitalizeFirstLetter(str) {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
+export function buildUrl(path, baseUrl = '') {
+  if (!path) return baseUrl;
+  
+  // Если путь уже является полным URL, возвращаем его
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Очищаем путь и базовый URL от дублирующихся слешей
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  
+  return `${cleanBaseUrl}${cleanPath}`;
 }
 
 /**
- * Экранирует специальные символы в регулярном выражении
- * @param {string} str Строка для экранирования
- * @returns {string} Экранированная строка
+ * Использует try-catch для выполнения промиса и возвращает результат или ошибку
+ * @param {Promise} promise Промис для выполнения
+ * @returns {Promise<[null, Error]|[result, null]>} Кортеж с результатом или ошибкой
  */
-export function escapeRegExp(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export async function tryCatch(promise) {
+  try {
+    const result = await promise;
+    return [result, null];
+  } catch (error) {
+    return [null, error];
+  }
 }
 
-/**
- * Постраничная навигация по массиву
- * @param {Array} array Исходный массив
- * @param {number} page Номер страницы (начиная с 1)
- * @param {number} pageSize Размер страницы
- * @returns {Array} Массив элементов для указанной страницы
- */
-export function paginate(array, page = 1, pageSize = 10) {
-  const startIndex = (page - 1) * pageSize;
-  return array.slice(startIndex, startIndex + pageSize);
-}
+// Экспортируем все функции
+export default {
+  getCurrentIsoDate,
+  getCurrentLocalTime,
+  generateRandomId,
+  sleep,
+  safeGet,
+  isEmpty,
+  containsMultibyteChars,
+  truncateString,
+  mergeObjects,
+  formatNumber,
+  isValidUrl,
+  buildUrl,
+  tryCatch
+};

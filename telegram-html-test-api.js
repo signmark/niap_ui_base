@@ -7,7 +7,7 @@
  * Запуск: node telegram-html-test-api.js
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 // Настройки для тестирования
 const API_BASE_URL = 'http://localhost:5000/api/test';

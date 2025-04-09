@@ -7,101 +7,279 @@
  * Запуск: node telegram-new-service-test.js
  */
 
+import { telegramService } from './server/services/social/telegram-service.js';
 import { formatHtmlForTelegram } from './server/utils/telegram-formatter.js';
-import axios from 'axios';
 import dotenv from 'dotenv';
 
 // Загружаем переменные окружения
 dotenv.config();
 
 // Получаем данные из .env или из аргументов командной строки
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEfbNEnEyqy_XJU';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-1002302366310';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TEST_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TEST_CHAT_ID;
 
-// Тестовый HTML-текст с форматированием
-const testHtml = `<p>В ходе предыдущего <strong>обсуждения</strong> мы рассмотрели причины, по которым завтрак является наиболее важным приемом пищи, и его влияние на уровень энергии, метаболизм и контроль аппетита. 😊</p><p>В настоящее время целесообразно проанализировать роль перекусов, поскольку они могут как способствовать поддержанию здоровья <strong>"хорошего"</strong>, так и незаметно наносить вред фигуре и самочувствию. 🍎 Перекусы помогают избежать резких колебаний уровня сахара в крови, поддерживают энергетический баланс и предотвращают чрезмерное чувство голода, которое зачастую приводит к переедания во время основных приемов пищи. 🚫</p><p>Следует, однако, понимать, что не все перекусы одинаково полезны. ⚠️ К нежелательным перекусам относятся сладости, булочки, печенье, чипсы и прочие продукты фастфуда. 🍩 Они вызывают быстрое повышение уровня сахара в крови, обеспечивая кратковременный прилив энергии, но столь же стремительно приводят к усталости, усилению аппетита и накоплению жировых отложений. </p><p><em>Полезными перекусами являются те, которые обеспечивают чувство сытости, стабильный энергетический баланс и поступление питательных веществ.</em> 🥗 К ним можно отнести орехи, ягоды, фрукты, овощи с хумусом, яйца, греческий йогурт, творог, цельнозерновые хлебцы с авокадо или ореховой пастой. 🥑 🍞 🥒</p><p>Рекомендации по правильному перекусыванию: 📝</p><ul><li>Выбирайте перекусы, содержащие белок, полезные жиры и клетчатку – они дольше обеспечивают чувство сытости и поддерживают обмен веществ. 👍</li><li>Не употребляйте пищу автоматически – перекус необходим, если вы действительно испытываете легкое чувство голода, а не просто по привычке или от скуки. 🤔</li><li>Контролируйте размер порции – горсть орехов полезна, но если съесть полпакета, это уже станет полноценным приемом пищи. 🥜</li></ul><p>Если вы стремитесь разобраться в вопросах питания, избавиться от вредных привычек и выстроить комфортную систему питания, присоединяйтесь к нашему марафону на нашем телеграм-канале. 📱</p>`;
+// Проверяем, что необходимые параметры заданы
+if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+  console.error('Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not found in environment variables');
+  console.log('Please set these variables in .env file or pass them as arguments');
+  process.exit(1);
+}
 
 /**
- * Отправляет HTML-сообщение в Telegram, используя новый форматтер
- * @param {string} html HTML-текст для отправки
- * @returns {Promise<Object>} Результат отправки
+ * Выводит сообщение в консоль с временной меткой
  */
-async function sendTelegramMessage(html) {
-  // Форматируем HTML для Telegram
-  const formattedHtml = formatHtmlForTelegram(html);
+function log(message) {
+  const now = new Date();
+  const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+  console.log(`[${timestamp}] ${message}`);
+}
+
+/**
+ * Тестирует отправку текста с форматированием в Telegram
+ */
+async function testSendTextMessage() {
+  log('Testing sending text message with formatting...');
   
-  console.log('Исходный HTML:', html.substring(0, 100) + '...');
-  console.log('Отформатированный HTML:', formattedHtml.substring(0, 100) + '...');
+  // Тестовое сообщение с различными HTML-тегами
+  const htmlText = `
+<b>Жирный текст</b>
+<strong>Тоже жирный</strong>
+<i>Курсив</i>
+<em>Тоже курсив</em>
+<u>Подчеркнутый</u>
+<s>Зачеркнутый</s>
+<code>Моноширинный шрифт</code>
+<pre>Блок кода
+с сохранением
+переносов строк</pre>
+<a href="https://t.me/">Ссылка на Telegram</a>
+
+<b><i>Жирный и курсив</i></b>
+<b><i><u>Жирный, курсив и подчеркнутый</u></i></b>
+
+<p>Параграф текста.</p>
+<p>Еще один параграф.</p>
+
+<ul>
+  <li>Пункт 1</li>
+  <li>Пункт 2</li>
+  <li>Пункт 3</li>
+</ul>
+
+А вот <b>важная информация</b> в середине обычного текста.
+  `;
   
-  // Отправляем запрос
   try {
-    const response = await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      chat_id: TELEGRAM_CHAT_ID,
-      text: formattedHtml,
-      parse_mode: 'HTML'
-    });
+    // Инициализируем сервис Telegram
+    telegramService.initialize(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID);
     
-    console.log('Ответ от Telegram API:', JSON.stringify(response.data, null, 2));
-    return response.data;
+    // Отправляем тестовое сообщение
+    const result = await telegramService.sendTextMessage(htmlText);
+    
+    log(`Message sent successfully!`);
+    log(`Message ID: ${result.messageId}`);
+    log(`Message URL: ${result.messageUrl}`);
+    
+    return result;
   } catch (error) {
-    console.error('Ошибка при отправке сообщения:', error.response?.data || error.message);
+    log(`Error sending text message: ${error.message}`);
     throw error;
   }
 }
 
 /**
- * Отправляет несколько сообщений для проверки всех типов форматирования
+ * Тестирует отправку изображения с подписью в Telegram
  */
-async function runTests() {
-  console.log('=== ТЕСТ 1: ОСНОВНОЙ HTML-ТЕКСТ ===');
-  try {
-    await sendTelegramMessage(testHtml);
-    console.log('✅ Тест 1 успешно пройден');
-  } catch (error) {
-    console.error('❌ Тест 1 не пройден:', error.message);
-  }
+async function testSendImage() {
+  log('Testing sending image with caption...');
   
-  console.log('\n=== ТЕСТ 2: ПОСЛЕДОВАТЕЛЬНЫЕ ТЕГИ ===');
-  const sequentialTags = '<b>Жирный текст</b> <i>Курсивный текст</i> <u>Подчеркнутый текст</u> <s>Зачеркнутый текст</s>';
-  try {
-    await sendTelegramMessage(sequentialTags);
-    console.log('✅ Тест 2 успешно пройден');
-  } catch (error) {
-    console.error('❌ Тест 2 не пройден:', error.message);
-  }
+  // Тестовое изображение
+  const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png';
   
-  console.log('\n=== ТЕСТ 3: ВЛОЖЕННЫЕ ТЕГИ ===');
-  const nestedTags = '<b>Жирный <i>жирный курсив</i> просто жирный</b> <i>курсив <u>курсив подчеркнутый</u> просто курсив</i>';
-  try {
-    await sendTelegramMessage(nestedTags);
-    console.log('✅ Тест 3 успешно пройден');
-  } catch (error) {
-    console.error('❌ Тест 3 не пройден:', error.message);
-  }
+  // Подпись к изображению
+  const caption = `<b>Логотип Telegram</b>
   
-  console.log('\n=== ТЕСТ 4: НЕПОЗВОЛИТЕЛЬНЫЕ ВЛОЖЕННОСТИ ===');
-  const invalidNesting = '<b>Жирный <i>жирный курсив</b> просто курсив</i> обычный текст';
-  try {
-    await sendTelegramMessage(invalidNesting);
-    console.log('✅ Тест 4 успешно пройден');
-  } catch (error) {
-    console.error('❌ Тест 4 не пройден:', error.message);
-  }
+Это <i>тестовое</i> изображение с <b>форматированной</b> подписью.
+Проверяем работу <a href="https://telegram.org">HTML-форматирования</a> в подписях к изображениям.`;
   
-  console.log('\n=== ТЕСТ 5: СПИСКИ И ЭМОДЗИ ===');
-  const listAndEmoji = '<p>Пункты списка:</p><ul><li>Первый пункт 🍎</li><li>Второй пункт 🍌</li><li>Третий пункт 🍊</li></ul>';
   try {
-    await sendTelegramMessage(listAndEmoji);
-    console.log('✅ Тест 5 успешно пройден');
+    // Отправляем изображение с подписью
+    const result = await telegramService.sendImage(imageUrl, caption);
+    
+    log(`Image sent successfully!`);
+    log(`Message ID: ${result.messageId}`);
+    log(`Message URL: ${result.messageUrl}`);
+    
+    return result;
   } catch (error) {
-    console.error('❌ Тест 5 не пройден:', error.message);
+    log(`Error sending image: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Тестирует отправку группы изображений в Telegram
+ */
+async function testSendMediaGroup() {
+  log('Testing sending media group...');
+  
+  // Массив тестовых изображений
+  const imageUrls = [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Signal-Logo.svg/600px-Signal-Logo.svg.png',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/598px-WhatsApp.svg.png'
+  ];
+  
+  // Подпись к первому изображению
+  const caption = `<b>Логотипы мессенджеров</b>
+  
+Тестирование отправки <i>группы изображений</i> с <b>HTML-форматированием</b> в подписи к первому изображению.`;
+  
+  try {
+    // Отправляем группу изображений
+    const result = await telegramService.sendMediaGroup(imageUrls, caption);
+    
+    log(`Media group sent successfully!`);
+    log(`Message IDs: ${result.messageIds.join(', ')}`);
+    log(`First message URL: ${result.messageUrl}`);
+    
+    return result;
+  } catch (error) {
+    log(`Error sending media group: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Тестирует отправку контента с изображением и текстом в Telegram
+ */
+async function testPublishContent() {
+  log('Testing publishing content...');
+  
+  // Пример контента
+  const content = {
+    title: 'Тестовая публикация',
+    content: `
+<p>Это тестовая публикация для проверки работы сервиса Telegram.</p>
+
+<p>Поддерживаются различные <b>HTML-теги</b> для <i>форматирования</i> текста:</p>
+
+<ul>
+  <li><b>Жирный текст</b></li>
+  <li><i>Курсив</i></li>
+  <li><u>Подчеркнутый</u></li>
+  <li><s>Зачеркнутый</s></li>
+  <li><code>Моноширинный шрифт</code></li>
+</ul>
+
+<p>А также <a href="https://telegram.org">ссылки</a> и <b><i>комбинации</i> различных <u>тегов</u></b>.</p>
+
+<p>Проверяем <b>работу</b> с <i>изображениями</i> и <u>форматированием</u> текста.</p>
+    `,
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/800px-Telegram_2019_Logo.svg.png',
+    additionalImages: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Telegram_Messenger.png/800px-Telegram_Messenger.png',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png'
+    ]
+  };
+  
+  // Настройки для публикации
+  const settings = {
+    token: TELEGRAM_BOT_TOKEN,
+    chatId: TELEGRAM_CHAT_ID
+  };
+  
+  try {
+    // Публикуем контент
+    const result = await telegramService.publishContent(content, settings);
+    
+    log(`Content published successfully!`);
+    log(`Message IDs: ${result.messageIds.join(', ')}`);
+    log(`Message URL: ${result.messageUrl}`);
+    
+    return result;
+  } catch (error) {
+    log(`Error publishing content: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Тестирует форматирование HTML с вложенными тегами
+ */
+async function testNestedTags() {
+  log('Testing complex HTML with nested tags...');
+  
+  const complexHtml = `
+<b>Заголовок</b>
+
+<p>Это <b>важный</b> текст с <i>разными</i> <u>стилями</u> форматирования.</p>
+
+<b>Список вещей:</b>
+<ul>
+  <li><b>Важный</b> пункт</li>
+  <li>Обычный пункт</li>
+  <li>Пункт с <i>курсивом</i> и <b>жирным</b> текстом</li>
+  <li><s>Зачеркнутый пункт</s> <i>(удален)</i></li>
+</ul>
+
+<p>Вложенные теги: <b>жирный <i>жирный и курсив <u>жирный, курсив и подчеркнутый</u></i></b></p>
+
+<p>Теги с <a href="https://t.me/">ссылкой <b>внутри</b></a> и <b>теги <a href="https://telegram.org/">со ссылкой</a> внутри</b>.</p>
+  `;
+  
+  try {
+    // Форматируем HTML для Telegram
+    const formattedHtml = formatHtmlForTelegram(complexHtml);
+    
+    log('Formatted HTML:');
+    log(formattedHtml);
+    
+    // Отправляем отформатированный HTML
+    const result = await telegramService.sendTextMessage(complexHtml);
+    
+    log(`Complex HTML message sent successfully!`);
+    log(`Message ID: ${result.messageId}`);
+    log(`Message URL: ${result.messageUrl}`);
+    
+    return result;
+  } catch (error) {
+    log(`Error sending complex HTML: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Запускает все тесты
+ */
+async function runAllTests() {
+  try {
+    log('Starting tests for new Telegram service...');
+    
+    // Инициализируем сервис Telegram
+    telegramService.initialize(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID);
+    
+    // Тест отправки текстового сообщения
+    await testSendTextMessage();
+    
+    // Тест отправки изображения с подписью
+    await testSendImage();
+    
+    // Тест отправки группы изображений
+    await testSendMediaGroup();
+    
+    // Тест публикации контента
+    await testPublishContent();
+    
+    // Тест сложного HTML с вложенными тегами
+    await testNestedTags();
+    
+    log('All tests completed successfully!');
+  } catch (error) {
+    log(`Error running tests: ${error.message}`);
+    process.exit(1);
   }
 }
 
 // Запускаем тесты
-console.log('Запуск тестов нового сервиса Telegram...');
-runTests().then(() => {
-  console.log('\nВсе тесты завершены. Проверьте результаты в Telegram.');
-}).catch(error => {
-  console.error('Произошла ошибка при выполнении тестов:', error);
-});
+runAllTests();
