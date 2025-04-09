@@ -19,8 +19,8 @@ export class PublishScheduler {
   // Для обратной совместимости со старым кодом (временное решение)
   private processedContentIds = new Set<string>();
   // Глобальный флаг для полного отключения публикаций (критическая мера безопасности)
-  // !!! ИЗМЕНИТЬ НА false ЧТОБЫ ВКЛЮЧИТЬ АВТОМАТИЧЕСКИЕ ПУБЛИКАЦИИ !!!
-  public disablePublishing = true;
+  // Публикации активированы
+  public disablePublishing = false;
 
   /**
    * Запускает планировщик публикаций
