@@ -559,9 +559,9 @@ export class TelegramService {
         
         let contentHTML = content.content;
         
-        // Сначала преобразуем параграфы в текст с двойными переносами строк
+        // Преобразуем параграфы в текст с ОДИНАРНЫМИ переносами строк
         contentHTML = contentHTML
-          .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n')
+          .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
           .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
           .replace(/<br\s*\/?>/g, '\n')
           .replace(/<ul[^>]*>/g, '\n')
