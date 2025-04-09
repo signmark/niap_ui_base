@@ -12,7 +12,7 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
-// Импортируем тестовые маршруты для Telegram
+// Импортируем тестовые маршруты для Telegram и другие тестовые маршруты
 import testRouter from './api/test-routes';
 
 // Установка переменных окружения для отладки
@@ -123,6 +123,21 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
+    
+    // Регистрируем дополнительные тестовые маршруты
+    console.log("Registering additional test routes...");
+    log("Registering additional test routes...");
+    // Импортируем дополнительные тестовые маршруты динамически, чтобы избежать проблем с импортом
+    try {
+      const testRoutes = await import('./routes/test/index.js');
+      app.use('/api/test', testRoutes.default || testRoutes);
+      log("Additional test routes imported and registered using ESM import");
+    } catch (importError) {
+      log(`Error importing additional test routes: ${importError instanceof Error ? importError.message : 'Unknown error'}`);
+      log("Continuing without additional test routes");
+    }
+    console.log("Additional test routes registered");
+    log("Additional test routes registered successfully");
     
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
