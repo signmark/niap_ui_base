@@ -118,7 +118,7 @@ export class TelegramService {
             
             // Сохраняем URL первого сообщения
             if (i === 0) {
-              firstMessageUrl = this.generateMessageUrl(messageId);
+              firstMessageUrl = await this.generateMessageUrl(messageId);
             }
             
             // Добавляем задержку между отправками сообщений
@@ -151,7 +151,7 @@ export class TelegramService {
       
       if (response.data.ok) {
         const messageId = response.data.result.message_id;
-        const messageUrl = this.generateMessageUrl(messageId);
+        const messageUrl = await this.generateMessageUrl(messageId);
         
         log(`Сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
         
@@ -208,7 +208,7 @@ export class TelegramService {
           
           // Сохраняем URL первого сообщения
           if (i === 0) {
-            firstMessageUrl = this.generateMessageUrl(messageId);
+            firstMessageUrl = await this.generateMessageUrl(messageId);
           }
           
           // Добавляем задержку между отправками сообщений, чтобы избежать ограничений API
@@ -394,20 +394,48 @@ export class TelegramService {
    * @returns {string} URL сообщения
    * @private
    */
-  generateMessageUrl(messageId) {
-    // Если есть имя пользователя чата, используем его для создания URL
-    if (this.chatUsername) {
-      return `https://t.me/${this.chatUsername}/${messageId}`;
+  async generateMessageUrl(messageId) {
+    try {
+      // Если username еще не сохранен, попытаемся получить его
+      if (!this.chatUsername) {
+        // Попытка получить информацию о чате
+        try {
+          const chatInfo = await this.getChatInfo();
+          // Проверка успешности получения информации
+          if (chatInfo && chatInfo.username) {
+            this.chatUsername = chatInfo.username;
+            log(`Получен username чата для URL: ${this.chatUsername}`, 'telegram');
+          }
+        } catch (error) {
+          log(`Не удалось получить информацию о чате для URL: ${error.message}`, 'telegram');
+          // Продолжаем выполнение, будем использовать ID чата
+        }
+      }
+      
+      // Если есть имя пользователя чата, используем его для создания URL
+      if (this.chatUsername) {
+        return `https://t.me/${this.chatUsername}/${messageId}`;
+      }
+      
+      // Если ID чата начинается с -100, это суперчат или канал
+      if (String(this.chatId).startsWith('-100')) {
+        const chatId = String(this.chatId).substring(4);
+        return `https://t.me/c/${chatId}/${messageId}`;
+      }
+      
+      // Для других типов чатов нельзя создать URL, так что возвращаем пустую строку
+      return '';
+    } catch (error) {
+      log(`Ошибка при генерации URL сообщения: ${error.message}`, 'telegram');
+      
+      // В случае ошибки пытаемся создать URL на основе ID чата
+      if (String(this.chatId).startsWith('-100')) {
+        const chatId = String(this.chatId).substring(4);
+        return `https://t.me/c/${chatId}/${messageId}`;
+      }
+      
+      return '';
     }
-    
-    // Если ID чата начинается с -100, это суперчат или канал
-    if (String(this.chatId).startsWith('-100')) {
-      const chatId = String(this.chatId).substring(4);
-      return `https://t.me/c/${chatId}/${messageId}`;
-    }
-    
-    // Для других типов чатов нельзя создать URL, так что возвращаем пустую строку
-    return '';
   }
   
   /**
