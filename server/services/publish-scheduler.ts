@@ -228,9 +228,6 @@ export class PublishScheduler {
     }
   }
 
-  // Хранит список уже обработанных публикаций для предотвращения дублирования
-  private processedContentIds: Set<string> = new Set();
-
   async checkScheduledContent() {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
@@ -257,7 +254,7 @@ export class PublishScheduler {
             'Content-Type': 'application/json'
           };
           
-          // Запрос с фильтром по статусу ТОЛЬКО "scheduled" и исключаем ранее обработанные
+          // Запрос с фильтром по статусу "scheduled"
           const response = await axios.get(`${directusUrl}/items/campaign_content`, {
             headers,
             params: {
@@ -409,27 +406,9 @@ export class PublishScheduler {
         }
       });
       
-      // Фильтруем контент, который пора публиковать и еще не опубликован
+      // Фильтруем контент, который пора публиковать
       const contentToPublish = scheduledContent.filter(content => {
         if (!content.scheduledAt) return false;
-        
-        // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
-        if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
-          log(`Контент ID ${content.id} "${content.title}" находится в списке исключенных, полностью пропускаем`, 'scheduler');
-          return false;
-        }
-        
-        // Проверяем, что статус не "published"
-        if (content.status === 'published') {
-          log(`Контент ID ${content.id} "${content.title}" уже опубликован, пропускаем`, 'scheduler');
-          return false;
-        }
-        
-        // Проверяем, не публиковали ли мы уже этот контент в текущей сессии сервера
-        if (content.id && this.processedContentIds.has(content.id)) {
-          log(`Контент ID ${content.id} "${content.title}" уже обработан ранее в текущей сессии сервера, пропускаем`, 'scheduler');
-          return false;
-        }
         
         const scheduledTime = new Date(content.scheduledAt);
         return scheduledTime <= now;
@@ -454,27 +433,6 @@ export class PublishScheduler {
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
-        return;
-      }
-      
-      // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
-      if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
-        log(`Контент ${content.id}: "${content.title}" является проблемным постом, полностью пропускаем публикацию`, 'scheduler');
-        return;
-      }
-      
-      // Проверяем, был ли этот контент уже опубликован в текущей сессии сервера
-      if (this.processedContentIds.has(content.id)) {
-        log(`Контент ${content.id}: "${content.title}" уже публиковался в текущей сессии сервера, пропускаем повторную публикацию`, 'scheduler');
-        return;
-      }
-      
-      // Добавляем в список обработанных
-      this.processedContentIds.add(content.id);
-      
-      // Пропускаем уже опубликованный контент
-      if (content.status === 'published') {
-        log(`Контент ${content.id}: "${content.title}" уже имеет статус published, пропускаем публикацию`, 'scheduler');
         return;
       }
 

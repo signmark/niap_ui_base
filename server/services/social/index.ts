@@ -1,5 +1,5 @@
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
-import { telegramService } from './telegram-service.js';
+import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { log } from '../../utils/logger';

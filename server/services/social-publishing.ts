@@ -270,7 +270,7 @@ export class SocialPublishingService {
         const requestBody = {
           chat_id: formattedChatId,
           media: mediaGroup
-        , parse_mode: "HTML"};
+        };
         
         log(`Отправляем запрос к Telegram API (sendMediaGroup): ${JSON.stringify(requestBody)}`, 'social-publishing');
         
@@ -283,7 +283,7 @@ export class SocialPublishingService {
         
         const photoRequestBody = {
           chat_id: formattedChatId, 
-          photo: images[0], parse_mode: "HTML"13560,
+          photo: images[0],
           caption: truncatedCaption,
           parse_mode: 'HTML'
         };
@@ -1982,69 +1982,27 @@ export class SocialPublishingService {
 
   private async getSystemToken(): Promise<string | null> {
     try {
-      // Импортируем directusAuthManager динамически, чтобы избежать циклических зависимостей
-      const directusAuthManager = await import('./directus-auth-manager').then(m => m.directusAuthManager);
-      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
-      
-      // 1. Приоритет - авторизация через логин/пароль (если есть учетные данные)
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
-      if (email && password) {
-        log(`Попытка авторизации администратора с учетными данными из env`, 'social-publishing');
-        try {
-          const adminSession = await directusAuthManager.login(email, password);
-          if (adminSession) {
-            log(`Авторизация администратора успешна через DirectusAuthManager`, 'social-publishing');
-            return adminSession.token;
-          }
-        } catch (e) {
-          log(`Ошибка авторизации администратора через DirectusAuthManager: ${e}`, 'social-publishing');
-        }
+      if (!email || !password) {
+        log(`Отсутствуют учетные данные администратора Directus в переменных окружения`, 'social-publishing');
+        return null;
       }
       
-      // 2. Вариант - использовать хранящуюся сессию администратора
-      try {
-        const adminSession = directusAuthManager.getSession(adminUserId);
-        if (adminSession && adminSession.token) {
-          log(`Использование существующей авторизации администратора`, 'social-publishing');
-          return adminSession.token;
-        }
-      } catch (e) {
-        log(`Не удалось получить существующую сессию администратора: ${e}`, 'social-publishing');
+      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+      
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
+      });
+      
+      if (response.data && response.data.data && response.data.data.access_token) {
+        log(`Успешно получен токен администратора Directus`, 'social-publishing');
+        return response.data.data.access_token;
       }
       
-      // 3. Последний вариант - использовать getAuthToken напрямую
-      try {
-        const token = await directusAuthManager.getAuthToken(adminUserId);
-        if (token) {
-          log(`Получен токен администратора через getAuthToken`, 'social-publishing');
-          return token;
-        }
-      } catch (e) {
-        log(`Не удалось получить токен через getAuthToken: ${e}`, 'social-publishing');
-      }
-      
-      // 4. Запасной метод - прямой запрос к API Directus (старый способ)
-      if (email && password) {
-        try {
-          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
-          
-          const response = await axios.post(`${directusUrl}/auth/login`, {
-            email,
-            password
-          });
-          
-          if (response.data && response.data.data && response.data.data.access_token) {
-            log(`Успешно получен токен администратора через прямой API запрос`, 'social-publishing');
-            return response.data.data.access_token;
-          }
-        } catch (error: any) {
-          log(`Ошибка при получении токена администратора через API: ${error.message}`, 'social-publishing');
-        }
-      }
-      
-      log(`Не удалось получить токен администратора Directus ни одним из способов`, 'social-publishing');
+      log(`Не удалось получить токен администратора Directus: Неверный формат ответа`, 'social-publishing');
       return null;
     } catch (error: any) {
       log(`Ошибка при получении токена администратора Directus: ${error.message}`, 'social-publishing');

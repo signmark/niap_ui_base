@@ -203,7 +203,7 @@ export class SocialPublishingWithImgurService {
         const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
           chat_id: formattedChatId,
           media: mediaGroup
-        , parse_mode: "HTML"}, {
+        }, {
           headers: { 'Content-Type': 'application/json' },
           timeout: 60000,
           validateStatus: () => true
@@ -270,42 +270,8 @@ export class SocialPublishingWithImgurService {
     const originalLength = content.length;
     
     try {
-      log(`Начало форматирования HTML для Telegram. Длина исходного контента: ${originalLength}`, 'social-publishing');
-      
-      // Используем две стратегии форматирования
-      
-      // 1. Пробуем использовать улучшенный конвертер из редактора в Telegram
-      try {
-        // Динамически импортируем модуль для преобразования HTML из редактора
-        // Если модуль существует, используем его
-        // @ts-ignore - игнорируем ошибку типа для dynamic import
-        const editorToTelegramModule = require('../utils/editor-to-telegram-converter.js');
-        
-        if (editorToTelegramModule && editorToTelegramModule.convertEditorToTelegram) {
-          // Используем специализированный конвертер для редактора
-          const formattedText = editorToTelegramModule.convertEditorToTelegram(content);
-          log(`Используем улучшенный конвертер editor-to-telegram-converter. Длина результата: ${formattedText.length}`, 'social-publishing');
-          
-          // Проверяем результат
-          const hasBalancedTags = this.checkTagsBalance(formattedText);
-          if (hasBalancedTags) {
-            log(`Теги сбалансированы, возвращаем результат улучшенного конвертера`, 'social-publishing');
-            return formattedText;
-          } else {
-            log(`Теги не сбалансированы в результате улучшенного конвертера, используем резервный метод`, 'social-publishing');
-          }
-        }
-      } catch (importError) {
-        log(`Не удалось использовать улучшенный конвертер: ${importError.message}. Используем стандартный метод.`, 'social-publishing');
-      }
-      
-      // 2. Если улучшенный конвертер недоступен или вернул некорректный результат, 
-      // используем стандартный метод форматирования
-      
       // Telegram поддерживает только ограниченный набор HTML-тегов:
       // <b>, <strong>, <i>, <em>, <u>, <s>, <strike>, <code>, <pre>, <a href="...">
-      
-      log(`Используем стандартный метод форматирования HTML для Telegram`, 'social-publishing');
       
       // Сначала преобразуем маркдаун в HTML для Telegram
       let formattedText = content
@@ -318,28 +284,24 @@ export class SocialPublishingWithImgurService {
         
         // Преобразуем блочные элементы в понятный Telegram формат
         .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n\n')
-        .replace(/<div[^>]*>(.*?)<\/div>/g, '$1\n')
-        .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
+        .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+        .replace(/<div>(.*?)<\/div>/g, '$1\n')
+        .replace(/<h[1-6]>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
         
         // Приводим HTML-теги к поддерживаемым в Telegram форматам
-        .replace(/<strong[^>]*>(.*?)<\/strong>/g, '<b>$1</b>')
-        .replace(/<em[^>]*>(.*?)<\/em>/g, '<i>$1</i>')
-        .replace(/<strike[^>]*>(.*?)<\/strike>/g, '<s>$1</s>')
-        .replace(/<del[^>]*>(.*?)<\/del>/g, '<s>$1</s>')
-        .replace(/<ins[^>]*>(.*?)<\/ins>/g, '<u>$1</u>')
+        .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
+        .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
+        .replace(/<ins>(.*?)<\/ins>/g, '<u>$1</u>')
         
-        // Обработка span с inline-стилями
-        .replace(/<span[^>]*?style\s*=\s*["'][^"']*?font-style\s*:\s*italic[^"']*?["'][^>]*>(.*?)<\/span>/gi, '<i>$1</i>')
-        .replace(/<span[^>]*?style\s*=\s*["'][^"']*?font-weight\s*:\s*(bold|[6-9]00)[^"']*?["'][^>]*>(.*?)<\/span>/gi, '<b>$2</b>')
-        
-        // Улучшенная обработка списков
-        .replace(/<ul[^>]*>([^]*?)<\/ul>/g, '$1')
-        .replace(/<ol[^>]*>([^]*?)<\/ol>/g, '$1')
-        .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1\n')
+        // Улучшенная обработка списков (без флага s для совместимости)
+        .replace(/<ul>([^]*?)<\/ul>/g, '$1')
+        .replace(/<ol>([^]*?)<\/ol>/g, '$1')
+        .replace(/<li>(.*?)<\/li>/g, '• $1\n')
         
         // Обрабатываем ссылки по формату Telegram
-        .replace(/<a\s+href\s*=\s*["'](.*?)["'].*?>(.*?)<\/a>/g, '<a href="$1">$2</a>');
+        .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>');
       
       // Telegram не поддерживает вложенные теги одного типа, исправляем это
       // Например: <b>жирный <b>вложенный</b> текст</b> -> <b>жирный вложенный текст</b>
@@ -351,13 +313,21 @@ export class SocialPublishingWithImgurService {
       formattedText = formattedText.replace(/<(\/?(?!b|strong|i|em|u|s|strike|code|pre|a\b)[^>]+)>/gi, '');
       
       // Проверяем правильность HTML (закрытые теги)
-      const hasBalancedTags = this.checkTagsBalance(formattedText);
+      const openTags = (formattedText.match(/<([a-z]+)[^>]*>/gi) || []).map(tag => 
+        tag.replace(/<([a-z]+)[^>]*>/i, '$1').toLowerCase()
+      );
       
-      if (!hasBalancedTags) {
-        log(`Внимание: HTML-теги не сбалансированы. Применяем дополнительное исправление.`, 'social-publishing');
+      const closeTags = (formattedText.match(/<\/([a-z]+)>/gi) || []).map(tag => 
+        tag.replace(/<\/([a-z]+)>/i, '$1').toLowerCase()
+      );
+      
+      // Если количество открывающих и закрывающих тегов не совпадает,
+      // может возникнуть ошибка при отправке. Логируем это.
+      if (openTags.length !== closeTags.length) {
+        log(`Внимание: количество открывающих (${openTags.length}) и закрывающих (${closeTags.length}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
         
-        // Пытаемся исправить незакрытые теги
-        formattedText = this.fixUnclosedTags(formattedText);
+        // В случае дисбаланса можно дополнительно удалить HTML-форматирование,
+        // но сейчас мы просто логируем для отладки и возвращаем текст как есть
       }
       
       log(`Форматирование текста для Telegram: было ${originalLength} символов, стало ${formattedText.length}`, 'social-publishing');
@@ -366,105 +336,6 @@ export class SocialPublishingWithImgurService {
       log(`Ошибка при форматировании текста для Telegram: ${error}. Возвращаем исходный текст.`, 'social-publishing');
       return content; // В случае ошибки возвращаем исходный текст
     }
-  }
-  
-  /**
-   * Проверяет баланс открывающих и закрывающих HTML-тегов
-   * @param html HTML-текст для проверки
-   * @returns true, если теги сбалансированы, иначе false
-   */
-  private checkTagsBalance(html: string): boolean {
-    if (!html) return true;
-    
-    // Находим все открывающие и закрывающие теги
-    const openTags = (html.match(/<([a-z]+)[^>]*>/gi) || []).map(tag => 
-      tag.replace(/<([a-z]+)[^>]*>/i, '$1').toLowerCase()
-    );
-    
-    const closeTags = (html.match(/<\/([a-z]+)>/gi) || []).map(tag => 
-      tag.replace(/<\/([a-z]+)>/i, '$1').toLowerCase()
-    );
-    
-    // Проверяем баланс
-    if (openTags.length !== closeTags.length) {
-      log(`Количество открывающих (${openTags.length}) и закрывающих (${closeTags.length}) тегов не совпадает`, 'social-publishing');
-      return false;
-    }
-    
-    // Дополнительно проверяем совпадение самих тегов
-    const openTagsCopy = [...openTags].sort();
-    const closeTagsCopy = [...closeTags].sort();
-    
-    for (let i = 0; i < openTagsCopy.length; i++) {
-      if (openTagsCopy[i] !== closeTagsCopy[i]) {
-        log(`Несоответствие тегов: открывающий <${openTagsCopy[i]}> и закрывающий </${closeTagsCopy[i]}>`, 'social-publishing');
-        return false;
-      }
-    }
-    
-    return true;
-  }
-  
-  /**
-   * Исправляет незакрытые HTML-теги в тексте
-   * @param html HTML-текст для исправления
-   * @returns Исправленный HTML-текст
-   */
-  private fixUnclosedTags(html: string): string {
-    // Список поддерживаемых Telegram тегов
-    const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
-    
-    // Стек для отслеживания открытых тегов
-    const tagStack: string[] = [];
-    
-    // Обрабатываем HTML для обнаружения и закрытия незакрытых тегов
-    let result = '';
-    let inTag = false;
-    let currentTag = '';
-    let isClosingTag = false;
-    
-    for (let i = 0; i < html.length; i++) {
-      const char = html[i];
-      
-      if (char === '<') {
-        inTag = true;
-        currentTag = '';
-        isClosingTag = html[i + 1] === '/';
-        result += char;
-      } else if (char === '>' && inTag) {
-        inTag = false;
-        result += char;
-        
-        // Обрабатываем закрытие тега
-        if (isClosingTag) {
-          const tagName = currentTag.replace('/', '').trim();
-          
-          // Если стек не пуст и верхний элемент совпадает с закрываемым тегом
-          if (tagStack.length > 0 && tagStack[tagStack.length - 1] === tagName) {
-            tagStack.pop(); // Корректно закрытый тег, удаляем из стека
-          } else {
-            // Некорректное закрытие тега, игнорируем
-            log(`Игнорирование некорректного закрытия тега: ${tagName}`, 'social-publishing');
-          }
-        } else if (supportedTags.includes(currentTag.split(' ')[0].trim()) && !currentTag.endsWith('/')) {
-          // Открывающий тег, добавляем в стек
-          tagStack.push(currentTag.split(' ')[0].trim());
-        }
-      } else if (inTag) {
-        currentTag += char;
-        result += char;
-      } else {
-        result += char;
-      }
-    }
-    
-    // Закрываем все незакрытые теги
-    for (let i = tagStack.length - 1; i >= 0; i--) {
-      result += `</${tagStack[i]}>`;
-      log(`Закрываем незакрытый тег: ${tagStack[i]}`, 'social-publishing');
-    }
-    
-    return result;
   }
   
   /**
@@ -482,63 +353,52 @@ export class SocialPublishingWithImgurService {
       
       log(`Подготовка текста для Telegram, исходная длина: ${content.length} символов`, 'social-publishing');
       
-      // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем, содержит ли текст уже прямые HTML-теги Telegram
-      const containsTelegramTags = /<(b|i|u|s|code|pre|a\s+href=)/i.test(content);
-      
-      if (containsTelegramTags) {
-        log(`Обнаружены прямые HTML-теги Telegram в контенте, пропускаем преобразование редакторского формата`, 'social-publishing');
-        
-        // Очистка текста от скрытых спец-символов
-        const cleanContent = content
-          .replace(/\u200B/g, '') // Zero-width space
-          .replace(/\u200C/g, '') // Zero-width non-joiner
-          .replace(/\u200D/g, '') // Zero-width joiner
-          .replace(/\uFEFF/g, ''); // Zero-width no-break space
-        
-        // Проверяем баланс тегов и при необходимости исправляем незакрытые теги
-        if (!this.checkTagsBalance(cleanContent)) {
-          log(`Обнаружены незакрытые HTML-теги в прямом контенте Telegram, исправляем...`, 'social-publishing');
-          const fixedContent = this.fixUnclosedTags(cleanContent);
-          
-          // Проверяем на слишком длинные строки без пробелов
-          this.checkForLongWords(fixedContent);
-          
-          // Проверяем длину контента
-          if (fixedContent.length > maxLength) {
-            return this.truncateTextSafely(fixedContent, maxLength);
-          }
-          
-          return fixedContent;
-        }
-        
-        // Проверяем на слишком длинные строки без пробелов
-        this.checkForLongWords(cleanContent);
-        
-        // Проверяем длину контента
-        if (cleanContent.length > maxLength) {
-          return this.truncateTextSafely(cleanContent, maxLength);
-        }
-        
-        return cleanContent;
-      }
-      
-      // Стандартный путь обработки для контента без прямых тегов Telegram
-      // Очистка текста от скрытых спец-символов
+      // Очистка текста от скрытых спец-символов, которые могут вызвать проблемы
+      // в кодировке при отправке в Telegram
       const cleanContent = content
         .replace(/\u200B/g, '') // Zero-width space
         .replace(/\u200C/g, '') // Zero-width non-joiner
         .replace(/\u200D/g, '') // Zero-width joiner
         .replace(/\uFEFF/g, ''); // Zero-width no-break space
       
-      // Форматируем текст для Telegram с поддержкой HTML
+      // Сначала форматируем текст для Telegram с поддержкой HTML
       const formattedText = this.formatTextForTelegram(cleanContent);
       
-      // Проверка на слишком длинные строки без пробелов
-      this.checkForLongWords(formattedText);
+      // Проверка на слишком длинные строки без пробелов (они могут вызвать проблемы при рендеринге)
+      const longWordsFound = formattedText.match(/[^\s]{100,}/g);
+      if (longWordsFound && longWordsFound.length > 0) {
+        log(`Внимание: найдены слишком длинные строки без пробелов (${longWordsFound.length}): ${longWordsFound[0].substring(0, 50)}...`, 'social-publishing');
+      }
       
-      // Проверяем длину контента
+      // Затем проверяем общую длину и обрезаем при необходимости
       if (formattedText.length > maxLength) {
-        return this.truncateTextSafely(formattedText, maxLength);
+        log(`Текст превышает максимальную длину ${maxLength}. Исходная длина: ${formattedText.length}, будет обрезан`, 'social-publishing');
+        
+        // Обрезаем текст до последнего полного предложения или абзаца
+        // чтобы избежать обрыва посреди предложения
+        let truncatedText = formattedText.substring(0, maxLength - 3);
+        
+        // Ищем последний символ конца предложения или абзаца
+        let lastSentenceEnd = Math.max(
+          truncatedText.lastIndexOf('. '),
+          truncatedText.lastIndexOf('! '),
+          truncatedText.lastIndexOf('? '),
+          truncatedText.lastIndexOf('.\n'),
+          truncatedText.lastIndexOf('!\n'),
+          truncatedText.lastIndexOf('?\n'),
+          truncatedText.lastIndexOf('\n\n')
+        );
+        
+        // Если нашли подходящее место для разрыва, обрезаем там
+        if (lastSentenceEnd > maxLength * 0.8) { // Не обрезаем слишком рано
+          truncatedText = truncatedText.substring(0, lastSentenceEnd + 1);
+        }
+        
+        // Добавляем многоточие, чтобы показать, что текст обрезан
+        truncatedText += '...';
+        
+        log(`Текст обрезан до ${truncatedText.length} символов`, 'social-publishing');
+        return truncatedText;
       }
       
       return formattedText;
@@ -550,55 +410,6 @@ export class SocialPublishingWithImgurService {
       }
       return content || '';
     }
-  }
-  
-  /**
-   * Проверяет наличие слишком длинных слов в тексте
-   * @param text Текст для проверки
-   */
-  private checkForLongWords(text: string): void {
-    const longWordsFound = text.match(/[^\s]{100,}/g);
-    if (longWordsFound && longWordsFound.length > 0) {
-      log(`Внимание: найдены слишком длинные строки без пробелов (${longWordsFound.length}): ${longWordsFound[0].substring(0, 50)}...`, 'social-publishing');
-    }
-  }
-  
-  /**
-   * Безопасно обрезает текст, сохраняя целостность предложений и форматирования
-   * @param text Текст для обрезки
-   * @param maxLength Максимальная длина
-   * @returns Обрезанный текст
-   */
-  private truncateTextSafely(text: string, maxLength: number): string {
-    log(`Текст превышает максимальную длину ${maxLength}. Исходная длина: ${text.length}, будет обрезан`, 'social-publishing');
-    
-    // Обрезаем текст до последнего полного предложения или абзаца
-    let truncatedText = text.substring(0, maxLength - 3);
-    
-    // Ищем последний символ конца предложения или абзаца
-    let lastSentenceEnd = Math.max(
-      truncatedText.lastIndexOf('. '),
-      truncatedText.lastIndexOf('! '),
-      truncatedText.lastIndexOf('? '),
-      truncatedText.lastIndexOf('.\n'),
-      truncatedText.lastIndexOf('!\n'),
-      truncatedText.lastIndexOf('?\n'),
-      truncatedText.lastIndexOf('\n\n')
-    );
-    
-    // Если нашли подходящее место для разрыва, обрезаем там
-    if (lastSentenceEnd > maxLength * 0.8) { // Не обрезаем слишком рано
-      truncatedText = truncatedText.substring(0, lastSentenceEnd + 1);
-    }
-    
-    // Проверяем и закрываем все незакрытые HTML-теги
-    truncatedText = this.fixUnclosedTags(truncatedText);
-    
-    // Добавляем многоточие
-    truncatedText += '...';
-    
-    log(`Текст обрезан до ${truncatedText.length} символов`, 'social-publishing');
-    return truncatedText;
   }
   
   /**
@@ -674,18 +485,11 @@ export class SocialPublishingWithImgurService {
           
           log(`Отправка обычного текста в Telegram (без HTML), длина: ${processedPlainText.length} символов`, 'social-publishing');
           
-          // Вместо полного удаления HTML-тегов, пробуем еще раз исправить разметку
-          // и отправить с правильно обработанными тегами
-          
-          // Создаем обработанную версию HTML
-          const processedHtml = this.fixUnclosedTags(text);
-          
-          // Данные запроса с HTML, но после исправления
+          // Тело запроса без указания parse_mode
           const plainMessageBody = {
             chat_id: formattedChatId,
-            text: processedHtml,
-            disable_web_page_preview: true,
-            parse_mode: "HTML"
+            text: processedPlainText,
+            disable_web_page_preview: true
           };
           
           // Отправляем запрос без HTML форматирования
@@ -890,99 +694,6 @@ export class SocialPublishingWithImgurService {
    * @param messageId Опциональный ID сообщения для создания прямой ссылки
    * @returns Корректно форматированный URL
    */
-  /**
-   * Исправляет незакрытые HTML-теги в тексте
-   * @param {string} html HTML-текст для исправления
-   * @returns {string} Исправленный HTML-текст
-   */
-  private fixUnclosedTags(html: string): string {
-    if (!html) return '';
-    
-    log(`Исправление незакрытых тегов в HTML: ${html.substring(0, 50)}...`, 'social-publishing');
-    
-    // Список поддерживаемых в Telegram тегов
-    const supportedTags = ['b', 'strong', 'i', 'em', 'u', 'ins', 'code', 'pre', 's', 'strike', 'del', 'a'];
-    
-    // Соответствие тегов (для стандартизации)
-    const tagMapping: {[key: string]: string} = {
-      'strong': 'b',
-      'em': 'i',
-      'ins': 'u',
-      'strike': 's',
-      'del': 's'
-    };
-    
-    // Стек для отслеживания открытых тегов
-    const openTags: string[] = [];
-    
-    // Регулярное выражение для поиска всех HTML-тегов
-    const tagRegex = /<\/?([a-z][a-z0-9]*)(?: [^>]*)?>/gi;
-    
-    // Подсчет открывающих и закрывающих тегов
-    const openingTagsCount = (html.match(/<[a-z][a-z0-9]*(?:\s[^>]*)?>+/gi) || []).length;
-    const closingTagsCount = (html.match(/<\/[a-z][a-z0-9]*>/gi) || []).length;
-    
-    log(`Исходное количество тегов: открывающие=${openingTagsCount}, закрывающие=${closingTagsCount}`, 'social-publishing');
-    
-    // Если количество открывающих и закрывающих тегов не совпадает,
-    // значит есть незакрытые теги и нужно их исправить
-    if (openingTagsCount !== closingTagsCount) {
-      log(`Внимание: количество открывающих (${openingTagsCount}) и закрывающих (${closingTagsCount}) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.`, 'social-publishing');
-      
-      // Проходим по всем тегам и собираем информацию об открытых/закрытых
-      let match;
-      const matches: {full: string, name: string, isClosing: boolean, index: number}[] = [];
-      while ((match = tagRegex.exec(html)) !== null) {
-        matches.push({
-          full: match[0],
-          name: match[1].toLowerCase(),
-          isClosing: match[0].startsWith('</'),
-          index: match.index
-        });
-      }
-      
-      // Находим незакрытые теги
-      const unclosedTags: string[] = [];
-      for (const tag of matches) {
-        if (!tag.isClosing) {
-          // Это открывающий тег
-          // Проверяем, поддерживается ли он в Telegram
-          if (supportedTags.includes(tag.name) || supportedTags.includes(tagMapping[tag.name])) {
-            // Стандартизируем имя тега
-            const standardTag = tagMapping[tag.name] || tag.name;
-            unclosedTags.push(standardTag);
-          }
-        } else {
-          // Это закрывающий тег
-          // Находим соответствующий открывающий тег и удаляем его из списка незакрытых
-          const standardTag = tagMapping[tag.name] || tag.name;
-          const index = unclosedTags.lastIndexOf(standardTag);
-          if (index !== -1) {
-            unclosedTags.splice(index, 1);
-          }
-        }
-      }
-      
-      // Если остались незакрытые теги, добавляем закрывающие теги в конец
-      if (unclosedTags.length > 0) {
-        log(`Обнаружены незакрытые теги: ${unclosedTags.join(', ')}`, 'social-publishing');
-        
-        let fixedHtml = html;
-        
-        // Добавляем закрывающие теги в обратном порядке
-        for (let i = unclosedTags.length - 1; i >= 0; i--) {
-          fixedHtml += `</${unclosedTags[i]}>`;
-        }
-        
-        return fixedHtml;
-      }
-    }
-    
-    // Если количество тегов совпадает или нет поддерживаемых незакрытых тегов,
-    // возвращаем исходный HTML
-    return html;
-  }
-
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
     // Определяем базовый URL для публичных каналов или приватных чатов
     let baseUrl = '';
@@ -1062,55 +773,34 @@ export class SocialPublishingWithImgurService {
    * @param telegramSettings Настройки Telegram API
    * @returns Результат публикации
    */
-  /**
-   * Публикует контент в Telegram с использованием нового сервиса
-   * Полная переработка с новой логикой форматирования и отправки сообщений
-   */
   async publishToTelegram(
     content: CampaignContent,
     telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    // Импортируем новый сервис для работы с Telegram
-    // @ts-ignore
-    const telegramService = require('./telegram-service-new.js');
-    
-    // Проверяем наличие настроек кампании
-    if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
-      log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
-      return {
-        platform: 'telegram',
-        status: 'failed',
-        publishedAt: null,
-        error: 'Отсутствуют настройки для Telegram (токен или ID чата). Убедитесь, что настройки заданы в кампании.'
-      };
-    }
+    // Переменная для хранения ID последнего отправленного сообщения
+    let lastMessageId: string | number | undefined;
+    // Добавляем расширенное логирование для отладки
+    log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram-debug');
+    log(`Telegram настройки: ${JSON.stringify({
+      hasSettings: !!telegramSettings,
+      hasToken: !!telegramSettings?.token,
+      hasChatId: !!telegramSettings?.chatId,
+      token: telegramSettings?.token ? `${telegramSettings.token.substring(0, 6)}...` : 'отсутствует',
+      chatId: telegramSettings?.chatId || 'отсутствует',
+      campaignId: content.campaignId
+    })}`, 'telegram-debug');
     
     // Расширенное логирование для отладки
-    log(`publishToTelegram вызван для контента: ${content.id}, title: "${content.title || 'без названия'}"`, 'telegram');
+    log(`publishToTelegram вызван для контента ID: ${content.id}, Title: "${content.title}"`, 'social-publishing');
+    log(`Параметры Telegram: ${JSON.stringify({
+      settingsProvided: !!telegramSettings,
+      tokenProvided: !!telegramSettings?.token,
+      chatIdProvided: !!telegramSettings?.chatId,
+      tokenLength: telegramSettings?.token ? telegramSettings.token.length : 0,
+      chatIdValue: telegramSettings?.chatId || 'не задан'
+    })}`, 'social-publishing');
     
-    try {
-      // Обработка дополнительных изображений и загрузка на Imgur
-      let processedContent = this.processAdditionalImages(content, 'telegram');
-      processedContent = await this.uploadImagesToImgur(processedContent);
-      
-      // Делегируем всю работу новому сервису
-      const result = await telegramService.publishContent(processedContent, telegramSettings);
-      
-      return result;
-    } catch (error: any) {
-      log(`Ошибка при публикации в Telegram: ${error.message}`, 'telegram');
-      return {
-        platform: 'telegram',
-        status: 'failed',
-        publishedAt: null,
-        error: `Ошибка при публикации в Telegram: ${error.message}`
-      };
-    }
-  }
-
-  // Функция для публикации в Telegram через API
-  async publishToTelegram(content: CampaignContent, telegramSettings: SocialMediaSettings): Promise<SocialPublication> {
-    // Проверка настроек
+    // Проверяем наличие настроек кампании
     if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
       log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
@@ -1481,7 +1171,7 @@ export class SocialPublishingWithImgurService {
                   const imageOnlyResponse = await axios.post(`${baseUrl}/sendPhoto`, {
                     chat_id: formattedChatId,
                     photo: imageUrl
-                  , parse_mode: "HTML"}, {
+                  }, {
                     headers: { 'Content-Type': 'application/json' },
                     timeout: 30000,
                     validateStatus: () => true
@@ -1535,7 +1225,7 @@ export class SocialPublishingWithImgurService {
             await axios.post(`${baseUrl}/sendPhoto`, {
               chat_id: formattedChatId,
               photo: processedContent.imageUrl
-            , parse_mode: "HTML"}, {
+            }, {
               validateStatus: () => true,
               timeout: 30000
             });
@@ -1633,7 +1323,7 @@ export class SocialPublishingWithImgurService {
                 const mediaResponse = await axios.post(`${baseUrl}/sendMediaGroup`, {
                   chat_id: formattedChatId,
                   media: mediaGroup
-                , parse_mode: "HTML"}, {
+                }, {
                   headers: { 'Content-Type': 'application/json' },
                   timeout: 30000
                 });

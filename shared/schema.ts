@@ -224,24 +224,6 @@ export const campaignContent = pgTable("campaign_content", {
     }
     */
   }),
-  // Информация о публикациях в социальных сетях
-  socialPublications: jsonb("social_publications").default({
-    /*
-    Формат данных:
-    {
-      "instagram": {
-        "status": "pending|published|failed",
-        "publishedAt": "2023-01-01T00:00:00Z",
-        "postId": "123456789",
-        "postUrl": "https://instagram.com/p/123456789/",
-        "error": "Ошибка публикации"
-      },
-      "telegram": { ... },
-      "vk": { ... },
-      "facebook": { ... }
-    }
-    */
-  }),
   metadata: jsonb("metadata").default({}), // Для дополнительных метаданных о контенте
 });
 
@@ -263,7 +245,6 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     scheduledAt: true,
     status: true,
     socialPlatforms: true,
-    socialPublications: true,
     metadata: true
   });
 
