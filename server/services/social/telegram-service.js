@@ -7,7 +7,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import { log } from '../../utils/logger.js';
-import { formatHtmlForTelegram, createImageCaption, splitLongMessage, fixUnclosedTags } from '../../utils/telegram-formatter.js';
+import { formatHtmlForTelegram, splitLongMessage, fixUnclosedTags, createImageCaption } from '../../utils/telegram-formatter.js';
 import { isImageUrl, isImageAccessible, prepareImageUrls, getFullDirectusUrl, isDirectusUrl } from '../../utils/image-utils.js';
 import { safeGet, sleep, isEmpty, isValidUrl, buildUrl } from '../../utils/common-utils.js';
 
