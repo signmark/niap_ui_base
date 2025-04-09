@@ -837,8 +837,18 @@ export class TelegramService {
           // Создаем простое сообщение с минимальным форматированием и сохраненными переносами строк
           let simplifiedHtml = cleanText;
           
+          // Найдем все форматирования и отсортируем их по длине (от большего к меньшему)
+          // Это предотвратит проблему, когда более короткое форматирование 
+          // перезаписывает часть более длинного форматирования
+          const sortedFormattings = [...formattings].sort((a, b) => 
+            b.content.length - a.content.length
+          );
+          
+          // Создаем карту форматирования для каждого символа текста
+          const formattingMap = new Map();
+          
           // Применяем только самое базовое форматирование
-          formattings.forEach(formatting => {
+          sortedFormattings.forEach(formatting => {
             if (formatting.content && simplifiedHtml.includes(formatting.content)) {
               let tag = '';
               
@@ -855,11 +865,19 @@ export class TelegramService {
               }
               
               if (tag) {
-                // Заменяем обычный текст на текст с тегами
-                simplifiedHtml = simplifiedHtml.replace(
-                  formatting.content, 
-                  `<${tag}>${formatting.content}</${tag}>`
-                );
+                // Находим первое вхождение форматируемого текста
+                const startIndex = simplifiedHtml.indexOf(formatting.content);
+                if (startIndex !== -1) {
+                  const endIndex = startIndex + formatting.content.length;
+                  
+                  // Добавляем открывающий тег перед форматируемым текстом
+                  simplifiedHtml = 
+                    simplifiedHtml.slice(0, startIndex) + 
+                    `<${tag}>` + 
+                    simplifiedHtml.slice(startIndex, endIndex) + 
+                    `</${tag}>` + 
+                    simplifiedHtml.slice(endIndex);
+                }
               }
             }
           });
