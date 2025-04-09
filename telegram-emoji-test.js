@@ -1,145 +1,213 @@
 /**
- * Тестовый скрипт для проверки эмодзи и спецсимволов при HTML-форматировании в Telegram
+ * Тестирование обработки эмодзи в HTML-тексте для Telegram
+ * Этот скрипт тестирует преобразование текста с эмодзи для Telegram
+ * 
  * Запуск: node telegram-emoji-test.js
  */
 
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-import { processHtmlForTelegram } from './shared/telegram-html-processor.js';
+import { TelegramService } from './tests/telegram-service-mock.js';
 
-// Загружаем переменные окружения
-dotenv.config();
+// Создаем экземпляр TelegramService для тестирования
+const telegramService = new TelegramService();
 
-// Конфигурация для Telegram
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-// Функция для логирования с временной меткой
-function log(message) {
-  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  console.log(`[${timestamp}] ${message}`);
-}
+// Определяем цвета для вывода в консоль
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m'
+};
 
 /**
- * Отправляет HTML-сообщение в Telegram
- * @param {string} html HTML-текст сообщения
- * @returns {Promise<object>} Результат отправки
+ * Выводит результат теста в консоль
+ * @param {string} name Название теста
+ * @param {string} input Входной HTML
+ * @param {string} expected Ожидаемый результат
+ * @param {string} actual Фактический результат
+ * @returns {boolean} Результат сравнения
  */
-async function sendTelegramMessage(html) {
-  // Обрабатываем HTML для совместимости с Telegram
-  const processedHtml = processHtmlForTelegram(html);
+function printTestResult(name, input, expected, actual) {
+  // Нормализуем строки для более точного сравнения
+  const normalizeString = (str) => {
+    return str.split('\n')
+      .map(line => line.trimEnd())
+      .filter(line => line.length > 0 || line === '')
+      .join('\n')
+      .trim();
+  };
   
-  try {
-    // Отправляем сообщение через Telegram Bot API
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: processedHtml,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      }),
-    });
-    
-    const result = await response.json();
-    
-    if (!result.ok) {
-      throw new Error(`Telegram API error: ${JSON.stringify(result)}`);
-    }
-    
-    return result;
-  } catch (error) {
-    log(`Ошибка при отправке сообщения: ${error.message}`);
-    throw error;
+  const normalizedExpected = normalizeString(expected);
+  const normalizedActual = normalizeString(actual);
+  
+  const success = normalizedExpected === normalizedActual;
+  const statusText = success 
+    ? `${colors.green}✓ ПРОЙДЕН${colors.reset}` 
+    : `${colors.red}✗ ПРОВАЛЕН${colors.reset}`;
+  
+  console.log(`\n${colors.bright}=== Тест: ${name} ===${colors.reset}`);
+  console.log(`${colors.blue}Входной HTML:${colors.reset}\n${input}`);
+  console.log(`\n${colors.blue}Результат:${colors.reset}\n${actual}`);
+  
+  if (!success) {
+    console.log(`\n${colors.yellow}Ожидалось:${colors.reset}\n${expected}`);
   }
+  
+  console.log(`\n${colors.bright}Статус: ${statusText}${colors.reset}`);
+  console.log('='.repeat(80));
+  
+  return success;
 }
 
 /**
- * Проводит тесты с эмодзи и специальными символами
+ * Запускает все тесты
  */
-async function runEmojiTests() {
-  log('Начинаем тесты с эмодзи и спецсимволами в Telegram HTML');
+function runTests() {
+  console.log(`${colors.cyan}========== ТЕСТЫ ОБРАБОТКИ ЭМОДЗИ В HTML ДЛЯ TELEGRAM ==========${colors.reset}`);
   
-  // Специальный HTML-текст для теста эмодзи
-  const emojiTestHtml = `
-<h1>Тест эмодзи и HTML-форматирования 🚀</h1>
-
-<p>Привет! 👋 Это <b>тестовое сообщение</b> для проверки работы с эмодзи в Telegram.</p>
-
-<p>Различные эмодзи в списке:</p>
+  // Массив для сбора результатов тестов
+  const results = [];
+  
+  // Тест 1: Простой текст с эмодзи
+  const simpleEmojiHtml = `<p>🎉 Поздравляем с днем рождения! 🎂</p>`;
+  const expectedSimpleEmoji = `🎉 Поздравляем с днем рождения! 🎂`;
+  
+  const actualSimpleEmoji = telegramService.standardizeTelegramTags(simpleEmojiHtml);
+  results.push(printTestResult(
+    'Простой текст с эмодзи', 
+    simpleEmojiHtml, 
+    expectedSimpleEmoji, 
+    actualSimpleEmoji
+  ));
+  
+  // Тест 2: Форматированный текст с эмодзи
+  const formattedEmojiHtml = `
+<p>🔥 <strong>Горячие новости!</strong> 🔥</p>
+<p>Сегодня в нашем магазине:</p>
 <ul>
-  <li>🔴 <b>Важное</b> сообщение</li>
-  <li>💚 <i>Одобренный</i> контент</li>
-  <li>⚠️ <u>Предупреждение</u> пользователям</li>
-  <li>📱 Мобильная <a href="https://t.me">версия</a></li>
+  <li>🍎 Яблоки со скидкой 20%</li>
+  <li>🍌 Бананы - 2 кг по цене 1</li>
+  <li>🍓 Свежая клубника</li>
 </ul>
-
-<p>Специальные символы:</p>
-<ol>
-  <li>&lt;HTML&gt; символы &amp; амперсанд — тире</li>
-  <li>Кавычки: "двойные" и 'одинарные'</li>
-  <li>Дроби: &frac12; и &frac14; и проценты: 100%</li>
-</ol>
-
-<p>🎉 <b>Эмодзи</b> в <i>разных</i> <u>стилях</u> <s>форматирования</s> текста!</p>
-  `;
-  
-  log('Исходный HTML:');
-  log(emojiTestHtml);
-  
-  // Для случая с эмодзи подготовим готовый форматированный текст
-  const formattedHtml = `<b>Тест эмодзи и HTML-форматирования 🚀</b>
-
-Привет! 👋 Это <b>тестовое сообщение</b> для проверки работы с эмодзи в Telegram.
-
-Различные эмодзи в списке:
-
-• 🔴 <b>Важное</b> сообщение
-• 💚 <i>Одобренный</i> контент
-• ⚠️ <u>Предупреждение</u> пользователям
-• 📱 Мобильная <a href="https://t.me">версия</a>
-
-Специальные символы:
-
-1. &lt;HTML&gt; символы &amp; амперсанд — тире
-2. Кавычки: "двойные" и 'одинарные'
-3. Дроби: &frac12; и &frac14; и проценты: 100%
-
-🎉 <b>Эмодзи</b> в <i>разных</i> <u>стилях</u> <s>форматирования</s> текста!
-
+<p>🛒 Приходите за покупками!</p>
 `;
 
-  try {
-    log('\nОтправка форматированного HTML в Telegram...');
-    const result = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: formattedHtml,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      }),
-    });
-    
-    const response = await result.json();
-    
-    if (response.ok) {
-      log(`Сообщение успешно отправлено! ID сообщения: ${response.result.message_id}`);
-    } else {
-      log(`Ошибка при отправке: ${JSON.stringify(response)}`);
-    }
-  } catch (error) {
-    log(`Ошибка при отправке: ${error.message}`);
+  const expectedFormattedEmoji = `🔥 <b>Горячие новости!</b> 🔥
+
+Сегодня в нашем магазине:
+
+  • 🍎 Яблоки со скидкой 20%
+
+  • 🍌 Бананы - 2 кг по цене 1
+
+  • 🍓 Свежая клубника
+
+🛒 Приходите за покупками!`;
+  
+  const actualFormattedEmoji = telegramService.standardizeTelegramTags(formattedEmojiHtml);
+  results.push(printTestResult(
+    'Форматированный текст с эмодзи', 
+    formattedEmojiHtml, 
+    expectedFormattedEmoji, 
+    actualFormattedEmoji
+  ));
+  
+  // Тест 3: Эмодзи внутри форматированного текста
+  const emojiInFormattedHtml = `
+<p><strong>✨ Специальное предложение ✨</strong></p>
+<p>Только сегодня <em>🔥 горячие скидки 🔥</em> на все товары!</p>
+<p>Успейте купить:</p>
+<ul>
+  <li><strong>📱 Смартфоны</strong> - скидка 15%</li>
+  <li><strong>💻 Ноутбуки</strong> - скидка 10%</li>
+  <li><strong>🎧 Наушники</strong> - скидка 20%</li>
+</ul>
+<p>⏰ Акция действует до конца дня!</p>
+`;
+
+  const expectedEmojiInFormatted = `<b>✨ Специальное предложение ✨</b>
+
+Только сегодня <i>🔥 горячие скидки 🔥</i> на все товары!
+
+Успейте купить:
+
+  • <b>📱 Смартфоны</b> - скидка 15%
+
+  • <b>💻 Ноутбуки</b> - скидка 10%
+
+  • <b>🎧 Наушники</b> - скидка 20%
+
+⏰ Акция действует до конца дня!`;
+  
+  const actualEmojiInFormatted = telegramService.standardizeTelegramTags(emojiInFormattedHtml);
+  results.push(printTestResult(
+    'Эмодзи внутри форматированного текста', 
+    emojiInFormattedHtml, 
+    expectedEmojiInFormatted, 
+    actualEmojiInFormatted
+  ));
+  
+  // Тест 4: Реальный пример рекламного поста с эмодзи
+  const realExampleHtml = `
+<p>🥓 <strong>Внимание, любители хрустящего сала!</strong> 🥓</p>
+<p>Представляем вам уникальный набор для настоящих гурманов:</p>
+<ul>
+  <li>🐖 Сало домашнее копченое</li>
+  <li>🧅 Лук свежий</li>
+  <li>🍞 Хлеб черный деревенский</li>
+  <li>🧂 Соль крупного помола</li>
+</ul>
+<p><em>💯 Все продукты только от проверенных фермеров!</em></p>
+<p>🚚 Доставка по городу - <strong>бесплатно</strong>.</p>
+<p>📞 Заказ по телефону: <strong>+7 (123) 456-78-90</strong></p>
+`;
+
+  const expectedRealExample = `🥓 <b>Внимание, любители хрустящего сала!</b> 🥓
+
+Представляем вам уникальный набор для настоящих гурманов:
+
+  • 🐖 Сало домашнее копченое
+
+  • 🧅 Лук свежий
+
+  • 🍞 Хлеб черный деревенский
+
+  • 🧂 Соль крупного помола
+
+<i>💯 Все продукты только от проверенных фермеров!</i>
+
+🚚 Доставка по городу - <b>бесплатно</b>.
+
+📞 Заказ по телефону: <b>+7 (123) 456-78-90</b>`;
+  
+  const actualRealExample = telegramService.standardizeTelegramTags(realExampleHtml);
+  results.push(printTestResult(
+    'Реальный пример рекламного поста с эмодзи', 
+    realExampleHtml, 
+    expectedRealExample, 
+    actualRealExample
+  ));
+  
+  // Подведение итогов
+  const passed = results.filter(r => r).length;
+  const total = results.length;
+  
+  console.log(`${colors.cyan}========== РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ ==========${colors.reset}`);
+  console.log(`Всего тестов: ${total}`);
+  console.log(`Пройдено: ${passed}`);
+  console.log(`Провалено: ${total - passed}`);
+  
+  if (passed === total) {
+    console.log(`${colors.green}✓ Все тесты пройдены успешно!${colors.reset}`);
+    return true;
+  } else {
+    console.log(`${colors.red}✗ Есть проваленные тесты. Требуется доработка функции.${colors.reset}`);
+    return false;
   }
 }
 
 // Запускаем тесты
-runEmojiTests().catch(error => {
-  log(`Ошибка выполнения тестов: ${error.message}`);
-});
+runTests();

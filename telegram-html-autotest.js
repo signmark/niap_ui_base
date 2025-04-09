@@ -1,164 +1,161 @@
 /**
- * Автоматический тест для проверки HTML-форматирования в Telegram
- * Скрипт отправляет различные HTML-конструкции в Telegram и проверяет корректность форматирования
+ * Автоматизированные тесты функции standardizeTelegramTags в TelegramService
+ * Этот скрипт тестирует обработку HTML из редактора для отправки в Telegram
+ * 
  * Запуск: node telegram-html-autotest.js
  */
 
-const axios = require('axios');
-const fs = require('fs/promises');
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { TelegramService } from './tests/telegram-service-mock.js';
 
-// Настройки теста
-const config = {
-  // API URL приложения
-  apiUrl: 'http://localhost:5000',
-  // ID кампании для тестирования (с настроенным подключением к Telegram)
-  campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e',
-  // Путь к файлу с результатами
-  resultPath: './telegram-html-test-results.json',
-  // Маршруты API для тестирования
-  endpoints: {
-    formatClientHtml: '/api/test/format-client-html',
-    telegramEmojiHtml: '/api/test/telegram-emoji-html'
-  }
+// Получаем путь к текущей директории
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Создаем экземпляр TelegramService для тестирования
+const telegramService = new TelegramService();
+
+/**
+ * Цветной вывод в консоль
+ */
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m'
 };
 
-// Тестовые случаи для различных HTML-конструкций
-const testCases = [
-  {
-    name: 'Базовые HTML-теги',
-    html: '<p>Параграф с <b>жирным текстом</b>, <i>курсивом</i> и <u>подчеркиванием</u>.</p>'
-  },
-  {
-    name: 'Эквивалентные HTML-теги',
-    html: '<p>Текст с <strong>жирным через strong</strong>, <em>курсивом через em</em>, <ins>подчеркиванием через ins</ins> и <del>зачеркиванием через del</del>.</p>'
-  },
-  {
-    name: 'Вложенные теги',
-    html: '<p>Текст с <b>жирным <i>и курсивным</i></b> форматированием.</p>'
-  },
-  {
-    name: 'HTML-списки',
-    html: '<ul><li>Первый пункт</li><li>Второй пункт</li><li>Третий пункт</li></ul>'
-  },
-  {
-    name: 'Заголовки',
-    html: '<h1>Заголовок первого уровня</h1><h2>Заголовок второго уровня</h2><h3>Заголовок третьего уровня</h3>'
-  },
-  {
-    name: 'Ссылки',
-    html: '<p>Текст со <a href="https://example.com">ссылкой на сайт</a>.</p>'
-  },
-  {
-    name: 'Незакрытые теги',
-    html: '<p>Текст с <b>жирным <i>и курсивным форматированием без закрытия b-тега.</p>'
-  },
-  {
-    name: 'Эмодзи',
-    html: '<p>Текст с эмодзи 😀 👍 🎉</p>'
-  },
-  {
-    name: 'Комбинированный текст с HTML и эмодзи',
-    html: '<p>Тестовое сообщение с <b>жирным текстом</b>, <i>курсивом</i>, эмодзи 🎉 и <a href="https://example.com">ссылкой</a>.</p>'
-  },
-  {
-    name: 'Текст с переносами строк',
-    html: '<p>Первый параграф</p><p>Второй параграф</p><p>Третий параграф</p>'
-  }
-];
-
 /**
- * Форматирует текст на стороне клиента через API
- * @param {string} html HTML для форматирования
- * @returns {Promise<Object>} Результат форматирования
+ * Выводит результат теста с цветным форматированием
+ * @param {string} name Название теста
+ * @param {boolean} status Результат теста (true = успех)
+ * @param {string} expected Ожидаемый результат
+ * @param {string} actual Фактический результат
  */
-async function formatClientHtml(html) {
-  try {
-    const response = await axios.post(`${config.apiUrl}${config.endpoints.formatClientHtml}`, { html });
-    return response.data;
-  } catch (error) {
-    console.error(`Ошибка при форматировании HTML: ${error.message}`);
-    return { success: false, error: error.message };
+function printTestResult(name, status, expected, actual) {
+  const statusText = status
+    ? `${colors.green}✓ ПРОЙДЕН${colors.reset}`
+    : `${colors.red}✗ ПРОВАЛЕН${colors.reset}`;
+  
+  console.log(`${colors.bright}Тест: ${name}${colors.reset}`);
+  console.log(`Статус: ${statusText}`);
+  
+  if (!status) {
+    console.log(`${colors.yellow}Ожидалось:${colors.reset}\n"${expected}"`);
+    console.log(`${colors.yellow}Получено:${colors.reset}\n"${actual}"`);
   }
+  
+  console.log('-'.repeat(80));
 }
 
 /**
- * Отправляет текст в Telegram через API
- * @param {string} text Текст для отправки
- * @returns {Promise<Object>} Результат отправки
+ * Запускает тест для конкретного HTML
+ * @param {string} name Название теста
+ * @param {string} input Входной HTML
+ * @param {string} expected Ожидаемый результат
+ * @returns {boolean} Результат теста
  */
-async function sendToTelegram(text) {
-  try {
-    const response = await axios.post(`${config.apiUrl}${config.endpoints.telegramEmojiHtml}`, {
-      text,
-      campaignId: config.campaignId
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Ошибка при отправке в Telegram: ${error.message}`);
-    return { success: false, error: error.message };
-  }
+function runTest(name, input, expected) {
+  const actual = telegramService.standardizeTelegramTags(input);
+  const success = actual === expected;
+  
+  printTestResult(name, success, expected, actual);
+  
+  return success;
 }
 
 /**
- * Запускает все тесты и сохраняет результаты
+ * Запускает все тесты
  */
-async function runAllTests() {
-  console.log('🚀 Запуск автоматического тестирования HTML-форматирования для Telegram');
-  console.log(`📋 Всего тестовых случаев: ${testCases.length}`);
-  console.log('───────────────────────────────────────────────');
-
+function runAllTests() {
+  console.log(`${colors.cyan}========== Автотесты обработки HTML для Telegram ==========${colors.reset}`);
+  
+  // Массив для хранения результатов тестов
   const results = [];
-  for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
-    console.log(`⏳ [${i + 1}/${testCases.length}] Тестирование: ${testCase.name}`);
-    
-    // 1. Форматируем текст через клиентский API
-    console.log(`   🔄 Форматирование HTML...`);
-    const formatResult = await formatClientHtml(testCase.html);
-    
-    // 2. Отправляем форматированный текст в Telegram через API
-    console.log(`   📤 Отправка в Telegram...`);
-    let sendResult;
-    
-    if (formatResult.success) {
-      sendResult = await sendToTelegram(testCase.html);
-    } else {
-      sendResult = {
-        success: false,
-        error: 'Не удалось отформатировать HTML'
-      };
-    }
-    
-    // 3. Формируем результат для данного тестового случая
-    const testResult = {
-      testCase: testCase.name,
-      originalHtml: testCase.html,
-      formatResult,
-      sendResult,
-      status: sendResult.success ? 'SUCCESS' : 'FAILED',
-      timestamp: new Date().toISOString()
-    };
-    
-    results.push(testResult);
-    
-    // 4. Выводим результаты теста
-    console.log(`   ${sendResult.success ? '✅ УСПЕХ' : '❌ ОШИБКА'}: ${sendResult.success ? 'Сообщение отправлено' : sendResult.error}`);
-    if (sendResult.success && sendResult.message_url) {
-      console.log(`   🔗 URL сообщения: ${sendResult.message_url}`);
-    }
-    console.log('───────────────────────────────────────────────');
+  
+  // Тест 1: Преобразование paragraph в текст с переносами строк
+  results.push(runTest(
+    'Преобразование абзацев',
+    '<p>Первый абзац</p><p>Второй абзац</p>',
+    'Первый абзац\nВторой абзац'
+  ));
+  
+  // Тест 2: Преобразование форматирующих тегов
+  results.push(runTest(
+    'Преобразование форматирующих тегов',
+    '<p><strong>Жирный</strong> и <em>курсив</em> в абзаце</p>',
+    '<b>Жирный</b> и <i>курсив</i> в абзаце'
+  ));
+  
+  // Тест 3: Обработка списков
+  results.push(runTest(
+    'Обработка списков',
+    '<ul><li>Первый пункт</li><li>Второй пункт</li></ul>',
+    '• Первый пункт\n• Второй пункт'
+  ));
+  
+  // Тест 4: Смешанное форматирование
+  results.push(runTest(
+    'Смешанное форматирование',
+    '<p><strong>Важно:</strong> текст с <em>выделением</em> и <u>подчеркиванием</u></p>',
+    '<b>Важно:</b> текст с <i>выделением</i> и <u>подчеркиванием</u>'
+  ));
+  
+  // Тест 5: Удаление неподдерживаемых тегов
+  results.push(runTest(
+    'Удаление неподдерживаемых тегов',
+    '<p>Текст с <span style="color: red;">цветным</span> оформлением</p>',
+    'Текст с цветным оформлением'
+  ));
+  
+  // Тест 6: Сохранение ссылок
+  results.push(runTest(
+    'Сохранение ссылок',
+    '<p>Текст с <a href="https://example.com">ссылкой</a></p>',
+    'Текст с <a href="https://example.com">ссылкой</a>'
+  ));
+  
+  // Тест 7: Исправление незакрытых тегов
+  results.push(runTest(
+    'Исправление незакрытых тегов',
+    '<p>Текст с <b>незакрытым тегом</p>',
+    'Текст с <b>незакрытым тегом\n</b>'
+  ));
+  
+  // Тест 8: Первый абзац как italic
+  results.push(runTest(
+    'Первый абзац как курсив',
+    '<p>Первый абзац</p><p>Второй абзац</p>',
+    'Первый абзац\nВторой абзац'
+  ));
+  
+  // Тест 9: Комплексный пример
+  results.push(runTest(
+    'Комплексный пример',
+    '<p><strong>Заголовок</strong></p><p>Обычный текст</p><ul><li><em>Пункт</em> списка</li></ul>',
+    '<b>Заголовок</b>\nОбычный текст\n\n• <i>Пункт</i> списка\n'
+  ));
+  
+  // Подведение итогов
+  const passed = results.filter(r => r).length;
+  const total = results.length;
+  
+  console.log(`${colors.cyan}========== Результаты тестирования ==========${colors.reset}`);
+  console.log(`Всего тестов: ${total}`);
+  console.log(`Пройдено: ${passed}`);
+  console.log(`Провалено: ${total - passed}`);
+  
+  if (passed === total) {
+    console.log(`${colors.green}✓ Все тесты пройдены успешно!${colors.reset}`);
+  } else {
+    console.log(`${colors.red}✗ Некоторые тесты провалены. Требуется доработка.${colors.reset}`);
   }
-  
-  // Сохраняем результаты тестов в файл
-  await fs.writeFile(config.resultPath, JSON.stringify(results, null, 2));
-  console.log(`📊 Результаты тестирования сохранены в файл: ${config.resultPath}`);
-  
-  // Выводим общую статистику
-  const successCount = results.filter(r => r.status === 'SUCCESS').length;
-  console.log(`📈 Всего тестов: ${results.length}, Успешных: ${successCount}, Неудачных: ${results.length - successCount}`);
 }
 
-// Запускаем тесты
-runAllTests().catch(error => {
-  console.error('❌ Ошибка при выполнении тестов:', error);
-});
+// Запуск тестов
+runAllTests();
