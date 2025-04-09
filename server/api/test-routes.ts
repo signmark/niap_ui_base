@@ -10,6 +10,7 @@ import express, { Request, Response } from 'express';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { telegramService } from '../services/social/telegram-service';
+import { formatHtmlForTelegram } from '../utils/telegram-formatter';
 import { CampaignContent } from '../../shared/types';
 
 // Создаем роутер
@@ -65,7 +66,7 @@ router.post('/raw-html-telegram', async (req: Request, res: Response) => {
     // Если autoFixHtml=true, предварительно исправляем незакрытые теги
     if (autoFixHtml) {
       // Используем агрессивный метод для исправления всех возможных проблем с HTML тегами
-      processedText = telegramService.aggressiveTagFixer(text);
+      processedText = formatHtmlForTelegram(text);
       console.log(`[Test API] Текст после агрессивного исправления HTML: ${processedText.substring(0, 100)}${processedText.length > 100 ? '...' : ''}`);
     }
     
@@ -141,7 +142,7 @@ router.post('/optimized-platform-publish', async (req: Request, res: Response) =
     console.log(`[Test API] Контент: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
     
     // Применяем агрессивное исправление HTML к контенту для повышения надежности
-    let processedContent = telegramService.aggressiveTagFixer(content);
+    let processedContent = formatHtmlForTelegram(content);
     console.log(`[Test API] Контент после агрессивного исправления HTML: ${processedContent.substring(0, 100)}${processedContent.length > 100 ? '...' : ''}`);
     
     // Создаем тестовый контент для публикации
@@ -384,7 +385,7 @@ router.post('/telegram-html', async (req: Request, res: Response) => {
     telegramService.initialize(telegramToken, telegramChatId);
     
     // Используем агрессивный метод исправления HTML перед отправкой
-    const processedHtml = telegramService.aggressiveTagFixer(html);
+    const processedHtml = formatHtmlForTelegram(html);
     console.log(`[Test API] Обработанный HTML (первые 100 символов): ${processedHtml.substring(0, 100)}...`);
     
     // Отправляем сообщение в Telegram
@@ -438,7 +439,7 @@ router.post('/fix-html', (req: Request, res: Response) => {
     // Определяем метод исправления в зависимости от режима
     let fixedText;
     if (aggressive) {
-      fixedText = telegramService.aggressiveTagFixer(text);
+      fixedText = formatHtmlForTelegram(text);
       console.log(`[Test API] Результат агрессивного исправления: ${fixedText}`);
     } else {
       fixedText = telegramService.fixUnclosedTags(text);

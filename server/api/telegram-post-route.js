@@ -41,13 +41,21 @@ router.post('/raw-html-telegram', async (req, res) => {
     // Инициализируем сервис
     telegramService.initialize(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID);
     
+    // Если требуется автоматическое исправление HTML, применяем форматирование
+    let processedText = text;
+    if (autoFixHtml) {
+      processedText = formatHtmlForTelegram(text);
+      log(`Текст после агрессивного исправления HTML: ${processedText.substring(0, 100)}...`, 'telegram');
+    }
+    
     // Отправляем сообщение
-    const result = await telegramService.sendTextMessage(text);
+    const result = await telegramService.sendTextMessage(processedText);
     
     return res.json({
       success: true,
       messageId: result.messageId,
-      messageUrl: result.messageUrl
+      messageUrl: result.messageUrl,
+      text: processedText
     });
   } catch (error) {
     log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'api');

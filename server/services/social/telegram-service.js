@@ -85,18 +85,61 @@ export class TelegramService {
    */
   async sendTextMessage(text, options = {}) {
     try {
-      const formattedText = formatHtmlForTelegram(text);
+      // Преобразуем только основные теги (strong -> b, em -> i)
+      const processedText = this.standardizeTelegramTags(text);
       
       // Проверяем длину сообщения
-      if (formattedText.length > 4096) {
-        return await this.sendLongTextMessage(formattedText);
+      if (processedText.length > 4096) {
+        // Разбиваем длинное сообщение на части по 4000 символов
+        const parts = [];
+        for (let i = 0; i < processedText.length; i += 4000) {
+          parts.push(processedText.substring(i, i + 4000));
+        }
+        
+        const messageIds = [];
+        let firstMessageUrl = '';
+        
+        // Отправляем каждую часть последовательно
+        for (let i = 0; i < parts.length; i++) {
+          const url = `${this.apiUrl}${this.token}/sendMessage`;
+          
+          const params = {
+            chat_id: this.chatId,
+            text: parts[i],
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+          };
+          
+          const response = await axios.post(url, params);
+          
+          if (response.data.ok) {
+            const messageId = response.data.result.message_id;
+            messageIds.push(messageId);
+            
+            // Сохраняем URL первого сообщения
+            if (i === 0) {
+              firstMessageUrl = this.generateMessageUrl(messageId);
+            }
+            
+            // Добавляем задержку между отправками сообщений
+            if (i < parts.length - 1) {
+              await sleep(500);
+            }
+          }
+        }
+        
+        return {
+          success: true,
+          messageIds,
+          messageUrl: firstMessageUrl
+        };
       }
       
       const url = `${this.apiUrl}${this.token}/sendMessage`;
       
       const params = {
         chat_id: this.chatId,
-        text: formattedText,
+        text: processedText,
         parse_mode: 'HTML',
         disable_web_page_preview: options.disablePreview || false
       };
@@ -134,17 +177,25 @@ export class TelegramService {
    */
   async sendLongTextMessage(text) {
     try {
-      const messageParts = splitLongMessage(text);
+      // Преобразуем HTML-теги перед разбивкой сообщения
+      const processedText = this.standardizeTelegramTags(text);
+    
+      // Разбиваем длинное сообщение на части по 4000 символов
+      const parts = [];
+      for (let i = 0; i < processedText.length; i += 4000) {
+        parts.push(processedText.substring(i, i + 4000));
+      }
+      
       const messageIds = [];
       let firstMessageUrl = '';
       
       // Отправляем каждую часть сообщения последовательно
-      for (let i = 0; i < messageParts.length; i++) {
+      for (let i = 0; i < parts.length; i++) {
         const url = `${this.apiUrl}${this.token}/sendMessage`;
         
         const params = {
           chat_id: this.chatId,
-          text: messageParts[i],
+          text: parts[i],
           parse_mode: 'HTML',
           disable_web_page_preview: true
         };
@@ -161,7 +212,7 @@ export class TelegramService {
           }
           
           // Добавляем задержку между отправками сообщений, чтобы избежать ограничений API
-          if (i < messageParts.length - 1) {
+          if (i < parts.length - 1) {
             await sleep(500);
           }
         } else {
@@ -389,8 +440,8 @@ export class TelegramService {
         fullContent += content.content;
       }
       
-      // Форматируем контент, удаляя нераспознаваемые HTML-теги и правильно закрывая распознаваемые
-      const formattedContent = formatHtmlForTelegram(fullContent);
+      // Используем контент как есть, без форматирования
+      const formattedContent = fullContent;
       
       // Определяем, есть ли у контента изображения
       const mainImageUrl = content.imageUrl || '';
@@ -510,19 +561,14 @@ export class TelegramService {
    */
   async sendRawHtmlToTelegram(html, options = {}) {
     try {
-      // Форматируем HTML для Telegram
-      const formattedHtml = formatHtmlForTelegram(html);
-      
-      // Проверяем длину сообщения
-      if (formattedHtml.length > 4096) {
-        return await this.sendLongTextMessage(formattedHtml);
-      }
+      // Просто отправляем HTML как есть
+      log(`Отправка HTML-текста как есть, без обработки`, 'telegram');
       
       const url = `${this.apiUrl}${this.token}/sendMessage`;
       
       const params = {
         chat_id: this.chatId,
-        text: formattedHtml,
+        text: html,
         parse_mode: 'HTML',
         disable_web_page_preview: options.disablePreview || false
       };
@@ -561,22 +607,42 @@ export class TelegramService {
   }
   
   /**
-   * Агрессивно исправляет HTML-теги для Telegram
-   * @param {string} html HTML-текст для исправления
-   * @returns {string} Исправленный HTML-текст
+   * Преобразует стандартные HTML-теги в теги, поддерживаемые Telegram
+   * @param {string} html HTML-текст для преобразования
+   * @returns {string} Преобразованный HTML-текст
    */
-  aggressiveTagFixer(html) {
+  standardizeTelegramTags(html) {
     try {
       if (!html) return '';
+
+      // Обрабатываем списки, преобразуя их в читаемый текст для Telegram
+      let result = html;
       
-      // Используем функцию formatHtmlForTelegram из telegram-formatter.js
-      const fixedHtml = formatHtmlForTelegram(html);
+      // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
+      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+        // Заменяем каждый элемент списка на строку с маркером (• или -)
+        const formattedList = listContent
+          .replace(/<li>([\s\S]*?)<\/li>/g, '\n• $1')
+          .replace(/<\/?[^>]+(>|$)/g, '') // Удаляем все оставшиеся HTML-теги внутри элементов списка
+          .trim();
+        
+        return '\n' + formattedList + '\n';
+      });
       
-      log(`HTML-текст успешно исправлен с помощью агрессивного фиксера`, 'telegram');
+      // Заменяем стандартные HTML-теги на Telegram-совместимые
+      result = result
+        .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+        .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+        .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
+        .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
+        // Удаляем другие HTML-теги, которые не поддерживаются в Telegram
+        .replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
+        
+      log(`HTML-теги успешно преобразованы в формат Telegram`, 'telegram');
       
-      return fixedHtml;
+      return result;
     } catch (error) {
-      log(`Ошибка при агрессивном исправлении HTML: ${error.message}`, 'telegram');
+      log(`Ошибка при преобразовании HTML-тегов: ${error.message}`, 'telegram');
       return html; // В случае ошибки возвращаем исходный текст
     }
   }
