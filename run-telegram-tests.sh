@@ -123,6 +123,10 @@ if [ "$ALL" = true ] || [ "$SIMPLE" = true ]; then
   echo -e "${YELLOW}Выполнение тестов API приложения...${NC}"
   node telegram-api-test.js
   check_result "Выполнение тестов API приложения"
+  
+  echo -e "${YELLOW}Выполнение продвинутых тестов форматирования...${NC}"
+  node telegram-format-advanced-test.js
+  check_result "Выполнение продвинутых тестов форматирования"
 fi
 
 # Запуск тестов с изображениями
