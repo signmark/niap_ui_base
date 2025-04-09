@@ -149,6 +149,36 @@ function convertListsToText(html) {
 }
 
 /**
+ * Добавляет переносы строк между последовательными тегами форматирования
+ * @param {string} html HTML-текст для обработки
+ * @returns {string} HTML-текст с переносами строк между последовательными тегами
+ */
+function addLinebreaksBetweenFormattingTags(html) {
+  const closingTagRegex = /<\/(b|i|u|s|code)>/gi;
+  let lastIndex = 0;
+  let result = '';
+  let match;
+  
+  while ((match = closingTagRegex.exec(html)) !== null) {
+    const endOfTag = match.index + match[0].length;
+    // Добавляем текст до конца закрывающего тега включительно
+    result += html.substring(lastIndex, endOfTag);
+    
+    // Проверяем, идет ли сразу после закрывающего тега открывающий тег форматирования
+    if (endOfTag < html.length && html.substring(endOfTag, endOfTag + 3).match(/<[biusc]/i)) {
+      result += '\n\n';
+    }
+    
+    lastIndex = endOfTag;
+  }
+  
+  // Добавляем оставшуюся часть текста
+  result += html.substring(lastIndex);
+  
+  return result;
+}
+
+/**
  * Нормализует форматирующие теги для Telegram
  * @param {string} html Исходный HTML
  * @returns {string} HTML с нормализованными тегами
@@ -176,6 +206,10 @@ function normalizeFormattingTags(html) {
       result = result.replace(attributeRegex, `<${tag}>`);
     }
   }
+  
+  // Добавляем переносы строк между последовательными форматирующими тегами
+  // Используем более надежный алгоритм с функцией обратного вызова
+  result = addLinebreaksBetweenFormattingTags(result);
   
   return result;
 }
@@ -271,6 +305,10 @@ function cleanupText(html) {
     }
     return `${g1} ${g2}`;
   });
+  
+  // Добавляем пробелы между закрывающими тегами форматирования и открывающими
+  // внутри одного блока текста, например <b>один</b><u>тест</u>
+  result = result.replace(/(<\/(b|i|u|s|code)>)(<(b|i|u|s|code)>)/gi, '$1 $3');
   
   // Добавляем пробелы между текстом и маркерами списка
   result = result.replace(/([a-zA-Zа-яА-Я0-9.,:;!?])•/g, '$1\n\n•');
