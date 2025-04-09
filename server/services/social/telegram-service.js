@@ -554,13 +554,26 @@ export class TelegramService {
       }
       
       if (content.content) {
-        // Просто добавляем контент как есть - никаких дополнительных преобразований
-        fullContent += content.content;
-        log(`Используем исходный HTML из редактора без модификаций`, 'telegram');
+        // МАКСИМАЛЬНО ПРОСТОЙ ПОДХОД: берём контент из БД как есть, минимум обработки
+        // Только фиксим незакрытые теги и абзацы для красивого отображения
+        
+        // Слегка упрощаем, заменяя только параграфы и стандартные HTML-теги на теги Telegram
+        let contentHTML = content.content
+          .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+          .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+          .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
+          .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
+          .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
+          .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>');
+          
+        // Добавляем к полному контенту  
+        fullContent += contentHTML;
+        log(`Контент из БД добавлен с минимальными изменениями`, 'telegram');
+        log(`Первые 100 символов: ${contentHTML.substring(0, 100)}...`, 'telegram');
       }
       
-      // Контент передается как есть - будет использован тот формат, который создан в редакторе
-      const formattedContent = fullContent;
+      // Исправляем незакрытые теги простым алгоритмом из успешного теста
+      let formattedContent = this.fixUnclosedTags(fullContent);
       
       // Определяем, есть ли у контента изображения
       const mainImageUrl = content.imageUrl || '';
