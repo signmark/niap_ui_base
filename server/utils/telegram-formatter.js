@@ -54,19 +54,87 @@ export function formatHtmlForTelegram(htmlContent) {
 }
 
 /**
- * Заменяет маркеры списков на символы
+ * Заменяет маркеры списков на символы с учетом уровня вложенности
  * @param {string} html HTML-текст для обработки
  * @returns {string} Обработанный HTML-текст
  */
 function replaceBulletPoints(html) {
-  // Заменяем различные варианты маркеров списка
-  let result = html
-    .replace(/<li>/gi, '• ')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<ul>/gi, '\n')
-    .replace(/<\/ul>/gi, '\n')
-    .replace(/<ol>/gi, '\n')
-    .replace(/<\/ol>/gi, '\n');
+  // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
+  let result = html;
+  
+  // Рекурсивно обрабатываем вложенные списки начиная с самых глубоких
+  // Для этого используем функцию, которая обрабатывает все списки в тексте
+  function processLists(text) {
+    // Текущая глубина вложенности
+    let currentLevel = 0;
+    
+    // Маркеры для разных уровней вложенности
+    const markers = ['•', '◦', '▪', '▫', '⁃'];
+    
+    // Стек для отслеживания вложенности списков
+    const listStack = [];
+    
+    // Результирующий текст
+    let result = '';
+    
+    // Разбиваем HTML на токены (открывающие/закрывающие теги и текст)
+    const tokens = text.split(/(<\/?(?:ul|ol|li)[^>]*>)/gi);
+    
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      
+      // Пропускаем пустые токены
+      if (!token.trim()) continue;
+      
+      // Обрабатываем открывающий тег ul/ol
+      if (token.match(/<(ul|ol)[^>]*>/i)) {
+        listStack.push(token.match(/<(ul|ol)[^>]*>/i)[1].toLowerCase());
+        currentLevel = listStack.length;
+        continue;
+      }
+      
+      // Обрабатываем закрывающий тег ul/ol
+      if (token.match(/<\/(ul|ol)[^>]*>/i)) {
+        listStack.pop();
+        currentLevel = listStack.length;
+        continue;
+      }
+      
+      // Обрабатываем открывающий тег li
+      if (token.match(/<li[^>]*>/i)) {
+        // Добавляем перенос строки и отступ в зависимости от уровня вложенности
+        const indent = '    '.repeat(currentLevel - 1);
+        const marker = markers[Math.min(currentLevel - 1, markers.length - 1)];
+        result += `\n${indent}${marker} `;
+        continue;
+      }
+      
+      // Обрабатываем закрывающий тег li
+      if (token.match(/<\/li>/i)) {
+        continue;
+      }
+      
+      // Остальные токены добавляем без изменений
+      result += token;
+    }
+    
+    return result;
+  }
+  
+  // Обрабатываем все списки в тексте
+  result = processLists(result);
+  
+  // Удаляем оставшиеся HTML-теги списков, если они остались
+  result = result
+    .replace(/<\/?li[^>]*>/gi, '')
+    .replace(/<\/?ul[^>]*>/gi, '')
+    .replace(/<\/?ol[^>]*>/gi, '');
+  
+  // Удаляем лишние пробелы в начале строк и множественные переносы строк
+  result = result
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+/gm, '')
+    .replace(/\n+$/, '');
   
   return result;
 }
@@ -194,9 +262,14 @@ function enhanceFormatting(html) {
     .replace(/<\/p>\s*<p>/gi, '\n\n')        // Между параграфами добавляем двойной перенос
     .replace(/<p>\s*([^<]*)\s*<\/p>/gi, '$1\n\n');  // Параграфы заменяем на их содержимое и двойной перенос
   
-  // Добавляем отступы для списков
-  result = result
-    .replace(/•/g, '  \n• ');  // Добавляем отступ для маркеров списка
+  // Добавляем отступы для разных маркеров списка
+  const markers = ['•', '◦', '▪', '▫', '⁃'];
+  for (const marker of markers) {
+    // Для каждого маркера создаем регулярное выражение
+    const regex = new RegExp(`(\\s*)(${marker})(\\s*)`, 'g');
+    // Добавляем перенос строки перед маркером и сохраняем отступы
+    result = result.replace(regex, '$1\n$2 ');
+  }
   
   return result;
 }
@@ -207,6 +280,10 @@ function enhanceFormatting(html) {
  * @returns {string} Подготовленная подпись к изображению
  */
 export function createImageCaption(html) {
+  // Применяем специальную обработку для улучшения отображения списков в подписях
+  // Используем ту же функцию, что и для обычного текста, но с особенностями для подписей
+  
+  // Применяем стандартное форматирование HTML для всего контента
   const formattedHtml = formatHtmlForTelegram(html);
   
   // Telegram ограничивает длину подписи 1024 символами
@@ -218,7 +295,51 @@ export function createImageCaption(html) {
   }
   
   // Иначе обрезаем до лимита и добавляем многоточие
-  return formattedHtml.substring(0, TELEGRAM_CAPTION_LIMIT - 3) + '...';
+  // Но при этом стараемся сохранить целостность форматирования
+  
+  // Находим последнюю открытую тег в обрезанном тексте
+  const partialText = formattedHtml.substring(0, TELEGRAM_CAPTION_LIMIT - 3);
+  const openTagRegex = /<([a-z][a-z0-9]*)[^>]*>/gi;
+  const closeTagRegex = /<\/([a-z][a-z0-9]*)[^>]*>/gi;
+  
+  // Получаем все открывающие и закрывающие теги
+  const openTags = [];
+  const closeTags = [];
+  let match;
+  
+  // Сначала находим все открывающие теги
+  while ((match = openTagRegex.exec(partialText)) !== null) {
+    openTags.push(match[1].toLowerCase());
+  }
+  
+  // Затем находим все закрывающие теги
+  while ((match = closeTagRegex.exec(partialText)) !== null) {
+    closeTags.push(match[1].toLowerCase());
+  }
+  
+  // Для каждого открывающего тега, который не имеет закрывающего,
+  // добавляем закрывающий в конец обрезанного текста
+  const unclosedTags = [];
+  for (const tag of openTags) {
+    // Удаляем из списка закрытые теги
+    const closeIndex = closeTags.indexOf(tag);
+    if (closeIndex !== -1) {
+      closeTags.splice(closeIndex, 1);
+    } else {
+      // Если тег не найден среди закрывающих, добавляем его в список незакрытых
+      unclosedTags.unshift(tag);
+    }
+  }
+  
+  // Формируем закрывающие теги
+  let closingTags = '';
+  for (const tag of unclosedTags) {
+    if (ALLOWED_TAGS.includes(tag)) {
+      closingTags += `</${tag}>`;
+    }
+  }
+  
+  return partialText + closingTags + '...';
 }
 
 /**
