@@ -73,47 +73,93 @@ export function fixUnclosedTags(html: string): string {
 export function formatHtmlForTelegram(htmlContent: string): string {
   if (!htmlContent) return '';
   
-  let html = htmlContent;
+  let result = htmlContent;
   
-  // Шаг 1: Конвертируем блочные элементы
-  // p в текст с переносом строки
-  html = html.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n');
+  // Сначала удаляем неподдерживаемые теги и их содержимое
+  const unsupportedBlockTags = ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'font'];
+  for (const tag of unsupportedBlockTags) {
+    // Удаляем открывающие и закрывающие теги, оставляя содержимое
+    const openTagRegex = new RegExp(`<${tag}[^>]*>`, 'gi');
+    const closeTagRegex = new RegExp(`</${tag}>`, 'gi');
+    result = result.replace(openTagRegex, '');
+    result = result.replace(closeTagRegex, '');
+  }
   
-  // div в текст без дополнительных переносов
-  html = html.replace(/<div[^>]*>(.*?)<\/div>/gi, '$1');
+  // Обрабатываем блочные элементы
+  result = result.replace(/<p[^>]*>(.*?)<\/p>/gis, '$1\n\n');
+  result = result.replace(/<div[^>]*>(.*?)<\/div>/gis, '$1\n');
+  result = result.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, '$1\n\n');
   
-  // Шаг 2: Конвертируем списки
-  // Убираем теги ul/ol
-  html = html.replace(/<\/?ul[^>]*>/gi, '');
-  html = html.replace(/<\/?ol[^>]*>/gi, '');
+  // Обрабатываем списки
+  result = result.replace(/<li[^>]*>(.*?)<\/li>/gis, '• $1\n');
   
-  // Преобразуем элементы списка в текст с маркером
-  html = html.replace(/<li[^>]*>(.*?)<\/li>/gi, '• $1\n');
+  // Заменяем тег <br> и <br/> на перенос строки
+  result = result.replace(/<br\s*\/?>/gi, '\n');
   
-  // Шаг 3: Конвертируем стандартные форматирующие теги
-  // strong/b в <b>
-  html = html.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '<b>$1</b>');
+  // Конвертируем стандартные форматирующие теги
+  result = result.replace(/<strong[^>]*>(.*?)<\/strong>/gis, '<b>$1</b>');
+  result = result.replace(/<em[^>]*>(.*?)<\/em>/gis, '<i>$1</i>');
+  result = result.replace(/<(s|strike|del)[^>]*>(.*?)<\/\1>/gis, '<s>$2</s>');
   
-  // em/i в <i>
-  html = html.replace(/<em[^>]*>(.*?)<\/em>/gi, '<i>$1</i>');
+  // Исправляем незакрытые теги и управляем вложенностью
+  const allowedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
+  const stack: string[] = [];
   
-  // s/strike/del в <s>
-  html = html.replace(/<(s|strike|del)[^>]*>(.*?)<\/\1>/gi, '<s>$2</s>');
+  // Находим все теги
+  result = result.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (match, tagName) => {
+    const tag = tagName.toLowerCase();
+    
+    // Преобразование эквивалентных тегов
+    let normalizedTag = tag;
+    if (tag === 'strong') normalizedTag = 'b';
+    if (tag === 'em') normalizedTag = 'i';
+    if (tag === 'strike') normalizedTag = 's';
+    if (tag === 'del') normalizedTag = 's';
+    
+    // Если тег не поддерживается, удаляем его
+    if (!allowedTags.includes(normalizedTag)) {
+      return '';
+    }
+    
+    // Если это закрывающий тег
+    if (match.startsWith('</')) {
+      if (stack.length > 0 && stack[stack.length - 1] === normalizedTag) {
+        stack.pop(); // Удаляем из стека
+        return `</${normalizedTag}>`; // Возвращаем нормализованный закрывающий тег
+      }
+      return ''; // Удаляем несоответствующий закрывающий тег
+    } 
+    // Если это открывающий тег
+    else {
+      // Если тег a, сохраняем только href
+      if (normalizedTag === 'a') {
+        const hrefMatch = match.match(/href=["']([^"']*)["']/i);
+        if (hrefMatch) {
+          stack.push('a');
+          return `<a href="${hrefMatch[1]}">`;
+        }
+        return ''; // Если нет href, удаляем тег
+      }
+      
+      // Для других поддерживаемых тегов, сохраняем только имя тега
+      stack.push(normalizedTag);
+      return `<${normalizedTag}>`;
+    }
+  });
   
-  // Шаг 4: Удаляем лишние атрибуты из тегов
-  // Удаляем все атрибуты из b, i, u, s, code, pre
-  html = html.replace(/<(b|i|u|s|code|pre)(?:\s+[^>]*)?>/gi, '<$1>');
+  // Закрываем все оставшиеся открытые теги
+  while (stack.length > 0) {
+    const tag = stack.pop();
+    if (tag) {
+      result += `</${tag}>`;
+    }
+  }
   
-  // Сохраняем только href в теге a
-  html = html.replace(/<a[^>]*href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi, '<a href="$1">$2</a>');
+  // Удаляем лишние пробелы и переносы
+  result = result.replace(/\n{3,}/g, '\n\n');
+  result = result.replace(/^\s+|\s+$/g, '');
   
-  // Шаг 5: Исправляем незакрытые теги
-  html = fixUnclosedTags(html);
-  
-  // Шаг 6: Удаляем лишние переносы строк
-  html = html.replace(/\n{3,}/g, '\n\n');
-  
-  return html.trim();
+  return result;
 }
 
 /**
