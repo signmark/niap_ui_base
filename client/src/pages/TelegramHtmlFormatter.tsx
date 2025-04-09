@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export default function TelegramHtmlFormatter() {
@@ -16,6 +16,9 @@ export default function TelegramHtmlFormatter() {
   const [formattedHtml, setFormattedHtml] = useState<string>("");
   const [sendResult, setSendResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("format");
+  
+  // Получаем доступ к toast
+  const { toast } = useToast();
 
   const formatHtml = async () => {
     if (!html) {

@@ -179,10 +179,16 @@ app.use((req, res, next) => {
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
     
-    // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
-    // log("Registering Telegram test routes...");
-    // app.use('/api/test', testRouter);
-    // log("Telegram test routes registered successfully");
+    // Регистрируем тестовые маршруты для Telegram
+    log("Registering Telegram test routes...");
+    app.use('/api/test', testRouter);
+    log("Telegram test routes registered successfully");
+    
+    // Регистрируем маршруты для работы с HTML в Telegram
+    log("Registering Telegram HTML formatting routes...");
+    app.use('/api/telegram-html', telegramHtmlRouter);
+    app.use('/api/telegram-html-test', telegramHtmlTestRouter);
+    log("Telegram HTML formatting routes registered successfully");
     
     console.log("Route registration completed");
     log("Routes registered successfully");

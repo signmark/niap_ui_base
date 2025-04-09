@@ -649,17 +649,29 @@ export class TelegramService {
       log(`Форматирование HTML для Telegram: ${html.substring(0, 100)}...`, 'telegram');
       log(`HTML теги перед обработкой: ${(html.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
 
-      // Сначала обработаем p-теги
-      let result = html
-        .replace(/<p>([\s\S]*?)<\/p>/g, '$1\n\n')
+      let result = html;
+      
+      // Используем пошаговый подход для правильной обработки вложенных тегов
+      
+      // Шаг 1: Предварительная обработка вложенных комбинаций тегов
+      // Обрабатываем сложные вложенные комбинации до обработки основных тегов
+      
+      // Обрабатываем <strong><em>...</em></strong> и <em><strong>...</strong></em>
+      result = result
+        .replace(/<strong><em>([\s\S]*?)<\/em><\/strong>/g, '<b><i>$1</i></b>')
+        .replace(/<em><strong>([\s\S]*?)<\/strong><\/em>/g, '<i><b>$1</b></i>');
+      
+      // Шаг 2: Обработка параграфов (<p> тегов)
+      result = result
         .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n')
         .replace(/<\/?p[^>]*>/g, ''); // Удаляем любые незакрытые или оставшиеся p теги
       
+      // Шаг 3: Обработка списков с сохранением форматирования внутри элементов списка
       // Обрабатываем вложенные списки
-      result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-        // Заменяем каждый li элемент на строку с маркером
+      result = result.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+        // Заменяем каждый li элемент, сохраняя форматирование внутри
         const formattedList = listContent
-          .replace(/<li>([\s\S]*?)<\/li>/g, '\n• $1')
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '\n• $1')
           .replace(/<\/?li[^>]*>/g, '') // Удаляем любые незакрытые li теги
           .trim();
         
@@ -671,19 +683,38 @@ export class TelegramService {
         .replace(/<\/?ul[^>]*>/g, '')
         .replace(/<\/?li[^>]*>/g, '');
         
-      // Заменяем стандартные HTML-теги на Telegram-совместимые
+      // Шаг 4: Замена стандартных HTML-тегов на Telegram-совместимые
+      // Рекурсивно обрабатываем теги, чтобы не потерять вложенные конструкции
+      
+      // Заменяем <strong> на <b>
+      while (result.match(/<strong[^>]*>([\s\S]*?)<\/strong>/)) {
+        result = result.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/g, '<b>$1</b>');
+      }
+      
+      // Заменяем <em> на <i>
+      while (result.match(/<em[^>]*>([\s\S]*?)<\/em>/)) {
+        result = result.replace(/<em[^>]*>([\s\S]*?)<\/em>/g, '<i>$1</i>');
+      }
+      
+      // Шаг 5: Обработка <br> тегов и других специальных элементов
       result = result
-        .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
-        .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>');
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<hr\s*\/?>/g, '\n---\n');
         
       // Логируем промежуточный результат после всех замен
       log(`Промежуточный результат: ${result.substring(0, 100)}...`, 'telegram');
       log(`HTML теги после замены: ${(result.match(/<[^>]+>/g) || []).slice(0, 5).join(', ')}`, 'telegram');
       
-      // НЕ перезаписываем теги b/i, которые уже присутствуют
+      // Шаг 6: Очистка от неподдерживаемых тегов
+      // НЕ перезаписываем теги b/i/u/s/code/pre/a, которые уже присутствуют
       // Удаляем другие HTML-теги, которые не поддерживаются в Telegram
       result = result
         .replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
+      
+      // Шаг 7: Удаление лишних пробелов и переносов строк
+      result = result
+        .replace(/\n{3,}/g, '\n\n')    // Не более двух переносов подряд
+        .replace(/^\s+|\s+$/g, '');    // Удаляем начальные и конечные пробелы
         
       // Логируем результат после всех преобразований
       log(`Финальный результат: ${result.substring(0, 100)}...`, 'telegram');
