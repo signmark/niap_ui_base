@@ -112,7 +112,7 @@ function cleanupHtmlAttributes(html) {
  * @param {string} html HTML-текст для исправления
  * @returns {string} Исправленный HTML-текст
  */
-function fixUnclosedTags(html) {
+export function fixUnclosedTags(html) {
   const stack = [];
   let result = html;
   

@@ -7,7 +7,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import { log } from '../../utils/logger.js';
-import { formatHtmlForTelegram, createImageCaption, splitLongMessage } from '../../utils/telegram-formatter.js';
+import { formatHtmlForTelegram, createImageCaption, splitLongMessage, fixUnclosedTags } from '../../utils/telegram-formatter.js';
 import { isImageUrl, isImageAccessible, prepareImageUrls, getFullDirectusUrl, isDirectusUrl } from '../../utils/image-utils.js';
 import { safeGet, sleep, isEmpty, isValidUrl, buildUrl } from '../../utils/common-utils.js';
 
@@ -20,6 +20,7 @@ export class TelegramService {
     this.chatId = '';
     this.apiUrl = 'https://api.telegram.org/bot';
     this.chatUsername = '';
+    this.lastMessageId = null;
   }
   
   /**
@@ -497,6 +498,164 @@ export class TelegramService {
       return result;
     } catch (error) {
       log(`Ошибка при публикации контента в Telegram: ${error.message}`, 'telegram');
+      throw error;
+    }
+  }
+
+  /**
+   * Отправляет сырой HTML-текст в Telegram
+   * @param {string} html HTML-текст для отправки
+   * @param {Object} options Дополнительные параметры
+   * @returns {Promise<Object>} Результат отправки
+   */
+  async sendRawHtmlToTelegram(html, options = {}) {
+    try {
+      // Форматируем HTML для Telegram
+      const formattedHtml = formatHtmlForTelegram(html);
+      
+      // Проверяем длину сообщения
+      if (formattedHtml.length > 4096) {
+        return await this.sendLongTextMessage(formattedHtml);
+      }
+      
+      const url = `${this.apiUrl}${this.token}/sendMessage`;
+      
+      const params = {
+        chat_id: this.chatId,
+        text: formattedHtml,
+        parse_mode: 'HTML',
+        disable_web_page_preview: options.disablePreview || false
+      };
+      
+      // Получаем информацию о чате для создания URL
+      await this.getChatInfo();
+      
+      const response = await axios.post(url, params);
+      
+      if (response.data.ok) {
+        const messageId = response.data.result.message_id;
+        const messageUrl = this.generateMessageUrl(messageId);
+        
+        this.lastMessageId = messageId;
+        
+        log(`HTML-сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
+        
+        return {
+          success: true,
+          messageId,
+          messageUrl,
+          result: response.data.result
+        };
+      } else {
+        throw new Error(`Telegram API error: ${response.data.description}`);
+      }
+    } catch (error) {
+      log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'telegram');
+      
+      return {
+        success: false,
+        error: error.message,
+        stack: error.stack
+      };
+    }
+  }
+  
+  /**
+   * Агрессивно исправляет HTML-теги для Telegram
+   * @param {string} html HTML-текст для исправления
+   * @returns {string} Исправленный HTML-текст
+   */
+  aggressiveTagFixer(html) {
+    try {
+      if (!html) return '';
+      
+      // Используем функцию formatHtmlForTelegram из telegram-formatter.js
+      const fixedHtml = formatHtmlForTelegram(html);
+      
+      log(`HTML-текст успешно исправлен с помощью агрессивного фиксера`, 'telegram');
+      
+      return fixedHtml;
+    } catch (error) {
+      log(`Ошибка при агрессивном исправлении HTML: ${error.message}`, 'telegram');
+      return html; // В случае ошибки возвращаем исходный текст
+    }
+  }
+  
+  /**
+   * Исправляет незакрытые HTML-теги
+   * @param {string} html HTML-текст для исправления
+   * @returns {string} Исправленный HTML-текст
+   */
+  fixUnclosedTags(html) {
+    try {
+      if (!html) return '';
+      
+      // Используем функцию fixUnclosedTags из telegram-formatter.js
+      const fixedHtml = fixUnclosedTags(html);
+      
+      log(`HTML-теги успешно исправлены`, 'telegram');
+      
+      return fixedHtml;
+    } catch (error) {
+      log(`Ошибка при исправлении HTML-тегов: ${error.message}`, 'telegram');
+      return html; // В случае ошибки возвращаем исходный текст
+    }
+  }
+  
+  /**
+   * Публикует контент в Telegram и обновляет статус публикации
+   * Адаптер для интеграции с новой версией publishContent
+   * @param {Object} content Контент для публикации
+   * @param {Object} settings Настройки публикации
+   * @returns {Promise<Object>} Результат публикации
+   */
+  async publishToPlatform(content, settings = {}) {
+    try {
+      // Вызываем метод publishContent с переданными параметрами
+      const result = await this.publishContent(content, settings);
+      
+      // Адаптируем ответ для совместимости с тестовым API
+      return {
+        success: true,
+        messageId: Array.isArray(result.messageIds) ? result.messageIds[0] : result.messageId,
+        postUrl: result.messageUrl,
+        status: 'published',
+        publishedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      log(`Ошибка при публикации в Telegram: ${error.message}`, 'telegram');
+      
+      return {
+        success: false,
+        error: error.message,
+        status: 'failed'
+      };
+    }
+  }
+  
+  /**
+   * Обновляет статус публикации в Telegram
+   * @param {string} contentId ID контента
+   * @param {Object} result Результат публикации
+   * @returns {Promise<Object>} Обновленный статус
+   */
+  async updatePublicationStatus(contentId, result) {
+    try {
+      // В данной реализации просто возвращаем обновленный статус
+      // В реальном приложении здесь может быть логика обновления статуса в базе данных
+      return {
+        id: contentId,
+        social_publications: {
+          telegram: {
+            status: result.success ? 'published' : 'failed',
+            publishedAt: result.success ? new Date().toISOString() : null,
+            postUrl: result.postUrl || null,
+            error: result.error || null
+          }
+        }
+      };
+    } catch (error) {
+      log(`Ошибка при обновлении статуса публикации: ${error.message}`, 'telegram');
       throw error;
     }
   }
