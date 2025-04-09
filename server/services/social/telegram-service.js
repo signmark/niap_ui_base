@@ -555,20 +555,37 @@ export class TelegramService {
       
       if (content.content) {
         // МАКСИМАЛЬНО ПРОСТОЙ ПОДХОД: берём контент из БД как есть, минимум обработки
-        // Только фиксим незакрытые теги и абзацы для красивого отображения
+        // Но обязательно обрабатываем параграфы и другие не поддерживаемые Telegram теги
         
-        // Слегка упрощаем, заменяя только параграфы и стандартные HTML-теги на теги Telegram
-        let contentHTML = content.content
+        let contentHTML = content.content;
+        
+        // Сначала преобразуем параграфы в текст с двойными переносами строк
+        contentHTML = contentHTML
+          .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n')
+          .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
+          .replace(/<br\s*\/?>/g, '\n')
+          .replace(/<ul[^>]*>/g, '\n')
+          .replace(/<\/ul>/g, '\n')
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
+          
+        // Теперь заменяем стандартные HTML-теги на теги Telegram
+        // ИМЕННО В ТАКОМ ПОРЯДКЕ, сначала преобразуем все форматирование
+        contentHTML = contentHTML
           .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
           .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
           .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
           .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
           .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
           .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>');
-          
+         
+        // НЕ удаляем форматирование, сохраняем поддерживаемые Telegram теги
+        
+        // Нормализуем переносы строк (не более двух подряд)
+        contentHTML = contentHTML.replace(/\n{3,}/g, '\n\n');
+        
         // Добавляем к полному контенту  
         fullContent += contentHTML;
-        log(`Контент из БД добавлен с минимальными изменениями`, 'telegram');
+        log(`Контент из БД обработан для Telegram`, 'telegram');
         log(`Первые 100 символов: ${contentHTML.substring(0, 100)}...`, 'telegram');
       }
       
