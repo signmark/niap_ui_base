@@ -448,8 +448,30 @@ export class PublishScheduler {
       for (const content of publishReadyContent) {
         log(`Публикация контента ${content.id} "${content.title}"...`, 'scheduler');
         try {
-          // Передаем токен авторизации в метод публикации
-          await this.publishContent(content, authToken);
+          // Дополнительно проверяем существование контента непосредственно перед публикацией
+          try {
+            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const checkResponse = await axios.get(
+              `${directusUrl}/items/campaign_content/${content.id}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (!checkResponse?.data?.data) {
+              log(`Контент ${content.id} не найден при финальной проверке, пропускаем публикацию`, 'scheduler');
+              continue;
+            }
+            
+            // Передаем токен авторизации в метод публикации
+            await this.publishContent(content, authToken);
+          } catch (checkError: any) {
+            log(`Ошибка при финальной проверке контента ${content.id}: ${checkError.message}, пропускаем публикацию`, 'scheduler');
+            continue;
+          }
         } catch (pubError: any) {
           log(`Ошибка при публикации контента ${content.id}: ${pubError.message}`, 'scheduler');
           // Продолжаем с другими контентами
