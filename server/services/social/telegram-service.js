@@ -554,10 +554,12 @@ export class TelegramService {
       }
       
       if (content.content) {
+        // Просто добавляем контент как есть - никаких дополнительных преобразований
         fullContent += content.content;
+        log(`Используем исходный HTML из редактора без модификаций`, 'telegram');
       }
       
-      // Используем контент как есть, без форматирования
+      // Контент передается как есть - будет использован тот формат, который создан в редакторе
       const formattedContent = fullContent;
       
       // Определяем, есть ли у контента изображения
@@ -840,15 +842,28 @@ export class TelegramService {
           // Создаем простое сообщение с минимальным форматированием и сохраненными переносами строк
           let simplifiedHtml = cleanText;
           
-          // Проверяем наш исходный контент на наличие слишком больших кусков форматирования
-          // Если форматирование занимает больше 60% текста, скорее всего это ошибка
+          // Полностью отключаем жирный шрифт и выделения для этого конкретного контента
+          // В будущем можно сделать выделение только для коротких фрагментов (например, заголовков)
+          
+          // Отфильтровываем все форматирования, оставляя только очень короткие фрагменты
           const contentLength = cleanText.length;
           const filteredFormattings = formattings.filter(format => {
-            const isLengthReasonable = format.content.length <= contentLength * 0.6;
-            if (!isLengthReasonable) {
-              log(`Отклонено подозрительное форматирование (${format.type}): длина ${format.content.length} из ${contentLength} символов`, 'telegram');
+            // Критерий 1: Оставляем только очень короткие выделения (не более 10% от текста)
+            const isVeryShort = format.content.length <= contentLength * 0.1;
+            
+            // Критерий 2: Не должно пересекать абзацы
+            const doesNotCrossParagraphs = !format.content.includes('\n');
+            
+            // Критерий 3: Жирный текст должен быть особенно коротким (заголовки, названия)
+            const isBoldAcceptable = (format.type !== 'bold') || (format.content.length <= contentLength * 0.05);
+            
+            // Логируем отклоненные форматирования
+            if (!isVeryShort || !doesNotCrossParagraphs || !isBoldAcceptable) {
+              log(`Отклонено форматирование (${format.type}): длина ${format.content.length} из ${contentLength} символов`, 'telegram');
             }
-            return isLengthReasonable;
+            
+            // Применяем все критерии
+            return isVeryShort && doesNotCrossParagraphs && isBoldAcceptable;
           });
           
           // Найдем все разрешенные форматирования и отсортируем их по длине (от большего к меньшему)
@@ -1012,12 +1027,88 @@ export class TelegramService {
     try {
       if (!html) return '';
       
-      // Используем функцию fixUnclosedTags из telegram-formatter.js
-      const fixedHtml = fixUnclosedTags(html);
+      // ВНИМАНИЕ: Используем алгоритм из telegram-html-fix-test.js, который успешно проходит тесты
+      
+      // Стек для отслеживания открытых тегов
+      const tagStack = [];
+      
+      // Регулярное выражение для поиска открывающих и закрывающих тегов
+      const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+      
+      // Находим все теги в тексте
+      let match;
+      let lastIndex = 0;
+      let result = '';
+      
+      // Клонируем регулярное выражение для сброса lastIndex
+      const regex = new RegExp(tagRegex);
+      
+      while ((match = regex.exec(html)) !== null) {
+        const fullTag = match[0];
+        const tagName = match[1].toLowerCase();
+        const isClosingTag = fullTag.startsWith('</');
+        
+        // Добавляем текст до текущего тега
+        result += html.substring(lastIndex, match.index);
+        lastIndex = match.index + fullTag.length;
+        
+        if (isClosingTag) {
+          // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому тегу
+          if (tagStack.length > 0) {
+            const lastOpenTag = tagStack[tagStack.length - 1];
+            if (lastOpenTag === tagName) {
+              // Тег правильно закрыт, удаляем его из стека
+              tagStack.pop();
+              result += fullTag;
+            } else {
+              // Закрывающий тег не соответствует последнему открытому
+              // Добавляем закрывающие теги для всех открытых тегов до соответствующего
+              let found = false;
+              for (let i = tagStack.length - 1; i >= 0; i--) {
+                if (tagStack[i] === tagName) {
+                  found = true;
+                  // Закрываем все промежуточные теги
+                  for (let j = tagStack.length - 1; j >= i; j--) {
+                    result += `</${tagStack[j]}>`;
+                    tagStack.pop();
+                  }
+                  break;
+                }
+              }
+              
+              if (!found) {
+                // Если соответствующий открывающий тег не найден, игнорируем закрывающий тег
+                log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
+              } else {
+                // Добавляем текущий закрывающий тег
+                result += fullTag;
+              }
+            }
+          } else {
+            // Если стек пуст, значит это закрывающий тег без открывающего
+            log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`, 'telegram');
+          }
+        } else {
+          // Открывающий тег, добавляем в стек
+          // Проверка для самозакрывающихся тегов
+          if (!fullTag.endsWith('/>')) {
+            tagStack.push(tagName);
+          }
+          result += fullTag;
+        }
+      }
+      
+      // Добавляем оставшийся текст
+      result += html.substring(lastIndex);
+      
+      // Закрываем все оставшиеся открытые теги в обратном порядке (LIFO)
+      for (let i = tagStack.length - 1; i >= 0; i--) {
+        result += `</${tagStack[i]}>`;
+      }
       
       log(`HTML-теги успешно исправлены`, 'telegram');
       
-      return fixedHtml;
+      return result;
     } catch (error) {
       log(`Ошибка при исправлении HTML-тегов: ${error.message}`, 'telegram');
       return html; // В случае ошибки возвращаем исходный текст
