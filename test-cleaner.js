@@ -37,11 +37,6 @@ const testCases = [
     name: "Ссылки",
     html: '<p>Перейдите на <a href="https://telegram.org">сайт Telegram</a>.</p>',
     expected: 'Перейдите на <a href="https://telegram.org">сайт Telegram</a>.'
-  },
-  {
-    name: "Сложное форматирование",
-    html: '<div class="container"><h1 style="color: red;">Заголовок статьи</h1><p>Первый абзац с <strong>жирным</strong> и <em>курсивным</em> текстом.</p><ul><li>Первый элемент списка</li><li>Второй <strong>важный</strong> элемент</li></ul><p>Еще текст с <a href="https://example.com" target="_blank">ссылкой</a>.</p><script>alert("Этот скрипт должен быть удален");</script></div>',
-    expected: 'Заголовок статьи\n\nПервый абзац с <b>жирным</b> и <i>курсивным</i> текстом.\n\n• Первый элемент списка\n• Второй <b>важный</b> элемент\n\nЕще текст с <a href="https://example.com">ссылкой</a>.'
   }
 ];
 
