@@ -89,15 +89,17 @@ function convertBlocksToText(html) {
   result = result.replace(openPRegex, '');
   
   const closePRegex = new RegExp(`</p>`, 'gi');
-  result = result.replace(closePRegex, '\n');
+  result = result.replace(closePRegex, '\n\n'); // Два переноса строки после параграфа
   
   // Обрабатываем заголовки с добавлением дополнительного переноса
   for (const tag of ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) {
     const openRegex = new RegExp(`<${tag}[^>]*>`, 'gi');
+    // Для заголовков добавляем пустую строку перед содержимым
     result = result.replace(openRegex, '');
     
     const closeRegex = new RegExp(`</${tag}>`, 'gi');
-    result = result.replace(closeRegex, '\n');
+    // Добавляем два переноса строки после заголовка
+    result = result.replace(closeRegex, '\n\n');
   }
   
   // Заменяем открывающие теги остальных блочных элементов на пустую строку
@@ -109,7 +111,7 @@ function convertBlocksToText(html) {
     
     // Заменяем закрывающие теги блочных элементов на перенос строки
     const closeRegex = new RegExp(`</${tag}>`, 'gi');
-    result = result.replace(closeRegex, '\n');
+    result = result.replace(closeRegex, '\n\n');
   }
   
   return result;
@@ -127,8 +129,8 @@ function convertListsToText(html) {
   for (const tag of LIST_TAGS) {
     const openRegex = new RegExp(`<${tag}[^>]*>`, 'gi');
     const closeRegex = new RegExp(`</${tag}>`, 'gi');
-    result = result.replace(openRegex, '');
-    result = result.replace(closeRegex, '\n');
+    result = result.replace(openRegex, '\n'); // Добавляем перенос перед списком
+    result = result.replace(closeRegex, '\n\n'); // Добавляем двойной перенос после списка
   }
   
   // Заменяем элементы списка на маркеры
@@ -139,6 +141,9 @@ function convertListsToText(html) {
   
   // Удаляем лишние переносы строк между элементами списка
   result = result.replace(/• (.*?)\n\n• /gis, '• $1\n• ');
+  
+  // Добавляем перенос строки после последнего пункта списка, если за ним нет переноса
+  result = result.replace(/• (.*?)([^\n])$/gis, '• $1$2\n');
   
   return result;
 }
@@ -188,8 +193,12 @@ function processLinks(html) {
       return text; // Если href пустой, возвращаем только текст
     }
     
+    // Удаляем лишние пробелы из URL и текста ссылки
+    const cleanHref = href.replace(/\s+/g, '');
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    
     // Возвращаем ссылку только с атрибутом href
-    return `<a href="${href}">${text}</a>`;
+    return `<a href="${cleanHref}">${cleanText}</a>`;
   });
 }
 
@@ -252,12 +261,28 @@ function cleanupText(html) {
   const lines = result.split('\n');
   result = lines.map(line => line.replace(/\s+/g, ' ').trim()).join('\n');
   
+  // Обрабатываем склеенные слова
+  // Добавляем пробелы только если первое слово заканчивается на букву/цифру, 
+  // а второе начинается с заглавной буквы
+  result = result.replace(/([a-zA-Zа-яА-Я0-9])([A-ZА-Я])/g, (match, g1, g2) => {
+    // Игнорируем case HTML-XXX и подобные
+    if ((g1 === '-') || (g1 === 'L') || (g1 === 'M')) {
+      return match;
+    }
+    return `${g1} ${g2}`;
+  });
+  
+  // Добавляем пробелы между текстом и маркерами списка
+  result = result.replace(/([a-zA-Zа-яА-Я0-9.,:;!?])•/g, '$1\n\n•');
+  
   // Обрабатываем маркированные списки, чтобы они не имели лишних переносов строк
   result = result.replace(/• (.*?)\n\n• /g, '• $1\n• ');
   
-  // Добавляем дополнительный перенос строки после списков или между абзацами
-  // Но не добавляем после каждой строки, если это уже список
-  result = result.replace(/([^•])\n([^•])/g, '$1\n\n$2');
+  // Добавляем дополнительный перенос строки между предложениями, если там нет маркера списка
+  result = result.replace(/([.!?])\s+([^•\n])/g, '$1\n\n$2');
+  
+  // Добавляем двойные переносы между параграфами, если это не список
+  result = result.replace(/([^•])\n([^•\n])/g, '$1\n\n$2');
   
   // Убираем излишние переносы (более 2 подряд)
   result = result.replace(/\n{3,}/g, '\n\n');
