@@ -12,8 +12,10 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
-// Импортируем тестовые маршруты для Telegram
+// Импортируем тестовые маршруты для Telegram и HTML форматтер
 import testRouter from './api/test-routes';
+import telegramHtmlRouter from './api/telegram-html-route';
+import telegramHtmlTestRouter from './api/telegram-html-test-route';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -123,6 +125,14 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
+    
+    // Регистрируем маршруты для тестирования HTML форматирования в Telegram
+    console.log("Registering Telegram HTML formatter routes...");
+    log("Registering Telegram HTML formatter routes...");
+    app.use('/api/telegram-html', telegramHtmlRouter);
+    app.use('/api/telegram-test', telegramHtmlTestRouter);
+    console.log("Telegram HTML formatter routes registered");
+    log("Telegram HTML formatter routes registered successfully");
     
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
