@@ -1,25 +1,20 @@
 /**
- * Новая улучшенная утилита для очистки HTML-контента для Telegram
- * Максимально простой и надежный подход без лишнего форматирования
- * 
- * Telegram поддерживает только: <b>, <i>, <u>, <s>, <code>, <pre>, <a href="">
+ * Утилита для нового метода очистки HTML для Telegram
+ * Более надежный алгоритм, сохраняющий форматирование
  */
 
-// Полностью игнорируемые теги (удаляются вместе с их содержимым)
-const IGNORED_TAGS = new Set(['script', 'style', 'iframe', 'noscript']);
+// Константы для настройки очистителя
+const TELEGRAM_SUPPORTED_TAGS = new Set(['b', 'strong', 'i', 'em', 'u', 'ins', 's', 'strike', 'del', 'a', 'code', 'pre']);
+const IGNORED_TAGS = ['script', 'style', 'iframe', 'object', 'embed', 'canvas'];
+const BLOCK_TAGS = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'article', 'section', 'header', 'footer', 'aside', 'main', 'address'];
+const LIST_TAGS = ['ul', 'ol', 'dl'];
+const LIST_ITEM_TAGS = ['li', 'dt', 'dd'];
 
-// Теги, которые заменяются на текст (содержимое сохраняется)
-const BLOCK_TAGS = new Set(['div', 'p', 'section', 'article', 'header', 'footer', 'aside', 'nav', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
-const LIST_TAGS = new Set(['ul', 'ol', 'dl']);
-const LIST_ITEM_TAGS = new Set(['li', 'dt', 'dd']);
-
-// Поддерживаемые Telegram теги
-const TELEGRAM_SUPPORTED_TAGS = new Set(['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'code', 'pre', 'a']);
-
-// Преобразование эквивалентных тегов
+// Алиасы для тегов
 const TAG_ALIASES = {
   'strong': 'b',
   'em': 'i',
+  'ins': 'u',
   'strike': 's',
   'del': 's'
 };
@@ -32,39 +27,32 @@ const TAG_ALIASES = {
 function cleanHtmlForTelegram(html) {
   if (!html) return '';
   console.log(`[telegram-html-cleaner-new] Начало очистки HTML, длина: ${html.length}`);
-  console.log(`[telegram-html-cleaner-new] ИСХОДНЫЙ HTML: ${html}`);
   
   try {
     // Шаг 1: Удаляем скрипты, стили и другие нежелательные блоки
     let result = removeIgnoredTags(html);
-    console.log(`[telegram-html-cleaner-new] После удаления игнорируемых тегов: ${result}`);
     
     // Шаг 2: Конвертируем блочные элементы в текст
     result = convertBlocksToText(result);
-    console.log(`[telegram-html-cleaner-new] После конвертации блочных элементов: ${result}`);
     
     // Шаг 3: Конвертируем списки в текст с маркерами
     result = convertListsToText(result);
-    console.log(`[telegram-html-cleaner-new] После конвертации списков: ${result}`);
     
     // Шаг 4: Заменяем br на переносы строк
     result = result.replace(/<br\s*\/?>/gi, '\n');
     
     // Шаг 5: Нормализуем форматирующие теги
     result = normalizeFormattingTags(result);
-    console.log(`[telegram-html-cleaner-new] После нормализации форматирующих тегов: ${result}`);
     
     // Шаг 6: Обрабатываем ссылки
     result = processLinks(result);
     
     // Шаг 7: Удаляем все оставшиеся HTML-теги
     result = removeUnsupportedTags(result);
-    console.log(`[telegram-html-cleaner-new] После удаления неподдерживаемых тегов: ${result}`);
     
     // Шаг 8: Общая очистка и форматирование
     result = cleanupText(result);
     
-    console.log(`[telegram-html-cleaner-new] ФИНАЛЬНЫЙ HTML: ${result}`);
     console.log(`[telegram-html-cleaner-new] HTML успешно очищен, новая длина: ${result.length}`);
     return result;
   } catch (error) {
@@ -148,6 +136,9 @@ function convertListsToText(html) {
     const itemRegex = new RegExp(`<${tag}[^>]*>(.*?)</${tag}>`, 'gis');
     result = result.replace(itemRegex, '• $1\n');
   }
+  
+  // Удаляем лишние переносы строк между элементами списка
+  result = result.replace(/• (.*?)\n\n• /gis, '• $1\n• ');
   
   return result;
 }
@@ -261,8 +252,12 @@ function cleanupText(html) {
   const lines = result.split('\n');
   result = lines.map(line => line.replace(/\s+/g, ' ').trim()).join('\n');
   
-  // Добавляем дополнительный перенос строки между абзацами для лучшей читаемости
-  result = result.replace(/\n/g, '\n\n');
+  // Обрабатываем маркированные списки, чтобы они не имели лишних переносов строк
+  result = result.replace(/• (.*?)\n\n• /g, '• $1\n• ');
+  
+  // Добавляем дополнительный перенос строки после списков или между абзацами
+  // Но не добавляем после каждой строки, если это уже список
+  result = result.replace(/([^•])\n([^•])/g, '$1\n\n$2');
   
   // Убираем излишние переносы (более 2 подряд)
   result = result.replace(/\n{3,}/g, '\n\n');
@@ -270,6 +265,5 @@ function cleanupText(html) {
   return result.trim();
 }
 
-module.exports = {
-  cleanHtmlForTelegram
-};
+// Экспортируем функцию для использования в других модулях
+export { cleanHtmlForTelegram };

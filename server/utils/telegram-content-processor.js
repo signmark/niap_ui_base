@@ -1,484 +1,268 @@
 /**
- * Модуль для обработки и публикации контента в Telegram
+ * Модуль для обработки и форматирования HTML-контента для Telegram
  * 
- * Этот модуль содержит функции для корректного форматирования HTML-контента
- * для Telegram и публикации сообщений с сохранением форматирования.
+ * Содержит функции для преобразования HTML-разметки в формат,
+ * поддерживаемый API Telegram, а также отправки сообщений и изображений.
  */
 
 import axios from 'axios';
 import { log } from './logger.js';
 
-/**
- * Форматирует ID чата для правильной работы с API Telegram
- * @param {string} chatId ID чата или канала Telegram
- * @returns {string} Отформатированный ID чата
- */
-function formatChatId(chatId) {
-  if (!chatId) {
-    return '';
-  }
-  
-  let formattedId = chatId.toString().trim();
-  
-  // Если ID начинается с '@', оставляем как есть для имен каналов
-  if (formattedId.startsWith('@')) {
-    return formattedId;
-  }
-  
-  // Проверка, содержит ли ID только цифры
-  if (/^-?\d+$/.test(formattedId)) {
-    // Если ID уже содержит знак минуса, используем как есть
-    if (formattedId.startsWith('-')) {
-      return formattedId;
-    }
-    // Если ID группы, добавляем знак минуса, если его нет
-    if (formattedId.length > 10) {
-      return '-' + formattedId;
-    }
-    // Если ID личного чата, используем как есть
-    return formattedId;
-  }
-  
-  // В иных случаях, возвращаем исходное значение
-  return formattedId;
-}
+// Максимальная длина текста для отправки в Telegram в подписи к изображению
+const MAX_CAPTION_LENGTH = 1024;
+
+// Максимальная длина текста для отправки в Telegram как текстовое сообщение
+const MAX_MESSAGE_LENGTH = 4096;
 
 /**
- * Проверяет, закрыты ли все HTML-теги в тексте
- * @param {string} html HTML-текст для проверки
- * @returns {string} Исправленный HTML с закрытыми тегами
+ * Преобразует HTML-разметку для корректного отображения в Telegram
+ * @param {string} html Исходный HTML-текст
+ * @returns {string} Текст в формате HTML, поддерживаемом Telegram
  */
-function fixUnclosedTags(html) {
-  if (!html) {
+export function formatHtmlForTelegram(html) {
+  if (!html || html.trim() === '') {
     return '';
   }
   
-  // Стек для отслеживания открытых тегов
-  const openTags = [];
-  // Регулярное выражение для поиска тегов
-  const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+  // Нормализуем пробелы и переносы строк (все \r\n, \r превращаем в \n)
+  let text = html
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    // Нормализуем множественные переносы строк
+    .replace(/\n{3,}/g, '\n\n')
+    // Убираем лишние пробелы, но сохраняем пробелы внутри тегов
+    .replace(/([^>])[ \t]{2,}([^<])/g, '$1 $2');
   
-  let match;
-  let processedHtml = html;
+  // Обрабатываем заголовки - заменяем <h1>-<h6> на жирный текст с двойным переносом строки
+  text = text.replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
   
-  // Находим все теги
-  while ((match = tagRegex.exec(html)) !== null) {
-    const fullTag = match[0];
-    const tagName = match[1].toLowerCase();
+  // Обрабатываем параграфы - заменяем <p> на текст с двойным переносом строки
+  text = text.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+  
+  // Обрабатываем теги <br> - заменяем на перенос строки
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  
+  // Обрабатываем маркированные списки
+  text = text.replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
+    const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+    if (!items) return content;
     
-    // Игнорируем самозакрывающиеся теги
-    if (fullTag.endsWith('/>')) {
-      continue;
-    }
+    return items.map(item => {
+      return '• ' + item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1');
+    }).join('\n') + '\n\n';
+  });
+  
+  // Обрабатываем нумерованные списки
+  text = text.replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
+    const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+    if (!items) return content;
     
-    // Проверяем, является ли тег открывающим или закрывающим
-    if (fullTag.startsWith('</')) {
-      // Закрывающий тег - проверяем, есть ли соответствующий открывающий
-      if (openTags.length > 0 && openTags[openTags.length - 1] === tagName) {
-        openTags.pop(); // Удаляем последний открытый тег из стека
-      }
-    } else {
-      // Открывающий тег - добавляем в стек
-      openTags.push(tagName);
-    }
-  }
-  
-  // Закрываем все оставшиеся открытые теги в обратном порядке
-  while (openTags.length > 0) {
-    const tagToClose = openTags.pop();
-    processedHtml += `</${tagToClose}>`;
-  }
-  
-  return processedHtml;
-}
-
-/**
- * Конвертирует HTML из редактора в формат, поддерживаемый Telegram
- * @param {string} html Исходный HTML
- * @returns {string} HTML в формате, поддерживаемом Telegram
- */
-function formatHtmlForTelegram(html) {
-  if (!html) {
-    return '';
-  }
-  
-  let processedHtml = html;
-  
-  // 1. Заменяем тройные <br> на двойные для лучшего форматирования
-  processedHtml = processedHtml.replace(/<br\s*\/?>\s*<br\s*\/?>\s*<br\s*\/?>/gi, '<br/><br/>');
-  
-  // 2. Заменяем <p> и другие блочные теги на текст с переносами строк
-  processedHtml = processedHtml
-    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1<br/><br/>')
-    .replace(/<div[^>]*>(.*?)<\/div>/gi, '$1<br/>')
-    .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '<b>$1</b><br/><br/>');
-  
-  // 3. Заменяем тип списка на соответствующий символ
-  // Маркированный список
-  processedHtml = processedHtml.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, listContent) => {
-    return listContent.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1<br/>');
+    return items.map((item, index) => {
+      return (index + 1) + '. ' + item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1');
+    }).join('\n') + '\n\n';
   });
   
-  // Нумерованный список
-  processedHtml = processedHtml.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, listContent) => {
-    let listItems = listContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-    let output = '';
-    if (listItems) {
-      for (let i = 0; i < listItems.length; i++) {
-        let itemContent = listItems[i].replace(/<li[^>]*>([\s\S]*?)<\/li>/i, '$1');
-        output += `${i + 1}. ${itemContent}<br/>`;
-      }
-    }
-    return output;
+  // Оставляем только теги, поддерживаемые Telegram: <b>, <strong>, <i>, <em>, <u>, <code>, <pre>, <a>
+  
+  // Заменяем <strong> на <b>
+  text = text.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '<b>$1</b>');
+  
+  // Заменяем <em> на <i>
+  text = text.replace(/<em[^>]*>(.*?)<\/em>/gi, '<i>$1</i>');
+  
+  // Очищаем атрибуты из тегов, оставляя только href для <a>
+  text = text.replace(/<(b|i|u|code)[^>]*>/gi, '<$1>');
+  text = text.replace(/<pre[^>]*>/gi, '<pre>');
+  
+  // Обрабатываем ссылки особым образом - сохраняем только атрибут href
+  text = text.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, (match, href, content) => {
+    return `<a href="${href}">${content}</a>`;
   });
   
-  // 4. Обрабатываем стили форматирования из редактора
-  // Жирный текст (поддерживается Telegram)
-  processedHtml = processedHtml.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>');
-  processedHtml = processedHtml.replace(/<span[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '<b>$1</b>');
-  
-  // Курсив (поддерживается Telegram)
-  processedHtml = processedHtml.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>');
-  processedHtml = processedHtml.replace(/<span[^>]*style="[^"]*font-style:\s*italic[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '<i>$1</i>');
-  
-  // Подчеркнутый текст (поддерживается Telegram)
-  processedHtml = processedHtml.replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>');
-  processedHtml = processedHtml.replace(/<span[^>]*style="[^"]*text-decoration:\s*underline[^"]*"[^>]*>([\s\S]*?)<\/span>/gi, '<u>$1</u>');
-  
-  // Код (поддерживается Telegram)
-  processedHtml = processedHtml.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '<code>$1</code>');
-  processedHtml = processedHtml.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '<pre>$1</pre>');
-  
-  // 5. Удаляем все оставшиеся неподдерживаемые теги, но сохраняем их содержимое
-  processedHtml = processedHtml
-    .replace(/<(?!b>|\/b>|i>|\/i>|u>|\/u>|code>|\/code>|pre>|\/pre>|a href=|\/a>|br\/?>)[^>]+>/gi, '');
-  
-  // 6. Заменяем множественные переносы строк на двойные
-  processedHtml = processedHtml.replace(/(<br\s*\/?>\s*){3,}/gi, '<br/><br/>');
-  
-  // 7. Корректное форматирование ссылок
-  processedHtml = processedHtml.replace(/<a[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, (match, url, text) => {
-    // Проверяем, начинается ли ссылка с http:// или https://
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
-    return `<a href="${url}">${text}</a>`;
+  // Удаляем все остальные HTML-теги, оставляя их содержимое
+  text = text.replace(/<(?!\/?(?:b|i|u|code|pre|a\s+href=["'][^"']+["'])[^>]*)>[^<]*<\/[^>]*>/gi, (match) => {
+    // Извлекаем текст внутри тега
+    const content = match.replace(/<[^>]*>|<\/[^>]*>/g, '');
+    return content;
   });
   
-  // 8. Удаляем лишние пробелы и переносы
-  processedHtml = processedHtml.replace(/\s+/g, ' ').trim();
+  // Удаляем одиночные теги, которые не поддерживаются
+  text = text.replace(/<(?!\/?(?:b|i|u|code|pre|a\s+href=["'][^"']+["']))[^>]*>/gi, '');
   
-  // 9. В конце удаляем все <br/> в начале и конце текста
-  processedHtml = processedHtml.replace(/^(<br\s*\/?>\s*)+|(<br\s*\/?>\s*)+$/gi, '');
+  // Обрабатываем вложенные теги - Telegram поддерживает их
+  // Нормализуем пробелы внутри тегов
+  text = text.replace(/>\s+</g, '><');
   
-  return processedHtml;
+  // Удаляем пробелы в начале и конце строк
+  text = text.replace(/^\s+|\s+$/gm, '');
+  
+  // Нормализуем множественные переносы строк после удаления тегов
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  // Проверяем, не превышает ли текст максимальную длину для Telegram
+  if (text.length > MAX_MESSAGE_LENGTH) {
+    text = text.substring(0, MAX_MESSAGE_LENGTH - 3) + '...';
+  }
+  
+  return text;
 }
 
 /**
  * Проверяет, нужно ли отправлять изображение отдельно от текста
- * @param {string} text Текст сообщения
- * @returns {boolean} true, если изображение нужно отправить отдельно
+ * @param {string} text Форматированный текст для отправки
+ * @returns {boolean} true, если нужно отправлять отдельно, иначе false
  */
-function needsSeparateImageSending(text) {
-  if (!text) {
-    return false;
-  }
-  
-  // Если текст слишком длинный, нужно отправить изображение отдельно
-  // Telegram ограничивает подписи к изображениям до 1024 символов
-  return text.length > 1024;
+export function needsSeparateImageSending(text) {
+  // Если текст длиннее максимальной длины подписи, отправляем отдельно
+  return text.length > MAX_CAPTION_LENGTH;
 }
 
 /**
- * Проверяет, превышает ли сообщение максимальную длину и обрезает его при необходимости
- * @param {string} text Текст сообщения
- * @returns {string} Обрезанный текст, если необходимо
+ * Форматирует ID чата для Telegram API
+ * @param {string} chatId ID чата или канала
+ * @returns {string} Форматированный ID чата
  */
-function truncateMessageIfNeeded(text) {
-  if (!text) {
-    return '';
+export function formatChatId(chatId) {
+  if (!chatId) return '';
+  
+  // Публичные каналы начинаются с @, оставляем как есть
+  if (chatId.startsWith('@')) {
+    return chatId;
   }
   
-  const MAX_MESSAGE_LENGTH = 4096;
-  
-  if (text.length <= MAX_MESSAGE_LENGTH) {
-    return text;
+  // Для числовых ID ничего не делаем
+  if (/^-?\d+$/.test(chatId)) {
+    return chatId;
   }
   
-  // Обрезаем текст и добавляем многоточие
-  return text.substring(0, MAX_MESSAGE_LENGTH - 3) + '...';
+  // Для имен каналов без @ добавляем его
+  if (/^[a-zA-Z]/.test(chatId)) {
+    return '@' + chatId;
+  }
+  
+  return chatId;
 }
 
 /**
- * Отправляет сообщение в Telegram
+ * Отправляет текстовое сообщение в Telegram
  * @param {string} token Токен бота Telegram
- * @param {string} chatId ID чата
- * @param {string} text Текст сообщения
- * @param {Object} options Дополнительные параметры
- * @returns {Promise<Object>} Результат отправки сообщения
+ * @param {string} chatId ID чата или канала
+ * @param {string} text HTML-текст для отправки
+ * @returns {Promise<object>} Результат отправки
  */
-async function sendTelegramMessage(token, chatId, text, options = {}) {
+export async function sendTelegramMessage(token, chatId, text) {
   try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    if (!token || !chatId || !text) {
+      return {
+        success: false,
+        error: 'Не указаны обязательные параметры: token, chatId или text'
+      };
+    }
     
-    const formattedChatId = formatChatId(chatId);
-    const formattedText = truncateMessageIfNeeded(text);
+    const apiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
     
-    const requestData = {
-      chat_id: formattedChatId,
-      text: formattedText,
+    const payload = {
+      chat_id: chatId,
+      text: text,
       parse_mode: 'HTML',
-      ...options
+      disable_web_page_preview: true
     };
     
-    log(`Отправка сообщения в Telegram: chat_id=${formattedChatId}, текст (первые 50 символов): "${formattedText.substring(0, 50)}${formattedText.length > 50 ? '...' : ''}"`, 'telegram-processor');
+    log.debug(`Отправка сообщения в Telegram: ${text.substring(0, 50)}...`, 'TelegramAPI');
     
-    const response = await axios.post(url, requestData);
-    
-    if (response.data && response.data.ok) {
-      log(`Сообщение успешно отправлено в Telegram, message_id: ${response.data.result.message_id}`, 'telegram-processor');
-      return response.data.result;
-    } else {
-      log(`Ошибка при отправке сообщения в Telegram: ${JSON.stringify(response.data)}`, 'telegram-processor');
-      return null;
-    }
-  } catch (error) {
-    log(`Исключение при отправке сообщения в Telegram: ${error.message}`, 'telegram-processor');
-    if (error.response && error.response.data) {
-      log(`Данные ответа от API Telegram: ${JSON.stringify(error.response.data)}`, 'telegram-processor');
-    }
-    throw error;
-  }
-}
-
-/**
- * Отправляет изображение в Telegram
- * @param {string} token Токен бота Telegram
- * @param {string} chatId ID чата
- * @param {string} imageUrl URL изображения
- * @param {string} caption Подпись к изображению (опционально)
- * @returns {Promise<Object>} Результат отправки изображения
- */
-async function sendTelegramPhoto(token, chatId, imageUrl, caption = '') {
-  try {
-    const url = `https://api.telegram.org/bot${token}/sendPhoto`;
-    
-    const formattedChatId = formatChatId(chatId);
-    const formattedCaption = caption ? truncateMessageIfNeeded(caption).substring(0, 1024) : '';
-    
-    const requestData = {
-      chat_id: formattedChatId,
-      photo: imageUrl,
-      parse_mode: 'HTML',
-      ...( formattedCaption ? { caption: formattedCaption } : {} )
-    };
-    
-    log(`Отправка фото в Telegram: chat_id=${formattedChatId}, imageUrl=${imageUrl}`, 'telegram-processor');
-    
-    const response = await axios.post(url, requestData);
+    const response = await axios.post(apiUrl, payload);
     
     if (response.data && response.data.ok) {
-      log(`Фото успешно отправлено в Telegram, message_id: ${response.data.result.message_id}`, 'telegram-processor');
-      return response.data.result;
-    } else {
-      log(`Ошибка при отправке фото в Telegram: ${JSON.stringify(response.data)}`, 'telegram-processor');
-      return null;
-    }
-  } catch (error) {
-    log(`Исключение при отправке фото в Telegram: ${error.message}`, 'telegram-processor');
-    if (error.response && error.response.data) {
-      log(`Данные ответа от API Telegram: ${JSON.stringify(error.response.data)}`, 'telegram-processor');
-    }
-    throw error;
-  }
-}
-
-/**
- * Обрабатывает контент и отправляет его в Telegram
- * @param {Object} content Объект с контентом для публикации
- * @param {string} chatId ID чата Telegram
- * @param {string} token Токен бота Telegram
- * @returns {Promise<Object>} Результат публикации
- */
-export async function processContentForTelegram(content, chatId, token) {
-  try {
-    // Проверяем наличие обязательных параметров
-    if (!content) {
-      return {
-        success: false,
-        error: {
-          description: 'Отсутствует контент для публикации'
-        }
-      };
-    }
-    
-    if (!chatId) {
-      return {
-        success: false,
-        error: {
-          description: 'Отсутствует ID чата Telegram'
-        }
-      };
-    }
-    
-    if (!token) {
-      return {
-        success: false,
-        error: {
-          description: 'Отсутствует токен бота Telegram'
-        }
-      };
-    }
-    
-    // Получаем необходимые данные из контента
-    const title = content.title || '';
-    const body = content.content || content.body || '';
-    const imageUrl = content.image_url || content.image || content.imageUrl || '';
-    const additionalImages = content.additional_images || content.additionalImages || [];
-    
-    // Форматируем заголовок и текст
-    const formattedTitle = title ? `<b>${fixUnclosedTags(title)}</b>` : '';
-    const formattedBody = body ? fixUnclosedTags(body) : '';
-    
-    // Соединяем заголовок и текст с разделителем
-    const combinedText = formattedTitle && formattedBody
-      ? `${formattedTitle}\n\n${formattedBody}`
-      : formattedTitle || formattedBody;
-    
-    // Форматируем HTML для Telegram
-    const telegramHtml = formatHtmlForTelegram(combinedText);
-    
-    const messageIds = [];
-    let messageUrl = null;
-    
-    // Проверяем, есть ли изображение для отправки
-    if (imageUrl) {
-      // Проверяем, нужно ли отправлять изображение отдельно или с подписью
-      if (needsSeparateImageSending(telegramHtml)) {
-        // Отправляем изображение без текста
-        try {
-          const photoResult = await sendTelegramPhoto(token, chatId, imageUrl);
-          if (photoResult && photoResult.message_id) {
-            messageIds.push(photoResult.message_id);
-            
-            // Если это первое сообщение, сохраняем ссылку на него
-            if (messageIds.length === 1 && photoResult.chat && photoResult.chat.username) {
-              messageUrl = `https://t.me/${photoResult.chat.username}/${photoResult.message_id}`;
-            }
-          }
-        } catch (error) {
-          log(`Ошибка при отправке фото: ${error.message}`, 'telegram-processor');
-        }
-        
-        // Отправляем текст отдельно
-        if (telegramHtml) {
-          try {
-            const textResult = await sendTelegramMessage(token, chatId, telegramHtml);
-            if (textResult && textResult.message_id) {
-              messageIds.push(textResult.message_id);
-              
-              // Если еще нет ссылки на сообщение, сохраняем ссылку на текстовое сообщение
-              if (!messageUrl && textResult.chat && textResult.chat.username) {
-                messageUrl = `https://t.me/${textResult.chat.username}/${textResult.message_id}`;
-              }
-            }
-          } catch (error) {
-            log(`Ошибка при отправке текста: ${error.message}`, 'telegram-processor');
-          }
-        }
-      } else {
-        // Отправляем изображение с подписью
-        try {
-          const photoWithCaptionResult = await sendTelegramPhoto(token, chatId, imageUrl, telegramHtml);
-          if (photoWithCaptionResult && photoWithCaptionResult.message_id) {
-            messageIds.push(photoWithCaptionResult.message_id);
-            
-            // Сохраняем ссылку на сообщение
-            if (photoWithCaptionResult.chat && photoWithCaptionResult.chat.username) {
-              messageUrl = `https://t.me/${photoWithCaptionResult.chat.username}/${photoWithCaptionResult.message_id}`;
-            }
-          }
-        } catch (error) {
-          log(`Ошибка при отправке фото с подписью: ${error.message}`, 'telegram-processor');
-          
-          // В случае ошибки пробуем отправить текст отдельно
-          if (telegramHtml) {
-            try {
-              const textResult = await sendTelegramMessage(token, chatId, telegramHtml);
-              if (textResult && textResult.message_id) {
-                messageIds.push(textResult.message_id);
-                
-                if (!messageUrl && textResult.chat && textResult.chat.username) {
-                  messageUrl = `https://t.me/${textResult.chat.username}/${textResult.message_id}`;
-                }
-              }
-            } catch (textError) {
-              log(`Ошибка при отправке текста после неудачной отправки фото: ${textError.message}`, 'telegram-processor');
-            }
-          }
-        }
-      }
-    } else if (telegramHtml) {
-      // Если нет изображения, отправляем только текст
-      try {
-        const textOnlyResult = await sendTelegramMessage(token, chatId, telegramHtml);
-        if (textOnlyResult && textOnlyResult.message_id) {
-          messageIds.push(textOnlyResult.message_id);
-          
-          if (textOnlyResult.chat && textOnlyResult.chat.username) {
-            messageUrl = `https://t.me/${textOnlyResult.chat.username}/${textOnlyResult.message_id}`;
-          }
-        }
-      } catch (error) {
-        log(`Ошибка при отправке только текста: ${error.message}`, 'telegram-processor');
-      }
-    }
-    
-    // Отправляем дополнительные изображения
-    if (Array.isArray(additionalImages) && additionalImages.length > 0) {
-      for (const additionalImageUrl of additionalImages) {
-        if (additionalImageUrl) {
-          try {
-            const additionalPhotoResult = await sendTelegramPhoto(token, chatId, additionalImageUrl);
-            if (additionalPhotoResult && additionalPhotoResult.message_id) {
-              messageIds.push(additionalPhotoResult.message_id);
-              
-              // Если еще нет ссылки на сообщение, сохраняем ссылку на это изображение
-              if (!messageUrl && additionalPhotoResult.chat && additionalPhotoResult.chat.username) {
-                messageUrl = `https://t.me/${additionalPhotoResult.chat.username}/${additionalPhotoResult.message_id}`;
-              }
-            }
-          } catch (error) {
-            log(`Ошибка при отправке дополнительного изображения: ${error.message}`, 'telegram-processor');
-          }
-        }
-      }
-    }
-    
-    // Проверяем, успешно ли отправлено хотя бы одно сообщение
-    if (messageIds.length > 0) {
+      log.debug(`Сообщение успешно отправлено, message_id: ${response.data.result.message_id}`, 'TelegramAPI');
+      
       return {
         success: true,
-        messageIds,
-        messageUrl,
-        platform: 'telegram'
+        message_id: response.data.result.message_id,
+        data: response.data
       };
     } else {
+      log.error(`Ошибка при отправке сообщения: ${JSON.stringify(response.data)}`, null, 'TelegramAPI');
+      
       return {
         success: false,
-        error: {
-          description: 'Не удалось отправить ни одно сообщение в Telegram'
-        }
+        error: response.data.description || 'Неизвестная ошибка API Telegram',
+        data: response.data
       };
     }
   } catch (error) {
-    log(`Общая ошибка при обработке контента для Telegram: ${error.message}`, 'telegram-processor');
+    log.error(`Исключение при отправке сообщения: ${error.message}`, error, 'TelegramAPI');
     
     return {
       success: false,
-      error: {
-        description: `Ошибка при отправке в Telegram: ${error.message}`
-      }
+      error: `Ошибка при отправке: ${error.message}`,
+      data: error.response?.data
+    };
+  }
+}
+
+/**
+ * Отправляет изображение в Telegram с опциональной подписью
+ * @param {string} token Токен бота Telegram
+ * @param {string} chatId ID чата или канала
+ * @param {string} imageUrl URL изображения
+ * @param {string} caption Опциональная HTML-подпись к изображению
+ * @returns {Promise<object>} Результат отправки
+ */
+export async function sendTelegramPhoto(token, chatId, imageUrl, caption = '') {
+  try {
+    if (!token || !chatId || !imageUrl) {
+      return {
+        success: false,
+        error: 'Не указаны обязательные параметры: token, chatId или imageUrl'
+      };
+    }
+    
+    const apiUrl = `https://api.telegram.org/bot${token}/sendPhoto`;
+    
+    // Если подпись слишком длинная, обрезаем ее
+    if (caption && caption.length > MAX_CAPTION_LENGTH) {
+      caption = caption.substring(0, MAX_CAPTION_LENGTH - 3) + '...';
+    }
+    
+    const payload = {
+      chat_id: chatId,
+      photo: imageUrl,
+      parse_mode: 'HTML'
+    };
+    
+    // Добавляем подпись только если она есть
+    if (caption && caption.trim() !== '') {
+      payload.caption = caption;
+    }
+    
+    log.debug(`Отправка изображения в Telegram: ${imageUrl}`, 'TelegramAPI');
+    
+    const response = await axios.post(apiUrl, payload);
+    
+    if (response.data && response.data.ok) {
+      log.debug(`Изображение успешно отправлено, message_id: ${response.data.result.message_id}`, 'TelegramAPI');
+      
+      return {
+        success: true,
+        message_id: response.data.result.message_id,
+        data: response.data
+      };
+    } else {
+      log.error(`Ошибка при отправке изображения: ${JSON.stringify(response.data)}`, null, 'TelegramAPI');
+      
+      return {
+        success: false,
+        error: response.data.description || 'Неизвестная ошибка API Telegram',
+        data: response.data
+      };
+    }
+  } catch (error) {
+    log.error(`Исключение при отправке изображения: ${error.message}`, error, 'TelegramAPI');
+    
+    return {
+      success: false,
+      error: `Ошибка при отправке: ${error.message}`,
+      data: error.response?.data
     };
   }
 }
