@@ -82,8 +82,10 @@ export class PublishScheduler {
    * 2. Активные сессии пользователей из кэша
    * 3. Статический токен из переменных окружения
    * 4. Сохраненный токен из хранилища
+   * 
+   * @returns Токен для авторизации запросов к API
    */
-  private async getSystemToken(): Promise<string | null> {
+  public async getSystemToken(): Promise<string | null> {
     try {
       // Загружаем менеджер авторизации
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
@@ -706,7 +708,62 @@ export class PublishScheduler {
           log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
         }
         
-        // Публикуем контент в платформу через модульный сервис socialPublishingService
+        // Определяем URL для API запроса "Опубликовать сейчас"
+        const appUrl = process.env.APP_URL || 'http://localhost:5000';
+        const publishUrl = `${appUrl}/api/publish/content`;
+        
+        // Используем тот же метод, что и при нажатии "Опубликовать сейчас" через API
+        log(`Вызов API публикации для запланированного контента ${content.id} на платформе ${platform}`, 'scheduler');
+        
+        try {
+          const apiResponse = await axios.post(publishUrl, {
+            content,
+            platforms: [platform],
+            userId: content.userId,
+            force: false // не используем принудительную публикацию для запланированного контента
+          }, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // Проверяем успешность публикации
+          const resultFromApi = apiResponse.data?.results?.[platform];
+          
+          if (resultFromApi?.success) {
+            // Используем успешный результат из API
+            log(`Успешная публикация через API для контента ${content.id} на платформе ${platform}`, 'scheduler');
+            
+            // Создаем объект результата для дальнейшей обработки
+            const result = {
+              platform,
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: resultFromApi.url || null,
+              postId: resultFromApi.messageId || null,
+              error: null
+            };
+            
+            // Обновляем статус публикации через модульный сервис (необязательно, т.к. API уже обновил статус)
+            // await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+            
+            // Отмечаем успешную публикацию
+            successfulPublications++;
+            
+            // Переходим к следующей итерации цикла
+            continue;
+          } else {
+            // Если API вернул ошибку, логируем ее
+            log(`Ошибка публикации через API для контента ${content.id} на платформе ${platform}: ${resultFromApi?.error || 'неизвестная ошибка'}`, 'scheduler');
+          }
+        } catch (apiError) {
+          log(`Исключение при вызове API публикации: ${apiError}`, 'scheduler');
+        }
+        
+        // Резервный вариант: публикуем через модульный сервис, если API метод не сработал
+        log(`Использование резервного метода публикации для контента ${content.id} на платформе ${platform}`, 'scheduler');
+        
         const result = await socialPublishingService.publishToPlatform(
           content,
           platform,
