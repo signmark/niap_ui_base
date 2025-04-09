@@ -554,12 +554,14 @@ export class TelegramService {
       }
       
       if (content.content) {
-        // МАКСИМАЛЬНО ПРОСТОЙ ПОДХОД: берём контент из БД как есть, минимум обработки
-        // Но обязательно обрабатываем параграфы и другие не поддерживаемые Telegram теги
+        // РАДИКАЛЬНО НОВЫЙ ПОДХОД - удаляем всё, кроме самого необходимого
         
-        let contentHTML = content.content;
+        // 1. Преобразуем все форматирующие теги перед удалением остальных
+        let contentHTML = content.content
+          .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+          .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>');
         
-        // Преобразуем параграфы в текст с ОДИНАРНЫМИ переносами строк
+        // 2. Сначала сохраняем структуру параграфов путем добавления переносов строк
         contentHTML = contentHTML
           .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
           .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
@@ -568,25 +570,23 @@ export class TelegramService {
           .replace(/<\/ul>/g, '\n')
           .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
           
-        // Теперь заменяем стандартные HTML-теги на теги Telegram
-        // ИМЕННО В ТАКОМ ПОРЯДКЕ, сначала преобразуем все форматирование
-        contentHTML = contentHTML
-          .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
-          .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
-          .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
-          .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
-          .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
-          .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>');
-         
-        // НЕ удаляем форматирование, сохраняем поддерживаемые Telegram теги
+        // 3. ВАЖНО: Проверяем HTML-теги на соответствие требованиям Telegram
+        // Удаляем все HTML-теги, КРОМЕ поддерживаемых Telegram (<b>, <i>, <u>, <s>, <a>)
+        contentHTML = contentHTML.replace(/<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g, '');
         
-        // Нормализуем переносы строк (не более двух подряд)
+        // Логируем обнаруженные теги <b> и <i> для отладки
+        const boldMatches = contentHTML.match(/<b>(.*?)<\/b>/g) || [];
+        const italicMatches = contentHTML.match(/<i>(.*?)<\/i>/g) || [];
+        log(`Найдено тегов <b>: ${boldMatches.length}, <i>: ${italicMatches.length}`, 'telegram');
+        
+        // 4. Нормализуем переносы строк
         contentHTML = contentHTML.replace(/\n{3,}/g, '\n\n');
         
-        // Добавляем к полному контенту  
-        fullContent += contentHTML;
-        log(`Контент из БД обработан для Telegram`, 'telegram');
+        // Логируем результат для отладки
+        log(`Контент обработан, удалены ВСЕ теги кроме <b>, <i>, <u>, <s>, <a>`, 'telegram');
         log(`Первые 100 символов: ${contentHTML.substring(0, 100)}...`, 'telegram');
+        
+        fullContent += contentHTML;
       }
       
       // Исправляем незакрытые теги простым алгоритмом из успешного теста
@@ -978,10 +978,11 @@ export class TelegramService {
     try {
       if (!html) return '';
       
-      // ОЧЕНЬ ПРОСТОЙ ПОДХОД, МИНИМАЛЬНАЯ ОБРАБОТКА
+      // РАДИКАЛЬНО НОВЫЙ ПОДХОД - сначала конвертируем нужные теги, затем удаляем остальные
       
-      // Используем точно такую же обработку, что и в тесте, который успешно отправляет
-      // Только самые необходимые замены тегов для совместимости с Telegram
+      log(`Начата обработка HTML для Telegram. Исходный текст: ${html.substring(0, 100)}...`, 'telegram');
+      
+      // 1. Сначала преобразуем все форматирующие теги перед удалением остальных
       let result = html
         .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
@@ -991,13 +992,16 @@ export class TelegramService {
         .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
         .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
       
-      // Обрабатываем абзацы и списки
+      // 2. Обрабатываем абзацы и списки - используем ОДИНАРНЫЕ переносы строк
       result = result
-        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n')
         .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
         .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n');
+      
+      // 3. ВАЖНО: Удаляем ВСЕ другие HTML-теги, кроме поддерживаемых Telegram
+      result = result.replace(/<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g, '');
       
       log(`HTML-теги преобразованы в формат Telegram`, 'telegram');
       
