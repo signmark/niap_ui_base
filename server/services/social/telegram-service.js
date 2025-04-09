@@ -1,613 +1,506 @@
 /**
- * Telegram Service
- * 
- * Сервис для публикации контента в Telegram.
- * Основные возможности:
- * - Поддержка HTML-форматирования текста (b, i, u, s, code, pre, a)
- * - Отправка изображений с подписями
- * - Работа с длинными сообщениями (более 4096 символов)
- * - Сохранение URLs опубликованных сообщений
+ * Сервис для отправки сообщений в Telegram
+ * Обеспечивает отправку текстовых сообщений, изображений и групп изображений
+ * с поддержкой HTML-форматирования
  */
 
 import axios from 'axios';
-import log from '../../utils/logger';
-import { formatHtmlForTelegram, splitLongMessage, stripHtml } from '../../utils/telegram-formatter';
-import { isImageUrl, getExtension, resizeImage } from '../../utils/image-utils';
-import { sleep } from '../../utils/common-utils';
-import { BaseSocialService } from './base-social-service';
-import { SocialPlatform } from '../../types/social-platform.enum';
+import FormData from 'form-data';
+import { log } from '../../utils/logger.js';
+import { formatHtmlForTelegram, createImageCaption, splitLongMessage } from '../../utils/telegram-formatter.js';
+import { isImageUrl, isImageAccessible, prepareImageUrls, getFullDirectusUrl, isDirectusUrl } from '../../utils/image-utils.js';
+import { safeGet, sleep, isEmpty, isValidUrl, buildUrl } from '../../utils/common-utils.js';
 
-class TelegramService extends BaseSocialService {
+/**
+ * Класс для работы с Telegram Bot API
+ */
+export class TelegramService {
   constructor() {
-    super();
-    this.maxCaptionLength = 1024; // Максимальная длина подписи для изображения
-    this.maxMessageLength = 4096; // Максимальная длина сообщения
-    this.maxMediaGroupSize = 10; // Максимальное количество изображений в одной группе
+    this.token = '';
+    this.chatId = '';
+    this.apiUrl = 'https://api.telegram.org/bot';
+    this.chatUsername = '';
   }
-
+  
   /**
-   * Инициализирует сервис с настройками для публикации
-   * @param {string} token Токен Telegram бота
-   * @param {string} chatId ID чата или канала для публикации
+   * Инициализирует сервис с токеном и ID чата
+   * @param {string} token Токен бота
+   * @param {string} chatId ID чата
    */
   initialize(token, chatId) {
-    if (!token || !chatId) {
-      throw new Error('Telegram token and chat ID are required');
-    }
-
     this.token = token;
-    this.chatId = chatId;
-    this.apiUrl = `https://api.telegram.org/bot${token}`;
-    this.initialized = true;
-
-    // Пытаемся получить информацию о чате для определения username
-    this.fetchChatInfo();
+    
+    // Нормализуем ID чата, добавляя '-' перед числовым ID, если его нет
+    this.chatId = this.formatChatId(chatId);
+    
+    log(`Инициализирован сервис Telegram с chatId: ${this.chatId}`, 'telegram');
   }
-
+  
   /**
-   * Получает информацию о чате для дальнейшего формирования URL сообщений
+   * Форматирует ID чата для корректной работы с API
+   * @param {string} chatId ID чата
+   * @returns {string} Отформатированный ID чата
    * @private
    */
-  async fetchChatInfo() {
+  formatChatId(chatId) {
+    if (!chatId) return '';
+    
+    // Если это числовое ID группы/канала, убедимся, что оно начинается с -
+    const numericId = String(chatId).trim();
+    
+    // Для групповых чатов (отрицательные ID)
+    if (/^-\d+$/.test(numericId)) {
+      return numericId; // Уже отформатированный ID групповых чатов
+    }
+    
+    // Для публичных каналов с именем пользователя
+    if (numericId.startsWith('@')) {
+      return numericId; // Имя пользователя уже с @
+    }
+    
+    // Для суперчатов (большие отрицательные ID)
+    if (/^-100\d+$/.test(numericId)) {
+      return numericId; // Уже отформатированный ID суперчатов
+    }
+    
+    // Для обычных ID каналов (преобразуем в формат суперчата, если это число без -)
+    if (/^\d+$/.test(numericId)) {
+      return `-100${numericId}`;
+    }
+    
+    // Для имен пользователей без @
+    if (/^[a-zA-Z][\w\d]{3,30}$/.test(numericId)) {
+      return `@${numericId}`;
+    }
+    
+    return chatId; // Возвращаем как есть, если формат не распознан
+  }
+  
+  /**
+   * Отправляет текстовое сообщение в Telegram
+   * @param {string} text Текст сообщения
+   * @param {Object} options Дополнительные параметры отправки
+   * @returns {Promise<Object>} Результат отправки
+   */
+  async sendTextMessage(text, options = {}) {
     try {
-      const response = await axios.post(`${this.apiUrl}/getChat`, {
-        chat_id: this.chatId
-      });
-
-      if (response.data && response.data.ok && response.data.result) {
-        const chatInfo = response.data.result;
-        this.chatUsername = chatInfo.username;
-        this.chatTitle = chatInfo.title;
-        log.info(`[TelegramService] Получена информация о чате: ${this.chatTitle} (${this.chatUsername || this.chatId})`);
+      const formattedText = formatHtmlForTelegram(text);
+      
+      // Проверяем длину сообщения
+      if (formattedText.length > 4096) {
+        return await this.sendLongTextMessage(formattedText);
       }
-    } catch (error) {
-      log.warn(`[TelegramService] Не удалось получить информацию о чате: ${error.message}`);
-    }
-  }
-
-  /**
-   * Публикует контент в Telegram
-   * @param {CampaignContent} content Контент для публикации
-   * @param {Object} settings Настройки Telegram (token, chatId)
-   * @returns {Object} Результат публикации с URL опубликованного сообщения
-   */
-  async publishToPlatform(content, platform, settings) {
-    if (platform !== SocialPlatform.TELEGRAM) {
-      throw new Error(`TelegramService не поддерживает публикацию в платформу ${platform}`);
-    }
-
-    // Инициализация с настройками из кампании
-    this.initialize(settings.telegramBotToken, settings.telegramChatId);
-
-    try {
-      // Проверка на наличие контента
-      if (!content || (!content.text && (!content.image_url || content.image_url.length === 0))) {
-        throw new Error('Контент для публикации в Telegram отсутствует');
-      }
-
-      // Подготовка HTML текста
-      const formattedText = content.text ? formatHtmlForTelegram(content.text) : '';
-
-      // Получаем все URL изображений
-      const imageUrls = this.extractImageUrls(content);
-
-      // Результат публикации
-      let result = null;
-
-      // Проверяем, есть ли изображения для отправки
-      if (imageUrls && imageUrls.length > 0) {
-        result = await this.publishWithImages(imageUrls, formattedText);
-      } else if (formattedText) {
-        // Если нет изображений, но есть текст, отправляем только текст
-        result = await this.publishTextOnly(formattedText);
-      } else {
-        throw new Error('Нет контента для публикации (ни текста, ни изображений)');
-      }
-
-      // Формируем результат публикации
-      return {
-        success: true,
-        platform: SocialPlatform.TELEGRAM,
-        url: result.url,
-        messageIds: result.messageIds,
-        postData: result.data,
-        error: null
-      };
-    } catch (error) {
-      log.error(`[TelegramService] Ошибка при публикации в Telegram: ${error.message}`, error);
-      return {
-        success: false,
-        platform: SocialPlatform.TELEGRAM,
-        url: null,
-        error: error.message
-      };
-    }
-  }
-
-  /**
-   * Извлекает URL изображений из контента
-   * @param {Object} content Контент для публикации
-   * @returns {Array<string>} Массив URL изображений
-   * @private
-   */
-  extractImageUrls(content) {
-    const imageUrls = [];
-
-    // Основное изображение
-    if (content.image_url && content.image_url.trim()) {
-      imageUrls.push(content.image_url.trim());
-    }
-
-    // Дополнительные изображения
-    if (content.additional_images && Array.isArray(content.additional_images)) {
-      for (const image of content.additional_images) {
-        if (image && typeof image === 'object' && image.url) {
-          imageUrls.push(image.url.trim());
-        } else if (typeof image === 'string' && image.trim()) {
-          imageUrls.push(image.trim());
-        }
-      }
-    }
-
-    return imageUrls;
-  }
-
-  /**
-   * Публикует только текстовое сообщение
-   * @param {string} text Форматированный HTML-текст
-   * @returns {Object} Результат публикации
-   * @private
-   */
-  async publishTextOnly(text) {
-    if (!this.initialized) {
-      throw new Error('TelegramService not initialized');
-    }
-
-    // Проверяем, не превышает ли длина текста максимально допустимую
-    if (text.length > this.maxMessageLength) {
-      // Разбиваем длинный текст на части
-      const textParts = splitLongMessage(text, this.maxMessageLength);
-      return await this.sendMultipleTextMessages(textParts);
-    } else {
-      // Отправляем одно сообщение
-      return await this.sendSingleTextMessage(text);
-    }
-  }
-
-  /**
-   * Отправляет одно текстовое сообщение
-   * @param {string} text HTML-текст для отправки
-   * @returns {Object} Результат отправки
-   * @private
-   */
-  async sendSingleTextMessage(text) {
-    const endpoint = `${this.apiUrl}/sendMessage`;
-    log.info(`[TelegramService] Отправка текстового сообщения (${text.length} символов)`);
-
-    try {
-      const response = await axios.post(endpoint, {
+      
+      const url = `${this.apiUrl}${this.token}/sendMessage`;
+      
+      const params = {
         chat_id: this.chatId,
-        text: text,
-        parse_mode: 'HTML'
-      });
-
-      if (response.data && response.data.ok) {
+        text: formattedText,
+        parse_mode: 'HTML',
+        disable_web_page_preview: options.disablePreview || false
+      };
+      
+      // Получаем информацию о чате для дальнейшего использования
+      await this.getChatInfo();
+      
+      const response = await axios.post(url, params);
+      
+      if (response.data.ok) {
         const messageId = response.data.result.message_id;
-        const url = this.generateMessageUrl(messageId);
+        const messageUrl = this.generateMessageUrl(messageId);
         
-        log.info(`[TelegramService] Сообщение успешно отправлено (ID: ${messageId})`);
+        log(`Сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
         
         return {
           success: true,
-          url,
-          messageIds: [messageId],
-          data: response.data
+          messageId,
+          messageUrl
         };
       } else {
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(response.data)}`);
+        throw new Error(`Telegram API error: ${response.data.description}`);
       }
     } catch (error) {
-      if (error.response && error.response.data) {
-        log.error(`[TelegramService] Ошибка при отправке сообщения: ${JSON.stringify(error.response.data)}`);
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(error.response.data)}`);
-      }
+      log(`Ошибка при отправке текстового сообщения в Telegram: ${error.message}`, 'telegram');
       throw error;
     }
   }
-
+  
   /**
-   * Отправляет несколько текстовых сообщений последовательно
-   * @param {Array<string>} textParts Части HTML-текста для отправки
-   * @returns {Object} Результат отправки
+   * Отправляет длинное текстовое сообщение, разбивая его на части
+   * @param {string} text Текст сообщения
+   * @returns {Promise<Object>} Результат отправки
    * @private
    */
-  async sendMultipleTextMessages(textParts) {
-    const messageIds = [];
-    let firstMessageId = null;
-    
-    log.info(`[TelegramService] Отправка длинного сообщения в ${textParts.length} частях`);
-
+  async sendLongTextMessage(text) {
     try {
-      for (let i = 0; i < textParts.length; i++) {
-        // Небольшая задержка между отправками, чтобы не превысить лимиты API
-        if (i > 0) {
-          await sleep(300);
-        }
-
-        const part = textParts[i];
-        const endpoint = `${this.apiUrl}/sendMessage`;
+      const messageParts = splitLongMessage(text);
+      const messageIds = [];
+      let firstMessageUrl = '';
+      
+      // Отправляем каждую часть сообщения последовательно
+      for (let i = 0; i < messageParts.length; i++) {
+        const url = `${this.apiUrl}${this.token}/sendMessage`;
         
-        const response = await axios.post(endpoint, {
+        const params = {
           chat_id: this.chatId,
-          text: part,
-          parse_mode: 'HTML'
-        });
-
-        if (response.data && response.data.ok) {
+          text: messageParts[i],
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
+        };
+        
+        const response = await axios.post(url, params);
+        
+        if (response.data.ok) {
           const messageId = response.data.result.message_id;
           messageIds.push(messageId);
           
+          // Сохраняем URL первого сообщения
           if (i === 0) {
-            firstMessageId = messageId;
+            firstMessageUrl = this.generateMessageUrl(messageId);
           }
           
-          log.info(`[TelegramService] Часть ${i+1}/${textParts.length} успешно отправлена (ID: ${messageId})`);
+          // Добавляем задержку между отправками сообщений, чтобы избежать ограничений API
+          if (i < messageParts.length - 1) {
+            await sleep(500);
+          }
         } else {
-          throw new Error(`Ошибка API Telegram при отправке части ${i+1}: ${JSON.stringify(response.data)}`);
+          throw new Error(`Telegram API error: ${response.data.description}`);
         }
       }
-
-      // URL первого сообщения в цепочке
-      const url = firstMessageId ? this.generateMessageUrl(firstMessageId) : null;
+      
+      log(`Длинное сообщение успешно отправлено в Telegram с ID: ${messageIds.join(', ')}`, 'telegram');
       
       return {
         success: true,
-        url,
         messageIds,
-        data: { message_count: messageIds.length }
+        messageUrl: firstMessageUrl
       };
     } catch (error) {
-      if (error.response && error.response.data) {
-        log.error(`[TelegramService] Ошибка при отправке множественных сообщений: ${JSON.stringify(error.response.data)}`);
-      }
+      log(`Ошибка при отправке длинного текстового сообщения в Telegram: ${error.message}`, 'telegram');
       throw error;
     }
   }
-
+  
   /**
-   * Публикует контент с изображениями
-   * @param {Array<string>} imageUrls Массив URL изображений
-   * @param {string} text Форматированный HTML-текст
-   * @returns {Object} Результат публикации
-   * @private
-   */
-  async publishWithImages(imageUrls, text) {
-    if (!this.initialized) {
-      throw new Error('TelegramService not initialized');
-    }
-    
-    const plainText = stripHtml(text || '');
-    const htmlText = text || '';
-    
-    // Если изображение одно и текст короткий - отправляем как одно сообщение с подписью
-    if (imageUrls.length === 1 && plainText.length <= this.maxCaptionLength) {
-      return await this.sendSingleImageWithCaption(imageUrls[0], htmlText);
-    }
-    
-    // Если изображений несколько (до 10) и текст короткий - отправляем как медиагруппу с подписью
-    if (imageUrls.length > 1 && imageUrls.length <= this.maxMediaGroupSize && plainText.length <= this.maxCaptionLength) {
-      return await this.sendMediaGroupWithCaption(imageUrls, htmlText);
-    }
-    
-    // В остальных случаях отправляем изображения и текст отдельно
-    const imageResult = await this.sendImagesWithoutCaption(imageUrls);
-    
-    if (htmlText) {
-      // Дожидаемся отправки изображений, затем отправляем текст
-      await sleep(500);
-      const textResult = await this.publishTextOnly(htmlText);
-      
-      // Объединяем результаты
-      return {
-        success: true,
-        url: imageResult.url, // Используем URL первого изображения как основной
-        messageIds: [...imageResult.messageIds, ...textResult.messageIds],
-        data: { image_message_ids: imageResult.messageIds, text_message_ids: textResult.messageIds }
-      };
-    }
-    
-    return imageResult;
-  }
-
-  /**
-   * Отправляет одно изображение с подписью
+   * Отправляет изображение в Telegram
    * @param {string} imageUrl URL изображения
-   * @param {string} caption HTML-подпись к изображению
-   * @returns {Object} Результат отправки
-   * @private
+   * @param {string} caption Подпись к изображению
+   * @param {Object} options Дополнительные параметры отправки
+   * @returns {Promise<Object>} Результат отправки
    */
-  async sendSingleImageWithCaption(imageUrl, caption) {
-    const endpoint = `${this.apiUrl}/sendPhoto`;
-    
+  async sendImage(imageUrl, caption = '', options = {}) {
     try {
-      const response = await axios.post(endpoint, {
+      // Проверяем, является ли URL действительным изображением
+      if (!await isImageUrl(imageUrl) || !await isImageAccessible(imageUrl)) {
+        throw new Error(`Invalid or inaccessible image URL: ${imageUrl}`);
+      }
+      
+      const url = `${this.apiUrl}${this.token}/sendPhoto`;
+      
+      // Если подпись содержит HTML-теги, форматируем ее
+      let formattedCaption = '';
+      if (caption) {
+        formattedCaption = createImageCaption(caption);
+      }
+      
+      const params = {
         chat_id: this.chatId,
         photo: imageUrl,
-        caption: caption || '',
-        parse_mode: caption ? 'HTML' : undefined
-      });
-
-      if (response.data && response.data.ok) {
+        caption: formattedCaption,
+        parse_mode: 'HTML'
+      };
+      
+      const response = await axios.post(url, params);
+      
+      if (response.data.ok) {
         const messageId = response.data.result.message_id;
-        const url = this.generateMessageUrl(messageId);
+        const messageUrl = this.generateMessageUrl(messageId);
         
-        log.info(`[TelegramService] Изображение с подписью успешно отправлено (ID: ${messageId})`);
+        log(`Изображение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
         
         return {
           success: true,
-          url,
-          messageIds: [messageId],
-          data: response.data
+          messageId,
+          messageUrl
         };
       } else {
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(response.data)}`);
+        throw new Error(`Telegram API error: ${response.data.description}`);
       }
     } catch (error) {
-      if (error.response && error.response.data) {
-        log.error(`[TelegramService] Ошибка при отправке изображения: ${JSON.stringify(error.response.data)}`);
-        
-        // Если ошибка связана с URL изображения, попробуем загрузить его напрямую
-        if (error.response.data.description && (
-            error.response.data.description.includes('Bad Request: wrong file identifier/HTTP URL specified') ||
-            error.response.data.description.includes('Bad Request: failed to get HTTP URL content')
-        )) {
-          log.info(`[TelegramService] Попытка отправки изображения через формат файла`);
-          return await this.sendImageAsFile(imageUrl, caption);
-        }
-        
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(error.response.data)}`);
-      }
+      log(`Ошибка при отправке изображения в Telegram: ${error.message}`, 'telegram');
       throw error;
     }
   }
-
+  
   /**
-   * Отправляет группу изображений с подписью к первому изображению
-   * @param {Array<string>} imageUrls URL изображений
-   * @param {string} caption HTML-подпись к первому изображению
-   * @returns {Object} Результат отправки
-   * @private
+   * Отправляет группу изображений (до 10 изображений) в Telegram
+   * @param {string[]} imageUrls Массив URL изображений
+   * @param {string} caption Общая подпись к группе изображений
+   * @param {Object} options Дополнительные параметры отправки
+   * @returns {Promise<Object>} Результат отправки
    */
-  async sendMediaGroupWithCaption(imageUrls, caption) {
-    const endpoint = `${this.apiUrl}/sendMediaGroup`;
-    
-    // Формируем массив медиа для отправки
-    const media = imageUrls.map((url, index) => {
-      return {
-        type: 'photo',
-        media: url,
-        caption: index === 0 ? (caption || '') : '',
-        parse_mode: index === 0 && caption ? 'HTML' : undefined
-      };
-    });
-
+  async sendMediaGroup(imageUrls, caption = '', options = {}) {
     try {
-      const response = await axios.post(endpoint, {
+      // Проверяем наличие изображений
+      if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+        throw new Error('No images provided');
+      }
+      
+      // Ограничиваем количество изображений до 10 (ограничение Telegram API)
+      const limitedImageUrls = imageUrls.slice(0, 10);
+      
+      // Подготавливаем массив изображений, проверяя их доступность
+      const validImageUrls = await prepareImageUrls(limitedImageUrls);
+      
+      if (validImageUrls.length === 0) {
+        throw new Error('No valid images found in provided URLs');
+      }
+      
+      // Если подпись содержит HTML-теги, форматируем ее
+      let formattedCaption = '';
+      if (caption) {
+        formattedCaption = createImageCaption(caption);
+      }
+      
+      // Формируем группу медиа
+      const media = validImageUrls.map((url, index) => {
+        return {
+          type: 'photo',
+          media: url,
+          // Прикрепляем подпись только к первому изображению
+          caption: index === 0 ? formattedCaption : '',
+          parse_mode: index === 0 ? 'HTML' : undefined
+        };
+      });
+      
+      const url = `${this.apiUrl}${this.token}/sendMediaGroup`;
+      
+      const params = {
         chat_id: this.chatId,
         media: media
-      });
-
-      if (response.data && response.data.ok) {
-        const messageIds = response.data.result.map(msg => msg.message_id);
-        const url = messageIds.length > 0 ? this.generateMessageUrl(messageIds[0]) : null;
-        
-        log.info(`[TelegramService] Группа изображений успешно отправлена (ID: ${messageIds.join(', ')})`);
-        
-        return {
-          success: true,
-          url,
-          messageIds,
-          data: response.data
-        };
-      } else {
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(response.data)}`);
-      }
-    } catch (error) {
-      if (error.response && error.response.data) {
-        log.error(`[TelegramService] Ошибка при отправке группы изображений: ${JSON.stringify(error.response.data)}`);
-        
-        // Если ошибка связана с URL изображения, отправим каждое изображение отдельно
-        if (error.response.data.description && (
-            error.response.data.description.includes('Bad Request: wrong file identifier/HTTP URL specified') ||
-            error.response.data.description.includes('Bad Request: failed to get HTTP URL content')
-        )) {
-          log.info(`[TelegramService] Отправка изображений по отдельности`);
-          return await this.sendImagesSequentially(imageUrls, caption);
-        }
-        
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(error.response.data)}`);
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Отправляет изображения последовательно, без группировки
-   * @param {Array<string>} imageUrls URL изображений
-   * @param {string} caption HTML-подпись к первому изображению
-   * @returns {Object} Результат отправки
-   * @private
-   */
-  async sendImagesSequentially(imageUrls, caption) {
-    const messageIds = [];
-    let firstMessageId = null;
-    
-    log.info(`[TelegramService] Отправка ${imageUrls.length} изображений последовательно`);
-
-    try {
-      for (let i = 0; i < imageUrls.length; i++) {
-        // Небольшая задержка между отправками
-        if (i > 0) {
-          await sleep(500);
-        }
-
-        const url = imageUrls[i];
-        const currentCaption = i === 0 ? caption : '';
-        
-        try {
-          const response = await axios.post(`${this.apiUrl}/sendPhoto`, {
-            chat_id: this.chatId,
-            photo: url,
-            caption: currentCaption || '',
-            parse_mode: currentCaption ? 'HTML' : undefined
-          });
-
-          if (response.data && response.data.ok) {
-            const messageId = response.data.result.message_id;
-            messageIds.push(messageId);
-            
-            if (i === 0) {
-              firstMessageId = messageId;
-            }
-            
-            log.info(`[TelegramService] Изображение ${i+1}/${imageUrls.length} успешно отправлено (ID: ${messageId})`);
-          }
-        } catch (error) {
-          log.error(`[TelegramService] Ошибка при отправке изображения ${i+1}: ${error.message}`);
-          // Продолжаем с остальными изображениями
-        }
-      }
-
-      // URL первого сообщения
-      const url = firstMessageId ? this.generateMessageUrl(firstMessageId) : null;
-      
-      return {
-        success: messageIds.length > 0,
-        url,
-        messageIds,
-        data: { message_count: messageIds.length }
       };
-    } catch (error) {
-      if (messageIds.length > 0) {
-        // Если отправили хотя бы одно изображение, считаем частичным успехом
-        const url = firstMessageId ? this.generateMessageUrl(firstMessageId) : null;
+      
+      const response = await axios.post(url, params);
+      
+      if (response.data.ok) {
+        const messageIds = response.data.result.map(message => message.message_id);
+        const firstMessageUrl = this.generateMessageUrl(messageIds[0]);
+        
+        log(`Медиа-группа успешно отправлена в Telegram с ID: ${messageIds.join(', ')}`, 'telegram');
         
         return {
           success: true,
-          url,
           messageIds,
-          data: { message_count: messageIds.length, error: error.message }
+          messageUrl: firstMessageUrl
         };
+      } else {
+        throw new Error(`Telegram API error: ${response.data.description}`);
       }
-      
+    } catch (error) {
+      log(`Ошибка при отправке группы изображений в Telegram: ${error.message}`, 'telegram');
       throw error;
     }
   }
-
+  
   /**
-   * Отправляет изображения без подписи
-   * @param {Array<string>} imageUrls URL изображений
-   * @returns {Object} Результат отправки
-   * @private
+   * Получает информацию о чате
+   * @returns {Promise<Object>} Информация о чате
    */
-  async sendImagesWithoutCaption(imageUrls) {
-    // Если изображений несколько, отправляем как медиагруппу
-    if (imageUrls.length > 1 && imageUrls.length <= this.maxMediaGroupSize) {
-      return await this.sendMediaGroupWithCaption(imageUrls, '');
-    }
-    
-    // Если изображение одно, отправляем отдельно
-    if (imageUrls.length === 1) {
-      return await this.sendSingleImageWithCaption(imageUrls[0], '');
-    }
-    
-    // Если изображений слишком много, отправляем последовательно
-    return await this.sendImagesSequentially(imageUrls, '');
-  }
-
-  /**
-   * Отправляет изображение как файл через загрузку
-   * @param {string} imageUrl URL изображения
-   * @param {string} caption HTML-подпись к изображению
-   * @returns {Object} Результат отправки
-   * @private
-   */
-  async sendImageAsFile(imageUrl, caption) {
+  async getChatInfo() {
     try {
-      // Получаем файл изображения
-      const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      const url = `${this.apiUrl}${this.token}/getChat`;
       
-      // Создаем FormData для отправки файла
-      const formData = new FormData();
-      formData.append('chat_id', this.chatId);
+      const params = {
+        chat_id: this.chatId
+      };
       
-      // Создаем бинарный блоб из данных изображения
-      const buffer = Buffer.from(response.data);
-      const filename = `image.${getExtension(imageUrl) || 'jpg'}`;
+      const response = await axios.post(url, params);
       
-      // Добавляем файл в формдату
-      formData.append('photo', new Blob([buffer]), filename);
-      
-      // Добавляем подпись, если есть
-      if (caption) {
-        formData.append('caption', caption);
-        formData.append('parse_mode', 'HTML');
-      }
-      
-      // Отправляем запрос
-      const uploadResponse = await axios.post(`${this.apiUrl}/sendPhoto`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      if (response.data.ok) {
+        const chat = response.data.result;
+        
+        // Сохраняем имя пользователя чата для использования в URL
+        if (chat.username) {
+          this.chatUsername = chat.username;
         }
-      });
-      
-      if (uploadResponse.data && uploadResponse.data.ok) {
-        const messageId = uploadResponse.data.result.message_id;
-        const url = this.generateMessageUrl(messageId);
         
-        log.info(`[TelegramService] Изображение успешно загружено и отправлено (ID: ${messageId})`);
+        log(`Получена информация о чате: ${chat.title || chat.username || chat.id}`, 'telegram');
         
-        return {
-          success: true,
-          url,
-          messageIds: [messageId],
-          data: uploadResponse.data
-        };
+        return chat;
       } else {
-        throw new Error(`Ошибка API Telegram: ${JSON.stringify(uploadResponse.data)}`);
+        throw new Error(`Telegram API error: ${response.data.description}`);
       }
     } catch (error) {
-      log.error(`[TelegramService] Ошибка при загрузке изображения: ${error.message}`);
-      throw new Error(`Не удалось загрузить изображение: ${error.message}`);
+      log(`Ошибка при получении информации о чате: ${error.message}`, 'telegram');
+      throw error;
     }
   }
-
+  
   /**
-   * Генерирует URL сообщения в Telegram
-   * @param {string|number} messageId ID сообщения
+   * Создает URL сообщения в Telegram
+   * @param {number} messageId ID сообщения
    * @returns {string} URL сообщения
    * @private
    */
   generateMessageUrl(messageId) {
+    // Если есть имя пользователя чата, используем его для создания URL
     if (this.chatUsername) {
-      // Для публичных каналов и групп с username
-      return `https://t.me/${this.chatUsername.replace('@', '')}/${messageId}`;
-    } else {
-      // Для приватных чатов и каналов можно создать URL с использованием c_id параметра
-      // Но такие ссылки работают только в самом Telegram
-      const chatId = this.chatId.startsWith('-100') ? this.chatId.substring(4) : this.chatId;
+      return `https://t.me/${this.chatUsername}/${messageId}`;
+    }
+    
+    // Если ID чата начинается с -100, это суперчат или канал
+    if (String(this.chatId).startsWith('-100')) {
+      const chatId = String(this.chatId).substring(4);
       return `https://t.me/c/${chatId}/${messageId}`;
     }
+    
+    // Для других типов чатов нельзя создать URL, так что возвращаем пустую строку
+    return '';
   }
-
+  
   /**
-   * Проверяет, поддерживается ли указанная платформа
-   * @param {SocialPlatform} platform Платформа для проверки
-   * @returns {boolean} Результат проверки
+   * Публикует контент в Telegram на основе данных из кампании
+   * @param {Object} content Данные контента (title, content, imageUrl, additionalImages)
+   * @param {Object} settings Настройки Telegram (token, chatId)
+   * @returns {Promise<Object>} Результат публикации
    */
-  supportsPublishingToPlatform(platform) {
-    return platform === SocialPlatform.TELEGRAM;
+  async publishContent(content, settings = {}) {
+    try {
+      // Устанавливаем токен и ID чата из настроек, если они предоставлены
+      if (settings.token) {
+        this.token = settings.token;
+      }
+      
+      if (settings.chatId) {
+        this.chatId = this.formatChatId(settings.chatId);
+      }
+      
+      // Получаем информацию о чате для формирования URL
+      await this.getChatInfo();
+      
+      // Объединяем заголовок и содержимое
+      let fullContent = '';
+      if (content.title) {
+        fullContent += `<b>${content.title}</b>\n\n`;
+      }
+      
+      if (content.content) {
+        fullContent += content.content;
+      }
+      
+      // Форматируем контент, удаляя нераспознаваемые HTML-теги и правильно закрывая распознаваемые
+      const formattedContent = formatHtmlForTelegram(fullContent);
+      
+      // Определяем, есть ли у контента изображения
+      const mainImageUrl = content.imageUrl || '';
+      const additionalImages = content.additionalImages || [];
+      
+      // Проверяем URL изображений и нормализуем их
+      let validMainImageUrl = '';
+      if (mainImageUrl) {
+        if (isDirectusUrl(mainImageUrl)) {
+          validMainImageUrl = getFullDirectusUrl(mainImageUrl);
+        } else {
+          validMainImageUrl = mainImageUrl;
+        }
+      }
+      
+      // Нормализуем URL дополнительных изображений
+      const validAdditionalImageUrls = [];
+      for (const imgUrl of additionalImages) {
+        if (imgUrl) {
+          if (isDirectusUrl(imgUrl)) {
+            validAdditionalImageUrls.push(getFullDirectusUrl(imgUrl));
+          } else {
+            validAdditionalImageUrls.push(imgUrl);
+          }
+        }
+      }
+      
+      // Стратегия публикации зависит от наличия изображений и длины текста
+      let result;
+      
+      // Если есть основное изображение и дополнительные изображения
+      if (validMainImageUrl && validAdditionalImageUrls.length > 0) {
+        // Telegram ограничивает длину подписи к изображениям 1024 символами
+        const TELEGRAM_CAPTION_LIMIT = 1024;
+        
+        // Объединяем все изображения в один массив
+        const allImages = [validMainImageUrl, ...validAdditionalImageUrls];
+        
+        // Если текст короткий, отправляем его как подпись к медиа-группе
+        if (formattedContent.length <= TELEGRAM_CAPTION_LIMIT) {
+          result = await this.sendMediaGroup(allImages, formattedContent);
+        } else {
+          // Если текст длинный, сначала отправляем медиа-группу, затем текст
+          const mediaResult = await this.sendMediaGroup(allImages);
+          const textResult = await this.sendTextMessage(formattedContent);
+          
+          // Возвращаем ID сообщений и URL медиа-группы
+          result = {
+            success: true,
+            messageIds: [...mediaResult.messageIds, textResult.messageId],
+            messageUrl: mediaResult.messageUrl
+          };
+        }
+      }
+      // Если есть только основное изображение
+      else if (validMainImageUrl) {
+        // Telegram ограничивает длину подписи к изображениям 1024 символами
+        const TELEGRAM_CAPTION_LIMIT = 1024;
+        
+        // Если текст короткий, отправляем его как подпись к изображению
+        if (formattedContent.length <= TELEGRAM_CAPTION_LIMIT) {
+          result = await this.sendImage(validMainImageUrl, formattedContent);
+        } else {
+          // Если текст длинный, сначала отправляем изображение, затем текст
+          const imageResult = await this.sendImage(validMainImageUrl);
+          const textResult = await this.sendTextMessage(formattedContent);
+          
+          // Возвращаем ID сообщений и URL изображения
+          result = {
+            success: true,
+            messageIds: [imageResult.messageId, textResult.messageId],
+            messageUrl: imageResult.messageUrl
+          };
+        }
+      }
+      // Если есть только дополнительные изображения
+      else if (validAdditionalImageUrls.length > 0) {
+        // Telegram ограничивает длину подписи к изображениям 1024 символами
+        const TELEGRAM_CAPTION_LIMIT = 1024;
+        
+        // Если текст короткий, отправляем его как подпись к медиа-группе
+        if (formattedContent.length <= TELEGRAM_CAPTION_LIMIT) {
+          result = await this.sendMediaGroup(validAdditionalImageUrls, formattedContent);
+        } else {
+          // Если текст длинный, сначала отправляем медиа-группу, затем текст
+          const mediaResult = await this.sendMediaGroup(validAdditionalImageUrls);
+          const textResult = await this.sendTextMessage(formattedContent);
+          
+          // Возвращаем ID сообщений и URL медиа-группы
+          result = {
+            success: true,
+            messageIds: [...mediaResult.messageIds, textResult.messageId],
+            messageUrl: mediaResult.messageUrl
+          };
+        }
+      }
+      // Если нет изображений, отправляем только текст
+      else {
+        result = await this.sendTextMessage(formattedContent);
+        
+        // Форматируем результат, чтобы он совпадал с другими случаями
+        result.messageIds = [result.messageId];
+      }
+      
+      return result;
+    } catch (error) {
+      log(`Ошибка при публикации контента в Telegram: ${error.message}`, 'telegram');
+      throw error;
+    }
   }
 }
 
+// Экспортируем экземпляр сервиса для использования в приложении
 export const telegramService = new TelegramService();
