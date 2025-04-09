@@ -781,8 +781,11 @@ export class TelegramService {
           // Удаляем все теги, но сохраняем переносы строк и эмодзи
           const textContent = textWithParagraphs.replace(/<[^>]*>/g, '');
           
-          // Убираем лишние переносы (более 2-х подряд)
-          const cleanText = textContent.replace(/\n{3,}/g, '\n\n');
+          // Работаем с переносами - убираем избыточные, сохраняем разделение абзацев
+          let cleanText = textContent
+            .replace(/\n{3,}/g, '\n\n')     // Убираем более 2-х переносов подряд
+            .replace(/\n\n\s+/g, '\n\n')    // Убираем пробелы после двойных переносов
+            .replace(/\n{2,}/g, '\n');      // Заменяем все двойные переносы на одинарные
           
           // Находим только основные выделенные части текста
           const boldMatch = html.match(/<strong>([\s\S]*?)<\/strong>/g);
@@ -837,19 +840,32 @@ export class TelegramService {
           // Создаем простое сообщение с минимальным форматированием и сохраненными переносами строк
           let simplifiedHtml = cleanText;
           
-          // Найдем все форматирования и отсортируем их по длине (от большего к меньшему)
+          // Проверяем наш исходный контент на наличие слишком больших кусков форматирования
+          // Если форматирование занимает больше 60% текста, скорее всего это ошибка
+          const contentLength = cleanText.length;
+          const filteredFormattings = formattings.filter(format => {
+            const isLengthReasonable = format.content.length <= contentLength * 0.6;
+            if (!isLengthReasonable) {
+              log(`Отклонено подозрительное форматирование (${format.type}): длина ${format.content.length} из ${contentLength} символов`, 'telegram');
+            }
+            return isLengthReasonable;
+          });
+          
+          // Найдем все разрешенные форматирования и отсортируем их по длине (от большего к меньшему)
           // Это предотвратит проблему, когда более короткое форматирование 
           // перезаписывает часть более длинного форматирования
-          const sortedFormattings = [...formattings].sort((a, b) => 
+          const sortedFormattings = [...filteredFormattings].sort((a, b) => 
             b.content.length - a.content.length
           );
           
-          // Создаем карту форматирования для каждого символа текста
-          const formattingMap = new Map();
-          
           // Применяем только самое базовое форматирование
+          // Используем метод, который не затрагивает уже обработанные части текста
+          let remainingText = simplifiedHtml;
+          let processedHtml = '';
+          
+          // Для каждого форматирования находим его в тексте и добавляем теги
           sortedFormattings.forEach(formatting => {
-            if (formatting.content && simplifiedHtml.includes(formatting.content)) {
+            if (formatting.content && remainingText.includes(formatting.content)) {
               let tag = '';
               
               switch(formatting.type) {
@@ -865,22 +881,29 @@ export class TelegramService {
               }
               
               if (tag) {
-                // Находим первое вхождение форматируемого текста
-                const startIndex = simplifiedHtml.indexOf(formatting.content);
-                if (startIndex !== -1) {
-                  const endIndex = startIndex + formatting.content.length;
+                // Разделяем текст на части: до форматируемого текста, сам форматируемый текст и после
+                const parts = remainingText.split(formatting.content);
+                
+                // Если текст найден, добавляем форматирование только к этому тексту
+                if (parts.length > 1) {
+                  // Добавляем первую часть как есть
+                  processedHtml += parts[0];
                   
-                  // Добавляем открывающий тег перед форматируемым текстом
-                  simplifiedHtml = 
-                    simplifiedHtml.slice(0, startIndex) + 
-                    `<${tag}>` + 
-                    simplifiedHtml.slice(startIndex, endIndex) + 
-                    `</${tag}>` + 
-                    simplifiedHtml.slice(endIndex);
+                  // Добавляем форматированный текст
+                  processedHtml += `<${tag}>${formatting.content}</${tag}>`;
+                  
+                  // Оставшийся текст для дальнейшей обработки
+                  remainingText = parts.slice(1).join(formatting.content);
                 }
               }
             }
           });
+          
+          // Добавляем оставшийся необработанный текст
+          processedHtml += remainingText;
+          
+          // Используем обработанный HTML
+          simplifiedHtml = processedHtml;
             
           log(`Упрощенный HTML (${simplifiedHtml.length} символов): ${simplifiedHtml.substring(0, 100)}...`, 'telegram');
           
@@ -920,22 +943,23 @@ export class TelegramService {
       
       // Обрабатываем параграфы <p> с сохранением внутреннего форматирования
       result = result.replace(/<p>([\s\S]*?)<\/p>/g, function(match, content) {
-        // Если параграф пустой, просто возвращаем два переноса строки
-        if (!content.trim()) return '\n\n';
+        // Если параграф пустой, просто возвращаем один перенос строки
+        if (!content.trim()) return '\n';
         
-        // В противном случае, сохраняем внутреннее форматирование и добавляем двойной перенос строки
-        return content + '\n\n';
+        // В противном случае, сохраняем внутреннее форматирование и добавляем один перенос строки
+        return content + '\n';
       });
       
       // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
       result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-        // Заменяем каждый элемент списка на строку с маркером (• или -)
+        // Заменяем каждый элемент списка на строку с маркером (•)
         const formattedList = listContent
-          .replace(/<li>([\s\S]*?)<\/li>/g, '\n• $1')
+          .replace(/<li>([\s\S]*?)<\/li>/g, '• $1\n') // Перенос строки после каждого элемента списка
           .replace(/<\/?[^>]+(>|$)/g, '') // Удаляем все оставшиеся HTML-теги внутри элементов списка
           .trim();
         
-        return '\n' + formattedList + '\n\n';
+        // Добавляем один перенос строки до и после списка
+        return '\n' + formattedList + '\n';
       });
       
       // Улучшенная обработка HTML-тегов и их конвертация в Telegram-совместимый формат
@@ -961,8 +985,11 @@ export class TelegramService {
         // Исправляем случаи, когда <s> тег разрывается из-за переноса строки
         .replace(/<s>([\s\S]*?)\n\n([\s\S]*?)<\/s>/g, '<s>$1</s>\n\n<s>$2</s>');
         
-      // Удаляем двойные переносы строк, которые могли возникнуть при обработке
-      result = result.replace(/\n{3,}/g, '\n\n');
+      // Удаляем лишние переносы строк, которые могли возникнуть при обработке
+      result = result
+        .replace(/\n{3,}/g, '\n')     // Три и более переносов -> один перенос
+        .replace(/\n\s+/g, '\n')      // Перенос + пробелы -> один перенос
+        .replace(/\n\n/g, '\n');      // Два переноса -> один перенос
       
       // Удаляем все оставшиеся HTML-теги, которые не поддерживаются в Telegram
       result = result.replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
