@@ -1,243 +1,276 @@
 /**
- * Скрипт для отправки конкретного контента в Telegram через API приложения
- * и последующего возврата в статус "draft"
- * 
+ * Скрипт для публикации конкретного поста в Telegram через API приложения
  * Запуск: node send-specific-content.js
  */
 
 import axios from 'axios';
-import dotenv from 'dotenv';
-dotenv.config();
 
-// Базовый URL для API приложения
-const API_BASE_URL = 'http://localhost:5000/api';
+// ID контента для публикации
+const contentId = '9ea456e7-41ef-49ea-81b9-a54593d2ffcb';
 
-// ID контента и кампании
-const CAMPAIGN_ID = process.env.CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
-const CONTENT_ID = '094bb372-d8ae-4759-8d0e-1c6c63391a04'; // Конкретный ID контента для публикации
-
-// Платформа для публикации
-const PLATFORM = 'telegram';
-
-// Получение токена авторизации для работы с API
-async function getAuthToken() {
+/**
+ * Получает данные о контенте из API приложения
+ * @param {string} contentId ID контента
+ * @returns {Promise<object>} Данные контента
+ */
+async function getContentData(contentId) {
   try {
-    console.log('Попытка авторизации с заданными учетными данными...');
+    console.log(`Получаем данные контента с ID ${contentId}...`);
     
-    // Используем переменные окружения, если они доступны
-    const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
-    const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
-    
-    console.log(`Авторизация с учетными данными: ${email}`);
-    console.log(`Пароль: ${password ? '*******' + password.substr(-3) : 'отсутствует'}`);
-    
-    // Используем учетные данные из переменных окружения
-    const loginResponse = await axios.post(`${API_BASE_URL}/auth/login`, {
-      email,
-      password
+    // Получаем токен авторизации администратора из Directus
+    const directusResponse = await axios.post('https://directus.nplanner.ru/auth/login', {
+      email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
+      password: process.env.DIRECTUS_ADMIN_PASSWORD || 'vvitk5vv!'
     });
     
-    console.log('Ответ от сервера авторизации:', loginResponse.status);
-    console.log('Структура данных ответа:', Object.keys(loginResponse.data).join(', '));
-    
-    // Полная проверка структуры ответа
-    if (loginResponse.data) {
-      if (loginResponse.data.token) {
-        console.log('Обнаружен прямой токен в data.token');
-        return loginResponse.data.token;
-      } else if (loginResponse.data.access_token) {
-        console.log('Обнаружен токен в data.access_token');
-        return loginResponse.data.access_token;
-      } else if (loginResponse.data.data && loginResponse.data.data.access_token) {
-        console.log('Обнаружен токен в data.data.access_token');
-        return loginResponse.data.data.access_token;
-      } else {
-        console.log('Детали ответа:', JSON.stringify(loginResponse.data).substring(0, 200) + '...');
-      }
+    if (!directusResponse.data || !directusResponse.data.data || !directusResponse.data.data.access_token) {
+      throw new Error('Не удалось получить токен авторизации');
     }
     
-    // Пробуем использовать статический токен из переменных окружения
-    if (process.env.DIRECTUS_ADMIN_TOKEN) {
-      console.log('Использование DIRECTUS_ADMIN_TOKEN из переменных окружения');
-      
-      try {
-        // Проверяем валидность токена
-        const testResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/users/me`, {
-          headers: {
-            Authorization: `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`
-          }
-        });
-        
-        if (testResponse.status === 200) {
-          console.log('DIRECTUS_ADMIN_TOKEN валиден, используем его');
-          return process.env.DIRECTUS_ADMIN_TOKEN;
-        }
-      } catch (tokenError) {
-        console.error('Ошибка проверки DIRECTUS_ADMIN_TOKEN:', tokenError.message);
+    const token = directusResponse.data.data.access_token;
+    console.log('✅ Токен авторизации получен');
+    
+    // Получаем данные контента
+    const contentResponse = await axios.get(`https://directus.nplanner.ru/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
+    });
+    
+    if (!contentResponse.data || !contentResponse.data.data) {
+      throw new Error('Не удалось получить данные контента');
     }
     
-    // Специфичный для Directus запрос на прямое получение токена
-    try {
-      console.log('Попытка прямого запроса к Directus API...');
-      
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-      const directusResponse = await axios.post(`${directusUrl}/auth/login`, {
-        email,
-        password
-      });
-      
-      if (directusResponse.data && directusResponse.data.data && directusResponse.data.data.access_token) {
-        console.log('Получен токен от Directus API');
-        return directusResponse.data.data.access_token;
-      }
-    } catch (directusError) {
-      console.error('Ошибка прямого запроса к Directus:', directusError.message);
-    }
-    
-    console.error('Ошибка: не удалось получить токен авторизации из ответа');
-    return null;
+    console.log('✅ Данные контента получены');
+    return contentResponse.data.data;
   } catch (error) {
-    console.error('Ошибка авторизации:', error.message);
-    if (error.response) {
-      console.error('Детали ошибки:', JSON.stringify(error.response.data || {}));
-    }
-    return null;
+    console.error('❌ Ошибка при получении данных контента:', error.message);
+    throw error;
   }
 }
 
 /**
- * Публикует указанный контент в Telegram
+ * Публикует контент в Telegram
+ * @param {string} contentId ID контента
  * @returns {Promise<object>} Результат публикации
  */
-async function publishContent() {
+async function publishToTelegram(contentId) {
   try {
-    console.log(`\nПубликация контента ID: ${CONTENT_ID}`);
-    console.log(`Кампания ID: ${CAMPAIGN_ID}`);
-    console.log(`Платформа: ${PLATFORM}`);
+    console.log(`Публикация контента ${contentId} в Telegram...`);
     
-    // Получаем токен авторизации
-    const token = await getAuthToken();
-    if (!token) {
-      return { success: false, error: 'Не удалось получить токен авторизации' };
-    }
+    // Получаем данные контента
+    const content = await getContentData(contentId);
     
-    // Сначала получаем данные контента, чтобы затем опубликовать их
-    const contentResponse = await axios.get(`${API_BASE_URL}/content/${CONTENT_ID}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    // Получаем данные кампании для извлечения настроек Telegram
+    const campaignId = content.campaign_id;
+    
+    // Получаем токен авторизации администратора из Directus
+    const directusResponse = await axios.post('https://directus.nplanner.ru/auth/login', {
+      email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
+      password: process.env.DIRECTUS_ADMIN_PASSWORD || 'vvitk5vv!'
     });
     
-    if (!contentResponse.data || !contentResponse.data.content) {
-      console.error('Ошибка: не удалось получить данные контента');
-      return { success: false, error: 'Контент не найден' };
+    if (!directusResponse.data || !directusResponse.data.data || !directusResponse.data.data.access_token) {
+      throw new Error('Не удалось получить токен авторизации');
     }
     
-    const content = contentResponse.data;
-    console.log(`Получен контент: "${content.title || 'Без заголовка'}"`);
+    const token = directusResponse.data.data.access_token;
     
-    // Проверяем текущий статус контента и меняем его на "scheduled" если нужно
-    const currentStatus = content.status || 'draft';
-    console.log(`Текущий статус контента: ${currentStatus}`);
+    // Получаем данные кампании
+    const campaignResponse = await axios.get(`https://directus.nplanner.ru/items/campaign/${campaignId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
-    if (currentStatus !== 'scheduled') {
-      console.log('Изменение статуса контента на "scheduled" для публикации...');
-      
-      // Изменяем статус на "scheduled" для публикации
-      await axios.patch(`${API_BASE_URL}/content/${CONTENT_ID}`, 
-        { status: 'scheduled' },
-        { headers: { Authorization: `Bearer ${token}` } }
+    if (!campaignResponse.data || !campaignResponse.data.data) {
+      throw new Error('Не удалось получить данные кампании');
+    }
+    
+    const campaign = campaignResponse.data.data;
+    
+    // Извлекаем настройки Telegram
+    let telegramSettings = {};
+    if (campaign.social_media_settings && typeof campaign.social_media_settings === 'object') {
+      telegramSettings = campaign.social_media_settings.telegram || {};
+    }
+    
+    // Отправляем в Telegram напрямую через Telegram Bot API
+    const telegramToken = telegramSettings.token || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+    const chatId = telegramSettings.chatId || '-1002302366310';
+    
+    // Форматируем HTML-контент для Telegram
+    const htmlContent = formatHtmlForTelegram(content.content);
+    
+    // Отправляем сообщение
+    const telegramResponse = await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+      chat_id: chatId,
+      text: htmlContent,
+      parse_mode: 'HTML',
+      disable_web_page_preview: false
+    });
+    
+    if (!telegramResponse.data || !telegramResponse.data.ok) {
+      throw new Error(`Ошибка Telegram API: ${JSON.stringify(telegramResponse.data)}`);
+    }
+    
+    console.log('✅ Сообщение успешно отправлено в Telegram!');
+    console.log(`ID сообщения: ${telegramResponse.data.result.message_id}`);
+    
+    // Получаем URL сообщения
+    try {
+      const chatInfo = await axios.post(
+        `https://api.telegram.org/bot${telegramToken}/getChat`,
+        { chat_id: chatId }
       );
-    }
-    
-    // Тестовый маршрут для отправки HTML с контролем форматирования
-    const publishResponse = await axios.post(`${API_BASE_URL}/test/telegram-html`, {
-      contentId: CONTENT_ID,
-      campaignId: CAMPAIGN_ID,
-      html: content.content,
-      autoFixHtml: true
-    }, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    });
-    
-    return { 
-      success: publishResponse.data.success, 
-      response: publishResponse.data,
-      content: content
-    };
-  } catch (error) {
-    console.error('Ошибка при публикации контента:', error.message);
-    if (error.response && error.response.data) {
-      console.error('Детали ошибки:', JSON.stringify(error.response.data));
-    }
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Возвращает контент в статус "draft" после публикации
- * @param {string} contentId ID контента
- * @param {string} originalStatus Исходный статус контента
- * @returns {Promise<boolean>} Успешность операции
- */
-async function revertToDraft(contentId, originalStatus = 'draft') {
-  try {
-    console.log(`\nВозврат контента ${contentId} в статус "${originalStatus}"...`);
-    
-    // Получаем токен авторизации
-    const token = await getAuthToken();
-    if (!token) {
-      return false;
-    }
-    
-    // Изменяем статус обратно на "draft"
-    await axios.patch(`${API_BASE_URL}/content/${contentId}`, 
-      { status: originalStatus },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    
-    console.log(`✅ Контент успешно возвращен в статус "${originalStatus}"`);
-    return true;
-  } catch (error) {
-    console.error(`Ошибка при возврате контента в статус "${originalStatus}":`, error.message);
-    return false;
-  }
-}
-
-/**
- * Запускает процесс публикации и выводит результат
- */
-async function main() {
-  console.log('=== Начало публикации контента в Telegram ===');
-  
-  try {
-    const result = await publishContent();
-    
-    if (result.success) {
-      console.log('\n✅ Публикация успешна!');
-      console.log(`URL публикации: ${result.response.postUrl || result.response.messageUrl || 'Нет URL'}`);
       
-      if (result.response.details) {
-        console.log('Детали:', JSON.stringify(result.response.details));
+      if (chatInfo.data.ok) {
+        let messageUrl;
+        if (chatInfo.data.result.username) {
+          messageUrl = `https://t.me/${chatInfo.data.result.username}/${telegramResponse.data.result.message_id}`;
+          console.log(`Канал: ${chatInfo.data.result.username}`);
+        } else {
+          const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
+          messageUrl = `https://t.me/c/${formattedChatId}/${telegramResponse.data.result.message_id}`;
+          console.log('Приватный канал');
+        }
+        console.log(`URL сообщения: ${messageUrl}`);
+      }
+    } catch (error) {
+      console.error('Ошибка при получении URL сообщения:', error.message);
+    }
+    
+    return telegramResponse.data;
+  } catch (error) {
+    console.error('❌ Ошибка при публикации в Telegram:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Исправляет незакрытые HTML-теги в тексте
+ * @param {string} text Текст с HTML-разметкой
+ * @returns {string} Текст с исправленными незакрытыми тегами
+ */
+function fixUnclosedTags(text) {
+  // Стек для отслеживания открытых тегов
+  const tagStack = [];
+  
+  // Регулярное выражение для поиска открывающих и закрывающих тегов
+  const tagRegex = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+  
+  // Находим все теги в тексте
+  let match;
+  let lastIndex = 0;
+  let result = '';
+  
+  while ((match = tagRegex.exec(text)) !== null) {
+    const fullTag = match[0];
+    const tagName = match[1].toLowerCase();
+    const isClosingTag = fullTag.startsWith('</');
+    
+    // Добавляем текст до текущего тега
+    result += text.substring(lastIndex, match.index);
+    lastIndex = match.index + fullTag.length;
+    
+    if (isClosingTag) {
+      // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому тегу
+      if (tagStack.length > 0) {
+        const lastOpenTag = tagStack[tagStack.length - 1];
+        if (lastOpenTag === tagName) {
+          // Тег правильно закрыт, удаляем его из стека
+          tagStack.pop();
+          result += fullTag;
+        } else {
+          // Закрывающий тег не соответствует последнему открытому
+          // Добавляем закрывающие теги для всех открытых тегов до соответствующего
+          let found = false;
+          for (let i = tagStack.length - 1; i >= 0; i--) {
+            if (tagStack[i] === tagName) {
+              found = true;
+              // Закрываем все промежуточные теги
+              for (let j = tagStack.length - 1; j >= i; j--) {
+                result += `</${tagStack[j]}>`;
+                tagStack.pop();
+              }
+              break;
+            }
+          }
+          
+          if (!found) {
+            // Если соответствующий открывающий тег не найден, игнорируем закрывающий тег
+            console.log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`);
+          } else {
+            // Добавляем текущий закрывающий тег
+            result += fullTag;
+          }
+        }
+      } else {
+        // Если стек пуст, значит это закрывающий тег без открывающего
+        console.log(`Игнорирую закрывающий тег </${tagName}>, для которого нет открывающего`);
       }
     } else {
-      console.log('\n❌ Ошибка при публикации');
-      console.log('Детали ошибки:', result.error || 'Неизвестная ошибка');
+      // Открывающий тег, добавляем в стек
+      tagStack.push(tagName);
+      result += fullTag;
     }
-    
-    // Получаем исходный статус из результата или используем "draft" по умолчанию
-    const originalStatus = result.content?.status || 'draft';
-    
-    // Возвращаем контент в исходный статус
-    await revertToDraft(CONTENT_ID, originalStatus);
-  } catch (error) {
-    console.error('\n❌ Ошибка при выполнении скрипта:', error.message);
-    
-    // Пытаемся вернуть контент в статус "draft" в случае ошибки
-    await revertToDraft(CONTENT_ID);
   }
   
-  console.log('\n=== Завершение публикации контента в Telegram ===');
+  // Добавляем оставшийся текст
+  result += text.substring(lastIndex);
+  
+  // Закрываем все оставшиеся открытые теги в обратном порядке (LIFO)
+  for (let i = tagStack.length - 1; i >= 0; i--) {
+    result += `</${tagStack[i]}>`;
+  }
+  
+  return result;
+}
+
+/**
+ * Преобразует HTML из редактора в формат Telegram
+ * @param {string} html HTML из редактора
+ * @returns {string} HTML, готовый для отправки в Telegram
+ */
+function formatHtmlForTelegram(html) {
+  console.log('Начинаю обработку HTML для Telegram...');
+  
+  // 1. Сначала обрабатываем блочные элементы
+  let result = html
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
+    .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<ul[^>]*>/g, '\n')
+    .replace(/<\/ul>/g, '\n')
+    .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
+  
+  // 2. Преобразуем форматирующие теги
+  result = result
+    .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+    .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+    .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
+    .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
+    .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
+    .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
+    .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
+  
+  // 3. Удаляем все оставшиеся HTML-теги
+  result = result.replace(/<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g, '');
+  
+  // 4. Исправляем незакрытые теги
+  result = fixUnclosedTags(result);
+  
+  // 5. Нормализуем переносы строк
+  result = result
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\n+/, '')
+    .replace(/\n+$/, '');
+  
+  console.log('HTML обработан и готов к отправке.');
+  return result;
 }
 
 // Запускаем публикацию
-main();
+publishToTelegram(contentId)
+  .then(() => console.log('\n=== Публикация успешно завершена ==='))
+  .catch(error => console.error('\n⚠️ Публикация завершена с ошибкой:', error.message));
