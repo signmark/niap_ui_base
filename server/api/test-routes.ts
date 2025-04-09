@@ -9,12 +9,16 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { telegramService } from '../services/social/telegram-service';
-import { formatHtmlForTelegram } from '../utils/telegram-formatter';
 import { CampaignContent } from '../../shared/types';
+import { formatHtmlForTelegram, standardizeTelegramTags, fixUnclosedTags, postProcessHtml } from '../utils/telegram-formatter';
+import { telegramService } from '../services/social/telegram-service';
 
 // Создаем роутер
 const router = express.Router();
+
+// Функция для стандартизации HTML-тегов для Telegram (импортируем её из telegram-formatter.ts)
+
+// Используем функцию postProcessHtml из telegram-formatter.ts
 
 // Базовый маршрут для проверки работоспособности API
 router.get('/', async (req: Request, res: Response) => {
@@ -712,6 +716,193 @@ router.post('/publish-content-by-id', async (req: Request, res: Response) => {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
+});
+
+/**
+ * Маршрут для тестирования форматирования HTML для Telegram
+ * POST /api/test/telegram/format-html
+ */
+router.post('/telegram/format-html', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст для форматирования'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на форматирование HTML: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    console.log(`[Telegram Test] Результат форматирования HTML: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при форматировании HTML: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при форматировании HTML',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для тестирования обработки списков в HTML для Telegram
+ * POST /api/test/telegram/format-lists
+ */
+router.post('/telegram/format-lists', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст со списками для форматирования'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на форматирование списков: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Проверка на наличие маркеров списка в формате Telegram
+    const hasBulletPoints = formattedHtml.includes('•');
+    
+    console.log(`[Telegram Test] Результат форматирования списков: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      hasBulletPoints
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при форматировании списков: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при форматировании списков',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для тестирования обработки эмодзи в HTML для Telegram
+ * POST /api/test/telegram/format-emoji
+ */
+router.post('/telegram/format-emoji', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст с эмодзи для форматирования'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на форматирование с эмодзи: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Простая проверка на наличие не-ASCII символов (включая эмодзи)
+    const hasNonAscii = /[^\u0000-\u007F]/.test(html);
+    const emojiCount = hasNonAscii ? 1 : 0;
+    
+    console.log(`[Telegram Test] Результат форматирования с эмодзи: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      emojiCount: emojiCount,
+      hasEmoji: hasNonAscii
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при форматировании с эмодзи: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при форматировании с эмодзи',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для тестирования исправления незакрытых тегов HTML для Telegram
+ * POST /api/test/telegram/fix-unclosed-tags
+ */
+router.post('/telegram/fix-unclosed-tags', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст с тегами для исправления'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на исправление незакрытых тегов: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Проверка наличия незакрытых тегов в оригинальном тексте
+    const unclosedTagsRegex = /<([a-z]+)(?:\s[^>]*)?>[^<]*(?:<\/\1>)?/gi;
+    const originalTags = html.match(unclosedTagsRegex) || [];
+    const formattedTags = formattedHtml.match(unclosedTagsRegex) || [];
+    
+    console.log(`[Telegram Test] Результат исправления незакрытых тегов: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      tagsBeforeFix: originalTags.length,
+      tagsAfterFix: formattedTags.length,
+      wasFixed: originalTags.length !== formattedTags.length || html !== formattedHtml
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при исправлении незакрытых тегов: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при исправлении незакрытых тегов',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для проверки доступности тестовых API
+ * GET /api/test/status
+ */
+router.get('/status', (req: Request, res: Response) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Тестовые API маршруты работают',
+    timestamp: new Date().toISOString(),
+    availableRoutes: [
+      { method: 'POST', path: '/api/test/telegram/format-html', description: 'Форматирование HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/format-lists', description: 'Обработка списков в HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/format-emoji', description: 'Обработка эмодзи в HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/fix-unclosed-tags', description: 'Исправление незакрытых тегов HTML' },
+      { method: 'POST', path: '/api/test/fix-html', description: 'Исправление HTML-разметки' },
+      { method: 'POST', path: '/api/test/raw-html-telegram', description: 'Прямая отправка HTML в Telegram' },
+      { method: 'POST', path: '/api/test/telegram-html', description: 'Тестирование HTML форматирования через Telegram API' }
+    ]
+  });
 });
 
 export default router;
