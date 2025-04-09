@@ -85,54 +85,27 @@ export class TelegramService {
    */
   async sendTextMessage(text, options = {}) {
     try {
+      // Проверяем наличие необходимых данных
+      if (!text) {
+        throw new Error('Текст сообщения не указан');
+      }
+      
+      if (!this.token) {
+        throw new Error('Токен бота не установлен');
+      }
+      
+      if (!this.chatId) {
+        throw new Error('ID чата не установлен');
+      }
+      
       // Преобразуем только основные теги (strong -> b, em -> i)
       const processedText = this.standardizeTelegramTags(text);
       
       // Проверяем длину сообщения
-      if (processedText.length > 4096) {
-        // Разбиваем длинное сообщение на части по 4000 символов
-        const parts = [];
-        for (let i = 0; i < processedText.length; i += 4000) {
-          parts.push(processedText.substring(i, i + 4000));
-        }
-        
-        const messageIds = [];
-        let firstMessageUrl = '';
-        
-        // Отправляем каждую часть последовательно
-        for (let i = 0; i < parts.length; i++) {
-          const url = `${this.apiUrl}${this.token}/sendMessage`;
-          
-          const params = {
-            chat_id: this.chatId,
-            text: parts[i],
-            parse_mode: 'HTML',
-            disable_web_page_preview: true
-          };
-          
-          const response = await axios.post(url, params);
-          
-          if (response.data.ok) {
-            const messageId = response.data.result.message_id;
-            messageIds.push(messageId);
-            
-            // Сохраняем URL первого сообщения
-            if (i === 0) {
-              firstMessageUrl = await this.generateMessageUrl(messageId);
-            }
-            
-            // Добавляем задержку между отправками сообщений
-            if (i < parts.length - 1) {
-              await sleep(500);
-            }
-          }
-        }
-        
-        return {
-          success: true,
-          messageIds,
-          messageUrl: firstMessageUrl
-        };
+      const TELEGRAM_MESSAGE_LIMIT = 4096;
+      if (processedText.length > TELEGRAM_MESSAGE_LIMIT) {
+        log(`Сообщение превышает лимит в ${TELEGRAM_MESSAGE_LIMIT} символов, будет разбито на части`, 'telegram');
+        return this.sendLongTextMessage(processedText);
       }
       
       const url = `${this.apiUrl}${this.token}/sendMessage`;
@@ -141,19 +114,26 @@ export class TelegramService {
         chat_id: this.chatId,
         text: processedText,
         parse_mode: 'HTML',
-        disable_web_page_preview: options.disablePreview || false
+        disable_web_page_preview: options.disablePreview || false,
+        disable_notification: options.silent || false
       };
       
       // Получаем информацию о чате для дальнейшего использования
+      log('Получение информации о чате перед отправкой текстового сообщения', 'telegram');
       await this.getChatInfo();
       
+      log(`Отправка текстового сообщения в Telegram (${processedText.length} символов)`, 'telegram');
       const response = await axios.post(url, params);
       
       if (response.data.ok) {
         const messageId = response.data.result.message_id;
+        
+        // Генерируем URL сообщения
+        log(`Генерация URL для сообщения с ID: ${messageId}`, 'telegram');
         const messageUrl = await this.generateMessageUrl(messageId);
         
         log(`Сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
+        log(`URL опубликованного сообщения: ${messageUrl || 'не удалось создать URL'}`, 'telegram');
         
         return {
           success: true,
@@ -242,6 +222,19 @@ export class TelegramService {
    */
   async sendImage(imageUrl, caption = '', options = {}) {
     try {
+      // Проверяем наличие необходимых данных
+      if (!imageUrl) {
+        throw new Error('URL изображения не указан');
+      }
+      
+      if (!this.token) {
+        throw new Error('Токен бота не установлен');
+      }
+      
+      if (!this.chatId) {
+        throw new Error('ID чата не установлен');
+      }
+
       // Проверяем, является ли URL действительным изображением
       if (!await isImageUrl(imageUrl) || !await isImageAccessible(imageUrl)) {
         throw new Error(`Invalid or inaccessible image URL: ${imageUrl}`);
@@ -259,16 +252,23 @@ export class TelegramService {
         chat_id: this.chatId,
         photo: imageUrl,
         caption: formattedCaption,
-        parse_mode: 'HTML'
+        parse_mode: 'HTML',
+        disable_notification: options.silent || false
       };
+      
+      log(`Отправка изображения в Telegram: ${imageUrl}`, 'telegram');
       
       const response = await axios.post(url, params);
       
       if (response.data.ok) {
         const messageId = response.data.result.message_id;
-        const messageUrl = this.generateMessageUrl(messageId);
+        
+        // Получаем URL сообщения
+        log(`Генерация URL для сообщения с ID: ${messageId}`, 'telegram');
+        const messageUrl = await this.generateMessageUrl(messageId);
         
         log(`Изображение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
+        log(`URL опубликованного изображения: ${messageUrl || 'не удалось создать URL'}`, 'telegram');
         
         return {
           success: true,
@@ -293,25 +293,45 @@ export class TelegramService {
    */
   async sendMediaGroup(imageUrls, caption = '', options = {}) {
     try {
-      // Проверяем наличие изображений
+      // Проверяем наличие необходимых данных
+      if (!this.token) {
+        throw new Error('Токен бота не установлен');
+      }
+      
+      if (!this.chatId) {
+        throw new Error('ID чата не установлен');
+      }
+      
+      // Проверяем наличие и валидность изображений
       if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-        throw new Error('No images provided');
+        throw new Error('Не предоставлены URL изображений');
       }
       
       // Ограничиваем количество изображений до 10 (ограничение Telegram API)
       const limitedImageUrls = imageUrls.slice(0, 10);
       
+      log(`Проверка доступности ${limitedImageUrls.length} изображений для отправки в группе`, 'telegram');
+      
       // Подготавливаем массив изображений, проверяя их доступность
       const validImageUrls = await prepareImageUrls(limitedImageUrls);
       
       if (validImageUrls.length === 0) {
-        throw new Error('No valid images found in provided URLs');
+        throw new Error('Не найдено доступных изображений среди предоставленных URL');
       }
       
-      // Если подпись содержит HTML-теги, форматируем ее
+      log(`Подготовлено ${validImageUrls.length} доступных изображений для отправки`, 'telegram');
+      
+      // Проверяем длину подписи и форматируем ее
+      const TELEGRAM_CAPTION_LIMIT = 1024;
       let formattedCaption = '';
+      
       if (caption) {
         formattedCaption = createImageCaption(caption);
+        
+        if (formattedCaption.length > TELEGRAM_CAPTION_LIMIT) {
+          log(`Подпись к группе изображений превышает лимит в ${TELEGRAM_CAPTION_LIMIT} символов, будет обрезана`, 'telegram');
+          formattedCaption = formattedCaption.substring(0, TELEGRAM_CAPTION_LIMIT - 3) + '...';
+        }
       }
       
       // Формируем группу медиа
@@ -329,16 +349,23 @@ export class TelegramService {
       
       const params = {
         chat_id: this.chatId,
-        media: media
+        media: media,
+        disable_notification: options.silent || false
       };
+      
+      log(`Отправка группы из ${media.length} изображений в Telegram`, 'telegram');
       
       const response = await axios.post(url, params);
       
       if (response.data.ok) {
         const messageIds = response.data.result.map(message => message.message_id);
-        const firstMessageUrl = this.generateMessageUrl(messageIds[0]);
         
-        log(`Медиа-группа успешно отправлена в Telegram с ID: ${messageIds.join(', ')}`, 'telegram');
+        // Получаем URL для первого сообщения в группе
+        log(`Генерация URL для первого сообщения группы с ID: ${messageIds[0]}`, 'telegram');
+        const firstMessageUrl = await this.generateMessageUrl(messageIds[0]);
+        
+        log(`Группа изображений успешно отправлена в Telegram с ID: ${messageIds.join(', ')}`, 'telegram');
+        log(`URL опубликованного сообщения: ${firstMessageUrl || 'не удалось создать URL'}`, 'telegram');
         
         return {
           success: true,
@@ -360,11 +387,22 @@ export class TelegramService {
    */
   async getChatInfo() {
     try {
+      // Проверяем наличие токена и ID чата
+      if (!this.token) {
+        throw new Error('Токен бота не установлен. Убедитесь, что токен передан в настройках');
+      }
+      
+      if (!this.chatId) {
+        throw new Error('ID чата не установлен. Убедитесь, что ID чата передан в настройках');
+      }
+      
       const url = `${this.apiUrl}${this.token}/getChat`;
       
       const params = {
         chat_id: this.chatId
       };
+      
+      log(`Запрос информации о чате ${this.chatId}`, 'telegram');
       
       const response = await axios.post(url, params);
       
@@ -374,9 +412,13 @@ export class TelegramService {
         // Сохраняем имя пользователя чата для использования в URL
         if (chat.username) {
           this.chatUsername = chat.username;
+          log(`Получен username чата для URL: ${this.chatUsername}`, 'telegram');
+        } else {
+          log(`У чата нет username, будет использован ID чата для URL`, 'telegram');
         }
         
-        log(`Получена информация о чате: ${chat.title || chat.username || chat.id}`, 'telegram');
+        // Логируем полную информацию о чате для диагностики
+        log(`Получена информация о чате: ID=${chat.id}, Title=${chat.title || 'нет'}, Username=${chat.username || 'нет'}, Type=${chat.type || 'неизвестно'}`, 'telegram');
         
         return chat;
       } else {
@@ -384,6 +426,14 @@ export class TelegramService {
       }
     } catch (error) {
       log(`Ошибка при получении информации о чате: ${error.message}`, 'telegram');
+      
+      // Если произошла ошибка 404 или 401, возможно, указан неверный токен или ID чата
+      if (error.response && error.response.status === 404) {
+        log(`Чат с ID ${this.chatId} не найден. Проверьте правильность ID чата или убедитесь, что бот добавлен в чат`, 'telegram');
+      } else if (error.response && error.response.status === 401) {
+        log(`Ошибка авторизации. Проверьте правильность токена бота`, 'telegram');
+      }
+      
       throw error;
     }
   }
@@ -396,15 +446,42 @@ export class TelegramService {
    */
   async generateMessageUrl(messageId) {
     try {
-      // Если username еще не сохранен, попытаемся получить его
+      // Проверяем наличие необходимых данных
+      if (!messageId) {
+        log('Не удалось создать URL: отсутствует ID сообщения', 'telegram');
+        return '';
+      }
+      
+      // Если токен не установлен, сообщаем об ошибке
+      if (!this.token) {
+        log('Не удалось создать URL: токен бота не установлен', 'telegram');
+        return '';
+      }
+      
+      // Если ID чата не установлен, сообщаем об ошибке
+      if (!this.chatId) {
+        log('Не удалось создать URL: ID чата не установлен', 'telegram');
+        return '';
+      }
+      
+      // Если username еще не сохранен, обязательно получаем информацию о чате
       if (!this.chatUsername) {
-        // Попытка получить информацию о чате
         try {
+          log(`Получение информации о чате для создания URL сообщения ${messageId}`, 'telegram');
           const chatInfo = await this.getChatInfo();
+          
           // Проверка успешности получения информации
-          if (chatInfo && chatInfo.username) {
-            this.chatUsername = chatInfo.username;
-            log(`Получен username чата для URL: ${this.chatUsername}`, 'telegram');
+          if (chatInfo) {
+            if (chatInfo.username) {
+              this.chatUsername = chatInfo.username;
+              log(`Получен username чата для URL: ${this.chatUsername}`, 'telegram');
+            } else {
+              log(`У чата отсутствует username, будет использован ID чата для URL`, 'telegram');
+            }
+            
+            // Сохраняем тип чата для диагностики
+            this.chatType = chatInfo.type;
+            log(`Тип чата: ${this.chatType}`, 'telegram');
           }
         } catch (error) {
           log(`Не удалось получить информацию о чате для URL: ${error.message}`, 'telegram');
@@ -412,26 +489,38 @@ export class TelegramService {
         }
       }
       
-      // Если есть имя пользователя чата, используем его для создания URL
+      // Если есть имя пользователя чата, используем его для создания URL (наиболее надежный метод)
       if (this.chatUsername) {
-        return `https://t.me/${this.chatUsername}/${messageId}`;
+        const url = `https://t.me/${this.chatUsername}/${messageId}`;
+        log(`Сгенерирован URL сообщения с username: ${url}`, 'telegram');
+        return url;
       }
       
-      // Если ID чата начинается с -100, это суперчат или канал
+      // Если ID чата начинается с -100, это публичный канал или супергруппа
       if (String(this.chatId).startsWith('-100')) {
-        const chatId = String(this.chatId).substring(4);
-        return `https://t.me/c/${chatId}/${messageId}`;
+        // Для публичных каналов и супергрупп без username используем формат c/XXXXXXXX/123
+        const chatId = String(this.chatId).substring(4); // Убираем '-100' из начала ID
+        const url = `https://t.me/c/${chatId}/${messageId}`;
+        log(`Сгенерирован URL сообщения для канала/группы: ${url}`, 'telegram');
+        return url;
       }
       
-      // Для других типов чатов нельзя создать URL, так что возвращаем пустую строку
+      // Для частных чатов и других типов чатов URL создать нельзя
+      log(`Невозможно создать URL для чата типа ${this.chatType || 'неизвестно'} с ID ${this.chatId}`, 'telegram');
       return '';
     } catch (error) {
       log(`Ошибка при генерации URL сообщения: ${error.message}`, 'telegram');
       
-      // В случае ошибки пытаемся создать URL на основе ID чата
-      if (String(this.chatId).startsWith('-100')) {
-        const chatId = String(this.chatId).substring(4);
-        return `https://t.me/c/${chatId}/${messageId}`;
+      // В случае критической ошибки всё равно пытаемся создать URL на основе ID чата, если возможно
+      try {
+        if (String(this.chatId).startsWith('-100')) {
+          const chatId = String(this.chatId).substring(4);
+          const url = `https://t.me/c/${chatId}/${messageId}`;
+          log(`Сгенерирован резервный URL сообщения: ${url}`, 'telegram');
+          return url;
+        }
+      } catch (backupError) {
+        log(`Ошибка при генерации резервного URL: ${backupError.message}`, 'telegram');
       }
       
       return '';
@@ -589,30 +678,70 @@ export class TelegramService {
    */
   async sendRawHtmlToTelegram(html, options = {}) {
     try {
-      // Просто отправляем HTML как есть
-      log(`Отправка HTML-текста как есть, без обработки`, 'telegram');
+      // Проверяем наличие необходимых данных
+      if (!html) {
+        throw new Error('HTML-текст не указан');
+      }
+      
+      if (!this.token) {
+        throw new Error('Токен бота не установлен');
+      }
+      
+      if (!this.chatId) {
+        throw new Error('ID чата не установлен');
+      }
+      
+      // Преобразуем HTML в формат, поддерживаемый Telegram
+      let processedHtml = html;
+      
+      // Сначала стандартизируем теги для Telegram
+      if (!options.skipTagProcessing) {
+        log(`Стандартизация HTML-тегов для Telegram...`, 'telegram');
+        processedHtml = this.standardizeTelegramTags(processedHtml);
+        
+        // Исправляем незакрытые теги
+        log(`Проверка и исправление незакрытых HTML-тегов...`, 'telegram');
+        processedHtml = this.fixUnclosedTags(processedHtml);
+      }
+      
+      // Проверяем длину сообщения
+      const TELEGRAM_MESSAGE_LIMIT = 4096;
+      if (processedHtml.length > TELEGRAM_MESSAGE_LIMIT) {
+        log(`HTML-сообщение превышает лимит в ${TELEGRAM_MESSAGE_LIMIT} символов, будет обрезано`, 'telegram');
+        processedHtml = processedHtml.substring(0, TELEGRAM_MESSAGE_LIMIT - 3) + '...';
+      }
+      
+      // Отправляем обработанный HTML
+      log(`Отправка HTML-текста (${processedHtml.length} символов)`, 'telegram');
       
       const url = `${this.apiUrl}${this.token}/sendMessage`;
       
       const params = {
         chat_id: this.chatId,
-        text: html,
+        text: processedHtml,
         parse_mode: 'HTML',
-        disable_web_page_preview: options.disablePreview || false
+        disable_web_page_preview: options.disablePreview || false,
+        disable_notification: options.silent || false
       };
       
       // Получаем информацию о чате для создания URL
+      log('Получение информации о чате перед отправкой HTML-сообщения', 'telegram');
       await this.getChatInfo();
       
       const response = await axios.post(url, params);
       
       if (response.data.ok) {
         const messageId = response.data.result.message_id;
-        const messageUrl = this.generateMessageUrl(messageId);
         
+        // Генерируем URL сообщения
+        log(`Генерация URL для HTML-сообщения с ID: ${messageId}`, 'telegram');
+        const messageUrl = await this.generateMessageUrl(messageId);
+        
+        // Сохраняем ID сообщения для последующего использования
         this.lastMessageId = messageId;
         
         log(`HTML-сообщение успешно отправлено в Telegram с ID: ${messageId}`, 'telegram');
+        log(`URL опубликованного HTML-сообщения: ${messageUrl || 'не удалось создать URL'}`, 'telegram');
         
         return {
           success: true,
@@ -624,12 +753,46 @@ export class TelegramService {
         throw new Error(`Telegram API error: ${response.data.description}`);
       }
     } catch (error) {
-      log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'telegram');
+      // Добавляем подробную информацию об ошибке 
+      if (error.response && error.response.data) {
+        log(`Ошибка при отправке HTML в Telegram: ${error.message}. Детали: ${JSON.stringify(error.response.data)}`, 'telegram');
+      } else {
+        log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'telegram');
+      }
       
+      // Если ошибка 400, попробуем отправить сообщение с упрощенным форматированием
+      if (error.message.includes('400') && !options.retried) {
+        log(`Попытка повторной отправки с минимальным HTML-форматированием...`, 'telegram');
+        
+        try {
+          // Удаляем все HTML-теги из текста, кроме базовых тегов Telegram
+          // Полностью убираем возможно проблемные элементы
+          let simplifiedHtml = html
+            .replace(/<p>|<\/p>/g, '') // Удаляем p-теги
+            .replace(/<ul>|<\/ul>/g, '') // Удаляем ul-теги
+            .replace(/<li>|<\/li>/g, '') // Удаляем li-теги
+            .replace(/\n{3,}/g, '\n\n') // Убираем лишние переносы строк
+            .replace(/<(?!\/?(b|i|u|s|a)(?=>|\s.*>))[^>]*>/g, ''); // Оставляем только базовые теги
+            
+          log(`Упрощенный HTML (${simplifiedHtml.length} символов): ${simplifiedHtml.substring(0, 100)}...`, 'telegram');
+          
+          // Рекурсивно вызываем метод с упрощенным HTML и флагом retried
+          return this.sendRawHtmlToTelegram(simplifiedHtml, { ...options, retried: true, skipTagProcessing: true });
+        } catch (simplifyError) {
+          log(`Ошибка при упрощении HTML: ${simplifyError.message}`, 'telegram');
+          // В случае ошибки упрощения, пробуем отправить текст совсем без тегов
+          const plainText = html.replace(/<[^>]*>/g, '');
+          log(`Отправка простого текста без HTML-тегов...`, 'telegram');
+          return this.sendTextMessage(plainText, options);
+        }
+      }
+      
+      // Обогащаем объект ошибки дополнительной информацией для диагностики
       return {
         success: false,
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
+        details: `Token: ${this.token ? 'установлен' : 'не установлен'}, ChatId: ${this.chatId || 'не установлен'}`
       };
     }
   }
@@ -646,6 +809,15 @@ export class TelegramService {
       // Обрабатываем списки, преобразуя их в читаемый текст для Telegram
       let result = html;
       
+      // Обрабатываем параграфы <p> с сохранением внутреннего форматирования
+      result = result.replace(/<p>([\s\S]*?)<\/p>/g, function(match, content) {
+        // Если параграф пустой, просто возвращаем два переноса строки
+        if (!content.trim()) return '\n\n';
+        
+        // В противном случае, сохраняем внутреннее форматирование и добавляем двойной перенос строки
+        return content + '\n\n';
+      });
+      
       // Обрабатываем списки ul/li, превращая их в удобочитаемый текст с символами
       result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
         // Заменяем каждый элемент списка на строку с маркером (• или -)
@@ -654,17 +826,37 @@ export class TelegramService {
           .replace(/<\/?[^>]+(>|$)/g, '') // Удаляем все оставшиеся HTML-теги внутри элементов списка
           .trim();
         
-        return '\n' + formattedList + '\n';
+        return '\n' + formattedList + '\n\n';
       });
       
-      // Заменяем стандартные HTML-теги на Telegram-совместимые
+      // Улучшенная обработка HTML-тегов и их конвертация в Telegram-совместимый формат
+
+      // Сначала заменяем теги для форматирования, которые могут быть вложены в параграфы
       result = result
         .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
         .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
         .replace(/<i>([\s\S]*?)<\/i>/g, '<i>$1</i>')
-        // Удаляем другие HTML-теги, которые не поддерживаются в Telegram
-        .replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
+        .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')  // Поддержка подчеркивания
+        .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>'); // Поддержка зачеркивания
+      
+      // Исправляем вложенные теги с форматированием для предотвращения потери форматирования
+      // Находим сложные случаи, когда теги оказываются разорваны переносами строк
+      result = result
+        // Исправляем случаи, когда <b> тег разрывается из-за переноса строки
+        .replace(/<b>([\s\S]*?)\n\n([\s\S]*?)<\/b>/g, '<b>$1</b>\n\n<b>$2</b>')
+        // Исправляем случаи, когда <i> тег разрывается из-за переноса строки
+        .replace(/<i>([\s\S]*?)\n\n([\s\S]*?)<\/i>/g, '<i>$1</i>\n\n<i>$2</i>')
+        // Исправляем случаи, когда <u> тег разрывается из-за переноса строки
+        .replace(/<u>([\s\S]*?)\n\n([\s\S]*?)<\/u>/g, '<u>$1</u>\n\n<u>$2</u>')
+        // Исправляем случаи, когда <s> тег разрывается из-за переноса строки
+        .replace(/<s>([\s\S]*?)\n\n([\s\S]*?)<\/s>/g, '<s>$1</s>\n\n<s>$2</s>');
+        
+      // Удаляем двойные переносы строк, которые могли возникнуть при обработке
+      result = result.replace(/\n{3,}/g, '\n\n');
+      
+      // Удаляем все оставшиеся HTML-теги, которые не поддерживаются в Telegram
+      result = result.replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
         
       log(`HTML-теги успешно преобразованы в формат Telegram`, 'telegram');
       
