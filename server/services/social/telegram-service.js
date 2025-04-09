@@ -440,8 +440,8 @@ export class TelegramService {
         fullContent += content.content;
       }
       
-      // Используем контент как есть, без форматирования
-      const formattedContent = fullContent;
+      // Форматируем HTML-контент для Telegram с поддержкой вложенных списков
+      const formattedContent = formatHtmlForTelegram(fullContent);
       
       // Определяем, есть ли у контента изображения
       const mainImageUrl = content.imageUrl || '';
