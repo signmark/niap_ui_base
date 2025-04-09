@@ -31,8 +31,14 @@ export function formatHtmlForTelegram(htmlContent) {
   if (!htmlContent) return '';
   
   try {
+    // Логируем оригинальный HTML для отладки
+    log(`Исходный HTML для форматирования: ${htmlContent.substring(0, 200)}...`, 'telegram-formatter');
+    
+    // Предварительная обработка для конвертации стилей в HTML теги
+    let preprocessedHtml = preprocessEditorContent(htmlContent);
+    
     // Заменяем маркеры списков на символы
-    const textWithBullets = replaceBulletPoints(htmlContent);
+    const textWithBullets = replaceBulletPoints(preprocessedHtml);
     
     // Очищаем от атрибутов, которые не поддерживаются в Telegram
     const cleanedHtml = cleanupHtmlAttributes(textWithBullets);
@@ -50,6 +56,77 @@ export function formatHtmlForTelegram(htmlContent) {
   } catch (error) {
     log(`Ошибка форматирования HTML для Telegram: ${error.message}`, 'telegram-formatter');
     return htmlContent; // Возвращаем исходный текст в случае ошибки
+  }
+}
+
+/**
+ * Предварительная обработка контента из редактора для лучшей совместимости с Telegram
+ * @param {string} html HTML из редактора
+ * @returns {string} Обработанный HTML
+ */
+function preprocessEditorContent(html) {
+  if (!html) return '';
+  
+  try {
+    // Сохраняем оригинальную длину
+    const origLength = html.length;
+    
+    // Используем более простой подход для обнаружения стилей
+    let result = html;
+    
+    // 1. Обработка HTML тегов со стилями
+    // Ищем и заменяем теги со стилем курсива
+    const italicRegex = /<[a-z][a-z0-9]*\s+[^>]*?style\s*=\s*["'][^"']*?font-style\s*:\s*italic[^"']*?["'][^>]*>([^<]+)<\/[a-z][a-z0-9]*>/gi;
+    result = result.replace(italicRegex, '<i>$1</i>');
+    
+    // Ищем и заменяем теги со стилем жирного текста
+    const boldRegex = /<[a-z][a-z0-9]*\s+[^>]*?style\s*=\s*["'][^"']*?font-weight\s*:\s*(bold|[6-9]00)[^"']*?["'][^>]*>([^<]+)<\/[a-z][a-z0-9]*>/gi;
+    result = result.replace(boldRegex, '<b>$2</b>');
+    
+    // Ищем и заменяем теги со стилем подчеркивания
+    const underlineRegex = /<[a-z][a-z0-9]*\s+[^>]*?style\s*=\s*["'][^"']*?text-decoration\s*:\s*underline[^"']*?["'][^>]*>([^<]+)<\/[a-z][a-z0-9]*>/gi;
+    result = result.replace(underlineRegex, '<u>$1</u>');
+    
+    // Ищем и заменяем теги со стилем зачеркивания
+    const strikeRegex = /<[a-z][a-z0-9]*\s+[^>]*?style\s*=\s*["'][^"']*?text-decoration\s*:\s*line-through[^"']*?["'][^>]*>([^<]+)<\/[a-z][a-z0-9]*>/gi;
+    result = result.replace(strikeRegex, '<s>$1</s>');
+    
+    // 2. Обработка специальных тегов
+    // Преобразуем <em> в <i>
+    result = result.replace(/<em>([^<]+)<\/em>/gi, '<i>$1</i>');
+    
+    // Преобразуем <strong> в <b>
+    result = result.replace(/<strong>([^<]+)<\/strong>/gi, '<b>$1</b>');
+    
+    // Преобразуем <span class="italic"> в <i>
+    const italicClassRegex = /<span\s+[^>]*?class\s*=\s*["'][^"']*?italic[^"']*?["'][^>]*>([^<]+)<\/span>/gi;
+    result = result.replace(italicClassRegex, '<i>$1</i>');
+    
+    // Преобразуем <span class="bold"> в <b>
+    const boldClassRegex = /<span\s+[^>]*?class\s*=\s*["'][^"']*?bold[^"']*?["'][^>]*>([^<]+)<\/span>/gi;
+    result = result.replace(boldClassRegex, '<b>$1</b>');
+    
+    // 3. Обработка специального форматирования из редактора
+    // Для разных редакторов могут использоваться разные классы или атрибуты
+    const editorSpecificRegex = /<span\s+[^>]*?data-format\s*=\s*["']italic["'][^>]*>([^<]+)<\/span>/gi;
+    result = result.replace(editorSpecificRegex, '<i>$1</i>');
+    
+    // 4. Обработка переносов строк
+    // Заменяем <br> на \n
+    result = result.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Заменяем <p>...</p> на текст с двойным переносом
+    result = result.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+    
+    // Заменяем <div>...</div> на текст с переносом строки
+    result = result.replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
+    
+    log(`Предварительная обработка: было ${origLength} символов, стало ${result.length}`, 'telegram-formatter');
+    
+    return result;
+  } catch (error) {
+    log(`Ошибка предварительной обработки HTML: ${error.message}`, 'telegram-formatter');
+    return html; // В случае ошибки возвращаем оригинальный HTML
   }
 }
 
