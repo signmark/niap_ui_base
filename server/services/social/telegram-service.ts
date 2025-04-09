@@ -1077,216 +1077,44 @@ export class TelegramService extends BaseSocialService {
     if (!text) return text;
     
     try {
-      // Вспомогательная функция для удаления всех HTML-тегов из текста
-      const stripAllTags = (htmlContent: string): string => {
-        return htmlContent.replace(/<[^>]+>/g, '');
-      };
+      // Импортируем наш новый более надежный очиститель HTML для Telegram
+      // Используем относительный путь для импорта JavaScript-модуля
+      // Примечание: для совместимости с ES module использовать import() вместо require()
+      const telegramHtmlCleanerPath = '../../utils/telegram-html-cleaner.js';
       
-      // Список поддерживаемых Telegram тегов и их стандартизированные эквиваленты
-      const tagMap: Record<string, string> = {
-        'b': 'b', 'strong': 'b',
-        'i': 'i', 'em': 'i',
-        'u': 'u', 'ins': 'u',
-        's': 's', 'strike': 's', 'del': 's',
-        'code': 'code', 'pre': 'pre'
-      };
+      log(`Импорт очистителя HTML для Telegram из: ${telegramHtmlCleanerPath}`, 'social-publishing');
       
-      // Шаг 1: Очищаем HTML от комментариев и опасных конструкций
-      let cleanedHtml = text
-        .replace(/<!--[\s\S]*?-->/g, '')
-        .replace(/<\?([\s\S]*?)\?>/g, '')
-        .replace(/<!DOCTYPE[^>]*>/i, '')
-        .replace(/<!\[CDATA\[([\s\S]*?)]]>/g, '')
-        .replace(/Подсознание наизнанку/g, ''); // Специфичное для проекта
-      
-      // Шаг 2: Заменяем блочные элементы на текст с переносами строк
-      cleanedHtml = cleanedHtml
-        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
-        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
-        .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
-        .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n')
-        .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, '$1\n');
-      
-      // Шаг 3: Стандартизируем теги в поддерживаемые Telegram форматы
-      cleanedHtml = cleanedHtml
-        .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
-        .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
-        .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
-        .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
-        .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
-        .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
-        .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
-        .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
-        .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
-      
-      // Шаг 4: Специальная обработка ссылок - удаляем вложенные теги в тексте ссылки
-      cleanedHtml = cleanedHtml.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, 
-        (match, url, text) => {
-          const cleanText = stripAllTags(text);
-          return `<a href="${url}">${cleanText}</a>`;
-        }
-      );
-      
-      // Шаг 5: Удаляем все теги, кроме поддерживаемых Telegram
-      const supportedTagList = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
-      const unsupportedTagPattern = new RegExp(`<\\/?(?!${supportedTagList.join('|')}\\b)[^>]+>`, 'gi');
-      cleanedHtml = cleanedHtml.replace(unsupportedTagPattern, '');
-      
-      // Шаг 6: Нормализуем атрибуты тегов
-      cleanedHtml = cleanedHtml
-        .replace(/<(b|i|u|s|code|pre)\s+[^>]*>/gi, '<$1>')
-        .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>/gi, '<a href="$1">');
-      
-      // Шаг 7: Правильное форматирование для Telegram - последовательная обработка тегов
-      // Разбиваем на параграфы
-      const paragraphs = cleanedHtml.split(/\n{2,}/);
-      let formattedHtml = '';
-      
-      for (const paragraph of paragraphs) {
-        if (!paragraph.trim()) continue;
-        
-        // Простой текст без форматирования
-        if (!/<[^>]+>/.test(paragraph)) {
-          formattedHtml += paragraph.trim() + '\n\n';
-          continue;
-        }
-        
-        // Текст с форматированием требует особой обработки
-        // Для Telegram важно, чтобы теги не перекрывались неправильно
-        
-        // 1. Выделение жирным
-        let boldText = paragraph.replace(/<b>([\s\S]*?)<\/b>/gi, (match, content) => {
-          // Удаляем вложенные теги того же типа
-          const cleanContent = content
-            .replace(/<\/?b>/gi, '')
-            .replace(/<\/?strong>/gi, '');
-          return `<b>${cleanContent}</b>`;
-        });
-        
-        // 2. Выделение курсивом
-        let italicText = boldText.replace(/<i>([\s\S]*?)<\/i>/gi, (match, content) => {
-          // Удаляем вложенные теги того же типа
-          const cleanContent = content
-            .replace(/<\/?i>/gi, '')
-            .replace(/<\/?em>/gi, '');
-          return `<i>${cleanContent}</i>`;
-        });
-        
-        // 3. Подчеркивание
-        let underlineText = italicText.replace(/<u>([\s\S]*?)<\/u>/gi, (match, content) => {
-          // Удаляем вложенные теги того же типа
-          const cleanContent = content
-            .replace(/<\/?u>/gi, '')
-            .replace(/<\/?ins>/gi, '');
-          return `<u>${cleanContent}</u>`;
-        });
-        
-        // 4. Зачеркивание
-        let strikeText = underlineText.replace(/<s>([\s\S]*?)<\/s>/gi, (match, content) => {
-          // Удаляем вложенные теги того же типа
-          const cleanContent = content
-            .replace(/<\/?s>/gi, '')
-            .replace(/<\/?strike>/gi, '')
-            .replace(/<\/?del>/gi, '');
-          return `<s>${cleanContent}</s>`;
-        });
-        
-        formattedHtml += strikeText.trim() + '\n\n';
-      }
-      
-      // Шаг 8: Проверка и исправление оставшихся незакрытых тегов
-      const tagStack: string[] = [];
-      let tempHtml = '';
-      let i = 0;
-      
-      while (i < formattedHtml.length) {
-        if (formattedHtml[i] === '<') {
-          if (formattedHtml[i + 1] === '/') {
-            // Закрывающий тег
-            const closeTagMatch = formattedHtml.substring(i).match(/<\/([a-z]+)>/i);
-            if (closeTagMatch) {
-              const closeTag = closeTagMatch[1].toLowerCase();
-              
-              if (tagStack.length > 0 && tagStack[tagStack.length - 1] === closeTag) {
-                // Правильный закрывающий тег
-                tagStack.pop();
-                tempHtml += closeTagMatch[0];
-                i += closeTagMatch[0].length;
-              } else {
-                // Неправильный закрывающий тег, пропускаем его
-                i += closeTagMatch[0].length;
-              }
-            } else {
-              // Некорректный закрывающий тег
-              i++;
-            }
-          } else {
-            // Открывающий тег
-            const openTagMatch = formattedHtml.substring(i).match(/<([a-z]+)(\s+[^>]*)?>/i);
-            if (openTagMatch) {
-              const openTag = openTagMatch[1].toLowerCase();
-              
-              if (supportedTagList.includes(openTag)) {
-                // Поддерживаемый тег
-                tagStack.push(openTag);
-                tempHtml += openTagMatch[0];
-                i += openTagMatch[0].length;
-              } else {
-                // Неподдерживаемый тег, пропускаем
-                i += openTagMatch[0].length;
-              }
-            } else {
-              tempHtml += formattedHtml[i];
-              i++;
-            }
+      // Динамический импорт модуля
+      return import(telegramHtmlCleanerPath)
+        .then(module => {
+          // Извлекаем нужную функцию
+          const { cleanHtmlForTelegram } = module;
+          
+          // Логируем оригинальный текст
+          log(`Применение cleanHtmlForTelegram к тексту длиной ${text.length} символов`, 'social-publishing');
+          log(`Первые 100 символов оригинального текста: ${text.substring(0, Math.min(100, text.length))}...`, 'social-publishing');
+          
+          // Применяем нашу новую функцию очистки
+          const cleanedText = cleanHtmlForTelegram(text);
+          
+          // Логируем результат
+          log(`Результат очистки: ${cleanedText.length} символов`, 'social-publishing');
+          log(`Первые 100 символов очищенного текста: ${cleanedText.substring(0, Math.min(100, cleanedText.length))}...`, 'social-publishing');
+          
+          // Финальное обрезание до максимальной длины Telegram
+          let result = cleanedText;
+          if (result.length > MAX_MESSAGE_LENGTH) {
+            result = result.substring(0, MAX_MESSAGE_LENGTH - 3) + '...';
+            log(`Предупреждение: текст обрезан до ${MAX_MESSAGE_LENGTH} символов`, 'social-publishing');
           }
-        } else {
-          tempHtml += formattedHtml[i];
-          i++;
-        }
-      }
-      
-      // Закрываем все незакрытые теги
-      const reversedStack = [...tagStack].reverse();
-      for (const tag of reversedStack) {
-        if (tag !== 'a') { // Специальная обработка для ссылок
-          tempHtml += `</${tag}>`;
-        }
-      }
-      
-      // Финальная очистка от лишних переносов строк и пробелов
-      let result = tempHtml
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/^\s+|\s+$/g, '')
-        .replace(/<\/b><b>/g, '')
-        .replace(/<\/i><i>/g, '')
-        .replace(/<\/u><u>/g, '')
-        .replace(/<\/s><s>/g, '');
-      
-      // Финальная проверка на баланс тегов
-      const openingCount = (result.match(/<[a-z][^>]*>/gi) || []).length;
-      const closingCount = (result.match(/<\/[a-z][^>]*>/gi) || []).length;
-      
-      if (openingCount !== closingCount) {
-        log(`Предупреждение: баланс тегов после исправления не идеален: открывающих ${openingCount}, закрывающих ${closingCount}`, 'social-publishing');
-        
-        // Возможно, стоит применить более радикальное решение, если разница слишком большая
-        if (Math.abs(openingCount - closingCount) > 3) {
-          log(`Критическая ошибка в балансе тегов после исправления. Удаляем все теги.`, 'social-publishing');
+          
+          return result;
+        })
+        .catch(error => {
+          log(`Ошибка при импорте или использовании cleanHtmlForTelegram: ${error}`, 'social-publishing');
+          // В случае ошибки с модулем, используем старый метод (просто удаляем все теги)
           return text.replace(/<[^>]*>/g, '');
-        }
-      }
-      
-      // Финальное обрезание до максимальной длины Telegram
-      if (result.length > MAX_MESSAGE_LENGTH) {
-        result = result.substring(0, MAX_MESSAGE_LENGTH - 3) + '...';
-      }
-      
-      log(`Текст после улучшенного исправления HTML: ${result.substring(0, Math.min(100, result.length))}...`, 'social-publishing');
-      
-      return result;
+        });
     } catch (error) {
       log(`Ошибка в aggressiveTagFixer: ${error}`, 'social-publishing');
       // В случае любой ошибки возвращаем текст без HTML-разметки
