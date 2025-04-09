@@ -290,9 +290,32 @@ export abstract class BaseSocialService {
         error: publicationResult.error || null
       };
       
+      // Создаем или обновляем также socialPlatforms (основное поле для отображения в интерфейсе)
+      let socialPlatforms = content.socialPlatforms || {};
+      
+      // Если socialPlatforms представлено как массив, преобразуем его в объект
+      if (Array.isArray(socialPlatforms)) {
+        const newSocialPlatforms: Record<string, any> = {};
+        for (const platformName of socialPlatforms) {
+          newSocialPlatforms[platformName] = newSocialPlatforms[platformName] || { status: 'pending' };
+        }
+        socialPlatforms = newSocialPlatforms;
+        log(`Преобразуем массив socialPlatforms в объект для контента ${contentId}`, 'social-publishing');
+      }
+      
+      // Обновляем информацию о публикации в socialPlatforms
+      socialPlatforms[platform] = {
+        status: publicationResult.status,
+        publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
+        postUrl: publicationResult.postUrl || null,
+        postId: publicationResult.postId || null,
+        error: publicationResult.error || null
+      };
+      
       // Обновляем контент
       const updatedContent = await storage.updateCampaignContent(contentId, {
         socialPublications,
+        socialPlatforms,
         // Если публикация успешна, обновляем общий статус до "published"
         // только если мы публиковали на все выбранные платформы
         ...(publicationResult.status === 'published' ? {
@@ -325,13 +348,25 @@ export abstract class BaseSocialService {
     socialPublications: Record<string, any>
   ): boolean {
     // Проверяем, указаны ли социальные платформы
-    if (!content.socialPlatforms || !Array.isArray(content.socialPlatforms) || content.socialPlatforms.length === 0) {
+    let selectedPlatforms: string[] = [];
+      
+    // Обрабатываем разные форматы поля socialPlatforms
+    if (Array.isArray(content.socialPlatforms)) {
+      // Если это массив строк, используем его напрямую
+      selectedPlatforms = content.socialPlatforms;
+    } else if (typeof content.socialPlatforms === 'object' && content.socialPlatforms !== null) {
+      // Если это объект, извлекаем ключи
+      selectedPlatforms = Object.keys(content.socialPlatforms);
+    }
+    
+    if (!selectedPlatforms.length) {
       log(`У контента ${content.id} нет выбранных социальных платформ`, 'social-publishing');
       return false;
     }
     
+    log(`Найдены платформы для проверки публикации: ${selectedPlatforms.join(', ')}`, 'social-publishing');
+    
     // Проверяем, все ли выбранные платформы опубликованы
-    const selectedPlatforms = content.socialPlatforms;
     let allPublished = true;
     
     for (const platform of selectedPlatforms) {
