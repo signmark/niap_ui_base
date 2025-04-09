@@ -6,6 +6,7 @@
 import axios from 'axios';
 import { CampaignContent } from '../../../shared/types';
 import { fixUnclosedTags, formatHtmlForTelegram } from '../../utils/telegram-formatter';
+import { cleanHtmlForTelegram } from '../../utils/telegram-html-cleaner-new';
 
 // Тип для результата отправки сообщения
 interface SendMessageResult {
@@ -163,10 +164,16 @@ class TelegramService {
       // Подготавливаем текст
       let text = content.content || '';
       
-      // Форматируем HTML для Telegram
-      text = formatHtmlForTelegram(text);
+      // Используем новый очиститель HTML для Telegram
+      console.log(`[TelegramService] ИСХОДНЫЙ ТЕКСТ ПОЛНОСТЬЮ:`);
+      console.log(text);
+      console.log(`[TelegramService] КОНЕЦ ИСХОДНОГО ТЕКСТА`);
       
-      console.log(`[TelegramService] Отформатированный текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+      text = cleanHtmlForTelegram(text);
+      
+      console.log(`[TelegramService] ОТФОРМАТИРОВАННЫЙ ТЕКСТ ПОЛНОСТЬЮ:`);
+      console.log(text);
+      console.log(`[TelegramService] КОНЕЦ ОТФОРМАТИРОВАННОГО ТЕКСТА`);
       
       // Если есть изображение, отправляем контент с изображением
       if (content.imageUrl) {

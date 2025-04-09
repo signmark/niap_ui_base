@@ -1,12 +1,9 @@
 /**
- * Тестирование отправки HTML-контента в Telegram через API нашего приложения
- * Запуск: node test-telegram-api.js
+ * Скрипт для отправки тестового контента через API немедленной публикации в Telegram
+ * Запуск: node send-example-content.js
  */
 
 const axios = require('axios');
-
-// API URL для нашего приложения
-const API_URL = 'http://localhost:5000';
 
 // Пример HTML-контента для публикации
 const htmlContent = `<p><strong>Разработка сбалансированного и индивидуализированного рациона питания</strong> – сложная задача, требующая учета множества факторов: особенностей организма, образа жизни и состояния здоровья. Однако благодаря <em>инновационному онлайн-сервису для составления персонализированных планов питания</em> эта задача стала значительно проще.</p>
@@ -17,50 +14,30 @@ const htmlContent = `<p><strong>Разработка сбалансирован�
 
 <p>Мы приглашаем вас опробовать наш сервис и убедиться в его эффективности. Будем рады получить вашу <strong>обратную связь и отзывы</strong>, которые помогут нам продолжать совершенствовать наше предложение. Вместе мы сделаем путь к здоровому образу жизни более простым и увлекательным.</p>`;
 
-/**
- * Получает токен авторизации
- * @returns {Promise<string|null>} Токен авторизации или null в случае ошибки
- */
-async function getAuthToken() {
+async function login() {
   try {
-    // Проверяем наличие переменных окружения для авторизации
-    if (!process.env.DIRECTUS_ADMIN_EMAIL || !process.env.DIRECTUS_ADMIN_PASSWORD) {
-      console.error('Отсутствуют переменные окружения для авторизации:');
-      console.error('Установите DIRECTUS_ADMIN_EMAIL и DIRECTUS_ADMIN_PASSWORD');
-      return null;
-    }
-
-    // Отправляем запрос на аутентификацию
-    const response = await axios.post(`${API_URL}/api/auth/login`, {
-      email: process.env.DIRECTUS_ADMIN_EMAIL,
-      password: process.env.DIRECTUS_ADMIN_PASSWORD
+    // Логин для получения токена
+    const loginResponse = await axios.post('http://localhost:5000/api/auth/login', {
+      email: process.env.DIRECTUS_ADMIN_EMAIL || 'admin@example.com',
+      password: process.env.DIRECTUS_ADMIN_PASSWORD || 'password'
     });
-
-    if (response.data && response.data.token) {
-      console.log('Авторизация успешна');
-      return response.data.token;
+    
+    if (loginResponse.data && loginResponse.data.token) {
+      console.log('Успешная авторизация');
+      return loginResponse.data.token;
     } else {
       console.error('Не удалось получить токен авторизации');
-      console.error('Ответ сервера:', response.data);
       return null;
     }
   } catch (error) {
-    console.error('Ошибка при авторизации:', error.message);
-    if (error.response) {
-      console.error('Данные ответа:', error.response.data);
-    }
+    console.error('Ошибка авторизации:', error.message);
     return null;
   }
 }
 
-/**
- * Отправляет HTML-контент в Telegram через API приложения
- * @param {string} token Токен авторизации
- * @returns {Promise<object|null>} Результат публикации или null в случае ошибки
- */
 async function publishToTelegram(token) {
   try {
-    // Формируем данные для публикации
+    // Создаем объект с данными для публикации
     const publishData = {
       contentType: 'telegram',
       content: htmlContent,
@@ -68,12 +45,12 @@ async function publishToTelegram(token) {
       platformId: 'telegram',
       campaignId: process.env.CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e'
     };
-
-    console.log('Отправка контента в Telegram через API...');
-
-    // Отправляем запрос на публикацию
+    
+    console.log('Отправка контента в Telegram...');
+    
+    // Отправляем запрос на публикацию контента
     const response = await axios.post(
-      `${API_URL}/api/social/publish`,
+      'http://localhost:5000/api/social/publish',
       publishData,
       {
         headers: {
@@ -82,39 +59,38 @@ async function publishToTelegram(token) {
         }
       }
     );
-
-    console.log('Публикация успешно отправлена!');
+    
     console.log('Ответ от сервера:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
     console.error('Ошибка при публикации:', error.message);
     if (error.response) {
-      console.error('Данные ответа:', error.response.data);
+      console.error('Данные ответа:', JSON.stringify(error.response.data, null, 2));
     }
     return null;
   }
 }
 
-/**
- * Основная функция
- */
 async function main() {
-  // Получаем токен авторизации
-  const token = await getAuthToken();
-
+  // Авторизуемся
+  const token = await login();
+  
   if (!token) {
-    console.error('Не удалось получить токен авторизации, завершение работы');
+    console.error('Не удалось получить токен авторизации. Проверьте учетные данные.');
     return;
   }
-
+  
   // Публикуем в Telegram
   const result = await publishToTelegram(token);
-
-  if (!result) {
-    console.error('Не удалось опубликовать контент, завершение работы');
-    return;
+  
+  if (result && result.success) {
+    console.log('Публикация успешно отправлена!');
+    if (result.postUrl) {
+      console.log('URL публикации:', result.postUrl);
+    }
+  } else {
+    console.error('Не удалось опубликовать контент.');
   }
 }
 
-// Запускаем основную функцию
 main();
