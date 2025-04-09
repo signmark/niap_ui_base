@@ -45,6 +45,103 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
   
+  // Управление глобальным флагом отключения публикаций
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/toggle-publishing', async (req: Request, res: Response) => {
+    try {
+      const enable = req.query.enable === 'true';
+      
+      if (enable) {
+        publishScheduler.disablePublishing = false;
+        log('Глобальный флаг публикаций ВКЛЮЧЕН. Контент будет публиковаться в соцсети.', 'api');
+      } else {
+        publishScheduler.disablePublishing = true;
+        log('Глобальный флаг публикаций ОТКЛЮЧЕН. Контент будет помечаться как опубликованный без фактической публикации!', 'api');
+      }
+      
+      return res.status(200).json({
+        success: true,
+        publishing: !publishScheduler.disablePublishing,
+        message: publishScheduler.disablePublishing 
+          ? 'Публикации отключены. Контент будет помечаться как опубликованный без фактической публикации!' 
+          : 'Публикации включены. Контент будет публиковаться в соцсети.'
+      });
+    } catch (error: any) {
+      log(`Ошибка при управлении флагом публикаций: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при управлении флагом публикаций',
+        message: error.message
+      });
+    }
+  });
+  
+  // Маршрут для принудительной пометки контента как опубликованного без фактической публикации
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/mark-as-published/:contentId', async (req: Request, res: Response) => {
+    try {
+      const contentId = req.params.contentId;
+      log(`Запрос на принудительную пометку контента ${contentId} как опубликованного`, 'api');
+      
+      // Получаем текущий контент
+      const content = await storage.getCampaignContent(contentId);
+      
+      if (!content) {
+        return res.status(404).json({
+          error: 'Контент не найден',
+          message: `Контент с ID ${contentId} не найден`
+        });
+      }
+      
+      // Обновляем статус на published без фактической публикации
+      await storage.updateCampaignContent(contentId, {
+        status: 'published'
+      });
+      
+      // Устанавливаем publishedAt через прямой запрос к API
+      try {
+        // Получаем системный токен
+        const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        
+        // Пробуем получить токен из активных сессий
+        const sessions = directusAuthManager.getAllActiveSessions();
+        let token = null;
+        
+        if (sessions.length > 0) {
+          token = sessions[0].token;
+        }
+        
+        if (token) {
+          await axios.patch(
+            `${directusUrl}/items/campaign_content/${contentId}`,
+            { published_at: new Date().toISOString() },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+          log(`Установлено поле published_at для контента ${contentId}`, 'api');
+        }
+      } catch (error: any) {
+        log(`Ошибка при установке published_at: ${error.message}`, 'api');
+      }
+      
+      // Добавляем ID в список для предотвращения повторной обработки
+      // Используем публичный метод для добавления в processedContentIds
+      publishScheduler.addProcessedContentId(contentId);
+      log(`ID ${contentId} добавлен в список обработанных записей`, 'api');
+      
+      return res.status(200).json({
+        success: true,
+        message: `Контент ${contentId} помечен как опубликованный без фактической публикации`,
+        contentId
+      });
+    } catch (error: any) {
+      log(`Ошибка при пометке контента как опубликованного: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при пометке контента как опубликованного',
+        message: error.message
+      });
+    }
+  });
+  
   // Очистка кэша обработанных ID контента
   // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
   app.all('/api/publish/reset-processed-cache', async (req: Request, res: Response) => {
@@ -560,22 +657,38 @@ export function registerPublishingRoutes(app: Express): void {
       const campaignId = req.query.campaignId as string;
       const authHeader = req.headers.authorization;
       
-      if (!userId) {
-        return res.status(400).json({ error: 'Не указан ID пользователя' });
-      }
-      
       // Получаем запланированные публикации из базы данных
       let scheduledContent: any[] = [];
       
       // Пытаемся получить токен авторизации
       let authToken: string | null = null;
+      let currentUserId: string | null = userId;
+      
       if (authHeader && authHeader.startsWith('Bearer ')) {
         authToken = authHeader.substring(7);
         
+        // Проверяем, указан ли userId и пытаемся получить его из токена
+        if (!currentUserId && authToken) {
+          try {
+            // Запрашиваем информацию о пользователе через токен
+            const userResponse = await directusApiManager.request({
+              url: '/users/me',
+              method: 'get'
+            }, authToken);
+            
+            if (userResponse?.data?.id) {
+              currentUserId = userResponse.data.id;
+              log(`Получен userId=${currentUserId} из токена авторизации`, 'api');
+            }
+          } catch (error: any) {
+            log(`Ошибка при получении информации о пользователе: ${error.message}`, 'api');
+          }
+        }
+        
         // Кэшируем токен для пользователя (для последующих запросов)
-        if (authToken) {
-          directusApiManager.cacheAuthToken(userId, authToken);
-          log(`Токен для пользователя ${userId} кэширован`, 'api');
+        if (authToken && currentUserId) {
+          directusApiManager.cacheAuthToken(currentUserId, authToken);
+          log(`Токен для пользователя ${currentUserId} кэширован`, 'api');
         }
       } else {
         log('No authorization header provided for scheduled content', 'api');
@@ -584,17 +697,58 @@ export function registerPublishingRoutes(app: Express): void {
       try {
         if (authToken) {
           // Если есть токен авторизации, запрашиваем данные из Directus через улучшенный адаптер
-          log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${userId}`, 'api');
+          log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${currentUserId || 'неизвестного'}`, 'api');
           
-          // Используем новый адаптер с улучшенным механизмом получения токена
-          scheduledContent = await directusStorageAdapter.getScheduledContent(userId, campaignId);
-          log(`Получено ${scheduledContent.length} запланированных публикаций из улучшенного адаптера`, 'api');
-          
-          // Если не удалось получить публикации через улучшенный адаптер, используем стандартный метод
-          if (scheduledContent.length === 0) {
-            log(`Используем стандартное хранилище для получения запланированных публикаций`, 'api');
-            scheduledContent = await storage.getScheduledContent(userId, campaignId);
-            log(`Получено ${scheduledContent.length} запланированных публикаций из стандартного хранилища`, 'api');
+          if (currentUserId) {
+            // Используем новый адаптер с улучшенным механизмом получения токена
+            scheduledContent = await directusStorageAdapter.getScheduledContent(currentUserId, campaignId);
+            log(`Получено ${scheduledContent.length} запланированных публикаций из улучшенного адаптера для ${currentUserId}`, 'api');
+            
+            // Если не удалось получить публикации через улучшенный адаптер, используем стандартный метод
+            if (scheduledContent.length === 0) {
+              log(`Используем стандартное хранилище для получения запланированных публикаций для ${currentUserId}`, 'api');
+              scheduledContent = await storage.getScheduledContent(currentUserId, campaignId);
+              log(`Получено ${scheduledContent.length} запланированных публикаций из стандартного хранилища для ${currentUserId}`, 'api');
+            }
+          } else {
+            // Если не смогли получить userId из токена, пытаемся получить все запланированные публикации
+            // напрямую из API Directus без фильтрации по пользователю
+            try {
+              log(`Запрос всех запланированных публикаций через API (без фильтрации по userId)`, 'api');
+              
+              const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+              const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+                params: {
+                  filter: { status: { _eq: 'scheduled' } }
+                },
+                headers: { 'Authorization': `Bearer ${authToken}` }
+              });
+              
+              if (response?.data?.data && Array.isArray(response.data.data)) {
+                // Преобразуем формат данных из Directus в наш формат CampaignContent
+                scheduledContent = response.data.data.map((item: any) => ({
+                  id: item.id,
+                  content: item.content,
+                  userId: item.user_id,
+                  campaignId: item.campaign_id,
+                  status: item.status,
+                  contentType: item.content_type || "text",
+                  title: item.title || null,
+                  imageUrl: item.image_url,
+                  videoUrl: item.video_url,
+                  prompt: item.prompt || "",
+                  scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+                  createdAt: new Date(item.created_at),
+                  socialPlatforms: item.social_platforms,
+                  publishedPlatforms: item.published_platforms || [],
+                  keywords: item.keywords || []
+                }));
+                
+                log(`Получено ${scheduledContent.length} запланированных публикаций напрямую через API`, 'api');
+              }
+            } catch (apiError: any) {
+              log(`Ошибка при запросе запланированных публикаций напрямую через API: ${apiError.message}`, 'api');
+            }
           }
         } else {
           // Если нет токена, пропускаем запрос к Directus
