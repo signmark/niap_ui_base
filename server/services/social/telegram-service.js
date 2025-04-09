@@ -765,18 +765,94 @@ export class TelegramService {
         log(`Попытка повторной отправки с минимальным HTML-форматированием...`, 'telegram');
         
         try {
-          // Удаляем все HTML-теги из текста, кроме базовых тегов Telegram
-          // Полностью убираем возможно проблемные элементы
-          let simplifiedHtml = html
-            .replace(/<p>|<\/p>/g, '') // Удаляем p-теги
-            .replace(/<ul>|<\/ul>/g, '') // Удаляем ul-теги
-            .replace(/<li>|<\/li>/g, '') // Удаляем li-теги
-            .replace(/\n{3,}/g, '\n\n') // Убираем лишние переносы строк
-            .replace(/<(?!\/?(b|i|u|s|a)(?=>|\s.*>))[^>]*>/g, ''); // Оставляем только базовые теги
+          // Используем более радикальный подход - полностью удаляем все теги и потом добавляем только базовые
+          // Экстракция текста без тегов
+          const textContent = html.replace(/<[^>]*>/g, '');
+          
+          // Находим только основные выделенные части текста
+          const boldMatch = html.match(/<strong>([\s\S]*?)<\/strong>/g);
+          const italicMatch = html.match(/<em>([\s\S]*?)<\/em>/g);
+          const underlineMatch = html.match(/<u>([\s\S]*?)<\/u>/g);
+          
+          // Подготавливаем массив для всех найденных выделений
+          const formattings = [];
+          
+          // Добавляем жирные тексты
+          if (boldMatch) {
+            boldMatch.forEach(match => {
+              const content = match.replace(/<\/?strong>/g, '');
+              if (content.trim()) {
+                formattings.push({
+                  type: 'bold',
+                  content: content,
+                  original: match
+                });
+              }
+            });
+          }
+          
+          // Добавляем курсивные тексты
+          if (italicMatch) {
+            italicMatch.forEach(match => {
+              const content = match.replace(/<\/?em>/g, '');
+              if (content.trim()) {
+                formattings.push({
+                  type: 'italic',
+                  content: content,
+                  original: match
+                });
+              }
+            });
+          }
+          
+          // Добавляем подчеркнутые тексты
+          if (underlineMatch) {
+            underlineMatch.forEach(match => {
+              const content = match.replace(/<\/?u>/g, '');
+              if (content.trim()) {
+                formattings.push({
+                  type: 'underline',
+                  content: content,
+                  original: match
+                });
+              }
+            });
+          }
+          
+          // Создаем простое сообщение с минимальным форматированием
+          let simplifiedHtml = textContent;
+          
+          // Применяем только самое базовое форматирование
+          formattings.forEach(formatting => {
+            if (formatting.content && simplifiedHtml.includes(formatting.content)) {
+              let tag = '';
+              
+              switch(formatting.type) {
+                case 'bold':
+                  tag = 'b';
+                  break;
+                case 'italic':
+                  tag = 'i';
+                  break;
+                case 'underline':
+                  tag = 'u';
+                  break;
+              }
+              
+              if (tag) {
+                // Заменяем обычный текст на текст с тегами
+                simplifiedHtml = simplifiedHtml.replace(
+                  formatting.content, 
+                  `<${tag}>${formatting.content}</${tag}>`
+                );
+              }
+            }
+          });
             
           log(`Упрощенный HTML (${simplifiedHtml.length} символов): ${simplifiedHtml.substring(0, 100)}...`, 'telegram');
           
-          // Рекурсивно вызываем метод с упрощенным HTML и флагом retried
+          // Рекурсивно вызываем метод с обработанным HTML и флагом retried
+          // Важно: отключаем дополнительную обработку, так как мы уже все сделали
           return this.sendRawHtmlToTelegram(simplifiedHtml, { ...options, retried: true, skipTagProcessing: true });
         } catch (simplifyError) {
           log(`Ошибка при упрощении HTML: ${simplifyError.message}`, 'telegram');
