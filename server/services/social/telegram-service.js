@@ -765,9 +765,24 @@ export class TelegramService {
         log(`Попытка повторной отправки с минимальным HTML-форматированием...`, 'telegram');
         
         try {
-          // Используем более радикальный подход - полностью удаляем все теги и потом добавляем только базовые
-          // Экстракция текста без тегов
-          const textContent = html.replace(/<[^>]*>/g, '');
+          // Используем более радикальный подход - но с правильными переносами строк
+          
+          // Сначала обрабатываем абзацы, заменяя их на текст с переносами строк
+          let textWithParagraphs = html;
+          
+          // Преобразование <p> в текст с двойными переносами строк
+          textWithParagraphs = textWithParagraphs.replace(/<p>([\s\S]*?)<\/p>/g, '$1\n\n');
+          
+          // Преобразуем <ul><li> в маркированный список с переносами
+          textWithParagraphs = textWithParagraphs.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+            return listContent.replace(/<li>([\s\S]*?)<\/li>/g, '• $1\n') + '\n';
+          });
+          
+          // Удаляем все теги, но сохраняем переносы строк и эмодзи
+          const textContent = textWithParagraphs.replace(/<[^>]*>/g, '');
+          
+          // Убираем лишние переносы (более 2-х подряд)
+          const cleanText = textContent.replace(/\n{3,}/g, '\n\n');
           
           // Находим только основные выделенные части текста
           const boldMatch = html.match(/<strong>([\s\S]*?)<\/strong>/g);
@@ -819,8 +834,8 @@ export class TelegramService {
             });
           }
           
-          // Создаем простое сообщение с минимальным форматированием
-          let simplifiedHtml = textContent;
+          // Создаем простое сообщение с минимальным форматированием и сохраненными переносами строк
+          let simplifiedHtml = cleanText;
           
           // Применяем только самое базовое форматирование
           formattings.forEach(formatting => {
