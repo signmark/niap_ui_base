@@ -53,31 +53,37 @@ const testMessages = [
  * @returns {Promise<object>} Результат отправки
  */
 async function sendTelegramMessage(html) {
-  const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  
-  // Форматируем HTML для Telegram
-  const formattedHtml = formatHtmlForTelegram(html);
+  // Используем наш собственный API для отправки в Telegram
+  const apiUrl = 'http://localhost:3000/api/test/telegram-html';
   
   const params = {
-    chat_id: TELEGRAM_CHAT_ID,
-    text: formattedHtml,
-    parse_mode: 'HTML', // Важно указать parse_mode для обработки HTML-форматирования
-    disable_web_page_preview: true // Отключаем предпросмотр веб-страниц для ссылок
+    text: html,
+    chatId: TELEGRAM_CHAT_ID,
+    token: TELEGRAM_BOT_TOKEN,
+    parseMode: 'HTML'
   };
   
   try {
-    console.log('Отправляем сообщение в Telegram...');
-    const response = await axios.post(telegramApiUrl, params);
-    return {
-      success: true,
-      messageId: response.data.result.message_id,
-      result: response.data
-    };
+    console.log('Отправляем сообщение через наш API...');
+    const response = await axios.post(apiUrl, params);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        messageId: response.data.messageId,
+        result: response.data
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.error || 'Неизвестная ошибка при отправке'
+      };
+    }
   } catch (error) {
-    console.error('Ошибка при отправке сообщения в Telegram:', error.response?.data || error.message);
+    console.error('Ошибка при отправке сообщения через API:', error.response?.data || error.message);
     return {
       success: false,
-      error: error.response?.data?.description || error.message
+      error: error.response?.data?.error || error.message
     };
   }
 }
