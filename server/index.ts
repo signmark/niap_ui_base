@@ -15,8 +15,8 @@ import { falAiUniversalService } from './services/fal-ai-universal';
 // Импортируем тестовые маршруты для Telegram и другие тестовые маршруты
 import testRouter from './api/test-routes';
 
-// Импортируем патч для Telegram (будет применен после запуска сервера)
-import { applyTelegramPatch } from './services/social-publishing-patch.js';
+// Импортируем патчи системы
+import { initializePatches } from './patches/index.js';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -226,10 +226,18 @@ app.use((req, res, next) => {
       // Печатаем URL-адрес приложения
       console.log(`=== SERVER URL: http://0.0.0.0:${PORT} ===`);
       
-      // Применяем патч для Telegram после полного запуска сервера
-      log("Applying Telegram publishing patch after server initialization...");
-      applyTelegramPatch(3000); // Даем серверу 3 секунды на полную инициализацию
-      log("Telegram patch scheduled for application");
+      // Применяем патчи системы после полного запуска сервера
+      log("Initializing system patches after server initialization...");
+      // Даем серверу 3 секунды на полную инициализацию
+      setTimeout(async () => {
+        try {
+          const success = await initializePatches();
+          log(`System patches initialization: ${success ? 'successful' : 'failed'}`);
+        } catch (error) {
+          log(`Error initializing system patches: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }, 3000);
+      log("System patches scheduled for initialization");
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

@@ -1107,6 +1107,11 @@ export class SocialPublishingWithImgurService {
       };
     }
   }
+
+  // Функция для публикации в Telegram через API
+  async publishToTelegram(content: CampaignContent, telegramSettings: SocialMediaSettings): Promise<SocialPublication> {
+    // Проверка настроек
+    if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
       log(`Ошибка публикации в Telegram: отсутствуют настройки кампании. Token: ${telegramSettings?.token ? 'задан' : 'отсутствует'}, ChatID: ${telegramSettings?.chatId ? 'задан' : 'отсутствует'}`, 'social-publishing');
       return {
         platform: 'telegram',
