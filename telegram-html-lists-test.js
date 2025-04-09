@@ -1,220 +1,194 @@
 /**
- * Тест для проверки обработки HTML-списков в Telegram
- * Скрипт проверяет корректное отображение списков ul/li в сообщениях Telegram
- * 
+ * Тест форматирования списков для Telegram с использованием функций из telegram-formatter.js
  * Запуск: node telegram-html-lists-test.js
  */
 
 // Импортируем необходимые модули
 import axios from 'axios';
-import fs from 'fs';
 import dotenv from 'dotenv';
-import { log } from './server/utils/logger.js';
+import { formatHtmlForTelegram } from './server/utils/telegram-formatter.js';
 
 // Загружаем переменные окружения
 dotenv.config();
 
-// Получаем токен и ID чата из переменных окружения
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+// Получаем токен Telegram из переменных окружения
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const chatId = process.env.TELEGRAM_CHAT_ID;
 
-// Тестовые случаи
+// Тестовый HTML-контент с вложенными списками
 const testHtml = `
-<p><strong>В ходе предыдущей дискуссии</strong> <em>мы рассмотрели причины</em>, по которым завтрак является наиважнейшим приемом пищи, и его влияние на энергетический баланс, метаболические процессы и контроль аппетита. 🌞</p>
-
-<p>В настоящий момент представляется целесообразным проанализировать роль перекусов, поскольку они могут как благоприятно воздействовать на состояние здоровья 🏋️‍♀️, так и незаметно наносить вред фигуре и самочувствию. 🍕</p>
-
-<p><strong>Следует, однако, осознавать, что не все перекусы одинаково полезны. ⚠️</strong> К нежелательным перекусам относятся кондитерские изделия, выпечка, чипсы и прочие продукты фастфуда. 🍩</p>
-
-<p><em>Полезными перекусами являются те, которые обеспечивают чувство насыщения, стабильный энергетический баланс и поступление питательных веществ. 🥗</em></p>
-
-<p><strong>Рекомендации по правильному перекусыванию: 📝</strong></p>
-
+<p><strong>Важный список продуктов:</strong></p>
 <ul>
-    <li>Отдавайте предпочтение перекусам, содержащим белок, полезные жиры и клетчатку – они дольше обеспечивают чувство насыщения и поддерживают обмен веществ. 💪</li>
-    <li>Не употребляйте пищу автоматически – перекус необходим, если вы действительно испытываете легкое чувство голода, а не просто по привычке или от скуки. 🤔</li>
-    <li>Контролируйте размер порции – умеренное количество орехов полезно, но если съесть полпакета, это уже станет полноценным приемом пищи. 🥜</li>
+  <li>Молочные продукты:
+    <ul>
+      <li>Молоко</li>
+      <li>Сыр <strong>твердый</strong></li>
+      <li>Йогурт <em>натуральный</em></li>
+    </ul>
+  </li>
+  <li>Фрукты:
+    <ul>
+      <li>Яблоки <strong>зеленые</strong></li>
+      <li>Бананы <em>спелые</em></li>
+      <li>Апельсины
+        <ul>
+          <li>Крупные</li>
+          <li>Сочные</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Овощи - разные виды:
+    <ul>
+      <li>Помидоры</li>
+      <li>Огурцы</li>
+      <li>Перец</li>
+    </ul>
+  </li>
 </ul>
+<p>Не забудьте про <strong>хлеб</strong> и <em>воду</em>!</p>
+`;
 
-<p>Если вы стремитесь разобраться в вопросах здорового питания, присоединяйтесь к нашему марафону на нашем телеграм-канале. 📲</p>`;
+// Форматированный HTML для Telegram
+const formattedHtml = formatHtmlForTelegram(testHtml);
 
-/**
- * Преобразует стандартные HTML-теги в теги, поддерживаемые Telegram
- * @param {string} html HTML-текст для преобразования
- * @returns {string} Преобразованный HTML-текст
- */
-function formatForTelegram(html) {
-  let formatted = html
-    // Замена стандартных тегов на поддерживаемые Telegram
-    .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-    .replace(/<b>(.*?)<\/b>/g, '<b>$1</b>')
-    .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-    .replace(/<i>(.*?)<\/i>/g, '<i>$1</i>')
-    .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
-    .replace(/<s>(.*?)<\/s>/g, '<s>$1</s>')
-    .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
-    .replace(/<code>(.*?)<\/code>/g, '<code>$1</code>')
-    .replace(/<pre>(.*?)<\/pre>/g, '<pre>$1</pre>')
-    .replace(/<a\s+href="(.*?)".*?>(.*?)<\/a>/g, '<a href="$1">$2</a>');
+// Выводим результат
+console.log('=== ORIGINAL HTML ===');
+console.log(testHtml);
+console.log('\n=== FORMATTED HTML FOR TELEGRAM ===');
+console.log(formattedHtml);
+
+// Расширенная функция для обработки HTML перед отправкой в Telegram
+function processTelegramHtml(html) {
+  // Сначала обработаем p-теги
+  let result = html
+    .replace(/<p>([\s\S]*?)<\/p>/g, '$1\n\n')
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n')
+    .replace(/<\/?p[^>]*>/g, ''); // Удаляем любые незакрытые или оставшиеся p теги
   
-  // Обработка списков
-  formatted = formatted.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
-    const items = listContent.match(/<li>([\s\S]*?)<\/li>/g);
-    if (!items) return match;
+  // Обработаем ul/li теги
+  // Заменяем ul/li на простые символы для списка
+  result = result.replace(/<ul>([\s\S]*?)<\/ul>/g, function(match, listContent) {
+    // Заменяем каждый li элемент на строку с маркером
+    const formattedList = listContent
+      .replace(/<li>([\s\S]*?)<\/li>/g, '\n• $1')
+      .replace(/<\/?li[^>]*>/g, '') // Удаляем любые незакрытые li теги
+      .trim();
     
-    return items.map(item => {
-      const content = item.replace(/<li>([\s\S]*?)<\/li>/, '$1').trim();
-      return `• ${content}\n`;
-    }).join('');
+    return '\n' + formattedList + '\n';
   });
   
-  // Удаление параграфов (заменяем на новую строку)
-  formatted = formatted.replace(/<p>([\s\S]*?)<\/p>/g, '$1\n\n');
+  // Удаляем любые оставшиеся ul/li теги
+  result = result
+    .replace(/<\/?ul[^>]*>/g, '')
+    .replace(/<\/?li[^>]*>/g, '');
   
-  // Удаление всех оставшихся HTML-тегов
-  formatted = formatted.replace(/<[^>]*>/g, '');
+  // Обработаем strong/em теги (заменяем на b/i)
+  result = result
+    .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+    .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>');
   
-  // Удаление лишних переносов строк
-  formatted = formatted.replace(/\n{3,}/g, '\n\n');
+  // Удаляем все остальные HTML теги кроме тех, что поддерживает Telegram
+  result = result.replace(/<(?!\/?(b|i|u|s|code|pre|a)(?=>|\s.*>))[^>]*>/g, '');
   
-  return formatted.trim();
+  return result;
 }
 
-/**
- * Отправляет HTML-сообщение в Telegram
- * @param {string} html HTML-текст для отправки
- * @returns {Promise<object>} Результат отправки
- */
-async function sendHtmlMessage(html) {
+// Функция для отправки текста в Telegram напрямую
+async function sendToTelegram(html) {
   try {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-      throw new Error('Не заданы токен бота или ID чата в переменных окружения');
-    }
+    console.log(`Отправка сообщения в Telegram на канал ${chatId}`);
+    console.log(`Token начинается с: ${token ? token.substring(0, 8) + '...' : 'отсутствует'}`);
     
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    // Предобработка HTML - обрабатываем все теги
+    const processedHtml = processTelegramHtml(html);
     
-    // Форматируем HTML для Telegram
-    const formattedText = formatForTelegram(html);
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    
+    // Печать исходного HTML перед отправкой
+    console.log('Исходный HTML перед отправкой:');
+    console.log(html.substring(0, 500) + (html.length > 500 ? '...' : ''));
+    
+    // Печать обработанного HTML
+    console.log('Обработанный HTML после удаления p тегов:');
+    console.log(processedHtml.substring(0, 500) + (processedHtml.length > 500 ? '...' : ''));
+    
+    // Печать HTML тегов в обработанном сообщении
+    const htmlTags = (processedHtml.match(/<[^>]+>/g) || []).slice(0, 10);
+    console.log('HTML теги в обработанном сообщении:');
+    console.log(htmlTags.join(', '));
     
     const params = {
-      chat_id: TELEGRAM_CHAT_ID,
-      text: formattedText,
+      chat_id: chatId,
+      text: processedHtml,  // Используем обработанный HTML
       parse_mode: 'HTML',
       disable_web_page_preview: true
     };
     
-    log(`Отправка HTML-сообщения в Telegram...`, 'test');
     const response = await axios.post(url, params);
     
+    console.log('Ответ от Telegram API:');
+    console.log(JSON.stringify(response.data, null, 2));
+    
     if (response.data.ok) {
-      const messageId = response.data.result.message_id;
-      let messageUrl = '';
+      console.log(`Сообщение успешно отправлено с ID: ${response.data.result.message_id}`);
       
-      // Если ID чата начинается с -100, это канал или супергруппа
-      if (String(TELEGRAM_CHAT_ID).startsWith('-100')) {
-        const chatId = String(TELEGRAM_CHAT_ID).replace('-100', '');
-        messageUrl = `https://t.me/c/${chatId}/${messageId}`;
-      } else {
-        // Получаем информацию о чате для создания URL
-        const chatInfoUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getChat`;
-        const chatInfoParams = { chat_id: TELEGRAM_CHAT_ID };
-        const chatInfoResponse = await axios.post(chatInfoUrl, chatInfoParams);
-        
-        if (chatInfoResponse.data.ok && chatInfoResponse.data.result.username) {
-          messageUrl = `https://t.me/${chatInfoResponse.data.result.username}/${messageId}`;
-        }
+      // Генерируем URL сообщения, если у канала есть имя пользователя
+      if (chatId.startsWith('@')) {
+        const username = chatId.substring(1);
+        console.log(`URL сообщения: https://t.me/${username}/${response.data.result.message_id}`);
+      } else if (chatId.startsWith('-100')) {
+        const channelId = chatId.substring(4);
+        console.log(`URL сообщения (для приватного канала): https://t.me/c/${channelId}/${response.data.result.message_id}`);
       }
       
-      log(`Сообщение успешно отправлено в Telegram, ID: ${messageId}`, 'test');
-      log(`URL сообщения: ${messageUrl}`, 'test');
-      
-      return {
-        success: true,
-        messageId,
-        messageUrl,
-        result: response.data.result
-      };
+      return response.data.result;
     } else {
-      throw new Error(`Telegram API error: ${response.data.description}`);
+      console.error(`Ошибка отправки: ${response.data.description}`);
+      return null;
     }
   } catch (error) {
-    log(`Ошибка при отправке HTML в Telegram: ${error.message}`, 'test');
-    
-    return {
-      success: false,
-      error: error.message,
-      stack: error.stack
-    };
+    console.error('Ошибка при отправке сообщения:');
+    console.error(error.message);
+    if (error.response) {
+      console.error('Ответ сервера:');
+      console.error(JSON.stringify(error.response.data, null, 2));
+    }
+    return null;
   }
 }
 
-/**
- * Отправляет запрос к API приложения для публикации HTML в Telegram
- * @param {string} html HTML-текст для отправки
- * @returns {Promise<object>} Результат публикации
- */
-async function testAppAPI(html) {
-  try {
-    // URL API приложения (использует существующий маршрут raw-html-telegram)
-    const apiUrl = 'http://localhost:5000/api/test/raw-html-telegram';
-    
-    // Данные для отправки
-    const payload = {
-      text: html,
-      autoFixHtml: true
-    };
-    
-    log(`Отправка запроса к API приложения...`, 'test');
-    const response = await axios.post(apiUrl, payload);
-    
-    log(`Ответ от API: ${JSON.stringify(response.data)}`, 'test');
-    
-    return response.data;
-  } catch (error) {
-    log(`Ошибка при обращении к API приложения: ${error.message}`, 'test');
-    
-    return {
-      success: false,
-      error: error.message
-    };
+// Основная функция
+async function main() {
+  if (!token || !chatId) {
+    console.error('Не найдены переменные окружения TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID');
+    return;
   }
+  
+  // Сперва отправляем пример поста пользователя
+  console.log('\n=== ОТПРАВКА ПРИМЕРА ПОСТА ПОЛЬЗОВАТЕЛЯ ===');
+  const userPost = `<p><strong>Цифровые продукты:</strong> основы создания и продвижения</p>
+<p>Цифровой продукт — это электронный товар, созданный для удовлетворения потребностей пользователя. Для успешного запуска необходимо:</p>
+<ul>
+  <li>Определить целевую аудиторию</li>
+  <li>Создать ценностное предложение</li>
+  <li>Разработать прототип</li>
+  <li>Провести тестирование</li>
+  <li>Настроить каналы продвижения</li>
+</ul>
+<p>Примеры цифровых продуктов:</p>
+<ul>
+  <li><strong>Приложения:</strong> мобильные и веб-сервисы</li>
+  <li><strong>Информационные товары:</strong> курсы, книги, чек-листы</li>
+  <li><strong>Доступ к данным:</strong> API, базы данных</li>
+</ul>
+<p>Эффективная монетизация возможна через подписку, разовые продажи или смешанную модель.</p>`;
+  await sendToTelegram(userPost);
+  
+  // Затем отправляем форматированный HTML
+  console.log('\n=== ОТПРАВКА ФОРМАТИРОВАННОГО HTML ===');
+  await sendToTelegram(formattedHtml);
 }
 
-/**
- * Основная функция для проведения тестов
- */
-async function runTests() {
-  try {
-    console.log('\n========== ТЕСТ ОБРАБОТКИ HTML-СПИСКОВ В TELEGRAM ==========\n');
-    
-    // Прямая отправка HTML через Telegram Bot API
-    console.log('\n----- Тест 1: Прямая отправка через Telegram Bot API -----\n');
-    const directResult = await sendHtmlMessage(testHtml);
-    
-    if (directResult.success) {
-      console.log(`✅ Тест 1 успешно выполнен. URL сообщения: ${directResult.messageUrl}`);
-    } else {
-      console.log(`❌ Тест 1 не выполнен: ${directResult.error}`);
-    }
-    
-    // Небольшая пауза между запросами
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Отправка через API приложения
-    console.log('\n----- Тест 2: Отправка через API приложения -----\n');
-    const apiResult = await testAppAPI(testHtml);
-    
-    if (apiResult.success) {
-      console.log(`✅ Тест 2 успешно выполнен. URL сообщения: ${apiResult.postUrl || apiResult.messageUrl}`);
-    } else {
-      console.log(`❌ Тест 2 не выполнен: ${apiResult.error}`);
-    }
-    
-    console.log('\n========== ТЕСТЫ ЗАВЕРШЕНЫ ==========\n');
-  } catch (error) {
-    console.error('Ошибка в процессе выполнения тестов:', error);
-  }
-}
-
-// Запускаем тесты
-runTests();
+// Запускаем основную функцию
+main().catch(console.error);
