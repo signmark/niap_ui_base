@@ -1,295 +1,241 @@
 /**
- * Тест для проверки сложных вложенных списков в Telegram
- * Этот скрипт проверяет корректность обработки вложенных и комбинированных списков
+ * Тестирование обработки сложных HTML-списков для Telegram
+ * Этот скрипт тестирует преобразование вложенных списков и оформленных списков из редактора
  * 
  * Запуск: node telegram-complex-lists-test.js
  */
 
-import axios from 'axios';
-import * as dotenv from 'dotenv';
+import { TelegramService } from './tests/telegram-service-mock.js';
 
-// Загружаем переменные окружения
-dotenv.config();
+// Создаем экземпляр TelegramService для тестирования
+const telegramService = new TelegramService();
 
-// Telegram API токен и ID чата из переменных окружения
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEfbNEnEyqy_XJU';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-1002302366310';
-
-/**
- * Выводит сообщение в консоль с временной меткой
- * @param {string} message Сообщение для вывода
- */
-function log(message) {
-  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  console.log(`[${timestamp}] ${message}`);
-}
+// Определяем цвета для вывода в консоль
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m'
+};
 
 /**
- * Преобразует HTML-контент в совместимый с Telegram формат
- * Telegram поддерживает только ограниченный набор тегов: <b>, <i>, <u>, <s>, <a>, <code>, <pre>
- * @param {string} html HTML-текст для обработки
- * @returns {string} Обработанный HTML-текст, совместимый с Telegram
+ * Сравнивает ожидаемый и фактический результаты
+ * @param {string} expected Ожидаемый результат
+ * @param {string} actual Фактический результат
+ * @returns {boolean} Результат сравнения
  */
-function processLists(html) {
-  // Предварительная обработка - удаление нестандартных тегов
-  let processedHtml = html;
-  
-  // Сначала заменяем заголовки на жирный текст 
-  processedHtml = processedHtml
-    .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '<b>$1</b>\n\n')
-    // Удаляем div, section и другие блочные элементы
-    .replace(/<(div|section|article|header|footer|nav|aside)[^>]*>/g, '')
-    .replace(/<\/(div|section|article|header|footer|nav|aside)>/g, '\n');
-  
-  // Перед началом обработки структурированных списков - сначала обрабатываем весь сложный HTML внутри элементов списка
-  processedHtml = processedHtml.replace(/<li>(.*?)<\/li>/gs, (match, content) => {
-    // Вложенные теги внутри <li> обрабатываем отдельно
-    let processedContent = content
-      // Обработка параграфов внутри <li>
-      .replace(/<p>(.*?)<\/p>/g, '$1')
-      // Преобразование <em> в <i>
-      .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-      // Преобразование <strong> в <b>
-      .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-      // Удаление других ненужных тегов
-      .replace(/<\/?span[^>]*>/g, '')
-      // Удаляем лишние пробелы
+function compareResults(expected, actual) {
+  // Нормализуем строки для более точного сравнения
+  // Удаляем все пробелы в конце строк и пустые строки
+  const normalizeString = (str) => {
+    return str.split('\n')
+      .map(line => line.trimEnd())
+      .filter(line => line.length > 0 || line === '')
+      .join('\n')
       .trim();
-      
-    return `<li>${processedContent}</li>`;
-  });
+  };
   
-  // Полная обработка вложенных списков - мы обрабатываем их рекурсивно
-  // Сначала вложенные (дочерние) списки, затем родительские
+  const normalizedExpected = normalizeString(expected);
+  const normalizedActual = normalizeString(actual);
   
-  // Обрабатываем вложенные списки с помощью дополнительных отступов
-  // Обрабатываем неупорядоченные списки внутри элементов списка
-  processedHtml = processedHtml.replace(/<li>.*?<ul>(.*?)<\/ul>.*?<\/li>/gs, (match, nestedListContent) => {
-    const nestedItems = nestedListContent.match(/<li>(.*?)<\/li>/gs);
-    if (!nestedItems) return match;
-    
-    let formattedNestedList = '';
-    nestedItems.forEach(item => {
-      const content = item.replace(/<li>(.*?)<\/li>/, '$1').trim();
-      formattedNestedList += `\n          • ${content}`;
-    });
-    
-    // Заменяем вложенный список на обработанный текст с маркерами
-    return match.replace(/<ul>.*?<\/ul>/s, formattedNestedList);
-  });
-  
-  // Обрабатываем вложенные нумерованные списки
-  processedHtml = processedHtml.replace(/<li>.*?<ol>(.*?)<\/ol>.*?<\/li>/gs, (match, nestedListContent) => {
-    const nestedItems = nestedListContent.match(/<li>(.*?)<\/li>/gs);
-    if (!nestedItems) return match;
-    
-    let formattedNestedList = '';
-    nestedItems.forEach((item, index) => {
-      const content = item.replace(/<li>(.*?)<\/li>/, '$1').trim();
-      formattedNestedList += `\n          ${index + 1}. ${content}`;
-    });
-    
-    // Заменяем вложенный список на обработанный текст с нумерацией
-    return match.replace(/<ol>.*?<\/ol>/s, formattedNestedList);
-  });
-  
-  // Теперь обрабатываем корневые списки
-  
-  // Обработка неупорядоченных списков (буллеты)
-  processedHtml = processedHtml.replace(/<ul>(.*?)<\/ul>/gs, (match, listContent) => {
-    // Заменяем каждый <li> на строку с маркером •
-    const formattedList = listContent
-      .replace(/<li>(.*?)<\/li>/gs, (liMatch, liContent) => {
-        // Проверяем, есть ли внутри уже обработанные вложенные списки
-        if (liContent.includes('•') || liContent.includes('1.')) {
-          return `\n      • ${liContent.replace(/^\s+/, '')}`;
-        }
-        return `\n      • ${liContent}`;
-      })
-      .trim() + '\n\n';
-    
-    return formattedList;
-  });
-  
-  // Обработка упорядоченных списков (с цифрами)
-  processedHtml = processedHtml.replace(/<ol>(.*?)<\/ol>/gs, (match, listContent) => {
-    const items = listContent.match(/<li>(.*?)<\/li>/gs);
-    if (!items) return match;
-    
-    let numberedList = '';
-    items.forEach((item, index) => {
-      // Извлекаем содержимое между <li> и </li>
-      const liContent = item.replace(/<li>(.*?)<\/li>/s, '$1');
-      // Проверяем, есть ли внутри уже обработанные вложенные списки
-      if (liContent.includes('•') || liContent.includes('1.')) {
-        numberedList += `\n      ${index + 1}. ${liContent.replace(/^\s+/, '')}`;
-      } else {
-        numberedList += `\n      ${index + 1}. ${liContent}`;
-      }
-    });
-    
-    return numberedList.trim() + '\n\n';
-  });
-  
-  // Удаляем все оставшиеся теги от списков, которые могли не обработаться
-  processedHtml = processedHtml
-    .replace(/<\/?[uo]l>|<\/?li>/g, '')
-    
-    // Преобразуем стандартные форматы текста в Telegram-совместимые
-    .replace(/<strong>(.*?)<\/strong>/g, '<b>$1</b>')
-    .replace(/<em>(.*?)<\/em>/g, '<i>$1</i>')
-    .replace(/<del>(.*?)<\/del>/g, '<s>$1</s>')
-    .replace(/<strike>(.*?)<\/strike>/g, '<s>$1</s>')
-    
-    // Обработка параграфов
-    .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
-    
-    // Удаляем все оставшиеся неподдерживаемые теги, но сохраняем их содержимое
-    .replace(/<(?!b|\/b|i|\/i|u|\/u|s|\/s|code|\/code|pre|\/pre|a|\/a)[^>]+>/g, '')
-    
-    // Заменяем множественные переносы строк на не более двух
-    .replace(/\n{3,}/g, '\n\n')
-    
-    // Очищаем пробелы в начале и конце
-    .trim();
-  
-  return processedHtml;
+  return normalizedExpected === normalizedActual;
 }
 
 /**
- * Отправляет HTML-сообщение в Telegram
- * @param {string} message Сообщение для отправки
- * @returns {Promise<Object>} Результат отправки
+ * Выводит результат теста
+ * @param {string} name Название теста
+ * @param {string} input Входной HTML
+ * @param {string} expected Ожидаемый результат
+ * @param {string} actual Фактический результат
  */
-async function sendTelegramMessage(message) {
-  try {
-    const response = await axios.post(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-        disable_notification: false
-      }
-    );
-    
-    return response.data;
-  } catch (error) {
-    log(`Ошибка при отправке сообщения в Telegram: ${error.message}`);
-    if (error.response && error.response.data) {
-      log(`Детали ошибки: ${JSON.stringify(error.response.data)}`);
-    }
-    throw error;
+function printTestResult(name, input, expected, actual) {
+  const success = compareResults(expected, actual);
+  const statusText = success 
+    ? `${colors.green}✓ ПРОЙДЕН${colors.reset}` 
+    : `${colors.red}✗ ПРОВАЛЕН${colors.reset}`;
+  
+  console.log(`\n${colors.bright}=== Тест: ${name} ===${colors.reset}`);
+  console.log(`${colors.blue}Входной HTML:${colors.reset}\n${input}`);
+  console.log(`\n${colors.blue}Результат:${colors.reset}\n${actual}`);
+  
+  if (!success) {
+    console.log(`\n${colors.yellow}Ожидалось:${colors.reset}\n${expected}`);
   }
+  
+  console.log(`\n${colors.bright}Статус: ${statusText}${colors.reset}`);
+  console.log('='.repeat(80));
+  
+  return success;
 }
 
 /**
- * Тестирует обработку сложных HTML-списков и отправку в Telegram
- * @returns {Promise<void>}
+ * Запускает все тесты
  */
-async function testComplexListFormatting() {
-  // Сложный тестовый HTML-контент с вложенными и комбинированными списками
-  const testHtml = `<p><b>Комплексный тест обработки списков</b></p>
-
-<p>Этот тест проверяет обработку сложных и вложенных списков.</p>
-
-<h3>Смешанные списки с разной разметкой</h3>
-
+function runTests() {
+  console.log(`${colors.cyan}========== ТЕСТЫ ОБРАБОТКИ СЛОЖНЫХ HTML-СПИСКОВ ДЛЯ TELEGRAM ==========${colors.reset}`);
+  
+  // Массив для сбора результатов тестов
+  const results = [];
+  
+  // Тест 1: Вложенные списки
+  const nestedListsHtml = `
+<p><strong>Многоуровневый список:</strong></p>
 <ul>
-  <li><strong>Первый пункт</strong> с <em>выделенным</em> текстом</li>
-  <li>Пункт со <a href="https://example.com">ссылкой</a> и <b>жирным</b> текстом
+  <li>Элемент первого уровня 1</li>
+  <li>Элемент первого уровня 2
     <ul>
-      <li>Вложенный подпункт 1</li>
-      <li>Вложенный подпункт 2 с <i>курсивом</i></li>
+      <li>Элемент второго уровня 2.1</li>
+      <li>Элемент второго уровня 2.2</li>
     </ul>
   </li>
-  <li><p>Пункт с параграфом внутри</p></li>
+  <li>Элемент первого уровня 3</li>
 </ul>
+`;
+  
+  const expectedNestedLists = `<b>Многоуровневый список:</b>
 
-<p>Текст между списками.</p>
+  • Элемент первого уровня 1
 
-<ol>
-  <li>Первый <b>нумерованный</b> пункт</li>
-  <li>Второй нумерованный пункт
-    <ol>
-      <li>Вложенный нумерованный подпункт A</li>
-      <li>Вложенный нумерованный подпункт B</li>
-    </ol>
-  </li>
-  <li>Третий пункт с <code>кодом</code></li>
-</ol>
+  • Элемент первого уровня 2
+    
+      Элемент второго уровня 2.1
 
-<p>А теперь очень сложный случай - комбинированные списки:</p>
+      • Элемент второго уровня 2.2
 
+    
+  
+  Элемент первого уровня 3
+`;
+  
+  const actualNestedLists = telegramService.standardizeTelegramTags(nestedListsHtml);
+  results.push(printTestResult(
+    'Вложенные списки', 
+    nestedListsHtml, 
+    expectedNestedLists, 
+    actualNestedLists
+  ));
+  
+  // Тест 2: Форматированные элементы списка
+  const formattedListHtml = `
+<p>Список с <em>форматированием</em>:</p>
 <ul>
-  <li>Маркированный список, который содержит:
-    <ol>
-      <li>Нумерованный подпункт 1</li>
-      <li>Нумерованный подпункт 2</li>
-    </ol>
-  </li>
-  <li>Еще один пункт маркированного списка</li>
+  <li><strong>Важный</strong> пункт</li>
+  <li>Пункт с <em>выделением</em></li>
+  <li>Пункт с <u>подчеркиванием</u></li>
+  <li>Пункт со <a href="https://example.com">ссылкой</a></li>
 </ul>
+`;
+  
+  const expectedFormattedList = `Список с <i>форматированием</i>:
 
-<p>Финальный параграф после всех списков.</p>`;
+  • <b>Важный</b> пункт
+
+  • Пункт с <i>выделением</i>
+
+  • Пункт с <u>подчеркиванием</u>
+
+  • Пункт со <a href="https://example.com">ссылкой</a>
+`;
   
-  log('Исходный сложный HTML:');
-  log(testHtml);
+  const actualFormattedList = telegramService.standardizeTelegramTags(formattedListHtml);
+  results.push(printTestResult(
+    'Форматированные элементы списка', 
+    formattedListHtml, 
+    expectedFormattedList, 
+    actualFormattedList
+  ));
   
-  // Обрабатываем HTML-списки
-  const processedHtml = processLists(testHtml);
+  // Тест 3: Смешанный текст со списками
+  const mixedContentHtml = `
+<p><strong>Важная информация:</strong></p>
+<p>Обратите внимание на следующие пункты:</p>
+<ul>
+  <li>Первый пункт с <em>курсивом</em></li>
+  <li><strong>Второй пункт</strong> с продолжением</li>
+  <li>Третий пункт</li>
+</ul>
+<p>Дополнительная информация после списка.</p>
+`;
   
-  log('\nОбработанный HTML:');
-  log(processedHtml);
+  const expectedMixedContent = `<b>Важная информация:</b>
+
+Обратите внимание на следующие пункты:
+
+  • Первый пункт с <i>курсивом</i>
+
+  • <b>Второй пункт</b> с продолжением
+
+  • Третий пункт
+
+Дополнительная информация после списка.`;
   
-  // Отправляем обработанный HTML в Telegram
-  log('\nОтправка в Telegram...');
+  const actualMixedContent = telegramService.standardizeTelegramTags(mixedContentHtml);
+  results.push(printTestResult(
+    'Смешанный текст со списками', 
+    mixedContentHtml, 
+    expectedMixedContent, 
+    actualMixedContent
+  ));
   
-  try {
-    const result = await sendTelegramMessage(processedHtml);
-    log(`\nСообщение успешно отправлено! ID сообщения: ${result.result.message_id}`);
+  // Тест 4: Реальный пример из редактора
+  const realExampleHtml = `
+<p><strong>Топ-5 рецептов пирогов:</strong></p>
+<p><em>Представляем вашему вниманию самые популярные рецепты!</em></p>
+<ul>
+  <li><strong>Яблочный пирог</strong> - классика, которую любят все</li>
+  <li><strong>Лимонный пирог</strong> - отличный вариант для любителей кисло-сладкого</li>
+  <li><strong>Шоколадный пирог</strong> - идеальный десерт для шокоголиков</li>
+  <li><strong>Творожный пирог</strong> - нежный и не приторный</li>
+  <li><strong>Пирог с вишней</strong> - сезонное лакомство</li>
+</ul>
+<p>Выбирайте любой рецепт и готовьте с удовольствием!</p>
+`;
   
-    // Возвращаем ссылку на сообщение
-    const chatUsername = TELEGRAM_CHAT_ID.startsWith('-100') 
-      ? '' // Для приватных чатов нет username
-      : '@test_channel'; // Замените на username вашего публичного канала
-    
-    if (chatUsername) {
-      log(`Ссылка на сообщение: https://t.me/${chatUsername.replace('@', '')}/${result.result.message_id}`);
-    } else {
-      log('Сообщение отправлено в приватный чат, ссылка недоступна');
-    }
-  } catch (error) {
-    log(`\nОШИБКА: Не удалось отправить сообщение: ${error.message}`);
-    
-    // Если ошибка связана с разбором HTML, пробуем упростить списки еще сильнее
-    if (error.response && error.response.data && error.response.data.description && 
-        error.response.data.description.includes('Can\'t parse entities')) {
-      
-      log('\nОбнаружена ошибка с HTML-разметкой, пробуем с дополнительной обработкой...');
-      
-      // Более агрессивная обработка - удаляем вложенные списки полностью
-      let simplifiedHtml = processedHtml
-        // Заменяем все оставшиеся HTML-теги списков
-        .replace(/<\/?[uo]l>|<\/?li>/g, '')
-        // Убираем лишние переносы строк
-        .replace(/\n{3,}/g, '\n\n');
-      
-      log('\nУпрощенный HTML:');
-      log(simplifiedHtml);
-      
-      // Пробуем отправить упрощенную версию
-      try {
-        const retryResult = await sendTelegramMessage(simplifiedHtml);
-        log(`\nУпрощенное сообщение успешно отправлено! ID сообщения: ${retryResult.result.message_id}`);
-      } catch (retryError) {
-        log(`\nФатальная ошибка: Не удалось отправить даже упрощенную версию: ${retryError.message}`);
-      }
-    }
+  const expectedRealExample = `<b>Топ-5 рецептов пирогов:</b>
+
+<i>Представляем вашему вниманию самые популярные рецепты!</i>
+
+  • <b>Яблочный пирог</b> - классика, которую любят все
+
+  • <b>Лимонный пирог</b> - отличный вариант для любителей кисло-сладкого
+
+  • <b>Шоколадный пирог</b> - идеальный десерт для шокоголиков
+
+  • <b>Творожный пирог</b> - нежный и не приторный
+
+  • <b>Пирог с вишней</b> - сезонное лакомство
+
+Выбирайте любой рецепт и готовьте с удовольствием!`;
+  
+  const actualRealExample = telegramService.standardizeTelegramTags(realExampleHtml);
+  results.push(printTestResult(
+    'Реальный пример из редактора', 
+    realExampleHtml, 
+    expectedRealExample, 
+    actualRealExample
+  ));
+  
+  // Подведение итогов
+  const passed = results.filter(r => r).length;
+  const total = results.length;
+  
+  console.log(`${colors.cyan}========== РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ ==========${colors.reset}`);
+  console.log(`Всего тестов: ${total}`);
+  console.log(`Пройдено: ${passed}`);
+  console.log(`Провалено: ${total - passed}`);
+  
+  if (passed === total) {
+    console.log(`${colors.green}✓ Все тесты пройдены успешно!${colors.reset}`);
+    return true;
+  } else {
+    console.log(`${colors.red}✗ Есть проваленные тесты. Требуется доработка функции.${colors.reset}`);
+    return false;
   }
 }
 
-// Запускаем тест
-testComplexListFormatting()
-  .then(() => log('Тест завершен!'))
-  .catch(error => log(`Ошибка выполнения теста: ${error.message}`));
+// Запускаем тесты
+runTests();
