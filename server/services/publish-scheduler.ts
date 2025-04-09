@@ -16,6 +16,7 @@ export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private checkIntervalMs = 60000; // проверяем каждую минуту
+  private processedContentIds = new Set<string>(); // для отслеживания уже обработанного контента
 
   /**
    * Запускает планировщик публикаций
@@ -51,6 +52,16 @@ export class PublishScheduler {
     clearInterval(this.intervalId);
     this.intervalId = null;
     this.isRunning = false;
+  }
+  
+  /**
+   * Очищает список обработанных ID контента
+   * Можно использовать для принудительной повторной обработки контента
+   */
+  clearProcessedContentIds() {
+    const count = this.processedContentIds.size;
+    this.processedContentIds.clear();
+    log(`Очищен список из ${count} обработанных ID контента`, 'scheduler');
   }
 
   /**
@@ -414,10 +425,22 @@ export class PublishScheduler {
         return scheduledTime <= now;
       });
       
-      log(`Готово к публикации ${contentToPublish.length} элементов контента`, 'scheduler');
+      // Проверяем, есть ли элементы, которые уже были обработаны
+      const newContentToPublish = contentToPublish.filter(content => {
+        // Проверяем, обрабатывался ли данный контент ранее
+        if (this.processedContentIds.has(content.id)) {
+          log(`Контент ID ${content.id} "${content.title}" уже обработан ранее в текущей сессии сервера, пропускаем`, 'scheduler');
+          return false;
+        }
+        return true;
+      });
+      
+      log(`Готово к публикации ${newContentToPublish.length} элементов контента`, 'scheduler');
       
       // Публикуем каждый элемент контента
-      for (const content of contentToPublish) {
+      for (const content of newContentToPublish) {
+        // Добавляем ID в список обработанных перед публикацией
+        this.processedContentIds.add(content.id);
         await this.publishContent(content);
       }
     } catch (error: any) {
