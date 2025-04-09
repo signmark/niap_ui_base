@@ -554,37 +554,69 @@ export class TelegramService {
       }
       
       if (content.content) {
-        // РАДИКАЛЬНО НОВЫЙ ПОДХОД - удаляем всё, кроме самого необходимого
+        // ПОЛНОСТЬЮ НОВЫЙ ПОДХОД: Точечное и бережное форматирование HTML
         
-        // 1. Преобразуем все форматирующие теги перед удалением остальных
-        let contentHTML = content.content
-          .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
-          .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>');
+        // 0. Выводим логи с содержимым оригинального контента для отладки
+        log(`ОРИГИНАЛЬНЫЙ HTML: ${content.content.substring(0, 200)}...`, 'telegram');
         
-        // 2. Сначала сохраняем структуру параграфов путем добавления переносов строк
+        // 1. Сначала создаем копию HTML для дальнейшей обработки
+        let contentHTML = content.content;
+        
+        // 2. Заменяем все блочные теги (<p>, <div>) на текст с ОДИНАРНЫМИ переносами строк
+        // ВНИМАНИЕ: Обязательно сохраняем содержимое их атрибутов и внутренних тегов!
+        const PRESERVE_TAGS_INSIDE_BLOCKS = true;
+        
+        if (PRESERVE_TAGS_INSIDE_BLOCKS) {
+          // Сложная замена с сохранением всех внутренних тегов
+          contentHTML = contentHTML
+            // Параграфы: от <p> до </p> заменяем на содержимое + перенос
+            .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
+            // Дивы: аналогично параграфам
+            .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
+            // <br> теги заменяем на перенос строки
+            .replace(/<br\s*\/?>/g, '\n')
+            // Списки: <ul> заменяем на перенос строки в начале и конце
+            .replace(/<ul[^>]*>/g, '\n')
+            .replace(/<\/ul>/g, '\n')
+            // Элементы списка: добавляем маркер "•" и перенос строки
+            .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
+        } else {
+          // Простой вариант - просто удаляем все эти теги
+          contentHTML = contentHTML
+            .replace(/<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<br\s*\/?>|<ul[^>]*>|<\/ul>|<li[^>]*>|<\/li>/g, '');
+        }
+        
+        // 3. Заменяем стандартные форматирующие теги на теги поддерживаемые Telegram
         contentHTML = contentHTML
-          .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
-          .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
-          .replace(/<br\s*\/?>/g, '\n')
-          .replace(/<ul[^>]*>/g, '\n')
-          .replace(/<\/ul>/g, '\n')
-          .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
-          
-        // 3. ВАЖНО: Проверяем HTML-теги на соответствие требованиям Telegram
-        // Удаляем все HTML-теги, КРОМЕ поддерживаемых Telegram (<b>, <i>, <u>, <s>, <a>)
-        contentHTML = contentHTML.replace(/<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g, '');
+          .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
+          .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
+          .replace(/<u>([\s\S]*?)<\/u>/g, '<u>$1</u>')
+          .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
+          .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
         
-        // Логируем обнаруженные теги <b> и <i> для отладки
-        const boldMatches = contentHTML.match(/<b>(.*?)<\/b>/g) || [];
-        const italicMatches = contentHTML.match(/<i>(.*?)<\/i>/g) || [];
-        log(`Найдено тегов <b>: ${boldMatches.length}, <i>: ${italicMatches.length}`, 'telegram');
+        // 4. ВАЖНО: Удаляем ВСЕ оставшиеся HTML-теги, КРОМЕ поддерживаемых Telegram
+        const SUPPORTED_TAGS_PATTERN = /<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g;
+        contentHTML = contentHTML.replace(SUPPORTED_TAGS_PATTERN, '');
         
-        // 4. Нормализуем переносы строк
-        contentHTML = contentHTML.replace(/\n{3,}/g, '\n\n');
+        // 5. Подсчитываем и логируем теги для отладки
+        const boldMatches = contentHTML.match(/<b>([\s\S]*?)<\/b>/g) || [];
+        const italicMatches = contentHTML.match(/<i>([\s\S]*?)<\/i>/g) || [];
+        const underlineMatches = contentHTML.match(/<u>([\s\S]*?)<\/u>/g) || [];
+        const strikeMatches = contentHTML.match(/<s>([\s\S]*?)<\/s>/g) || [];
         
-        // Логируем результат для отладки
-        log(`Контент обработан, удалены ВСЕ теги кроме <b>, <i>, <u>, <s>, <a>`, 'telegram');
-        log(`Первые 100 символов: ${contentHTML.substring(0, 100)}...`, 'telegram');
+        log(`Форматирование тегов: <b>: ${boldMatches.length}, <i>: ${italicMatches.length}, <u>: ${underlineMatches.length}, <s>: ${strikeMatches.length}`, 'telegram');
+        
+        // 6. Нормализуем переносы строк - ОДНОКРАТНЫЕ
+        contentHTML = contentHTML
+          .replace(/\n{3,}/g, '\n\n')  // Более 2 переносов -> 2 переноса
+          .replace(/^\n+/, '')         // Удаляем переносы в начале
+          .replace(/\n+$/, '');        // Удаляем переносы в конце
+        
+        // 7. Проверяем результат на наличие незакрытых тегов
+        contentHTML = this.fixUnclosedTags(contentHTML);
+        
+        // 8. Логируем обработанный контент
+        log(`ОБРАБОТАННЫЙ HTML (${contentHTML.length} символов): ${contentHTML.substring(0, 200)}...`, 'telegram');
         
         fullContent += contentHTML;
       }
@@ -971,6 +1003,7 @@ export class TelegramService {
   
   /**
    * Преобразует стандартные HTML-теги в теги, поддерживаемые Telegram
+   * ВАЖНОЕ ЗАМЕЧАНИЕ: В этой функции строго копируется подход из успешных тестов!
    * @param {string} html HTML-текст для преобразования
    * @returns {string} Преобразованный HTML-текст
    */
@@ -978,12 +1011,23 @@ export class TelegramService {
     try {
       if (!html) return '';
       
-      // РАДИКАЛЬНО НОВЫЙ ПОДХОД - сначала конвертируем нужные теги, затем удаляем остальные
+      // ПОДХОД ИЗ УСПЕШНОГО ТЕСТА: Минимальное преобразование HTML-тегов
+      log(`[КОПИЯ ТЕСТА] Начата обработка HTML для Telegram`, 'telegram');
       
-      log(`Начата обработка HTML для Telegram. Исходный текст: ${html.substring(0, 100)}...`, 'telegram');
+      // 1. Только самые базовые преобразования форматирующих тегов
+      let result = html;
       
-      // 1. Сначала преобразуем все форматирующие теги перед удалением остальных
-      let result = html
+      // Шаг 1: Преобразование блочных элементов в текст с переносами
+      result = result
+        .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n')
+        .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n')
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<ul[^>]*>/g, '\n')
+        .replace(/<\/ul>/g, '\n')
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/g, '• $1\n');
+      
+      // Шаг 2: Простое преобразование форматирующих тегов
+      result = result
         .replace(/<strong>([\s\S]*?)<\/strong>/g, '<b>$1</b>')
         .replace(/<em>([\s\S]*?)<\/em>/g, '<i>$1</i>')
         .replace(/<b>([\s\S]*?)<\/b>/g, '<b>$1</b>')
@@ -992,18 +1036,19 @@ export class TelegramService {
         .replace(/<s>([\s\S]*?)<\/s>/g, '<s>$1</s>')
         .replace(/<strike>([\s\S]*?)<\/strike>/g, '<s>$1</s>');
       
-      // 2. Обрабатываем абзацы и списки - используем ОДИНАРНЫЕ переносы строк
-      result = result
-        .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n')
-        .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
-        .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n');
-      
-      // 3. ВАЖНО: Удаляем ВСЕ другие HTML-теги, кроме поддерживаемых Telegram
+      // Шаг 3: Удаление всех оставшихся HTML-тегов
       result = result.replace(/<(?!\/?b>|\/?i>|\/?u>|\/?s>|\/?a(?:\s[^>]*)?>)[^>]*>/g, '');
       
-      log(`HTML-теги преобразованы в формат Telegram`, 'telegram');
+      // Шаг 4: Исправление незакрытых тегов
+      result = this.fixUnclosedTags(result);
+      
+      // Шаг 5: Нормализация переносов строк
+      result = result
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/^\n+/, '')
+        .replace(/\n+$/, '');
+      
+      log(`[КОПИЯ ТЕСТА] HTML преобразован в формат Telegram`, 'telegram');
       
       return result;
       
