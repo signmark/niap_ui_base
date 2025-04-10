@@ -429,8 +429,18 @@ export class SocialPublishingService {
             postUrl = `https://t.me/${username}/${firstMessageId}`;
             log(`Формирование URL для публичного канала (группа сообщений): ${postUrl}`, 'social-publishing');
           } else {
-            // Приватный чат: используем формат с /c/
-            postUrl = `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`;
+            // Формирование правильного URL для приватного чата
+            // Учитываем разные форматы ID: если начинается с -1001 или -1002, приводим к нужному формату
+            let cleanChatId = formattedChatId;
+            if (cleanChatId.startsWith('-1001')) {
+              cleanChatId = cleanChatId.replace('-1001', '');
+            } else if (cleanChatId.startsWith('-1002')) {
+              cleanChatId = cleanChatId.replace('-1002', '');
+            } else if (cleanChatId.startsWith('-100')) {
+              cleanChatId = cleanChatId.replace('-100', '');
+            }
+            
+            postUrl = `https://t.me/c/${cleanChatId}/${firstMessageId}`;
             log(`Формирование URL для приватного чата (группа сообщений): ${postUrl}`, 'social-publishing');
           }
           
@@ -461,7 +471,18 @@ export class SocialPublishingService {
             log(`Формирование URL для публичного канала: ${postUrl}`, 'social-publishing');
           } else {
             // Приватный чат: используем формат с /c/
-            postUrl = `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`;
+            // Формирование правильного URL для приватного чата
+            // Учитываем разные форматы ID: если начинается с -1001 или -1002, приводим к нужному формату
+            let cleanChatId = formattedChatId;
+            if (cleanChatId.startsWith('-1001')) {
+              cleanChatId = cleanChatId.replace('-1001', '');
+            } else if (cleanChatId.startsWith('-1002')) {
+              cleanChatId = cleanChatId.replace('-1002', '');
+            } else if (cleanChatId.startsWith('-100')) {
+              cleanChatId = cleanChatId.replace('-100', '');
+            }
+            
+            postUrl = `https://t.me/c/${cleanChatId}/${message.message_id}`;
             log(`Формирование URL для приватного чата: ${postUrl}`, 'social-publishing');
           }
           
