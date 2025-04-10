@@ -339,7 +339,7 @@ export class TelegramService extends BaseSocialService {
    * @param token Токен бота Telegram
    * @returns Результат отправки сообщения
    */
-  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<any> {
+  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<{ success: boolean, result?: any, error?: string }> {
     try {
       // Дополнительно проверяем длину текста
       if (!text || text.trim() === '') {
@@ -1471,14 +1471,30 @@ export class TelegramService extends BaseSocialService {
               // Сохраняем ID сообщения для формирования ссылки
               if (textResponse.result && textResponse.result.message_id) {
                 lastMessageId = textResponse.result.message_id;
+                log(`ID сообщения получен из текстового ответа: ${lastMessageId}`, 'social-publishing');
+              } else {
+                log(`Внимание! ID сообщения не получен из текстового ответа. Проверьте содержимое ответа: ${JSON.stringify(textResponse)}`, 'social-publishing');
               }
               
-              return {
-                platform: 'telegram',
-                status: 'published',
-                publishedAt: new Date(),
-                postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
-              };
+              // Убеждаемся, что у нас есть ID сообщения для правильной ссылки
+              if (lastMessageId) {
+                log(`Формируем URL с ID сообщения: ${lastMessageId}`, 'social-publishing');
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId),
+                  messageId: lastMessageId // Добавляем ID сообщения в результат
+                };
+              } else {
+                log(`Формируем URL без ID сообщения`, 'social-publishing');
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: this.generatePostUrl(chatId, formattedChatId, '')
+                };
+              }
             } else {
               log(`Ошибка при отправке текста: ${textResponse.error}`, 'social-publishing');
               return {
