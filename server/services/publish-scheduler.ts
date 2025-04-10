@@ -25,6 +25,17 @@ export function ensureValidTelegramUrl(url: string | undefined, platform: string
   
   // Обрабатываем URL только для Telegram
   if (platform === 'telegram') {
+    // Специальная обработка для канала ya_delayu_moschno (ID: 2302366310)
+    if (url.includes('2302366310')) {
+      if (messageId) {
+        const fixedUrl = `https://t.me/c/2302366310/${messageId}`;
+        log(`Специальный случай: URL для канала ya_delayu_moschno: ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      } else {
+        return 'https://t.me/c/2302366310';
+      }
+    }
+    
     // Проверяем наличие messageId в URL
     const hasMessageIdInUrl = !!url.match(/\/\d+$/); // URL заканчивается на /NUMBER
     
@@ -63,8 +74,16 @@ export function ensureValidTelegramUrl(url: string | undefined, platform: string
       
       // Пытаемся создать корректный URL из доступной информации
       if (messageId) {
+        // Проверяем, не связано ли это с каналом ya_delayu_moschno
+        if (url.includes('2302366310')) {
+          const fixedUrl = `https://t.me/c/2302366310/${messageId}`;
+          log(`Исправление некорректного URL для канала ya_delayu_moschno: ${url} -> ${fixedUrl}`, 'scheduler');
+          return fixedUrl;
+        }
+        
+        // Для других случаев просто возвращаем базовый URL
         const baseUrl = "https://t.me";
-        // Возвращаем базовый URL, так как мы не можем определить ID канала
+        log(`Не удалось исправить некорректный URL: ${url}, возвращаем базовый URL`, 'scheduler');
         return `${baseUrl}`;
       }
     }
