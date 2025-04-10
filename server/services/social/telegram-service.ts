@@ -1045,20 +1045,27 @@ export class TelegramService extends BaseSocialService {
       log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
       // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // В соответствии с алгоритмом из TELEGRAM_POSTING_ALGORITHM.md
       
-      // 1. Если есть изображения и включен флаг принудительного разделения,
-      // отправляем сначала изображения без подписи, затем текст отдельным сообщением
-      if (hasImages && forceImageTextSeparation) {
-        log(`Telegram: публикация с изображением. Отправляем изображение и текст раздельно.`, 'social-publishing');
+      // Проверяем длину контента для определения стратегии отправки
+      const textLengthExceeds1024 = text.length > 1024;
+      const textLengthExceeds4096 = text.length > 4096;
+      
+      // Если текст превышает 4096 символов, обрезаем до 4093 и добавляем "..."
+      if (textLengthExceeds4096) {
+        log(`Текст превышает 4096 символов, обрезаем до 4093 и добавляем "..."`, 'social-publishing');
+        text = text.substring(0, 4093) + '...';
+      }
+      
+      // 1. Если есть изображения и текст превышает 1024 символов или включен флаг принудительного разделения,
+      // отправляем сначала изображения, затем текст отдельным сообщением
+      if (hasImages && (textLengthExceeds1024 || forceImageTextSeparation)) {
+        log(`Telegram: публикация с изображением. Отправляем изображение и текст раздельно. Длина текста: ${text.length}`, 'social-publishing');
         
-        // Подготавливаем краткую подпись для изображения (только заголовок)
-        const imageCaption = processedContent.title ? 
-          (processedContent.title.length > 200 ? 
-            processedContent.title.substring(0, 197) + '...' : 
-            processedContent.title) : 
-          '';
+        // При отправке изображений отдельно не используем подпись (caption)
         
-        log(`Используем краткую подпись для изображения: "${imageCaption}"`, 'social-publishing');
+        // Изображения отправляются без подписи, т.к. текст будет отправлен отдельно
+        log(`Отправляем изображения без подписи, т.к. текст ${textLengthExceeds1024 ? 'превышает 1024 символа' : 'будет отправлен отдельно'}`, 'social-publishing');
         
         // Собираем все изображения для отправки через универсальный метод
         const images: string[] = [];
@@ -1090,13 +1097,13 @@ export class TelegramService extends BaseSocialService {
         if (images.length > 0) {
           log(`Отправка всех ${images.length} изображений через универсальный метод`, 'social-publishing');
           
-          // Передаем текст как caption при отправке изображений
+          // При отправке изображений, если текст превышает 1024 символа, не передаем его как caption
           imagesSentResult = await this.sendImagesToTelegram(
             formattedChatId,
             token,
             images,
-            baseUrl,
-            text // Передаем текст как caption
+            baseUrl
+            // Не передаем текст как caption, т.к. он будет отправлен отдельно
           );
           
           if (!imagesSentResult.success) {
