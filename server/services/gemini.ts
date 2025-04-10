@@ -81,10 +81,10 @@ export class GeminiService {
   /**
    * Генерирует контент с помощью Gemini
    * @param prompt Промпт для генерации
-   * @param model Модель Gemini (по умолчанию gemini-pro)
+   * @param model Модель Gemini (по умолчанию gemini-1.5-flash)
    * @returns Сгенерированный контент
    */
-  async generateContent(prompt: string, model = 'gemini-pro'): Promise<string> {
+  async generateContent(prompt: string, model = 'gemini-1.5-flash'): Promise<string> {
     try {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
@@ -117,7 +117,7 @@ export class GeminiService {
     prompt: string,
     options: GenerateSocialContentOptions = {}
   ): Promise<string> {
-    const { platform, tone, model = 'gemini-pro' } = options;
+    const { platform, tone, model = 'gemini-1.5-flash' } = options;
     
     try {
       logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
