@@ -55,6 +55,8 @@ export function SettingsDialog() {
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
   const [claudeKey, setClaudeKey] = useState(""); // Добавлен ключ Claude
+  const [geminiKey, setGeminiKey] = useState(""); // Добавлен ключ Gemini
+  const [qwenKey, setQwenKey] = useState(""); // Восстановлен ключ Qwen
   // XMLRiver API credentials
   const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
@@ -65,6 +67,8 @@ export function SettingsDialog() {
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
   const [claudeTesting, setClaudeTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Claude
+  const [geminiTesting, setGeminiTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Gemini
+  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Qwen
   // Состояния для соцсетей убраны, т.к. токены перенесены в настройки кампаний
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
@@ -260,6 +264,7 @@ export function SettingsDialog() {
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
   const testClaudeKey = () => testApiKey('claude', claudeKey, setClaudeTesting);
+  const testGeminiKey = () => testApiKey('gemini', geminiKey, setGeminiTesting);
   // Токены социальных сетей (Instagram и Facebook) были перемещены
   // в настройки каждой кампании и убраны из глобальных настроек
   
@@ -283,6 +288,7 @@ export function SettingsDialog() {
       const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
       const claudeKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'claude');
+      const geminiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'gemini');
       // Социальные сети перенесены в настройки кампаний
 
       if (perplexityKeyData) {
@@ -299,6 +305,9 @@ export function SettingsDialog() {
       }
       if (claudeKeyData) {
         setClaudeKey(claudeKeyData.api_key);
+      }
+      if (geminiKeyData) {
+        setGeminiKey(geminiKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -343,6 +352,7 @@ export function SettingsDialog() {
         { name: 'deepseek', key: deepseekKey },
         { name: 'fal_ai', key: falAiKey },
         { name: 'claude', key: claudeKey },
+        { name: 'gemini', key: geminiKey },
         { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
       // Токены социальных сетей перенесены в настройки кампаний
