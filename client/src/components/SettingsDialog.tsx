@@ -651,6 +651,70 @@ export function SettingsDialog() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Gemini AI</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="Введите API ключ Gemini AI"
+              className={cn("flex-1", !geminiKey && "border-amber-400 focus-visible:ring-amber-400")}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://ai.google.dev/', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ на сайте Google AI Studio</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testGeminiKey}
+              disabled={!geminiKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {geminiTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : geminiTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : geminiTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для генерации и улучшения контента через Gemini AI от Google
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функций улучшения и генерации текста</li>
+              <li>Поддерживает работу с моделями Gemini 1.5 Pro и Gemini 1.5 Flash</li>
+              <li>Ключ можно получить в <a href="https://ai.google.dev/" target="_blank" className="text-blue-500 hover:underline">Google AI Studio</a></li>
+            </ul>
+          </div>
+          {geminiTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{geminiTesting.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
             <Label className="text-base font-medium">API Ключ Qwen</Label>
             <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "success" : "destructive"}>
               {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Настроен" : "Требуется настройка"}
