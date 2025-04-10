@@ -288,12 +288,15 @@ export class SocialPublishingService {
         // Отправка группы изображений (медиагруппы) через sendMediaGroup
         log(`Отправка медиагруппы в Telegram с ${images.length} изображениями через API sendMediaGroup`, 'social-publishing');
         
+        // Проверка длины подписи согласно документации
+        const isTextShort = truncatedCaption.length <= 1024;
+        
         // Формируем массив объектов медиа для API Telegram
         const mediaGroup = images.map((url, index) => ({
           type: 'photo',
           media: url,
-          // Добавляем подпись только к первому изображению
-          ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
+          // Добавляем подпись только к первому изображению и только если текст помещается в подпись
+          ...(index === 0 && isTextShort ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
         }));
         
         log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
@@ -309,6 +312,26 @@ export class SocialPublishingService {
         response = await axios.post(`${baseUrl}/sendMediaGroup`, requestBody, {
           headers: { 'Content-Type': 'application/json' }
         });
+        
+        // Если текст слишком длинный для подписи к медиа, отправляем его отдельным сообщением
+        if (!isTextShort) {
+          log(`Текст слишком длинный для подписи (${truncatedCaption.length} > 1024), отправляем отдельно`, 'social-publishing');
+          
+          const textMessageBody = {
+            chat_id: formattedChatId,
+            text: truncatedCaption,
+            parse_mode: 'HTML'
+          };
+          
+          try {
+            await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
+              headers: { 'Content-Type': 'application/json' }
+            });
+            log(`Дополнительное текстовое сообщение успешно отправлено`, 'social-publishing');
+          } catch (textError) {
+            log(`Ошибка при отправке дополнительного текстового сообщения: ${textError}`, 'social-publishing');
+          }
+        }
       } else if (images.length === 1) {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
@@ -391,12 +414,32 @@ export class SocialPublishingService {
           
           // Берем ID первого сообщения в группе для ссылки
           const firstMessageId = messages[0].message_id;
+          
+          // Корректное формирование URL для поста в Telegram (группа сообщений)
+          // Важно: удаляем префикс -100 из ID для формирования правильной ссылки
+          // Для приватных чатов: https://t.me/c/CHAT_ID/MESSAGE_ID
+          // Для публичных каналов: https://t.me/USERNAME/MESSAGE_ID
+          
+          let postUrl;
+          
+          // Проверяем, имеет ли chatId формат числа или строки с @username
+          if (chatId.startsWith('@')) {
+            // Публичный канал: используем username без @
+            const username = chatId.substring(1);
+            postUrl = `https://t.me/${username}/${firstMessageId}`;
+            log(`Формирование URL для публичного канала (группа сообщений): ${postUrl}`, 'social-publishing');
+          } else {
+            // Приватный чат: используем формат с /c/
+            postUrl = `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`;
+            log(`Формирование URL для приватного чата (группа сообщений): ${postUrl}`, 'social-publishing');
+          }
+          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: firstMessageId.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`,
+            postUrl: postUrl,
             userId: content.userId // Добавляем userId из контента
           };
         } else {

@@ -225,9 +225,24 @@ export class PublishScheduler {
       log(`Тип social_platforms: ${typeof content.social_platforms}`, 'scheduler');
       log(`Значение social_platforms: ${JSON.stringify(content.social_platforms)}`, 'scheduler');
       
-      // Используем правильное имя поля (с подчеркиванием)
-      // Преобразуем строку в объект, если получен строковый формат
-      let socialPlatforms = content.social_platforms || content.socialPlatforms;
+      // Используем правильное имя поля в зависимости от типа API
+      // Directus API возвращает CamelCase, но в Directus UI используется snake_case
+      // Чтобы исключить неоднозначность и ошибки, проверяем оба варианта
+      
+      let socialPlatforms = null;
+      
+      // Проверяем наличие поля social_platforms (snake_case вариант - обычно из Directus API)
+      if (content.social_platforms !== undefined && content.social_platforms !== null) {
+        log(`Найдено поле social_platforms в snake_case формате`, 'scheduler');
+        socialPlatforms = content.social_platforms;
+      } 
+      // Проверяем наличие поля socialPlatforms (camelCase вариант - обычно из кода)
+      else if (content.socialPlatforms !== undefined && content.socialPlatforms !== null) {
+        log(`Найдено поле socialPlatforms в camelCase формате`, 'scheduler');
+        socialPlatforms = content.socialPlatforms;
+      }
+      
+      // Если поле получено как строка (часто из Directus), преобразуем его в объект
       if (typeof socialPlatforms === 'string') {
         try {
           log(`Попытка разбора socialPlatforms из строки: ${socialPlatforms}`, 'scheduler');
@@ -235,8 +250,14 @@ export class PublishScheduler {
           log(`После разбора тип: ${typeof socialPlatforms}`, 'scheduler');
         } catch (e) {
           log(`Ошибка при разборе socialPlatforms для ${content.id}: ${e}`, 'scheduler');
-          socialPlatforms = null;
+          socialPlatforms = {};
         }
+      }
+      
+      // Если socialPlatforms все еще null или undefined, создаем пустой объект для безопасности
+      if (socialPlatforms === null || socialPlatforms === undefined) {
+        log(`social_platforms и socialPlatforms не найдены, создаем пустой объект`, 'scheduler');
+        socialPlatforms = {};
       }
       
       // Проверяем наличие платформ с улучшенной обработкой
