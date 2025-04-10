@@ -220,11 +220,18 @@ export class PublishScheduler {
       // (перенесено ниже)
 
       // Проверяем наличие платформ для публикации
-      if (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0) {
+      const hasSocialPlatforms = content.socialPlatforms && 
+                              typeof content.socialPlatforms === 'object' &&
+                              Object.keys(content.socialPlatforms).length > 0;
+      
+      if (!hasSocialPlatforms) {
         log(`Контент ${content.id} не имеет привязанных социальных платформ. Вот его данные:`, 'scheduler');
         log(JSON.stringify(content), 'scheduler');
         return;
       }
+      
+      log(`Контент ${content.id} имеет привязанные социальные платформы:`, 'scheduler');
+      log(JSON.stringify(content.socialPlatforms), 'scheduler');
       
       // Логируем платформы для диагностики
       log(`Найдены следующие платформы для контента ${content.id}: ${Object.keys(content.socialPlatforms).join(', ')}`, 'scheduler');

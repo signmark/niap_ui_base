@@ -26,12 +26,17 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    platform: SocialPlatform,
+    platformInput: SocialPlatform | any,
     content: CampaignContent,
     campaign: any,
     authToken?: string
   ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
-    log(`Публикация контента в ${platform}`, 'social-publishing');
+    // Нормализуем имя платформы - объект преобразуем в строку
+    const platform = typeof platformInput === 'string' 
+      ? platformInput as SocialPlatform
+      : (platformInput && platformInput.toString ? platformInput.toString() : String(platformInput));
+      
+    log(`Публикация контента в ${platform} (тип: ${typeof platform})`, 'social-publishing');
     
     try {
       // Получаем настройки социальных сетей из объекта кампании
@@ -40,7 +45,7 @@ export class SocialPublishingService {
       // Выбираем соответствующий сервис в зависимости от платформы
       // ИСПРАВЛЕНО: Порядок параметров должен соответствовать сигнатуре метода
       // Параметры должны быть: контент, строка с названием платформы, настройки
-      switch (platform) {
+      switch (platform as SocialPlatform) {
         case 'telegram':
           log(`Вызов telegramService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
           return await telegramService.publishToPlatform(content, 'telegram' as SocialPlatform, settings);
@@ -83,11 +88,18 @@ export class SocialPublishingService {
    */
   public async updatePublicationStatus(
     contentId: string, 
-    platform: SocialPlatform, 
+    platformInput: SocialPlatform | any, 
     publicationResult: SocialPublication
   ) {
-    // ИСПРАВЛЕНО: Явно указываем строковую константу вместо переменной platform
-    switch (platform) {
+    // Нормализуем имя платформы - объект преобразуем в строку
+    const platform = typeof platformInput === 'string' 
+      ? platformInput as SocialPlatform
+      : (platformInput && platformInput.toString ? platformInput.toString() : String(platformInput));
+      
+    log(`Обновление статуса публикации для платформы ${platform} (тип: ${typeof platform})`, 'social-publishing');
+    
+    // ИСПРАВЛЕНО: Обработка строковой платформы и безопасное приведение к типу
+    switch (platform as SocialPlatform) {
       case 'telegram':
         log(`Вызов telegramService.updatePublicationStatus с платформой как строкой: "telegram"`, 'social-publishing');
         return await telegramService.updatePublicationStatus(contentId, 'telegram' as SocialPlatform, publicationResult);
