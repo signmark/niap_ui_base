@@ -85,52 +85,57 @@ function ensureValidTelegramUrl(url, platform, messageId) {
   
   // Обрабатываем URL только для Telegram
   if (platform === 'telegram') {
-    // Проверяем наличие messageId в URL
-    const hasMessageIdInUrl = !!url.match(/\/\d+$/); // URL заканчивается на /NUMBER
-    
-    if (!hasMessageIdInUrl && messageId) {
-      // URL не содержит ID сообщения - нужно добавить messageId
-      
-      // Случай 1: URL для публичного канала без ID сообщения (t.me/channelname)
-      if (url.match(/^https?:\/\/t\.me\/[^\/]+$/)) {
-        const fixedUrl = `${url}/${messageId}`;
-        console.log(`Исправление URL для публичного канала Telegram: ${url} -> ${fixedUrl}`);
-        return fixedUrl;
-      }
-      
-      // Случай 2: URL для приватного канала без ID сообщения (t.me/c/123456789)
-      // Поддерживаем как числовые ID, так и ID с префиксами (-100...)
-      if (url.match(/^https?:\/\/t\.me\/c\/[\d-]+$/) || url.includes('/c/') && !url.includes('/c/c/')) {
-        const fixedUrl = `${url}/${messageId}`;
-        console.log(`Исправление URL для приватного канала Telegram: ${url} -> ${fixedUrl}`);
-        return fixedUrl;
-      }
-      
-      // Общий случай: удаляем завершающий слеш (если есть) и добавляем messageId
-      const trimmedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-      const fixedUrl = `${trimmedUrl}/${messageId}`;
-      console.log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`);
-      return fixedUrl;
-    }
-    
     // Специальная обработка случая, когда URL имеет неправильный формат из-за ошибки [object Object]
     if (url.includes('[object Object]')) {
       console.log(`Найден некорректный URL с [object Object]: ${url}`);
-      
-      // Возвращаем базовый URL Telegram, так как мы не можем определить ID канала
       return 'https://t.me';
     }
     
     // Если URL содержит слово "undefined", тоже считаем его некорректным
     if (url.includes('undefined')) {
       console.log(`Найден некорректный URL с undefined: ${url}`);
-      
-      // Возвращаем базовый URL Telegram
       return 'https://t.me';
     }
+    
+    // Проверяем наличие messageId в URL (URL заканчивается на /NUMBER)
+    const hasMessageIdInUrl = !!url.match(/\/\d+$/);
+    
+    // Если URL уже содержит ID сообщения или messageId не указан, возвращаем URL без изменений
+    if (hasMessageIdInUrl || !messageId) {
+      return url;
+    }
+    
+    // Специальная обработка для URL приватных каналов (t.me/c/1234567890)
+    if (url.match(/^https?:\/\/t\.me\/c\/\d+$/)) {
+      const fixedUrl = `${url}/${messageId}`;
+      console.log(`Исправление URL для приватного канала Telegram: ${url} -> ${fixedUrl}`);
+      return fixedUrl;
+    }
+    
+    // URL не содержит ID сообщения - нужно добавить messageId
+    
+    // Удаляем завершающий слеш, если он есть
+    let baseUrl = url;
+    if (baseUrl.endsWith('/')) {
+      baseUrl = baseUrl.slice(0, -1);
+    }
+    
+    // Добавляем ID сообщения
+    const fixedUrl = `${baseUrl}/${messageId}`;
+    
+    // Определяем тип URL для логирования
+    if (url.match(/^https?:\/\/t\.me\/[^\/]+$/)) {
+      console.log(`Исправление URL для публичного канала Telegram: ${url} -> ${fixedUrl}`);
+    } else if (url.includes('/c/')) {
+      console.log(`Исправление URL для приватного канала Telegram: ${url} -> ${fixedUrl}`);
+    } else {
+      console.log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`);
+    }
+    
+    return fixedUrl;
   }
   
-  // Для других платформ или если URL уже корректный, возвращаем без изменений
+  // Для других платформ возвращаем без изменений
   return url;
 }
 
