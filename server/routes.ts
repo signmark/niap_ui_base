@@ -3347,11 +3347,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Приоритет параметров: aiService, service
       const selectedAiService = aiService || service || 'perplexity';
       // Проверяем, что это один из поддерживаемых сервисов
-      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude, gemini
       const useService = 
         selectedAiService === 'qwen' ? 'qwen' : 
         selectedAiService === 'deepseek' ? 'deepseek' : 
         selectedAiService === 'claude' ? 'claude' : 
+        selectedAiService === 'gemini' ? 'gemini' : 
         'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
@@ -3488,6 +3489,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           
           usedService = 'claude';
+          
+        } else if (useService === 'gemini') {
+          // Инициализируем Gemini API с токеном запроса
+          console.log(`Попытка инициализации Gemini сервиса для пользователя ${userId}`);
+          
+          // Создаем новый экземпляр сервиса Gemini
+          const geminiInstance = new GeminiService();
+          
+          // Инициализируем сервис с ключом из API Keys Storage
+          const initialized = await geminiInstance.initialize(userId, token);
+          
+          if (!initialized) {
+            console.log('Предупреждение: Gemini API сервис не был полностью инициализирован');
+            
+            if (!geminiInstance.hasApiKey()) {
+              console.error('Ошибка: Не удалось получить API ключ Gemini');
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
+                needApiKey: true
+              });
+            }
+          }
+          
+          console.log(`Generating content with Gemini for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+          
+          // Получаем платформу из поля platform или из tone, если platform не указана
+          const platform = req.body.platform || (
+              tone === 'professional' ? 'facebook' :
+              tone === 'casual' ? 'telegram' :
+              tone === 'friendly' ? 'instagram' : 'general'
+          );
+          
+          // Используем Gemini для генерации контента
+          generatedContent = await geminiInstance.generateSocialContent(
+            keywords,
+            prompt,
+            {
+              platform,
+              tone,
+              maxTokens: 4000,
+              temperature: 0.7,
+              model: 'gemini-pro'
+            }
+          );
+          
+          usedService = 'gemini';
           
         } else {
           // По умолчанию используем Perplexity API
