@@ -8,6 +8,7 @@ import { qwenService } from './services/qwen';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { registerClaudeRoutes } from './routes-claude';
+import { registerGeminiRoutes } from './routes-gemini';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
@@ -1278,8 +1279,9 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Регистрируем универсальный интерфейс для FAL.AI
+  // Регистрируем маршруты для AI сервисов
   registerClaudeRoutes(app);
+  registerGeminiRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
