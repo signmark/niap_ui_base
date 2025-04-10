@@ -6,7 +6,7 @@ import { directusCrud } from './directus-crud';
 const directusApi = directusApiManager.instance;
 
 // Типы API сервисов, используемых в приложении
-export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen' | 'claude';
+export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen' | 'claude' | 'gemini';
 
 // Маппинг имен сервисов как они записаны в БД
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
