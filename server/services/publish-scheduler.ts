@@ -17,7 +17,14 @@ export class PublishScheduler {
   private isRunning = false;
   private checkIntervalMs = 60000; // проверяем каждую минуту
   // Для обратной совместимости со старым кодом (временное решение)
+  // При перезапуске сервера список очищается
   private processedContentIds = new Set<string>();
+  
+  // Инициализируем пустой список при создании экземпляра класса
+  constructor() {
+    this.processedContentIds.clear();
+    log('Планировщик публикаций инициализирован с пустым списком обработанных контентов', 'scheduler');
+  }
 
   /**
    * Запускает планировщик публикаций
@@ -201,19 +208,26 @@ export class PublishScheduler {
       log(`Обработка запланированного контента ${content.id}`, 'scheduler');
 
       // Проверяем, был ли уже обработан этот контент (предотвращение дублирования)
+      // Временно отключаем эту проверку для диагностики проблемы
       if (this.processedContentIds.has(content.id)) {
-        log(`Контент ${content.id} уже обрабатывался`, 'scheduler');
-        return;
+        log(`Контент ${content.id} уже был в списке обработанных, но попробуем обработать снова`, 'scheduler');
+        // Удаляем из списка обработанных, чтобы попробовать еще раз
+        this.processedContentIds.delete(content.id);
+        // Не выходим из функции, чтобы выполнить обработку
       }
 
-      // Добавляем ID в список обработанных
-      this.processedContentIds.add(content.id);
+      // Добавляем ID в список обработанных ПОСЛЕ проверки наличия платформ
+      // (перенесено ниже)
 
       // Проверяем наличие платформ для публикации
       if (!content.socialPlatforms) {
-        log(`Контент ${content.id} не имеет привязанных социальных платформ`, 'scheduler');
+        log(`Контент ${content.id} не имеет привязанных социальных платформ. Вот его данные:`, 'scheduler');
+        log(JSON.stringify(content), 'scheduler');
         return;
       }
+      
+      // Добавляем ID в список обработанных только если контент имеет платформы
+      this.processedContentIds.add(content.id);
 
       // Получаем список платформ для публикации
       const platformsToPublish: SocialPlatform[] = [];
