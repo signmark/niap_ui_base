@@ -736,17 +736,24 @@ export class PublishScheduler {
             log(`Успешная публикация через API для контента ${content.id} на платформе ${platform}`, 'scheduler');
             
             // Создаем объект результата для дальнейшей обработки
+            // Улучшенная логика получения URL и messageId из результата API
+            log(`Результат публикации от API: ${JSON.stringify(resultFromApi)}`, 'scheduler');
+            
             const result = {
               platform,
               status: 'published',
               publishedAt: new Date(),
-              postUrl: resultFromApi.url || null,
-              postId: resultFromApi.messageId || null,
+              // API может вернуть ссылку в postUrl или url, проверяем оба поля
+              postUrl: resultFromApi.postUrl || resultFromApi.url || null,
+              postId: resultFromApi.messageId || resultFromApi.postId || null,
               error: null
             };
             
-            // Обновляем статус публикации через модульный сервис (необязательно, т.к. API уже обновил статус)
-            // await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+            log(`Сформирован результат публикации с postUrl: ${result.postUrl}`, 'scheduler');
+            
+            // Обновляем статус публикации через модульный сервис с дополнительной проверкой
+            // API должен обновить статус, но для надёжности делаем и здесь
+            await socialPublishingService.updatePublicationStatus(content.id, platform, result);
             
             // Отмечаем успешную публикацию
             successfulPublications++;
