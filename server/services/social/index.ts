@@ -1,13 +1,23 @@
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
-import { telegramService } from './telegram-service.js';
+import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { log } from '../../utils/logger';
+import { publishScheduler } from '../publish-scheduler';
 
 /**
  * Единый сервис для публикации контента в различные социальные сети
  */
 export class SocialPublishingService {
+  /**
+   * Получает токен для доступа к API
+   * Делегирует получение токена модулю publishScheduler
+   * 
+   * @returns {Promise<string|null>} Токен для авторизации запросов к API
+   */
+  public async getSystemToken(): Promise<string | null> {
+    return await publishScheduler.getSystemToken();
+  }
   /**
    * Публикует контент в выбранную социальную платформу
    * @param content Контент для публикации
@@ -16,13 +26,17 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    content: CampaignContent,
     platform: SocialPlatform,
-    settings: SocialMediaSettings
-  ): Promise<SocialPublication> {
+    content: CampaignContent,
+    campaign: any,
+    authToken?: string
+  ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
     log(`Публикация контента в ${platform}`, 'social-publishing');
     
     try {
+      // Получаем настройки социальных сетей из объекта кампании
+      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      
       // Выбираем соответствующий сервис в зависимости от платформы
       switch (platform) {
         case 'telegram':

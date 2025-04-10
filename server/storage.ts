@@ -643,7 +643,7 @@ export class DatabaseStorage implements IStorage {
       // Получаем кампанию через API
       const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
         params: {
-          fields: ['id', 'name', 'description', 'user_id', 'settings']
+          fields: ['id', 'name', 'description', 'user_id', 'social_media_settings']
         },
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -658,14 +658,14 @@ export class DatabaseStorage implements IStorage {
       const item = response.data.data;
       
       // Парсим настройки, если они есть
-      let settings = null;
-      if (item.settings) {
+      let socialMediaSettings = null;
+      if (item.social_media_settings) {
         try {
-          settings = typeof item.settings === 'string' 
-            ? JSON.parse(item.settings) 
-            : item.settings;
+          socialMediaSettings = typeof item.social_media_settings === 'string' 
+            ? JSON.parse(item.social_media_settings) 
+            : item.social_media_settings;
         } catch (parseError) {
-          console.error('Error parsing campaign settings:', parseError);
+          console.error('Error parsing campaign social_media_settings:', parseError);
         }
       }
       
@@ -674,7 +674,8 @@ export class DatabaseStorage implements IStorage {
         name: item.name,
         description: item.description,
         userId: item.user_id,
-        settings
+        settings: socialMediaSettings, // Для обратной совместимости со старым кодом
+        socialMediaSettings // Новое поле с правильным названием
       };
     } catch (error) {
       console.error('Error getting campaign with settings from Directus:', error);
@@ -991,9 +992,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         publishedPlatforms: item.published_platforms || [],
-        keywords: item.keywords || [], // Добавляем ключевые слова
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Дополнительные изображения
-        socialPublications: item.social_publications || {} // Добавляем информацию о публикациях
+        keywords: item.keywords || [] // Добавляем ключевые слова
       };
     } catch (error: any) {
       console.error(`Ошибка при получении контента с ID ${id}:`, error);
@@ -1059,8 +1058,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем ключевые слова при возвращении результата
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
-        socialPublications: item.social_publications || {} // Добавляем информацию о публикациях
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
     } catch (error) {
       console.error('Error creating campaign content in Directus:', error);
@@ -1119,11 +1117,6 @@ export class DatabaseStorage implements IStorage {
         console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);
         directusUpdates.additional_images = Array.isArray(updates.additionalImages) ? updates.additionalImages : [];
       }
-      // Добавляем обработку поля socialPublications для хранения информации о URL публикаций
-      if (updates.socialPublications !== undefined) {
-        console.log(`Обновляем информацию о публикациях контента ${id}:`, JSON.stringify(updates.socialPublications));
-        directusUpdates.social_publications = updates.socialPublications;
-      }
       
       // Обработка ключевых слов (keywords)
       if (updates.keywords !== undefined) {
@@ -1152,8 +1145,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем возврат ключевых слов
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
-        socialPublications: item.social_publications || {} // Добавляем информацию о публикациях
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
     } catch (error) {
       console.error('Error updating campaign content in Directus:', error);
@@ -1254,8 +1246,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем ключевые слова
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
-        socialPublications: item.social_publications || {} // Добавляем информацию о публикациях
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       }));
       
       return content;

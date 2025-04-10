@@ -1,4 +1,5 @@
 import { Express, Request, Response } from 'express';
+import axios from 'axios';
 import { storage } from '../storage';
 import { socialPublishingService } from '../services/social/index';
 
@@ -15,6 +16,156 @@ import { directusStorageAdapter } from '../services/directus';
  */
 export function registerPublishingRoutes(app: Express): void {
   console.log('[publishing-routes] Регистрация маршрутов управления публикациями...');
+  
+  // Специальный маршрут для запуска проверки запланированных публикаций
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/check-scheduled', async (req: Request, res: Response) => {
+    try {
+      log('Запрос на проверку запланированных публикаций', 'api');
+      
+      // Проверяем запланированные публикации немедленно
+      publishScheduler.checkScheduledContent()
+        .then(() => {
+          log('Проверка запланированных публикаций завершена', 'api');
+        })
+        .catch((error) => {
+          log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'api');
+        });
+
+      // Возвращаем успешный результат не дожидаясь завершения проверки
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Проверка запланированных публикаций запущена'
+      });
+    } catch (error: any) {
+      log(`Ошибка при запуске проверки публикаций: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при запуске проверки публикаций',
+        message: error.message
+      });
+    }
+  });
+  
+  // Управление глобальным флагом отключения публикаций
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/toggle-publishing', async (req: Request, res: Response) => {
+    try {
+      const enable = req.query.enable === 'true';
+      
+      if (enable) {
+        publishScheduler.disablePublishing = false;
+        log('Глобальный флаг публикаций ВКЛЮЧЕН. Контент будет публиковаться в соцсети.', 'api');
+      } else {
+        publishScheduler.disablePublishing = true;
+        log('Глобальный флаг публикаций ОТКЛЮЧЕН. Контент будет помечаться как опубликованный без фактической публикации!', 'api');
+      }
+      
+      return res.status(200).json({
+        success: true,
+        publishing: !publishScheduler.disablePublishing,
+        message: publishScheduler.disablePublishing 
+          ? 'Публикации отключены. Контент будет помечаться как опубликованный без фактической публикации!' 
+          : 'Публикации включены. Контент будет публиковаться в соцсети.'
+      });
+    } catch (error: any) {
+      log(`Ошибка при управлении флагом публикаций: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при управлении флагом публикаций',
+        message: error.message
+      });
+    }
+  });
+  
+  // Маршрут для принудительной пометки контента как опубликованного без фактической публикации
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/mark-as-published/:contentId', async (req: Request, res: Response) => {
+    try {
+      const contentId = req.params.contentId;
+      log(`Запрос на принудительную пометку контента ${contentId} как опубликованного`, 'api');
+      
+      // Получаем текущий контент
+      const content = await storage.getCampaignContent(contentId);
+      
+      if (!content) {
+        return res.status(404).json({
+          error: 'Контент не найден',
+          message: `Контент с ID ${contentId} не найден`
+        });
+      }
+      
+      // Обновляем статус на published без фактической публикации
+      await storage.updateCampaignContent(contentId, {
+        status: 'published'
+      });
+      
+      // Устанавливаем publishedAt через прямой запрос к API
+      try {
+        // Получаем системный токен
+        const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        
+        // Пробуем получить токен из активных сессий
+        const sessions = directusAuthManager.getAllActiveSessions();
+        let token = null;
+        
+        if (sessions.length > 0) {
+          token = sessions[0].token;
+        }
+        
+        if (token) {
+          await axios.patch(
+            `${directusUrl}/items/campaign_content/${contentId}`,
+            { published_at: new Date().toISOString() },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+          log(`Установлено поле published_at для контента ${contentId}`, 'api');
+        }
+      } catch (error: any) {
+        log(`Ошибка при установке published_at: ${error.message}`, 'api');
+      }
+      
+      // Добавляем ID в список для предотвращения повторной обработки
+      // Используем публичный метод для добавления в processedContentIds
+      publishScheduler.addProcessedContentId(contentId);
+      log(`ID ${contentId} добавлен в список обработанных записей`, 'api');
+      
+      return res.status(200).json({
+        success: true,
+        message: `Контент ${contentId} помечен как опубликованный без фактической публикации`,
+        contentId
+      });
+    } catch (error: any) {
+      log(`Ошибка при пометке контента как опубликованного: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при пометке контента как опубликованного',
+        message: error.message
+      });
+    }
+  });
+  
+  // Очистка кэша обработанных ID контента
+  // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId
+  app.all('/api/publish/reset-processed-cache', async (req: Request, res: Response) => {
+    try {
+      log('Запрос на очистку кэша обработанных ID контента', 'api');
+      
+      // Очищаем кэш обработанных ID контента
+      publishScheduler.clearProcessedContentIds();
+      
+      log('Кэш обработанных ID контента очищен', 'api');
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Кэш обработанных ID контента очищен'
+      });
+    } catch (error: any) {
+      log(`Ошибка при очистке кэша обработанных ID: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при очистке кэша обработанных ID',
+        message: error.message
+      });
+    }
+  });
   
   // Публикация контента через API для тестирования
   app.post('/api/publish/content', async (req: Request, res: Response) => {
@@ -38,100 +189,148 @@ export function registerPublishingRoutes(app: Express): void {
       const campaign = await storage.getCampaignById(content.campaignId);
       if (!campaign) {
         log(`Кампания ${content.campaignId} не найдена при попытке публикации контента`, 'api');
-        return res.status(404).json({ error: 'Кампания не найдена' });
+        return res.status(404).json({ error: `Кампания ${content.campaignId} не найдена` });
       }
       
-      // Настройки социальных сетей
-      const socialSettings = campaign.socialMediaSettings || {};
-      log(`Получены настройки социальных сетей для кампании: ${JSON.stringify(Object.keys(socialSettings))}`, 'api');
+      // Получаем админский токен для обновления статуса публикации
+      const systemToken = await socialPublishingService.getSystemToken();
+      if (!systemToken) {
+        log(`Не удалось получить системный токен для публикации контента`, 'api');
+      } else {
+        log(`Системный токен для публикации контента получен успешно`, 'api');
+      }
       
-      // Результаты публикации
-      const results: Record<string, any> = {};
-      const publications: any[] = [];
+      // Публикуем контент во все указанные платформы
+      const results: Record<string, any> = {}; 
+      let hasSuccess = false;
       
-      // Публикуем в каждую из указанных платформ
-      for (const platform of platforms) {
-        try {
-          log(`Публикация в ${platform}...`, 'api');
+      // Сбрасываем успешный результат для повторных попыток
+      if (force) {
+        log(`Принудительная повторная публикация контента ${content.id || 'без ID'}`, 'api');
+      }
+
+      try {
+        // Устанавливаем статус в pending для всех платформ
+        if (content.id) {
+          // Создаем socialPlatforms объект, если его нет
+          const socialPlatforms = content.socialPlatforms || {};
           
-          // Публикуем в указанную платформу через модульный сервис
-          const result = await socialPublishingService.publishToPlatform(
-            content,
-            platform as SocialPlatform,
-            socialSettings
-          );
+          const updatedPlatforms: Record<string, any> = {};
           
-          log(`Публикация в ${platform} выполнена: ${JSON.stringify(result)}`, 'api');
+          // Обновляем статус только для выбранных платформ
+          for (const platform of platforms) {
+            updatedPlatforms[platform] = {
+              ...(socialPlatforms[platform] || {}),
+              status: 'pending',
+              error: null
+            };
+          }
           
-          // Добавляем результат в массив публикаций
-          publications.push({
-            platform,
-            status: result.status || 'published',
-            publishedAt: result.publishedAt || new Date().toISOString(),
-            // Дополнительные поля, которые могут быть в результате, но не в типе SocialPublication
-            ...(result.messageId ? { messageId: result.messageId } : {}),
-            ...(result.postId ? { postId: result.postId } : {}),
-            ...(result.url ? { url: result.url } : {}),
-            ...(result.error ? { error: result.error } : {})
-          });
+          // Обновляем контент через хранилище
+          await storage.updateCampaignContent(content.id, {
+            socialPlatforms: {
+              ...socialPlatforms,
+              ...updatedPlatforms
+            }
+          }, systemToken || undefined);
           
-          // Обновляем статус публикации через модульный сервис
-          await socialPublishingService.updatePublicationStatus(
-            content.id,
-            platform as SocialPlatform,
-            result
-          );
+          log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
+        }
+        
+        // Публикуем на каждую платформу
+        for (const platformName of platforms) {
+          const platform = platformName as SocialPlatform;
           
-          // Сохраняем результат
-          results[platform] = result;
-        } catch (platformError: any) {
-          log(`Ошибка при публикации в ${platform}: ${platformError.message}`, 'api');
-          results[platform] = { 
-            status: 'failed',
-            error: platformError.message
-          };
-          
-          // Добавляем ошибку в массив публикаций
-          publications.push({
-            platform,
-            status: 'failed',
-            publishedAt: null,
-            error: platformError.message
-          });
-          
-          // Обновляем статус публикации как неудачный через модульный сервис
-          if (content.id) {
-            await socialPublishingService.updatePublicationStatus(
-              content.id,
-              platform as SocialPlatform,
-              {
-                platform: platform as SocialPlatform,
-                status: 'failed',
-                error: platformError.message,
-                publishedAt: null
+          try {
+            log(`Публикация контента в ${platform}`, 'api');
+            
+            // Публикуем контент в выбранную платформу
+            const result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);
+            
+            results[platform] = {
+              success: true,
+              result,
+              contentId: content.id
+            };
+            
+            hasSuccess = true;
+            
+            if (result && result.messageId) {
+              log(`Публикация в ${platform} успешна, messageId: ${result.messageId}`, 'api');
+            } else if (result && result.url) {
+              log(`Публикация в ${platform} успешна, url: ${result.url}`, 'api');
+            } else {
+              log(`Публикация в ${platform} успешна, результат без messageId`, 'api');
+            }
+          } catch (platformError: any) {
+            results[platform] = {
+              success: false,
+              error: platformError.message || 'Неизвестная ошибка',
+              contentId: content.id
+            };
+            
+            log(`Ошибка публикации в ${platform}: ${platformError.message}`, 'api');
+            
+            // Обновляем статус публикации в Directus
+            if (content.id) {
+              // Если есть системный токен, обновляем статус публикации
+              if (systemToken) {
+                try {
+                  const socialPlatforms = content.socialPlatforms || {};
+                  
+                  await storage.updateCampaignContent(content.id, {
+                    socialPlatforms: {
+                      ...socialPlatforms,
+                      [platform]: {
+                        ...(socialPlatforms[platform] || {}),
+                        status: 'failed',
+                        error: platformError.message || 'Неизвестная ошибка'
+                      }
+                    }
+                  }, systemToken);
+                  
+                  log(`Статус публикации обновлен на failed для ${platform}`, 'api');
+                } catch (updateError: any) {
+                  log(`Ошибка при обновлении статуса публикации: ${updateError.message}`, 'api');
+                }
+              } else {
+                log(`Не удалось обновить статус публикации для ${platform} - нет системного токена`, 'api');
               }
-            );
+            }
           }
         }
+      } catch (error: any) {
+        log(`Общая ошибка публикации: ${error.message}`, 'api');
+        return res.status(500).json({
+          error: 'Ошибка при публикации контента',
+          message: error.message,
+          details: results
+        });
       }
       
       // Возвращаем результат
-      log(`Публикация контента завершена. Результаты: ${JSON.stringify(results)}`, 'api');
-      return res.status(200).json({ 
-        success: true, 
-        publications,
-        results
-      });
+      if (hasSuccess) {
+        return res.status(200).json({
+          success: true,
+          results
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать контент ни на одной платформе',
+          results
+        });
+      }
     } catch (error: any) {
-      log(`Ошибка при публикации через API: ${error.message}`, 'api');
+      log(`Ошибка при публикации контента: ${error.message}`, 'api');
       return res.status(500).json({ 
-        error: 'Ошибка при публикации контента',
-        message: error.message
+        error: 'Ошибка при публикации контента', 
+        message: error.message 
       });
     }
   });
-  
-  // Публикация контента вручную
+
+  // Публикация контента по ID, с указанием платформ
   app.post('/api/publish/:contentId', async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;
@@ -155,90 +354,137 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(404).json({ error: 'Контент не найден' });
       }
 
-      // Получаем кампанию для настроек социальных сетей
+      // Получаем кампанию
       const campaign = await storage.getCampaignById(content.campaignId);
       if (!campaign) {
         log(`Кампания ${content.campaignId} не найдена при попытке публикации контента ${contentId}`, 'api');
-        return res.status(404).json({ error: 'Кампания не найдена' });
+        return res.status(404).json({ error: `Кампания ${content.campaignId} не найдена` });
       }
 
-      // Настройки социальных сетей
-      const socialSettings = campaign.socialMediaSettings || {};
-      log(`Получены настройки социальных сетей для кампании ${content.campaignId}`, 'api');
+      // Получаем админский токен для обновления статуса публикации
+      const systemToken = await socialPublishingService.getSystemToken();
+      if (!systemToken) {
+        log(`Не удалось получить системный токен для публикации контента ${contentId}`, 'api');
+      } else {
+        log(`Системный токен для публикации контента ${contentId} получен успешно`, 'api');
+      }
 
-      // Результаты публикации
+      // Публикуем контент во все указанные платформы
       const results: Record<string, any> = {};
+      let hasSuccess = false;
 
-      // Публикуем в каждую платформу
-      for (const platform of platforms) {
-        if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
-          log(`Неподдерживаемая платформа: ${platform}`, 'api');
-          results[platform] = { 
-            status: 'failed',
-            error: 'Неподдерживаемая платформа' 
-          };
-          continue;
-        }
-
-        log(`Начинаем публикацию в ${platform} для контента ${contentId}`, 'api');
+      try {
+        // Устанавливаем статус в pending для всех платформ
+        // Создаем socialPlatforms объект, если его нет
+        const socialPlatforms = content.socialPlatforms || {};
         
-        try {
-          // Публикуем контент в платформу через модульный сервис socialPublishingService
-          const result = await socialPublishingService.publishToPlatform(
-            content,
-            platform as SocialPlatform,
-            socialSettings
-          );
-          
-          log(`Результат публикации в ${platform}: ${JSON.stringify(result)}`, 'api');
-
-          // Обновляем статус публикации через модульный сервис socialPublishingService
-          await socialPublishingService.updatePublicationStatus(
-            contentId,
-            platform as SocialPlatform,
-            result
-          );
-
-          // Сохраняем результат
-          results[platform] = result;
-        } catch (platformError: any) {
-          log(`Ошибка при публикации в ${platform}: ${platformError.message}`, 'api');
-          results[platform] = { 
-            status: 'failed',
-            error: platformError.message
+        const updatedPlatforms: Record<string, any> = {};
+        
+        // Обновляем статус только для выбранных платформ
+        for (const platform of platforms) {
+          updatedPlatforms[platform] = {
+            ...(socialPlatforms[platform] || {}),
+            status: 'pending',
+            error: null
           };
-          
-          // Обновляем статус публикации как неудачный через модульный сервис socialPublishingService
-          await socialPublishingService.updatePublicationStatus(
-            contentId,
-            platform as SocialPlatform,
-            {
-              platform: platform as SocialPlatform,
-              status: 'failed',
-              error: platformError.message,
-              publishedAt: null
-            }
-          );
         }
+        
+        // Обновляем контент через хранилище
+        await storage.updateCampaignContent(content.id, {
+          socialPlatforms: {
+            ...socialPlatforms,
+            ...updatedPlatforms
+          }
+        }, systemToken || undefined);
+        
+        log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
+        
+        // Публикуем на каждую платформу
+        for (const platformName of platforms) {
+          const platform = platformName as SocialPlatform;
+          
+          try {
+            log(`Публикация контента ${content.id} в ${platform}`, 'api');
+            
+            // Публикуем контент в выбранную платформу
+            const result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);
+            
+            results[platform] = {
+              success: true,
+              result,
+              contentId: content.id
+            };
+            
+            hasSuccess = true;
+            
+            if (result && result.messageId) {
+              log(`Публикация ${content.id} в ${platform} успешна, messageId: ${result.messageId}`, 'api');
+            } else if (result && result.url) {
+              log(`Публикация ${content.id} в ${platform} успешна, url: ${result.url}`, 'api');
+            } else {
+              log(`Публикация ${content.id} в ${platform} успешна, результат без messageId`, 'api');
+            }
+          } catch (platformError: any) {
+            results[platform] = {
+              success: false,
+              error: platformError.message || 'Неизвестная ошибка',
+              contentId: content.id
+            };
+            
+            log(`Ошибка публикации ${content.id} в ${platform}: ${platformError.message}`, 'api');
+            
+            // Если есть системный токен, обновляем статус публикации
+            if (systemToken) {
+              try {
+                const socialPlatforms = content.socialPlatforms || {};
+                
+                await storage.updateCampaignContent(content.id, {
+                  socialPlatforms: {
+                    ...socialPlatforms,
+                    [platform]: {
+                      ...(socialPlatforms[platform] || {}),
+                      status: 'failed',
+                      error: platformError.message || 'Неизвестная ошибка'
+                    }
+                  }
+                }, systemToken);
+                
+                log(`Статус публикации ${content.id} обновлен на failed для ${platform}`, 'api');
+              } catch (updateError: any) {
+                log(`Ошибка при обновлении статуса публикации ${content.id}: ${updateError.message}`, 'api');
+              }
+            } else {
+              log(`Не удалось обновить статус публикации ${content.id} для ${platform} - нет системного токена`, 'api');
+            }
+          }
+        }
+      } catch (error: any) {
+        log(`Общая ошибка публикации ${contentId}: ${error.message}`, 'api');
+        return res.status(500).json({
+          error: 'Ошибка при публикации контента',
+          message: error.message,
+          details: results
+        });
       }
-
-      // Получаем обновленный контент
-      const updatedContent = await storage.getCampaignContentById(contentId);
-      
-      // Логируем успешное завершение
-      log(`Ручная публикация контента ${contentId} завершена. Результаты: ${JSON.stringify(results)}`, 'api');
       
       // Возвращаем результат
-      return res.status(200).json({ 
-        success: true, 
-        results,
-        content: updatedContent
-      });
+      if (hasSuccess) {
+        return res.status(200).json({
+          success: true,
+          results
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать контент ни на одной платформе',
+          results
+        });
+      }
     } catch (error: any) {
-      log(`Ошибка при ручной публикации: ${error.message}`, 'api');
+      log(`Ошибка при публикации контента с ID ${req.params.contentId}: ${error.message}`, 'api');
       return res.status(500).json({ 
-        error: 'Ошибка при публикации контента',
-        message: error.message
+        error: 'Ошибка при публикации контента', 
+        message: error.message 
       });
     }
   });
@@ -247,55 +493,32 @@ export function registerPublishingRoutes(app: Express): void {
   app.get('/api/publish/status/:contentId', async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;
-
+      
       // Проверяем параметры
       if (!contentId) {
         return res.status(400).json({ error: 'Не указан ID контента' });
       }
-
+      
       // Получаем контент
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
         return res.status(404).json({ error: 'Контент не найден' });
       }
-
-      // Возвращаем статус публикации
+      
+      // Возвращаем статус публикации по платформам
       return res.status(200).json({ 
         success: true, 
-        status: content.status,
-        publishedAt: content.publishedAt,
-        socialPlatforms: content.socialPlatforms || {}
+        data: {
+          contentId: content.id,
+          status: content.status,
+          scheduledAt: content.scheduledAt,
+          socialPlatforms: content.socialPlatforms || {}
+        }
       });
     } catch (error: any) {
       log(`Ошибка при получении статуса публикации: ${error.message}`, 'api');
       return res.status(500).json({ 
         error: 'Ошибка при получении статуса публикации',
-        message: error.message
-      });
-    }
-  });
-
-  // Запуск проверки запланированных публикаций
-  app.post('/api/publish/check-scheduled', async (req: Request, res: Response) => {
-    try {
-      // Проверяем запланированные публикации немедленно
-      publishScheduler.checkScheduledContent()
-        .then(() => {
-          log('Проверка запланированных публикаций завершена', 'api');
-        })
-        .catch((error) => {
-          log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'api');
-        });
-
-      // Возвращаем успешный результат не дожидаясь завершения проверки
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Проверка запланированных публикаций запущена'
-      });
-    } catch (error: any) {
-      log(`Ошибка при запуске проверки публикаций: ${error.message}`, 'api');
-      return res.status(500).json({ 
-        error: 'Ошибка при запуске проверки публикаций',
         message: error.message
       });
     }
@@ -435,22 +658,38 @@ export function registerPublishingRoutes(app: Express): void {
       const campaignId = req.query.campaignId as string;
       const authHeader = req.headers.authorization;
       
-      if (!userId) {
-        return res.status(400).json({ error: 'Не указан ID пользователя' });
-      }
-      
       // Получаем запланированные публикации из базы данных
       let scheduledContent: any[] = [];
       
       // Пытаемся получить токен авторизации
       let authToken: string | null = null;
+      let currentUserId: string | null = userId;
+      
       if (authHeader && authHeader.startsWith('Bearer ')) {
         authToken = authHeader.substring(7);
         
+        // Проверяем, указан ли userId и пытаемся получить его из токена
+        if (!currentUserId && authToken) {
+          try {
+            // Запрашиваем информацию о пользователе через токен
+            const userResponse = await directusApiManager.request({
+              url: '/users/me',
+              method: 'get'
+            }, authToken);
+            
+            if (userResponse?.data?.id) {
+              currentUserId = userResponse.data.id;
+              log(`Получен userId=${currentUserId} из токена авторизации`, 'api');
+            }
+          } catch (error: any) {
+            log(`Ошибка при получении информации о пользователе: ${error.message}`, 'api');
+          }
+        }
+        
         // Кэшируем токен для пользователя (для последующих запросов)
-        if (authToken) {
-          directusApiManager.cacheAuthToken(userId, authToken);
-          log(`Токен для пользователя ${userId} кэширован`, 'api');
+        if (authToken && currentUserId) {
+          directusApiManager.cacheAuthToken(currentUserId, authToken);
+          log(`Токен для пользователя ${currentUserId} кэширован`, 'api');
         }
       } else {
         log('No authorization header provided for scheduled content', 'api');
@@ -459,17 +698,58 @@ export function registerPublishingRoutes(app: Express): void {
       try {
         if (authToken) {
           // Если есть токен авторизации, запрашиваем данные из Directus через улучшенный адаптер
-          log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${userId}`, 'api');
+          log(`Запрос запланированных публикаций с токеном авторизации для пользователя ${currentUserId || 'неизвестного'}`, 'api');
           
-          // Используем новый адаптер с улучшенным механизмом получения токена
-          scheduledContent = await directusStorageAdapter.getScheduledContent(userId, campaignId);
-          log(`Получено ${scheduledContent.length} запланированных публикаций из улучшенного адаптера`, 'api');
-          
-          // Если не удалось получить публикации через улучшенный адаптер, используем стандартный метод
-          if (scheduledContent.length === 0) {
-            log(`Используем стандартное хранилище для получения запланированных публикаций`, 'api');
-            scheduledContent = await storage.getScheduledContent(userId, campaignId);
-            log(`Получено ${scheduledContent.length} запланированных публикаций из стандартного хранилища`, 'api');
+          if (currentUserId) {
+            // Используем новый адаптер с улучшенным механизмом получения токена
+            scheduledContent = await directusStorageAdapter.getScheduledContent(currentUserId, campaignId);
+            log(`Получено ${scheduledContent.length} запланированных публикаций из улучшенного адаптера для ${currentUserId}`, 'api');
+            
+            // Если не удалось получить публикации через улучшенный адаптер, используем стандартный метод
+            if (scheduledContent.length === 0) {
+              log(`Используем стандартное хранилище для получения запланированных публикаций для ${currentUserId}`, 'api');
+              scheduledContent = await storage.getScheduledContent(currentUserId, campaignId);
+              log(`Получено ${scheduledContent.length} запланированных публикаций из стандартного хранилища для ${currentUserId}`, 'api');
+            }
+          } else {
+            // Если не смогли получить userId из токена, пытаемся получить все запланированные публикации
+            // напрямую из API Directus без фильтрации по пользователю
+            try {
+              log(`Запрос всех запланированных публикаций через API (без фильтрации по userId)`, 'api');
+              
+              const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+              const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+                params: {
+                  filter: { status: { _eq: 'scheduled' } }
+                },
+                headers: { 'Authorization': `Bearer ${authToken}` }
+              });
+              
+              if (response?.data?.data && Array.isArray(response.data.data)) {
+                // Преобразуем формат данных из Directus в наш формат CampaignContent
+                scheduledContent = response.data.data.map((item: any) => ({
+                  id: item.id,
+                  content: item.content,
+                  userId: item.user_id,
+                  campaignId: item.campaign_id,
+                  status: item.status,
+                  contentType: item.content_type || "text",
+                  title: item.title || null,
+                  imageUrl: item.image_url,
+                  videoUrl: item.video_url,
+                  prompt: item.prompt || "",
+                  scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+                  createdAt: new Date(item.created_at),
+                  socialPlatforms: item.social_platforms,
+                  publishedPlatforms: item.published_platforms || [],
+                  keywords: item.keywords || []
+                }));
+                
+                log(`Получено ${scheduledContent.length} запланированных публикаций напрямую через API`, 'api');
+              }
+            } catch (apiError: any) {
+              log(`Ошибка при запросе запланированных публикаций напрямую через API: ${apiError.message}`, 'api');
+            }
           }
         } else {
           // Если нет токена, пропускаем запрос к Directus
@@ -686,166 +966,87 @@ export function registerPublishingRoutes(app: Express): void {
             // Преобразуем имена полей из snake_case в camelCase для совместимости с нашей моделью
             content = {
               id: contentData.id,
-              title: contentData.title || "",
-              content: contentData.content || "",
-              contentType: contentData.content_type || "text",
-              campaignId: contentData.campaign_id || "",
-              userId: contentData.user_id || userId,
-              createdAt: contentData.created_at ? new Date(contentData.created_at) : new Date(),
-              status: contentData.status || "draft",
-              imageUrl: contentData.image_url || null,
-              videoUrl: contentData.video_url || null,
-              imagePrompt: contentData.image_prompt || null,
-              keywords: contentData.keywords || null,
-              metadata: contentData.metadata || null,
+              userId: contentData.user_id,
+              createdAt: contentData.date_created ? new Date(contentData.date_created) : null,
+              campaignId: contentData.campaign_id,
+              title: contentData.title,
+              content: contentData.content || '',
+              contentType: contentData.content_type || 'text',
+              imageUrl: contentData.image_url,
+              additionalImages: contentData.additional_images,
+              status: contentData.status || 'draft',
               scheduledAt: contentData.scheduled_at ? new Date(contentData.scheduled_at) : null,
-              publishedAt: contentData.published_at ? new Date(contentData.published_at) : null,
-              socialPlatforms: contentData.social_platforms || null
+              socialPlatforms: contentData.social_platforms || {},
+              tags: contentData.tags || [],
+              sourceId: contentData.source_id,
+              sourceType: contentData.source_type,
+              metadata: contentData.metadata || {},
+              // Дополнительные поля, которые могут быть в Directus (опциональные)
+              imagePrompt: contentData.image_prompt
             };
             
-            log(`Контент ${contentId} найден через прямой API запрос`, 'api');
-            // Продолжаем работу, но сообщаем о проблеме с storage
-            log(`ВНИМАНИЕ: Контент найден через API, но не через storage. Возможно проблемы с кэшированием.`, 'api');
-          } catch (apiError) {
-            log(`Не удалось получить контент напрямую через API: ${(apiError as Error).message}`, 'api');
+            log(`Контент получен через прямой API запрос`, 'api');
+          } catch (apiError: any) {
+            log(`Ошибка при попытке получить контент через API: ${apiError.message}`, 'api');
             return res.status(404).json({ 
               error: 'Контент не найден', 
-              message: `Контент с ID ${contentId} не найден` 
+              message: `Контент с ID ${contentId} не найден: ${apiError.message}`
             });
           }
         }
         
-        // Проверяем, что контент определен, иначе создаем пустой объект
-        if (!content) {
-          log(`ВНИМАНИЕ: Не удалось найти контент с ID ${contentId} всеми возможными способами`, 'api');
-          return res.status(404).json({ 
-            error: 'Контент не найден', 
-            message: `Контент с ID ${contentId} не найден после всех проверок` 
-          });
-        }
-        
-        log(`Контент найден: ${contentId}, userId: ${content.userId || 'не указан'}`, 'api');
-        
-        // Подготавливаем обновления для контента
-        // Важно: при чтении ISO строки new Date() уже учитывает часовой пояс
-        const scheduledAtDate = new Date(scheduledAt);
-        log(`Исходная дата из клиента: ${scheduledAt}, преобразована в: ${scheduledAtDate.toISOString()}`, 'api');
-        
-        const updates: any = {
-          status: 'scheduled',
-          scheduledAt: scheduledAtDate,
-          socialPlatforms: socialPlatforms
-        };
-        
-        // Добавляем дату публикации в каждой платформе
-        if (socialPlatforms && typeof socialPlatforms === 'object') {
-          // Проверяем наличие запланированных платформ
-          let hasScheduledPlatforms = false;
-          
-          for (const platform in socialPlatforms) {
-            if (socialPlatforms[platform] && typeof socialPlatforms[platform] === 'object') {
-              // Используем указанную дату платформы или общую дату, если не указана
-              if (!socialPlatforms[platform].scheduledAt && scheduledAtDate) {
-                socialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
-              }
-              
-              // Проверка статуса платформы
-              if (socialPlatforms[platform].status === 'scheduled' || 
-                  socialPlatforms[platform].status === 'pending') {
-                hasScheduledPlatforms = true;
-              }
-            }
-          }
-          
-          // Если нет запланированных платформ, меняем общий статус на черновик
-          if (!hasScheduledPlatforms) {
-            updates.status = 'draft';
-            log(`Нет запланированных платформ, статус изменен на 'draft'`, 'api');
-          }
-        }
-        
-        // Если userId из контента не определен, но у нас есть userId из токена, добавляем его
-        if (!content.userId && userId) {
-          updates.userId = userId;
-          // Также добавляем userId в сам контент для логики ниже
-          content.userId = userId;
-        }
-        
-        log(`Обновляем контент в базе данных: ${JSON.stringify(updates)}`, 'api');
-        
-        // Обновляем контент через интерфейс хранилища
-        // Напрямую обновляем контент через Directus API
-        let updatedContent;
-        let directUpdateSuccessful = false;
-        
+        // Обновляем контент через прямой API запрос
         try {
-          // Обновляем через API напрямую, чтобы убедиться, что записи существуют
-          log(`Обновление контента через API напрямую`, 'api');
+          log(`Прямое обновление контента ${contentId} через API для планирования`, 'api');
           
-          const directUpdateResponse = await directusApiManager.request({
+          // Формируем данные для обновления
+          const updateData = {
+            status: 'scheduled',
+            scheduled_at: scheduledAt,
+            social_platforms: socialPlatforms
+          };
+          
+          // Выполняем запрос к API Directus
+          const updateResponse = await directusApiManager.request({
             url: `/items/campaign_content/${contentId}`,
             method: 'patch',
-            data: {
-              status: updates.status, // Используем динамический статус
-              scheduled_at: updates.status === 'scheduled' ? scheduledAtDate.toISOString() : null,
-              social_platforms: socialPlatforms
-            },
+            data: updateData,
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
           
-          log(`Контент успешно обновлен через API напрямую`, 'api');
-          directUpdateSuccessful = true;
-        } catch (directUpdateError) {
-          // Если запись не найдена, возможно она не существует или у нас устаревший токен
-          log(`Ошибка при прямом обновлении через API: ${(directUpdateError as Error).message}`, 'api');
-        }
-        
-        // Пробуем обновить контент через интерфейс хранилища, но только если прямое обновление не прошло успешно
-        let storageUpdateSuccessful = false;
-        
-        try {
-          updatedContent = await storage.updateCampaignContent(contentId, updates);
-          log(`Контент успешно обновлен через storage: ${updatedContent.id}`, 'api');
-          storageUpdateSuccessful = true;
-        } catch (storageError) {
-          log(`Ошибка при обновлении через storage: ${(storageError as Error).message}`, 'api');
+          log(`Планирование контента ${contentId} через API успешно`, 'api');
           
-          // Если прямое обновление было успешным, используем результат прямого API запроса
-          if (directUpdateSuccessful) {
-            log(`Используем данные контента из прямого API запроса`, 'api');
+          // Также обновляем через storage для синхронизации кэша
+          try {
+            await storage.updateCampaignContent(contentId, {
+              status: 'scheduled',
+              scheduledAt: new Date(scheduledAt),
+              socialPlatforms: socialPlatforms
+            }, token);
             
-            // Создаем структуру обновленного контента из имеющихся данных
-            updatedContent = {
-              ...content,
-              ...updates,
-              id: contentId
-            };
-            log(`Создан объект с обновленными данными на основе прямого API запроса`, 'api');
-          } else {
-            throw new Error('Failed to update campaign content');
+            log(`Контент ${contentId} также обновлен через storage`, 'api');
+          } catch (storageError: any) {
+            log(`Предупреждение: Не удалось обновить кэш storage для ${contentId}: ${storageError.message}`, 'api');
           }
+          
+          return res.status(200).json({
+            success: true,
+            message: 'Публикация успешно запланирована',
+            contentId,
+            scheduledAt,
+            platforms: Object.keys(socialPlatforms)
+          });
+        } catch (updateError: any) {
+          log(`Ошибка при обновлении контента через API: ${updateError.message}`, 'api');
+          return res.status(500).json({
+            error: 'Ошибка при планировании публикации',
+            message: updateError.message
+          });
         }
-        
-        // Форматируем данные для ответа с правильной структурой
-        const formattedResponse = {
-          success: true,
-          message: 'Публикация успешно запланирована',
-          data: {
-            id: contentId,
-            scheduledAt: scheduledAtDate.toISOString(),
-            status: 'scheduled',
-            socialPlatforms: socialPlatforms
-          }
-        };
-        
-        // Выводим форматированную дату в лог
-        log(`Запланированная дата публикации: ${scheduledAtDate.toISOString()}`, 'api');
-        
-        return res.status(200).json(formattedResponse);
       } catch (error: any) {
-        log(`Ошибка при прямом обновлении: ${error.message}`, 'api');
+        log(`Общая ошибка при планировании публикации: ${error.message}`, 'api');
         return res.status(500).json({
           error: 'Ошибка при планировании публикации',
           message: error.message
@@ -853,9 +1054,9 @@ export function registerPublishingRoutes(app: Express): void {
       }
     } catch (error: any) {
       log(`Ошибка при планировании публикации: ${error.message}`, 'api');
-      return res.status(500).json({
+      return res.status(500).json({ 
         error: 'Ошибка при планировании публикации', 
-        message: error.message
+        message: error.message 
       });
     }
   });

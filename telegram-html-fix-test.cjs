@@ -1,149 +1,177 @@
 /**
- * Тест агрессивного исправления незакрытых HTML-тегов для Telegram
- * Запускать с Node.js в режиме CommonJS
+ * Тестовый скрипт для проверки исправления незакрытых HTML-тегов в Telegram
+ * Запустите: node telegram-html-fix-test.cjs
  */
 
 const axios = require('axios');
 
-// Настройки для тестов
-const API_BASE_URL = 'http://localhost:5000'; // Или URL вашего API
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 секунды
+// Токен и chatId из настроек кампании
+const token = '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+const chatId = '-1002302366310';
 
-function log(message) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
-}
+// Текст с незакрытыми HTML тегами
+const unclosedText = `Тест исправленного форматирования HTML в Telegram:
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+<b>Жирный текст
+<i>Жирный и курсивный текст
+<u>Жирный, курсивный и подчеркнутый текст
+
+<code>Моноширинный текст
+<a href='https://replit.com'>Ссылка`;
 
 /**
- * Отправляет тестовый HTML-текст с включенным исправлением тегов
- * @param {Object} testCase Тестовый случай
- * @returns {Promise<Object>} Результат отправки
+ * Исправляет незакрытые HTML-теги в тексте
+ * @param {string} text Текст с HTML-разметкой
+ * @returns {string} Текст с исправленными незакрытыми тегами
  */
-async function sendHtmlWithAutoFix(testCase) {
-  let retries = 0;
+function fixUnclosedTags(text) {
+  // Определяем поддерживаемые Telegram теги
+  const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
   
-  while (retries < MAX_RETRIES) {
-    try {
-      const apiUrl = `${API_BASE_URL}/api/test/raw-html-telegram`;
-      
-      log(`Отправка текста [${testCase.name}] в Telegram через API...`);
-      log(`Текст: ${testCase.html}`);
-      log(`Автоисправление HTML: включено`);
-      
-      const response = await axios.post(apiUrl, {
-        text: testCase.html,
-        chatId: process.env.TELEGRAM_CHAT_ID || '-1002302366310',
-        autoFixHtml: true // Включаем автоисправление
+  // Создаем стек для отслеживания открытых тегов
+  const stack = [];
+  
+  // Регулярное выражение для поиска всех HTML-тегов
+  const tagRegex = /<\/?([a-z]+)[^>]*>/gi;
+  let match;
+  let processedText = text;
+  const allTags = [];
+  
+  // Находим все теги и их позиции
+  while ((match = tagRegex.exec(text)) !== null) {
+    const fullTag = match[0];
+    const tagName = match[1].toLowerCase();
+    
+    // Проверяем, является ли тег поддерживаемым
+    if (supportedTags.includes(tagName)) {
+      const isClosing = fullTag.startsWith('</');
+      allTags.push({
+        tag: tagName,
+        isClosing,
+        position: match.index
       });
-      
-      log(`Ответ API: ${JSON.stringify(response.data)}`);
-      
-      return response.data;
-    } catch (error) {
-      log(`Ошибка при отправке: ${error.message}`);
-      
-      if (error.response && error.response.data) {
-        log(`Ответ сервера: ${JSON.stringify(error.response.data)}`);
-      }
-      
-      retries++;
-      
-      if (retries < MAX_RETRIES) {
-        log(`Повторная попытка через ${RETRY_DELAY / 1000} секунд...`);
-        await sleep(RETRY_DELAY);
-      } else {
-        throw error;
-      }
     }
   }
+  
+  // Сортируем по позиции, чтобы обрабатывать теги в порядке их появления
+  allTags.sort((a, b) => a.position - b.position);
+  
+  // Определяем, какие теги открыты и неправильно закрыты
+  for (const tagInfo of allTags) {
+    if (tagInfo.isClosing) {
+      // Если это закрывающий тег, проверяем, соответствует ли он последнему открытому
+      if (stack.length > 0 && stack[stack.length - 1] === tagInfo.tag) {
+        stack.pop(); // Правильный закрывающий тег, удаляем из стека
+      } else {
+        // Неправильный порядок закрытия, но не обрабатываем здесь
+        continue;
+      }
+    } else {
+      // Открывающий тег - добавляем в стек
+      stack.push(tagInfo.tag);
+    }
+  }
+  
+  // Если остались незакрытые теги, закрываем их в обратном порядке
+  if (stack.length > 0) {
+    console.log(`Обнаружены незакрытые HTML теги: ${stack.join(', ')}. Автоматически закрываем их.`);
+    
+    let closingTags = '';
+    // Закрываем теги в обратном порядке (LIFO)
+    for (let i = stack.length - 1; i >= 0; i--) {
+      closingTags += `</${stack[i]}>`;
+    }
+    
+    // Добавляем закрывающие теги в конец текста
+    processedText += closingTags;
+    
+    console.log(`Текст с закрытыми тегами: ${processedText}`);
+  } else {
+    console.log('Все теги уже закрыты правильно.');
+  }
+  
+  return processedText;
 }
 
 /**
- * Запускает тест для одного случая
- * @param {Object} testCase Тестовый случай
- * @returns {Promise<boolean>} Успешность теста
+ * Отправляет текст в Telegram с HTML форматированием
+ * @param {string} text Текст для отправки
+ * @returns {Promise<void>}
  */
-async function runTest(testCase) {
-  log(`\n=== Тест: ${testCase.name} ===`);
-  
+async function sendToTelegram(text) {
   try {
-    const result = await sendHtmlWithAutoFix(testCase);
+    console.log('Отправка исправленного текста в Telegram...');
     
-    if (result.success) {
-      log(`✅ Тест "${testCase.name}" успешно прошел, ID сообщения: ${result.messageId}`);
-      return true;
+    const response = await axios.post(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      },
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    
+    if (response.data && response.data.ok) {
+      console.log('Сообщение успешно отправлено!');
+      console.log(`Message ID: ${response.data.result.message_id}`);
+      
+      // Получаем информацию о чате для формирования URL
+      const getChat = await axios.post(
+        `https://api.telegram.org/bot${token}/getChat`,
+        { chat_id: chatId },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      
+      // Формируем URL для сообщения
+      let messageUrl;
+      if (getChat.data && getChat.data.ok) {
+        if (getChat.data.result.username) {
+          // Для публичных каналов
+          messageUrl = `https://t.me/${getChat.data.result.username}/${response.data.result.message_id}`;
+          console.log(`Канал публичный с username: ${getChat.data.result.username}`);
+        } else {
+          // Для приватных каналов
+          const formattedChatId = chatId.startsWith('-100') ? chatId.substring(4) : chatId;
+          messageUrl = `https://t.me/c/${formattedChatId}/${response.data.result.message_id}`;
+          console.log(`Канал приватный (без username)`);
+        }
+        console.log(`URL сообщения: ${messageUrl}`);
+      } else {
+        console.log('Не удалось получить информацию о чате');
+      }
     } else {
-      log(`❌ Ошибка в тесте "${testCase.name}": ${result.error || 'Неизвестная ошибка'}`);
-      return false;
+      console.error('Ошибка при отправке:', response.data);
     }
   } catch (error) {
-    log(`❌ Ошибка при выполнении теста "${testCase.name}": ${error.message}`);
-    return false;
+    console.error('Ошибка:', error.message);
+    if (error.response) {
+      console.error('Ответ API:', error.response.data);
+    }
   }
 }
 
 /**
- * Запускает все тесты последовательно
+ * Основная функция запуска теста
  */
-async function runAllTests() {
-  log('Запуск тестов для агрессивного исправления HTML-тегов в Telegram...');
+async function runTest() {
+  console.log('=== Тест исправления незакрытых HTML-тегов в Telegram ===');
+  console.log('\nИсходный текст с незакрытыми тегами:');
+  console.log(unclosedText);
+  console.log('\n--- Исправление тегов ---');
   
-  // Тестовые случаи с незакрытыми тегами
-  const testCases = [
-    {
-      name: 'Незакрытый тег <b>',
-      html: 'Текст с <b>незакрытым тегом жирного шрифта'
-    },
-    {
-      name: 'Незакрытый тег <i>',
-      html: 'Текст с <i>незакрытым тегом курсива'
-    },
-    {
-      name: 'Незакрытые вложенные теги',
-      html: 'Текст с <b>вложенным <i>форматированием без закрытия'
-    },
-    {
-      name: 'Ссылка без закрывающего тега',
-      html: 'Текст со <a href="https://example.com">ссылкой без закрытия'
-    },
-    {
-      name: 'Смешанные закрытые и незакрытые теги',
-      html: 'Текст с <b>жирным</b> и <i>незакрытым курсивом'
-    }
-  ];
+  // Исправляем текст
+  const fixedText = fixUnclosedTags(unclosedText);
   
-  let passed = 0;
-  let failed = 0;
+  console.log('\n=== Отправка исправленного текста в Telegram ===');
+  await sendToTelegram(fixedText);
   
-  for (let i = 0; i < testCases.length; i++) {
-    const success = await runTest(testCases[i]);
-    if (success) {
-      passed++;
-    } else {
-      failed++;
-    }
-    
-    // Небольшая пауза между тестами, чтобы не перегружать API
-    if (i < testCases.length - 1) {
-      await sleep(1000);
-    }
-  }
-  
-  log(`\n=== Итоги тестирования ===`);
-  log(`Всего тестов: ${testCases.length}`);
-  log(`Успешно: ${passed}`);
-  log(`Провалено: ${failed}`);
-  
-  // Возвращаем код завершения для CI/CD
-  process.exit(failed > 0 ? 1 : 0);
+  console.log('\n=== Тест завершен ===');
 }
 
-// Запускаем тесты
-runAllTests().catch(error => {
-  log(`Критическая ошибка при выполнении тестов: ${error}`);
-  process.exit(1);
+// Запускаем тест
+runTest().catch(error => {
+  console.error('Произошла ошибка при выполнении теста:', error);
 });

@@ -130,318 +130,46 @@ export class InstagramService extends BaseSocialService {
         }
       }
       
-      // Создаем URL для Instagram Graph API
-      const baseUrl = 'https://graph.facebook.com/v17.0';
+      // Публикация в Instagram выполняется в 2 этапа:
+      // 1. Отправка запроса на создание контейнера для медиа
+      // 2. Публикация контейнера
       
-      // Проверяем наличие дополнительных изображений для карусели
-      const hasMultipleImages = imgurContent.additionalImages && 
-                                Array.isArray(imgurContent.additionalImages) && 
-                                imgurContent.additionalImages.length > 0;
-      
-      log(`[Instagram] Обнаружено ${hasMultipleImages ? imgurContent.additionalImages.length : 0} дополнительных изображений для публикации`, 'instagram');
-      
-      if (hasMultipleImages) {
-        // Если есть дополнительные изображения - используем карусель
-        return await this.publishInstagramCarousel(imgurContent, caption, token, businessAccountId, baseUrl);
-      } else {
-        // Иначе используем стандартную публикацию
-        return await this.publishInstagramSingleImage(imgurContent, caption, token, businessAccountId, baseUrl);
-      }
-    } catch (error: any) {
-      log(`[Instagram] Ошибка при публикации: ${error.message}`, 'instagram');
-      
-      return {
-        platform: 'instagram',
-        status: 'failed',
-        publishedAt: null,
-        error: `Ошибка при публикации в Instagram: ${error.message}`
-      };
-    }
-  }
-  
-  /**
-   * Публикует одиночное изображение в Instagram
-   * @param content Контент для публикации
-   * @param caption Описание для изображения
-   * @param token Токен доступа
-   * @param businessAccountId ID бизнес-аккаунта
-   * @param baseUrl Базовый URL API Instagram
-   * @returns Результат публикации
-   */
-  private async publishInstagramSingleImage(
-    content: CampaignContent, 
-    caption: string, 
-    token: string, 
-    businessAccountId: string,
-    baseUrl: string
-  ): Promise<SocialPublication> {
-    try {
-      log(`[Instagram] Начинаем публикацию одиночного изображения`, 'instagram');
-      
-      // Формируем URL запроса для создания контейнера
-      const containerUrl = `${baseUrl}/${businessAccountId}/media`;
-      
-      // Подготавливаем параметры запроса
-      const containerParams = {
-        image_url: content.imageUrl,
-        caption: caption,
-        access_token: token
-      };
-      
-      // Отправляем запрос на создание контейнера
-      log(`[Instagram] Отправка запроса на создание контейнера с URL изображения: ${content.imageUrl?.substring(0, 50)}...`, 'instagram');
-      const containerResponse = await axios.post(
-        containerUrl, 
-        containerParams, 
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 30000
-        }
-      );
-      
-      log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
-      
-      // Проверяем успешность создания контейнера
-      if (!containerResponse.data || !containerResponse.data.id) {
-        const errorMsg = containerResponse.data.error ? 
-          `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
-          'Неизвестная ошибка при создании контейнера';
-        
-        log(`[Instagram] Ошибка при создании контейнера: ${errorMsg}`, 'instagram');
-        
-        return {
-          platform: 'instagram',
-          status: 'failed',
-          publishedAt: null,
-          error: errorMsg
-        };
-      }
-      
-      // Получаем ID контейнера
-      const containerId = containerResponse.data.id;
-      
-      log(`[Instagram] Этап 2 - публикация контейнера ${containerId}`, 'instagram');
-      
-      // Формируем URL запроса для публикации
-      const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
-      
-      // Подготавливаем параметры запроса
-      const publishParams = {
-        creation_id: containerId,
-        access_token: token
-      };
-      
-      // Отправляем запрос на публикацию
-      const publishResponse = await axios.post(
-        publishUrl, 
-        publishParams, 
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 30000
-        }
-      );
-      
-      log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'instagram');
-      
-      // Проверяем успешность публикации
-      if (!publishResponse.data || !publishResponse.data.id) {
-        const errorMsg = publishResponse.data.error ? 
-          `${publishResponse.data.error.code}: ${publishResponse.data.error.message}` : 
-          'Неизвестная ошибка при публикации';
-        
-        log(`[Instagram] Ошибка при публикации: ${errorMsg}`, 'instagram');
-        
-        return {
-          platform: 'instagram',
-          status: 'failed',
-          publishedAt: null,
-          error: errorMsg
-        };
-      }
-      
-      // Получаем ID публикации
-      const igMediaId = publishResponse.data.id;
-        
-      // Для получения permalink нужен отдельный запрос
-      log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'instagram');
-      
-      // Формируем URL запроса для получения информации о публикации
-      const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
-      
-      // Отправляем запрос
-      const mediaInfoResponse = await axios.get(`${mediaInfoUrl}`, {
-        params: {
-          fields: 'permalink',
-          access_token: token
-        },
-        timeout: 30000
-      });
-      
-      log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'instagram');
-      
-      // Проверяем успешность получения информации
-      let postUrl = '';
-      
-      if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
-        postUrl = mediaInfoResponse.data.permalink;
-        log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
-      } else {
-        // Если не удалось получить permalink, используем стандартную форму ссылки
-        postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-        log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
-      }
-      
-      log(`[Instagram] Публикация успешно завершена!`, 'instagram');
-      
-      return {
-        platform: 'instagram',
-        status: 'published',
-        publishedAt: new Date(),
-        postUrl: postUrl
-      };
-    } catch (error: any) {
-      log(`[Instagram] Исключение при публикации: ${error.message}`, 'instagram');
-      
-      // Дополнительное логирование для ответа API
-      if (error.response && error.response.data) {
-        log(`[Instagram] Детали ошибки API: ${JSON.stringify(error.response.data)}`, 'instagram');
-      }
-      
-      // Обработка распространенных ошибок
-      let errorMessage = `Ошибка при публикации в Instagram: ${error.message}`;
-      
-      if (error.response?.data?.error) {
-        const apiError = error.response.data.error;
-        
-        if (apiError.code === 190) {
-          errorMessage = 'Недействительный токен доступа. Пожалуйста, обновите токен в настройках.';
-        } else if (apiError.code === 4) {
-          errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
-        } else if (apiError.code === 10) {
-          errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
-        } else {
-          errorMessage = `Ошибка API Instagram: ${apiError.message} (код ${apiError.code})`;
-        }
-      }
-      
-      return {
-        platform: 'instagram',
-        status: 'failed',
-        publishedAt: null,
-        error: errorMessage
-      };
-    }
-  }
-  
-  /**
-   * Публикует карусель (несколько изображений) в Instagram
-   * @param content Контент для публикации
-   * @param caption Описание для изображений
-   * @param token Токен доступа
-   * @param businessAccountId ID бизнес-аккаунта
-   * @param baseUrl Базовый URL API Instagram
-   * @returns Результат публикации
-   */
-  private async publishInstagramCarousel(
-    content: CampaignContent, 
-    caption: string, 
-    token: string, 
-    businessAccountId: string,
-    baseUrl: string
-  ): Promise<SocialPublication> {
-    try {
-      log(`[Instagram] Начинаем публикацию карусели (нескольких изображений)`, 'instagram');
-      
-      if (!content.additionalImages || !Array.isArray(content.additionalImages) || content.additionalImages.length === 0) {
-        log(`[Instagram] Ошибка: нет дополнительных изображений для карусели`, 'instagram');
-        return this.publishInstagramSingleImage(content, caption, token, businessAccountId, baseUrl);
-      }
-      
-      // Сначала собираем все изображения: основное и дополнительные
-      const allImages = [content.imageUrl];
-      if (content.additionalImages) {
-        content.additionalImages.forEach(imgUrl => {
-          if (imgUrl && typeof imgUrl === 'string') {
-            allImages.push(imgUrl);
-          }
-        });
-      }
-      
-      log(`[Instagram] Карусель будет содержать ${allImages.length} изображений`, 'instagram');
-      
-      // Создаём медиа-контейнер для каждого изображения
-      const mediaContainerPromises = allImages.map(async (imageUrl) => {
-        if (!imageUrl) return null;
-        
-        try {
-          const containerUrl = `${baseUrl}/${businessAccountId}/media`;
-          const params = {
-            image_url: imageUrl,
-            is_carousel_item: true,
-            access_token: token
-          };
-          
-          log(`[Instagram] Создание медиа-контейнера для изображения: ${imageUrl.substring(0, 40)}...`, 'instagram');
-          
-          const response = await axios.post(
-            containerUrl,
-            params,
-            {
-              headers: { 'Content-Type': 'application/json' },
-              timeout: 30000
-            }
-          );
-          
-          if (!response.data || !response.data.id) {
-            log(`[Instagram] Ошибка создания контейнера для изображения: ${JSON.stringify(response.data)}`, 'instagram');
-            return null;
-          }
-          
-          log(`[Instagram] Успешно создан контейнер: ${response.data.id}`, 'instagram');
-          return response.data.id;
-        } catch (error: any) {
-          log(`[Instagram] Ошибка при создании контейнера для карусели: ${error.message}`, 'instagram');
-          if (error.response?.data) {
-            log(`[Instagram] Ответ API: ${JSON.stringify(error.response.data)}`, 'instagram');
-          }
-          return null;
-        }
-      });
-      
-      const mediaContainerIds = await Promise.all(mediaContainerPromises);
-      const validContainerIds = mediaContainerIds.filter(id => id !== null) as string[];
-      
-      if (validContainerIds.length === 0) {
-        log(`[Instagram] Не удалось создать контейнеры для изображений. Пробуем публикацию с одним изображением`, 'instagram');
-        return this.publishInstagramSingleImage(content, caption, token, businessAccountId, baseUrl);
-      }
-      
-      // Создаём карусель
-      log(`[Instagram] Создаём карусель с ${validContainerIds.length} изображениями`, 'instagram');
       try {
-        const carouselUrl = `${baseUrl}/${businessAccountId}/media`;
-        const carouselParams = {
+        log(`[Instagram] Этап 1 - создание контейнера для медиа`, 'instagram');
+        
+        // Создаем URL для Instagram Graph API
+        const baseUrl = 'https://graph.facebook.com/v17.0';
+        
+        // Формируем URL запроса для создания контейнера
+        const containerUrl = `${baseUrl}/${businessAccountId}/media`;
+        
+        // Подготавливаем параметры запроса
+        const containerParams = {
+          image_url: imgurContent.imageUrl,
           caption: caption,
-          media_type: 'CAROUSEL',
-          children: validContainerIds,
           access_token: token
         };
         
-        const carouselResponse = await axios.post(
-          carouselUrl,
-          carouselParams,
+        // Отправляем запрос на создание контейнера
+        log(`[Instagram] Отправка запроса на создание контейнера с URL изображения: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
+        const containerResponse = await axios.post(
+          containerUrl, 
+          containerParams, 
           {
             headers: { 'Content-Type': 'application/json' },
             timeout: 30000
           }
         );
         
-        if (!carouselResponse.data || !carouselResponse.data.id) {
-          const errorMsg = carouselResponse.data.error ? 
-            `${carouselResponse.data.error.code}: ${carouselResponse.data.error.message}` : 
-            'Неизвестная ошибка при создании карусели';
-            
-          log(`[Instagram] Ошибка при создании карусели: ${errorMsg}`, 'instagram');
+        log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
+        
+        // Проверяем успешность создания контейнера
+        if (!containerResponse.data || !containerResponse.data.id) {
+          const errorMsg = containerResponse.data.error ? 
+            `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
+            'Неизвестная ошибка при создании контейнера';
+          
+          log(`[Instagram] Ошибка при создании контейнера: ${errorMsg}`, 'instagram');
           
           return {
             platform: 'instagram',
@@ -451,33 +179,39 @@ export class InstagramService extends BaseSocialService {
           };
         }
         
-        // Получаем ID контейнера карусели
-        const carouselContainerId = carouselResponse.data.id;
+        // Получаем ID контейнера
+        const containerId = containerResponse.data.id;
         
-        log(`[Instagram] Карусель создана, ID: ${carouselContainerId}. Публикуем...`, 'instagram');
+        log(`[Instagram] Этап 2 - публикация контейнера ${containerId}`, 'instagram');
         
-        // Публикуем карусель
+        // Формируем URL запроса для публикации
         const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
+        
+        // Подготавливаем параметры запроса
         const publishParams = {
-          creation_id: carouselContainerId,
+          creation_id: containerId,
           access_token: token
         };
         
+        // Отправляем запрос на публикацию
         const publishResponse = await axios.post(
-          publishUrl,
-          publishParams,
+          publishUrl, 
+          publishParams, 
           {
             headers: { 'Content-Type': 'application/json' },
             timeout: 30000
           }
         );
         
+        log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'instagram');
+        
+        // Проверяем успешность публикации
         if (!publishResponse.data || !publishResponse.data.id) {
           const errorMsg = publishResponse.data.error ? 
             `${publishResponse.data.error.code}: ${publishResponse.data.error.message}` : 
-            'Неизвестная ошибка при публикации карусели';
-            
-          log(`[Instagram] Ошибка при публикации карусели: ${errorMsg}`, 'instagram');
+            'Неизвестная ошибка при публикации';
+          
+          log(`[Instagram] Ошибка при публикации: ${errorMsg}`, 'instagram');
           
           return {
             platform: 'instagram',
@@ -491,7 +225,7 @@ export class InstagramService extends BaseSocialService {
         const igMediaId = publishResponse.data.id;
         
         // Для получения permalink нужен отдельный запрос
-        log(`[Instagram] Карусель опубликована, ID: ${igMediaId}. Получаем постоянную ссылку...`, 'instagram');
+        log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'instagram');
         
         // Формируем URL запроса для получения информации о публикации
         const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
@@ -505,52 +239,74 @@ export class InstagramService extends BaseSocialService {
           timeout: 30000
         });
         
+        log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'instagram');
+        
         // Проверяем успешность получения информации
         let postUrl = '';
         
         if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
           postUrl = mediaInfoResponse.data.permalink;
-          log(`[Instagram] Получена постоянная ссылка на карусель: ${postUrl}`, 'instagram');
+          log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
         } else {
           // Если не удалось получить permalink, используем стандартную форму ссылки
           postUrl = `https://www.instagram.com/p/${igMediaId}/`;
           log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
         }
         
-        log(`[Instagram] Публикация карусели успешно завершена!`, 'instagram');
+        log(`[Instagram] Публикация успешно завершена!`, 'instagram');
         
         return {
           platform: 'instagram',
           status: 'published',
           publishedAt: new Date(),
-          postUrl: postUrl,
-          postId: igMediaId
+          postUrl: postUrl
         };
       } catch (error: any) {
-        log(`[Instagram] Ошибка при публикации карусели: ${error.message}`, 'instagram');
+        log(`[Instagram] Исключение при публикации: ${error.message}`, 'instagram');
         
-        if (error.response?.data) {
+        // Дополнительное логирование для ответа API
+        if (error.response && error.response.data) {
           log(`[Instagram] Детали ошибки API: ${JSON.stringify(error.response.data)}`, 'instagram');
         }
         
-        // Если не удалось опубликовать карусель, пробуем опубликовать как одиночное изображение
-        log(`[Instagram] Пробуем опубликовать как одиночное изображение...`, 'instagram');
-        return this.publishInstagramSingleImage(content, caption, token, businessAccountId, baseUrl);
+        // Обработка распространенных ошибок
+        let errorMessage = `Ошибка при публикации в Instagram: ${error.message}`;
+        
+        if (error.response?.data?.error) {
+          const apiError = error.response.data.error;
+          
+          if (apiError.code === 190) {
+            errorMessage = 'Недействительный токен доступа. Пожалуйста, обновите токен в настройках.';
+          } else if (apiError.code === 4) {
+            errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
+          } else if (apiError.code === 10) {
+            errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
+          } else {
+            errorMessage = `Ошибка API Instagram: ${apiError.message} (код ${apiError.code})`;
+          }
+        }
+        
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: errorMessage
+        };
       }
     } catch (error: any) {
-      log(`[Instagram] Общая ошибка при публикации карусели: ${error.message}`, 'instagram');
+      log(`[Instagram] Общая ошибка при публикации: ${error.message}`, 'instagram');
       
       return {
         platform: 'instagram',
         status: 'failed',
         publishedAt: null,
-        error: `Ошибка при публикации Instagram карусели: ${error.message}`
+        error: `Общая ошибка при публикации: ${error.message}`
       };
     }
   }
 
   /**
-   * Публикует контент в выбранную социальную платформу (реализация абстрактного метода)
+   * Публикует контент в выбранную социальную платформу
    * @param content Контент для публикации
    * @param platform Социальная платформа
    * @param settings Настройки социальных сетей

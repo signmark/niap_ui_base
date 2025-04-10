@@ -57,12 +57,6 @@ function Router() {
       <Route path="/test/imgur" component={() => <Layout><TestImgur /></Layout>} />
       <Route path="/test/html-tags" component={() => <Layout><HtmlTagsTestPage /></Layout>} />
       <Route path="/test/telegram" component={TelegramTestPage} />
-      <Route path="/test/telegram-post">
-        {() => {
-          window.location.href = '/src/test/telegram-post-test.html';
-          return null;
-        }}
-      </Route>
       <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={() => <Layout><Campaigns /></Layout>} />

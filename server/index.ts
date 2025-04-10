@@ -12,11 +12,8 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
-// Импортируем тестовые маршруты для Telegram и другие тестовые маршруты
+// Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
-
-// Импортируем патчи системы
-import { initializePatches } from './patches/index.js';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -127,21 +124,6 @@ app.use((req, res, next) => {
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
-    // Регистрируем дополнительные тестовые маршруты
-    console.log("Registering additional test routes...");
-    log("Registering additional test routes...");
-    // Импортируем дополнительные тестовые маршруты динамически, чтобы избежать проблем с импортом
-    try {
-      const testRoutes = await import('./routes/test/index.js');
-      app.use('/api/test', testRoutes.default || testRoutes);
-      log("Additional test routes imported and registered using ESM import");
-    } catch (importError) {
-      log(`Error importing additional test routes: ${importError instanceof Error ? importError.message : 'Unknown error'}`);
-      log("Continuing without additional test routes");
-    }
-    console.log("Additional test routes registered");
-    log("Additional test routes registered successfully");
-    
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes...");
@@ -225,19 +207,6 @@ app.use((req, res, next) => {
       
       // Печатаем URL-адрес приложения
       console.log(`=== SERVER URL: http://0.0.0.0:${PORT} ===`);
-      
-      // Применяем патчи системы после полного запуска сервера
-      log("Initializing system patches after server initialization...");
-      // Даем серверу 3 секунды на полную инициализацию
-      setTimeout(async () => {
-        try {
-          const success = await initializePatches();
-          log(`System patches initialization: ${success ? 'successful' : 'failed'}`);
-        } catch (error) {
-          log(`Error initializing system patches: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }, 3000);
-      log("System patches scheduled for initialization");
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

@@ -15,7 +15,7 @@ export abstract class BaseSocialService {
    * Получает системный токен для доступа к API Directus
    * @returns Токен доступа или null в случае ошибки
    */
-  public async getSystemToken(): Promise<string | null> {
+  protected async getSystemToken(): Promise<string | null> {
     try {
       const directusAuthManager = await import('../directus-auth-manager').then(m => m.directusAuthManager);
       const directusCrud = await import('../directus-crud').then(m => m.directusCrud);
@@ -32,7 +32,7 @@ export abstract class BaseSocialService {
           const adminSession = await directusAuthManager.login(email, password);
           if (adminSession) {
             log(`Авторизация администратора успешна через прямой API запрос`, 'social-publishing');
-            return adminSession.token; // Используем token вместо accessToken
+            return adminSession.token;
           }
         } catch (e) {
           log(`Ошибка авторизации администратора: ${e}`, 'social-publishing');
@@ -45,21 +45,10 @@ export abstract class BaseSocialService {
         const adminSession = directusAuthManager.getSession(adminUserId);
         if (adminSession && adminSession.token) {
           log(`Использование существующей авторизации администратора`, 'social-publishing');
-          return adminSession.token; // Используем token вместо accessToken
+          return adminSession.token;
         }
       } catch (e) {
         log(`Не удалось получить существующую сессию администратора: ${e}`, 'social-publishing');
-      }
-      
-      // 3. Последний вариант - использовать getAuthToken напрямую
-      try {
-        const token = await directusAuthManager.getAuthToken(adminUserId);
-        if (token) {
-          log(`Получен токен администратора через getAuthToken`, 'social-publishing');
-          return token;
-        }
-      } catch (e) {
-        log(`Не удалось получить токен через getAuthToken: ${e}`, 'social-publishing');
       }
       
       return null;
@@ -116,8 +105,10 @@ export abstract class BaseSocialService {
             }
           } catch (error) {
             // Если не удалось распарсить JSON, считаем это одиночным URL и создаем массив с одним элементом
-            if (updatedContent.additionalImages.trim().startsWith('http')) {
-              updatedContent.additionalImages = [updatedContent.additionalImages.trim()];
+            // Обработка строки url
+            const additionalImage = updatedContent.additionalImages as string;
+            if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim().startsWith('http')) {
+              updatedContent.additionalImages = [additionalImage.trim()];
               log(`additionalImages в виде строки URL преобразован в массив с одним элементом для ${platform}`, 'social-publishing');
             } else {
               // Иначе создаем пустой массив
@@ -303,9 +294,32 @@ export abstract class BaseSocialService {
         error: publicationResult.error || null
       };
       
+      // Создаем или обновляем также socialPlatforms (основное поле для отображения в интерфейсе)
+      let socialPlatforms = content.socialPlatforms || {};
+      
+      // Если socialPlatforms представлено как массив, преобразуем его в объект
+      if (Array.isArray(socialPlatforms)) {
+        const newSocialPlatforms: Record<string, any> = {};
+        for (const platformName of socialPlatforms) {
+          newSocialPlatforms[platformName] = newSocialPlatforms[platformName] || { status: 'pending' };
+        }
+        socialPlatforms = newSocialPlatforms;
+        log(`Преобразуем массив socialPlatforms в объект для контента ${contentId}`, 'social-publishing');
+      }
+      
+      // Обновляем информацию о публикации в socialPlatforms
+      socialPlatforms[platform] = {
+        status: publicationResult.status,
+        publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
+        postUrl: publicationResult.postUrl || null,
+        postId: publicationResult.postId || null,
+        error: publicationResult.error || null
+      };
+      
       // Обновляем контент
       const updatedContent = await storage.updateCampaignContent(contentId, {
         socialPublications,
+        socialPlatforms,
         // Если публикация успешна, обновляем общий статус до "published"
         // только если мы публиковали на все выбранные платформы
         ...(publicationResult.status === 'published' ? {
@@ -338,13 +352,25 @@ export abstract class BaseSocialService {
     socialPublications: Record<string, any>
   ): boolean {
     // Проверяем, указаны ли социальные платформы
-    if (!content.socialPlatforms || !Array.isArray(content.socialPlatforms) || content.socialPlatforms.length === 0) {
+    let selectedPlatforms: string[] = [];
+      
+    // Обрабатываем разные форматы поля socialPlatforms
+    if (Array.isArray(content.socialPlatforms)) {
+      // Если это массив строк, используем его напрямую
+      selectedPlatforms = content.socialPlatforms;
+    } else if (typeof content.socialPlatforms === 'object' && content.socialPlatforms !== null) {
+      // Если это объект, извлекаем ключи
+      selectedPlatforms = Object.keys(content.socialPlatforms);
+    }
+    
+    if (!selectedPlatforms.length) {
       log(`У контента ${content.id} нет выбранных социальных платформ`, 'social-publishing');
       return false;
     }
     
+    log(`Найдены платформы для проверки публикации: ${selectedPlatforms.join(', ')}`, 'social-publishing');
+    
     // Проверяем, все ли выбранные платформы опубликованы
-    const selectedPlatforms = content.socialPlatforms;
     let allPublished = true;
     
     for (const platform of selectedPlatforms) {

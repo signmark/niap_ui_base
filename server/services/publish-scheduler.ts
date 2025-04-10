@@ -16,6 +16,11 @@ export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private checkIntervalMs = 60000; // проверяем каждую минуту
+  // Для обратной совместимости со старым кодом (временное решение)
+  private processedContentIds = new Set<string>();
+  // Глобальный флаг для полного отключения публикаций (критическая мера безопасности)
+  // Публикации активированы
+  public disablePublishing = false;
 
   /**
    * Запускает планировщик публикаций
@@ -52,6 +57,23 @@ export class PublishScheduler {
     this.intervalId = null;
     this.isRunning = false;
   }
+  
+  /**
+   * Метод обратной совместимости, теперь сохраняется напрямую в БД
+   * @deprecated Используйте прямое обновление статуса в БД вместо кэша
+   */
+  clearProcessedContentIds() {
+    log(`Метод clearProcessedContentIds() вызван, но кэш теперь не используется. Статус обновляется в БД.`, 'scheduler');
+  }
+  
+  /**
+   * Метод обратной совместимости, теперь сохраняется напрямую в БД
+   * @deprecated Используйте прямое обновление статуса в БД вместо кэша
+   * @param contentId ID контента 
+   */
+  addProcessedContentId(contentId: string) {
+    log(`Метод addProcessedContentId() вызван для ID ${contentId}, но кэш теперь не используется. Обновите статус в БД.`, 'scheduler');
+  }
 
   /**
    * Получает токен для доступа к API
@@ -60,8 +82,10 @@ export class PublishScheduler {
    * 2. Активные сессии пользователей из кэша
    * 3. Статический токен из переменных окружения
    * 4. Сохраненный токен из хранилища
+   * 
+   * @returns Токен для авторизации запросов к API
    */
-  private async getSystemToken(): Promise<string | null> {
+  public async getSystemToken(): Promise<string | null> {
     try {
       // Загружаем менеджер авторизации
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
@@ -228,161 +252,94 @@ export class PublishScheduler {
     }
   }
 
-  // Хранит список уже обработанных публикаций для предотвращения дублирования
-  private processedContentIds: Set<string> = new Set();
-
+  /**
+   * Проверяет и публикует запланированный контент 
+   * Ищет ТОЛЬКО контент со статусом 'scheduled' и публикует его
+   */
   async checkScheduledContent() {
     try {
       log('Проверка запланированных публикаций', 'scheduler');
+      
+      // Проверяем, не отключены ли публикации глобально
+      if (this.disablePublishing) {
+        log('ПРЕДУПРЕЖДЕНИЕ: Публикации отключены глобальным флагом disablePublishing=true', 'scheduler');
+        log('Контент будет обнаружен, но не будет опубликован', 'scheduler');
+      }
       
       // Проверяем запросы на извлечение токена
       checkTokenExtractionRequest();
       
       // Получаем системный токен для доступа ко всем публикациям
-      const systemToken = await this.getSystemToken();
+      const authToken = await this.getSystemToken();
+      
+      if (!authToken) {
+        log('Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны', 'scheduler');
+        return;
+      }
       
       // Пытаемся получить запланированные публикации
       let scheduledContent: CampaignContent[] = [];
       
-      if (systemToken) {
-        log('Поиск запланированных публикаций через API с системным токеном', 'scheduler');
+      try {
+        // Прямой запрос с параметрами фильтрации
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
         
-        try {
-          // Прямой запрос с параметрами фильтрации
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-          log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
-          
-          const headers = {
-            'Authorization': `Bearer ${systemToken}`,
-            'Content-Type': 'application/json'
-          };
-          
-          // Запрос с фильтром по статусу ТОЛЬКО "scheduled" и исключаем ранее обработанные
-          const response = await axios.get(`${directusUrl}/items/campaign_content`, {
-            headers,
-            params: {
-              filter: JSON.stringify({
-                status: {
-                  _eq: 'scheduled'
-                },
-                scheduled_at: {
-                  _nnull: true
-                }
-              })
-            }
-          });
-          
-          if (response?.data?.data) {
-            const items = response.data.data;
-            log(`Получено ${items.length} запланированных публикаций через API с системным токеном`, 'scheduler');
-            
-            const contentItems = items.map((item: any) => ({
-              id: item.id,
-              content: item.content,
-              userId: item.user_id,
-              campaignId: item.campaign_id,
-              status: item.status,
-              contentType: item.content_type || "text",
-              title: item.title || null,
-              imageUrl: item.image_url,
-              videoUrl: item.video_url,
-              additionalImages: item.additional_images || null,
-              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-              createdAt: new Date(item.created_at),
-              socialPlatforms: item.social_platforms,
-              prompt: item.prompt || null,
-              keywords: item.keywords || null,
-              hashtags: item.hashtags || null,
-              links: item.links || null,
-              publishedAt: item.published_at ? new Date(item.published_at) : null,
-              metadata: item.metadata || {}
-            }));
-            
-            scheduledContent = [...scheduledContent, ...contentItems];
-          }
-        } catch (error: any) {
-          log(`Ошибка при запросе с системным токеном: ${error.message}`, 'scheduler');
-          console.error('Directus API Error:', JSON.stringify(error.response || error, null, 2));
-          
-          if (error.response?.data) {
-            console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-            console.error('Response status:', error.response.status);
-          }
-        }
-      } else {
-        log('Системный токен не найден, запланированные публикации не могут быть обработаны', 'scheduler');
-      }
-      
-      // Если ничего не нашли через API с системным токеном, пробуем через адаптер хранилища
-      if (scheduledContent.length === 0 && systemToken) {
-        try {
-          log('Поиск запланированных публикаций через адаптер хранилища с системным токеном', 'scheduler');
-          const allContent = await directusCrud.list('campaign_content', {
-            authToken: systemToken,
-            filter: {
+        const headers = {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        // Запрос с фильтром ТОЛЬКО по статусу "scheduled"
+        const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+          headers,
+          params: {
+            filter: JSON.stringify({
               status: {
                 _eq: 'scheduled'
               },
               scheduled_at: {
                 _nnull: true
               }
-            },
-            sort: ['scheduled_at']
-          });
-          
-          if (allContent && Array.isArray(allContent) && allContent.length > 0) {
-            log(`Получено ${allContent.length} запланированных публикаций через CRUD интерфейс`, 'scheduler');
-            
-            const contentItems = allContent.map((item: any) => {
-              // Создаем базовую структуру объекта с обязательными полями
-              const content = {
-                id: item.id,
-                content: item.content,
-                userId: item.user_id,
-                campaignId: item.campaign_id,
-                status: item.status,
-                contentType: item.content_type || "text",
-                title: item.title || null,
-                imageUrl: item.image_url,
-                videoUrl: item.video_url,
-                scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-                createdAt: new Date(item.created_at),
-                socialPlatforms: item.social_platforms,
-                additionalImages: item.additional_images || null,
-                prompt: item.prompt || null,
-                keywords: item.keywords || null,
-                hashtags: item.hashtags || null,
-                links: item.links || null,
-                publishedAt: item.published_at ? new Date(item.published_at) : null,
-                metadata: item.metadata || {}
-              };
-              
-              // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
-              // в метаданных, чтобы гарантировать правильное отображение больших текстов
-              if (item.social_platforms && 
-                  typeof item.social_platforms === 'object' && 
-                  Array.isArray(item.social_platforms) && 
-                  item.social_platforms.includes('telegram')) {
-                if (!content.metadata) content.metadata = {};
-                (content.metadata as any).forceImageTextSeparation = true;
-                log(`Установлен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${item.id}`, 'scheduler');
-              }
-              
-              return content;
-            });
-            
-            scheduledContent = [...scheduledContent, ...contentItems];
+            })
           }
-        } catch (error: any) {
-          log(`Ошибка при получении публикаций через CRUD интерфейс: ${error.message}`, 'scheduler');
+        });
+        
+        if (response?.data?.data) {
+          const items = response.data.data;
+          log(`Получено ${items.length} запланированных публикаций через API`, 'scheduler');
+          
+          const contentItems = items.map((item: any) => ({
+            id: item.id,
+            content: item.content,
+            userId: item.user_id,
+            campaignId: item.campaign_id,
+            status: item.status,
+            contentType: item.content_type || "text",
+            title: item.title || null,
+            imageUrl: item.image_url,
+            videoUrl: item.video_url,
+            additionalImages: item.additional_images || null,
+            scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+            createdAt: new Date(item.created_at),
+            socialPlatforms: item.social_platforms,
+            prompt: item.prompt || null,
+            keywords: item.keywords || null,
+            hashtags: item.hashtags || null,
+            links: item.links || null,
+            publishedAt: item.published_at ? new Date(item.published_at) : null,
+            metadata: item.metadata || {}
+          }));
+          
+          scheduledContent = contentItems;
         }
-      }
-      
-      // В последнюю очередь, если все еще нет данных, пробуем стандартное хранилище
-      if (scheduledContent.length === 0) {
-        log('Попытка получения запланированных публикаций через стандартное хранилище', 'scheduler');
-        const storageContent = await storage.getScheduledContent();
-        scheduledContent = [...scheduledContent, ...storageContent];
+      } catch (error: any) {
+        log(`Ошибка при запросе запланированных публикаций: ${error.message}`, 'scheduler');
+        
+        if (error.response?.data) {
+          log(`Ошибка API: ${JSON.stringify(error.response.data)}`, 'scheduler');
+        }
+        return; // Прерываем выполнение, так как эти данные критичны
       }
       
       if (scheduledContent.length === 0) {
@@ -395,51 +352,132 @@ export class PublishScheduler {
       // Текущее время
       const now = new Date();
       
-      // Детальное логирование каждого запланированного элемента
-      scheduledContent.forEach(content => {
-        if (content.scheduledAt) {
-          const scheduledTime = new Date(content.scheduledAt);
-          const timeUntilPublish = scheduledTime.getTime() - now.getTime();
-          
-          log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()}, ` +
-              `текущее время: ${now.toISOString()}, ` + 
-              `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
-        } else {
-          log(`Контент ID ${content.id} "${content.title}" не имеет времени публикации`, 'scheduler');
-        }
-      });
-      
-      // Фильтруем контент, который пора публиковать и еще не опубликован
+      // Фильтруем контент, время публикации которого уже наступило
       const contentToPublish = scheduledContent.filter(content => {
         if (!content.scheduledAt) return false;
         
-        // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
-        if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
-          log(`Контент ID ${content.id} "${content.title}" находится в списке исключенных, полностью пропускаем`, 'scheduler');
-          return false;
-        }
-        
-        // Проверяем, что статус не "published"
-        if (content.status === 'published') {
-          log(`Контент ID ${content.id} "${content.title}" уже опубликован, пропускаем`, 'scheduler');
-          return false;
-        }
-        
-        // Проверяем, не публиковали ли мы уже этот контент в текущей сессии сервера
-        if (content.id && this.processedContentIds.has(content.id)) {
-          log(`Контент ID ${content.id} "${content.title}" уже обработан ранее в текущей сессии сервера, пропускаем`, 'scheduler');
-          return false;
-        }
-        
         const scheduledTime = new Date(content.scheduledAt);
+        const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+        
+        // Логируем для каждого контента
+        log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()}, ` +
+            `текущее время: ${now.toISOString()}, ` + 
+            `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+        
         return scheduledTime <= now;
       });
       
-      log(`Готово к публикации ${contentToPublish.length} элементов контента`, 'scheduler');
+      if (contentToPublish.length === 0) {
+        log('Нет контента, готового к публикации по времени', 'scheduler');
+        return;
+      }
+      
+      log(`Найдено ${contentToPublish.length} публикаций, готовых к публикации`, 'scheduler');
+      
+      // Проверяем каждый контент перед публикацией
+      // Делаем последнюю проверку для каждого контента - получаем свежие данные
+      const publishReadyContent = [];
+      
+      for (const content of contentToPublish) {
+        try {
+          // Делаем прямой запрос к Directus API для получения свежих данных
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const response = await axios.get(
+            `${directusUrl}/items/campaign_content/${content.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (response?.data?.data) {
+            const freshData = response.data.data;
+            
+            // Проверяем основной статус контента - должен быть СТРОГО "scheduled"
+            if (freshData.status !== 'scheduled') {
+              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет статус ${freshData.status} вместо scheduled, пропускаем`, 'scheduler');
+              continue;
+            }
+            
+            // Проверяем наличие publishedAt поля - если есть, значит контент уже опубликован
+            if (freshData.published_at) {
+              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет published_at = ${freshData.published_at}, пропускаем`, 'scheduler');
+              continue;
+            }
+            
+            // Проверяем статус в платформах
+            if (freshData.social_platforms && typeof freshData.social_platforms === 'object') {
+              const socialPlatforms = freshData.social_platforms;
+              
+              // Проверяем, есть ли хотя бы одна платформа со статусом published
+              const anyPublished = Object.values(socialPlatforms).some(
+                (platform: any) => platform && platform.status === 'published'
+              );
+              
+              if (anyPublished) {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет опубликованный статус в соцсетях, пропускаем`, 'scheduler');
+                // Обновляем общий статус на published
+                log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
+                
+                await axios.patch(
+                  `${directusUrl}/items/campaign_content/${content.id}`,
+                  { 
+                    status: 'published',
+                    published_at: new Date().toISOString()
+                  },
+                  { headers: { 'Authorization': `Bearer ${authToken}` } }
+                );
+                continue;
+              }
+            }
+            
+            // Если все проверки прошли, добавляем в список для публикации
+            publishReadyContent.push(content);
+          }
+        } catch (error: any) {
+          log(`Ошибка при проверке статуса в БД для контента ${content.id}: ${error.message}`, 'scheduler');
+          // При ошибке проверки НЕ добавляем в список публикации, чтобы избежать ошибок
+          // Контент будет проверен при следующем запуске планировщика
+          // Это помогает избежать ошибок обновления несуществующего контента
+        }
+      }
+      
+      log(`Готово к публикации ${publishReadyContent.length} элементов контента`, 'scheduler');
       
       // Публикуем каждый элемент контента
-      for (const content of contentToPublish) {
-        await this.publishContent(content);
+      for (const content of publishReadyContent) {
+        log(`Публикация контента ${content.id} "${content.title}"...`, 'scheduler');
+        try {
+          // Дополнительно проверяем существование контента непосредственно перед публикацией
+          try {
+            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const checkResponse = await axios.get(
+              `${directusUrl}/items/campaign_content/${content.id}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (!checkResponse?.data?.data) {
+              log(`Контент ${content.id} не найден при финальной проверке, пропускаем публикацию`, 'scheduler');
+              continue;
+            }
+            
+            // Передаем токен авторизации в метод публикации
+            await this.publishContent(content, authToken);
+          } catch (checkError: any) {
+            log(`Ошибка при финальной проверке контента ${content.id}: ${checkError.message}, пропускаем публикацию`, 'scheduler');
+            continue;
+          }
+        } catch (pubError: any) {
+          log(`Ошибка при публикации контента ${content.id}: ${pubError.message}`, 'scheduler');
+          // Продолжаем с другими контентами
+        }
       }
     } catch (error: any) {
       log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'scheduler');
@@ -449,33 +487,42 @@ export class PublishScheduler {
   /**
    * Публикует контент в выбранные социальные сети
    * @param content Контент для публикации
+   * @param authToken Токен авторизации для API запросов
    */
-  async publishContent(content: CampaignContent) {
+  async publishContent(content: CampaignContent, authToken?: string) {
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
         return;
       }
       
-      // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
-      if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
-        log(`Контент ${content.id}: "${content.title}" является проблемным постом, полностью пропускаем публикацию`, 'scheduler');
-        return;
-      }
-      
-      // Проверяем, был ли этот контент уже опубликован в текущей сессии сервера
-      if (this.processedContentIds.has(content.id)) {
-        log(`Контент ${content.id}: "${content.title}" уже публиковался в текущей сессии сервера, пропускаем повторную публикацию`, 'scheduler');
-        return;
-      }
-      
-      // Добавляем в список обработанных
-      this.processedContentIds.add(content.id);
-      
-      // Пропускаем уже опубликованный контент
+      // ЖЕСТКАЯ проверка статуса ПЕРЕД публикацией
+      // Проверяем, был ли контент уже опубликован (общий статус или любая платформа)
       if (content.status === 'published') {
-        log(`Контент ${content.id}: "${content.title}" уже имеет статус published, пропускаем публикацию`, 'scheduler');
+        log(`БЛОКИРОВКА: Контент ${content.id} имеет глобальный статус "published", публикация остановлена`, 'scheduler');
         return;
+      }
+      
+      // Проверяем статус в социальных платформах
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        // Если хотя бы одна платформа имеет статус published, считаем контент опубликованным
+        const anyPublished = Object.values(content.socialPlatforms).some(
+          (platform: any) => platform && platform.status === 'published'
+        );
+        
+        if (anyPublished) {
+          log(`БЛОКИРОВКА: Контент ${content.id} уже имеет опубликованный статус в некоторых соцсетях, публикация остановлена`, 'scheduler');
+          
+          // Обновляем основной статус на published, если он ещё не установлен
+          if (content.status !== 'published') {
+            await storage.updateCampaignContent(content.id, {
+              status: 'published'
+            });
+            log(`Обновлен глобальный статус контента ${content.id} на "published"`, 'scheduler');
+          }
+          
+          return;
+        }
       }
 
       log(`Публикация контента ${content.id}: "${content.title}"`, 'scheduler');
@@ -586,6 +633,51 @@ export class PublishScheduler {
         return;
       }
 
+      // Проверка глобального флага отключения публикаций
+      if (this.disablePublishing) {
+        log(`БЛОКИРОВКА: Публикация контента ${content.id} отменена из-за глобального флага отключения публикаций`, 'scheduler');
+        
+        // Обновляем статус на published без фактической публикации
+        try {
+          // Сначала проверяем наличие контента, используем полученный или системный токен
+          const tokenToUse = authToken || await this.getSystemToken();
+          if (!tokenToUse) {
+            log(`Не удалось получить авторизационный токен для контента ${content.id}`, 'scheduler');
+            return;
+          }
+          
+          // Проверка существования контента с использованием токена
+          const existingContent = await storage.getCampaignContentById(content.id, tokenToUse);
+          if (!existingContent) {
+            log(`Контент с ID ${content.id} не найден в БД, обновление статуса невозможно`, 'scheduler');
+            return;
+          }
+
+          // Обновляем статус с передачей токена авторизации
+          await storage.updateCampaignContent(content.id, {
+            status: 'published'
+          }, tokenToUse);
+          
+          // Отдельной операцией устанавливаем publishedAt через прямой запрос к API
+          try {
+            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            await axios.patch(
+              `${directusUrl}/items/campaign_content/${content.id}`,
+              { published_at: new Date().toISOString() },
+              { headers: { 'Authorization': `Bearer ${tokenToUse}` } }
+            );
+            log(`Установлено поле published_at для контента ${content.id}`, 'scheduler');
+          } catch (patchError: any) {
+            log(`Ошибка при установке published_at для контента ${content.id}: ${patchError.message}`, 'scheduler');
+          }
+        } catch (error: any) {
+          log(`Ошибка при обновлении статуса контента: ${error.message}`, 'scheduler');
+        }
+        
+        log(`Контент ${content.id} помечен как опубликованный без фактической публикации (disablePublishing=true)`, 'scheduler');
+        return;
+      }
+
       // Публикуем в каждую платформу
       let successfulPublications = 0;
       let totalAttempts = 0;
@@ -616,7 +708,137 @@ export class PublishScheduler {
           log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
         }
         
-        // Публикуем контент в платформу через модульный сервис socialPublishingService
+        // Определяем URL для API запроса "Опубликовать сейчас"
+        const appUrl = process.env.APP_URL || 'http://localhost:5000';
+        const publishUrl = `${appUrl}/api/publish/content`;
+        
+        // Используем тот же метод, что и при нажатии "Опубликовать сейчас" через API
+        log(`Вызов API публикации для запланированного контента ${content.id} на платформе ${platform}`, 'scheduler');
+        
+        try {
+          const apiResponse = await axios.post(publishUrl, {
+            content,
+            platforms: [platform],
+            userId: content.userId,
+            force: false // не используем принудительную публикацию для запланированного контента
+          }, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // Проверяем успешность публикации
+          const resultFromApi = apiResponse.data?.results?.[platform];
+          
+          if (resultFromApi?.success) {
+            // Используем успешный результат из API
+            log(`Успешная публикация через API для контента ${content.id} на платформе ${platform}`, 'scheduler');
+            
+            // Создаем объект результата для дальнейшей обработки
+            // Улучшенная логика получения URL и messageId из результата API
+            log(`Результат публикации от API: ${JSON.stringify(resultFromApi)}`, 'scheduler');
+            
+            // ДЕТАЛЬНОЕ логирование полной структуры ответа для отладки
+            log(`API вернул полную структуру ответа: ${JSON.stringify(resultFromApi)}`, 'scheduler');
+            
+            // Попытка извлечь postUrl и messageId из вложенного объекта
+            const detailedPath = (obj: any, path: string): any => {
+              try {
+                const parts = path.split('.');
+                let current = obj;
+                for (const part of parts) {
+                  if (current && typeof current === 'object' && part in current) {
+                    current = current[part];
+                  } else {
+                    return null;
+                  }
+                }
+                return current;
+              } catch (e) {
+                return null;
+              }
+            };
+            
+            // Проверяем все возможные пути к URL и messageId в ответе
+            const possibleUrlPaths = [
+              'result.postUrl', 
+              'result.url', 
+              'result.result.postUrl', 
+              'result.result.url',
+              'postUrl',
+              'url'
+            ];
+            
+            const possibleIdPaths = [
+              'result.messageId',
+              'result.postId',
+              'result.result.messageId',
+              'result.result.postId',
+              'messageId',
+              'postId'
+            ];
+            
+            // Извлекаем URL из всех возможных мест
+            let foundUrl = null;
+            for (const path of possibleUrlPaths) {
+              const value = detailedPath(resultFromApi, path);
+              if (value) {
+                foundUrl = value;
+                log(`Найден URL в пути ${path}: ${value}`, 'scheduler');
+                break;
+              }
+            }
+            
+            // Извлекаем ID сообщения из всех возможных мест
+            let foundId = null;
+            for (const path of possibleIdPaths) {
+              const value = detailedPath(resultFromApi, path);
+              if (value) {
+                foundId = value;
+                log(`Найден ID в пути ${path}: ${value}`, 'scheduler');
+                break;
+              }
+            }
+            
+            const result = {
+              platform,
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: foundUrl,
+              postId: foundId,
+              error: null
+            };
+            
+            log(`Сформирован результат публикации с postUrl: ${result.postUrl}`, 'scheduler');
+            log(`Детали результата публикации для ${platform}: ${JSON.stringify(result)}`, 'scheduler');
+            
+            // Обновляем статус публикации через модульный сервис с дополнительной проверкой
+            // API должен обновить статус, но для надёжности делаем и здесь
+            try {
+              log(`Вызов updatePublicationStatus для platform=${platform}`, 'scheduler');
+              await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+              log(`Статус публикации успешно обновлен для ${platform}`, 'scheduler');
+            } catch (updateError) {
+              log(`Ошибка при обновлении статуса публикации: ${updateError}`, 'scheduler');
+            }
+            
+            // Отмечаем успешную публикацию
+            successfulPublications++;
+            
+            // Переходим к следующей итерации цикла
+            continue;
+          } else {
+            // Если API вернул ошибку, логируем ее
+            log(`Ошибка публикации через API для контента ${content.id} на платформе ${platform}: ${resultFromApi?.error || 'неизвестная ошибка'}`, 'scheduler');
+          }
+        } catch (apiError) {
+          log(`Исключение при вызове API публикации: ${apiError}`, 'scheduler');
+        }
+        
+        // Резервный вариант: публикуем через модульный сервис, если API метод не сработал
+        log(`Использование резервного метода публикации для контента ${content.id} на платформе ${platform}`, 'scheduler');
+        
         const result = await socialPublishingService.publishToPlatform(
           content,
           platform,
@@ -645,9 +867,24 @@ export class PublishScheduler {
       if (successfulPublications > 0) {
         log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах`, 'scheduler');
         
-        await storage.updateCampaignContent(content.id, {
-          status: 'published'
-        });
+        try {
+          // Сначала проверяем, что контент все еще существует в базе
+          // Используем переданный токен авторизации
+          const existingContent = await storage.getCampaignContentById(content.id, authToken);
+          if (!existingContent) {
+            log(`Контент с ID ${content.id} не найден в БД, обновление статуса невозможно`, 'scheduler');
+            return;
+          }
+          
+          // Обновляем статус с передачей токена авторизации
+          await storage.updateCampaignContent(content.id, {
+            status: 'published'
+          }, authToken);
+          
+          log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
+        } catch (updateError: any) {
+          log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
+        }
       }
     } catch (error: any) {
       log(`Ошибка при публикации контента ${content.id}: ${error.message}`, 'scheduler');
