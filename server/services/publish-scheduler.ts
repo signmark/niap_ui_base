@@ -192,6 +192,78 @@ export class PublishScheduler {
   }
 
   /**
+   * Получает настройки Telegram из настроек кампании
+   * @param campaignId ID кампании
+   * @param authToken Токен авторизации
+   * @returns Настройки Telegram или null, если не удалось получить
+   */
+  private async getTelegramSettings(campaignId: string, authToken: string): Promise<{token: string, chatId: string} | null> {
+    try {
+      if (!campaignId) {
+        log(`ID кампании не передан, не могу получить настройки Telegram`, 'scheduler');
+        return null;
+      }
+
+      log(`Запрос настроек Telegram для кампании ${campaignId}`, 'scheduler');
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const campaignUrl = `${directusUrl}/items/campaigns/${campaignId}`;
+      
+      try {
+        const response = await axios.get(campaignUrl, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.data && response.data.data && response.data.data.socialMediaSettings) {
+          const settings = response.data.data.socialMediaSettings;
+          
+          // Если настройки - строка, пробуем распарсить
+          if (typeof settings === 'string') {
+            try {
+              const parsedSettings = JSON.parse(settings);
+              if (parsedSettings.telegram && parsedSettings.telegram.token && parsedSettings.telegram.chatId) {
+                log(`Получены настройки Telegram из кампании (парсинг строки)`, 'scheduler');
+                return {
+                  token: parsedSettings.telegram.token,
+                  chatId: parsedSettings.telegram.chatId
+                };
+              }
+            } catch (e) {
+              log(`Ошибка при парсинге настроек: ${e}`, 'scheduler');
+            }
+          } 
+          // Если настройки - объект
+          else if (settings.telegram && settings.telegram.token && settings.telegram.chatId) {
+            log(`Получены настройки Telegram из кампании (объект)`, 'scheduler');
+            return {
+              token: settings.telegram.token,
+              chatId: settings.telegram.chatId
+            };
+          }
+        }
+      } catch (error: any) {
+        log(`Ошибка при запросе настроек кампании: ${error.message}`, 'scheduler');
+      }
+      
+      // Если не удалось получить настройки из кампании, используем переменные окружения
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      
+      if (token && chatId) {
+        log(`Используем настройки Telegram из переменных окружения`, 'scheduler');
+        return { token, chatId };
+      }
+      
+      log(`Не удалось получить настройки Telegram ни из кампании, ни из переменных окружения`, 'scheduler');
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении настроек Telegram: ${error.message}`, 'scheduler');
+      return null;
+    }
+  }
+
+  /**
    * Получает токен администратора для авторизации запросов к API
    * @returns Токен администратора
    */
@@ -670,7 +742,7 @@ export class PublishScheduler {
       // 1. Есть хотя бы одна успешная публикация
       // 2. Все платформы уже были в статусе "published" (successfulPublications > 0 && totalAttempts === 0)
       if (successfulPublications > 0) {
-        log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах`, 'scheduler');
+        log(`Проверка наличия URL перед обновлением основного статуса контента ${content.id}`, 'scheduler');
         
         try {
           // Сначала проверяем, что контент все еще существует в базе
@@ -681,12 +753,73 @@ export class PublishScheduler {
             return;
           }
           
-          // Обновляем статус с передачей токена авторизации
-          await storage.updateCampaignContent(content.id, {
-            status: 'published'
-          }, authToken);
+          // Получаем актуальные данные о платформах
+          let updateSocialPlatforms = existingContent.socialPlatforms;
+          if (typeof updateSocialPlatforms === 'string') {
+            try {
+              updateSocialPlatforms = JSON.parse(updateSocialPlatforms);
+            } catch (e) {
+              log(`Ошибка при разборе socialPlatforms: ${e}`, 'scheduler');
+              updateSocialPlatforms = {};
+            }
+          }
           
-          log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
+          // Проверяем наличие URL для всех платформ со статусом published
+          let allURLsPresent = true;
+          let needsUpdate = false;
+          
+          for (const platform in updateSocialPlatforms) {
+            const settings = updateSocialPlatforms[platform];
+            if (settings && settings.status === 'published' && !settings.postUrl) {
+              log(`Платформа ${platform} имеет статус published, но URL отсутствует`, 'scheduler');
+              allURLsPresent = false;
+              
+              // Исправляем URL перед тем, как сделать повторную публикацию
+              if (platform === 'telegram' && settings.postId) {
+                // Формируем URL для Telegram на основе postId
+                const postId = settings.postId;
+                // Получаем информацию о чате напрямую из переменных окружения
+                let chatId = process.env.TELEGRAM_CHAT_ID || '';
+                log(`Получен chatId из переменных окружения: ${chatId}`, 'scheduler');
+                
+                if (chatId.startsWith('-100')) {
+                  chatId = chatId.replace('-100', '');
+                  log(`Преобразован chatId после удаления префикса -100: ${chatId}`, 'scheduler');
+                }
+                
+                // Используем функцию ensureValidTelegramUrl для формирования URL
+                const correctedUrl = ensureValidTelegramUrl(`https://t.me/c/${chatId}`, 'telegram', postId);
+                log(`Сформирован URL для Telegram: ${correctedUrl}`, 'scheduler');
+                
+                // Обновляем URL в socialPlatforms
+                updateSocialPlatforms[platform].postUrl = correctedUrl;
+                needsUpdate = true;
+              }
+            }
+          }
+          
+          // Если нужно обновить данные в БД из-за добавления URL
+          if (needsUpdate) {
+            await storage.updateCampaignContent(content.id, {
+              socialPlatforms: updateSocialPlatforms
+            }, authToken);
+            log(`Обновлены URL для платформ контента ${content.id}`, 'scheduler');
+          }
+          
+          // Только если все URL присутствуют, меняем основной статус на published
+          if (allURLsPresent) {
+            log(`Обновление основного статуса контента ${content.id} на "published" после проверки URL`, 'scheduler');
+            
+            // Обновляем статус с передачей токена авторизации
+            await storage.updateCampaignContent(content.id, {
+              status: 'published'
+            }, authToken);
+            
+            log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
+          } else {
+            log(`Статус контента ${content.id} не обновлен на published, т.к. не все URL присутствуют`, 'scheduler');
+          }
+          
         } catch (updateError: any) {
           log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
         }
