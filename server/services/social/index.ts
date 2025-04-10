@@ -40,23 +40,101 @@ export class SocialPublishingService {
     
     try {
       // Получаем настройки социальных сетей из объекта кампании
-      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      let settings: any = {};
       
-      // Выбираем соответствующий сервис в зависимости от платформы
-      // ИСПРАВЛЕНО: Порядок параметров должен соответствовать сигнатуре метода
-      // Параметры должны быть: контент, строка с названием платформы, настройки
+      // Подробные логи для отладки
+      log(`Структура объекта campaign: ${JSON.stringify(campaign).substring(0, 200)}`, 'social-publishing');
+      
+      if (campaign) {
+        if (campaign.socialMediaSettings) {
+          settings = campaign.socialMediaSettings;
+          log(`Найдены настройки в campaign.socialMediaSettings`, 'social-publishing');
+        } else if (campaign.settings) {
+          settings = campaign.settings;
+          log(`Найдены настройки в campaign.settings`, 'social-publishing');
+        } else if (typeof campaign === 'object') {
+          // Пытаемся найти настройки в объекте напрямую
+          if (campaign.telegram || campaign.vk || campaign.instagram) {
+            settings = campaign;
+            log(`Найдены настройки напрямую в объекте campaign`, 'social-publishing');
+          }
+        }
+      }
+      
+      log(`Полученные настройки социальных сетей: ${JSON.stringify(settings).substring(0, 200)}`, 'social-publishing');
+      
+      // Проверяем настройки для конкретной платформы
+      let platformSettings: any = null;
+      
       switch (platform as SocialPlatform) {
         case 'telegram':
+          // Проверяем различные варианты размещения настроек
+          if (settings.telegram) {
+            platformSettings = settings.telegram;
+          } else if (settings.telegram_bot_token && settings.telegram_chat_id) {
+            platformSettings = settings;
+          }
+          
+          log(`Настройки для Telegram: ${JSON.stringify(platformSettings || 'не найдены')}`, 'social-publishing');
+          
+          if (!platformSettings || (!platformSettings.token && !platformSettings.telegram_bot_token)) {
+            log(`Отсутствуют настройки для Telegram`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'failed',
+              publishedAt: null,
+              error: `Missing Telegram settings`
+            };
+          }
+          
           log(`Вызов telegramService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
-          return await telegramService.publishToPlatform(content, 'telegram' as SocialPlatform, settings);
+          return await telegramService.publishToPlatform(content, 'telegram' as SocialPlatform, platformSettings);
         
         case 'vk':
+          // Проверяем различные варианты размещения настроек
+          if (settings.vk) {
+            platformSettings = settings.vk;
+          } else if (settings.vk_access_token && settings.vk_group_id) {
+            platformSettings = settings;
+          }
+          
+          log(`Настройки для VK: ${JSON.stringify(platformSettings || 'не найдены')}`, 'social-publishing');
+          
+          if (!platformSettings) {
+            log(`Отсутствуют настройки для VK`, 'social-publishing');
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: `Missing VK settings`
+            };
+          }
+          
           log(`Вызов vkService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
-          return await vkService.publishToPlatform(content, 'vk' as SocialPlatform, settings);
+          return await vkService.publishToPlatform(content, 'vk' as SocialPlatform, platformSettings);
         
         case 'instagram':
+          // Проверяем различные варианты размещения настроек
+          if (settings.instagram) {
+            platformSettings = settings.instagram;
+          } else if (settings.instagram_access_token || settings.instagram_business_account_id) {
+            platformSettings = settings;
+          }
+          
+          log(`Настройки для Instagram: ${JSON.stringify(platformSettings || 'не найдены')}`, 'social-publishing');
+          
+          if (!platformSettings) {
+            log(`Отсутствуют настройки для Instagram`, 'social-publishing');
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              publishedAt: null,
+              error: `Missing Instagram settings`
+            };
+          }
+          
           log(`Вызов instagramService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
-          return await instagramService.publishToPlatform(content, 'instagram' as SocialPlatform, settings);
+          return await instagramService.publishToPlatform(content, 'instagram' as SocialPlatform, platformSettings);
         
         // Для остальных платформ возвращаем ошибку
         default:
