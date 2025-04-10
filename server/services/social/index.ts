@@ -26,14 +26,17 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    content: CampaignContent,
     platform: SocialPlatform,
-    settings: SocialMediaSettings,
+    content: CampaignContent,
+    campaign: any,
     authToken?: string
   ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
     log(`Публикация контента в ${platform}`, 'social-publishing');
     
     try {
+      // Получаем настройки социальных сетей из объекта кампании
+      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      
       // Выбираем соответствующий сервис в зависимости от платформы
       switch (platform) {
         case 'telegram':
