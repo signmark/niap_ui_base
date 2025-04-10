@@ -37,7 +37,7 @@ export class GeminiService {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       
       // Простой запрос для проверки ключа
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent('Hello, world!');
       
       return result !== null;
@@ -53,7 +53,7 @@ export class GeminiService {
    * @returns Улучшенный текст
    */
   async improveText(params: ImproveTextParams): Promise<string> {
-    const { text, prompt, model = 'gemini-pro' } = params;
+    const { text, prompt, model = 'gemini-1.5-flash' } = params;
     
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
