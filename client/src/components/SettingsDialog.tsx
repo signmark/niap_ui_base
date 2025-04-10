@@ -100,7 +100,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini' | 'qwen',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
@@ -265,6 +265,7 @@ export function SettingsDialog() {
   const testApifyKey = () => testApiKey('apify', apifyKey, setApifyTesting);
   const testClaudeKey = () => testApiKey('claude', claudeKey, setClaudeTesting);
   const testGeminiKey = () => testApiKey('gemini', geminiKey, setGeminiTesting);
+  const testQwenKey = () => testApiKey('qwen', qwenKey, setQwenTesting);
   // Токены социальных сетей (Instagram и Facebook) были перемещены
   // в настройки каждой кампании и убраны из глобальных настроек
   
@@ -289,6 +290,7 @@ export function SettingsDialog() {
       const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
       const claudeKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'claude');
       const geminiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'gemini');
+      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
       // Социальные сети перенесены в настройки кампаний
 
       if (perplexityKeyData) {
@@ -308,6 +310,9 @@ export function SettingsDialog() {
       }
       if (geminiKeyData) {
         setGeminiKey(geminiKeyData.api_key);
+      }
+      if (qwenKeyData) {
+        setQwenKey(qwenKeyData.api_key);
       }
       
       // Обработка XMLRiver ключа
@@ -353,6 +358,7 @@ export function SettingsDialog() {
         { name: 'fal_ai', key: falAiKey },
         { name: 'claude', key: claudeKey },
         { name: 'gemini', key: geminiKey },
+        { name: 'qwen', key: qwenKey },
         { name: 'xmlriver', key: xmlRiverCombinedKey }
       ];
       // Токены социальных сетей перенесены в настройки кампаний
@@ -640,6 +646,70 @@ export function SettingsDialog() {
           </div>
           {claudeTesting.status === 'error' && (
             <p className="text-sm text-red-500">{claudeTesting.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Qwen</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={qwenKey}
+              onChange={(e) => setQwenKey(e.target.value)}
+              placeholder="Введите API ключ Qwen"
+              className={cn("flex-1", !qwenKey && "border-amber-400 focus-visible:ring-amber-400")}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://help.aliyun.com/zh/dashscope/developer-reference/activate-dashscope-and-create-an-api-key', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ на сайте Alibaba Cloud</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testQwenKey}
+              disabled={!qwenKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {qwenTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : qwenTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : qwenTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для генерации и улучшения текста через Qwen (модель от Alibaba)
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функций улучшения и генерации текста</li>
+              <li>Поддерживает эффективную работу с многоязычным контентом</li>
+              <li>Ключ можно получить в <a href="https://help.aliyun.com/zh/dashscope/developer-reference/activate-dashscope-and-create-an-api-key" target="_blank" className="text-blue-500 hover:underline">консоли разработчика Alibaba Cloud</a></li>
+            </ul>
+          </div>
+          {qwenTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{qwenTesting.message}</p>
           )}
         </div>
         
