@@ -10,6 +10,37 @@ import { directusCrud } from './directus-crud';
 import { checkTokenExtractionRequest } from './token-extractor';
 
 /**
+ * Проверяет и корректирует URL поста в Telegram
+ * @param url Исходный URL
+ * @param platform Платформа
+ * @param messageId ID сообщения или поста
+ * @returns Корректный URL
+ */
+function ensureValidTelegramUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
+  // Если URL не определен, возвращаем пустую строку
+  if (!url) return '';
+  
+  // Логируем параметры для отладки
+  log(`Проверка URL: ${url}, платформа: ${platform}, messageId: ${messageId}`, 'scheduler');
+  
+  // Обрабатываем URL для Telegram
+  if (platform === 'telegram') {
+    // Проверяем формат URL для приватных каналов Telegram
+    // URL не содержит ID сообщения (проверяем, что после /c/NUMBER нет дальнейших слешей)
+    if (url.includes('/c/') && !url.includes('/', url.indexOf('/c/') + 3)) {
+      // URL не содержит ID сообщения - нужно добавить messageId
+      // Пример URL: https://t.me/c/230236310 -> https://t.me/c/230236310/123
+      const fixedUrl = `${url}/${messageId}`;
+      log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
+      return fixedUrl;
+    }
+  }
+  
+  // Для других платформ или если URL уже корректный, возвращаем без изменений
+  return url;
+}
+
+/**
  * Класс для планирования и выполнения автоматической публикации контента
  */
 export class PublishScheduler {
@@ -18,6 +49,36 @@ export class PublishScheduler {
   private checkIntervalMs = 60000; // проверяем каждую минуту
   // Для обратной совместимости со старым кодом (временное решение)
   // При перезапуске сервера список очищается
+  
+  /**
+   * Проверяет и корректирует URL поста в зависимости от платформы
+   * @param url Исходный URL
+   * @param platform Платформа
+   * @param messageId ID сообщения или поста
+   * @returns Корректный URL
+   */
+  private ensureValidPostUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
+    // Если URL не определен, возвращаем пустую строку
+    if (!url) return '';
+    
+    // Логируем параметры для отладки
+    log(`Проверка URL: ${url}, платформа: ${platform}, messageId: ${messageId}`, 'scheduler');
+    
+    // Обрабатываем URL для Telegram
+    if (platform === 'telegram') {
+      // Проверяем формат URL для приватных каналов Telegram
+      if (url.includes('/c/') && !url.includes('/', url.indexOf('/c/') + 3)) {
+        // URL не содержит ID сообщения - нужно добавить messageId
+        // Пример URL: https://t.me/c/230236310 -> https://t.me/c/230236310/123
+        const fixedUrl = `${url}/${messageId}`;
+        log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      }
+    }
+    
+    // Для других платформ или если URL уже корректный, возвращаем без изменений
+    return url;
+  }
   private processedContentIds = new Set<string>();
   
   // Инициализируем пустой список при создании экземпляра класса
@@ -491,8 +552,8 @@ export class PublishScheduler {
             status: 'published' as const,
             platform: platformNameForResult as SocialPlatform, // используем строку вместо объекта
             publishedAt: new Date(),
-            // Проверка и форматирование URL поста
-            postUrl: this.ensureValidPostUrl(result.postUrl || result.url, platformNameForResult, result.messageId || result.postId),
+            // Дополнительная проверка URL для Telegram - убедиться, что ссылка содержит message_id
+            postUrl: ensureValidTelegramUrl(result.postUrl || result.url, platformNameForResult, result.messageId || result.postId),
             postId: result.messageId || result.postId,
             error: null
           };
