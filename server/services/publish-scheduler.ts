@@ -228,11 +228,20 @@ export class PublishScheduler {
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
       const currentDate = new Date().toISOString();
 
-      // Фильтр для запроса: контент со статусом "scheduled" и scheduledAt <= текущее время
+      // Фильтр для запроса: контент со статусом "scheduled" и scheduled_at <= текущее время
+      // Directus API использует snake_case для имен полей
       const filter = {
         status: { _eq: 'scheduled' },
-        scheduled_at: { _lte: currentDate }
+        scheduled_at: { 
+          _lte: currentDate,
+          _nnull: true // Поле должно быть не null
+        }
       };
+      
+      // Дополнительно логируем SQL-запрос, который будет сгенерирован
+      log(`SQL-подобный запрос: SELECT * FROM campaign_content WHERE status = 'scheduled' AND scheduled_at <= '${currentDate}' AND scheduled_at IS NOT NULL`, 'scheduler');
+      
+      log(`Дата проверки шедулера: ${currentDate}`, 'scheduler');
 
       log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
       
