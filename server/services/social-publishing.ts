@@ -403,12 +403,31 @@ export class SocialPublishingService {
           // Для одиночного сообщения
           const message = response.data.result;
           log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
+          // Корректное формирование URL для поста в Telegram
+          // Важно: удаляем префикс -100 из ID для формирования правильной ссылки
+          // Для приватных чатов: https://t.me/c/CHAT_ID/MESSAGE_ID
+          // Для публичных каналов: https://t.me/USERNAME/MESSAGE_ID
+          
+          let postUrl;
+          
+          // Проверяем, имеет ли chatId формат числа или строки с @username
+          if (chatId.startsWith('@')) {
+            // Публичный канал: используем username без @
+            const username = chatId.substring(1);
+            postUrl = `https://t.me/${username}/${message.message_id}`;
+            log(`Формирование URL для публичного канала: ${postUrl}`, 'social-publishing');
+          } else {
+            // Приватный чат: используем формат с /c/
+            postUrl = `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`;
+            log(`Формирование URL для приватного чата: ${postUrl}`, 'social-publishing');
+          }
+          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: message.message_id.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+            postUrl: postUrl,
             userId: content.userId // Добавляем userId из контента
           };
         }
