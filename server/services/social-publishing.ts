@@ -105,41 +105,9 @@ export class SocialPublishingService {
    */
   async publishToTelegram(
     content: CampaignContent,
-    telegramSettings?: any
+    telegramSettings?: SocialMediaSettings['telegram']
   ): Promise<SocialPublication> {
-    // Поддерживаем разные структуры настроек
-    let token = null;
-    let chatId = null;
-    
-    // Логируем полученные настройки для отладки
-    log(`Полученные настройки Telegram: ${JSON.stringify(telegramSettings)}`, 'social-publishing');
-    
-    // Проверяем различные варианты структуры настроек
-    if (telegramSettings) {
-      if (telegramSettings.token) {
-        token = telegramSettings.token;
-      } else if (telegramSettings.telegram_bot_token) {
-        token = telegramSettings.telegram_bot_token;
-      } else if (telegramSettings.telegram?.token) {
-        token = telegramSettings.telegram.token;
-      } else if (telegramSettings.settings?.telegram_bot_token) {
-        token = telegramSettings.settings.telegram_bot_token;
-      }
-      
-      if (telegramSettings.chatId) {
-        chatId = telegramSettings.chatId;
-      } else if (telegramSettings.telegram_chat_id) {
-        chatId = telegramSettings.telegram_chat_id;
-      } else if (telegramSettings.telegram?.chatId) {
-        chatId = telegramSettings.telegram.chatId;
-      } else if (telegramSettings.settings?.telegram_chat_id) {
-        chatId = telegramSettings.settings.telegram_chat_id;
-      }
-    }
-    
-    log(`Извлеченные данные Telegram: token=${token ? 'найден' : 'не найден'}, chatId=${chatId || 'не найден'}`, 'social-publishing');
-    
-    if (!token || !chatId) {
+    if (!telegramSettings?.token || !telegramSettings?.chatId) {
       return {
         platform: 'telegram',
         status: 'failed',
@@ -288,15 +256,12 @@ export class SocialPublishingService {
         // Отправка группы изображений (медиагруппы) через sendMediaGroup
         log(`Отправка медиагруппы в Telegram с ${images.length} изображениями через API sendMediaGroup`, 'social-publishing');
         
-        // Проверка длины подписи согласно документации
-        const isTextShort = truncatedCaption.length <= 1024;
-        
         // Формируем массив объектов медиа для API Telegram
         const mediaGroup = images.map((url, index) => ({
           type: 'photo',
           media: url,
-          // Добавляем подпись только к первому изображению и только если текст помещается в подпись
-          ...(index === 0 && isTextShort ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
+          // Добавляем подпись только к первому изображению
+          ...(index === 0 ? { caption: truncatedCaption, parse_mode: 'HTML' } : {})
         }));
         
         log(`Сформирована медиагруппа для Telegram: ${JSON.stringify(mediaGroup)}`, 'social-publishing');
@@ -305,40 +270,20 @@ export class SocialPublishingService {
         const requestBody = {
           chat_id: formattedChatId,
           media: mediaGroup
-        };
+        , parse_mode: "HTML"};
         
         log(`Отправляем запрос к Telegram API (sendMediaGroup): ${JSON.stringify(requestBody)}`, 'social-publishing');
         
         response = await axios.post(`${baseUrl}/sendMediaGroup`, requestBody, {
           headers: { 'Content-Type': 'application/json' }
         });
-        
-        // Если текст слишком длинный для подписи к медиа, отправляем его отдельным сообщением
-        if (!isTextShort) {
-          log(`Текст слишком длинный для подписи (${truncatedCaption.length} > 1024), отправляем отдельно`, 'social-publishing');
-          
-          const textMessageBody = {
-            chat_id: formattedChatId,
-            text: truncatedCaption,
-            parse_mode: 'HTML'
-          };
-          
-          try {
-            await axios.post(`${baseUrl}/sendMessage`, textMessageBody, {
-              headers: { 'Content-Type': 'application/json' }
-            });
-            log(`Дополнительное текстовое сообщение успешно отправлено`, 'social-publishing');
-          } catch (textError) {
-            log(`Ошибка при отправке дополнительного текстового сообщения: ${textError}`, 'social-publishing');
-          }
-        }
       } else if (images.length === 1) {
         // Отправка одиночного изображения с подписью
         log(`Отправка изображения в Telegram для типа ${content.contentType} с URL: ${images[0]}`, 'social-publishing');
         
         const photoRequestBody = {
           chat_id: formattedChatId, 
-          photo: images[0],
+          photo: images[0], parse_mode: "HTML"13560,
           caption: truncatedCaption,
           parse_mode: 'HTML'
         };
@@ -414,84 +359,24 @@ export class SocialPublishingService {
           
           // Берем ID первого сообщения в группе для ссылки
           const firstMessageId = messages[0].message_id;
-          
-          // Корректное формирование URL для поста в Telegram (группа сообщений)
-          // Важно: удаляем префикс -100 из ID для формирования правильной ссылки
-          // Для приватных чатов: https://t.me/c/CHAT_ID/MESSAGE_ID
-          // Для публичных каналов: https://t.me/USERNAME/MESSAGE_ID
-          
-          let postUrl;
-          
-          // Проверяем, имеет ли chatId формат числа или строки с @username
-          if (chatId.startsWith('@')) {
-            // Публичный канал: используем username без @
-            const username = chatId.substring(1);
-            postUrl = `https://t.me/${username}/${firstMessageId}`;
-            log(`Формирование URL для публичного канала (группа сообщений): ${postUrl}`, 'social-publishing');
-          } else {
-            // Формирование правильного URL для приватного чата
-            // Учитываем разные форматы ID: если начинается с -1001 или -1002, приводим к нужному формату
-            let cleanChatId = formattedChatId;
-            if (cleanChatId.startsWith('-1001')) {
-              cleanChatId = cleanChatId.replace('-1001', '');
-            } else if (cleanChatId.startsWith('-1002')) {
-              cleanChatId = cleanChatId.replace('-1002', '');
-            } else if (cleanChatId.startsWith('-100')) {
-              cleanChatId = cleanChatId.replace('-100', '');
-            }
-            
-            postUrl = `https://t.me/c/${cleanChatId}/${firstMessageId}`;
-            log(`Формирование URL для приватного чата (группа сообщений): ${postUrl}`, 'social-publishing');
-          }
-          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: firstMessageId.toString(),
-            postUrl: postUrl,
+            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`,
             userId: content.userId // Добавляем userId из контента
           };
         } else {
           // Для одиночного сообщения
           const message = response.data.result;
           log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
-          // Корректное формирование URL для поста в Telegram
-          // Важно: удаляем префикс -100 из ID для формирования правильной ссылки
-          // Для приватных чатов: https://t.me/c/CHAT_ID/MESSAGE_ID
-          // Для публичных каналов: https://t.me/USERNAME/MESSAGE_ID
-          
-          let postUrl;
-          
-          // Проверяем, имеет ли chatId формат числа или строки с @username
-          if (chatId.startsWith('@')) {
-            // Публичный канал: используем username без @
-            const username = chatId.substring(1);
-            postUrl = `https://t.me/${username}/${message.message_id}`;
-            log(`Формирование URL для публичного канала: ${postUrl}`, 'social-publishing');
-          } else {
-            // Приватный чат: используем формат с /c/
-            // Формирование правильного URL для приватного чата
-            // Учитываем разные форматы ID: если начинается с -1001 или -1002, приводим к нужному формату
-            let cleanChatId = formattedChatId;
-            if (cleanChatId.startsWith('-1001')) {
-              cleanChatId = cleanChatId.replace('-1001', '');
-            } else if (cleanChatId.startsWith('-1002')) {
-              cleanChatId = cleanChatId.replace('-1002', '');
-            } else if (cleanChatId.startsWith('-100')) {
-              cleanChatId = cleanChatId.replace('-100', '');
-            }
-            
-            postUrl = `https://t.me/c/${cleanChatId}/${message.message_id}`;
-            log(`Формирование URL для приватного чата: ${postUrl}`, 'social-publishing');
-          }
-          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: message.message_id.toString(),
-            postUrl: postUrl,
+            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
             userId: content.userId // Добавляем userId из контента
           };
         }
@@ -1614,32 +1499,7 @@ export class SocialPublishingService {
       }
       
       // Обновляем информацию о платформе
-      // platform может быть строкой или объектом, обрабатываем оба случая
-      const platformKey = typeof platform === 'string' ? platform : (platform as any).toString();
-      log(`Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
-      log(`Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
-      
-      // Проверяем наличие URL-а в publicationResult
-      if (!publicationResult.postUrl && content.socialPlatforms) {
-        // Пытаемся извлечь URL из существующих данных, если в текущем обновлении его нет
-        try {
-          let existingPlatforms = content.socialPlatforms;
-          if (typeof existingPlatforms === 'string') {
-            existingPlatforms = JSON.parse(existingPlatforms);
-          }
-          
-          // Если у платформы уже есть сохраненный URL, используем его
-          if (existingPlatforms[platformKey] && existingPlatforms[platformKey].postUrl) {
-            log(`Найден сохраненный URL ${existingPlatforms[platformKey].postUrl} для платформы ${platformKey}`, 'social-publishing');
-            publicationResult.postUrl = existingPlatforms[platformKey].postUrl;
-          }
-        } catch (e) {
-          log(`Ошибка при попытке извлечь сохраненный URL: ${e}`, 'social-publishing');
-        }
-      }
-      
-      // Обновляем информацию о публикации
-      socialPlatforms[platformKey] = publicationResult;
+      socialPlatforms[platform] = publicationResult;
       
       // Определяем общий статус публикации на основе статусов всех платформ
       const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
@@ -2122,27 +1982,69 @@ export class SocialPublishingService {
 
   private async getSystemToken(): Promise<string | null> {
     try {
+      // Импортируем directusAuthManager динамически, чтобы избежать циклических зависимостей
+      const directusAuthManager = await import('./directus-auth-manager').then(m => m.directusAuthManager);
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      
+      // 1. Приоритет - авторизация через логин/пароль (если есть учетные данные)
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
-      if (!email || !password) {
-        log(`Отсутствуют учетные данные администратора Directus в переменных окружения`, 'social-publishing');
-        return null;
+      if (email && password) {
+        log(`Попытка авторизации администратора с учетными данными из env`, 'social-publishing');
+        try {
+          const adminSession = await directusAuthManager.login(email, password);
+          if (adminSession) {
+            log(`Авторизация администратора успешна через DirectusAuthManager`, 'social-publishing');
+            return adminSession.token;
+          }
+        } catch (e) {
+          log(`Ошибка авторизации администратора через DirectusAuthManager: ${e}`, 'social-publishing');
+        }
       }
       
-      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
-      
-      const response = await axios.post(`${directusUrl}/auth/login`, {
-        email,
-        password
-      });
-      
-      if (response.data && response.data.data && response.data.data.access_token) {
-        log(`Успешно получен токен администратора Directus`, 'social-publishing');
-        return response.data.data.access_token;
+      // 2. Вариант - использовать хранящуюся сессию администратора
+      try {
+        const adminSession = directusAuthManager.getSession(adminUserId);
+        if (adminSession && adminSession.token) {
+          log(`Использование существующей авторизации администратора`, 'social-publishing');
+          return adminSession.token;
+        }
+      } catch (e) {
+        log(`Не удалось получить существующую сессию администратора: ${e}`, 'social-publishing');
       }
       
-      log(`Не удалось получить токен администратора Directus: Неверный формат ответа`, 'social-publishing');
+      // 3. Последний вариант - использовать getAuthToken напрямую
+      try {
+        const token = await directusAuthManager.getAuthToken(adminUserId);
+        if (token) {
+          log(`Получен токен администратора через getAuthToken`, 'social-publishing');
+          return token;
+        }
+      } catch (e) {
+        log(`Не удалось получить токен через getAuthToken: ${e}`, 'social-publishing');
+      }
+      
+      // 4. Запасной метод - прямой запрос к API Directus (старый способ)
+      if (email && password) {
+        try {
+          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+          
+          const response = await axios.post(`${directusUrl}/auth/login`, {
+            email,
+            password
+          });
+          
+          if (response.data && response.data.data && response.data.data.access_token) {
+            log(`Успешно получен токен администратора через прямой API запрос`, 'social-publishing');
+            return response.data.data.access_token;
+          }
+        } catch (error: any) {
+          log(`Ошибка при получении токена администратора через API: ${error.message}`, 'social-publishing');
+        }
+      }
+      
+      log(`Не удалось получить токен администратора Directus ни одним из способов`, 'social-publishing');
       return null;
     } catch (error: any) {
       log(`Ошибка при получении токена администратора Directus: ${error.message}`, 'social-publishing');

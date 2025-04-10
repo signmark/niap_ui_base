@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест публикации в Telegram</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    textarea {
+      min-height: 200px;
+      resize: vertical;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .success {
+      background-color: #f0fdf4;
+      border-color: #86efac;
+    }
+    .error {
+      background-color: #fef2f2;
+      border-color: #fecaca;
+    }
+    .status {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .image-preview {
+      max-width: 100%;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .image-container {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .additional-images-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .additional-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .toggle-section {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #2563eb;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .advanced-options {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      display: none;
+    }
+    .preset-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .preset-button {
+      background-color: #e2e8f0;
+      color: #334155;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+    .preset-button:hover {
+      background-color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Тест публикации в Telegram</h1>
+    
+    <div class="preset-buttons">
+      <button type="button" class="preset-button" data-preset="simple">Простой текст</button>
+      <button type="button" class="preset-button" data-preset="formatted">Форматированный текст</button>
+      <button type="button" class="preset-button" data-preset="with-image">Текст с изображением</button>
+      <button type="button" class="preset-button" data-preset="multiple-images">Несколько изображений</button>
+      <button type="button" class="preset-button" data-preset="long-text">Длинный текст</button>
+    </div>
+    
+    <form id="telegramForm">
+      <div class="form-group">
+        <label for="title">Заголовок (опционально)</label>
+        <input type="text" id="title" name="title" placeholder="Введите заголовок">
+      </div>
+      
+      <div class="form-group">
+        <label for="content">Содержимое (HTML)</label>
+        <textarea id="content" name="content" placeholder="Введите HTML-текст для отправки"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="imageUrl">URL изображения (опционально)</label>
+        <input type="text" id="imageUrl" name="imageUrl" placeholder="Введите URL изображения">
+        <div class="image-container" id="imagePreviewContainer" style="display: none;">
+          <img id="imagePreview" class="image-preview" src="" alt="Предпросмотр изображения">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="additionalImages">Дополнительные изображения (опционально, по одному URL на строку)</label>
+        <textarea id="additionalImages" name="additionalImages" placeholder="Введите URLs дополнительных изображений, по одному на строку" style="min-height: 100px;"></textarea>
+        <div class="additional-images-container" id="additionalImagesPreview"></div>
+      </div>
+      
+      <div class="toggle-section" id="toggleAdvanced">
+        Расширенные настройки ▾
+      </div>
+      
+      <div class="advanced-options" id="advancedOptions">
+        <div class="form-group">
+          <label for="testToken">Токен Telegram (опционально, по умолчанию из .env)</label>
+          <input type="text" id="testToken" name="testToken" placeholder="Введите токен Telegram бота">
+        </div>
+        
+        <div class="form-group">
+          <label for="testChatId">ID чата Telegram (опционально, по умолчанию из .env)</label>
+          <input type="text" id="testChatId" name="testChatId" placeholder="Введите ID чата Telegram">
+        </div>
+      </div>
+      
+      <button type="submit">Отправить в Telegram</button>
+    </form>
+    
+    <div class="result" id="result"></div>
+  </div>
+  
+  <script>
+    // Обработчик для открытия/закрытия расширенных настроек
+    document.getElementById('toggleAdvanced').addEventListener('click', function() {
+      const advancedOptions = document.getElementById('advancedOptions');
+      if (advancedOptions.style.display === 'none' || advancedOptions.style.display === '') {
+        advancedOptions.style.display = 'block';
+        this.textContent = 'Расширенные настройки ▴';
+      } else {
+        advancedOptions.style.display = 'none';
+        this.textContent = 'Расширенные настройки ▾';
+      }
+    });
+    
+    // Обработчик предпросмотра основного изображения
+    document.getElementById('imageUrl').addEventListener('input', function() {
+      const imageUrl = this.value.trim();
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const imagePreview = document.getElementById('imagePreview');
+      
+      if (imageUrl) {
+        imagePreview.src = imageUrl;
+        previewContainer.style.display = 'block';
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+    
+    // Обработчик предпросмотра дополнительных изображений
+    document.getElementById('additionalImages').addEventListener('input', function() {
+      const urls = this.value.trim().split('\n').filter(url => url.trim());
+      const previewContainer = document.getElementById('additionalImagesPreview');
+      
+      previewContainer.innerHTML = '';
+      
+      urls.forEach(url => {
+        if (url.trim()) {
+          const img = document.createElement('img');
+          img.src = url.trim();
+          img.className = 'additional-image';
+          img.alt = 'Дополнительное изображение';
+          previewContainer.appendChild(img);
+        }
+      });
+    });
+    
+    // Обработчик отправки формы
+    document.getElementById('telegramForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = '<div class="status">Отправка данных...</div>';
+      resultEl.className = 'result';
+      
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+      
+      // Обработка дополнительных изображений
+      const additionalImagesText = document.getElementById('additionalImages').value.trim();
+      const additionalImages = additionalImagesText ? 
+        additionalImagesText.split('\n')
+          .map(url => url.trim())
+          .filter(url => url) : 
+        [];
+      
+      const testToken = document.getElementById('testToken').value.trim();
+      const testChatId = document.getElementById('testChatId').value.trim();
+      
+      if (!content) {
+        resultEl.innerHTML = '<div class="status">Ошибка: Контент не может быть пустым</div>';
+        resultEl.className = 'result error';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/test/telegram-post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            imageUrl: imageUrl || undefined,
+            additionalImages: additionalImages.length > 0 ? additionalImages : undefined,
+            testToken: testToken || undefined,
+            testChatId: testChatId || undefined
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          resultEl.className = 'result success';
+          resultEl.innerHTML = `
+            <div class="status">Успешно отправлено!</div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+            ${data.result?.postUrl ? `<p><a href="${data.result.postUrl}" target="_blank">Открыть публикацию в Telegram</a></p>` : ''}
+          `;
+        } else {
+          resultEl.className = 'result error';
+          resultEl.innerHTML = `
+            <div class="status">Ошибка при отправке</div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultEl.className = 'result error';
+        resultEl.innerHTML = `
+          <div class="status">Ошибка при отправке</div>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    // Предустановленные шаблоны для быстрого тестирования
+    const presets = {
+      simple: {
+        title: 'Простой текст',
+        content: 'Тестовое сообщение для публикации в Telegram',
+        imageUrl: '',
+        additionalImages: ''
+      },
+      formatted: {
+        title: 'Форматированный текст',
+        content: '<b>Жирный текст</b>\n<i>Курсив</i>\n<u>Подчеркнутый</u>\n<code>Моноширинный текст</code>\n<a href="https://t.me">Ссылка на Telegram</a>',
+        imageUrl: '',
+        additionalImages: ''
+      },
+      'with-image': {
+        title: 'Текст с изображением',
+        content: '<b>Заголовок с изображением</b>\n\nЭто тестовый пост с одним изображением и <i>форматированным текстом</i>.',
+        imageUrl: 'https://img.freepik.com/free-photo/green-park-view_1417-1492.jpg',
+        additionalImages: ''
+      },
+      'multiple-images': {
+        title: 'Несколько изображений',
+        content: '<b>Пост с несколькими изображениями</b>\n\nЭтот тестовый пост содержит основное изображение и несколько дополнительных изображений.',
+        imageUrl: 'https://img.freepik.com/free-photo/green-park-view_1417-1492.jpg',
+        additionalImages: 'https://img.freepik.com/free-photo/painting-mountain-lake-with-mountain-background_188544-9126.jpg\nhttps://img.freepik.com/free-photo/autumn-landscape-with-lake-forest_1150-19350.jpg\nhttps://img.freepik.com/free-photo/beautiful-scenery-rock-formations-by-sea-queens-bath-kauai-hawaii-sunset_181624-36857.jpg'
+      },
+      'long-text': {
+        title: 'Длинный текст',
+        content: '<b>Очень длинный пост для тестирования</b>\n\n' + '<p>Это очень длинный параграф текста для тестирования обработки длинных сообщений в Telegram. API Telegram имеет ограничение на длину сообщений в 4096 символов, поэтому при превышении этого лимита наш сервис должен корректно разбивать сообщение на части.</p>\n'.repeat(20) + '<i>Конец длинного сообщения.</i>',
+        imageUrl: 'https://img.freepik.com/free-photo/green-park-view_1417-1492.jpg',
+        additionalImages: ''
+      }
+    };
+    
+    // Обработчик кнопок с предустановками
+    document.querySelectorAll('.preset-button').forEach(button => {
+      button.addEventListener('click', function() {
+        const presetName = this.getAttribute('data-preset');
+        const preset = presets[presetName];
+        
+        if (preset) {
+          document.getElementById('title').value = preset.title;
+          document.getElementById('content').value = preset.content;
+          document.getElementById('imageUrl').value = preset.imageUrl;
+          document.getElementById('additionalImages').value = preset.additionalImages;
+          
+          // Триггер событий для обновления предпросмотров
+          const imageUrlInput = document.getElementById('imageUrl');
+          const additionalImagesInput = document.getElementById('additionalImages');
+          
+          const inputEvent = new Event('input');
+          imageUrlInput.dispatchEvent(inputEvent);
+          additionalImagesInput.dispatchEvent(inputEvent);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

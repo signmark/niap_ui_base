@@ -1,131 +1,162 @@
 /**
- * Тестовые маршруты API
- * Используются для тестирования различных функций без изменения основного кода
+ * Тестовые маршруты для проверки API публикации контента
+ * 
+ * Этот файл содержит тестовые маршруты для проверки работы API публикации контента
+ * в различные социальные сети, включая специальные маршруты для проверки HTML-форматирования
+ * в Telegram.
  */
+
 import express, { Request, Response } from 'express';
-import { telegramService } from '../services/social/telegram-service';
-import { instagramService } from '../services/social/instagram-service';
-import { socialPublishingService } from '../services/social/index';
-import { storage } from '../storage';
-import { log } from '../utils/logger';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { CampaignContent } from '../../shared/types';
+import { formatHtmlForTelegram, standardizeTelegramTags, fixUnclosedTags, postProcessHtml } from '../utils/telegram-formatter';
+import { telegramService } from '../services/social/telegram-service';
 
-// Создаем роутер для тестовых маршрутов
-const testRouter = express.Router();
+// Создаем роутер
+const router = express.Router();
 
-// Middleware для обработки GET запросов к маршрутам -post
-testRouter.get('/instagram-post', (req: Request, res: Response) => {
-  // Устанавливаем заголовки для предотвращения кэширования и указания типа контента
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  
-  return res.status(400).json({
-    success: false,
-    error: 'Этот маршрут требует POST-запрос с данными',
-    method: 'POST',
-    requiredParams: ['text', 'token', 'businessAccountId', 'imageUrl'],
-    example: {
-      text: "Тестовый пост для Instagram",
-      token: "EAA...",
-      businessAccountId: "17841422577074562",
-      imageUrl: "https://i.imgur.com/example.jpg"
-    }
+// Функция для стандартизации HTML-тегов для Telegram (импортируем её из telegram-formatter.ts)
+
+// Используем функцию postProcessHtml из telegram-formatter.ts
+
+// Базовый маршрут для проверки работоспособности API
+router.get('/', async (req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    message: 'API для тестирования доступно',
+    timestamp: new Date().toISOString()
   });
 });
 
 /**
- * Тестовый маршрут для проверки форматирования текста для Telegram
- * POST /api/test/format-telegram
+ * Маршрут для прямой отправки HTML-текста в Telegram
+ * 
+ * Этот маршрут используется для тестирования метода sendRawHtmlToTelegram
+ * и проверки корректного форматирования HTML-текста при отправке в Telegram.
+ * 
+ * Принимает:
+ * - text: HTML-текст для отправки
+ * - chatId: ID чата для отправки (опционально, по умолчанию берется из .env)
  */
-testRouter.post('/format-telegram', async (req: Request, res: Response) => {
+router.post('/raw-html-telegram', async (req: Request, res: Response) => {
   try {
-    const { text } = req.body;
+    const { text, chatId, autoFixHtml = true } = req.body; // Включаем автоисправление по умолчанию
     
-    // Проверяем наличие обязательного параметра
     if (!text) {
       return res.status(400).json({
         success: false,
-        error: 'Обязательный параметр: text'
+        error: 'Отсутствует текст для отправки (параметр text)'
       });
     }
     
-    console.log(`[Test API] Запрос на форматирование текста для Telegram`);
-    console.log(`[Test API] Исходный текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+    // Используем указанный chatId или значение из .env
+    const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID || undefined;
     
-    // Используем функцию из сервиса для форматирования текста
-    let formattedText = telegramService.formatTextForTelegram(text);
+    if (!targetChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует ID чата Telegram. Укажите его в запросе или в .env'
+      });
+    }
     
-    // Применяем агрессивный исправитель тегов для закрытия всех тегов
-    formattedText = telegramService.aggressiveTagFixer(formattedText);
+    console.log(`[Test API] Отправка HTML-текста в Telegram, чат ID: ${targetChatId}`);
+    console.log(`[Test API] Текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+    console.log(`[Test API] Автоисправление HTML: ${autoFixHtml ? 'включено' : 'отключено'}`);
+
+    // Подготавливаем текст для отправки
+    let processedText = text;
     
-    console.log(`[Test API] Отформатированный текст: ${formattedText.substring(0, 100)}${formattedText.length > 100 ? '...' : ''}`);
+    // Если autoFixHtml=true, предварительно исправляем незакрытые теги
+    if (autoFixHtml) {
+      // Используем агрессивный метод для исправления всех возможных проблем с HTML тегами
+      processedText = formatHtmlForTelegram(text);
+      console.log(`[Test API] Текст после агрессивного исправления HTML: ${processedText.substring(0, 100)}${processedText.length > 100 ? '...' : ''}`);
+    }
     
-    // Возвращаем результат
+    // Инициализируем сервис с токеном и ID чата
+    telegramService.initialize(
+      process.env.TELEGRAM_BOT_TOKEN || '',
+      targetChatId
+    );
+    
+    // Используем прямой метод отправки HTML-текста
+    // Внутри метода также производится автоматическое исправление тегов
+    const result = await telegramService.sendRawHtmlToTelegram(processedText);
+    
+    // Если result.success === true то отправка прошла успешно,
+    // в результате есть messageId и messageUrl
+    console.log(`[Test API] Результат отправки: ${JSON.stringify(result)}`);
+    
+    // Возвращаем результат клиенту
     return res.json({
-      success: true,
-      originalText: text,
-      formattedText: formattedText,
-      containsHtml: formattedText.includes('<') && formattedText.includes('>')
+      success: result.success,
+      messageId: result.messageId,
+      messageUrl: result.messageUrl,
+      chatId: targetChatId,
+      text: text,
+      result: result.result || result,
+      ...(result.error ? { error: result.error } : {})
     });
   } catch (error: any) {
-    console.error('Ошибка при форматировании текста для Telegram:', error);
+    console.error('[Test API] Ошибка при отправке HTML в Telegram:', error);
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Неизвестная ошибка'
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
 
 /**
- * Обработчик GET запросов для тестового маршрута Telegram
- * GET /api/test/telegram-post
+ * Маршрут для тестирования оптимизированной публикации в Telegram с HTML-форматированием
+ * 
+ * Этот маршрут позволяет тестировать всю цепочку публикации контента в Telegram,
+ * включая обработку HTML-форматирования, но используя оптимизированный метод publishToPlatform
+ * с прямой отправкой HTML.
+ * 
+ * Принимает:
+ * - content: Текст с HTML-форматированием
+ * - chatId: ID чата для отправки (опционально, берется из .env)
+ * - imageUrl: URL изображения для отправки (опционально)
  */
-testRouter.get('/telegram-post', (req: Request, res: Response) => {
-  // Устанавливаем заголовки для предотвращения кэширования и указания типа контента
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  
-  return res.status(400).json({
-    success: false,
-    error: 'Этот маршрут требует POST-запрос с данными',
-    method: 'POST',
-    requiredParams: ['text', 'chatId', 'token'],
-    example: {
-      text: "Тестовое сообщение для Telegram",
-      chatId: "-1002302366310", 
-      token: "7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU"
-    }
-  });
-});
-
-/**
- * Тестовый маршрут для проверки отправки сообщений в Telegram
- * POST /api/test/telegram-post
- */
-testRouter.post('/telegram-post', async (req: Request, res: Response) => {
+router.post('/optimized-platform-publish', async (req: Request, res: Response) => {
   try {
-    const { text, chatId, token, imageUrl, additionalImages } = req.body;
+    const { content, chatId, imageUrl } = req.body;
     
-    // Проверяем наличие обязательных параметров
-    if (!text || !chatId || !token) {
+    if (!content) {
       return res.status(400).json({
         success: false,
-        error: 'Обязательные параметры: text, chatId и token'
+        error: 'Отсутствует контент для публикации (параметр content)'
       });
     }
     
-    // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
-    const testContent = {
-      id: 'test-id',
-      title: 'Тестовый заголовок',
-      content: text, // Используем content вместо text
+    // Используем указанный chatId или значение из .env
+    const targetChatId = chatId || process.env.TELEGRAM_CHAT_ID || undefined;
+    
+    if (!targetChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует ID чата Telegram. Укажите его в запросе или в .env'
+      });
+    }
+    
+    console.log(`[Test API] Оптимизированная публикация в Telegram, чат ID: ${targetChatId}`);
+    console.log(`[Test API] Контент: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
+    
+    // Применяем агрессивное исправление HTML к контенту для повышения надежности
+    let processedContent = formatHtmlForTelegram(content);
+    console.log(`[Test API] Контент после агрессивного исправления HTML: ${processedContent.substring(0, 100)}${processedContent.length > 100 ? '...' : ''}`);
+    
+    // Создаем тестовый контент для публикации
+    const testContent: CampaignContent = {
+      id: uuidv4(),
+      title: 'Тестовая публикация',
+      content: processedContent, // Используем исправленный контент
       contentType: 'text',
-      imageUrl: imageUrl || '',
-      additionalImages: additionalImages || [],
+      imageUrl: imageUrl || null,
+      additionalImages: [],
       status: 'draft',
       userId: 'test-user',
       campaignId: 'test-campaign',
@@ -136,772 +167,742 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
       metadata: {}
     };
     
-    // Отправляем тестовое сообщение в Telegram
-    const result = await telegramService.publishToTelegram(testContent, {
-      token,
-      chatId
-    });
+    // Настраиваем параметры для Telegram
+    const telegramSettings = {
+      token: process.env.TELEGRAM_BOT_TOKEN || '',
+      chatId: targetChatId
+    };
     
-    // Логируем результат для отладки
-    console.log(`[Test API] Результат отправки в Telegram: ${JSON.stringify(result)}`);
+    // Инициализируем telegramService с нашими настройками
+    telegramService.initialize(
+      telegramSettings.token,
+      telegramSettings.chatId
+    );
     
-    // Возвращаем обработанный результат
+    // Публикуем контент с использованием оптимизированного метода
+    const result = await telegramService.publishToPlatform(testContent);
+    
+    if (!result) {
+      return res.status(500).json({
+        success: false,
+        error: 'Не удалось опубликовать контент в Telegram',
+        details: 'Нет ответа от сервиса публикации'
+      });
+    }
+    
+    console.log(`[Test API] Публикация успешно отправлена, URL: ${result.postUrl}`);
+    
     return res.json({
       success: true,
       messageId: result.messageId,
       postUrl: result.postUrl,
-      platform: result.platform,
-      status: result.status,
-      data: result
+      chatId: targetChatId,
+      content: content,
+      result: result
     });
   } catch (error: any) {
-    console.error('Ошибка при отправке сообщения в Telegram:', error);
+    console.error('[Test API] Ошибка при публикации в Telegram:', error);
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Неизвестная ошибка'
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
 
 /**
- * Тестовый маршрут для проверки форматирования URL Telegram
- * GET /api/test/telegram-url
+ * Маршрут для тестирования публикации в Instagram
+ * Этот маршрут принимает токен и ID бизнес-аккаунта напрямую в запросе,
+ * что облегчает тестирование без необходимости настройки кампании
  */
-testRouter.get('/telegram-url', (req: Request, res: Response) => {
+router.post('/instagram-post', async (req: Request, res: Response) => {
   try {
-    const { chatId, messageId, chatUsername } = req.query;
+    const { token, businessAccountId, imageUrl, caption } = req.body;
     
-    // Проверяем наличие обязательных параметров
-    if (!chatId) {
+    if (!token || !businessAccountId || !imageUrl) {
       return res.status(400).json({
         success: false,
-        error: 'Обязательный параметр: chatId'
+        error: 'Необходимо указать token, businessAccountId и imageUrl'
       });
     }
     
-    // Форматируем chatId для API
-    let formattedChatId = chatId as string;
-    if (formattedChatId.startsWith('@')) {
-      formattedChatId = formattedChatId.substring(1);
-    } else if (formattedChatId.startsWith('-100')) {
-      formattedChatId = formattedChatId.substring(4);
-    }
+    console.log(`[Test API] Тестовая публикация в Instagram, businessAccountId: ${businessAccountId}`);
+    console.log(`[Test API] Изображение: ${imageUrl}`);
+    console.log(`[Test API] Подпись: ${caption ? caption.substring(0, 50) + '...' : 'не указана'}`);
     
-    // Форматируем URL
-    const url = telegramService.formatTelegramUrl(
-      chatId as string,
-      formattedChatId,
-      messageId ? Number(messageId) : undefined,
-      chatUsername as string | undefined
-    );
-    
-    // Возвращаем результат
-    return res.json({
-      success: true,
-      data: {
-        url,
-        originalChatId: chatId,
-        formattedChatId,
-        messageId: messageId || null,
-        chatUsername: chatUsername || null
-      }
-    });
-  } catch (error: any) {
-    console.error('Ошибка при форматировании URL Telegram:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки исправления незакрытых HTML-тегов
- * POST /api/test/fix-html-tags
- */
-testRouter.post('/fix-html-tags', async (req: Request, res: Response) => {
-  try {
-    const { text } = req.body;
-    
-    // Проверяем наличие обязательных параметров
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательный параметр: text'
-      });
-    }
-    
-    console.log(`[Test API] Запрос на исправление HTML-тегов`);
-    console.log(`[Test API] Исходный текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
-    
-    // Используем функцию из сервиса для исправления тегов
-    // Создаем временный экземпляр TelegramService для доступа к приватным методам
-    const tempTelegramService = telegramService;
-    
-    // Применяем метод исправления тегов
-    const fixedWithBasic = tempTelegramService.fixUnclosedTags(text);
-    
-    // Форматируем текст для Telegram через публичный API метод
-    const formattedText = tempTelegramService.formatTextForTelegram(text);
-    
-    // Возвращаем результаты обработки
-    return res.json({
-      success: true,
-      originalText: text,
-      fixedWithBasic,
-      formattedText,
-      comparison: {
-        originalLength: text.length,
-        basicFixLength: fixedWithBasic.length,
-        formattedTextLength: formattedText.length
-      }
-    });
-  } catch (error: any) {
-    console.error('[Test API] Ошибка при исправлении HTML-тегов:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки HTML-форматирования с использованием настроек кампании
- * POST /api/test/telegram-html
- */
-testRouter.post('/telegram-html', async (req: Request, res: Response) => {
-  // Устанавливаем правильный Content-Type для ответа
-  res.setHeader('Content-Type', 'application/json');
-  try {
-    const { text, campaignId } = req.body;
-    
-    // Проверяем наличие обязательных параметров
-    if (!text || !campaignId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательные параметры: text и campaignId'
-      });
-    }
-    
-    console.log(`[Test API] Запрос на тестирование HTML-форматирования для кампании ${campaignId}`);
-    
-    // Получаем настройки кампании и токен администратора
-    
-    // Получаем токен администратора
-    const adminToken = await storage.getAdminToken();
-    console.log(`[Test API] Токен администратора: ${adminToken ? 'получен' : 'не получен'}`);
-    
-    const campaign = await storage.getCampaignById(campaignId);
-    
-    if (!campaign || !campaign.settings) {
-      return res.status(404).json({
-        success: false,
-        error: 'Кампания не найдена или не имеет настроек'
-      });
-    }
-    
-    console.log(`[Test API] Получены настройки кампании: ${JSON.stringify(campaign.settings)}`);
-    
-    // Проверяем настройки Telegram
-    if (!campaign.settings.telegram || !campaign.settings.telegram.token || !campaign.settings.telegram.chatId) {
-      return res.status(400).json({
-        success: false,
-        error: 'В настройках кампании отсутствуют настройки Telegram'
-      });
-    }
-    
-    // Формируем тестовый контент
-    const testContent = {
-      id: `test-${Date.now()}`,
-      title: 'Тест HTML-форматирования',
-      content: text,
-      contentType: 'text',
-      imageUrl: '',
-      additionalImages: [],
-      status: 'draft',
+    // Создаем тестовый контент
+    const testContent: CampaignContent = {
+      id: uuidv4(),
       userId: 'test-user',
-      campaignId: campaignId,
-      socialPlatforms: ['telegram'],
-      createdAt: new Date(),
-      hashtags: [],
-      links: [],
-      metadata: {}
-    };
-    
-    // Отправляем тестовое сообщение в Telegram с настройками из кампании
-    const result = await telegramService.publishToTelegram(testContent, {
-      token: campaign.settings.telegram.token,
-      chatId: campaign.settings.telegram.chatId
-    });
-    
-    // Логируем результат для отладки
-    console.log(`[Test API] Результат отправки HTML-сообщения: ${JSON.stringify(result)}`);
-    
-    // Возвращаем результат
-    return res.json({
-      success: true,
-      postUrl: result.postUrl,
-      platform: result.platform,
-      status: result.status,
-      data: result
-    });
-  } catch (error: any) {
-    console.error('[Test API] Ошибка при тестировании HTML-форматирования:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки форматирования HTML для Telegram на стороне клиента
- * POST /api/test/format-client-html
- * 
- * Пример использования:
- * POST /api/test/format-client-html
- * Body: {"html": "<p>Тестовый <strong>жирный</strong> текст с <em>курсивом</em> и эмодзи 🎉</p>"}
- */
-testRouter.post('/format-client-html', async (req: Request, res: Response) => {
-  try {
-    const { html } = req.body;
-    
-    // Проверяем наличие обязательного параметра
-    if (!html) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательный параметр: html'
-      });
-    }
-    
-    log(`[Test API] Запрос на проверку форматирования HTML для Telegram на стороне клиента`, 'test');
-    log(`[Test API] Исходный HTML: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`, 'test');
-    
-    // 1. Серверный формат - TelegramService.formatTextForTelegram
-    const serverFormatted = telegramService.formatTextForTelegram(html);
-    
-    // 2. Серверный формат с агрессивным исправлением
-    const serverFormattedAggressive = telegramService.aggressiveTagFixer(serverFormatted);
-    
-    // 3. Клиентский формат (имитация того, что мы делаем в компоненте)
-    let clientFormatted = html;
-    
-    // Заменяем эквивалентные теги на поддерживаемые Telegram форматы
-    clientFormatted = clientFormatted
-      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
-      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
-      .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
-      .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
-      .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
-    
-    // Обрабатываем блочные элементы, добавляя переносы строк
-    clientFormatted = clientFormatted
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
-      .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
-      .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
-    
-    // Обрабатываем списки
-    clientFormatted = clientFormatted
-      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
-      .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n');
-    
-    // Убираем лишние переносы строк (более 2 подряд)
-    clientFormatted = clientFormatted.replace(/\n{3,}/g, '\n\n');
-    
-    // 4. Серверный формат через агрессивный isSuccess
-    const isHtmlValid = telegramService.isValidHtmlForTelegram(html);
-    
-    // Отладочный вывод
-    const debugInfo = {
-      originalLength: html.length,
-      serverFormattedLength: serverFormatted.length,
-      serverFormattedAggressiveLength: serverFormattedAggressive.length,
-      clientFormattedLength: clientFormatted.length,
-      containsHtmlTags: html.includes('<') && html.includes('>'),
-      serverFormattedContainsHtmlTags: serverFormatted.includes('<') && serverFormatted.includes('>'),
-      serverFormattedAggressiveContainsHtmlTags: serverFormattedAggressive.includes('<') && serverFormattedAggressive.includes('>'),
-      clientFormattedContainsHtmlTags: clientFormatted.includes('<') && clientFormatted.includes('>')
-    };
-    
-    // Анализ проблем
-    const problems = [];
-    
-    // Проверяем незакрытые теги
-    const openTagCount = (text: string) => (text.match(/<[^\/][^>]*>/g) || []).length;
-    const closeTagCount = (text: string) => (text.match(/<\/[^>]*>/g) || []).length;
-    
-    const originalOpenTags = openTagCount(html);
-    const originalCloseTags = closeTagCount(html);
-    
-    if (originalOpenTags !== originalCloseTags) {
-      problems.push(`Незакрытые теги в исходном HTML: открывающих ${originalOpenTags}, закрывающих ${originalCloseTags}`);
-    }
-    
-    // Возвращаем результат
-    return res.json({
-      success: true,
-      original: html,
-      serverFormatted,
-      serverFormattedAggressive,
-      clientFormatted,
-      isHtmlValid,
-      debug: debugInfo,
-      problems
-    });
-  } catch (error: any) {
-    log(`[Test API] Ошибка при проверке форматирования HTML: ${error.message}`, 'test');
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для тестирования публикации в Instagram через UI
- * POST /api/test/instagram-ui-test
- * 
- * Пример использования:
- * POST /api/test/instagram-ui-test
- * Body: {
- *   "text": "Тестовый пост для Instagram",
- *   "imageUrl": "https://picsum.photos/800/800",
- *   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e"
- * }
- */
-testRouter.post('/instagram-ui-test', async (req: Request, res: Response) => {
-  try {
-    const { text, imageUrl, campaignId } = req.body;
-    
-    // Проверяем наличие обязательных параметров
-    if (!text || !imageUrl || !campaignId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательные параметры: text, imageUrl и campaignId'
-      });
-    }
-    
-    log(`[Instagram UI Test API] Запрос на публикацию в Instagram через UI`, 'test');
-    log(`[Instagram UI Test API] Текст (начало): ${text?.substring(0, 50)}...`, 'test');
-    log(`[Instagram UI Test API] Campaign ID: ${campaignId}`, 'test');
-    log(`[Instagram UI Test API] Image URL: ${imageUrl?.substring(0, 30)}...`, 'test');
-    
-    // Получаем настройки кампании и токен администратора
-    const adminToken = await storage.getAdminToken();
-    log(`[Instagram UI Test API] Токен администратора: ${adminToken ? 'получен' : 'не получен'}`, 'test');
-    
-    const campaign = await storage.getCampaignById(campaignId);
-    
-    if (!campaign || !campaign.settings) {
-      return res.status(404).json({
-        success: false,
-        error: 'Кампания не найдена или не имеет настроек'
-      });
-    }
-    
-    log(`[Instagram UI Test API] Получены настройки кампании: ${JSON.stringify(campaign.settings)}`, 'test');
-    
-    // Проверяем настройки Instagram
-    if (!campaign.settings.instagram || !campaign.settings.instagram.token || !campaign.settings.instagram.businessAccountId) {
-      return res.status(400).json({
-        success: false,
-        error: 'В настройках кампании отсутствуют настройки Instagram'
-      });
-    }
-    
-    // Создаем уникальный ID для контента
-    const contentId = `instagram-ui-test-${Date.now()}`;
-    
-    // Создаем тестовый контент с обязательными полями
-    const testContent = {
-      id: contentId,
-      userId: 'test-user',
-      campaignId: campaignId,
-      title: 'Instagram UI Test',
-      content: text,
+      campaignId: 'test-campaign',
+      title: 'Тестовая публикация в Instagram',
+      content: caption || 'Тестовая подпись для Instagram',
       contentType: 'image',
       imageUrl: imageUrl,
       additionalImages: [],
       status: 'draft',
       socialPlatforms: ['instagram'],
       createdAt: new Date(),
-      publishedAt: null,
-      scheduledAt: null,
       hashtags: [],
       links: [],
-      videoUrl: null,
-      prompt: null,
-      keywords: [],
       metadata: {}
     };
     
-    // Используем socialPublishingService для симуляции вызова из UI
-    const result = await socialPublishingService.publishToPlatform(
-      testContent, 
-      'instagram', 
-      campaign.settings
-    );
-    
-    // Возвращаем результат
-    return res.json({
-      success: result.status === 'published',
-      platform: 'instagram',
-      status: result.status,
-      postUrl: result.postUrl || null,
-      error: result.error || null,
-      contentId: contentId,
-      result
-    });
+    // Выполняем запрос к Instagram Graph API
+    try {
+      // 1. Создаем медиа-контейнер
+      console.log('[Test API] Создание медиа-контейнера...');
+      const containerResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${businessAccountId}/media`,
+        {
+          image_url: imageUrl,
+          caption: caption || ''
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          params: {
+            access_token: token
+          }
+        }
+      );
+      
+      if (!containerResponse.data || !containerResponse.data.id) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось создать медиа-контейнер в Instagram',
+          details: containerResponse.data
+        });
+      }
+      
+      const containerId = containerResponse.data.id;
+      console.log(`[Test API] Медиа-контейнер создан, ID: ${containerId}`);
+      
+      // 2. Публикуем медиа-контейнер
+      console.log('[Test API] Публикация медиа-контейнера...');
+      const publishResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${businessAccountId}/media_publish`,
+        {
+          creation_id: containerId
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          params: {
+            access_token: token
+          }
+        }
+      );
+      
+      if (!publishResponse.data || !publishResponse.data.id) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать медиа в Instagram',
+          details: publishResponse.data
+        });
+      }
+      
+      const postId = publishResponse.data.id;
+      console.log(`[Test API] Публикация создана, ID: ${postId}`);
+      
+      // 3. Получаем permalink на публикацию
+      console.log('[Test API] Получение постоянной ссылки на публикацию...');
+      const permalinkResponse = await axios.get(
+        `https://graph.facebook.com/v18.0/${postId}`,
+        {
+          params: {
+            fields: 'permalink',
+            access_token: token
+          }
+        }
+      );
+      
+      const permalink = permalinkResponse.data?.permalink || null;
+      console.log(`[Test API] Постоянная ссылка получена: ${permalink}`);
+      
+      return res.json({
+        success: true,
+        containerId: containerId,
+        postId: postId,
+        permalink: permalink,
+        businessAccountId: businessAccountId
+      });
+    } catch (apiError: any) {
+      console.error('[Test API] Ошибка Instagram API:', apiError);
+      
+      // Получаем подробности ошибки из ответа Instagram API
+      const apiResponse = apiError.response?.data;
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при взаимодействии с Instagram API',
+        message: apiError.message,
+        details: apiResponse || apiError
+      });
+    }
   } catch (error: any) {
-    log(`[Instagram UI Test API] Ошибка: ${error.message}`, 'test');
+    console.error('[Test API] Ошибка при тестировании публикации в Instagram:', error);
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Неизвестная ошибка'
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
 
 /**
- * Тестовый маршрут для прямой отправки HTML и эмодзи в Telegram
- * POST /api/test/telegram-emoji-html
- * 
- * Пример использования:
- * POST /api/test/telegram-emoji-html
- * Body: {
- *   "text": "<b>Жирный текст</b>, <i>курсив</i> и эмодзи 🎉",
- *   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e"
- * }
+ * Маршрут для тестирования HTML форматирования через Telegram API с отправкой
+ * Использует наш улучшенный метод агрессивного исправления HTML-тегов
+ * и поддерживает передачу credentials напрямую в запросе для легкости тестирования
  */
-testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
+router.post('/telegram-html', async (req: Request, res: Response) => {
   try {
-    const { text, campaignId } = req.body;
+    const { html, token, chatId } = req.body;
     
-    // Проверяем наличие обязательных параметров
-    if (!text || !campaignId) {
+    if (!html) {
       return res.status(400).json({
         success: false,
-        error: 'Обязательные параметры: text и campaignId'
+        error: 'Отсутствует HTML для отправки (параметр html)'
       });
     }
     
-    log(`[Test API] Запрос на отправку HTML и эмодзи в Telegram`, 'test');
-    log(`[Test API] Текст: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`, 'test');
+    // Используем переданные токен/chatId или значения из переменных окружения
+    const telegramToken = token || process.env.TELEGRAM_TEST_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+    const telegramChatId = chatId || process.env.TELEGRAM_TEST_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
     
-    // Получаем настройки кампании с дополнительной отладкой
-    // Используем глобальный экземпляр storage с явной авторизацией
+    if (!telegramToken || !telegramChatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствуют учетные данные Telegram. Укажите token и chatId в запросе или настройте переменные окружения'
+      });
+    }
     
-    // Сначала получаем админский токен для авторизации
-    const adminToken = await storage.getAdminToken();
-    console.log(`[Test API] Админский токен получен: ${adminToken ? 'да' : 'нет'}`);
+    console.log(`[Test API] Запрос на отправку HTML в Telegram`);
+    console.log(`[Test API] Chat ID: ${telegramChatId}`);
+    console.log(`[Test API] HTML (первые 100 символов): ${html.substring(0, 100)}...`);
     
-    // Затем получаем кампанию
-    console.log(`[Test API] Запрашиваем кампанию ${campaignId}`);
-    const campaign = await storage.getCampaignById(campaignId);
+    // Инициализируем сервис с токеном и ID чата
+    telegramService.initialize(telegramToken, telegramChatId);
     
-    console.log(`[Test API] Получены данные кампании: ${JSON.stringify(campaign)}`);
+    // Используем агрессивный метод исправления HTML перед отправкой
+    const processedHtml = formatHtmlForTelegram(html);
+    console.log(`[Test API] Обработанный HTML (первые 100 символов): ${processedHtml.substring(0, 100)}...`);
     
-    // Если кампания не получена, пробуем получить из логов (для отладки)
-    if (!campaign) {
-      console.log(`[Test API] Не удалось получить кампанию, используем тестовые данные`);
+    // Отправляем сообщение в Telegram
+    const result = await telegramService.sendRawHtmlToTelegram(processedHtml);
+    
+    if (!result.success) {
+      console.log(`[Test API] Ошибка при отправке в Telegram: ${result.error}`);
+      return res.json({
+        success: false,
+        error: result.error || 'Ошибка при отправке HTML в Telegram'
+      });
+    }
+    
+    console.log(`[Test API] Сообщение успешно отправлено в Telegram, ID: ${result.messageId}`);
+    
+    return res.json({
+      success: true,
+      messageId: result.messageId,
+      postUrl: result.messageUrl,
+      originalHtml: html,
+      processedHtml: processedHtml
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при отправке HTML в Telegram:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * Специальный маршрут для тестирования функции агрессивного исправления HTML тегов
+ */
+router.post('/fix-html', (req: Request, res: Response) => {
+  try {
+    const { text, aggressive = false } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует текст для исправления (параметр text)'
+      });
+    }
+    
+    console.log(`[Test API] Запрос на исправление HTML: ${text}`);
+    console.log(`[Test API] Режим исправления: ${aggressive ? 'агрессивный' : 'обычный'}`);
+    
+    // Определяем метод исправления в зависимости от режима
+    let fixedText;
+    if (aggressive) {
+      fixedText = formatHtmlForTelegram(text);
+      console.log(`[Test API] Результат агрессивного исправления: ${fixedText}`);
+    } else {
+      fixedText = telegramService.fixUnclosedTags(text);
+      console.log(`[Test API] Результат обычного исправления: ${fixedText}`);
+    }
+    
+    return res.json({
+      success: true,
+      originalText: text,
+      fixedText: fixedText,
+      aggressive: aggressive
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при исправлении HTML:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * Маршрут для получения списка кампаний пользователя
+ */
+router.get('/list-campaigns', async (req: Request, res: Response) => {
+  try {
+    console.log('[Test API] Запрос на получение списка кампаний');
+    
+    // Импортируем необходимые модули
+    const { directusAuthManager } = await import('../services/directus');
+    
+    try {
+      // Получаем данные авторизации
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
-      // Создаем тестовые настройки для Telegram (для тестирования)
-      return res.status(500).json({
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
+      }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем список кампаний через storage
+      const { storage } = await import('../storage');
+      const campaigns = await storage.getCampaigns(authResult.userId);
+      
+      console.log(`[Test API] Получено ${campaigns.length} кампаний`);
+      
+      return res.json({
+        success: true,
+        count: campaigns.length,
+        data: campaigns
+      });
+      
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации в Directus: ${authError.message}`);
+      return res.status(401).json({
         success: false,
-        error: `Не удалось получить настройки кампании. ID: ${campaignId}`,
-        adminToken: adminToken ? 'Токен получен' : 'Токен не получен'
+        error: 'Ошибка авторизации в Directus',
+        message: authError.message
+      });
+    }
+  } catch (error: any) {
+    console.error(`[Test API] Ошибка при получении списка кампаний: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при получении списка кампаний',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для получения списка доступных ID контента
+ * который может использоваться для тестирования публикации
+ */
+router.get('/list-content-ids', async (req: Request, res: Response) => {
+  try {
+    const { campaignId } = req.query;
+    console.log(`[Test API] Запрос на получение списка ID контента для кампании ${campaignId || 'не указана'}`);
+    
+    if (!campaignId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать ID кампании (campaignId) в параметрах запроса'
       });
     }
     
-    if (!campaign || !campaign.settings || !campaign.settings.telegram) {
-      return res.status(404).json({
+    // Импортируем необходимые модули
+    const { directusAuthManager } = await import('../services/directus');
+    
+    try {
+      // Получаем данные авторизации
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
+      }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем контент через storage
+      const { storage } = await import('../storage');
+      const contentItems = await storage.getCampaignContent(authResult.userId, campaignId as string);
+      
+      if (contentItems && contentItems.length > 0) {
+        const contentList = contentItems.map((item: any) => ({
+          id: item.id,
+          title: item.title || 'Без названия',
+          status: item.status,
+          contentType: item.contentType,
+          hasImage: !!item.imageUrl,
+          contentPreview: item.content ? item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '') : null
+        }));
+        
+        console.log(`[Test API] Получено ${contentList.length} элементов контента`);
+        
+        return res.json({
+          success: true,
+          count: contentList.length,
+          data: contentList
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          error: `Элементы контента не найдены для кампании ${campaignId}`
+        });
+      }
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации в Directus: ${authError.message}`);
+      return res.status(401).json({
         success: false,
-        error: 'Кампания не найдена или не имеет настроек Telegram'
+        error: 'Ошибка авторизации в Directus',
+        message: authError.message
+      });
+    }
+  } catch (error: any) {
+    console.error(`[Test API] Ошибка при получении списка ID контента: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при получении списка ID контента',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для получения контента по ID с последующей публикацией в Telegram
+ * Этот маршрут получает контент из Directus и публикует его в Telegram,
+ * используя настройки из .env или переданные в запросе
+ */
+router.post('/publish-content-by-id', async (req: Request, res: Response) => {
+  try {
+    const { contentId, telegramToken, telegramChatId } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать ID контента (contentId)'
       });
     }
     
-    const { token, chatId } = campaign.settings.telegram;
+    // Используем переданные настройки или берем из .env
+    const token = telegramToken || process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TEST_TOKEN;
+    const chatId = telegramChatId || process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TEST_CHAT_ID;
     
     if (!token || !chatId) {
       return res.status(400).json({
         success: false,
-        error: 'В настройках кампании отсутствуют token или chatId для Telegram'
+        error: 'Не указаны настройки Telegram (token и chatId). Передайте их в запросе или задайте в .env'
       });
     }
     
-    // Подготавливаем сообщение с использованием улучшенного клиентского форматирования
-    let formattedHtml = text;
+    console.log(`[Test API] Получение контента по ID: ${contentId}`);
+    console.log(`[Test API] Использование настроек: chatId=${chatId}`);
     
-    // 1. Обработка ссылок - сначала обрабатываем их, чтобы сохранить href атрибуты
-    const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
-    formattedHtml = formattedHtml.replace(linkRegex, (match: string, url: string, text: string) => {
-      return `<a href="${url}">${text}</a>`;
-    });
-    
-    // 2. Заменяем эквивалентные теги на поддерживаемые Telegram форматы
-    formattedHtml = formattedHtml
-      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '<b>$1</b>')
-      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '<b>$1</b>')
-      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '<i>$1</i>')
-      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '<i>$1</i>')
-      .replace(/<ins[^>]*>([\s\S]*?)<\/ins>/gi, '<u>$1</u>')
-      .replace(/<u[^>]*>([\s\S]*?)<\/u>/gi, '<u>$1</u>')
-      .replace(/<strike[^>]*>([\s\S]*?)<\/strike>/gi, '<s>$1</s>')
-      .replace(/<s[^>]*>([\s\S]*?)<\/s>/gi, '<s>$1</s>')
-      .replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, '<s>$1</s>');
-    
-    // 3. Обрабатываем блочные элементы, добавляя переносы строк
-    formattedHtml = formattedHtml
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
-      .replace(/<div[^>]*>([\s\S]*?)<\/div>/gi, '$1\n')
-      .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, '<b>$1</b>\n\n');
-    
-    // 4. Обрабатываем списки
-    formattedHtml = formattedHtml
-      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
-      .replace(/<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>/gi, '$1\n');
-    
-    // 5. Удаляем все оставшиеся HTML-теги, которые не поддерживаются Telegram
-    const supportedTags = ['b', 'i', 'u', 's', 'code', 'pre', 'a'];
-    const tagRegex = new RegExp(`<(?!\/?(?:${supportedTags.join('|')})(?:\\s|>))[^>]*>`, 'gi');
-    formattedHtml = formattedHtml.replace(tagRegex, '');
-    
-    // 6. Проверяем баланс открывающих и закрывающих тегов
-    const fixUnclosedTags = (html: string): string => {
-      let result = html;
+    try {
+      // Авторизуемся как администратор для получения контента
+      const { directusAuthManager } = await import('../services/directus');
+      const { directusCrud } = await import('../services/directus');
       
-      // Простая проверка на балансировку тегов
-      supportedTags.forEach(tag => {
-        const openingTags = (result.match(new RegExp(`<${tag}(?:\\s[^>]*)?>`,'gi')) || []).length;
-        const closingTags = (result.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
-        
-        // Если открывающих тегов больше, добавляем закрывающие
-        if (openingTags > closingTags) {
-          const diff = openingTags - closingTags;
-          result += `${Array(diff).fill(`</${tag}>`).join('')}`;
-        }
-      });
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
-      return result;
-    };
-    
-    formattedHtml = fixUnclosedTags(formattedHtml);
-    
-    // 7. Убираем лишние переносы строк (более 2 подряд)
-    formattedHtml = formattedHtml.replace(/\n{3,}/g, '\n\n');
-    
-    // Отправляем текст в Telegram
-    const messageBody = {
-      chat_id: chatId,
-      text: formattedHtml,
-      parse_mode: 'HTML',
-      protect_content: false,
-      disable_notification: false
-    };
-    
-    // Отправляем запрос в API Telegram
-    const baseUrl = `https://api.telegram.org/bot${token}`;
-    const response = await axios.post(`${baseUrl}/sendMessage`, messageBody, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 30000,
-      validateStatus: () => true
-    });
-    
-    // Проверяем результат
-    if (response.status === 200 && response.data && response.data.ok) {
-      log(`[Test API] Сообщение успешно отправлено в Telegram, message_id: ${response.data?.result?.message_id}`, 'test');
-      
-      // Формируем URL сообщения
-      let messageUrl = '';
-      let formattedChatId = chatId;
-      
-      // Форматируем chatId для URL
-      if (formattedChatId.startsWith('@')) {
-        formattedChatId = formattedChatId.substring(1);
-        messageUrl = `https://t.me/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else if (formattedChatId.startsWith('-100')) {
-        formattedChatId = formattedChatId.substring(4);
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else {
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют учетные данные администратора в переменных окружения'
+        });
       }
+      
+      // Авторизуемся в Directus
+      const authResult = await directusAuthManager.login(email, password);
+      console.log(`[Test API] Успешная авторизация в Directus как администратор (userId: ${authResult.userId})`);
+      
+      // Получаем контент напрямую из хранилища
+      const { storage } = await import('../storage');
+      const content = await storage.getCampaignContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: `Контент с ID ${contentId} не найден`
+        });
+      }
+      
+      console.log(`[Test API] Контент получен: ${content.title}`);
+      console.log(`[Test API] Тип контента: ${content.contentType}`);
+      console.log(`[Test API] HTML текст: ${content.content.substring(0, 100)}${content.content.length > 100 ? '...' : ''}`);
+      
+      // Инициализируем telegramService с нашими настройками
+      telegramService.initialize(token, chatId);
+      
+      // Публикуем контент с использованием метода publishToPlatform
+      const result = await telegramService.publishToPlatform(content);
+      
+      if (!result) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать контент в Telegram',
+          details: 'Нет ответа от сервиса публикации'
+        });
+      }
+      
+      console.log(`[Test API] Публикация успешно отправлена, URL: ${result.postUrl}`);
+      
+      // Обновляем статус публикации в хранилище
+      const { socialPublishingService } = await import('../services/social/index');
+      await socialPublishingService.updatePublicationStatus(
+        contentId,
+        'telegram',
+        result
+      );
       
       return res.json({
         success: true,
-        message_id: response.data?.result?.message_id,
-        message_url: messageUrl,
-        original_text: text,
-        formatted_text: formattedHtml
+        contentId: contentId,
+        messageId: result.messageId,
+        postUrl: result.postUrl,
+        chatId: chatId,
+        result: result
       });
-    } else {
-      log(`[Test API] Ошибка при отправке сообщения в Telegram: ${JSON.stringify(response.data)}`, 'test');
-      
-      // В случае ошибки пробуем отправить обычный текст без HTML
-      if (formattedHtml.includes('<') && formattedHtml.includes('>')) {
-        log(`[Test API] Пробуем отправить обычный текст без HTML-форматирования`, 'test');
-        
-        const plainText = text.replace(/<[^>]*>/g, '');
-        const plainMessageBody = {
-          chat_id: chatId,
-          text: plainText,
-          disable_notification: false
-        };
-        
-        const plainResponse = await axios.post(`${baseUrl}/sendMessage`, plainMessageBody, {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 30000,
-          validateStatus: () => true
-        });
-        
-        if (plainResponse.status === 200 && plainResponse.data && plainResponse.data.ok) {
-          log(`[Test API] Сообщение успешно отправлено без HTML-форматирования, message_id: ${plainResponse.data?.result?.message_id}`, 'test');
-          
-          return res.json({
-            success: true,
-            message_id: plainResponse.data?.result?.message_id,
-            original_text: text,
-            formatted_text: plainText,
-            note: 'Отправлено без HTML-форматирования из-за ошибки',
-            error: response.data?.description || 'Ошибка при отправке HTML',
-            html_error: true
-          });
-        }
-      }
-      
-      return res.status(500).json({
+    } catch (authError: any) {
+      console.error(`[Test API] Ошибка авторизации или получения данных: ${authError.message}`);
+      return res.status(401).json({
         success: false,
-        error: response.data?.description || 'Ошибка при отправке сообщения',
-        original_text: text,
-        formatted_text: formattedHtml
+        error: 'Ошибка авторизации или получения данных',
+        message: authError.message
       });
     }
   } catch (error: any) {
-    log(`[Test API] Исключение при отправке сообщения в Telegram: ${error.message}`, 'test');
+    console.error('[Test API] Ошибка при публикации контента в Telegram:', error);
+    
     return res.status(500).json({
       success: false,
-      error: error.message || 'Неизвестная ошибка'
+      error: error.message || 'Неизвестная ошибка',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
 
 /**
- * Тестовый маршрут для публикации в Instagram
- * POST /api/test/instagram-post
- * 
- * Используется для прямого тестирования публикации в Instagram без авторизации
+ * Маршрут для тестирования форматирования HTML для Telegram
+ * POST /api/test/telegram/format-html
  */
-testRouter.post('/instagram-post', async (req: Request, res: Response) => {
-  // Явно устанавливаем тип контента как JSON и добавляем предотвращение кэширования
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.removeHeader('X-Powered-By');
-  
+router.post('/telegram/format-html', async (req: Request, res: Response) => {
   try {
-    // Обработка параметров
-    let text = '';
-    let token = '';
-    let businessAccountId = '';
-    let imageUrl = '';
+    const { html } = req.body;
     
-    // Проверяем, пришел ли запрос как JSON или как form-data
-    if (req.headers['content-type']?.includes('application/json')) {
-      // JSON запрос
-      text = req.body.text || '';
-      token = req.body.token || '';
-      businessAccountId = req.body.businessAccountId || '';
-      imageUrl = req.body.imageUrl || '';
-    } else {
-      // Form-data запрос
-      text = req.body.text || '';
-      token = req.body.token || '';
-      businessAccountId = req.body.businessAccountId || '';
-      imageUrl = req.body.imageUrl || '';
-    }
-    
-    // Проверяем обязательные параметры
-    if (!text || !token || !businessAccountId || !imageUrl) {
-      // Создаем объект ошибки
-      const errorResponse = {
+    if (!html) {
+      return res.status(400).json({
         success: false,
-        error: 'Обязательные параметры: text, token, businessAccountId и imageUrl',
-        receivedParams: {
-          text: !!text,
-          token: !!token,
-          businessAccountId: !!businessAccountId,
-          imageUrl: !!imageUrl
-        }
-      };
-      
-      // Отправляем JSON-ответ
-      return res.status(400).end(JSON.stringify(errorResponse));
+        error: 'Отсутствует HTML-текст для форматирования'
+      });
     }
     
-    // Логируем входные данные (без токенов)
-    log(`[Instagram Test API] Запрос на публикацию в Instagram`, 'test');
-    log(`[Instagram Test API] Текст (начало): ${text?.substring(0, 50)}...`, 'test');
-    log(`[Instagram Test API] Business Account ID: ${businessAccountId}`, 'test');
-    log(`[Instagram Test API] Image URL: ${imageUrl?.substring(0, 30)}...`, 'test');
+    console.log(`[Telegram Test] Запрос на форматирование HTML: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
     
-    // Создаем тестовый контент с обязательными полями
-    const testContent = {
-      id: 'instagram-test-' + Date.now(),
-      userId: 'test-user',
-      campaignId: 'test-campaign',
-      title: 'Instagram Test',
-      content: text,
-      contentType: 'image',
-      imageUrl: imageUrl,
-      additionalImages: [],
-      status: 'draft',
-      socialPlatforms: ['instagram'],
-      createdAt: new Date(),
-      publishedAt: null,
-      scheduledAt: null,
-      hashtags: [],
-      links: [],
-      videoUrl: null,
-      prompt: null,
-      keywords: [],
-      metadata: {}
-    };
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
     
-    // Создаем настройки Instagram
-    const instagramSettings = {
-      token,
-      accessToken: null,
-      businessAccountId
-    };
+    console.log(`[Telegram Test] Результат форматирования HTML: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
     
-    // Публикуем с использованием сервиса Instagram
-    log(`[Instagram Test API] Отправка запроса в Instagram API`, 'test');
-    const result = await instagramService.publishToInstagram(testContent, instagramSettings);
-    
-    // Возвращаем результат
-    return res.json({
-      success: result.status === 'published',
-      platform: 'instagram',
-      status: result.status,
-      postUrl: result.postUrl || null,
-      error: result.error || null,
-      result
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml
     });
   } catch (error: any) {
-    // Логируем ошибку
-    log(`[Instagram Test API] Ошибка при публикации: ${error.message}`, 'test');
-    if (error.response) {
-      log(`[Instagram Test API] Ответ API: ${JSON.stringify(error.response.data)}`, 'test');
-    }
-    
-    // Убедимся, что отправляем JSON и устанавливаем корректный код ошибки
+    console.error(`[Telegram Test] Ошибка при форматировании HTML: ${error.message}`);
     return res.status(500).json({
       success: false,
-      error: error.message,
-      details: error.response?.data || null
+      error: 'Ошибка при форматировании HTML',
+      message: error.message
     });
   }
 });
 
-export default testRouter;
+/**
+ * Маршрут для тестирования обработки списков в HTML для Telegram
+ * POST /api/test/telegram/format-lists
+ */
+router.post('/telegram/format-lists', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст со списками для форматирования'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на форматирование списков: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Проверка на наличие маркеров списка в формате Telegram
+    const hasBulletPoints = formattedHtml.includes('•');
+    
+    console.log(`[Telegram Test] Результат форматирования списков: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      hasBulletPoints
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при форматировании списков: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при форматировании списков',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для тестирования обработки эмодзи в HTML для Telegram
+ * POST /api/test/telegram/format-emoji
+ */
+router.post('/telegram/format-emoji', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст с эмодзи для форматирования'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на форматирование с эмодзи: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Простая проверка на наличие не-ASCII символов (включая эмодзи)
+    const hasNonAscii = /[^\u0000-\u007F]/.test(html);
+    const emojiCount = hasNonAscii ? 1 : 0;
+    
+    console.log(`[Telegram Test] Результат форматирования с эмодзи: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      emojiCount: emojiCount,
+      hasEmoji: hasNonAscii
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при форматировании с эмодзи: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при форматировании с эмодзи',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для тестирования исправления незакрытых тегов HTML для Telegram
+ * POST /api/test/telegram/fix-unclosed-tags
+ */
+router.post('/telegram/fix-unclosed-tags', async (req: Request, res: Response) => {
+  try {
+    const { html } = req.body;
+    
+    if (!html) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует HTML-текст с тегами для исправления'
+      });
+    }
+    
+    console.log(`[Telegram Test] Запрос на исправление незакрытых тегов: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`);
+    
+    // Форматирование HTML для Telegram
+    const formattedHtml = standardizeTelegramTags(html);
+    
+    // Проверка наличия незакрытых тегов в оригинальном тексте
+    const unclosedTagsRegex = /<([a-z]+)(?:\s[^>]*)?>[^<]*(?:<\/\1>)?/gi;
+    const originalTags = html.match(unclosedTagsRegex) || [];
+    const formattedTags = formattedHtml.match(unclosedTagsRegex) || [];
+    
+    console.log(`[Telegram Test] Результат исправления незакрытых тегов: ${formattedHtml.substring(0, 100)}${formattedHtml.length > 100 ? '...' : ''}`);
+    
+    return res.status(200).json({
+      success: true,
+      originalHtml: html,
+      formattedHtml,
+      tagsBeforeFix: originalTags.length,
+      tagsAfterFix: formattedTags.length,
+      wasFixed: originalTags.length !== formattedTags.length || html !== formattedHtml
+    });
+  } catch (error: any) {
+    console.error(`[Telegram Test] Ошибка при исправлении незакрытых тегов: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка при исправлении незакрытых тегов',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Маршрут для проверки доступности тестовых API
+ * GET /api/test/status
+ */
+router.get('/status', (req: Request, res: Response) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Тестовые API маршруты работают',
+    timestamp: new Date().toISOString(),
+    availableRoutes: [
+      { method: 'POST', path: '/api/test/telegram/format-html', description: 'Форматирование HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/format-lists', description: 'Обработка списков в HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/format-emoji', description: 'Обработка эмодзи в HTML для Telegram' },
+      { method: 'POST', path: '/api/test/telegram/fix-unclosed-tags', description: 'Исправление незакрытых тегов HTML' },
+      { method: 'POST', path: '/api/test/fix-html', description: 'Исправление HTML-разметки' },
+      { method: 'POST', path: '/api/test/raw-html-telegram', description: 'Прямая отправка HTML в Telegram' },
+      { method: 'POST', path: '/api/test/telegram-html', description: 'Тестирование HTML форматирования через Telegram API' }
+    ]
+  });
+});
+
+export default router;

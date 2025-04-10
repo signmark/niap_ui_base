@@ -10,140 +10,17 @@ import { directusCrud } from './directus-crud';
 import { checkTokenExtractionRequest } from './token-extractor';
 
 /**
- * Проверяет и корректирует URL поста в Telegram
- * @param url Исходный URL
- * @param platform Платформа
- * @param messageId ID сообщения или поста
- * @returns Корректный URL
- */
-export function ensureValidTelegramUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
-  // Если URL не определен, возвращаем пустую строку
-  if (!url) return '';
-  
-  // Логируем параметры для отладки
-  log(`Проверка URL: ${url}, платформа: ${platform}, messageId: ${messageId}`, 'scheduler');
-  
-  // Обрабатываем URL только для Telegram
-  if (platform === 'telegram') {
-    // Специальная обработка для канала ya_delayu_moschno (ID: 2302366310)
-    if (url.includes('2302366310')) {
-      if (messageId) {
-        const fixedUrl = `https://t.me/c/2302366310/${messageId}`;
-        log(`Специальный случай: URL для канала ya_delayu_moschno: ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      } else {
-        return 'https://t.me/c/2302366310';
-      }
-    }
-    
-    // Проверяем наличие messageId в URL
-    const hasMessageIdInUrl = !!url.match(/\/\d+$/); // URL заканчивается на /NUMBER
-    
-    if (!hasMessageIdInUrl && messageId) {
-      // URL не содержит ID сообщения - нужно добавить messageId
-      
-      // Случай 1: URL для публичного канала без ID сообщения (t.me/channelname)
-      if (url.match(/^https?:\/\/t\.me\/[^\/]+$/)) {
-        const fixedUrl = `${url}/${messageId}`;
-        log(`Исправление URL для публичного канала Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      }
-      
-      // Случай 2: URL для приватного канала без ID сообщения (t.me/c/123456789)
-      if (url.match(/^https?:\/\/t\.me\/c\/\d+$/)) {
-        const fixedUrl = `${url}/${messageId}`;
-        log(`Исправление URL для приватного канала Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      }
-      
-      // Общий случай: просто добавляем messageId в конец URL
-      if (!url.endsWith('/')) {
-        const fixedUrl = `${url}/${messageId}`;
-        log(`Исправление URL для Telegram (общий случай): ${url} -> ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      } else {
-        const fixedUrl = `${url}${messageId}`;
-        log(`Исправление URL для Telegram (с завершающим слешем): ${url} -> ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      }
-    }
-    
-    // Специальная обработка случая, когда URL имеет неправильный формат из-за ошибки [object Object]
-    if (url.includes('[object Object]')) {
-      log(`Найден некорректный URL с [object Object]: ${url}`, 'scheduler');
-      
-      // Пытаемся создать корректный URL из доступной информации
-      if (messageId) {
-        // Проверяем, не связано ли это с каналом ya_delayu_moschno
-        if (url.includes('2302366310')) {
-          const fixedUrl = `https://t.me/c/2302366310/${messageId}`;
-          log(`Исправление некорректного URL для канала ya_delayu_moschno: ${url} -> ${fixedUrl}`, 'scheduler');
-          return fixedUrl;
-        }
-        
-        // Для других случаев просто возвращаем базовый URL
-        const baseUrl = "https://t.me";
-        log(`Не удалось исправить некорректный URL: ${url}, возвращаем базовый URL`, 'scheduler');
-        return `${baseUrl}`;
-      }
-    }
-  }
-  
-  // Для других платформ или если URL уже корректный, возвращаем без изменений
-  return url;
-}
-
-/**
  * Класс для планирования и выполнения автоматической публикации контента
  */
 export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private checkIntervalMs = 60000; // проверяем каждую минуту
-  // Для обратной совместимости со старым кодом (временное решение)
-  // При перезапуске сервера список очищается
-  
-  /**
-   * Проверяет и корректирует URL поста в зависимости от платформы
-   * @param url Исходный URL
-   * @param platform Платформа
-   * @param messageId ID сообщения или поста
-   * @returns Корректный URL
-   */
-  private ensureValidPostUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
-    // Если URL не определен, возвращаем пустую строку
-    if (!url) return '';
-    
-    // Логируем параметры для отладки
-    log(`Проверка URL: ${url}, платформа: ${platform}, messageId: ${messageId}`, 'scheduler');
-    
-    // Обрабатываем URL для Telegram
-    if (platform === 'telegram') {
-      // Проверяем формат URL для приватных каналов Telegram
-      if (url.includes('/c/') && !url.includes('/', url.indexOf('/c/') + 3)) {
-        // URL не содержит ID сообщения - нужно добавить messageId
-        // Пример URL: https://t.me/c/230236310 -> https://t.me/c/230236310/123
-        const fixedUrl = `${url}/${messageId}`;
-        log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
-        return fixedUrl;
-      }
-    }
-    
-    // Для других платформ или если URL уже корректный, возвращаем без изменений
-    return url;
-  }
-  private processedContentIds = new Set<string>();
-  
-  // Инициализируем пустой список при создании экземпляра класса
-  constructor() {
-    this.processedContentIds.clear();
-    log('Планировщик публикаций инициализирован с пустым списком обработанных контентов', 'scheduler');
-  }
 
   /**
    * Запускает планировщик публикаций
    */
-  public start(): void {
+  start() {
     if (this.isRunning) {
       log('Планировщик публикаций уже запущен', 'scheduler');
       return;
@@ -151,247 +28,418 @@ export class PublishScheduler {
 
     log('Запуск планировщика публикаций', 'scheduler');
     this.isRunning = true;
+    
+    // Немедленно выполняем первую проверку
+    this.checkScheduledContent();
 
-    // Сразу делаем первую проверку
-    this.checkScheduledContent().catch(error => {
-      log(`Ошибка при первой проверке запланированного контента: ${error}`, 'scheduler');
-    });
-
-    // Настраиваем интервальную проверку
+    // Устанавливаем интервал для регулярных проверок
     this.intervalId = setInterval(() => {
-      this.checkScheduledContent().catch(error => {
-        log(`Ошибка при проверке запланированного контента: ${error}`, 'scheduler');
-      });
+      this.checkScheduledContent();
     }, this.checkIntervalMs);
   }
 
   /**
    * Останавливает планировщик публикаций
    */
-  public stop(): void {
-    if (!this.isRunning) {
+  stop() {
+    if (!this.isRunning || !this.intervalId) {
       log('Планировщик публикаций не запущен', 'scheduler');
       return;
     }
 
     log('Остановка планировщика публикаций', 'scheduler');
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    clearInterval(this.intervalId);
+    this.intervalId = null;
     this.isRunning = false;
   }
 
   /**
-   * Публичный метод для добавления ID контента в список обработанных
-   * @param contentId ID контента
+   * Получает токен для доступа к API
+   * Приоритеты получения токена:
+   * 1. Авторизация через логин/пароль (admin)
+   * 2. Активные сессии пользователей из кэша
+   * 3. Статический токен из переменных окружения
+   * 4. Сохраненный токен из хранилища
    */
-  public addProcessedContentId(contentId: string): void {
-    this.processedContentIds.add(contentId);
-    log(`ID ${contentId} добавлен в список обработанных через публичный метод`, 'scheduler');
-  }
-
-  /**
-   * Получает настройки Telegram из настроек кампании
-   * @param campaignId ID кампании
-   * @param authToken Токен авторизации
-   * @returns Настройки Telegram или null, если не удалось получить
-   */
-  private async getTelegramSettings(campaignId: string, authToken: string): Promise<{token: string, chatId: string} | null> {
+  private async getSystemToken(): Promise<string | null> {
     try {
-      if (!campaignId) {
-        log(`ID кампании не передан, не могу получить настройки Telegram`, 'scheduler');
-        return null;
-      }
-
-      log(`Запрос настроек Telegram для кампании ${campaignId}`, 'scheduler');
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-      const campaignUrl = `${directusUrl}/items/campaigns/${campaignId}`;
+      // Загружаем менеджер авторизации
+      const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+      const directusCrud = await import('./directus-crud').then(m => m.directusCrud);
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
       
-      try {
-        const response = await axios.get(campaignUrl, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        if (response.data && response.data.data && response.data.data.socialMediaSettings) {
-          const settings = response.data.data.socialMediaSettings;
-          
-          // Если настройки - строка, пробуем распарсить
-          if (typeof settings === 'string') {
-            try {
-              const parsedSettings = JSON.parse(settings);
-              if (parsedSettings.telegram && parsedSettings.telegram.token && parsedSettings.telegram.chatId) {
-                log(`Получены настройки Telegram из кампании (парсинг строки)`, 'scheduler');
-                return {
-                  token: parsedSettings.telegram.token,
-                  chatId: parsedSettings.telegram.chatId
-                };
-              }
-            } catch (e) {
-              log(`Ошибка при парсинге настроек: ${e}`, 'scheduler');
-            }
-          } 
-          // Если настройки - объект
-          else if (settings.telegram && settings.telegram.token && settings.telegram.chatId) {
-            log(`Получены настройки Telegram из кампании (объект)`, 'scheduler');
-            return {
-              token: settings.telegram.token,
-              chatId: settings.telegram.chatId
-            };
-          }
-        }
-      } catch (error: any) {
-        log(`Ошибка при запросе настроек кампании: ${error.message}`, 'scheduler');
-      }
-      
-      // Если не удалось получить настройки из кампании, используем переменные окружения
-      const token = process.env.TELEGRAM_BOT_TOKEN;
-      const chatId = process.env.TELEGRAM_CHAT_ID;
-      
-      if (token && chatId) {
-        log(`Используем настройки Telegram из переменных окружения`, 'scheduler');
-        return { token, chatId };
-      }
-      
-      log(`Не удалось получить настройки Telegram ни из кампании, ни из переменных окружения`, 'scheduler');
-      return null;
-    } catch (error: any) {
-      log(`Ошибка при получении настроек Telegram: ${error.message}`, 'scheduler');
-      return null;
-    }
-  }
-
-  /**
-   * Получает токен администратора для авторизации запросов к API
-   * @returns Токен администратора
-   */
-  public async getSystemToken(): Promise<string | null> {
-    log('Получение системного токена для авторизации запросов', 'scheduler');
-    try {
-      // Используем переменные окружения
+      // 1. Приоритет - авторизация через логин/пароль (если есть учетные данные)
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-
-      if (!email || !password) {
-        log('Не найдены учетные данные администратора в переменных окружения', 'scheduler');
-        return null;
-      }
-
-      log('Попытка авторизации администратора с учетными данными из env', 'scheduler');
       
-      // Пробуем получить токен напрямую через API
+      if (email && password) {
+        log('Попытка авторизации администратора с учетными данными из env', 'scheduler');
+        
+        try {
+          // Прямая авторизация через REST API
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const response = await axios.post(`${directusUrl}/auth/login`, {
+            email,
+            password
+          });
+          
+          if (response?.data?.data?.access_token) {
+            const token = response.data.data.access_token;
+            log('Авторизация администратора успешна через прямой API запрос', 'scheduler');
+            
+            // Сохраняем токен в кэше
+            directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+            
+            // Пробуем сохранить в DirectusAuthManager
+            try {
+              directusAuthManager.login(email, password)
+                .then(() => log('Сессия администратора добавлена в DirectusAuthManager', 'scheduler'))
+                .catch(e => log(`Не удалось добавить сессию в DirectusAuthManager: ${e.message}`, 'scheduler'));
+            } catch (e: any) {
+              log(`Ошибка при сохранении сессии: ${e.message}`, 'scheduler');
+            }
+            
+            return token;
+          }
+        } catch (error: any) {
+          log(`Ошибка при прямой авторизации администратора: ${error.message}`, 'scheduler');
+          if (error.response?.data?.errors) {
+            log(`Детали ошибки: ${JSON.stringify(error.response.data.errors)}`, 'scheduler');
+          }
+        }
+        
+        try {
+          // Запасной вариант - используем метод для авторизации через DirectusAuthManager
+          const authInfo = await directusAuthManager.login(email, password);
+          
+          if (authInfo && authInfo.token) {
+            log('Авторизация администратора успешна через directusAuthManager', 'scheduler');
+            return authInfo.token;
+          }
+          
+          // Если не получилось через directusAuthManager, пробуем через directusCrud
+          const authResult = await directusCrud.login(email, password);
+          
+          if (authResult?.access_token) {
+            log('Авторизация администратора успешна через directusCrud', 'scheduler');
+            return authResult.access_token;
+          }
+        } catch (error: any) {
+          log(`Ошибка при авторизации через вспомогательные сервисы: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // 2. Проверяем, есть ли активные сессии пользователей
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      if (sessions.length > 0) {
+        // Используем токен первого активного пользователя
+        const firstSession = sessions[0];
+        log(`Использование токена пользователя ${firstSession.userId} из активной сессии`, 'scheduler');
+        
+        // Проверяем валидность токена
+        try {
+          const testResponse = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, firstSession.token);
+          
+          if (testResponse?.data?.data) {
+            log(`Токен активной сессии пользователя ${firstSession.userId} валиден`, 'scheduler');
+            return firstSession.token;
+          }
+        } catch (error: any) {
+          log(`Токен активной сессии недействителен: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // 3. Если не получилось через сессии, проверяем статический токен
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      if (adminToken) {
+        log('Проверка статического токена администратора из переменных окружения', 'scheduler');
+        
+        // Проверяем валидность токена
+        try {
+          const testResponse = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, adminToken);
+          
+          if (testResponse?.data?.data) {
+            log('Статический токен администратора валиден', 'scheduler');
+            return adminToken;
+          }
+        } catch (error: any) {
+          log(`Статический токен недействителен: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // 4. Пробуем получить токен из кэша
+      const cachedToken = directusApiManager.getCachedToken(adminUserId);
+      if (cachedToken) {
+        log(`Найден кэшированный токен для администратора ${adminUserId}`, 'scheduler');
+        
+        // Проверяем валидность токена
+        try {
+          const testResponse = await directusApiManager.request({
+            url: '/users/me',
+            method: 'get'
+          }, cachedToken.token);
+          
+          if (testResponse?.data?.data) {
+            log('Кэшированный токен администратора валиден', 'scheduler');
+            return cachedToken.token;
+          }
+        } catch (error: any) {
+          log(`Кэшированный токен недействителен: ${error.message}`, 'scheduler');
+        }
+      }
+      
+      // 5. В последнюю очередь, ищем токен в хранилище
       try {
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-        const response = await axios.post(`${directusUrl}/auth/login`, {
-          email,
-          password
-        });
-
-        if (response.data && response.data.data && response.data.data.access_token) {
-          log('Авторизация администратора успешна через прямой API запрос', 'scheduler');
-          return response.data.data.access_token;
+        const tokenInfo = await storage.getUserTokenInfo(adminUserId);
+        if (tokenInfo && tokenInfo.token) {
+          log(`Найден токен для администратора ${adminUserId} в хранилище`, 'scheduler');
+          
+          // Проверяем валидность токена
+          try {
+            const testResponse = await directusApiManager.request({
+              url: '/users/me',
+              method: 'get'
+            }, tokenInfo.token);
+            
+            if (testResponse?.data?.data) {
+              log('Токен из хранилища валиден', 'scheduler');
+              return tokenInfo.token;
+            }
+          } catch (error: any) {
+            log(`Токен из хранилища недействителен: ${error.message}`, 'scheduler');
+          }
         }
       } catch (error: any) {
-        log(`Ошибка API при получении токена: ${error.message}`, 'scheduler');
+        log(`Ошибка при получении токена из хранилища: ${error.message}`, 'scheduler');
       }
-
-      // Пробуем получить токен через directusApiManager
-      try {
-        const authData = await directusApiManager.auth.login({
-          email,
-          password
-        });
-
-        if (authData && authData.access_token) {
-          return authData.access_token;
-        }
-      } catch (error: any) {
-        log(`Ошибка directusApiManager при получении токена: ${error.message}`, 'scheduler');
-      }
-
-      // Пробуем через DirectusCrud
-      try {
-        const adminSession = await directusCrud.authenticateUser(email, password);
-        if (adminSession && adminSession.token) {
-          log('Сессия администратора добавлена в DirectusAuthManager', 'scheduler');
-          return adminSession.token;
-        }
-      } catch (error: any) {
-        log(`Ошибка directusCrud при получении токена: ${error.message}`, 'scheduler');
-      }
-
-      log('Не удалось получить токен администратора', 'scheduler');
+      
+      log('Не удалось получить действительный токен для планировщика', 'scheduler');
       return null;
     } catch (error: any) {
-      log(`Ошибка при получении токена администратора: ${error.message}`, 'scheduler');
+      log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
       return null;
     }
   }
 
-  /**
-   * Проверяет запланированный контент и публикует его при необходимости
-   */
-  private async checkScheduledContent(): Promise<void> {
-    log('Проверка запланированных публикаций', 'scheduler');
+  // Хранит список уже обработанных публикаций для предотвращения дублирования
+  private processedContentIds: Set<string> = new Set();
 
+  async checkScheduledContent() {
     try {
-      // Получаем токен для авторизации запросов
-      const authToken = await this.getSystemToken();
-      if (!authToken) {
-        log('Не удалось получить токен для проверки запланированных публикаций', 'scheduler');
-        return;
+      log('Проверка запланированных публикаций', 'scheduler');
+      
+      // Проверяем запросы на извлечение токена
+      checkTokenExtractionRequest();
+      
+      // Получаем системный токен для доступа ко всем публикациям
+      const systemToken = await this.getSystemToken();
+      
+      // Пытаемся получить запланированные публикации
+      let scheduledContent: CampaignContent[] = [];
+      
+      if (systemToken) {
+        log('Поиск запланированных публикаций через API с системным токеном', 'scheduler');
+        
+        try {
+          // Прямой запрос с параметрами фильтрации
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
+          
+          const headers = {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
+          };
+          
+          // Запрос с фильтром по статусу ТОЛЬКО "scheduled" и исключаем ранее обработанные
+          const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+            headers,
+            params: {
+              filter: JSON.stringify({
+                status: {
+                  _eq: 'scheduled'
+                },
+                scheduled_at: {
+                  _nnull: true
+                }
+              })
+            }
+          });
+          
+          if (response?.data?.data) {
+            const items = response.data.data;
+            log(`Получено ${items.length} запланированных публикаций через API с системным токеном`, 'scheduler');
+            
+            const contentItems = items.map((item: any) => ({
+              id: item.id,
+              content: item.content,
+              userId: item.user_id,
+              campaignId: item.campaign_id,
+              status: item.status,
+              contentType: item.content_type || "text",
+              title: item.title || null,
+              imageUrl: item.image_url,
+              videoUrl: item.video_url,
+              additionalImages: item.additional_images || null,
+              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+              createdAt: new Date(item.created_at),
+              socialPlatforms: item.social_platforms,
+              prompt: item.prompt || null,
+              keywords: item.keywords || null,
+              hashtags: item.hashtags || null,
+              links: item.links || null,
+              publishedAt: item.published_at ? new Date(item.published_at) : null,
+              metadata: item.metadata || {}
+            }));
+            
+            scheduledContent = [...scheduledContent, ...contentItems];
+          }
+        } catch (error: any) {
+          log(`Ошибка при запросе с системным токеном: ${error.message}`, 'scheduler');
+          console.error('Directus API Error:', JSON.stringify(error.response || error, null, 2));
+          
+          if (error.response?.data) {
+            console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+            console.error('Response status:', error.response.status);
+          }
+        }
+      } else {
+        log('Системный токен не найден, запланированные публикации не могут быть обработаны', 'scheduler');
       }
       
-      // Подробно логируем полученный токен для отладки (только первые 15 символов)
-      if (authToken) {
-        log(`Получен токен авторизации для работы с API (первые 15 символов): ${authToken.substring(0, 15)}...`, 'scheduler');
+      // Если ничего не нашли через API с системным токеном, пробуем через адаптер хранилища
+      if (scheduledContent.length === 0 && systemToken) {
+        try {
+          log('Поиск запланированных публикаций через адаптер хранилища с системным токеном', 'scheduler');
+          const allContent = await directusCrud.list('campaign_content', {
+            authToken: systemToken,
+            filter: {
+              status: {
+                _eq: 'scheduled'
+              },
+              scheduled_at: {
+                _nnull: true
+              }
+            },
+            sort: ['scheduled_at']
+          });
+          
+          if (allContent && Array.isArray(allContent) && allContent.length > 0) {
+            log(`Получено ${allContent.length} запланированных публикаций через CRUD интерфейс`, 'scheduler');
+            
+            const contentItems = allContent.map((item: any) => {
+              // Создаем базовую структуру объекта с обязательными полями
+              const content = {
+                id: item.id,
+                content: item.content,
+                userId: item.user_id,
+                campaignId: item.campaign_id,
+                status: item.status,
+                contentType: item.content_type || "text",
+                title: item.title || null,
+                imageUrl: item.image_url,
+                videoUrl: item.video_url,
+                scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+                createdAt: new Date(item.created_at),
+                socialPlatforms: item.social_platforms,
+                additionalImages: item.additional_images || null,
+                prompt: item.prompt || null,
+                keywords: item.keywords || null,
+                hashtags: item.hashtags || null,
+                links: item.links || null,
+                publishedAt: item.published_at ? new Date(item.published_at) : null,
+                metadata: item.metadata || {}
+              };
+              
+              // Для публикации в Telegram всегда устанавливаем флаг forceImageTextSeparation
+              // в метаданных, чтобы гарантировать правильное отображение больших текстов
+              if (item.social_platforms && 
+                  typeof item.social_platforms === 'object' && 
+                  Array.isArray(item.social_platforms) && 
+                  item.social_platforms.includes('telegram')) {
+                if (!content.metadata) content.metadata = {};
+                (content.metadata as any).forceImageTextSeparation = true;
+                log(`Установлен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${item.id}`, 'scheduler');
+              }
+              
+              return content;
+            });
+            
+            scheduledContent = [...scheduledContent, ...contentItems];
+          }
+        } catch (error: any) {
+          log(`Ошибка при получении публикаций через CRUD интерфейс: ${error.message}`, 'scheduler');
+        }
       }
-
-      // Получаем список запланированных публикаций
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-      const currentDate = new Date().toISOString();
-
-      // Фильтр для запроса: контент со статусом "scheduled" и scheduled_at <= текущее время
-      // Directus API использует snake_case для имен полей
-      const filter = {
-        status: { _eq: 'scheduled' },
-        scheduled_at: { 
-          _lte: currentDate,
-          _nnull: true // Поле должно быть не null
-        }
-      };
       
-      // Дополнительно логируем SQL-запрос, который будет сгенерирован
-      log(`SQL-подобный запрос: SELECT * FROM campaign_content WHERE status = 'scheduled' AND scheduled_at <= '${currentDate}' AND scheduled_at IS NOT NULL`, 'scheduler');
+      // В последнюю очередь, если все еще нет данных, пробуем стандартное хранилище
+      if (scheduledContent.length === 0) {
+        log('Попытка получения запланированных публикаций через стандартное хранилище', 'scheduler');
+        const storageContent = await storage.getScheduledContent();
+        scheduledContent = [...scheduledContent, ...storageContent];
+      }
       
-      log(`Дата проверки шедулера: ${currentDate}`, 'scheduler');
-
-      log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
-      
-      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
-        params: {
-          filter: JSON.stringify(filter),
-          sort: 'scheduled_at'
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      // Проверяем наличие запланированных публикаций
-      const scheduledContent = response.data.data || [];
-      log(`Получено ${scheduledContent.length} запланированных публикаций через API`, 'scheduler');
-
       if (scheduledContent.length === 0) {
         log('Запланированные публикации не найдены', 'scheduler');
         return;
       }
-
-      // Обрабатываем каждую запланированную публикацию
-      for (const content of scheduledContent) {
-        await this.processScheduledContent(content, authToken);
+      
+      log(`Найдено ${scheduledContent.length} запланированных публикаций`, 'scheduler');
+      
+      // Текущее время
+      const now = new Date();
+      
+      // Детальное логирование каждого запланированного элемента
+      scheduledContent.forEach(content => {
+        if (content.scheduledAt) {
+          const scheduledTime = new Date(content.scheduledAt);
+          const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+          
+          log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()}, ` +
+              `текущее время: ${now.toISOString()}, ` + 
+              `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+        } else {
+          log(`Контент ID ${content.id} "${content.title}" не имеет времени публикации`, 'scheduler');
+        }
+      });
+      
+      // Фильтруем контент, который пора публиковать и еще не опубликован
+      const contentToPublish = scheduledContent.filter(content => {
+        if (!content.scheduledAt) return false;
+        
+        // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
+        if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
+          log(`Контент ID ${content.id} "${content.title}" находится в списке исключенных, полностью пропускаем`, 'scheduler');
+          return false;
+        }
+        
+        // Проверяем, что статус не "published"
+        if (content.status === 'published') {
+          log(`Контент ID ${content.id} "${content.title}" уже опубликован, пропускаем`, 'scheduler');
+          return false;
+        }
+        
+        // Проверяем, не публиковали ли мы уже этот контент в текущей сессии сервера
+        if (content.id && this.processedContentIds.has(content.id)) {
+          log(`Контент ID ${content.id} "${content.title}" уже обработан ранее в текущей сессии сервера, пропускаем`, 'scheduler');
+          return false;
+        }
+        
+        const scheduledTime = new Date(content.scheduledAt);
+        return scheduledTime <= now;
+      });
+      
+      log(`Готово к публикации ${contentToPublish.length} элементов контента`, 'scheduler');
+      
+      // Публикуем каждый элемент контента
+      for (const content of contentToPublish) {
+        await this.publishContent(content);
       }
     } catch (error: any) {
       log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'scheduler');
@@ -399,266 +447,157 @@ export class PublishScheduler {
   }
 
   /**
-   * Обрабатывает запланированный контент
-   * @param content Запланированный контент
-   * @param authToken Токен для авторизации запросов
+   * Публикует контент в выбранные социальные сети
+   * @param content Контент для публикации
    */
-  private async processScheduledContent(content: CampaignContent, authToken: string): Promise<void> {
+  async publishContent(content: CampaignContent) {
     try {
-      log(`Обработка запланированного контента ${content.id}`, 'scheduler');
-
-      // УДАЛЕНО: Проверка на уже обработанный контент теперь полностью отключена
-      // Вместо этого мы будем полагаться на статусы публикаций в БД
-
-      // Добавляем ID в список обработанных ПОСЛЕ проверки наличия платформ
-      // (перенесено ниже)
-
-      // Проверяем наличие платформ для публикации
-      // Дополнительное логирование для отладки
-      log(`Тип socialPlatforms: ${typeof content.socialPlatforms}`, 'scheduler');
-      log(`Значение socialPlatforms: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
-      log(`Тип social_platforms: ${typeof content.social_platforms}`, 'scheduler');
-      log(`Значение social_platforms: ${JSON.stringify(content.social_platforms)}`, 'scheduler');
-      
-      // Используем правильное имя поля в зависимости от типа API
-      // Directus API возвращает CamelCase, но в Directus UI используется snake_case
-      // Чтобы исключить неоднозначность и ошибки, проверяем оба варианта
-      
-      let socialPlatforms = null;
-      
-      // Проверяем наличие поля social_platforms (snake_case вариант - обычно из Directus API)
-      if (content.social_platforms !== undefined && content.social_platforms !== null) {
-        log(`Найдено поле social_platforms в snake_case формате`, 'scheduler');
-        socialPlatforms = content.social_platforms;
-      } 
-      // Проверяем наличие поля socialPlatforms (camelCase вариант - обычно из кода)
-      else if (content.socialPlatforms !== undefined && content.socialPlatforms !== null) {
-        log(`Найдено поле socialPlatforms в camelCase формате`, 'scheduler');
-        socialPlatforms = content.socialPlatforms;
-      }
-      
-      // Если поле получено как строка (часто из Directus), преобразуем его в объект
-      if (typeof socialPlatforms === 'string') {
-        try {
-          log(`Попытка разбора socialPlatforms из строки: ${socialPlatforms}`, 'scheduler');
-          socialPlatforms = JSON.parse(socialPlatforms);
-          log(`После разбора тип: ${typeof socialPlatforms}`, 'scheduler');
-        } catch (e) {
-          log(`Ошибка при разборе socialPlatforms для ${content.id}: ${e}`, 'scheduler');
-          socialPlatforms = {};
-        }
-      }
-      
-      // Если socialPlatforms все еще null или undefined, создаем пустой объект для безопасности
-      if (socialPlatforms === null || socialPlatforms === undefined) {
-        log(`social_platforms и socialPlatforms не найдены, создаем пустой объект`, 'scheduler');
-        socialPlatforms = {};
-      }
-      
-      // Проверяем наличие платформ с улучшенной обработкой
-      const hasSocialPlatforms = socialPlatforms && 
-                              typeof socialPlatforms === 'object' &&
-                              Object.keys(socialPlatforms).length > 0;
-                              
-      // Подробный лог после проверки
-      log(`hasSocialPlatforms: ${hasSocialPlatforms}, тип после обработки: ${typeof socialPlatforms}`, 'scheduler');
-      if (socialPlatforms) {
-        log(`Количество платформ: ${Object.keys(socialPlatforms).length}`, 'scheduler');
-      }
-      
-      if (!hasSocialPlatforms) {
-        log(`Контент ${content.id} не имеет привязанных социальных платформ. Вот его данные:`, 'scheduler');
-        log(JSON.stringify(content), 'scheduler');
+      if (!content.id || !content.campaignId) {
+        log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
         return;
       }
       
-      log(`Контент ${content.id} имеет привязанные социальные платформы:`, 'scheduler');
-      log(JSON.stringify(socialPlatforms), 'scheduler');
+      // Проверяем, не является ли контент проблемным постом с ID "a5bf4171-27cc-4f54-9fca-6b31aa962cf3"
+      if (content.id === 'a5bf4171-27cc-4f54-9fca-6b31aa962cf3') {
+        log(`Контент ${content.id}: "${content.title}" является проблемным постом, полностью пропускаем публикацию`, 'scheduler');
+        return;
+      }
       
-      // Логируем платформы для диагностики
-      log(`Найдены следующие платформы для контента ${content.id}: ${Object.keys(socialPlatforms).join(', ')}`, 'scheduler');
+      // Проверяем, был ли этот контент уже опубликован в текущей сессии сервера
+      if (this.processedContentIds.has(content.id)) {
+        log(`Контент ${content.id}: "${content.title}" уже публиковался в текущей сессии сервера, пропускаем повторную публикацию`, 'scheduler');
+        return;
+      }
       
-      // Добавляем ID в список обработанных только если контент имеет платформы
+      // Добавляем в список обработанных
       this.processedContentIds.add(content.id);
+      
+      // Пропускаем уже опубликованный контент
+      if (content.status === 'published') {
+        log(`Контент ${content.id}: "${content.title}" уже имеет статус published, пропускаем публикацию`, 'scheduler');
+        return;
+      }
 
-      // Получаем список платформ для публикации
-      const platformsToPublish: SocialPlatform[] = [];
+      log(`Публикация контента ${content.id}: "${content.title}"`, 'scheduler');
+
+      // Получаем системный токен для доступа к API
+      const systemToken = await this.getSystemToken();
       
-      // Логируем все платформы для отладки
-      log(`Все платформы в контенте: ${JSON.stringify(socialPlatforms)}`, 'scheduler');
+      // Получаем данные кампании для настроек социальных сетей
+      let campaign: Campaign | undefined;
       
-      for (const [platform, settings] of Object.entries(socialPlatforms)) {
-        // Подробный лог о типах данных
-        log(`Платформа ${platform} (тип: ${typeof platform}) с настройками ${JSON.stringify(settings)} (тип: ${typeof settings})`, 'scheduler');
-        
-        // ИСПРАВЛЕНО: Улучшена логика обработки платформ
-        // 1. Проверяем наличие настроек
-        // 2. Любая платформа со статусом null или undefined устанавливается в 'pending'
-        // 3. Обработка разных статусов
-        
-        if (settings) {
-          // Получаем текущий статус (если его нет, считаем равным 'pending')
-          const statusValue = settings.status || 'pending';
-          log(`Статус для платформы ${platform}: "${statusValue}" (тип: ${typeof statusValue})`, 'scheduler');
+      // Пробуем с системным токеном через прямой запрос
+      if (systemToken) {
+        try {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          log(`Прямой запрос для получения кампании: ${content.campaignId}`, 'scheduler');
           
-          // Проверяем особый случай: статус published, но URL отсутствует - переустанавливаем на pending
-          if (statusValue === 'published' && !settings.postUrl) {
-            log(`Платформа ${platform} имеет статус published, но отсутствует URL. Переустанавливаем на pending для повторной публикации`, 'scheduler');
-            
-            try {
-              // Создаем полный объект socialPlatforms с обновленным статусом
-              const updatedSocialPlatforms = { ...socialPlatforms };
-              updatedSocialPlatforms[platform] = { 
-                ...settings, 
-                status: 'pending',
-                error: null // сбрасываем ошибку
-              };
-              
-              // Обновляем контент в базе данных
-              await storage.updateCampaignContent(content.id, {
-                socialPlatforms: updatedSocialPlatforms
-              }, authToken);
-              
-              log(`Статус платформы ${platform} для контента ${content.id} сброшен на pending из-за отсутствия URL`, 'scheduler');
-              
-              // Добавляем платформу для публикации
-              platformsToPublish.push(platform as SocialPlatform);
-              log(`Платформа ${platform} добавлена в список для публикации после сброса статуса`, 'scheduler');
-            } catch (updateError) {
-              log(`Ошибка при сбросе статуса платформы в БД: ${updateError}`, 'scheduler');
+          // Делаем прямой запрос без параметров
+          const response = await axios.get(`${directusUrl}/items/user_campaigns`, {
+            headers: {
+              'Authorization': `Bearer ${systemToken}`,
+              'Content-Type': 'application/json'
             }
-          }
-          // ИЗМЕНЕНО: Обрабатываем любой статус, кроме 'published' с URL
-          else if (statusValue !== 'published') {
-            // Если статус не 'pending', обновляем его в БД
-            if (statusValue !== 'pending') {
-              log(`Платформа ${platform} имеет статус ${statusValue}, меняем на pending для публикации`, 'scheduler');
+          });
+          
+          if (response?.data?.data && Array.isArray(response.data.data)) {
+            // Ищем кампанию в списке
+            const campaignItem = response.data.data.find((item: any) => 
+              item.id === content.campaignId || 
+              item.id === parseInt(content.campaignId)
+            );
+            
+            if (campaignItem) {
+              log(`Кампания найдена в списке: ${campaignItem.name}`, 'scheduler');
               
-              try {
-                // Создаем полный объект socialPlatforms с обновленным статусом
-                const updatedSocialPlatforms = { ...socialPlatforms };
-                updatedSocialPlatforms[platform] = { 
-                  ...settings, 
-                  status: 'pending',
-                  error: null // сбрасываем ошибку
-                };
-                
-                // Обновляем контент в базе данных
-                await storage.updateCampaignContent(content.id, {
-                  socialPlatforms: updatedSocialPlatforms
-                }, authToken);
-                
-                log(`Статус платформы ${platform} для контента ${content.id} обновлен в БД: status=pending, error=null`, 'scheduler');
-              } catch (updateError) {
-                log(`Ошибка при обновлении статуса платформы в БД: ${updateError}`, 'scheduler');
+              // Добавим подробное логирование настроек для диагностики
+              log(`Настройки кампании: ${JSON.stringify({
+                id: campaignItem.id,
+                hasSettings: !!campaignItem.social_media_settings,
+                settingsType: typeof campaignItem.social_media_settings,
+                settingsKeys: campaignItem.social_media_settings ? Object.keys(campaignItem.social_media_settings) : [],
+                telegramSettings: campaignItem.social_media_settings?.telegram ? 'имеются' : 'отсутствуют',
+                instagramSettings: campaignItem.social_media_settings?.instagram ? 'имеются' : 'отсутствуют',
+                vkSettings: campaignItem.social_media_settings?.vk ? 'имеются' : 'отсутствуют',
+                facebookSettings: campaignItem.social_media_settings?.facebook ? 'имеются' : 'отсутствуют',
+                rawSettings: campaignItem.social_media_settings
+              })}`, 'scheduler');
+              
+              campaign = {
+                id: parseInt(campaignItem.id) || 0,
+                name: campaignItem.name || '',
+                userId: campaignItem.user_id || '',
+                socialMediaSettings: campaignItem.social_media_settings || {},
+                createdAt: campaignItem.created_at ? new Date(campaignItem.created_at) : null,
+                description: campaignItem.description || null,
+                status: campaignItem.status || 'active',
+                trendAnalysisSettings: campaignItem.trend_analysis_settings || {},
+                directusId: campaignItem.id,
+                link: null
+              } as Campaign;
+              
+              // Добавляем логирование настроек Telegram для диагностики
+              if (campaign.socialMediaSettings && 
+                  typeof campaign.socialMediaSettings === 'object') {
+                const socialSettings = campaign.socialMediaSettings as any;
+                if (socialSettings.telegram) {
+                  const telegramSettings = socialSettings.telegram;
+                  log(`Настройки Telegram для кампании: token=${telegramSettings.token ? 'задан' : 'не задан'}, chatId=${telegramSettings.chatId || 'не задан'}`, 'scheduler');
+                } else {
+                  log(`Настройки Telegram для кампании не найдены`, 'scheduler');
+                }
+              } else {
+                log(`Настройки социальных сетей для кампании не найдены`, 'scheduler');
               }
             } else {
-              log(`Платформа ${platform} уже имеет статус pending`, 'scheduler');
+              log(`Кампания с ID ${content.campaignId} не найдена в списке из ${response.data.data.length} элементов`, 'scheduler');
             }
-            
-            // Добавляем платформу для публикации в любом случае (кроме 'published')
-            platformsToPublish.push(platform as SocialPlatform);
-            log(`Платформа ${platform} добавлена в список для публикации`, 'scheduler');
-          } else {
-            log(`Платформа ${platform} имеет статус published и не будет обработана повторно`, 'scheduler');
           }
-        } else {
-          log(`Настройки для платформы ${platform} отсутствуют, пропускаем`, 'scheduler');
+        } catch (error: any) {
+          log(`Ошибка при получении кампании через прямой запрос: ${error.message}`, 'scheduler');
         }
       }
-
-      if (platformsToPublish.length === 0) {
-        log(`Контент ${content.id} не имеет платформ со статусом pending`, 'scheduler');
+      
+      // Если не получилось через CRUD, используем стандартное хранилище
+      if (!campaign) {
+        campaign = await storage.getCampaign(parseInt(content.campaignId));
+      }
+      
+      if (!campaign) {
+        log(`Кампания с ID ${content.campaignId} не найдена`, 'scheduler');
         return;
       }
 
-      log(`Платформы для публикации контента ${content.id}: ${platformsToPublish.join(', ')}`, 'scheduler');
-
-      // Получаем настройки социальных сетей для контента
-      log(`Запрос настроек кампании ${content.campaignId} для получения настроек соцсетей`, 'scheduler');
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-      const campaignUrl = `${directusUrl}/items/campaigns/${content.campaignId}`;
-      log(`URL для получения настроек кампании: ${campaignUrl}`, 'scheduler');
-      
-      // Создаем константы для тестирования (временное решение)
-      // Внимание: В реальном коде получать настройки из API
-      const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-      const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-      const VK_ACCESS_TOKEN = process.env.VK_ACCESS_TOKEN;
-      const VK_GROUP_ID = process.env.VK_GROUP_ID;
-      
-      if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        log(`Отсутствуют переменные окружения для настроек Telegram. Пожалуйста, проверьте наличие TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID`, 'scheduler');
-      }
-      
-      if (!VK_ACCESS_TOKEN || !VK_GROUP_ID) {
-        log(`Отсутствуют переменные окружения для настроек VK. Пожалуйста, проверьте наличие VK_ACCESS_TOKEN и VK_GROUP_ID`, 'scheduler');
-      }
-      
-      // Подробно логируем все переменные окружения (без их значений)
-      Object.keys(process.env).forEach(key => {
-        if (key.includes('TELEGRAM') || key.includes('VK') || key.includes('INSTAGRAM')) {
-          log(`Найдена переменная окружения: ${key} = ${key.includes('TOKEN') || key.includes('KEY') ? '[скрыто]' : process.env[key]}`, 'scheduler');
-        }
-      });
-      
-      // Пытаемся выполнить запрос к API для получения настроек кампании
-      let campaignResponse;
-      try {
-        campaignResponse = await axios.get(campaignUrl, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-      } catch (error: any) {
-        // Если возникла ошибка доступа, используем временное решение с переменными окружения
-        log(`Ошибка при запросе настроек кампании: ${error.message}. Используем настройки из переменных окружения`, 'scheduler');
-        
-        // Создаем имитацию ответа API со значениями из переменных окружения
-        campaignResponse = {
-          data: {
-            data: {
-              id: content.campaignId,
-              socialMediaSettings: {
-                telegram: {
-                  token: TELEGRAM_BOT_TOKEN,
-                  chatId: TELEGRAM_CHAT_ID
-                },
-                vk: {
-                  token: VK_ACCESS_TOKEN,
-                  groupId: VK_GROUP_ID
-                }
-              }
-            }
-          },
-          status: 200
-        };
-      }
-      
-      // Выводим ответ для отладки
-      log(`Получен ответ API для кампании: статус ${campaignResponse.status}`, 'scheduler');
-      if (campaignResponse.data) {
-        log(`Данные в ответе: ${JSON.stringify(campaignResponse.data).substring(0, 200)}...`, 'scheduler');
-      }
-
-      if (!campaignResponse.data || !campaignResponse.data.data) {
-        log(`Не удалось получить настройки кампании ${content.campaignId}`, 'scheduler');
-        return;
-      }
-
-      const campaign = campaignResponse.data.data;
+      // Настройки социальных сетей
       const socialSettings = campaign.socialMediaSettings || {};
 
-      // Счетчики для отслеживания успешных публикаций и всех попыток
+      // Проверяем, в какие платформы нужно публиковать
+      const socialPlatforms = content.socialPlatforms || {};
+      const platformsToPublish = Object.keys(socialPlatforms) as SocialPlatform[];
+
+      if (platformsToPublish.length === 0) {
+        log(`Для контента ${content.id} не указаны платформы`, 'scheduler');
+        
+        // Обновляем статус - не передаем publishedAt напрямую, это внутреннее поле контента
+        await storage.updateCampaignContent(content.id, {
+          status: 'published'
+        });
+        
+        return;
+      }
+
+      // Публикуем в каждую платформу
       let successfulPublications = 0;
       let totalAttempts = 0;
-
-      // Публикуем контент в каждую платформу
+      
       for (const platform of platformsToPublish) {
-        // Проверяем, не был ли контент уже опубликован в эту платформу
-        const platformSettings = socialPlatforms[platform];
-        
-        if (platformSettings && platformSettings.status === 'published') {
+        // Проверяем, существует ли объект социальных платформ и платформа в нём
+        const platformStatus = socialPlatforms && typeof socialPlatforms === 'object' 
+          ? (socialPlatforms as Record<string, any>)[platform]?.status
+          : undefined;
+          
+        // Пропускаем уже опубликованные, но считаем их как успешные
+        if (platformStatus === 'published') {
           log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
           successfulPublications++;
           continue;
@@ -666,75 +605,37 @@ export class PublishScheduler {
 
         totalAttempts++;
 
-        // Убедимся, что метаданные проинициализированы
+        // Убедимся, что метаданные проинициализированы и установлен флаг forceImageTextSeparation для Telegram
         if (!content.metadata) {
           content.metadata = {};
         }
         
-        log(`Публикация запланированного контента ${content.id} на платформу ${platform}`, 'scheduler');
+        // Для Telegram убираем принудительное разделение картинки и текста
+        if (platform === 'telegram') {
+          (content.metadata as any).forceImageTextSeparation = false;
+          log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
+        }
         
-        // ПРЯМОЙ ВЫЗОВ СЕРВИСА ПУБЛИКАЦИИ - используем тот же код, что и для моментальной публикации
-        log(`Прямой вызов socialPublishingService.publishToPlatform для контента ${content.id}`, 'scheduler');
-        
-        // Получаем объект кампании для использования в сервисе публикации
-        // ИСПРАВЛЕНО: Передаем полные настройки кампании, полученные ранее
-        const campaignObject = {
-          id: content.campaignId,
-          socialMediaSettings: socialSettings
-        };
-        
-        // Вызываем общий сервис публикации - ТОТ ЖЕ КОД, что и для моментальной публикации через API
-        // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
-        // Этот код предотвращает передачу объекта вместо строки
-        const platformName = typeof platform === 'string' ? platform : (platform as any).toString();
-        
-        log(`Передаем platformName=${platformName} (тип: ${typeof platformName}) в socialPublishingService.publishToPlatform`, 'scheduler');
-        log(`Настройки социальных сетей: ${JSON.stringify(socialSettings)}`, 'scheduler');
-        
+        // Публикуем контент в платформу через модульный сервис socialPublishingService
         const result = await socialPublishingService.publishToPlatform(
-          platformName as SocialPlatform, 
-          content, 
-          campaignObject,
-          authToken
+          content,
+          platform,
+          socialSettings
         );
-        
-        // Логируем результат публикации
-        log(`Результат публикации для ${platform}: ${JSON.stringify(result)}`, 'scheduler');
-        
-        // Обновляем статус публикации
-        try {
-          log(`Обновление статуса публикации для platform=${platform}`, 'scheduler');
-          
-          // Формируем структуру результата (для socialPublishingService.updatePublicationStatus)
-          // ИСПРАВЛЕНО: Преобразуем platform в строку для корректного формирования объекта
-          const platformNameForResult = typeof platform === 'string' ? platform : (platform as any).toString();
-          // Формируем объект результата публикации с улучшенной обработкой URL
-          const publicationResult = {
-            status: 'published' as const,
-            platform: platformNameForResult as SocialPlatform, // используем строку вместо объекта
-            publishedAt: new Date(),
-            // Дополнительная проверка URL для Telegram - убедиться, что ссылка содержит message_id
-            postUrl: ensureValidTelegramUrl(result.postUrl || result.url, platformNameForResult, result.messageId || result.postId),
-            postId: result.messageId || result.postId,
-            error: null
-          };
-          
-          // Логируем результирующий URL для отладки
-          log(`Финальный URL для платформы ${platform}: ${publicationResult.postUrl}`, 'scheduler');
-          
-          // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
-          // для корректной передачи в метод updatePublicationStatus
-          const platformNameForUpdate = typeof platform === 'string' ? platform : (platform as any).toString();
-          log(`Передаем platformNameForUpdate=${platformNameForUpdate} (тип: ${typeof platformNameForUpdate}) в updatePublicationStatus`, 'scheduler');
-          await socialPublishingService.updatePublicationStatus(content.id, platformNameForUpdate as SocialPlatform, publicationResult);
-          log(`Статус публикации успешно обновлен для ${platform}`, 'scheduler');
-          
-          // Отмечаем успешную публикацию
-          successfulPublications++;
+
+        // Обновляем статус публикации через модульный сервис socialPublishingService
+        await socialPublishingService.updatePublicationStatus(
+          content.id,
+          platform,
+          result
+        );
+
+        // Логируем результат
+        if (result.status === 'published') {
           log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
-        } catch (updateError) {
-          log(`Ошибка при обновлении статуса публикации: ${updateError}`, 'scheduler');
-          log(`Ошибка при публикации контента ${content.id} в ${platform}: ${updateError}`, 'scheduler');
+          successfulPublications++;
+        } else {
+          log(`Ошибка при публикации контента ${content.id} в ${platform}: ${result.error}`, 'scheduler');
         }
       }
       
@@ -742,87 +643,11 @@ export class PublishScheduler {
       // 1. Есть хотя бы одна успешная публикация
       // 2. Все платформы уже были в статусе "published" (successfulPublications > 0 && totalAttempts === 0)
       if (successfulPublications > 0) {
-        log(`Проверка наличия URL перед обновлением основного статуса контента ${content.id}`, 'scheduler');
+        log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах`, 'scheduler');
         
-        try {
-          // Сначала проверяем, что контент все еще существует в базе
-          // Используем переданный токен авторизации
-          const existingContent = await storage.getCampaignContentById(content.id, authToken);
-          if (!existingContent) {
-            log(`Контент с ID ${content.id} не найден в БД, обновление статуса невозможно`, 'scheduler');
-            return;
-          }
-          
-          // Получаем актуальные данные о платформах
-          let updateSocialPlatforms = existingContent.socialPlatforms;
-          if (typeof updateSocialPlatforms === 'string') {
-            try {
-              updateSocialPlatforms = JSON.parse(updateSocialPlatforms);
-            } catch (e) {
-              log(`Ошибка при разборе socialPlatforms: ${e}`, 'scheduler');
-              updateSocialPlatforms = {};
-            }
-          }
-          
-          // Проверяем наличие URL для всех платформ со статусом published
-          let allURLsPresent = true;
-          let needsUpdate = false;
-          
-          for (const platform in updateSocialPlatforms) {
-            const settings = updateSocialPlatforms[platform];
-            if (settings && settings.status === 'published' && !settings.postUrl) {
-              log(`Платформа ${platform} имеет статус published, но URL отсутствует`, 'scheduler');
-              allURLsPresent = false;
-              
-              // Исправляем URL перед тем, как сделать повторную публикацию
-              if (platform === 'telegram' && settings.postId) {
-                // Формируем URL для Telegram на основе postId
-                const postId = settings.postId;
-                // Получаем информацию о чате напрямую из переменных окружения
-                let chatId = process.env.TELEGRAM_CHAT_ID || '';
-                log(`Получен chatId из переменных окружения: ${chatId}`, 'scheduler');
-                
-                if (chatId.startsWith('-100')) {
-                  chatId = chatId.replace('-100', '');
-                  log(`Преобразован chatId после удаления префикса -100: ${chatId}`, 'scheduler');
-                }
-                
-                // Используем функцию ensureValidTelegramUrl для формирования URL
-                const correctedUrl = ensureValidTelegramUrl(`https://t.me/c/${chatId}`, 'telegram', postId);
-                log(`Сформирован URL для Telegram: ${correctedUrl}`, 'scheduler');
-                
-                // Обновляем URL в socialPlatforms
-                updateSocialPlatforms[platform].postUrl = correctedUrl;
-                needsUpdate = true;
-              }
-            }
-          }
-          
-          // Если нужно обновить данные в БД из-за добавления URL
-          if (needsUpdate) {
-            await storage.updateCampaignContent(content.id, {
-              socialPlatforms: updateSocialPlatforms
-            }, authToken);
-            log(`Обновлены URL для платформ контента ${content.id}`, 'scheduler');
-          }
-          
-          // Только если все URL присутствуют, меняем основной статус на published
-          if (allURLsPresent) {
-            log(`Обновление основного статуса контента ${content.id} на "published" после проверки URL`, 'scheduler');
-            
-            // Обновляем статус с передачей токена авторизации
-            await storage.updateCampaignContent(content.id, {
-              status: 'published'
-            }, authToken);
-            
-            log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
-          } else {
-            log(`Статус контента ${content.id} не обновлен на published, т.к. не все URL присутствуют`, 'scheduler');
-          }
-          
-        } catch (updateError: any) {
-          log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
-        }
+        await storage.updateCampaignContent(content.id, {
+          status: 'published'
+        });
       }
     } catch (error: any) {
       log(`Ошибка при публикации контента ${content.id}: ${error.message}`, 'scheduler');

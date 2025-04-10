@@ -36,6 +36,8 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
+import testRouter from './api/test-routes';
+import telegramPostRouter from './api/telegram-post-route.js';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -2887,6 +2889,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerValidationRoutes(app);
   console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
+  
+  // Регистрируем тестовые маршруты для разработки и тестирования
+  console.log('Registering test routes...');
+  app.use('/api/test', testRouter);
+  // Регистрируем маршрут для тестирования публикации в Telegram
+  app.use('/api/test', telegramPostRouter);
+  console.log('Test routes registered successfully');
   console.log('API routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
