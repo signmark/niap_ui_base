@@ -233,9 +233,23 @@ export class PublishScheduler {
       const platformsToPublish: SocialPlatform[] = [];
       
       for (const [platform, settings] of Object.entries(content.socialPlatforms)) {
-        // Проверяем только платформы со статусом pending
-        if (settings && settings.status === 'pending') {
-          platformsToPublish.push(platform as SocialPlatform);
+        // Добавляем проверку на платформы со статусом failed или null
+        if (settings) {
+          if (settings.status === 'pending') {
+            platformsToPublish.push(platform as SocialPlatform);
+            log(`Платформа ${platform} имеет статус pending и будет опубликована`, 'scheduler');
+          } 
+          else if (settings.status === 'failed') {
+            // Автоматически меняем статус с failed на pending для повторной попытки
+            log(`Платформа ${platform} имеет статус failed, меняем на pending для повторной попытки`, 'scheduler');
+            settings.status = 'pending';
+            platformsToPublish.push(platform as SocialPlatform);
+          }
+          else {
+            log(`Платформа ${platform} имеет статус ${settings.status} и не будет обработана`, 'scheduler');
+          }
+        } else {
+          log(`Настройки для платформы ${platform} отсутствуют`, 'scheduler');
         }
       }
 
