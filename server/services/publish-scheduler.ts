@@ -220,11 +220,14 @@ export class PublishScheduler {
       // (перенесено ниже)
 
       // Проверяем наличие платформ для публикации
-      if (!content.socialPlatforms) {
+      if (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0) {
         log(`Контент ${content.id} не имеет привязанных социальных платформ. Вот его данные:`, 'scheduler');
         log(JSON.stringify(content), 'scheduler');
         return;
       }
+      
+      // Логируем платформы для диагностики
+      log(`Найдены следующие платформы для контента ${content.id}: ${Object.keys(content.socialPlatforms).join(', ')}`, 'scheduler');
       
       // Добавляем ID в список обработанных только если контент имеет платформы
       this.processedContentIds.add(content.id);
@@ -232,21 +235,57 @@ export class PublishScheduler {
       // Получаем список платформ для публикации
       const platformsToPublish: SocialPlatform[] = [];
       
+      // Логируем все платформы для отладки
+      log(`Все платформы в контенте: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
+      
       for (const [platform, settings] of Object.entries(content.socialPlatforms)) {
+        // Подробный лог о типах данных
+        log(`Платформа ${platform} (тип: ${typeof platform}) с настройками ${JSON.stringify(settings)} (тип: ${typeof settings})`, 'scheduler');
+        
         // Добавляем проверку на платформы со статусом failed или null
         if (settings) {
-          if (settings.status === 'pending') {
+          // Лог для отладки значения статуса
+          const statusValue = settings.status;
+          log(`Статус для платформы ${platform}: "${statusValue}" (тип: ${typeof statusValue})`, 'scheduler');
+          
+          if (statusValue === 'pending') {
             platformsToPublish.push(platform as SocialPlatform);
             log(`Платформа ${platform} имеет статус pending и будет опубликована`, 'scheduler');
           } 
-          else if (settings.status === 'failed') {
+          else if (statusValue === 'failed') {
             // Автоматически меняем статус с failed на pending для повторной попытки
             log(`Платформа ${platform} имеет статус failed, меняем на pending для повторной попытки`, 'scheduler');
-            settings.status = 'pending';
+            
+            try {
+              // Обновляем статус в объекте (изменение копии)
+              settings.status = 'pending';
+              
+              // Для диагностики выводим объект после изменения
+              log(`Обновленные настройки для платформы ${platform}: ${JSON.stringify(settings)}`, 'scheduler');
+              
+              // Создаем полный объект socialPlatforms с обновленным статусом для этой платформы
+              const updatedSocialPlatforms = { ...content.socialPlatforms };
+              updatedSocialPlatforms[platform] = { 
+                ...settings, 
+                status: 'pending',
+                error: null // сбрасываем ошибку
+              };
+              
+              // Обновляем контент в базе данных
+              const updateResult = await storage.updateCampaignContent(content.id, {
+                socialPlatforms: updatedSocialPlatforms
+              }, authToken);
+              
+              log(`Статус платформы ${platform} для контента ${content.id} обновлен в БД: status=pending, error=null`, 'scheduler');
+            } catch (updateError) {
+              log(`Ошибка при обновлении статуса платформы в БД: ${updateError}`, 'scheduler');
+            }
+            
+            // Добавляем платформу для публикации
             platformsToPublish.push(platform as SocialPlatform);
           }
           else {
-            log(`Платформа ${platform} имеет статус ${settings.status} и не будет обработана`, 'scheduler');
+            log(`Платформа ${platform} имеет статус ${statusValue} и не будет обработана`, 'scheduler');
           }
         } else {
           log(`Настройки для платформы ${platform} отсутствуют`, 'scheduler');
@@ -306,8 +345,14 @@ export class PublishScheduler {
         const campaign = { id: content.campaignId };
         
         // Вызываем общий сервис публикации - ТОТ ЖЕ КОД, что и для моментальной публикации через API
+        // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
+        // Этот код предотвращает передачу объекта вместо строки
+        const platformName = typeof platform === 'string' ? platform : (platform as any).toString();
+        
+        log(`Передаем platformName=${platformName} (тип: ${typeof platformName}) в socialPublishingService.publishToPlatform`, 'scheduler');
+        
         const result = await socialPublishingService.publishToPlatform(
-          platform, 
+          platformName as SocialPlatform, 
           content, 
           campaign,
           authToken
@@ -321,16 +366,22 @@ export class PublishScheduler {
           log(`Обновление статуса публикации для platform=${platform}`, 'scheduler');
           
           // Формируем структуру результата (для socialPublishingService.updatePublicationStatus)
+          // ИСПРАВЛЕНО: Преобразуем platform в строку для корректного формирования объекта
+          const platformNameForResult = typeof platform === 'string' ? platform : (platform as any).toString();
           const publicationResult = {
             status: 'published' as const,
-            platform,
+            platform: platformNameForResult as SocialPlatform, // используем строку вместо объекта
             publishedAt: new Date(),
             postUrl: result.postUrl || result.url,
             postId: result.messageId || result.postId,
             error: null
           };
           
-          await socialPublishingService.updatePublicationStatus(content.id, platform, publicationResult);
+          // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
+          // для корректной передачи в метод updatePublicationStatus
+          const platformNameForUpdate = typeof platform === 'string' ? platform : (platform as any).toString();
+          log(`Передаем platformNameForUpdate=${platformNameForUpdate} (тип: ${typeof platformNameForUpdate}) в updatePublicationStatus`, 'scheduler');
+          await socialPublishingService.updatePublicationStatus(content.id, platformNameForUpdate as SocialPlatform, publicationResult);
           log(`Статус публикации успешно обновлен для ${platform}`, 'scheduler');
           
           // Отмечаем успешную публикацию
