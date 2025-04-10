@@ -1500,9 +1500,30 @@ export class SocialPublishingService {
       
       // Обновляем информацию о платформе
       // platform может быть строкой или объектом, обрабатываем оба случая
-      const platformKey = typeof platform === 'string' ? platform : platform.toString();
+      const platformKey = typeof platform === 'string' ? platform : (platform as any).toString();
       log(`Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
       log(`Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      
+      // Проверяем наличие URL-а в publicationResult
+      if (!publicationResult.postUrl && content.socialPlatforms) {
+        // Пытаемся извлечь URL из существующих данных, если в текущем обновлении его нет
+        try {
+          let existingPlatforms = content.socialPlatforms;
+          if (typeof existingPlatforms === 'string') {
+            existingPlatforms = JSON.parse(existingPlatforms);
+          }
+          
+          // Если у платформы уже есть сохраненный URL, используем его
+          if (existingPlatforms[platformKey] && existingPlatforms[platformKey].postUrl) {
+            log(`Найден сохраненный URL ${existingPlatforms[platformKey].postUrl} для платформы ${platformKey}`, 'social-publishing');
+            publicationResult.postUrl = existingPlatforms[platformKey].postUrl;
+          }
+        } catch (e) {
+          log(`Ошибка при попытке извлечь сохраненный URL: ${e}`, 'social-publishing');
+        }
+      }
+      
+      // Обновляем информацию о публикации
       socialPlatforms[platformKey] = publicationResult;
       
       // Определяем общий статус публикации на основе статусов всех платформ

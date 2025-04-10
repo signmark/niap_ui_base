@@ -739,15 +739,20 @@ export class PublishScheduler {
             // Улучшенная логика получения URL и messageId из результата API
             log(`Результат публикации от API: ${JSON.stringify(resultFromApi)}`, 'scheduler');
             
+            // Попытка извлечь postUrl и messageId из вложенного объекта result, если он существует
+            const nestedResult = resultFromApi.result || {};
+            
             const result = {
               platform,
               status: 'published',
               publishedAt: new Date(),
-              // API может вернуть ссылку в postUrl или url, проверяем оба поля
-              postUrl: resultFromApi.postUrl || resultFromApi.url || null,
-              postId: resultFromApi.messageId || resultFromApi.postId || null,
+              // API может вернуть ссылку в различных местах JSON-структуры, проверяем все варианты
+              postUrl: nestedResult.postUrl || resultFromApi.postUrl || nestedResult.url || resultFromApi.url || null,
+              postId: nestedResult.messageId || resultFromApi.messageId || nestedResult.postId || resultFromApi.postId || null,
               error: null
             };
+            
+            log(`API вернул JSON: ${JSON.stringify(resultFromApi)}`, 'scheduler');
             
             log(`Сформирован результат публикации с postUrl: ${result.postUrl}`, 'scheduler');
             log(`Детали результата публикации для ${platform}: ${JSON.stringify(result)}`, 'scheduler');
