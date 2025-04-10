@@ -750,10 +750,17 @@ export class PublishScheduler {
             };
             
             log(`Сформирован результат публикации с postUrl: ${result.postUrl}`, 'scheduler');
+            log(`Детали результата публикации для ${platform}: ${JSON.stringify(result)}`, 'scheduler');
             
             // Обновляем статус публикации через модульный сервис с дополнительной проверкой
             // API должен обновить статус, но для надёжности делаем и здесь
-            await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+            try {
+              log(`Вызов updatePublicationStatus для platform=${platform}`, 'scheduler');
+              await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+              log(`Статус публикации успешно обновлен для ${platform}`, 'scheduler');
+            } catch (updateError) {
+              log(`Ошибка при обновлении статуса публикации: ${updateError}`, 'scheduler');
+            }
             
             // Отмечаем успешную публикацию
             successfulPublications++;
