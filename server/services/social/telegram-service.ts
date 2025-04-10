@@ -683,7 +683,10 @@ export class TelegramService extends BaseSocialService {
    * @returns URL сообщения
    */
   private generatePostUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
-    return this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
+    log(`Генерация URL для Telegram с chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
+    const url = this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
+    log(`Сгенерирован URL для Telegram: ${url}`, 'social-publishing');
+    return url;
   }
   
   /**
@@ -1184,11 +1187,21 @@ export class TelegramService extends BaseSocialService {
           
           if (response.status === 200 && response.data && response.data.ok) {
             log(`Изображение с текстом успешно отправлено в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+            
+            // Получаем ID сообщения
+            const messageId = response.data?.result?.message_id;
+            log(`ID сообщения с изображением: ${messageId || 'не получен'}`, 'social-publishing');
+            
+            // Генерируем URL для этого сообщения
+            const postUrl = this.generatePostUrl(chatId, formattedChatId, messageId);
+            log(`Сгенерирован URL для сообщения с изображением: ${postUrl}`, 'social-publishing');
+            
             return {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.generatePostUrl(chatId, formattedChatId, response.data?.result?.message_id)
+              postUrl,
+              messageId  // Добавляем ID сообщения в результат
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
@@ -1407,7 +1420,19 @@ export class TelegramService extends BaseSocialService {
                   
                   // Обновляем lastMessageId при необходимости
                   if (mediaResponse.data.result && mediaResponse.data.result.length > 0) {
+                    // Детальное логирование полученных данных
+                    log(`Детальный анализ ответа sendMediaGroup: Получено ${mediaResponse.data.result.length} сообщений`, 'social-publishing');
+                    
+                    // Перебираем все сообщения и выводим информацию о них
+                    mediaResponse.data.result.forEach((msg: any, idx: number) => {
+                      log(`Сообщение ${idx+1}: ID=${msg.message_id || 'не найден'}, присутствие фото: ${!!msg.photo}`, 'social-publishing');
+                    });
+                    
+                    // Берем ID первого сообщения для формирования ссылки
                     lastMessageId = mediaResponse.data.result[0].message_id;
+                    log(`Выбран ID первого сообщения из группы: ${lastMessageId}`, 'social-publishing');
+                  } else {
+                    log(`Внимание! В ответе sendMediaGroup не найдены результаты сообщений`, 'social-publishing');
                   }
                 } else {
                   log(`Ошибка при отправке группы изображений: ${JSON.stringify(mediaResponse.data)}`, 'social-publishing');
