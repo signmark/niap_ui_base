@@ -438,9 +438,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
+                        <SelectItem value="gemini">Gemini AI</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
-                        <SelectItem value="gemini">Gemini AI</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
