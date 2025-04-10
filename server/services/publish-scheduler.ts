@@ -429,8 +429,35 @@ export class PublishScheduler {
           const statusValue = settings.status || 'pending';
           log(`Статус для платформы ${platform}: "${statusValue}" (тип: ${typeof statusValue})`, 'scheduler');
           
-          // ИЗМЕНЕНО: Обрабатываем любой статус, кроме 'published'
-          if (statusValue !== 'published') {
+          // Проверяем особый случай: статус published, но URL отсутствует - переустанавливаем на pending
+          if (statusValue === 'published' && !settings.postUrl) {
+            log(`Платформа ${platform} имеет статус published, но отсутствует URL. Переустанавливаем на pending для повторной публикации`, 'scheduler');
+            
+            try {
+              // Создаем полный объект socialPlatforms с обновленным статусом
+              const updatedSocialPlatforms = { ...socialPlatforms };
+              updatedSocialPlatforms[platform] = { 
+                ...settings, 
+                status: 'pending',
+                error: null // сбрасываем ошибку
+              };
+              
+              // Обновляем контент в базе данных
+              await storage.updateCampaignContent(content.id, {
+                socialPlatforms: updatedSocialPlatforms
+              }, authToken);
+              
+              log(`Статус платформы ${platform} для контента ${content.id} сброшен на pending из-за отсутствия URL`, 'scheduler');
+              
+              // Добавляем платформу для публикации
+              platformsToPublish.push(platform as SocialPlatform);
+              log(`Платформа ${platform} добавлена в список для публикации после сброса статуса`, 'scheduler');
+            } catch (updateError) {
+              log(`Ошибка при сбросе статуса платформы в БД: ${updateError}`, 'scheduler');
+            }
+          }
+          // ИЗМЕНЕНО: Обрабатываем любой статус, кроме 'published' с URL
+          else if (statusValue !== 'published') {
             // Если статус не 'pending', обновляем его в БД
             if (statusValue !== 'pending') {
               log(`Платформа ${platform} имеет статус ${statusValue}, меняем на pending для публикации`, 'scheduler');
