@@ -1499,7 +1499,11 @@ export class SocialPublishingService {
       }
       
       // Обновляем информацию о платформе
-      socialPlatforms[platform] = publicationResult;
+      // platform может быть строкой или объектом, обрабатываем оба случая
+      const platformKey = typeof platform === 'string' ? platform : platform.toString();
+      log(`Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
+      log(`Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      socialPlatforms[platformKey] = publicationResult;
       
       // Определяем общий статус публикации на основе статусов всех платформ
       const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
