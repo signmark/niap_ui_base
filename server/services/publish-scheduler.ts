@@ -486,14 +486,19 @@ export class PublishScheduler {
           // Формируем структуру результата (для socialPublishingService.updatePublicationStatus)
           // ИСПРАВЛЕНО: Преобразуем platform в строку для корректного формирования объекта
           const platformNameForResult = typeof platform === 'string' ? platform : (platform as any).toString();
+          // Формируем объект результата публикации с улучшенной обработкой URL
           const publicationResult = {
             status: 'published' as const,
             platform: platformNameForResult as SocialPlatform, // используем строку вместо объекта
             publishedAt: new Date(),
-            postUrl: result.postUrl || result.url,
+            // Проверка и форматирование URL поста
+            postUrl: this.ensureValidPostUrl(result.postUrl || result.url, platformNameForResult, result.messageId || result.postId),
             postId: result.messageId || result.postId,
             error: null
           };
+          
+          // Логируем результирующий URL для отладки
+          log(`Финальный URL для платформы ${platform}: ${publicationResult.postUrl}`, 'scheduler');
           
           // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
           // для корректной передачи в метод updatePublicationStatus
