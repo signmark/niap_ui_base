@@ -105,9 +105,41 @@ export class SocialPublishingService {
    */
   async publishToTelegram(
     content: CampaignContent,
-    telegramSettings?: SocialMediaSettings['telegram']
+    telegramSettings?: any
   ): Promise<SocialPublication> {
-    if (!telegramSettings?.token || !telegramSettings?.chatId) {
+    // Поддерживаем разные структуры настроек
+    let token = null;
+    let chatId = null;
+    
+    // Логируем полученные настройки для отладки
+    log(`Полученные настройки Telegram: ${JSON.stringify(telegramSettings)}`, 'social-publishing');
+    
+    // Проверяем различные варианты структуры настроек
+    if (telegramSettings) {
+      if (telegramSettings.token) {
+        token = telegramSettings.token;
+      } else if (telegramSettings.telegram_bot_token) {
+        token = telegramSettings.telegram_bot_token;
+      } else if (telegramSettings.telegram?.token) {
+        token = telegramSettings.telegram.token;
+      } else if (telegramSettings.settings?.telegram_bot_token) {
+        token = telegramSettings.settings.telegram_bot_token;
+      }
+      
+      if (telegramSettings.chatId) {
+        chatId = telegramSettings.chatId;
+      } else if (telegramSettings.telegram_chat_id) {
+        chatId = telegramSettings.telegram_chat_id;
+      } else if (telegramSettings.telegram?.chatId) {
+        chatId = telegramSettings.telegram.chatId;
+      } else if (telegramSettings.settings?.telegram_chat_id) {
+        chatId = telegramSettings.settings.telegram_chat_id;
+      }
+    }
+    
+    log(`Извлеченные данные Telegram: token=${token ? 'найден' : 'не найден'}, chatId=${chatId || 'не найден'}`, 'social-publishing');
+    
+    if (!token || !chatId) {
       return {
         platform: 'telegram',
         status: 'failed',
