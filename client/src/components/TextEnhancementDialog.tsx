@@ -120,13 +120,13 @@ const AI_SERVICES = [
     name: "Gemini",
     models: [
       {
-        id: "gemini-pro",
-        name: "Gemini Pro",
+        id: "gemini-1.5-flash",
+        name: "Gemini 1.5 Flash",
         default: true
       },
       {
-        id: "gemini-ultra",
-        name: "Gemini Ultra"
+        id: "gemini-1.5-pro",
+        name: "Gemini 1.5 Pro"
       }
     ]
   }
