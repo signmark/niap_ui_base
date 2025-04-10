@@ -377,7 +377,11 @@ export class PublishScheduler {
         log(`Прямой вызов socialPublishingService.publishToPlatform для контента ${content.id}`, 'scheduler');
         
         // Получаем объект кампании для использования в сервисе публикации
-        const campaign = { id: content.campaignId };
+        // ИСПРАВЛЕНО: Передаем полные настройки кампании, полученные ранее
+        const campaignObject = {
+          id: content.campaignId,
+          socialMediaSettings: socialSettings
+        };
         
         // Вызываем общий сервис публикации - ТОТ ЖЕ КОД, что и для моментальной публикации через API
         // ИСПРАВЛЕНО: Преобразуем platform в строку, если она не является строкой
@@ -385,11 +389,12 @@ export class PublishScheduler {
         const platformName = typeof platform === 'string' ? platform : (platform as any).toString();
         
         log(`Передаем platformName=${platformName} (тип: ${typeof platformName}) в socialPublishingService.publishToPlatform`, 'scheduler');
+        log(`Настройки социальных сетей: ${JSON.stringify(socialSettings)}`, 'scheduler');
         
         const result = await socialPublishingService.publishToPlatform(
           platformName as SocialPlatform, 
           content, 
-          campaign,
+          campaignObject,
           authToken
         );
         
