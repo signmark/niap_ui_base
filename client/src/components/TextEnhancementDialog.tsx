@@ -114,6 +114,21 @@ const AI_SERVICES = [
         name: "Qwen Plus"
       }
     ]
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    models: [
+      {
+        id: "gemini-pro",
+        name: "Gemini Pro",
+        default: true
+      },
+      {
+        id: "gemini-ultra",
+        name: "Gemini Ultra"
+      }
+    ]
   }
 ];
 
@@ -171,6 +186,8 @@ export function TextEnhancementDialog({
         return '/deepseek/improve-text';
       case 'qwen':
         return '/qwen/improve-text';
+      case 'gemini':
+        return '/gemini/improve-text';
       default:
         return '/claude/improve-text';
     }
@@ -250,8 +267,16 @@ export function TextEnhancementDialog({
     document.getElementById('settings-dialog-trigger')?.click();
     
     toast({
-      title: `Необходим API ключ ${selectedService === 'claude' ? 'Claude' : selectedService === 'deepseek' ? 'DeepSeek' : 'Qwen'}`,
-      description: `Перейдите в настройки и добавьте API ключ ${selectedService === 'claude' ? 'Claude' : selectedService === 'deepseek' ? 'DeepSeek' : 'Qwen'}`,
+      title: `Необходим API ключ ${
+        selectedService === 'claude' ? 'Claude' : 
+        selectedService === 'deepseek' ? 'DeepSeek' : 
+        selectedService === 'gemini' ? 'Gemini' : 'Qwen'
+      }`,
+      description: `Перейдите в настройки и добавьте API ключ ${
+        selectedService === 'claude' ? 'Claude' : 
+        selectedService === 'deepseek' ? 'DeepSeek' : 
+        selectedService === 'gemini' ? 'Gemini' : 'Qwen'
+      }`,
     });
   };
 
