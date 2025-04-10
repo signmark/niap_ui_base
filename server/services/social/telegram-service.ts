@@ -615,9 +615,22 @@ export class TelegramService extends BaseSocialService {
         }
         
         // Генерируем URL сообщения, учитывая username чата, если он известен
+        // Корректно обрабатываем разные форматы ID (удаляем префикс -1001, -1002, -100)
+        let cleanChatId = chatId;
+        if (cleanChatId.startsWith('-1001')) {
+          cleanChatId = cleanChatId.replace('-1001', '');
+          log(`Обработка ID чата с префиксом -1001: ${chatId} -> ${cleanChatId}`, 'social-publishing');
+        } else if (cleanChatId.startsWith('-1002')) {
+          cleanChatId = cleanChatId.replace('-1002', '');
+          log(`Обработка ID чата с префиксом -1002: ${chatId} -> ${cleanChatId}`, 'social-publishing');
+        } else if (cleanChatId.startsWith('-100')) {
+          cleanChatId = cleanChatId.replace('-100', '');
+          log(`Обработка ID чата с префиксом -100: ${chatId} -> ${cleanChatId}`, 'social-publishing');
+        }
+        
         const messageUrl = this.currentChatUsername 
           ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
-          : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+          : `https://t.me/c/${cleanChatId}/${lastMessageId}`;
         
         // Если все группы успешно отправлены
         return { 

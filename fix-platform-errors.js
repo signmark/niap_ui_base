@@ -5,7 +5,7 @@
  * Запуск: node fix-platform-errors.js
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 /**
  * Функция для логирования сообщений

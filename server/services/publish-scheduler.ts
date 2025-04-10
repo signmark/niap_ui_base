@@ -16,23 +16,57 @@ import { checkTokenExtractionRequest } from './token-extractor';
  * @param messageId ID сообщения или поста
  * @returns Корректный URL
  */
-function ensureValidTelegramUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
+export function ensureValidTelegramUrl(url: string | undefined, platform: string, messageId: string | undefined): string {
   // Если URL не определен, возвращаем пустую строку
   if (!url) return '';
   
   // Логируем параметры для отладки
   log(`Проверка URL: ${url}, платформа: ${platform}, messageId: ${messageId}`, 'scheduler');
   
-  // Обрабатываем URL для Telegram
+  // Обрабатываем URL только для Telegram
   if (platform === 'telegram') {
-    // Проверяем формат URL для приватных каналов Telegram
-    // URL не содержит ID сообщения (проверяем, что после /c/NUMBER нет дальнейших слешей)
-    if (url.includes('/c/') && !url.includes('/', url.indexOf('/c/') + 3)) {
+    // Проверяем наличие messageId в URL
+    const hasMessageIdInUrl = !!url.match(/\/\d+$/); // URL заканчивается на /NUMBER
+    
+    if (!hasMessageIdInUrl && messageId) {
       // URL не содержит ID сообщения - нужно добавить messageId
-      // Пример URL: https://t.me/c/230236310 -> https://t.me/c/230236310/123
-      const fixedUrl = `${url}/${messageId}`;
-      log(`Исправление URL для Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
-      return fixedUrl;
+      
+      // Случай 1: URL для публичного канала без ID сообщения (t.me/channelname)
+      if (url.match(/^https?:\/\/t\.me\/[^\/]+$/)) {
+        const fixedUrl = `${url}/${messageId}`;
+        log(`Исправление URL для публичного канала Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      }
+      
+      // Случай 2: URL для приватного канала без ID сообщения (t.me/c/123456789)
+      if (url.match(/^https?:\/\/t\.me\/c\/\d+$/)) {
+        const fixedUrl = `${url}/${messageId}`;
+        log(`Исправление URL для приватного канала Telegram: ${url} -> ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      }
+      
+      // Общий случай: просто добавляем messageId в конец URL
+      if (!url.endsWith('/')) {
+        const fixedUrl = `${url}/${messageId}`;
+        log(`Исправление URL для Telegram (общий случай): ${url} -> ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      } else {
+        const fixedUrl = `${url}${messageId}`;
+        log(`Исправление URL для Telegram (с завершающим слешем): ${url} -> ${fixedUrl}`, 'scheduler');
+        return fixedUrl;
+      }
+    }
+    
+    // Специальная обработка случая, когда URL имеет неправильный формат из-за ошибки [object Object]
+    if (url.includes('[object Object]')) {
+      log(`Найден некорректный URL с [object Object]: ${url}`, 'scheduler');
+      
+      // Пытаемся создать корректный URL из доступной информации
+      if (messageId) {
+        const baseUrl = "https://t.me";
+        // Возвращаем базовый URL, так как мы не можем определить ID канала
+        return `${baseUrl}`;
+      }
     }
   }
   
