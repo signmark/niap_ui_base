@@ -3535,7 +3535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             {
               platform,
               tone,
-              model: 'gemini-pro'
+              model: 'gemini-1.5-flash'
             }
           );
           
