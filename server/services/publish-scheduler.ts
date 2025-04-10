@@ -220,9 +220,36 @@ export class PublishScheduler {
       // (перенесено ниже)
 
       // Проверяем наличие платформ для публикации
-      const hasSocialPlatforms = content.socialPlatforms && 
-                              typeof content.socialPlatforms === 'object' &&
-                              Object.keys(content.socialPlatforms).length > 0;
+      // Дополнительное логирование для отладки
+      log(`Тип socialPlatforms: ${typeof content.socialPlatforms}`, 'scheduler');
+      log(`Значение socialPlatforms: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
+      log(`Тип social_platforms: ${typeof content.social_platforms}`, 'scheduler');
+      log(`Значение social_platforms: ${JSON.stringify(content.social_platforms)}`, 'scheduler');
+      
+      // Используем правильное имя поля (с подчеркиванием)
+      // Преобразуем строку в объект, если получен строковый формат
+      let socialPlatforms = content.social_platforms || content.socialPlatforms;
+      if (typeof socialPlatforms === 'string') {
+        try {
+          log(`Попытка разбора socialPlatforms из строки: ${socialPlatforms}`, 'scheduler');
+          socialPlatforms = JSON.parse(socialPlatforms);
+          log(`После разбора тип: ${typeof socialPlatforms}`, 'scheduler');
+        } catch (e) {
+          log(`Ошибка при разборе socialPlatforms для ${content.id}: ${e}`, 'scheduler');
+          socialPlatforms = null;
+        }
+      }
+      
+      // Проверяем наличие платформ с улучшенной обработкой
+      const hasSocialPlatforms = socialPlatforms && 
+                              typeof socialPlatforms === 'object' &&
+                              Object.keys(socialPlatforms).length > 0;
+                              
+      // Подробный лог после проверки
+      log(`hasSocialPlatforms: ${hasSocialPlatforms}, тип после обработки: ${typeof socialPlatforms}`, 'scheduler');
+      if (socialPlatforms) {
+        log(`Количество платформ: ${Object.keys(socialPlatforms).length}`, 'scheduler');
+      }
       
       if (!hasSocialPlatforms) {
         log(`Контент ${content.id} не имеет привязанных социальных платформ. Вот его данные:`, 'scheduler');
@@ -231,10 +258,10 @@ export class PublishScheduler {
       }
       
       log(`Контент ${content.id} имеет привязанные социальные платформы:`, 'scheduler');
-      log(JSON.stringify(content.socialPlatforms), 'scheduler');
+      log(JSON.stringify(socialPlatforms), 'scheduler');
       
       // Логируем платформы для диагностики
-      log(`Найдены следующие платформы для контента ${content.id}: ${Object.keys(content.socialPlatforms).join(', ')}`, 'scheduler');
+      log(`Найдены следующие платформы для контента ${content.id}: ${Object.keys(socialPlatforms).join(', ')}`, 'scheduler');
       
       // Добавляем ID в список обработанных только если контент имеет платформы
       this.processedContentIds.add(content.id);
@@ -243,9 +270,9 @@ export class PublishScheduler {
       const platformsToPublish: SocialPlatform[] = [];
       
       // Логируем все платформы для отладки
-      log(`Все платформы в контенте: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
+      log(`Все платформы в контенте: ${JSON.stringify(socialPlatforms)}`, 'scheduler');
       
-      for (const [platform, settings] of Object.entries(content.socialPlatforms)) {
+      for (const [platform, settings] of Object.entries(socialPlatforms)) {
         // Подробный лог о типах данных
         log(`Платформа ${platform} (тип: ${typeof platform}) с настройками ${JSON.stringify(settings)} (тип: ${typeof settings})`, 'scheduler');
         
@@ -271,7 +298,8 @@ export class PublishScheduler {
               log(`Обновленные настройки для платформы ${platform}: ${JSON.stringify(settings)}`, 'scheduler');
               
               // Создаем полный объект socialPlatforms с обновленным статусом для этой платформы
-              const updatedSocialPlatforms = { ...content.socialPlatforms };
+              // Используем нормализованную переменную socialPlatforms вместо content.socialPlatforms
+              const updatedSocialPlatforms = { ...socialPlatforms };
               updatedSocialPlatforms[platform] = { 
                 ...settings, 
                 status: 'pending',
@@ -328,7 +356,7 @@ export class PublishScheduler {
       // Публикуем контент в каждую платформу
       for (const platform of platformsToPublish) {
         // Проверяем, не был ли контент уже опубликован в эту платформу
-        const platformSettings = content.socialPlatforms[platform];
+        const platformSettings = socialPlatforms[platform];
         
         if (platformSettings && platformSettings.status === 'published') {
           log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
