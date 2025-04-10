@@ -22,7 +22,8 @@ function getServiceDisplayName(serviceName: string): string {
     'deepseek': 'DeepSeek',
     'fal_ai': 'FAL.AI',
     'xmlriver': 'XMLRiver',
-    'claude': 'Claude AI'
+    'claude': 'Claude AI',
+    'gemini': 'Google Gemini'
   };
   
   return serviceNames[serviceName] || serviceName;
@@ -95,7 +96,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
