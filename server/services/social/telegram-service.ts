@@ -1114,19 +1114,44 @@ export class TelegramService extends BaseSocialService {
           }
         }
         
-        // Текст теперь отправляется вместе с изображениями как подпись, 
-        // поэтому отдельная отправка текста не требуется
+        // При длине текста > 1024 символов или включенном флаге принудительного разделения
+        // изображения отправляются без подписи, а текст - отдельным сообщением
         
-        // Используем результат предыдущей отправки изображений
+        // Сначала проверяем, успешно ли отправлены изображения
         if (imagesSentResult && imagesSentResult.success) {
-          // Если изображения успешно отправлены с текстом, возвращаем успешный результат
-          log(`Публикация в Telegram завершена успешно (изображения с подписью)`, 'social-publishing');
-          return {
-            platform: 'telegram',
-            status: 'published',
-            publishedAt: new Date(),
-            postUrl: imagesSentResult.messageUrl || this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
-          };
+          // Сохраняем ID сообщения с изображениями
+          let messageId = imagesSentResult.messageId || '';
+          
+          // Теперь отправляем текст отдельным сообщением
+          log(`Отправка текста отдельным сообщением (${text.length} символов)`, 'social-publishing');
+          const textResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+          
+          if (textResponse.success) {
+            log(`Текст успешно отправлен отдельным сообщением: ${JSON.stringify(textResponse.result)}`, 'social-publishing');
+            
+            // Используем ID сообщения с текстом для формирования URL, т.к. оно более важное
+            if (textResponse.result && textResponse.result.message_id) {
+              messageId = textResponse.result.message_id;
+            }
+            
+            // Возвращаем успешный результат (изображения + текст отдельно)
+            log(`Публикация в Telegram завершена успешно (изображения и текст отдельно)`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: this.generatePostUrl(chatId, formattedChatId, messageId)
+            };
+          } else {
+            // Если текст не удалось отправить, но изображения отправлены
+            log(`Изображения отправлены успешно, но текст отправить не удалось: ${textResponse.error}`, 'social-publishing');
+            return {
+              platform: 'telegram', 
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: imagesSentResult.messageUrl || this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
+            };
+          }
         } else {
           // Если возникла проблема с отправкой изображений, попробуем отправить только текст
           try {
