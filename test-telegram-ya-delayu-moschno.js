@@ -4,8 +4,9 @@
  * Запуск: node test-telegram-ya-delayu-moschno.js
  */
 
-const axios = require('axios');
-require('dotenv').config();
+import axios from 'axios';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 function log(message) {
   console.log(`[TEST] ${message}`);
@@ -97,7 +98,8 @@ async function testEnsureValidTelegramUrl() {
 async function testDirectEnsureValidTelegramUrl() {
   try {
     // Импортируем функцию из модуля
-    const { ensureValidTelegramUrl } = require('./server/services/publish-scheduler');
+    const publishSchedulerModule = await import('./server/services/publish-scheduler.js');
+    const { ensureValidTelegramUrl } = publishSchedulerModule;
     
     if (!ensureValidTelegramUrl) {
       log('Функция ensureValidTelegramUrl не найдена в модуле');
