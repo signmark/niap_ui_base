@@ -739,20 +739,76 @@ export class PublishScheduler {
             // Улучшенная логика получения URL и messageId из результата API
             log(`Результат публикации от API: ${JSON.stringify(resultFromApi)}`, 'scheduler');
             
-            // Попытка извлечь postUrl и messageId из вложенного объекта result, если он существует
-            const nestedResult = resultFromApi.result || {};
+            // ДЕТАЛЬНОЕ логирование полной структуры ответа для отладки
+            log(`API вернул полную структуру ответа: ${JSON.stringify(resultFromApi)}`, 'scheduler');
+            
+            // Попытка извлечь postUrl и messageId из вложенного объекта
+            const detailedPath = (obj: any, path: string): any => {
+              try {
+                const parts = path.split('.');
+                let current = obj;
+                for (const part of parts) {
+                  if (current && typeof current === 'object' && part in current) {
+                    current = current[part];
+                  } else {
+                    return null;
+                  }
+                }
+                return current;
+              } catch (e) {
+                return null;
+              }
+            };
+            
+            // Проверяем все возможные пути к URL и messageId в ответе
+            const possibleUrlPaths = [
+              'result.postUrl', 
+              'result.url', 
+              'result.result.postUrl', 
+              'result.result.url',
+              'postUrl',
+              'url'
+            ];
+            
+            const possibleIdPaths = [
+              'result.messageId',
+              'result.postId',
+              'result.result.messageId',
+              'result.result.postId',
+              'messageId',
+              'postId'
+            ];
+            
+            // Извлекаем URL из всех возможных мест
+            let foundUrl = null;
+            for (const path of possibleUrlPaths) {
+              const value = detailedPath(resultFromApi, path);
+              if (value) {
+                foundUrl = value;
+                log(`Найден URL в пути ${path}: ${value}`, 'scheduler');
+                break;
+              }
+            }
+            
+            // Извлекаем ID сообщения из всех возможных мест
+            let foundId = null;
+            for (const path of possibleIdPaths) {
+              const value = detailedPath(resultFromApi, path);
+              if (value) {
+                foundId = value;
+                log(`Найден ID в пути ${path}: ${value}`, 'scheduler');
+                break;
+              }
+            }
             
             const result = {
               platform,
               status: 'published',
               publishedAt: new Date(),
-              // API может вернуть ссылку в различных местах JSON-структуры, проверяем все варианты
-              postUrl: nestedResult.postUrl || resultFromApi.postUrl || nestedResult.url || resultFromApi.url || null,
-              postId: nestedResult.messageId || resultFromApi.messageId || nestedResult.postId || resultFromApi.postId || null,
+              postUrl: foundUrl,
+              postId: foundId,
               error: null
             };
-            
-            log(`API вернул JSON: ${JSON.stringify(resultFromApi)}`, 'scheduler');
             
             log(`Сформирован результат публикации с postUrl: ${result.postUrl}`, 'scheduler');
             log(`Детали результата публикации для ${platform}: ${JSON.stringify(result)}`, 'scheduler');
