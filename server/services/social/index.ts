@@ -38,15 +38,20 @@ export class SocialPublishingService {
       const settings = campaign.socialMediaSettings || campaign.settings || {};
       
       // Выбираем соответствующий сервис в зависимости от платформы
+      // ИСПРАВЛЕНО: Порядок параметров должен соответствовать сигнатуре метода
+      // Параметры должны быть: контент, строка с названием платформы, настройки
       switch (platform) {
         case 'telegram':
-          return await telegramService.publishToPlatform(content, platform, settings);
+          log(`Вызов telegramService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
+          return await telegramService.publishToPlatform(content, 'telegram' as SocialPlatform, settings);
         
         case 'vk':
-          return await vkService.publishToPlatform(content, platform, settings);
+          log(`Вызов vkService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
+          return await vkService.publishToPlatform(content, 'vk' as SocialPlatform, settings);
         
         case 'instagram':
-          return await instagramService.publishToPlatform(content, platform, settings);
+          log(`Вызов instagramService.publishToPlatform с платформой как строкой: "${platform}"`, 'social-publishing');
+          return await instagramService.publishToPlatform(content, 'instagram' as SocialPlatform, settings);
         
         // Для остальных платформ возвращаем ошибку
         default:
@@ -81,15 +86,19 @@ export class SocialPublishingService {
     platform: SocialPlatform, 
     publicationResult: SocialPublication
   ) {
+    // ИСПРАВЛЕНО: Явно указываем строковую константу вместо переменной platform
     switch (platform) {
       case 'telegram':
-        return await telegramService.updatePublicationStatus(contentId, platform, publicationResult);
+        log(`Вызов telegramService.updatePublicationStatus с платформой как строкой: "telegram"`, 'social-publishing');
+        return await telegramService.updatePublicationStatus(contentId, 'telegram' as SocialPlatform, publicationResult);
       
       case 'vk':
-        return await vkService.updatePublicationStatus(contentId, platform, publicationResult);
+        log(`Вызов vkService.updatePublicationStatus с платформой как строкой: "vk"`, 'social-publishing');
+        return await vkService.updatePublicationStatus(contentId, 'vk' as SocialPlatform, publicationResult);
       
       case 'instagram':
-        return await instagramService.updatePublicationStatus(contentId, platform, publicationResult);
+        log(`Вызов instagramService.updatePublicationStatus с платформой как строкой: "instagram"`, 'social-publishing');
+        return await instagramService.updatePublicationStatus(contentId, 'instagram' as SocialPlatform, publicationResult);
       
       default:
         log(`Платформа ${platform} не поддерживается для обновления статуса`, 'social-publishing');
