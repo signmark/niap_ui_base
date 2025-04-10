@@ -643,7 +643,7 @@ export class DatabaseStorage implements IStorage {
       // Получаем кампанию через API
       const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
         params: {
-          fields: ['id', 'name', 'description', 'user_id', 'settings']
+          fields: ['id', 'name', 'description', 'user_id', 'social_media_settings']
         },
         headers: {
           'Authorization': `Bearer ${adminToken}`
