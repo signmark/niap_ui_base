@@ -207,14 +207,8 @@ export class PublishScheduler {
     try {
       log(`Обработка запланированного контента ${content.id}`, 'scheduler');
 
-      // Проверяем, был ли уже обработан этот контент (предотвращение дублирования)
-      // Временно отключаем эту проверку для диагностики проблемы
-      if (this.processedContentIds.has(content.id)) {
-        log(`Контент ${content.id} уже был в списке обработанных, но попробуем обработать снова`, 'scheduler');
-        // Удаляем из списка обработанных, чтобы попробовать еще раз
-        this.processedContentIds.delete(content.id);
-        // Не выходим из функции, чтобы выполнить обработку
-      }
+      // УДАЛЕНО: Проверка на уже обработанный контент теперь полностью отключена
+      // Вместо этого мы будем полагаться на статусы публикаций в БД
 
       // Добавляем ID в список обработанных ПОСЛЕ проверки наличия платформ
       // (перенесено ниже)
@@ -276,54 +270,52 @@ export class PublishScheduler {
         // Подробный лог о типах данных
         log(`Платформа ${platform} (тип: ${typeof platform}) с настройками ${JSON.stringify(settings)} (тип: ${typeof settings})`, 'scheduler');
         
-        // Добавляем проверку на платформы со статусом failed или null
+        // ИСПРАВЛЕНО: Улучшена логика обработки платформ
+        // 1. Проверяем наличие настроек
+        // 2. Любая платформа со статусом null или undefined устанавливается в 'pending'
+        // 3. Обработка разных статусов
+        
         if (settings) {
-          // Лог для отладки значения статуса
-          const statusValue = settings.status;
+          // Получаем текущий статус (если его нет, считаем равным 'pending')
+          const statusValue = settings.status || 'pending';
           log(`Статус для платформы ${platform}: "${statusValue}" (тип: ${typeof statusValue})`, 'scheduler');
           
-          if (statusValue === 'pending') {
-            platformsToPublish.push(platform as SocialPlatform);
-            log(`Платформа ${platform} имеет статус pending и будет опубликована`, 'scheduler');
-          } 
-          else if (statusValue === 'failed') {
-            // Автоматически меняем статус с failed на pending для повторной попытки
-            log(`Платформа ${platform} имеет статус failed, меняем на pending для повторной попытки`, 'scheduler');
-            
-            try {
-              // Обновляем статус в объекте (изменение копии)
-              settings.status = 'pending';
+          // ИЗМЕНЕНО: Обрабатываем любой статус, кроме 'published'
+          if (statusValue !== 'published') {
+            // Если статус не 'pending', обновляем его в БД
+            if (statusValue !== 'pending') {
+              log(`Платформа ${platform} имеет статус ${statusValue}, меняем на pending для публикации`, 'scheduler');
               
-              // Для диагностики выводим объект после изменения
-              log(`Обновленные настройки для платформы ${platform}: ${JSON.stringify(settings)}`, 'scheduler');
-              
-              // Создаем полный объект socialPlatforms с обновленным статусом для этой платформы
-              // Используем нормализованную переменную socialPlatforms вместо content.socialPlatforms
-              const updatedSocialPlatforms = { ...socialPlatforms };
-              updatedSocialPlatforms[platform] = { 
-                ...settings, 
-                status: 'pending',
-                error: null // сбрасываем ошибку
-              };
-              
-              // Обновляем контент в базе данных
-              const updateResult = await storage.updateCampaignContent(content.id, {
-                socialPlatforms: updatedSocialPlatforms
-              }, authToken);
-              
-              log(`Статус платформы ${platform} для контента ${content.id} обновлен в БД: status=pending, error=null`, 'scheduler');
-            } catch (updateError) {
-              log(`Ошибка при обновлении статуса платформы в БД: ${updateError}`, 'scheduler');
+              try {
+                // Создаем полный объект socialPlatforms с обновленным статусом
+                const updatedSocialPlatforms = { ...socialPlatforms };
+                updatedSocialPlatforms[platform] = { 
+                  ...settings, 
+                  status: 'pending',
+                  error: null // сбрасываем ошибку
+                };
+                
+                // Обновляем контент в базе данных
+                await storage.updateCampaignContent(content.id, {
+                  socialPlatforms: updatedSocialPlatforms
+                }, authToken);
+                
+                log(`Статус платформы ${platform} для контента ${content.id} обновлен в БД: status=pending, error=null`, 'scheduler');
+              } catch (updateError) {
+                log(`Ошибка при обновлении статуса платформы в БД: ${updateError}`, 'scheduler');
+              }
+            } else {
+              log(`Платформа ${platform} уже имеет статус pending`, 'scheduler');
             }
             
-            // Добавляем платформу для публикации
+            // Добавляем платформу для публикации в любом случае (кроме 'published')
             platformsToPublish.push(platform as SocialPlatform);
-          }
-          else {
-            log(`Платформа ${platform} имеет статус ${statusValue} и не будет обработана`, 'scheduler');
+            log(`Платформа ${platform} добавлена в список для публикации`, 'scheduler');
+          } else {
+            log(`Платформа ${platform} имеет статус published и не будет обработана повторно`, 'scheduler');
           }
         } else {
-          log(`Настройки для платформы ${platform} отсутствуют`, 'scheduler');
+          log(`Настройки для платформы ${platform} отсутствуют, пропускаем`, 'scheduler');
         }
       }
 
