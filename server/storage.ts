@@ -658,14 +658,14 @@ export class DatabaseStorage implements IStorage {
       const item = response.data.data;
       
       // Парсим настройки, если они есть
-      let settings = null;
-      if (item.settings) {
+      let socialMediaSettings = null;
+      if (item.social_media_settings) {
         try {
-          settings = typeof item.settings === 'string' 
-            ? JSON.parse(item.settings) 
-            : item.settings;
+          socialMediaSettings = typeof item.social_media_settings === 'string' 
+            ? JSON.parse(item.social_media_settings) 
+            : item.social_media_settings;
         } catch (parseError) {
-          console.error('Error parsing campaign settings:', parseError);
+          console.error('Error parsing campaign social_media_settings:', parseError);
         }
       }
       
@@ -674,7 +674,8 @@ export class DatabaseStorage implements IStorage {
         name: item.name,
         description: item.description,
         userId: item.user_id,
-        settings
+        settings: socialMediaSettings, // Для обратной совместимости со старым кодом
+        socialMediaSettings // Новое поле с правильным названием
       };
     } catch (error) {
       console.error('Error getting campaign with settings from Directus:', error);
