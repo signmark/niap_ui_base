@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -222,7 +222,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 </div>
               </div>
               
-              {(selectedService === 'deepseek' || selectedService === 'claude') && (
+              {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService === 'gemini') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа

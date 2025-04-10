@@ -3495,22 +3495,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Инициализируем Gemini API с токеном запроса
           console.log(`Попытка инициализации Gemini сервиса для пользователя ${userId}`);
           
-          // Создаем новый экземпляр сервиса Gemini
-          const geminiInstance = new GeminiService();
+          // Получаем API ключ Gemini напрямую
+          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
           
-          // Инициализируем сервис с ключом из API Keys Storage
-          const initialized = await geminiInstance.initialize(userId, token);
+          if (!geminiApiKey) {
+            console.error('Ошибка: Не удалось получить API ключ Gemini');
+            return res.status(400).json({ 
+              error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
+              needApiKey: true
+            });
+          }
           
-          if (!initialized) {
-            console.log('Предупреждение: Gemini API сервис не был полностью инициализирован');
-            
-            if (!geminiInstance.hasApiKey()) {
-              console.error('Ошибка: Не удалось получить API ключ Gemini');
-              return res.status(400).json({ 
-                error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
-                needApiKey: true
-              });
-            }
+          // Создаем новый экземпляр сервиса Gemini с ключом API
+          const geminiInstance = new GeminiService(geminiApiKey);
+          
+          // Проверяем ключ API
+          const apiKeyValid = await geminiInstance.testApiKey();
+          if (!apiKeyValid) {
+            console.error('Ошибка: API ключ Gemini недействителен');
+            return res.status(400).json({ 
+              error: 'API ключ Gemini недействителен. Пожалуйста, проверьте ключ в настройках.',
+              needApiKey: true
+            });
           }
           
           console.log(`Generating content with Gemini for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
@@ -3529,8 +3535,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             {
               platform,
               tone,
-              maxTokens: 4000,
-              temperature: 0.7,
               model: 'gemini-pro'
             }
           );
