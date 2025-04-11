@@ -134,6 +134,10 @@ const AI_SERVICES = [
         name: "Gemini 1.5 Flash (быстрая)"
       },
       {
+        id: "gemini-2.0-flash",
+        name: "Gemini 2.0 Flash (быстрее + 1M токенов)"
+      },
+      {
         id: "gemini-ultra",
         name: "Gemini Ultra (мощная)"
       }
