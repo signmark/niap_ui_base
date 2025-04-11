@@ -68,8 +68,15 @@ export class GeminiService {
         'gemini-2.5-pro'
       ];
       
-      // Если модель не поддерживается, используем флеш модель по умолчанию
-      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      // Определяем, какую модель использовать
+      let selectedModel;
+      // Если просто "gemini", используем самую надежную модель
+      if (model === 'gemini') {
+        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+      } else {
+        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
+        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      }
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
@@ -109,8 +116,15 @@ export class GeminiService {
         'gemini-2.5-pro'
       ];
       
-      // Если модель не поддерживается, используем флеш модель по умолчанию
-      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      // Определяем, какую модель использовать
+      let selectedModel;
+      // Если просто "gemini", используем самую надежную модель
+      if (model === 'gemini') {
+        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+      } else {
+        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
+        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      }
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
@@ -154,8 +168,15 @@ export class GeminiService {
         'gemini-2.5-pro'
       ];
       
-      // Если модель не поддерживается, используем флеш модель по умолчанию
-      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      // Определяем, какую модель использовать
+      let selectedModel;
+      // Если просто "gemini", используем самую надежную модель
+      if (model === 'gemini') {
+        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+      } else {
+        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
+        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      }
       
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
