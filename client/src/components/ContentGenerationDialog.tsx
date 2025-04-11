@@ -29,7 +29,10 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 
+  'gemini-1.5-pro' | 'gemini-1.5-flash' | 
+  'gemini-2.0-flash' | 'gemini-2.0-flash-exp' |
+  'gemini-2.5-pro' | 'gemini-2.5-pro-exp';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -46,11 +49,17 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const getModelForService = (service: ApiService): string => {
     switch(service) {
       case 'gemini-2.5-pro':
+        return 'gemini-2.5-pro-preview-03-25';
+      case 'gemini-2.5-pro-exp':
         return 'gemini-2.5-pro-exp-03-25';
-      case 'gemini-2.5-flash':
-        return 'gemini-2.5-flash-exp-03-25';
+      case 'gemini-2.0-flash':
+        return 'gemini-2.0-flash';
+      case 'gemini-2.0-flash-exp':
+        return 'gemini-2.0-flash-exp';
       case 'gemini-1.5-pro':
         return 'gemini-1.5-pro';
+      case 'gemini-1.5-flash':
+        return 'gemini-1.5-flash';
       case 'gemini':
         return 'gemini-pro';
       default:
@@ -232,8 +241,12 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="gemini">Gemini</SelectItem>
-                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
-                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (2025)</SelectItem>
+                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                      <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                      <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</SelectItem>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (Preview)</SelectItem>
+                      <SelectItem value="gemini-2.5-pro-exp">Gemini 2.5 Pro Exp</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
@@ -242,8 +255,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               </div>
               
               {(selectedService === 'deepseek' || selectedService === 'claude' || 
-                selectedService === 'gemini' || selectedService === 'gemini-2.5-pro' || 
-                selectedService === 'gemini-2.5-flash') && (
+                selectedService === 'gemini' || selectedService === 'gemini-1.5-pro' || 
+                selectedService === 'gemini-1.5-flash' || selectedService === 'gemini-2.0-flash' || 
+                selectedService === 'gemini-2.0-flash-exp' || selectedService === 'gemini-2.5-pro' || 
+                selectedService === 'gemini-2.5-pro-exp') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа
