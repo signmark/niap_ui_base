@@ -230,10 +230,10 @@ export class GeminiService {
     const { platform, tone, model = 'gemini-pro' } = options;
     
     try {
-      logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
-      
       // Выбираем подходящую модель
       const selectedModel = this.getSelectedModel(model);
+      
+      logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${selectedModel}`, 'gemini');
       
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
