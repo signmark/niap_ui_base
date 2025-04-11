@@ -1,15 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as logger from '../utils/logger';
 
 interface ImproveTextParams {
   text: string;
   prompt: string;
-  model?: string;
-}
-
-interface GenerateSocialContentOptions {
-  platform?: string;
-  tone?: string;
   model?: string;
 }
 
@@ -23,7 +17,7 @@ export class GeminiService {
    * Конструктор сервиса Gemini
    * @param apiKey API ключ Gemini
    */
-  constructor(apiKey: string) {
+  constructor({ apiKey }: { apiKey: string }) {
     this.apiKey = apiKey;
   }
   
@@ -60,100 +54,41 @@ export class GeminiService {
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
+      const genModel = genAI.getGenerativeModel({ model });
       
-      // Подготавливаем инструкцию
-      const instruction = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+      // Определяем, содержит ли текст HTML-теги
+      const containsHtml = /<[^>]+>/.test(text);
       
-      // Генерируем улучшенный текст
-      const result = await geminiModel.generateContent(instruction);
+      // Формируем системный промпт и пользовательское сообщение
+      let userPrompt = '';
+      
+      if (containsHtml) {
+        userPrompt = `${prompt}\n\nВажно: текст содержит HTML разметку, которую нужно сохранить.\n\nВот текст для улучшения:\n\n${text}`;
+      } else {
+        userPrompt = `${prompt}\n\nВот текст для улучшения:\n\n${text}`;
+      }
+      
+      // Получаем ответ от модели
+      const result = await genModel.generateContent(userPrompt);
       const response = result.response;
       const improvedText = response.text();
       
-      logger.log('[gemini-service] Text improvement successful', 'gemini');
+      logger.log('[gemini-service] Successfully improved text', 'gemini');
       return improvedText;
     } catch (error) {
       logger.error('[gemini-service] Error improving text:', error);
-      throw new Error(`Ошибка при улучшении текста с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Ошибка при улучшении текста с Gemini: ${(error as Error).message}`);
     }
   }
   
   /**
-   * Генерирует контент с помощью Gemini
-   * @param prompt Промпт для генерации
-   * @param model Модель Gemini (по умолчанию gemini-pro)
-   * @returns Сгенерированный контент
+   * Обновляет API ключ
+   * @param apiKey Новый API ключ
    */
-  async generateContent(prompt: string, model = 'gemini-pro'): Promise<string> {
-    try {
-      logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
-      
-      // Создаем генеративную модель
-      const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
-      
-      // Генерируем контент
-      const result = await geminiModel.generateContent(prompt);
-      const response = result.response;
-      const generatedContent = response.text();
-      
-      logger.log('[gemini-service] Content generation successful', 'gemini');
-      return generatedContent;
-    } catch (error) {
-      logger.error('[gemini-service] Error generating content:', error);
-      throw new Error(`Ошибка при генерации контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-  
-  /**
-   * Генерирует социальный контент с помощью Gemini
-   * @param keywords Ключевые слова
-   * @param prompt Базовый промпт
-   * @param options Дополнительные опции (платформа, тон, модель)
-   * @returns Сгенерированный социальный контент
-   */
-  async generateSocialContent(
-    keywords: string[],
-    prompt: string,
-    options: GenerateSocialContentOptions = {}
-  ): Promise<string> {
-    const { platform, tone, model = 'gemini-pro' } = options;
-    
-    try {
-      logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
-      
-      // Преобразуем ключевые слова в строку
-      const keywordsText = keywords.join(', ');
-      
-      // Создаем генеративную модель
-      const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
-      
-      // Формируем полный промпт
-      let fullPrompt = prompt;
-      
-      // Добавляем информацию о платформе и тоне
-      if (platform) {
-        fullPrompt += `\n\nСоздай контент для платформы: ${platform}`;
-      }
-      
-      if (tone) {
-        fullPrompt += `\n\nИспользуй следующий тон: ${tone}`;
-      }
-      
-      // Добавляем ключевые слова
-      fullPrompt += `\n\nИспользуй следующие ключевые слова: ${keywordsText}`;
-      
-      // Генерируем контент
-      const result = await geminiModel.generateContent(fullPrompt);
-      const response = result.response;
-      const generatedContent = response.text();
-      
-      logger.log('[gemini-service] Social content generation successful', 'gemini');
-      return generatedContent;
-    } catch (error) {
-      logger.error('[gemini-service] Error generating social content:', error);
-      throw new Error(`Ошибка при генерации социального контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  updateApiKey(apiKey: string): void {
+    this.apiKey = apiKey;
   }
 }
+
+// Экспортируем экземпляр сервиса по умолчанию
+export const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
