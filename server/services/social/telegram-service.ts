@@ -1188,8 +1188,8 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl,
-              messageId  // Добавляем ID сообщения в результат
+              postUrl
+              // Удаляем поле messageId, т.к. оно не соответствует интерфейсу SocialPublication
             };
           } else {
             log(`Ошибка при отправке изображения с текстом в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
