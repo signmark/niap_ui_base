@@ -122,11 +122,20 @@ const AI_SERVICES = [
       {
         id: "gemini-pro",
         name: "Gemini Pro",
+        default: false
+      },
+      {
+        id: "gemini-1.5-pro",
+        name: "Gemini 1.5 Pro",
         default: true
       },
       {
+        id: "gemini-1.5-flash",
+        name: "Gemini 1.5 Flash (быстрая)"
+      },
+      {
         id: "gemini-ultra",
-        name: "Gemini Ultra"
+        name: "Gemini Ultra (мощная)"
       }
     ]
   }
