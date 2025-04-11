@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { api } from "@/lib/api";
 
 interface TextEnhancementDialogProps {
   open: boolean;
@@ -230,11 +229,6 @@ export function TextEnhancementDialog({
     return customPrompt || (selectedPrompt ? selectedPrompt.prompt : "");
   };
 
-  // Получение эндпоинта API в зависимости от выбранного сервиса
-  const getApiEndpoint = () => {
-    return '/improve-text';  // С ведущим слешем для правильной конкатенации с baseURL: '/api'
-  };
-  
   // Получение правильного названия модели в зависимости от выбранного сервиса
   const getModelName = (service: string, modelId: string): string => {
     // Для всех сервисов просто возвращаем ID модели как есть
@@ -242,24 +236,43 @@ export function TextEnhancementDialog({
   };
   
   // Логирование в консоль для отладки
-  console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
   
   // Мутация для улучшения текста
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await api.post(getApiEndpoint(), {
-        text,
-        prompt: getCurrentPrompt(),
-        model: getModelName(selectedService, selectedModelId),
-        service: selectedService
-      });
-      
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Произошла ошибка при улучшении текста');
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('Требуется авторизация');
       }
       
-      return response.data.text;
+      // Используем единый маршрут для всех сервисов
+      let apiEndpoint = '/api/improve-text';
+      
+      console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
+      
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+          'x-user-id': localStorage.getItem('user_id') || ''
+        },
+        body: JSON.stringify({
+          text,
+          prompt: getCurrentPrompt(),
+          model: getModelName(selectedService, selectedModelId),
+          service: selectedService
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Произошла ошибка при улучшении текста');
+      }
+      
+      return data.text;
     },
     onSuccess: (data) => {
       setEnhancedText(data);
@@ -275,9 +288,18 @@ export function TextEnhancementDialog({
       onOpenChange(false);
     },
     onError: (error: any) => {
+      console.error('Ошибка при улучшении текста:', error);
+      
       // Проверяем, нужен ли API ключ
-      if (error.response?.data?.needApiKey) {
+      if (error.message?.includes('API ключ') || error.message?.includes('не настроен')) {
         setHasApiKey(false);
+        
+        toast({
+          variant: "destructive",
+          title: "Требуется API ключ",
+          description: `Для использования ${selectedService} необходимо добавить API ключ в настройках`,
+        });
+        return;
       }
       
       toast({
