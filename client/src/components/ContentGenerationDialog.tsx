@@ -87,11 +87,15 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       
       console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
+      console.log('Передаем заголовок x-user-id:', localStorage.getItem('user_id'));
+      console.log('Авторизационный токен:', authToken ? 'Присутствует (скрыт)' : 'Отсутствует');
+      
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${authToken}`,
+          'x-user-id': localStorage.getItem('user_id') || ''
         },
         body: JSON.stringify({
           prompt: prompt,
@@ -105,11 +109,27 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Не удалось сгенерировать контент');
+        let errorText;
+        try {
+          const error = await response.json();
+          errorText = error.error || error.message || `Ошибка HTTP: ${response.status}`;
+        } catch (e) {
+          // Если не удалось распарсить JSON, получаем текст ошибки
+          const htmlText = await response.text();
+          console.error('Ошибка не в формате JSON:', htmlText.substring(0, 200));
+          errorText = `Ошибка сервера: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorText);
       }
 
-      const data = await response.json();
+      try {
+        const data = await response.json();
+        
+        // Добавляем информацию о используемом сервисе
+        return {
+          content: data.content,
+          service: data.service || selectedService
+        };
       
       // Добавляем информацию о используемом сервисе
       return {
