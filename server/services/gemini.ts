@@ -43,8 +43,8 @@ export class GeminiService {
     try {
       logger.log('[gemini-service] Testing Gemini API key with experimental model...', 'gemini');
       
-      // Создаем экземпляр Google Generative AI с API ключом
-      const genAI = new GoogleGenerativeAI(this.apiKey);
+      // Используем созданную функцию для инициализации API
+      const genAI = this.createGenAI();
       
       // Используем экспериментальную модель для проверки ключа
       const PRO_MODEL = 'gemini-2.5-pro-exp-03-25';
@@ -109,8 +109,8 @@ export class GeminiService {
       // Выбираем подходящую модель
       const selectedModel = this.getSelectedModel(model);
       
-      // Создаем генеративную модель
-      const genAI = new GoogleGenerativeAI(this.apiKey);
+      // Создаем генеративную модель через метод createGenAI
+      const genAI = this.createGenAI();
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Подготавливаем инструкцию с явным указанием не добавлять техническую информацию
@@ -148,7 +148,8 @@ export class GeminiService {
         
         // Проверяем, является ли ошибка связанной с доступностью модели
         if (error.message && error.message.includes('Model not found')) {
-          logger.error(`[gemini-service] Model availability error: The model "${selectedModel}" is not available or doesn't exist`);
+          const requestedModel = this.getSelectedModel(model);
+          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
         }
       }
       
@@ -169,8 +170,8 @@ export class GeminiService {
       // Выбираем подходящую модель
       const selectedModel = this.getSelectedModel(model);
       
-      // Создаем генеративную модель
-      const genAI = new GoogleGenerativeAI(this.apiKey);
+      // Создаем генеративную модель через метод createGenAI
+      const genAI = this.createGenAI();
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Дополняем промпт инструкциями не добавлять техническую информацию
@@ -204,7 +205,8 @@ export class GeminiService {
         
         // Проверяем, является ли ошибка связанной с доступностью модели
         if (error.message && error.message.includes('Model not found')) {
-          logger.error(`[gemini-service] Model availability error: The model "${selectedModel}" is not available or doesn't exist`);
+          const requestedModel = this.getSelectedModel(model);
+          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
         }
       }
       
@@ -235,8 +237,8 @@ export class GeminiService {
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
       
-      // Создаем генеративную модель
-      const genAI = new GoogleGenerativeAI(this.apiKey);
+      // Создаем генеративную модель через метод createGenAI
+      const genAI = this.createGenAI();
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Формируем полный промпт
@@ -276,6 +278,18 @@ export class GeminiService {
       return cleanedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating social content:', error);
+      
+      // Улучшенное логирование ошибок API для отладки проблем с моделями
+      if (error instanceof Error) {
+        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+        
+        // Проверяем, является ли ошибка связанной с доступностью модели
+        if (error.message && error.message.includes('Model not found')) {
+          const requestedModel = this.getSelectedModel(model);
+          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
+        }
+      }
+      
       throw new Error(`Ошибка при генерации социального контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
