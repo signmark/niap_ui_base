@@ -353,8 +353,22 @@ export function registerUnifiedRoutes(app: Router) {
     }
   };
   
-  // Регистрируем только маршрут с префиксом /api, т.к. клиент использует axios с baseURL: '/api'
-  app.post('/api/improve-text', improveTextHandler);
+  // Регистрируем маршрут с префиксом /api, т.к. клиент использует axios с baseURL: '/api'
+  app.post('/api/improve-text', (req, res) => {
+    console.log('[CRITICAL DEBUG] ========= RECEIVED /api/improve-text REQUEST ==========');
+    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body));
+    console.log('[CRITICAL DEBUG] User ID:', req.userId);
+    improveTextHandler(req, res);
+  });
+  
+  // Создаем дополнительный маршрут с двойным префиксом /api/api/improve-text
+  // для обработки запросов с двойным префиксом (когда клиент использует baseURL: '/api' и URL: '/api/improve-text')
+  app.post('/api/api/improve-text', (req, res) => {
+    console.log('[CRITICAL DEBUG] ========= RECEIVED /api/api/improve-text REQUEST ==========');
+    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body));
+    console.log('[CRITICAL DEBUG] User ID:', req.userId);
+    improveTextHandler(req, res);
+  });
   
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
