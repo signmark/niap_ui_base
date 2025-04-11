@@ -18,8 +18,24 @@ export class InstagramService extends BaseSocialService {
     }
     
     try {
+      log(`[Instagram] Начинаем форматирование текста для Instagram. Исходная длина: ${content.length} символов`, 'instagram');
+      
+      // Проверяем наличие маркдаун заголовков (генерируются Gemini и др. моделями)
+      let formattedText = content;
+      
+      // Обрабатываем маркдаун заголовки (# Заголовок)
+      formattedText = formattedText
+        .replace(/^#{1,6}\s+(.+)$/gm, '$1\n')
+        .replace(/\n#{1,6}\s+(.+)$/gm, '\n$1\n');
+      
+      // Обрабатываем маркдаун списки
+      formattedText = formattedText
+        .replace(/^\*\s+(.+)$/gm, '• $1')
+        .replace(/^-\s+(.+)$/gm, '• $1')
+        .replace(/^\d+\.\s+(.+)$/gm, '$1');
+        
       // Instagram не поддерживает HTML-теги, удаляем их
-      let formattedText = content
+      formattedText = formattedText
         // Удаляем HTML-теги и заменяем их на обычный текст
         .replace(/<br\s*\/?>/g, '\n')
         .replace(/<p>([^]*?)<\/p>/g, '$1\n\n')
@@ -41,24 +57,64 @@ export class InstagramService extends BaseSocialService {
         // Удаляем все остальные HTML-теги
         .replace(/<[^>]*>/g, '');
       
+      // Обрабатываем эмодзи, чтобы сделать текст более привлекательным
+      formattedText = this.processEmojisForInstagram(formattedText);
+      
       // Нормализуем переносы строк (не более 2 подряд)
       formattedText = formattedText.replace(/\n{3,}/g, '\n\n');
       
       // Instagram имеет ограничение на длину текста (2200 символов)
-      if (formattedText.length > 2200) {
-        formattedText = formattedText.substring(0, 2197) + '...';
-        log(`Текст для Instagram был обрезан до 2200 символов`, 'instagram');
+      const maxLength = 2200;
+      if (formattedText.length > maxLength) {
+        // Пытаемся найти логичное место для обрезки (конец предложения)
+        let cutPosition = maxLength - 20; // Уменьшаем, чтобы найти точку
+        let foundPeriod = false;
+        
+        // Ищем подходящее место для обрезки (конец предложения)
+        for (let i = cutPosition; i < Math.min(cutPosition + 100, formattedText.length - 4); i++) {
+          if (formattedText[i] === '.' || formattedText[i] === '!' || formattedText[i] === '?') {
+            cutPosition = i + 1;
+            foundPeriod = true;
+            break;
+          }
+        }
+        
+        // Если не нашли подходящего места, просто обрезаем по лимиту
+        if (!foundPeriod) {
+          cutPosition = maxLength - 3;
+        }
+        
+        // Обрезаем текст и добавляем многоточие
+        formattedText = formattedText.substring(0, cutPosition) + '...';
+        log(`[Instagram] Текст был обрезан до ${formattedText.length} символов (лимит 2200)`, 'instagram');
       }
       
+      log(`[Instagram] Форматирование текста завершено. Финальная длина: ${formattedText.length} символов`, 'instagram');
       return formattedText;
     } catch (error) {
-      log(`Ошибка при форматировании текста для Instagram: ${error}`, 'instagram');
+      log(`[Instagram] Ошибка при форматировании текста: ${error}`, 'instagram');
       
       // В случае ошибки возвращаем обрезанный исходный текст
       if (content.length > 2200) {
         return content.substring(0, 2197) + '...';
       }
       return content;
+    }
+  }
+  
+  /**
+   * Обрабатывает эмодзи в тексте для Instagram
+   * @param text Исходный текст
+   * @returns Текст с обработанными эмодзи
+   */
+  private processEmojisForInstagram(text: string): string {
+    try {
+      // Сохраняем существующие эмодзи
+      // Тут можно добавить дополнительную логику для обработки эмодзи
+      return text;
+    } catch (error) {
+      log(`[Instagram] Ошибка при обработке эмодзи: ${error}`, 'instagram');
+      return text;
     }
   }
 
