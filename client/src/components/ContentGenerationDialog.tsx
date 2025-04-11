@@ -29,18 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 
-  // Стабильные модели Gemini (подтверждено тестами)
-  'gemini-1.5-pro' | 'gemini-1.5-flash' | 'gemini-1.5-flash-8b' |
-  'gemini-2.0-flash-001' | 'gemini-2.0-flash-lite-001' |
-  
-  // Экспериментальные и preview модели (beta API)
-  'gemini-2.5-pro-preview-03-25' | 'gemini-2.5-pro-exp-03-25' |
-  'gemini-2.0-flash-exp' | 'gemini-2.0-flash-exp-image-generation' |
-  'gemini-2.0-flash-thinking-exp-01-21' | 'gemini-2.0-flash-live-001' |
-  
-  // Устаревшие модели (для обратной совместимости)
-  'gemini-pro' | 'gemini-2.0-pro' | 'gemini-2.0-flash';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -55,9 +44,18 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   
   // Сопоставление выбранных сервисов с конкретными моделями API
   const getModelForService = (service: ApiService): string => {
-    // Просто возвращаем имя модели как есть - сервер сам определит, 
-    // какую версию API использовать (v1 или v1beta)
-    return service;
+    switch(service) {
+      case 'gemini-2.5-pro':
+        return 'gemini-2.5-pro-exp-03-25';
+      case 'gemini-2.5-flash':
+        return 'gemini-2.5-flash-exp-03-25';
+      case 'gemini-1.5-pro':
+        return 'gemini-1.5-pro';
+      case 'gemini':
+        return 'gemini-pro';
+      default:
+        return service;
+    }
   };
 
   const { mutate: generateContent, isPending } = useMutation({
@@ -87,15 +85,11 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       
       console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
-      console.log('Передаем заголовок x-user-id:', localStorage.getItem('user_id'));
-      console.log('Авторизационный токен:', authToken ? 'Присутствует (скрыт)' : 'Отсутствует');
-      
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-          'x-user-id': localStorage.getItem('user_id') || ''
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           prompt: prompt,
@@ -109,31 +103,17 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       });
 
       if (!response.ok) {
-        let errorText;
-        try {
-          const error = await response.json();
-          errorText = error.error || error.message || `Ошибка HTTP: ${response.status}`;
-        } catch (e) {
-          // Если не удалось распарсить JSON, получаем текст ошибки
-          const htmlText = await response.text();
-          console.error('Ошибка не в формате JSON:', htmlText.substring(0, 200));
-          errorText = `Ошибка сервера: ${response.status} ${response.statusText}`;
-        }
-        throw new Error(errorText);
+        const error = await response.json();
+        throw new Error(error.message || 'Не удалось сгенерировать контент');
       }
 
-      try {
-        const data = await response.json();
-        
-        // Добавляем информацию о используемом сервисе
-        return {
-          content: data.content,
-          service: data.service || selectedService
-        };
-      } catch (error) {
-        console.error('Ошибка при обработке JSON ответа:', error);
-        throw new Error('Ошибка при обработке ответа от сервера');
-      }
+      const data = await response.json();
+      
+      // Добавляем информацию о используемом сервисе
+      return {
+        content: data.content,
+        service: data.service || selectedService
+      };
     },
     onSuccess: (data) => {
       // Преобразуем контент в формат, подходящий для редактора
@@ -251,35 +231,19 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="gemini">Gemini</SelectItem>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (2025)</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
-                      
-                      {/* Стабильные модели Gemini */}
-                      <SelectItem value="gemini">Gemini (Legacy)</SelectItem>
-                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                      <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
-                      <SelectItem value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-001">Gemini 2.0 Flash</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite</SelectItem>
-                      
-                      {/* Экспериментальные и preview модели */}
-                      <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro (Preview) 🧪</SelectItem>
-                      <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro (Exp) 🧪</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Exp) 🧪</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-exp-image-generation">Gemini 2.0 Flash Image 🧪</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking 🧪</SelectItem>
-                      <SelectItem value="gemini-2.0-flash-live-001">Gemini 2.0 Flash Live 🧪</SelectItem>
-                      
-                      {/* Устаревшие модели */}
-                      <SelectItem value="gemini-2.0-pro">Gemini 2.0 Pro (Legacy)</SelectItem>
-                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Legacy)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
-              {/* Показываем выбор платформы для всех сервисов и моделей */}
-              {selectedService && (
+              {(selectedService === 'deepseek' || selectedService === 'claude' || 
+                selectedService === 'gemini' || selectedService === 'gemini-2.5-pro' || 
+                selectedService === 'gemini-2.5-flash') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа

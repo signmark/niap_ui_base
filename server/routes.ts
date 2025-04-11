@@ -3345,9 +3345,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader?.replace('Bearer ', '') || '';
       
       // Определяем сервис для генерации - явный приоритет для Gemini моделей
-      // Проверяем, является ли сервис связанным с Gemini по имени/префиксу
+      // Сначала проверяем, является ли сервис или модель связанной с Gemini
       const isGeminiRequest = service === 'gemini' || 
-                              (typeof service === 'string' && service.startsWith('gemini-'));
+                              service === 'gemini-pro' || 
+                              service === 'gemini-1.5-pro' || 
+                              service === 'gemini-2.5-pro' || 
+                              service === 'gemini-2.5-flash';
       
       // Если это Gemini-запрос, принудительно используем Gemini
       // Приоритет параметров: явный Gemini запрос, aiService, service
@@ -3361,11 +3364,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         selectedAiService === 'claude' ? 'claude' : 
         (selectedAiService === 'gemini' || isGeminiRequest) ? 'gemini' : 
         'perplexity';
-      
-      // Добавляем явный лог для диагностики случаев с Gemini
-      if (isGeminiRequest) {
-        console.log(`[routes.ts] GEMINI REQUEST DETECTED - service: ${service}, useService: ${useService}`);
-      }
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
       
@@ -3542,8 +3540,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Определяем модель Gemini - используем переданную в запросе или значение по умолчанию
           const modelName = req.body.modelType || service || 'gemini';
           
-          // Передаем model name как есть - маппинг будет происходить внутри GeminiService
-          const geminiModel = modelName;
+          // Преобразуем значение modelName в нужную версию модели Gemini
+          let geminiModel = 'gemini-1.5-flash'; // Значение по умолчанию
+          
+          // Маппинг из UI-значений в реальные названия моделей
+          if (modelName === 'gemini-1.5-pro') {
+            geminiModel = 'gemini-1.5-pro';
+          } else if (modelName === 'gemini-2.5-flash') {
+            geminiModel = 'gemini-2.5-flash';
+          } else if (modelName === 'gemini-2.5-pro') {
+            geminiModel = 'gemini-2.5-pro';
+          }
           
           // Используем Gemini для генерации контента
           generatedContent = await geminiInstance.generateSocialContent(
