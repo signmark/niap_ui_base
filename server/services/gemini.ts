@@ -28,21 +28,39 @@ export class GeminiService {
   }
   
   /**
+   * Создает экземпляр Google Generative AI с правильными настройками
+   * @returns Экземпляр GoogleGenerativeAI
+   */
+  private createGenAI(): GoogleGenerativeAI {
+    return new GoogleGenerativeAI(this.apiKey);
+  }
+  
+  /**
    * Проверяет валидность API ключа Gemini
    * @returns true если ключ валидный, false если нет
    */
   async testApiKey(): Promise<boolean> {
     try {
+      logger.log('[gemini-service] Testing Gemini API key with experimental model...', 'gemini');
+      
       // Создаем экземпляр Google Generative AI с API ключом
       const genAI = new GoogleGenerativeAI(this.apiKey);
       
-      // Простой запрос для проверки ключа
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      // Используем экспериментальную модель для проверки ключа
+      const PRO_MODEL = 'gemini-2.5-pro-exp-03-25';
+      const model = genAI.getGenerativeModel({ model: PRO_MODEL });
       const result = await model.generateContent('Hello, world!');
       
+      logger.log('[gemini-service] Successfully tested API key with model: ' + PRO_MODEL, 'gemini');
       return result !== null;
     } catch (error) {
       logger.error('[gemini-service] Error testing API key:', error);
+      
+      // Расширенное логирование ошибки
+      if (error instanceof Error) {
+        logger.error(`[gemini-service] Detailed error testing API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+      }
+      
       return false;
     }
   }
