@@ -3345,12 +3345,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader?.replace('Bearer ', '') || '';
       
       // Определяем сервис для генерации - явный приоритет для Gemini моделей
-      // Сначала проверяем, является ли сервис или модель связанной с Gemini
+      // Проверяем, является ли сервис связанным с Gemini по имени/префиксу
       const isGeminiRequest = service === 'gemini' || 
-                              service === 'gemini-pro' || 
-                              service === 'gemini-1.5-pro' || 
-                              service === 'gemini-2.5-pro' || 
-                              service === 'gemini-2.5-flash';
+                              (typeof service === 'string' && service.startsWith('gemini-'));
       
       // Если это Gemini-запрос, принудительно используем Gemini
       // Приоритет параметров: явный Gemini запрос, aiService, service
@@ -3364,6 +3361,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         selectedAiService === 'claude' ? 'claude' : 
         (selectedAiService === 'gemini' || isGeminiRequest) ? 'gemini' : 
         'perplexity';
+      
+      // Добавляем явный лог для диагностики случаев с Gemini
+      if (isGeminiRequest) {
+        console.log(`[routes.ts] GEMINI REQUEST DETECTED - service: ${service}, useService: ${useService}`);
+      }
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
       
