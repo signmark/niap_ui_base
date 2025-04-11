@@ -103,8 +103,8 @@ export class GeminiService {
     const modelMapping: {[key: string]: { name: string; beta: boolean }} = {
       'gemini': { name: PRO_MODEL_1_5, beta: false }, // По умолчанию используем 1.5 Pro
       'gemini-pro': { name: PRO_MODEL_1_5, beta: false },
-      'gemini-2.5-pro': { name: PRO_MODEL_2_5, beta: true }, // Используем preview версию Gemini 2.5 Pro (beta)
-      'gemini-2.5-pro-exp': { name: PRO_MODEL_2_5_EXP, beta: true }, // Экспериментальная версия
+      'gemini-2.5-pro-preview-03-25': { name: PRO_MODEL_2_5, beta: true }, // Используем preview версию Gemini 2.5 Pro (beta)
+      'gemini-2.5-pro-exp-03-25': { name: PRO_MODEL_2_5_EXP, beta: true }, // Экспериментальная версия
       'gemini-1.5-pro': { name: PRO_MODEL_1_5, beta: false },
       'gemini-1.5-flash': { name: FLASH_MODEL_1_5, beta: false },
       'gemini-2.0-flash': { name: FLASH_MODEL_2_0, beta: false }, // Gemini 2.0 Flash (стабильная)
