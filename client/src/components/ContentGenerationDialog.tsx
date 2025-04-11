@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -214,7 +214,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="gemini">Gemini AI</SelectItem>
+                      <SelectItem value="gemini">Gemini 1.5 Flash</SelectItem>
+                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
@@ -222,7 +225,9 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 </div>
               </div>
               
-              {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService === 'gemini') && (
+              {(selectedService === 'deepseek' || selectedService === 'claude' || 
+                selectedService === 'gemini' || selectedService === 'gemini-1.5-pro' || 
+                selectedService === 'gemini-2.5-flash' || selectedService === 'gemini-2.5-pro') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа
