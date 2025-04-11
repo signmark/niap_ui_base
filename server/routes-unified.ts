@@ -16,7 +16,13 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса Gemini для пользователя
    */
   async function getGeminiService(req: Request): Promise<GeminiService | null> {
-    const userId = req.userId;
+    // Получаем userId либо из req.userId, либо из заголовка x-user-id
+    let userId = req.userId;
+    if (!userId && req.headers['x-user-id']) {
+      userId = req.headers['x-user-id'] as string;
+      console.log(`[getGeminiService] Using userId from x-user-id header: ${userId}`);
+    }
+    
     if (!userId) {
       log('[unified-routes] Cannot get Gemini service: userId is missing', 'unified');
       return null;
@@ -40,7 +46,13 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса Claude для пользователя
    */
   async function getClaudeService(req: Request): Promise<ClaudeService | null> {
-    const userId = req.userId;
+    // Получаем userId либо из req.userId, либо из заголовка x-user-id
+    let userId = req.userId;
+    if (!userId && req.headers['x-user-id']) {
+      userId = req.headers['x-user-id'] as string;
+      console.log(`[getClaudeService] Using userId from x-user-id header: ${userId}`);
+    }
+    
     if (!userId) {
       log('[unified-routes] Cannot get Claude service: userId is missing', 'unified');
       return null;
@@ -64,7 +76,13 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса DeepSeek для пользователя
    */
   async function getDeepSeekService(req: Request): Promise<DeepSeekService | null> {
-    const userId = req.userId;
+    // Получаем userId либо из req.userId, либо из заголовка x-user-id
+    let userId = req.userId;
+    if (!userId && req.headers['x-user-id']) {
+      userId = req.headers['x-user-id'] as string;
+      console.log(`[getDeepSeekService] Using userId from x-user-id header: ${userId}`);
+    }
+    
     if (!userId) {
       log('[unified-routes] Cannot get DeepSeek service: userId is missing', 'unified');
       return null;
@@ -88,7 +106,13 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение API ключа Qwen для пользователя
    */
   async function getQwenApiKey(req: Request): Promise<string | null> {
-    const userId = req.userId;
+    // Получаем userId либо из req.userId, либо из заголовка x-user-id
+    let userId = req.userId;
+    if (!userId && req.headers['x-user-id']) {
+      userId = req.headers['x-user-id'] as string;
+      console.log(`[getQwenApiKey] Using userId from x-user-id header: ${userId}`);
+    }
+    
     if (!userId) {
       log('[unified-routes] Cannot get Qwen API key: userId is missing', 'unified');
       return null;
@@ -114,7 +138,13 @@ export function registerUnifiedRoutes(app: Router) {
   app.post('/api/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
-      const userId = req.userId;
+      let userId = req.userId;
+      
+      // Проверяем заголовок x-user-id, если userId еще не установлен
+      if (!userId && req.headers['x-user-id']) {
+        userId = req.headers['x-user-id'] as string;
+        console.log(`[improve-text] Using userId from x-user-id header: ${userId}`);
+      }
       
       log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}`, 'unified');
       
@@ -325,7 +355,13 @@ export function registerUnifiedRoutes(app: Router) {
   app.post('/api/generate-content', async (req: Request, res: Response) => {
     try {
       const { prompt, keywords, tone, platform, service, model } = req.body;
-      const userId = req.userId;
+      let userId = req.userId;
+      
+      // Проверяем заголовок x-user-id, если userId еще не установлен
+      if (!userId && req.headers['x-user-id']) {
+        userId = req.headers['x-user-id'] as string;
+        console.log(`[generate-content] Using userId from x-user-id header: ${userId}`);
+      }
       
       log(`[unified-routes] Received generate-content request with service=${service} from user ${userId}`, 'unified');
       
