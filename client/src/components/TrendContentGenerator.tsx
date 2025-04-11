@@ -81,8 +81,8 @@ const generateContentSchema = z.object({
     'gemini-1.5-flash',
     'gemini-2.0-flash',
     'gemini-2.0-flash-exp',
-    'gemini-2.5-pro',
-    'gemini-2.5-pro-exp'
+    'gemini-2.5-pro-preview-03-25',
+    'gemini-2.5-pro-exp-03-25'
   ]).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
