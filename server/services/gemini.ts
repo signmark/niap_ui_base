@@ -35,7 +35,10 @@ export class GeminiService {
   private createGenAI(apiVersion: 'v1' | 'v1beta' = 'v1'): GoogleGenerativeAI {
     try {
       // Для указания версии API (v1 или v1beta)
-      const apiConfig = apiVersion === 'v1beta' ? { apiVersion } : undefined;
+      // Используем вложенное свойство apiOptions.apiVersion по документации Google
+      const apiConfig = apiVersion === 'v1beta' 
+        ? { apiOptions: { apiVersion } } 
+        : undefined;
       
       // Создаем экземпляр с учетом версии типов библиотеки
       // @ts-ignore - Игнорируем ошибку типов, так как библиотека поддерживает второй параметр,
