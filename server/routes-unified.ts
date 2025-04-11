@@ -23,7 +23,11 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      const apiKey = await apiKeyService.getApiKey(userId, 'gemini');
+      // Получаем токен из заголовка запроса
+      const authToken = req.headers.authorization?.replace('Bearer ', '') || null;
+      console.log(`[unified-routes][gemini] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'gemini', authToken);
       if (!apiKey) {
         log('[unified-routes] Gemini API key not found for user', 'unified');
         return null;
@@ -47,7 +51,11 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      const apiKey = await apiKeyService.getApiKey(userId, 'claude');
+      // Получаем токен из заголовка запроса
+      const authToken = req.headers.authorization?.replace('Bearer ', '') || undefined;
+      console.log(`[unified-routes][claude] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'claude', authToken);
       if (!apiKey) {
         log('[unified-routes] Claude API key not found for user', 'unified');
         return null;
@@ -71,7 +79,11 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek');
+      // Получаем токен из заголовка запроса
+      const authToken = req.headers.authorization?.replace('Bearer ', '') || null;
+      console.log(`[unified-routes][deepseek] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
       if (!apiKey) {
         log('[unified-routes] DeepSeek API key not found for user', 'unified');
         return null;
@@ -95,7 +107,11 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen');
+      // Получаем токен из заголовка запроса
+      const authToken = req.headers.authorization?.replace('Bearer ', '') || undefined;
+      console.log(`[unified-routes][qwen] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
       if (!apiKey) {
         log('[unified-routes] Qwen API key not found for user', 'unified');
         return null;
