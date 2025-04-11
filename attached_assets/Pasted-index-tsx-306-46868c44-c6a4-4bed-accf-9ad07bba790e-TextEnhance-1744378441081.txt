@@ -1,0 +1,69 @@
+index.tsx:306 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+TextEnhancementDialog.tsx:252 Улучшение текста через claude API (endpoint: /api/improve-text)
+TextEnhancementDialog.tsx:239 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:281 Ошибка при парсинге JSON: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+mutationFn @ TextEnhancementDialog.tsx:281
+await in mutationFn
+fn @ @tanstack_react-query.js?v=80cf88ca:1189
+run @ @tanstack_react-query.js?v=80cf88ca:494
+start @ @tanstack_react-query.js?v=80cf88ca:536
+execute @ @tanstack_react-query.js?v=80cf88ca:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=80cf88ca:2630
+(anonymous) @ @tanstack_react-query.js?v=80cf88ca:3295
+onClick @ TextEnhancementDialog.tsx:486
+callCallback2 @ chunk-RPCDYKBN.js?v=80cf88ca:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=80cf88ca:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=80cf88ca:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=80cf88ca:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=80cf88ca:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=80cf88ca:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=80cf88ca:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=80cf88ca:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=80cf88ca:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=80cf88ca:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=80cf88ca:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=80cf88ca:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=80cf88ca:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=80cf88ca:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=80cf88ca:5449
+TextEnhancementDialog.tsx:305 Ошибка при улучшении текста: Error: Получен некорректный ответ от сервера. Проверьте соединение и попробуйте снова.
+    at Object.mutationFn (TextEnhancementDialog.tsx:282:15)
+overrideMethod @ hook.js:608
+onError @ TextEnhancementDialog.tsx:305
+execute @ @tanstack_react-query.js?v=80cf88ca:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=80cf88ca:2630
+(anonymous) @ @tanstack_react-query.js?v=80cf88ca:3295
+onClick @ TextEnhancementDialog.tsx:486
+callCallback2 @ chunk-RPCDYKBN.js?v=80cf88ca:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=80cf88ca:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=80cf88ca:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=80cf88ca:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=80cf88ca:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=80cf88ca:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=80cf88ca:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=80cf88ca:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=80cf88ca:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=80cf88ca:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=80cf88ca:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=80cf88ca:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=80cf88ca:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=80cf88ca:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=80cf88ca:5449
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:239 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:319 Загружено ключевых слов: 33
+index.tsx:278 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:291 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:239 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
