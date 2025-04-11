@@ -1496,8 +1496,8 @@ export class TelegramService extends BaseSocialService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId),
-                  messageId: lastMessageId // Добавляем ID сообщения в результат
+                  postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
+                  // Удаляем поле messageId, т.к. оно не соответствует интерфейсу SocialPublication
                 };
               } else {
                 log(`Формируем URL без ID сообщения`, 'social-publishing');
