@@ -147,13 +147,17 @@ export function registerUnifiedRoutes(app: Router) {
       const isGeminiService = service === 'gemini' || 
                              (typeof service === 'string' && service.startsWith('gemini-'));
                              
+      console.log(`[DEBUG] Детектирован сервис: ${service}, isGeminiService=${isGeminiService}`);
+                             
       // Обработка в зависимости от запрошенного сервиса
       if (isGeminiService) {
           // Получаем Gemini сервис
+          console.log(`[DEBUG] Получаем Gemini сервис для пользователя ${userId}`);
           const geminiService = await getGeminiService(req);
           
           if (!geminiService) {
             log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
+            console.log(`[DEBUG] Gemini API ключ не настроен для пользователя ${userId}`);
             return res.status(400).json({
               success: false,
               error: 'API ключ Gemini не настроен',
@@ -164,13 +168,25 @@ export function registerUnifiedRoutes(app: Router) {
           
           // Улучшаем текст с помощью Gemini
           log(`[unified-routes] Calling Gemini service with model ${model || 'default'}`, 'unified');
-          const geminiResult = await geminiService.improveText({ text, prompt, model: model || 'gemini-2.5-pro-exp-03-25' });
+          console.log(`[DEBUG] Вызываем Gemini.improveText с моделью ${model || 'gemini-2.5-pro-exp-03-25'}`);
           
-          return res.json({
-            success: true,
-            text: geminiResult,
-            service: 'gemini'
-          });
+          try {
+            const geminiResult = await geminiService.improveText({ text, prompt, model: model || 'gemini-2.5-pro-exp-03-25' });
+            
+            console.log(`[DEBUG] Успешно получен результат от Gemini, длина: ${geminiResult?.length || 0}`);
+            
+            return res.json({
+              success: true,
+              text: geminiResult,
+              service: 'gemini'
+            });
+          } catch (error) {
+            console.error(`[DEBUG] Ошибка при вызове Gemini.improveText:`, error);
+            return res.status(500).json({
+              success: false,
+              error: `Ошибка Gemini API: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`
+            });
+          }
       } else {
         // Для остальных сервисов используем switch
         switch (service) {
