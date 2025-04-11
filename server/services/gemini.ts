@@ -54,7 +54,24 @@ export class GeminiService {
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const genModel = genAI.getGenerativeModel({ model });
+      
+      // Параметры модели в зависимости от выбранной модели
+      let generationConfig = {};
+      
+      // Для некоторых моделей может потребоваться особая настройка
+      if (model === 'gemini-2.0-flash' || model === 'gemini-1.5-flash') {
+        generationConfig = {
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 32
+        };
+      }
+      
+      // Создаем соответствующую модель
+      const genModel = genAI.getGenerativeModel({ 
+        model,
+        generationConfig
+      });
       
       // Определяем, содержит ли текст HTML-теги
       const containsHtml = /<[^>]+>/.test(text);
