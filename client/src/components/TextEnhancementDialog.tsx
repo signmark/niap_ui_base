@@ -241,9 +241,16 @@ export function TextEnhancementDialog({
     return modelId;
   };
   
+  // Обновляем значение текста при изменении initialText
+  useEffect(() => {
+    setText(initialText);
+    console.log("TextEnhancementDialog: получен новый текст длиной:", initialText.length);
+  }, [initialText]);
+  
   // Логирование в консоль для отладки
   console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
+  console.log(`TextEnhancementDialog: текущий текст имеет длину ${text.length} символов`);
   
   // Мутация для улучшения текста - ТОЧНО КАК В ContentGenerationDialog
   const { mutate: improveText, isPending } = useMutation({
@@ -261,8 +268,17 @@ export function TextEnhancementDialog({
       // Используем единый маршрут для всех сервисов
       let apiEndpoint = '/api/improve-text';
       
+      // Получаем userId для заголовка
+      const userId = localStorage.getItem('user_id');
+      
+      // Проверка наличия всех необходимых данных
+      if (!userId) {
+        console.error('ОШИБКА: user_id отсутствует в localStorage!');
+        throw new Error('Не удалось получить идентификатор пользователя. Пожалуйста, войдите в систему заново.');
+      }
+      
       console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
-      console.log('Передаем заголовок x-user-id:', localStorage.getItem('user_id'));
+      console.log('Передаем заголовок x-user-id:', userId);
       console.log('Авторизационный токен:', authToken ? 'Присутствует (скрыт)' : 'Отсутствует');
       
       const response = await fetch(apiEndpoint, {
@@ -270,7 +286,7 @@ export function TextEnhancementDialog({
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
-          'x-user-id': localStorage.getItem('user_id') || ''
+          'x-user-id': userId
         },
         body: JSON.stringify({
           text,

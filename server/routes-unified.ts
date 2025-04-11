@@ -146,13 +146,18 @@ export function registerUnifiedRoutes(app: Router) {
         console.log(`[improve-text] Using userId from x-user-id header: ${userId}`);
       }
       
-      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}, headers: ${JSON.stringify(req.headers)}`, 'unified');
+      console.log(`[debug-improve-text] Полное тело запроса:`, JSON.stringify(req.body, null, 2));
+      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}, text length: ${text ? text.length : 0}, prompt length: ${prompt ? prompt.length : 0}`, 'unified');
       
       if (!text || !prompt) {
-        log('[unified-routes] Missing text or prompt in improve-text request', 'unified');
+        log(`[unified-routes] Missing text (length: ${text ? text.length : 0}) or prompt (length: ${prompt ? prompt.length : 0}) in improve-text request. Full body: ${JSON.stringify(req.body)}`, 'unified');
         return res.status(400).json({
           success: false,
-          error: 'Текст и инструкции обязательны'
+          error: 'Текст и инструкции обязательны',
+          details: {
+            textLength: text ? text.length : 0,
+            promptLength: prompt ? prompt.length : 0
+          }
         });
       }
       
