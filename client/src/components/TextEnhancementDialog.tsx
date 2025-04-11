@@ -262,12 +262,15 @@ export function TextEnhancementDialog({
       let apiEndpoint = '/api/improve-text';
       
       console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
+      console.log('Передаем заголовок x-user-id:', localStorage.getItem('user_id'));
+      console.log('Авторизационный токен:', authToken ? 'Присутствует (скрыт)' : 'Отсутствует');
       
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${authToken}`,
+          'x-user-id': localStorage.getItem('user_id') || ''
         },
         body: JSON.stringify({
           text,
@@ -305,7 +308,10 @@ export function TextEnhancementDialog({
       }
     },
     onSuccess: (data) => {
-      setEnhancedText(data);
+      // Получаем текст из ответа
+      const enhancedText = typeof data === 'object' && data.text ? data.text : String(data);
+      
+      setEnhancedText(enhancedText);
       
       // Показываем уведомление об успешном улучшении
       toast({
@@ -314,7 +320,7 @@ export function TextEnhancementDialog({
       });
       
       // Сразу же сохраняем улучшенный текст и закрываем диалог
-      onSave(data);
+      onSave(enhancedText);
       onOpenChange(false);
     },
     onError: (error: any) => {
