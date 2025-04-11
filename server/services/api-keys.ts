@@ -31,7 +31,8 @@ const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
   4: 'fal_ai',           // Пятое поле в UI - API Ключ FAL.AI
   5: 'xmlriver',         // Шестое поле в UI - API Ключ XMLRiver
   6: 'qwen',             // Седьмое поле в UI - API Ключ Qwen
-  7: 'claude'            // Восьмое поле в UI - API Ключ Claude
+  7: 'claude',           // Восьмое поле в UI - API Ключ Claude
+  8: 'gemini'            // Девятое поле в UI - API Ключ Gemini
 };
 
 // Интерфейс для хранения API ключей и метаданных
