@@ -109,6 +109,49 @@ export function registerGeminiRoutes(app: any) {
   /**
    * Маршрут для сохранения API ключа Gemini
    */
+  /**
+   * Маршрут для тестирования API ключа Gemini
+   */
+  router.post('/api/gemini/test-api-key', async (req: Request, res: Response) => {
+    try {
+      const { apiKey } = req.body;
+      
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ обязателен'
+        });
+      }
+      
+      logger.log('[gemini-routes] Testing Gemini API key', 'gemini');
+      
+      // Тестируем ключ API
+      const geminiService = new GeminiService({ apiKey });
+      const isValid = await geminiService.testApiKey();
+      
+      if (!isValid) {
+        logger.log('[gemini-routes] Invalid Gemini API key provided', 'gemini');
+        return res.status(400).json({
+          success: false,
+          error: 'Недействительный API ключ Gemini. Пожалуйста, проверьте ключ и попробуйте снова.'
+        });
+      }
+      
+      logger.log('[gemini-routes] Gemini API key is valid', 'gemini');
+      return res.json({
+        success: true,
+        message: 'API ключ Gemini действителен'
+      });
+    } catch (error) {
+      logger.log(`[gemini-routes] Error testing Gemini API key: ${(error as Error).message}`, 'gemini');
+      
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при проверке API ключа: ${(error as Error).message}`
+      });
+    }
+  });
+
   router.post('/api/gemini/save-api-key', async (req: Request, res: Response) => {
     try {
       const { apiKey } = req.body;
