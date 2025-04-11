@@ -448,6 +448,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                       <SelectContent>
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
                         <SelectItem value="gemini">Gemini</SelectItem>
+                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
                       </SelectContent>
