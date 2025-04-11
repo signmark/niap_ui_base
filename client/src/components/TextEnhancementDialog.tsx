@@ -232,7 +232,7 @@ export function TextEnhancementDialog({
 
   // Получение эндпоинта API в зависимости от выбранного сервиса
   const getApiEndpoint = () => {
-    return '/api/improve-text';  // Используем абсолютный путь с префиксом /api/
+    return 'improve-text';  // Без префикса /api, т.к. axios клиент добавляет baseURL: '/api'
   };
   
   // Получение правильного названия модели в зависимости от выбранного сервиса
