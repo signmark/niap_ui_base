@@ -266,7 +266,21 @@ export function TextEnhancementDialog({
         })
       });
       
-      const data = await response.json();
+      // Проверяем статус ответа
+      if (!response.ok) {
+        console.error(`Ошибка HTTP: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Ответ сервера: ${errorText.substring(0, 500)}...`);
+        throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+      }
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error('Ошибка при парсинге JSON:', error);
+        throw new Error('Получен некорректный ответ от сервера. Проверьте соединение и попробуйте снова.');
+      }
       
       if (!data.success) {
         throw new Error(data.error || 'Произошла ошибка при улучшении текста');
