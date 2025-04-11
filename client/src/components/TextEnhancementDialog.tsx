@@ -248,18 +248,35 @@ export function TextEnhancementDialog({
   // Мутация для улучшения текста
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await api.post(getApiEndpoint(), {
-        text,
-        prompt: getCurrentPrompt(),
-        model: getModelName(selectedService, selectedModelId),
-        service: selectedService
-      });
-      
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Произошла ошибка при улучшении текста');
+      // Получаем токен авторизации (как в ContentGenerationDialog)
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('Требуется авторизация');
       }
       
-      return response.data.text;
+      // Используем прямой fetch вместо api-клиента для большего контроля над заголовками
+      const response = await fetch(getApiEndpoint(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+          'x-user-id': localStorage.getItem('user_id') || ''
+        },
+        body: JSON.stringify({
+          text,
+          prompt: getCurrentPrompt(),
+          model: getModelName(selectedService, selectedModelId),
+          service: selectedService
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Произошла ошибка при улучшении текста');
+      }
+      
+      return data.text;
     },
     onSuccess: (data) => {
       setEnhancedText(data);
@@ -275,16 +292,26 @@ export function TextEnhancementDialog({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      // Проверяем, нужен ли API ключ
-      if (error.response?.data?.needApiKey) {
-        setHasApiKey(false);
-      }
+      console.error('Ошибка TextEnhancementDialog:', error);
       
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Не удалось улучшить текст",
-      });
+      // Проверяем, нужен ли API ключ
+      if (error.response?.data?.needApiKey || 
+          (typeof error === 'object' && error?.message?.includes('API ключ') && 
+           error?.message?.includes('не настроен'))) {
+        setHasApiKey(false);
+        
+        toast({
+          variant: "destructive",
+          title: "Необходим API ключ",
+          description: `Перейдите в настройки и добавьте API ключ ${selectedService.toUpperCase()}`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: error.message || "Не удалось улучшить текст",
+        });
+      }
     }
   });
 
