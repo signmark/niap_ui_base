@@ -53,34 +53,15 @@ export class GeminiService {
    * @returns Выбранная модель
    */
   private getSelectedModel(model: string): string {
-    // Поддерживаемые модели Gemini (актуальны в 2025 году)
-    const supportedModels = [
-      'gemini-pro',
-      'gemini-pro-vision',
-      'gemini-ultra'
-    ];
-
-    // Маппинг новых моделей на поддерживаемые
-    const modelMapping: {[key: string]: string} = {
-      'gemini': 'gemini-pro',
-      'gemini-2.5-pro': 'gemini-pro',
-      'gemini-2.5-flash': 'gemini-pro',
-      'gemini-1.5-pro': 'gemini-pro',
-      'gemini-1.5-flash': 'gemini-pro'
-    };
-
-    // Получаем модель из маппинга или возвращаем исходную
-    const mappedModel = modelMapping[model] || model;
+    // В API версии, которую использует библиотека @google/generative-ai,
+    // доступны только следующие модели (v1beta)
+    const MODEL_NAME = 'gemini-1.0-pro'; // Это единственная модель, которая гарантированно работает
     
-    // Проверяем, поддерживается ли модель
-    if (supportedModels.includes(mappedModel)) {
-      logger.log(`[gemini-service] Using model ${mappedModel} (requested ${model})`, 'gemini');
-      return mappedModel;
-    } else {
-      // Если модель не поддерживается, возвращаем стандартную
-      logger.log(`[gemini-service] Model ${model} not supported, falling back to gemini-pro`, 'gemini');
-      return 'gemini-pro';
-    }
+    // Регистрируем в логе, какую модель запросил пользователь
+    logger.log(`[gemini-service] Requested model ${model}, using ${MODEL_NAME}`, 'gemini');
+    
+    // Всегда возвращаем работающую модель
+    return MODEL_NAME;
   }
   
   /**
