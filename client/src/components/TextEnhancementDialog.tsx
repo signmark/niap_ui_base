@@ -183,7 +183,7 @@ export function TextEnhancementDialog({
 
   // Получение эндпоинта API в зависимости от выбранного сервиса
   const getApiEndpoint = () => {
-    return '/improve-text';  // Единый маршрут для всех сервисов
+    return '/api/improve-text';  // Единый маршрут для всех сервисов
   };
   
   // Логирование в консоль для отладки
