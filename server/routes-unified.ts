@@ -134,13 +134,12 @@ export function registerUnifiedRoutes(app: Router) {
         });
       }
       
+      // Проверяем, является ли это запросом к Gemini
+      const isGeminiService = service === 'gemini' || 
+                             (typeof service === 'string' && service.startsWith('gemini-'));
+                             
       // Обработка в зависимости от запрошенного сервиса
-      switch (service) {
-        case 'gemini':
-        case 'gemini-pro':
-        case 'gemini-1.5-pro':
-        case 'gemini-2.5-pro':
-        case 'gemini-2.5-flash':
+      if (isGeminiService) {
           // Получаем Gemini сервис
           const geminiService = await getGeminiService(req);
           
@@ -163,32 +162,35 @@ export function registerUnifiedRoutes(app: Router) {
             text: geminiResult,
             service: 'gemini'
           });
-          
-        case 'claude':
-          // Получаем Claude сервис
-          const claudeService = await getClaudeService(req);
-          
-          if (!claudeService) {
-            log(`[unified-routes] Claude API key not configured for user ${userId}`, 'unified');
-            return res.status(400).json({
-              success: false,
-              error: 'API ключ Claude не настроен',
-              needApiKey: true,
+      } else {
+        // Для остальных сервисов используем switch
+        switch (service) {
+          case 'claude': {
+            // Получаем Claude сервис
+            const claudeService = await getClaudeService(req);
+            
+            if (!claudeService) {
+              log(`[unified-routes] Claude API key not configured for user ${userId}`, 'unified');
+              return res.status(400).json({
+                success: false,
+                error: 'API ключ Claude не настроен',
+                needApiKey: true,
+                service: 'claude'
+              });
+            }
+            
+            // Улучшаем текст с помощью Claude
+            log(`[unified-routes] Calling Claude service with model ${model || 'default'}`, 'unified');
+            const claudeResult = await claudeService.improveText({ text, prompt, model });
+            
+            return res.json({
+              success: true,
+              text: claudeResult,
               service: 'claude'
             });
           }
           
-          // Улучшаем текст с помощью Claude
-          log(`[unified-routes] Calling Claude service with model ${model || 'default'}`, 'unified');
-          const claudeResult = await claudeService.improveText({ text, prompt, model });
-          
-          return res.json({
-            success: true,
-            text: claudeResult,
-            service: 'claude'
-          });
-          
-        case 'deepseek':
+          case 'deepseek': {
           // Получаем DeepSeek сервис
           const deepseekService = await getDeepSeekService(req);
           
