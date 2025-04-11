@@ -54,20 +54,21 @@ export class GeminiService {
    */
   private getSelectedModel(model: string): string {
     // Экспериментальные модели Gemini 2.5 (актуальны на 2025 год)
-    const MODEL_NAME = 'gemini-2.5-pro-exp-03-25'; // Экспериментальная версия модели
+    const PRO_MODEL = 'gemini-2.5-pro-exp-03-25'; // Экспериментальная версия Pro модели
+    const FLASH_MODEL = 'gemini-2.5-flash-exp-03-25'; // Экспериментальная версия Flash модели
     
     // Маппинг пользовательских моделей на фактические
     const modelMapping: {[key: string]: string} = {
-      'gemini': MODEL_NAME,
-      'gemini-pro': MODEL_NAME,
-      'gemini-2.5-pro': MODEL_NAME,
-      'gemini-2.5-flash': MODEL_NAME,
-      'gemini-1.5-pro': MODEL_NAME,
-      'gemini-1.5-flash': MODEL_NAME
+      'gemini': PRO_MODEL, // По умолчанию используем Pro
+      'gemini-pro': PRO_MODEL,
+      'gemini-2.5-pro': PRO_MODEL,
+      'gemini-2.5-flash': FLASH_MODEL, // Используем Flash модель для запросов к Flash
+      'gemini-1.5-pro': PRO_MODEL,
+      'gemini-1.5-flash': FLASH_MODEL
     };
     
-    // Получаем модель из маппинга или возвращаем экспериментальную
-    const mappedModel = modelMapping[model] || MODEL_NAME;
+    // Получаем модель из маппинга или возвращаем экспериментальную Pro
+    const mappedModel = modelMapping[model] || PRO_MODEL;
     
     // Регистрируем в логе, какую модель запросил пользователь
     logger.log(`[gemini-service] Requested model ${model}, using ${mappedModel}`, 'gemini');
