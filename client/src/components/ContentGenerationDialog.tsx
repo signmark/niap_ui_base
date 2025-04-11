@@ -30,9 +30,17 @@ interface ContentGenerationDialogProps {
 }
 
 type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 
-  'gemini-1.5-pro' | 'gemini-1.5-flash' | 
-  'gemini-2.0-flash' | 'gemini-2.0-flash-exp' |
-  'gemini-2.5-pro-preview-03-25' | 'gemini-2.5-pro-exp-03-25';
+  // Стабильные модели Gemini (подтверждено тестами)
+  'gemini-1.5-pro' | 'gemini-1.5-flash' | 'gemini-1.5-flash-8b' |
+  'gemini-2.0-flash-001' | 'gemini-2.0-flash-lite-001' |
+  
+  // Экспериментальные и preview модели (beta API)
+  'gemini-2.5-pro-preview-03-25' | 'gemini-2.5-pro-exp-03-25' |
+  'gemini-2.0-flash-exp' | 'gemini-2.0-flash-exp-image-generation' |
+  'gemini-2.0-flash-thinking-exp-01-21' | 'gemini-2.0-flash-live-001' |
+  
+  // Устаревшие модели (для обратной совместимости)
+  'gemini-pro' | 'gemini-2.0-pro' | 'gemini-2.0-flash';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
