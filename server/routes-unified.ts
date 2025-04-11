@@ -23,11 +23,7 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      // Получаем токен из заголовка запроса
-      const authToken = req.headers.authorization?.replace('Bearer ', '') || null;
-      console.log(`[unified-routes][gemini] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
-      
-      const apiKey = await apiKeyService.getApiKey(userId, 'gemini', authToken);
+      const apiKey = await apiKeyService.getApiKey(userId, 'gemini');
       if (!apiKey) {
         log('[unified-routes] Gemini API key not found for user', 'unified');
         return null;
@@ -51,11 +47,7 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      // Получаем токен из заголовка запроса
-      const authToken = req.headers.authorization?.replace('Bearer ', '') || undefined;
-      console.log(`[unified-routes][claude] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
-      
-      const apiKey = await apiKeyService.getApiKey(userId, 'claude', authToken);
+      const apiKey = await apiKeyService.getApiKey(userId, 'claude');
       if (!apiKey) {
         log('[unified-routes] Claude API key not found for user', 'unified');
         return null;
@@ -79,11 +71,7 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      // Получаем токен из заголовка запроса
-      const authToken = req.headers.authorization?.replace('Bearer ', '') || null;
-      console.log(`[unified-routes][deepseek] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
-      
-      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', authToken);
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek');
       if (!apiKey) {
         log('[unified-routes] DeepSeek API key not found for user', 'unified');
         return null;
@@ -107,11 +95,7 @@ export function registerUnifiedRoutes(app: Router) {
     }
     
     try {
-      // Получаем токен из заголовка запроса
-      const authToken = req.headers.authorization?.replace('Bearer ', '') || undefined;
-      console.log(`[unified-routes][qwen] Using token for API key fetch: ${authToken ? 'Yes (provided)' : 'No (not provided)'}`);
-      
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
+      const apiKey = await apiKeyService.getApiKey(userId, 'qwen');
       if (!apiKey) {
         log('[unified-routes] Qwen API key not found for user', 'unified');
         return null;
@@ -127,34 +111,10 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для улучшения текста с помощью различных AI сервисов
    */
-  // Регистрируем дублирующие маршруты: один с префиксом /api, другой без
-  // Обработчик для улучшения текста
-  const improveTextHandler = async (req: Request, res: Response) => {
+  app.post('/api/improve-text', async (req: Request, res: Response) => {
     try {
-      console.log(`[CRITICAL DEBUG] НАЧАЛО ОБРАБОТКИ ЗАПРОСА IMPROVE-TEXT`);
-      console.log(`[CRITICAL DEBUG] Request body:`, req.body);
-      console.log(`[CRITICAL DEBUG] Request headers:`, req.headers);
-      
-      // Проверяем, что тело запроса не пустое
-      if (!req.body || Object.keys(req.body).length === 0) {
-        console.log(`[CRITICAL ERROR] Тело запроса пустое или отсутствует!`);
-        return res.status(400).json({
-          success: false,
-          error: 'Тело запроса пустое или отсутствует'
-        });
-      }
-      
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
-      
-      // Расширенное логирование для отладки
-      console.log(`[DEBUG] improve-text raw request:`, JSON.stringify({
-        service,
-        model,
-        userId,
-        text: text?.substring(0, 30) + '...',
-        prompt: prompt?.substring(0, 30) + '...'
-      }));
       
       log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}`, 'unified');
       
@@ -174,21 +134,18 @@ export function registerUnifiedRoutes(app: Router) {
         });
       }
       
-      // Проверяем, является ли это запросом к Gemini
-      const isGeminiService = service === 'gemini' || 
-                             (typeof service === 'string' && service.startsWith('gemini-'));
-                             
-      console.log(`[DEBUG] Детектирован сервис: ${service}, isGeminiService=${isGeminiService}`);
-                             
       // Обработка в зависимости от запрошенного сервиса
-      if (isGeminiService) {
+      switch (service) {
+        case 'gemini':
+        case 'gemini-pro':
+        case 'gemini-1.5-pro':
+        case 'gemini-2.5-pro':
+        case 'gemini-2.5-flash':
           // Получаем Gemini сервис
-          console.log(`[DEBUG] Получаем Gemini сервис для пользователя ${userId}`);
           const geminiService = await getGeminiService(req);
           
           if (!geminiService) {
             log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
-            console.log(`[DEBUG] Gemini API ключ не настроен для пользователя ${userId}`);
             return res.status(400).json({
               success: false,
               error: 'API ключ Gemini не настроен',
@@ -199,178 +156,158 @@ export function registerUnifiedRoutes(app: Router) {
           
           // Улучшаем текст с помощью Gemini
           log(`[unified-routes] Calling Gemini service with model ${model || 'default'}`, 'unified');
-          console.log(`[DEBUG] Вызываем Gemini.improveText с моделью ${model || 'gemini-2.5-pro-exp-03-25'}`);
+          const geminiResult = await geminiService.improveText({ text, prompt, model: model || 'gemini-2.5-pro-exp-03-25' });
           
-          try {
-            const geminiResult = await geminiService.improveText({ text, prompt, model: model || 'gemini-2.5-pro-exp-03-25' });
-            
-            console.log(`[DEBUG] Успешно получен результат от Gemini, длина: ${geminiResult?.length || 0}`);
-            
-            return res.json({
-              success: true,
-              text: geminiResult,
-              service: 'gemini'
-            });
-          } catch (error) {
-            console.error(`[DEBUG] Ошибка при вызове Gemini.improveText:`, error);
-            return res.status(500).json({
+          return res.json({
+            success: true,
+            text: geminiResult,
+            service: 'gemini'
+          });
+          
+        case 'claude':
+          // Получаем Claude сервис
+          const claudeService = await getClaudeService(req);
+          
+          if (!claudeService) {
+            log(`[unified-routes] Claude API key not configured for user ${userId}`, 'unified');
+            return res.status(400).json({
               success: false,
-              error: `Ошибка Gemini API: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`
-            });
-          }
-      } else {
-        // Для остальных сервисов используем switch
-        switch (service) {
-          case 'claude': {
-            // Получаем Claude сервис
-            const claudeService = await getClaudeService(req);
-            
-            if (!claudeService) {
-              log(`[unified-routes] Claude API key not configured for user ${userId}`, 'unified');
-              return res.status(400).json({
-                success: false,
-                error: 'API ключ Claude не настроен',
-                needApiKey: true,
-                service: 'claude'
-              });
-            }
-            
-            // Улучшаем текст с помощью Claude
-            log(`[unified-routes] Calling Claude service with model ${model || 'default'}`, 'unified');
-            const claudeResult = await claudeService.improveText({ text, prompt, model });
-            
-            return res.json({
-              success: true,
-              text: claudeResult,
+              error: 'API ключ Claude не настроен',
+              needApiKey: true,
               service: 'claude'
             });
           }
           
-          case 'deepseek': {
-            // Получаем DeepSeek сервис
-            const deepseekService = await getDeepSeekService(req);
-            
-            if (!deepseekService) {
-              log(`[unified-routes] DeepSeek API key not configured for user ${userId}`, 'unified');
-              return res.status(400).json({
-                success: false,
-                error: 'API ключ DeepSeek не настроен',
-                needApiKey: true,
-                service: 'deepseek'
-              });
-            }
-            
-            // Определяем, содержит ли текст HTML-теги
-            const containsHtml = /<[^>]+>/.test(text);
-            
-            // Формируем сообщения для DeepSeek API
-            let systemMessage = '';
-            let userMessage = '';
-            
-            if (containsHtml) {
-              systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Сделай текст более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-              userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
-            } else {
-              systemMessage = 'Улучши следующий текст. Сделай его более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-              userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
-            }
-            
-            const messages = [
-              { role: 'system', content: systemMessage },
-              { role: 'user', content: userMessage }
-            ];
-            
-            const modelToUse = model || 'deepseek-chat'; // Используем DeepSeek Chat как модель по умолчанию
-            
-            log(`[unified-routes] Calling DeepSeek with model ${modelToUse}`, 'unified');
-            
-            // Генерируем улучшенный текст
-            let deepseekResult = await deepseekService.generateText(messages as any, {
-              model: modelToUse,
-              temperature: 0.3,
-              max_tokens: 4000
-            });
-            
-            // Удаляем служебный текст в тройных обратных кавычках (```)
-            deepseekResult = deepseekResult.replace(/```[\s\S]*?```/g, '');
-            
-            // Если оригинальный текст содержал HTML, но ответ не содержит, 
-            // попробуем заключить абзацы в теги <p>
-            if (containsHtml && !/<[^>]+>/.test(deepseekResult)) {
-              log('[unified-routes] HTML tags were not preserved in DeepSeek response, attempting to add paragraph tags', 'unified');
-              deepseekResult = deepseekResult
-                .split('\n\n')
-                .map(para => para.trim())
-                .filter(para => para.length > 0)
-                .map(para => `<p>${para}</p>`)
-                .join('\n');
-            }
-            
-            return res.json({
-              success: true,
-              text: deepseekResult,
+          // Улучшаем текст с помощью Claude
+          log(`[unified-routes] Calling Claude service with model ${model || 'default'}`, 'unified');
+          const claudeResult = await claudeService.improveText({ text, prompt, model });
+          
+          return res.json({
+            success: true,
+            text: claudeResult,
+            service: 'claude'
+          });
+          
+        case 'deepseek':
+          // Получаем DeepSeek сервис
+          const deepseekService = await getDeepSeekService(req);
+          
+          if (!deepseekService) {
+            log(`[unified-routes] DeepSeek API key not configured for user ${userId}`, 'unified');
+            return res.status(400).json({
+              success: false,
+              error: 'API ключ DeepSeek не настроен',
+              needApiKey: true,
               service: 'deepseek'
             });
           }
           
-          case 'qwen': {
-            // Получаем API ключ Qwen для пользователя
-            const qwenApiKey = await getQwenApiKey(req);
-            
-            if (!qwenApiKey) {
-              log(`[unified-routes] Qwen API key not configured for user ${userId}`, 'unified');
-              return res.status(400).json({
-                success: false,
-                error: 'API ключ Qwen не настроен',
-                needApiKey: true,
-                service: 'qwen'
-              });
-            }
-            
-            // Используем Qwen сервис с API ключом пользователя
-            qwenService.updateApiKey(qwenApiKey);
-            
-            // Определяем, содержит ли текст HTML-теги
-            const containsHtmlQwen = /<[^>]+>/.test(text);
-            
-            // Формируем сообщения для Qwen API
-            let qwenSystemMessage = '';
-            if (containsHtmlQwen) {
-              qwenSystemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Следуй инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-            } else {
-              qwenSystemMessage = 'Улучши следующий текст согласно инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-            }
-            
-            log(`[unified-routes] Calling Qwen service with model ${model || 'default'}`, 'unified');
-            
-            // Улучшаем текст с помощью Qwen
-            const qwenResult = await qwenService.generateText(
-              [
-                { role: 'system', content: qwenSystemMessage },
-                { role: 'user', content: `Инструкции: ${prompt}\n\nТекст:\n${text}` }
-              ], 
-              {
-                model: model || 'qwen-pro',
-                temperature: 0.3,
-                max_tokens: 4000
-              }
-            );
-            
-            return res.json({
-              success: true,
-              text: qwenResult,
+          // Определяем, содержит ли текст HTML-теги
+          const containsHtml = /<[^>]+>/.test(text);
+          
+          // Формируем сообщения для DeepSeek API
+          let systemMessage = '';
+          let userMessage = '';
+          
+          if (containsHtml) {
+            systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Сделай текст более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+            userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
+          } else {
+            systemMessage = 'Улучши следующий текст. Сделай его более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+            userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
+          }
+          
+          const messages = [
+            { role: 'system', content: systemMessage },
+            { role: 'user', content: userMessage }
+          ];
+          
+          const modelToUse = model || 'deepseek-chat'; // Используем DeepSeek Chat как модель по умолчанию
+          
+          log(`[unified-routes] Calling DeepSeek with model ${modelToUse}`, 'unified');
+          
+          // Генерируем улучшенный текст
+          let deepseekResult = await deepseekService.generateText(messages, {
+            model: modelToUse,
+            temperature: 0.3,
+            max_tokens: 4000
+          });
+          
+          // Удаляем служебный текст в тройных обратных кавычках (```)
+          deepseekResult = deepseekResult.replace(/```[\s\S]*?```/g, '');
+          
+          // Если оригинальный текст содержал HTML, но ответ не содержит, 
+          // попробуем заключить абзацы в теги <p>
+          if (containsHtml && !/<[^>]+>/.test(deepseekResult)) {
+            log('[unified-routes] HTML tags were not preserved in DeepSeek response, attempting to add paragraph tags', 'unified');
+            deepseekResult = deepseekResult
+              .split('\n\n')
+              .map(para => para.trim())
+              .filter(para => para.length > 0)
+              .map(para => `<p>${para}</p>`)
+              .join('\n');
+          }
+          
+          return res.json({
+            success: true,
+            text: deepseekResult,
+            service: 'deepseek'
+          });
+          
+        case 'qwen':
+          // Получаем API ключ Qwen для пользователя
+          const qwenApiKey = await getQwenApiKey(req);
+          
+          if (!qwenApiKey) {
+            log(`[unified-routes] Qwen API key not configured for user ${userId}`, 'unified');
+            return res.status(400).json({
+              success: false,
+              error: 'API ключ Qwen не настроен',
+              needApiKey: true,
               service: 'qwen'
             });
           }
           
-          default: {
-            log(`[unified-routes] Unsupported service: ${service}`, 'unified');
-            return res.status(400).json({
-              success: false,
-              error: `Неизвестный сервис: ${service}`
-            });
+          // Используем Qwen сервис с API ключом пользователя
+          qwenService.updateApiKey(qwenApiKey);
+          
+          // Определяем, содержит ли текст HTML-теги
+          const containsHtmlQwen = /<[^>]+>/.test(text);
+          
+          // Формируем сообщения для Qwen API
+          if (containsHtmlQwen) {
+            systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Следуй инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+          } else {
+            systemMessage = 'Улучши следующий текст согласно инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
           }
-        }
+          
+          log(`[unified-routes] Calling Qwen service with model ${model || 'default'}`, 'unified');
+          
+          // Улучшаем текст с помощью Qwen
+          const qwenResult = await qwenService.generateText(
+            [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: `Инструкции: ${prompt}\n\nТекст:\n${text}` }
+            ], 
+            {
+              model: model || 'qwen-pro',
+              temperature: 0.3,
+              max_tokens: 4000
+            }
+          );
+          
+          return res.json({
+            success: true,
+            text: qwenResult,
+            service: 'qwen'
+          });
+          
+        default:
+          log(`[unified-routes] Unsupported service: ${service}`, 'unified');
+          return res.status(400).json({
+            success: false,
+            error: `Неизвестный сервис: ${service}`
+          });
       }
     } catch (error) {
       log(`[unified-routes] Error in improve-text endpoint: ${(error as Error).message}`, 'unified');
@@ -380,67 +317,11 @@ export function registerUnifiedRoutes(app: Router) {
         error: 'Внутренняя ошибка сервера при улучшении текста'
       });
     }
-  };
-  
-  // Регистрируем маршрут с префиксом /api, т.к. клиент использует fetch с URL: '/api/improve-text'
-  app.post('/api/improve-text', (req, res) => {
-    console.log('[CRITICAL DEBUG] ========= RECEIVED /api/improve-text REQUEST ==========');
-    console.log('[CRITICAL DEBUG] Request headers:', req.headers);
-    console.log('[CRITICAL DEBUG] Content-Type:', req.headers['content-type']);
-    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body || {}));
-    console.log('[CRITICAL DEBUG] User ID:', req.userId);
-    
-    // Проверка авторизации
-    if (!req.userId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Требуется авторизация'
-      });
-    }
-    
-    // Проверка Content-Type и наличия тела запроса
-    if (!req.headers['content-type']?.includes('application/json') || !req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Неверный формат запроса: требуется JSON с полями text, prompt, service'
-      });
-    }
-    
-    improveTextHandler(req, res);
-  });
-  
-  // Создаем дополнительный маршрут с двойным префиксом /api/api/improve-text
-  // для обработки запросов с двойным префиксом (если клиент некорректно использует axios baseURL + URL)
-  app.post('/api/api/improve-text', (req, res) => {
-    console.log('[CRITICAL DEBUG] ========= RECEIVED /api/api/improve-text REQUEST ==========');
-    console.log('[CRITICAL DEBUG] Request headers:', req.headers);
-    console.log('[CRITICAL DEBUG] Content-Type:', req.headers['content-type']);
-    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body || {}));
-    console.log('[CRITICAL DEBUG] User ID:', req.userId);
-    
-    // Проверка авторизации
-    if (!req.userId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Требуется авторизация'
-      });
-    }
-    
-    // Проверка Content-Type и наличия тела запроса
-    if (!req.headers['content-type']?.includes('application/json') || !req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Неверный формат запроса: требуется JSON с полями text, prompt, service'
-      });
-    }
-    
-    improveTextHandler(req, res);
   });
   
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
    */
-  // Маршрут должен иметь префикс /api, чтобы не перехватываться Vite
   app.post('/api/generate-content', async (req: Request, res: Response) => {
     try {
       const { prompt, keywords, tone, platform, service, model } = req.body;
@@ -567,7 +448,7 @@ export function registerUnifiedRoutes(app: Router) {
           log(`[unified-routes] Calling DeepSeek for content generation with model ${modelToUse}`, 'unified');
           
           // Генерируем контент
-          let deepseekResult = await deepseekService.generateText(messages as any, {
+          let deepseekResult = await deepseekService.generateText(messages, {
             model: modelToUse,
             temperature: 0.7,
             max_tokens: 4000

@@ -110,18 +110,7 @@ export const api = axios.create({
 // Добавляем логирование для отладки
 api.interceptors.request.use(
   config => {
-    let formattedUrl = '';
-    if (config.baseURL && config.url) {
-      // Если URL не начинается со слеша, добавляем его
-      if (!config.url.startsWith('/')) {
-        formattedUrl = `${config.baseURL}/${config.url}`;
-      } else {
-        formattedUrl = `${config.baseURL}${config.url}`;
-      }
-    } else {
-      formattedUrl = config.url || '';
-    }
-    console.log(`API Request: ${config.method?.toUpperCase()} ${formattedUrl}`, config.data);
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, config.data);
     return config;
   },
   error => {

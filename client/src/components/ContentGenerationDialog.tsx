@@ -87,22 +87,11 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       
       console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
-      // Получаем ID пользователя из localStorage
-      const userId = localStorage.getItem('user_id');
-      
-      // Логируем для отладки
-      if (!userId) {
-        console.warn('ContentGenerationDialog: user_id отсутствует в localStorage!');
-      } else {
-        console.log(`ContentGenerationDialog: отправка запроса с user_id: ${userId}`);
-      }
-      
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-          'x-user-id': userId || ''
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           prompt: prompt,

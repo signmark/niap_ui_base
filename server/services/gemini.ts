@@ -190,13 +190,6 @@ export class GeminiService {
   async improveText(params: ImproveTextParams): Promise<string> {
     const { text, prompt, model = 'gemini-pro' } = params;
     
-    // Добавляем отладочную информацию
-    console.log('[DEBUG-GEMINI] improveText вызван с параметрами:', {
-      textLength: text?.length || 0,
-      promptLength: prompt?.length || 0,
-      model
-    });
-    
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
@@ -205,7 +198,6 @@ export class GeminiService {
       
       // Логируем выбранную модель и версию API для диагностики
       logger.log(`[gemini-service] Selected model: ${selectedModel}, API version: ${apiVersion}`, 'gemini');
-      console.log(`[DEBUG-GEMINI] Выбрана модель ${selectedModel} с версией API ${apiVersion}`);
       
       try {
         // Создаем генеративную модель через метод createGenAI с правильной версией API

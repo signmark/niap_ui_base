@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface TextEnhancementDialogProps {
   open: boolean;
@@ -196,7 +197,7 @@ export function TextEnhancementDialog({
   const [selectedPromptId, setSelectedPromptId] = useState("improve");
   const [selectedService, setSelectedService] = useState(AI_SERVICES.find(s => s.default)?.id || "claude");
   const [selectedModelId, setSelectedModelId] = useState("");
-  const [hasApiKey, setHasApiKey] = useState(true); // Если ключи уже настроены, это будет true
+  const [hasApiKey, setHasApiKey] = useState(true); // Предполагаем, что ключ есть, потом проверим
   
   const { toast } = useToast();
   
@@ -220,7 +221,6 @@ export function TextEnhancementDialog({
     if (open) {
       setText(initialText);
       setEnhancedText("");
-      setHasApiKey(true); // Сбрасываем состояние hasApiKey при каждом открытии
     }
   }, [open, initialText]);
 
@@ -230,6 +230,11 @@ export function TextEnhancementDialog({
     return customPrompt || (selectedPrompt ? selectedPrompt.prompt : "");
   };
 
+  // Получение эндпоинта API в зависимости от выбранного сервиса
+  const getApiEndpoint = () => {
+    return '/api/improve-text';  // Единый маршрут для всех сервисов
+  };
+  
   // Получение правильного названия модели в зависимости от выбранного сервиса
   const getModelName = (service: string, modelId: string): string => {
     // Для всех сервисов просто возвращаем ID модели как есть
@@ -237,22 +242,20 @@ export function TextEnhancementDialog({
   };
   
   // Логирование в консоль для отладки
+  console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
   
   // Мутация для улучшения текста
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
+      // Получаем токен авторизации (как в ContentGenerationDialog)
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error('Требуется авторизация');
       }
       
-      // Используем единый маршрут для всех сервисов
-      let apiEndpoint = '/api/improve-text';
-      
-      console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
-      
-      const response = await fetch(apiEndpoint, {
+      // Используем прямой fetch вместо api-клиента для большего контроля над заголовками
+      const response = await fetch(getApiEndpoint(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -267,49 +270,7 @@ export function TextEnhancementDialog({
         })
       });
       
-      // Проверяем статус ответа
-      if (!response.ok) {
-        console.error(`Ошибка HTTP: ${response.status} ${response.statusText}`);
-        
-        // Пытаемся получить информацию об ошибке из ответа
-        let errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
-        let errorData = null;
-        
-        try {
-          // Сначала пытаемся распарсить ответ как JSON
-          errorData = await response.json();
-          console.error('Ответ сервера:', errorData);
-          
-          // Если есть сообщение об ошибке в ответе, используем его
-          if (errorData && errorData.error) {
-            errorMessage = errorData.error;
-            
-            // Если нужен API ключ, выбрасываем специальную ошибку
-            if (errorData.needApiKey && errorData.service) {
-              throw new Error(errorMessage);
-            }
-          }
-        } catch (jsonError) {
-          // Если не удалось распарсить как JSON, пытаемся получить как текст
-          try {
-            const errorText = await response.text();
-            console.error(`Ответ сервера: ${errorText.substring(0, 500)}...`);
-          } catch (textError) {
-            console.error('Не удалось получить детали ошибки');
-          }
-        }
-        
-        // Выбрасываем ошибку с сообщением
-        throw new Error(errorMessage);
-      }
-      
-      let data;
-      try {
-        data = await response.json();
-      } catch (error) {
-        console.error('Ошибка при парсинге JSON:', error);
-        throw new Error('Получен некорректный ответ от сервера. Проверьте соединение и попробуйте снова.');
-      }
+      const data = await response.json();
       
       if (!data.success) {
         throw new Error(data.error || 'Произошла ошибка при улучшении текста');
@@ -331,29 +292,26 @@ export function TextEnhancementDialog({
       onOpenChange(false);
     },
     onError: (error: any) => {
-      console.error('Ошибка при улучшении текста:', error);
+      console.error('Ошибка TextEnhancementDialog:', error);
       
       // Проверяем, нужен ли API ключ
-      if (error.message?.includes('API ключ') || error.message?.includes('не настроен')) {
+      if (error.response?.data?.needApiKey || 
+          (typeof error === 'object' && error?.message?.includes('API ключ') && 
+           error?.message?.includes('не настроен'))) {
         setHasApiKey(false);
         
         toast({
-          variant: "default", // Используем обычный вариант вместо "destructive"
-          title: "Требуется API ключ",
-          description: `Для использования ${
-            selectedService === 'claude' ? 'Claude AI' : 
-            selectedService === 'deepseek' ? 'DeepSeek' : 
-            selectedService === 'gemini' ? 'Google Gemini' : 'Qwen'
-          } необходимо добавить API ключ в настройках пользователя`,
+          variant: "destructive",
+          title: "Необходим API ключ",
+          description: `Перейдите в настройки и добавьте API ключ ${selectedService.toUpperCase()}`,
         });
-        return;
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: error.message || "Не удалось улучшить текст",
+        });
       }
-      
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Не удалось улучшить текст",
-      });
     }
   });
 

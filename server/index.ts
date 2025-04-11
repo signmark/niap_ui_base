@@ -27,15 +27,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Добавляем механизм приоритетной обработки API запросов, чтобы они не перехватывались Vite
-app.use((req, res, next) => {
-  // Если это запрос к API, помечаем его специальным флагом
-  if (req.path.startsWith('/api/')) {
-    (req as any).isApiRequest = true;
-  }
-  next();
-});
-
 // Добавляем API маршрут для проверки статуса явно, чтобы он работал до инициализации Vite
 app.get('/api/status-check', (req, res) => {
   return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
@@ -195,9 +186,6 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // УДАЛЕНО: специальное middleware для API-запросов, так как оно блокирует все
-    // незарегистрированные маршруты, а нам нужно, чтобы они проходили дальше
-    
     // Всегда настраиваем Vite в среде Replit
     try {
       log("Setting up Vite in development mode...");

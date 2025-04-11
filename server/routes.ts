@@ -38,7 +38,6 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
-import { registerUnifiedRoutes } from './routes-unified';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -1284,13 +1283,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты для AI сервисов
   registerClaudeRoutes(app);
   registerGeminiRoutes(app);
-  
-  // Регистрируем унифицированные маршруты для AI сервисов
-  console.log('Registering unified AI routes...');
-  log('Registering unified AI routes...');
-  registerUnifiedRoutes(app);
-  console.log('Unified AI routes registered');
-  log('Unified AI routes registered successfully');
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
