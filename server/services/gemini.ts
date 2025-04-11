@@ -29,11 +29,15 @@ export class GeminiService {
   
   /**
    * Создает экземпляр Google Generative AI с правильными настройками
+   * @param apiVersion Версия API (v1 или v1beta)
    * @returns Экземпляр GoogleGenerativeAI
    */
-  private createGenAI(): GoogleGenerativeAI {
-    // Создаем экземпляр GoogleGenerativeAI (с API v1 по умолчанию)
-    return new GoogleGenerativeAI(this.apiKey);
+  private createGenAI(apiVersion: 'v1' | 'v1beta' = 'v1'): GoogleGenerativeAI {
+    // Для исправления ошибки типизации в библиотеке
+    const apiConfig = apiVersion === 'v1beta' ? { apiVersion } : undefined;
+    
+    // Создаем экземпляр GoogleGenerativeAI с указанной версией API
+    return new GoogleGenerativeAI(this.apiKey, apiConfig);
   }
   
   /**
@@ -67,33 +71,52 @@ export class GeminiService {
   }
   
   /**
-   * Определяет подходящую модель Gemini на основе запроса пользователя
+   * Определяет подходящую модель Gemini и API версию на основе запроса пользователя
    * @param model Запрошенная модель
-   * @returns Выбранная модель
+   * @returns Выбранная модель и необходимая версия API
    */
-  private getSelectedModel(model: string): string {
+  private getSelectedModelInfo(model: string): { modelName: string; apiVersion: 'v1' | 'v1beta' } {
     // Актуальные модели Gemini (обновлены в апреле 2025 года)
     const PRO_MODEL_1_5 = 'gemini-1.5-pro'; // Современная модель Pro 1.5
     const FLASH_MODEL_1_5 = 'gemini-1.5-flash'; // Быстрая модель Flash 1.5
     const PRO_MODEL_2_5 = 'gemini-2.5-pro-preview-03-25'; // Preview модель Gemini 2.5 Pro
+    const FLASH_MODEL_2_5 = 'gemini-2.5-flash-exp-03-25'; // Preview модель Gemini 2.5 Flash
     
     // Маппинг пользовательских моделей на фактические
-    const modelMapping: {[key: string]: string} = {
-      'gemini': PRO_MODEL_1_5, // По умолчанию используем 1.5 Pro
-      'gemini-pro': PRO_MODEL_1_5,
-      'gemini-2.5-pro': PRO_MODEL_2_5, // Используем актуальную preview версию Gemini 2.5 Pro
-      'gemini-1.5-pro': PRO_MODEL_1_5,
-      'gemini-1.5-flash': FLASH_MODEL_1_5
+    const modelMapping: {[key: string]: { name: string; beta: boolean }} = {
+      'gemini': { name: PRO_MODEL_1_5, beta: false }, // По умолчанию используем 1.5 Pro
+      'gemini-pro': { name: PRO_MODEL_1_5, beta: false },
+      'gemini-2.5-pro': { name: PRO_MODEL_2_5, beta: true }, // Используем актуальную preview версию Gemini 2.5 Pro (beta)
+      'gemini-1.5-pro': { name: PRO_MODEL_1_5, beta: false },
+      'gemini-1.5-flash': { name: FLASH_MODEL_1_5, beta: false },
+      'gemini-2.5-flash': { name: FLASH_MODEL_2_5, beta: true } // Используем актуальную preview версию Gemini 2.5 Flash (beta)
     };
     
     // Получаем модель из маппинга или используем Pro модель 1.5 по умолчанию
-    const mappedModel = modelMapping[model] || PRO_MODEL_1_5;
+    const defaultModel = { name: PRO_MODEL_1_5, beta: false };
+    const mappedModel = modelMapping[model] || defaultModel;
+    
+    // Определяем версию API на основе типа модели
+    const apiVersion = mappedModel.beta ? 'v1beta' : 'v1';
     
     // Регистрируем в логе, какую модель запросил пользователь
-    logger.log(`[gemini-service] Requested model ${model}, using ${mappedModel}`, 'gemini');
+    logger.log(`[gemini-service] Requested model ${model}, using ${mappedModel.name} with API ${apiVersion}`, 'gemini');
     
-    // Возвращаем модель
-    return mappedModel;
+    // Возвращаем информацию о модели
+    return { 
+      modelName: mappedModel.name,
+      apiVersion
+    };
+  }
+  
+  /**
+   * Определяет подходящую модель Gemini на основе запроса пользователя
+   * @param model Запрошенная модель
+   * @returns Выбранная модель
+   * @deprecated Используйте getSelectedModelInfo вместо этого метода
+   */
+  private getSelectedModel(model: string): string {
+    return this.getSelectedModelInfo(model).modelName;
   }
   
   /**
@@ -107,11 +130,11 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
+      // Выбираем подходящую модель и версию API
+      const { modelName: selectedModel, apiVersion } = this.getSelectedModelInfo(model);
       
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
+      // Создаем генеративную модель через метод createGenAI с правильной версией API
+      const genAI = this.createGenAI(apiVersion);
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Подготавливаем инструкцию с явным указанием не добавлять техническую информацию
@@ -168,11 +191,11 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
+      // Выбираем подходящую модель и версию API
+      const { modelName: selectedModel, apiVersion } = this.getSelectedModelInfo(model);
       
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
+      // Создаем генеративную модель через метод createGenAI с правильной версией API
+      const genAI = this.createGenAI(apiVersion);
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Дополняем промпт инструкциями не добавлять техническую информацию
@@ -230,16 +253,16 @@ export class GeminiService {
     const { platform, tone, model = 'gemini-pro' } = options;
     
     try {
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
+      // Выбираем подходящую модель и версию API
+      const { modelName: selectedModel, apiVersion } = this.getSelectedModelInfo(model);
       
-      logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${selectedModel}`, 'gemini');
+      logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${selectedModel} with API ${apiVersion}`, 'gemini');
       
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
       
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
+      // Создаем генеративную модель через метод createGenAI с правильной версией API
+      const genAI = this.createGenAI(apiVersion);
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Формируем полный промпт
