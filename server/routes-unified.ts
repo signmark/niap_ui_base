@@ -111,7 +111,9 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для улучшения текста с помощью различных AI сервисов
    */
-  app.post('/improve-text', async (req: Request, res: Response) => {
+  // ВАЖНО: маршруты должны быть зарегистрированы с префиксом /api, чтобы они работали правильно,
+  // так как Vite перехватывает все запросы без префикса /api
+  app.post('/api/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
@@ -354,7 +356,8 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
    */
-  app.post('/generate-content', async (req: Request, res: Response) => {
+  // Маршрут должен иметь префикс /api, чтобы не перехватываться Vite
+  app.post('/api/generate-content', async (req: Request, res: Response) => {
     try {
       const { prompt, keywords, tone, platform, service, model } = req.body;
       const userId = req.userId;
