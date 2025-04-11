@@ -647,6 +647,134 @@ export function SettingsDialog() {
             <p className="text-sm text-red-500">{claudeTesting.message}</p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Google Gemini</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="Введите API ключ Google Gemini"
+              className={cn("flex-1", !geminiKey && "border-amber-400 focus-visible:ring-amber-400")}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://aistudio.google.com/app/apikey', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ в Google AI Studio</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testGeminiKey}
+              disabled={!geminiKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {geminiTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : geminiTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : geminiTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для улучшения текста и генерации контента через Google Gemini
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функции "Улучшить текст" с использованием модели Gemini</li>
+              <li>Обеспечивает доступ к Gemini 1.5 Pro для генерации текста</li>
+              <li>Ключ можно получить в <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 hover:underline">Google AI Studio</a></li>
+            </ul>
+          </div>
+          {geminiTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{geminiTesting.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-base font-medium">API Ключ Alibaba Qwen</Label>
+            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "success" : "destructive"}>
+              {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              value={qwenKey}
+              onChange={(e) => setQwenKey(e.target.value)}
+              placeholder="Введите API ключ Alibaba Qwen"
+              className={cn("flex-1", !qwenKey && "border-amber-400 focus-visible:ring-amber-400")}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://help.aliyun.com/document_detail/611472.html', '_blank')}
+                    className="shrink-0 border-amber-400 text-amber-600"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Получить ключ в Alibaba Cloud</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={testQwenKey}
+              disabled={!qwenKey.trim() || isPending}
+              className="shrink-0"
+            >
+              {qwenTesting.status === 'testing' ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : qwenTesting.status === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
+              ) : qwenTesting.status === 'error' ? (
+                <XCircle className="h-4 w-4 mr-1 text-red-500" />
+              ) : null}
+              Проверить
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium">
+              Ключ используется для улучшения текста и генерации контента через Alibaba Qwen
+            </p>
+            <ul className="list-disc list-inside pl-2 text-xs">
+              <li>Необходим для функции "Улучшить текст" с использованием модели Qwen</li>
+              <li>Обеспечивает доступ к Qwen-MAX для генерации многоязычного контента</li>
+              <li>Особенно эффективен для работы с китайским языком</li>
+            </ul>
+          </div>
+          {qwenTesting.status === 'error' && (
+            <p className="text-sm text-red-500">{qwenTesting.message}</p>
+          )}
+        </div>
         
         <Separator className="my-4" />
         
