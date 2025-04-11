@@ -116,6 +116,15 @@ export function registerUnifiedRoutes(app: Router) {
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
       
+      // Расширенное логирование для отладки
+      console.log(`[DEBUG] improve-text raw request:`, JSON.stringify({
+        service,
+        model,
+        userId,
+        text: text?.substring(0, 30) + '...',
+        prompt: prompt?.substring(0, 30) + '...'
+      }));
+      
       log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}`, 'unified');
       
       if (!text || !prompt) {
