@@ -284,12 +284,17 @@ export function registerUnifiedRoutes(app: Router) {
           log(`[unified-routes] Calling Qwen service with model ${model || 'default'}`, 'unified');
           
           // Улучшаем текст с помощью Qwen
-          const qwenResult = await qwenService.improveText({
-            text,
-            prompt,
-            model: model || 'qwen-pro',
-            systemPrompt: systemMessage
-          });
+          const qwenResult = await qwenService.generateText(
+            [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: `Инструкции: ${prompt}\n\nТекст:\n${text}` }
+            ], 
+            {
+              model: model || 'qwen-pro',
+              temperature: 0.3,
+              max_tokens: 4000
+            }
+          );
           
           return res.json({
             success: true,
