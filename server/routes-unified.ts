@@ -138,12 +138,15 @@ export function registerUnifiedRoutes(app: Router) {
   app.post('/api/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
-      let userId = req.userId;
+      const userId = req.userId;
       
-      // Проверяем заголовок x-user-id, если userId еще не установлен
-      if (!userId && req.headers['x-user-id']) {
-        userId = req.headers['x-user-id'] as string;
-        console.log(`[improve-text] Using userId from x-user-id header: ${userId}`);
+      // Простой ответ для тестов и отладки
+      if (process.env.NODE_ENV === 'development' && req.query.debug === 'true') {
+        return res.json({
+          success: true,
+          text: `Улучшенный текст: ${text.substring(0, 50)}...`,
+          service: service
+        });
       }
       
       console.log(`[debug-improve-text] Полное тело запроса:`, JSON.stringify(req.body, null, 2));
@@ -360,12 +363,15 @@ export function registerUnifiedRoutes(app: Router) {
   app.post('/api/generate-content', async (req: Request, res: Response) => {
     try {
       const { prompt, keywords, tone, platform, service, model } = req.body;
-      let userId = req.userId;
+      const userId = req.userId;
       
-      // Проверяем заголовок x-user-id, если userId еще не установлен
-      if (!userId && req.headers['x-user-id']) {
-        userId = req.headers['x-user-id'] as string;
-        console.log(`[generate-content] Using userId from x-user-id header: ${userId}`);
+      // Простой ответ для тестов и отладки
+      if (process.env.NODE_ENV === 'development' && req.query.debug === 'true') {
+        return res.json({
+          success: true,
+          content: `Сгенерированный контент с использованием ключевых слов: ${keywords ? keywords.join(', ') : 'нет ключевых слов'}`,
+          service: service
+        });
       }
       
       log(`[unified-routes] Received generate-content request with service=${service} from user ${userId}`, 'unified');
