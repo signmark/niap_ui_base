@@ -37,8 +37,7 @@ export class GeminiService {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       
       // Простой запрос для проверки ключа
-      // Используем Flash, так как он самый быстрый для проверки ключа
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
       const result = await model.generateContent('Hello, world!');
       
       return result !== null;
@@ -49,32 +48,45 @@ export class GeminiService {
   }
   
   /**
+   * Определяет подходящую модель Gemini на основе запроса пользователя
+   * @param model Запрошенная модель
+   * @returns Выбранная модель
+   */
+  private getSelectedModel(model: string): string {
+    // Поддерживаемые модели Gemini
+    const supportedModels = [
+      'gemini-pro',
+      'gemini-pro-vision', 
+      'gemini-ultra',
+      'gemini-1.0-pro',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'gemini-2.5-pro',
+      'gemini-2.5-flash'
+    ];
+
+    // Если просто "gemini", используем самую надежную модель
+    if (model === 'gemini') {
+      return 'gemini-2.5-pro'; // Используем самую новую модель по умолчанию
+    } else {
+      // Иначе используем переданную модель или дефолтную, если модель не поддерживается
+      return supportedModels.includes(model) ? model : 'gemini-2.5-pro';
+    }
+  }
+  
+  /**
    * Улучшает текст с помощью Gemini
    * @param params Параметры улучшения текста
    * @returns Улучшенный текст
    */
   async improveText(params: ImproveTextParams): Promise<string> {
-    const { text, prompt, model = 'gemini-1.5-flash' } = params;
+    const { text, prompt, model = 'gemini-pro' } = params;
     
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
-      // Проверяем, что переданная модель входит в список поддерживаемых
-      // Используем только доступные модели Gemini 1.5
-      const supportedModels = [
-        'gemini-1.5-flash', 
-        'gemini-1.5-pro'
-      ];
-      
-      // Определяем, какую модель использовать
-      let selectedModel;
-      // Если просто "gemini", используем самую надежную модель
-      if (model === 'gemini') {
-        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
-      } else {
-        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
-        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
-      }
+      // Выбираем подходящую модель
+      const selectedModel = this.getSelectedModel(model);
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
@@ -99,29 +111,15 @@ export class GeminiService {
   /**
    * Генерирует контент с помощью Gemini
    * @param prompt Промпт для генерации
-   * @param model Модель Gemini (по умолчанию gemini-1.5-flash)
+   * @param model Модель Gemini (по умолчанию gemini-pro)
    * @returns Сгенерированный контент
    */
-  async generateContent(prompt: string, model = 'gemini-1.5-flash'): Promise<string> {
+  async generateContent(prompt: string, model = 'gemini-pro'): Promise<string> {
     try {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
-      // Проверяем, что переданная модель входит в список поддерживаемых
-      // Используем только доступные модели Gemini 1.5
-      const supportedModels = [
-        'gemini-1.5-flash', 
-        'gemini-1.5-pro'
-      ];
-      
-      // Определяем, какую модель использовать
-      let selectedModel;
-      // Если просто "gemini", используем самую надежную модель
-      if (model === 'gemini') {
-        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
-      } else {
-        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
-        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
-      }
+      // Выбираем подходящую модель
+      const selectedModel = this.getSelectedModel(model);
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
@@ -152,27 +150,13 @@ export class GeminiService {
     prompt: string,
     options: GenerateSocialContentOptions = {}
   ): Promise<string> {
-    const { platform, tone, model = 'gemini-1.5-flash' } = options;
+    const { platform, tone, model = 'gemini-pro' } = options;
     
     try {
       logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
       
-      // Проверяем, что переданная модель входит в список поддерживаемых
-      // Используем только доступные модели Gemini 1.5
-      const supportedModels = [
-        'gemini-1.5-flash', 
-        'gemini-1.5-pro'
-      ];
-      
-      // Определяем, какую модель использовать
-      let selectedModel;
-      // Если просто "gemini", используем самую надежную модель
-      if (model === 'gemini') {
-        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
-      } else {
-        // Иначе используем переданную модель или дефолтную, если модель не поддерживается
-        selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
-      }
+      // Выбираем подходящую модель
+      const selectedModel = this.getSelectedModel(model);
       
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
