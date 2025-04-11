@@ -95,8 +95,17 @@ export class GeminiService {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
-      // Подготавливаем инструкцию
-      const instruction = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+      // Подготавливаем инструкцию с явным указанием не добавлять техническую информацию
+      const instruction = `${prompt}
+
+Исходный текст:
+"""${text}"""
+
+Важно: дай ТОЛЬКО улучшенный текст БЕЗ вводных фраз, технической информации и метаданных.
+Не добавляй префиксы вроде "Улучшенный текст:" и подобные.
+Не нужно добавлять комментарии о том, что было изменено.
+Не нужно писать "Вот улучшенная версия" и т.п.
+Верни ТОЛЬКО финальный отредактированный текст.`;
       
       // Генерируем улучшенный текст
       const result = await geminiModel.generateContent(instruction);
@@ -104,7 +113,14 @@ export class GeminiService {
       const improvedText = response.text();
       
       logger.log('[gemini-service] Text improvement successful with model ' + selectedModel, 'gemini');
-      return improvedText;
+      
+      // Очищаем текст от возможных маркеров и технических деталей
+      let cleanedText = improvedText
+        .replace(/^(Улучшенный текст:|Вот улучшенный текст:|Улучшенная версия:|Результат:|Ответ:)/i, '')
+        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
+        .trim();
+        
+      return cleanedText;
     } catch (error) {
       logger.error('[gemini-service] Error improving text:', error);
       throw new Error(`Ошибка при улучшении текста с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
@@ -128,13 +144,28 @@ export class GeminiService {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
+      // Дополняем промпт инструкциями не добавлять техническую информацию
+      const enhancedPrompt = `${prompt}
+
+Важно: дай ТОЛЬКО конечный текст контента БЕЗ вводных фраз, технической информации и метаданных.
+Не добавляй префиксы или метки вроде "Ответ:", "Контент:" и т.п.
+Не нужно добавлять комментарии о структуре или пояснения.
+Верни ТОЛЬКО финальный отформатированный контент.`;
+      
       // Генерируем контент
-      const result = await geminiModel.generateContent(prompt);
+      const result = await geminiModel.generateContent(enhancedPrompt);
       const response = result.response;
       const generatedContent = response.text();
       
       logger.log(`[gemini-service] Content generation successful with model ${selectedModel}`, 'gemini');
-      return generatedContent;
+      
+      // Очищаем текст от возможных маркеров и технических деталей
+      let cleanedContent = generatedContent
+        .replace(/^(Контент:|Результат:|Готовый текст:|Ответ:|Вот готовый контент:|Вот результат:)/i, '')
+        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
+        .trim();
+        
+      return cleanedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating content:', error);
       throw new Error(`Ошибка при генерации контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
@@ -183,13 +214,26 @@ export class GeminiService {
       // Добавляем ключевые слова
       fullPrompt += `\n\nИспользуй следующие ключевые слова: ${keywordsText}`;
       
+      // Добавляем инструкции для чистого вывода
+      fullPrompt += `\n\nВажно: дай ТОЛЬКО готовый текст для публикации БЕЗ вводных фраз, технической информации и метаданных.
+Не добавляй префиксы вроде "Контент для ${platform || 'социальных сетей'}:" и подобные.
+Не нужно добавлять комментарии о формате, структуре или пояснения.
+Верни ТОЛЬКО финальный текст для публикации.`;
+      
       // Генерируем контент
       const result = await geminiModel.generateContent(fullPrompt);
       const response = result.response;
       const generatedContent = response.text();
       
       logger.log(`[gemini-service] Social content generation successful with model ${selectedModel}`, 'gemini');
-      return generatedContent;
+      
+      // Очищаем текст от возможных маркеров и технических деталей
+      let cleanedContent = generatedContent
+        .replace(/^(Пост для [^:]+:|Публикация для [^:]+:|Контент для [^:]+:|Результат:|Готовый текст:|Вот пост для [^:]+:|Вот публикация:|Публикация:|Пост:)/i, '')
+        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
+        .trim();
+        
+      return cleanedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating social content:', error);
       throw new Error(`Ошибка при генерации социального контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
