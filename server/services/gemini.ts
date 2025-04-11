@@ -106,7 +106,15 @@ export class GeminiService {
       'gemini-1.5-flash': { name: FLASH_MODEL_1_5, beta: false },
       'gemini-2.0-pro': { name: PRO_MODEL_2_0, beta: false }, // Gemini 2.0 Pro (стабильная)
       'gemini-2.0-flash': { name: FLASH_MODEL_2_0, beta: false }, // Gemini 2.0 Flash (стабильная)
-      'gemini-2.5-pro-preview-03-25': { name: PRO_MODEL_2_5, beta: false } // Gemini 2.5 Pro Preview работала до этого
+      'gemini-2.5-pro-preview-03-25': { name: PRO_MODEL_2_5, beta: false }, // Gemini 2.5 Pro Preview работала до этого
+      'gemini-1.5-flash-001': { name: 'gemini-1.5-flash-001', beta: true },
+      'gemini-1.5-flash-latest': { name: 'gemini-1.5-flash-latest', beta: true },
+      'gemini-1.0-pro-001': { name: 'gemini-1.0-pro-001', beta: true },
+      'gemini-1.0-pro-latest': { name: 'gemini-1.0-pro-latest', beta: true },
+      'gemini-1.0-pro-vision-001': { name: 'gemini-1.0-pro-vision-001', beta: true },
+      'gemini-1.0-pro-vision-latest': { name: 'gemini-1.0-pro-vision-latest', beta: true },
+      'gemini-ultra-vision-001': { name: 'gemini-ultra-vision-001', beta: true },
+      'gemini-pro-vision': { name: 'gemini-pro-vision', beta: true }
     };
     
     // Получаем модель из маппинга или используем Pro модель 1.5 по умолчанию

@@ -143,6 +143,38 @@ const AI_SERVICES = [
       {
         id: "gemini-2.5-pro-preview-03-25",
         name: "Gemini 2.5 Pro (Preview)"
+      },
+      {
+        id: "gemini-1.5-flash-001",
+        name: "Gemini 1.5 Flash 001"
+      },
+      {
+        id: "gemini-1.5-flash-latest",
+        name: "Gemini 1.5 Flash Latest"
+      },
+      {
+        id: "gemini-1.0-pro-001",
+        name: "Gemini 1.0 Pro 001"
+      },
+      {
+        id: "gemini-1.0-pro-latest", 
+        name: "Gemini 1.0 Pro Latest"
+      },
+      {
+        id: "gemini-1.0-pro-vision-001",
+        name: "Gemini 1.0 Pro Vision 001"
+      },
+      {
+        id: "gemini-1.0-pro-vision-latest",
+        name: "Gemini 1.0 Pro Vision Latest"
+      },
+      {
+        id: "gemini-ultra-vision-001",
+        name: "Gemini Ultra Vision 001"
+      },
+      {
+        id: "gemini-pro-vision",
+        name: "Gemini Pro Vision"
       }
     ]
   }
@@ -213,6 +245,22 @@ export function TextEnhancementDialog({
           return 'gemini-2.0-flash';
         case 'gemini-2.5-pro-preview-03-25':
           return 'gemini-2.5-pro-preview-03-25';
+        case 'gemini-1.5-flash-001':
+          return 'gemini-1.5-flash-001';
+        case 'gemini-1.5-flash-latest':
+          return 'gemini-1.5-flash-latest';
+        case 'gemini-1.0-pro-001':
+          return 'gemini-1.0-pro-001';
+        case 'gemini-1.0-pro-latest':
+          return 'gemini-1.0-pro-latest';
+        case 'gemini-1.0-pro-vision-001':
+          return 'gemini-1.0-pro-vision-001';
+        case 'gemini-1.0-pro-vision-latest':
+          return 'gemini-1.0-pro-vision-latest';
+        case 'gemini-ultra-vision-001':
+          return 'gemini-ultra-vision-001';
+        case 'gemini-pro-vision':
+          return 'gemini-pro-vision';
         default:
           return modelId; // Используем modelId для остальных моделей
       }
