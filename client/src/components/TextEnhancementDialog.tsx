@@ -141,11 +141,11 @@ const AI_SERVICES = [
         name: "Gemini 2.0 Flash Exp"
       },
       {
-        id: "gemini-2.5-pro",
+        id: "gemini-2.5-pro-preview-03-25",
         name: "Gemini 2.5 Pro (Preview)"
       },
       {
-        id: "gemini-2.5-pro-exp",
+        id: "gemini-2.5-pro-exp-03-25",
         name: "Gemini 2.5 Pro Exp"
       }
     ]
@@ -215,9 +215,9 @@ export function TextEnhancementDialog({
           return 'gemini-2.0-flash';
         case 'gemini-2.0-flash-exp':
           return 'gemini-2.0-flash-exp';
-        case 'gemini-2.5-pro':
+        case 'gemini-2.5-pro-preview-03-25':
           return 'gemini-2.5-pro-preview-03-25';
-        case 'gemini-2.5-pro-exp':
+        case 'gemini-2.5-pro-exp-03-25':
           return 'gemini-2.5-pro-exp-03-25';
         default:
           return modelId; // Используем modelId для остальных моделей
