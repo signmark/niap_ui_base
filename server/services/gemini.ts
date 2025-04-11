@@ -72,21 +72,22 @@ export class GeminiService {
    * @returns Выбранная модель
    */
   private getSelectedModel(model: string): string {
-    // Актуальные модели Gemini 1.5 (обновлены в апреле 2025 года)
-    const PRO_MODEL = 'gemini-1.5-pro'; // Современная модель Pro
-    const FLASH_MODEL = 'gemini-1.5-flash'; // Быстрая модель Flash
+    // Актуальные модели Gemini (обновлены в апреле 2025 года)
+    const PRO_MODEL_1_5 = 'gemini-1.5-pro'; // Современная модель Pro 1.5
+    const FLASH_MODEL_1_5 = 'gemini-1.5-flash'; // Быстрая модель Flash 1.5
+    const PRO_MODEL_2_5 = 'gemini-2.5-pro-preview-03-25'; // Preview модель Gemini 2.5 Pro
     
     // Маппинг пользовательских моделей на фактические
     const modelMapping: {[key: string]: string} = {
-      'gemini': PRO_MODEL, // По умолчанию используем Pro
-      'gemini-pro': PRO_MODEL,
-      'gemini-2.5-pro': 'gemini-2.5-pro-preview-03-25', // Используем актуальную preview версию Gemini 2.5 Pro
-      'gemini-1.5-pro': PRO_MODEL,
-      'gemini-1.5-flash': FLASH_MODEL
+      'gemini': PRO_MODEL_1_5, // По умолчанию используем 1.5 Pro
+      'gemini-pro': PRO_MODEL_1_5,
+      'gemini-2.5-pro': PRO_MODEL_2_5, // Используем актуальную preview версию Gemini 2.5 Pro
+      'gemini-1.5-pro': PRO_MODEL_1_5,
+      'gemini-1.5-flash': FLASH_MODEL_1_5
     };
     
-    // Получаем модель из маппинга или используем Pro модель по умолчанию
-    const mappedModel = modelMapping[model] || PRO_MODEL;
+    // Получаем модель из маппинга или используем Pro модель 1.5 по умолчанию
+    const mappedModel = modelMapping[model] || PRO_MODEL_1_5;
     
     // Регистрируем в логе, какую модель запросил пользователь
     logger.log(`[gemini-service] Requested model ${model}, using ${mappedModel}`, 'gemini');
