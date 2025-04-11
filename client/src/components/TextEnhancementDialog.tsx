@@ -186,6 +186,22 @@ export function TextEnhancementDialog({
     return '/api/improve-text';  // Единый маршрут для всех сервисов
   };
   
+  // Получение правильного названия модели в зависимости от выбранного сервиса
+  const getModelName = (service: string, modelId: string): string => {
+    // Если это Gemini сервис, используем специальные названия моделей для Gemini 2.5
+    if (service === 'gemini') {
+      switch (modelId) {
+        case 'gemini-2.5-flash':
+          return 'gemini-2.5-flash-exp-03-25';
+        case 'gemini-2.5-pro':
+          return 'gemini-2.5-pro-exp-03-25';
+        default:
+          return modelId; // Используем modelId для остальных моделей
+      }
+    }
+    return modelId; // Для остальных сервисов используем modelId напрямую
+  };
+  
   // Логирование в консоль для отладки
   console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
@@ -196,7 +212,7 @@ export function TextEnhancementDialog({
       const response = await api.post(getApiEndpoint(), {
         text,
         prompt: getCurrentPrompt(),
-        model: selectedModelId,
+        model: getModelName(selectedService, selectedModelId),
         service: selectedService
       });
       
