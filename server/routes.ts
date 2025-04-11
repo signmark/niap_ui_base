@@ -3508,9 +3508,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Получаем API ключ через API Keys Storage
           try {
-            const apiKeyResult = await apiKeyService.getApiKey(userId, token, 'gemini');
-            if (!apiKeyResult.success) {
-              console.error('Ошибка получения API ключа Gemini:', apiKeyResult.error);
+            const apiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
+            if (!apiKey) {
+              console.error('Ошибка получения API ключа Gemini: ключ не найден');
               return res.status(400).json({ 
                 error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
                 needApiKey: true
@@ -3518,7 +3518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Устанавливаем API ключ в экземпляр сервиса
-            geminiInstance.updateApiKey(apiKeyResult.apiKey);
+            geminiInstance.updateApiKey(apiKey);
             
             // Проверяем валидность ключа
             const keyValid = await geminiInstance.testApiKey();
