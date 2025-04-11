@@ -32,7 +32,8 @@ export class GeminiService {
    * @returns Экземпляр GoogleGenerativeAI
    */
   private createGenAI(): GoogleGenerativeAI {
-    return new GoogleGenerativeAI(this.apiKey);
+    // Создаем экземпляр GoogleGenerativeAI с API v1 (не v1beta)
+    return new GoogleGenerativeAI(this.apiKey, { apiVersion: 'v1' });
   }
   
   /**
@@ -41,13 +42,13 @@ export class GeminiService {
    */
   async testApiKey(): Promise<boolean> {
     try {
-      logger.log('[gemini-service] Testing Gemini API key with experimental model...', 'gemini');
+      logger.log('[gemini-service] Testing Gemini API key with stable model...', 'gemini');
       
       // Используем созданную функцию для инициализации API
       const genAI = this.createGenAI();
       
-      // Используем экспериментальную модель для проверки ключа
-      const PRO_MODEL = 'gemini-2.5-pro-exp-03-25';
+      // Используем стабильную модель для проверки ключа
+      const PRO_MODEL = 'gemini-2.5-pro';
       const model = genAI.getGenerativeModel({ model: PRO_MODEL });
       const result = await model.generateContent('Hello, world!');
       
@@ -71,9 +72,9 @@ export class GeminiService {
    * @returns Выбранная модель
    */
   private getSelectedModel(model: string): string {
-    // Экспериментальные модели Gemini 2.5 (актуальны на 2025 год)
-    const PRO_MODEL = 'gemini-2.5-pro-exp-03-25'; // Экспериментальная версия Pro модели
-    const FLASH_MODEL = 'gemini-2.5-flash-exp-03-25'; // Экспериментальная версия Flash модели
+    // Актуальные модели Gemini 2.5 (обновлены в 2025 году)
+    const PRO_MODEL = 'gemini-2.5-pro'; // Стабильная версия Pro модели
+    const FLASH_MODEL = 'gemini-2.5-flash'; // Стабильная версия Flash модели
     
     // Маппинг пользовательских моделей на фактические
     const modelMapping: {[key: string]: string} = {
