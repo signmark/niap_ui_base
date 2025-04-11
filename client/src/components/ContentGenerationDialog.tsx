@@ -81,7 +81,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           tone,
           campaignId,
           platform: platform, // Используется для всех сервисов
-          service: selectedService // Указываем выбранный сервис
+          service: selectedService, // Указываем выбранный сервис
+          modelType: selectedService // Передаем выбранную модель
         })
       });
 
@@ -214,10 +215,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="gemini">Gemini 1.5 Flash</SelectItem>
-                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                      <SelectItem value="gemini">Gemini</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>

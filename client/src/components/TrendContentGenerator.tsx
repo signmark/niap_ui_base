@@ -202,6 +202,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
             campaignId: campaignId || selectedTopics[0]?.campaignId || selectedTopics[0]?.campaign_id,
             platform: 'general', // В данном случае используем общую платформу
             service: values.modelType, // Указываем выбранный сервис
+            modelType: values.modelType, // Передаем выбранную модель
             analyzeTrends: true, // Включаем анализ трендов для выявления фишек
             extractKeywords: true, // Указываем необходимость подбора ключевых слов из кампании
             formatOutput: 'html', // Запрашиваем формат вывода в HTML, а не Markdown
@@ -446,10 +447,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
-                        <SelectItem value="gemini">Gemini 1.5 Flash</SelectItem>
-                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                        <SelectItem value="gemini">Gemini</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
                       </SelectContent>
