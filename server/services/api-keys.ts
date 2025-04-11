@@ -17,7 +17,8 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   'fal_ai': 'fal_ai',
   'xmlriver': 'xmlriver',
   'qwen': 'qwen',
-  'claude': 'claude'
+  'claude': 'claude',
+  'gemini': 'gemini'
 };
 
 // Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
