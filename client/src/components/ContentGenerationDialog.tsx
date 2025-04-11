@@ -217,6 +217,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="gemini">Gemini</SelectItem>
                       <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (2025)</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
@@ -225,8 +226,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               </div>
               
               {(selectedService === 'deepseek' || selectedService === 'claude' || 
-                selectedService === 'gemini' || selectedService === 'gemini-1.5-pro' || 
-                selectedService === 'gemini-2.5-flash' || selectedService === 'gemini-2.5-pro') && (
+                selectedService === 'gemini' || selectedService === 'gemini-2.5-pro' || 
+                selectedService === 'gemini-2.5-flash') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа
