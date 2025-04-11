@@ -3344,16 +3344,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '') || '';
       
-      // Определяем сервис для генерации - по умолчанию Perplexity
-      // Приоритет параметров: aiService, service
-      const selectedAiService = aiService || service || 'perplexity';
+      // Определяем сервис для генерации - явный приоритет для Gemini моделей
+      // Сначала проверяем, является ли сервис или модель связанной с Gemini
+      const isGeminiRequest = service === 'gemini' || 
+                              service === 'gemini-pro' || 
+                              service === 'gemini-1.5-pro' || 
+                              service === 'gemini-2.5-pro' || 
+                              service === 'gemini-2.5-flash';
+      
+      // Если это Gemini-запрос, принудительно используем Gemini
+      // Приоритет параметров: явный Gemini запрос, aiService, service
+      const selectedAiService = isGeminiRequest ? 'gemini' : (aiService || service || 'perplexity');
+      
       // Проверяем, что это один из поддерживаемых сервисов
       // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude, gemini
       const useService = 
         selectedAiService === 'qwen' ? 'qwen' : 
         selectedAiService === 'deepseek' ? 'deepseek' : 
         selectedAiService === 'claude' ? 'claude' : 
-        selectedAiService === 'gemini' ? 'gemini' : 
+        (selectedAiService === 'gemini' || isGeminiRequest) ? 'gemini' : 
         'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
