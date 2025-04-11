@@ -41,6 +41,22 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
   const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
+  
+  // Сопоставление выбранных сервисов с конкретными моделями API
+  const getModelForService = (service: ApiService): string => {
+    switch(service) {
+      case 'gemini-2.5-pro':
+        return 'gemini-2.5-pro-exp-03-25';
+      case 'gemini-2.5-flash':
+        return 'gemini-2.5-flash-exp-03-25';
+      case 'gemini-1.5-pro':
+        return 'gemini-1.5-pro';
+      case 'gemini':
+        return 'gemini-pro';
+      default:
+        return service;
+    }
+  };
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -82,7 +98,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           campaignId,
           platform: platform, // Используется для всех сервисов
           service: selectedService, // Указываем выбранный сервис
-          modelType: selectedService // Передаем выбранную модель
+          model: getModelForService(selectedService) // Используем маппинг для получения правильного названия модели
         })
       });
 
