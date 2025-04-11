@@ -255,28 +255,54 @@ export function TextEnhancementDialog({
       }
       
       // Используем прямой fetch вместо api-клиента для большего контроля над заголовками
-      const response = await fetch(getApiEndpoint(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-          'x-user-id': localStorage.getItem('user_id') || ''
-        },
-        body: JSON.stringify({
-          text,
-          prompt: getCurrentPrompt(),
+      console.log('TextEnhancementDialog: Отправка запроса на улучшение текста:',
+        JSON.stringify({
+          text: text.substring(0, 50) + '...',
+          prompt: getCurrentPrompt().substring(0, 50) + '...',
           model: getModelName(selectedService, selectedModelId),
           service: selectedService
         })
-      });
+      );
       
-      const data = await response.json();
+      try {
+        const response = await fetch(getApiEndpoint(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+            'x-user-id': localStorage.getItem('user_id') || ''
+          },
+          body: JSON.stringify({
+            text,
+            prompt: getCurrentPrompt(),
+            model: getModelName(selectedService, selectedModelId),
+            service: selectedService
+          })
+        });
       
-      if (!data.success) {
-        throw new Error(data.error || 'Произошла ошибка при улучшении текста');
+        // Проверяем тип контента перед разбором как JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const textResponse = await response.text();
+          console.error('Server returned non-JSON response:', textResponse.substring(0, 200));
+          throw new Error(`Сервер вернул неверный формат ответа: ${contentType || 'unknown'}`);
+        }
+      
+        const data = await response.json();
+      
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP ошибка: ${response.status}`);
+        }
+      
+        if (!data.success) {
+          throw new Error(data.error || 'Произошла ошибка при улучшении текста');
+        }
+      
+        return data.text;
+      } catch (error) {
+        console.error('Fetch error:', error);
+        throw error;
       }
-      
-      return data.text;
     },
     onSuccess: (data) => {
       setEnhancedText(data);
