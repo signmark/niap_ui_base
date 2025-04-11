@@ -125,12 +125,8 @@ const AI_SERVICES = [
         default: true
       },
       {
-        id: "gemini-2.5-flash",
-        name: "Gemini 2.5 Flash (2025)"
-      },
-      {
-        id: "gemini-2.5-pro",
-        name: "Gemini 2.5 Pro (2025)"
+        id: "gemini-ultra",
+        name: "Gemini Ultra"
       }
     ]
   }
@@ -183,23 +179,18 @@ export function TextEnhancementDialog({
 
   // Получение эндпоинта API в зависимости от выбранного сервиса
   const getApiEndpoint = () => {
-    return '/api/improve-text';  // Единый маршрут для всех сервисов
-  };
-  
-  // Получение правильного названия модели в зависимости от выбранного сервиса
-  const getModelName = (service: string, modelId: string): string => {
-    // Если это Gemini сервис, используем специальные названия моделей для Gemini 2.5
-    if (service === 'gemini') {
-      switch (modelId) {
-        case 'gemini-2.5-flash':
-          return 'gemini-2.5-flash-exp-03-25';
-        case 'gemini-2.5-pro':
-          return 'gemini-2.5-pro-exp-03-25';
-        default:
-          return modelId; // Используем modelId для остальных моделей
-      }
+    switch (selectedService) {
+      case 'claude':
+        return '/claude/improve-text';
+      case 'deepseek':
+        return '/deepseek/improve-text';
+      case 'qwen':
+        return '/qwen/improve-text';
+      case 'gemini':
+        return '/gemini/improve-text';
+      default:
+        return '/claude/improve-text';
     }
-    return modelId; // Для остальных сервисов используем modelId напрямую
   };
   
   // Логирование в консоль для отладки
@@ -212,7 +203,7 @@ export function TextEnhancementDialog({
       const response = await api.post(getApiEndpoint(), {
         text,
         prompt: getCurrentPrompt(),
-        model: getModelName(selectedService, selectedModelId),
+        model: selectedModelId,
         service: selectedService
       });
       

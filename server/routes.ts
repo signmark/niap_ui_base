@@ -1,7 +1,6 @@
 import { deepseekService, DeepSeekMessage } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { ClaudeService } from './services/claude';
-import { GeminiService } from './services/gemini';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
@@ -9,7 +8,6 @@ import { qwenService } from './services/qwen';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { registerClaudeRoutes } from './routes-claude';
-import { registerGeminiRoutes } from './routes-gemini';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
@@ -1280,9 +1278,8 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Регистрируем маршруты для AI сервисов
+  // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
-  registerGeminiRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
@@ -3344,25 +3341,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader?.replace('Bearer ', '') || '';
       
-      // Определяем сервис для генерации - явный приоритет для Gemini моделей
-      // Сначала проверяем, является ли сервис или модель связанной с Gemini
-      const isGeminiRequest = service === 'gemini' || 
-                              service === 'gemini-pro' || 
-                              service === 'gemini-1.5-pro' || 
-                              service === 'gemini-2.5-pro' || 
-                              service === 'gemini-2.5-flash';
-      
-      // Если это Gemini-запрос, принудительно используем Gemini
-      // Приоритет параметров: явный Gemini запрос, aiService, service
-      const selectedAiService = isGeminiRequest ? 'gemini' : (aiService || service || 'perplexity');
-      
+      // Определяем сервис для генерации - по умолчанию Perplexity
+      // Приоритет параметров: aiService, service
+      const selectedAiService = aiService || service || 'perplexity';
       // Проверяем, что это один из поддерживаемых сервисов
-      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude, gemini
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude
       const useService = 
         selectedAiService === 'qwen' ? 'qwen' : 
         selectedAiService === 'deepseek' ? 'deepseek' : 
         selectedAiService === 'claude' ? 'claude' : 
-        (selectedAiService === 'gemini' || isGeminiRequest) ? 'gemini' : 
         'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
@@ -3499,71 +3486,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           
           usedService = 'claude';
-          
-        } else if (useService === 'gemini') {
-          // Инициализируем Gemini API с токеном запроса
-          console.log(`Попытка инициализации Gemini сервиса для пользователя ${userId}`);
-          
-          // Получаем API ключ Gemini напрямую
-          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
-          
-          if (!geminiApiKey) {
-            console.error('Ошибка: Не удалось получить API ключ Gemini');
-            return res.status(400).json({ 
-              error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
-              needApiKey: true
-            });
-          }
-          
-          // Создаем новый экземпляр сервиса Gemini с ключом API
-          const geminiInstance = new GeminiService(geminiApiKey);
-          
-          // Проверяем ключ API
-          const apiKeyValid = await geminiInstance.testApiKey();
-          if (!apiKeyValid) {
-            console.error('Ошибка: API ключ Gemini недействителен');
-            return res.status(400).json({ 
-              error: 'API ключ Gemini недействителен. Пожалуйста, проверьте ключ в настройках.',
-              needApiKey: true
-            });
-          }
-          
-          console.log(`Generating content with Gemini for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
-          
-          // Получаем платформу из поля platform или из tone, если platform не указана
-          const platform = req.body.platform || (
-              tone === 'professional' ? 'facebook' :
-              tone === 'casual' ? 'telegram' :
-              tone === 'friendly' ? 'instagram' : 'general'
-          );
-          
-          // Определяем модель Gemini - используем переданную в запросе или значение по умолчанию
-          const modelName = req.body.modelType || service || 'gemini';
-          
-          // Преобразуем значение modelName в нужную версию модели Gemini
-          let geminiModel = 'gemini-1.5-flash'; // Значение по умолчанию
-          
-          // Маппинг из UI-значений в реальные названия моделей
-          if (modelName === 'gemini-1.5-pro') {
-            geminiModel = 'gemini-1.5-pro';
-          } else if (modelName === 'gemini-2.5-flash') {
-            geminiModel = 'gemini-2.5-flash';
-          } else if (modelName === 'gemini-2.5-pro') {
-            geminiModel = 'gemini-2.5-pro';
-          }
-          
-          // Используем Gemini для генерации контента
-          generatedContent = await geminiInstance.generateSocialContent(
-            keywords,
-            prompt,
-            {
-              platform,
-              tone,
-              model: geminiModel
-            }
-          );
-          
-          usedService = 'gemini';
           
         } else {
           // По умолчанию используем Perplexity API

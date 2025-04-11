@@ -9,7 +9,6 @@ import { socialPublishingService } from '../services/social/index';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import axios from 'axios';
-import { GeminiService } from '../services/gemini';
 
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
@@ -779,69 +778,6 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     log(`[Test API] Исключение при отправке сообщения в Telegram: ${error.message}`, 'test');
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для генерации контента с помощью Gemini
- * POST /api/test/gemini-generate
- * 
- * Используется для тестирования API Gemini без авторизации
- * Пример использования:
- * POST /api/test/gemini-generate
- * Body: {
- *   "prompt": "Напиши короткий пост о здоровом питании",
- *   "model": "gemini-1.5-flash"
- * }
- */
-testRouter.post('/gemini-generate', async (req: Request, res: Response) => {
-  try {
-    const { prompt, model = 'gemini-1.5-flash' } = req.body;
-    
-    // Проверяем наличие обязательного параметра
-    if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательный параметр: prompt'
-      });
-    }
-    
-    log(`[Test API] Запрос на генерацию контента с помощью Gemini`, 'test');
-    log(`[Test API] Промпт: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}`, 'test');
-    log(`[Test API] Модель: ${model}`, 'test');
-    
-    // Получаем API ключ из системного окружения для тестирования
-    const apiKey = process.env.GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'API ключ Gemini не настроен в переменных окружения (GEMINI_API_KEY)'
-      });
-    }
-    
-    // Создаем экземпляр сервиса Gemini с API ключом
-    const geminiService = new GeminiService(apiKey);
-    
-    // Генерируем контент с помощью Gemini
-    const generatedContent = await geminiService.generateContent(prompt, model);
-    
-    // Логируем результат для отладки
-    log(`[Test API] Результат генерации контента через Gemini: ${generatedContent.substring(0, 100)}${generatedContent.length > 100 ? '...' : ''}`, 'test');
-    
-    // Возвращаем результат
-    return res.json({
-      success: true,
-      prompt,
-      model,
-      content: generatedContent
-    });
-  } catch (error: any) {
-    log(`[Test API] Ошибка при генерации контента через Gemini: ${error.message}`, 'test');
     return res.status(500).json({
       success: false,
       error: error.message || 'Неизвестная ошибка'

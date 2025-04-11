@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -41,22 +41,6 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
   const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
-  
-  // Сопоставление выбранных сервисов с конкретными моделями API
-  const getModelForService = (service: ApiService): string => {
-    switch(service) {
-      case 'gemini-2.5-pro':
-        return 'gemini-2.5-pro-exp-03-25';
-      case 'gemini-2.5-flash':
-        return 'gemini-2.5-flash-exp-03-25';
-      case 'gemini-1.5-pro':
-        return 'gemini-1.5-pro';
-      case 'gemini':
-        return 'gemini-pro';
-      default:
-        return service;
-    }
-  };
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -80,10 +64,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         throw new Error('Требуется авторизация');
       }
 
-      // Используем единый маршрут для всех сервисов
-      let apiEndpoint = '/api/generate-content';
+      // Выбираем правильный API маршрут в зависимости от выбранного сервиса
+      let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
-      console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
+      console.log(`Генерация контента через ${selectedService} API`);
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -97,8 +81,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           tone,
           campaignId,
           platform: platform, // Используется для всех сервисов
-          service: selectedService, // Указываем выбранный сервис
-          model: getModelForService(selectedService) // Используем маппинг для получения правильного названия модели
+          service: selectedService // Указываем выбранный сервис
         })
       });
 
@@ -231,9 +214,6 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="gemini">Gemini</SelectItem>
-                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
-                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (2025)</SelectItem>
                       <SelectItem value="qwen">Qwen</SelectItem>
                       <SelectItem value="claude">Claude</SelectItem>
                     </SelectContent>
@@ -241,9 +221,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 </div>
               </div>
               
-              {(selectedService === 'deepseek' || selectedService === 'claude' || 
-                selectedService === 'gemini' || selectedService === 'gemini-2.5-pro' || 
-                selectedService === 'gemini-2.5-flash') && (
+              {(selectedService === 'deepseek' || selectedService === 'claude') && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="platform" className="text-right">
                     Платформа

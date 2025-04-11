@@ -28,71 +28,23 @@ export class GeminiService {
   }
   
   /**
-   * Создает экземпляр Google Generative AI с правильными настройками
-   * @returns Экземпляр GoogleGenerativeAI
-   */
-  private createGenAI(): GoogleGenerativeAI {
-    return new GoogleGenerativeAI(this.apiKey);
-  }
-  
-  /**
    * Проверяет валидность API ключа Gemini
    * @returns true если ключ валидный, false если нет
    */
   async testApiKey(): Promise<boolean> {
     try {
-      logger.log('[gemini-service] Testing Gemini API key with experimental model...', 'gemini');
+      // Создаем экземпляр Google Generative AI с API ключом
+      const genAI = new GoogleGenerativeAI(this.apiKey);
       
-      // Используем созданную функцию для инициализации API
-      const genAI = this.createGenAI();
-      
-      // Используем экспериментальную модель для проверки ключа
-      const PRO_MODEL = 'gemini-2.5-pro-exp-03-25';
-      const model = genAI.getGenerativeModel({ model: PRO_MODEL });
+      // Простой запрос для проверки ключа
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
       const result = await model.generateContent('Hello, world!');
       
-      logger.log('[gemini-service] Successfully tested API key with model: ' + PRO_MODEL, 'gemini');
       return result !== null;
     } catch (error) {
       logger.error('[gemini-service] Error testing API key:', error);
-      
-      // Расширенное логирование ошибки
-      if (error instanceof Error) {
-        logger.error(`[gemini-service] Detailed error testing API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-      }
-      
       return false;
     }
-  }
-  
-  /**
-   * Определяет подходящую модель Gemini на основе запроса пользователя
-   * @param model Запрошенная модель
-   * @returns Выбранная модель
-   */
-  private getSelectedModel(model: string): string {
-    // Экспериментальные модели Gemini 2.5 (актуальны на 2025 год)
-    const PRO_MODEL = 'gemini-2.5-pro-exp-03-25'; // Экспериментальная версия Pro модели
-    const FLASH_MODEL = 'gemini-2.5-flash-exp-03-25'; // Экспериментальная версия Flash модели
-    
-    // Маппинг пользовательских моделей на фактические
-    const modelMapping: {[key: string]: string} = {
-      'gemini': PRO_MODEL, // По умолчанию используем Pro
-      'gemini-pro': PRO_MODEL,
-      'gemini-2.5-pro': PRO_MODEL,
-      'gemini-2.5-flash': FLASH_MODEL, // Используем Flash модель для запросов к Flash
-      'gemini-1.5-pro': PRO_MODEL,
-      'gemini-1.5-flash': FLASH_MODEL
-    };
-    
-    // Получаем модель из маппинга или используем Pro модель по умолчанию
-    const mappedModel = modelMapping[model] || PRO_MODEL;
-    
-    // Регистрируем в логе, какую модель запросил пользователь
-    logger.log(`[gemini-service] Requested model ${model}, using ${mappedModel}`, 'gemini');
-    
-    // Возвращаем модель
-    return mappedModel;
   }
   
   /**
@@ -106,53 +58,22 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
+      // Создаем генеративную модель
+      const genAI = new GoogleGenerativeAI(this.apiKey);
+      const geminiModel = genAI.getGenerativeModel({ model });
       
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
-      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
-      
-      // Подготавливаем инструкцию с явным указанием не добавлять техническую информацию
-      const instruction = `${prompt}
-
-Исходный текст:
-"""${text}"""
-
-Важно: дай ТОЛЬКО улучшенный текст БЕЗ вводных фраз, технической информации и метаданных.
-Не добавляй префиксы вроде "Улучшенный текст:" и подобные.
-Не нужно добавлять комментарии о том, что было изменено.
-Не нужно писать "Вот улучшенная версия" и т.п.
-Верни ТОЛЬКО финальный отредактированный текст.`;
+      // Подготавливаем инструкцию
+      const instruction = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
       
       // Генерируем улучшенный текст
       const result = await geminiModel.generateContent(instruction);
       const response = result.response;
       const improvedText = response.text();
       
-      logger.log('[gemini-service] Text improvement successful with model ' + selectedModel, 'gemini');
-      
-      // Очищаем текст от возможных маркеров и технических деталей
-      let cleanedText = improvedText
-        .replace(/^(Улучшенный текст:|Вот улучшенный текст:|Улучшенная версия:|Результат:|Ответ:)/i, '')
-        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
-        .trim();
-        
-      return cleanedText;
+      logger.log('[gemini-service] Text improvement successful', 'gemini');
+      return improvedText;
     } catch (error) {
       logger.error('[gemini-service] Error improving text:', error);
-      
-      // Улучшенное логирование ошибок API для отладки проблем с моделями
-      if (error instanceof Error) {
-        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-        
-        // Проверяем, является ли ошибка связанной с доступностью модели
-        if (error.message && error.message.includes('Model not found')) {
-          const requestedModel = this.getSelectedModel(model);
-          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
-        }
-      }
-      
       throw new Error(`Ошибка при улучшении текста с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -167,49 +88,19 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
-      
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
-      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
-      
-      // Дополняем промпт инструкциями не добавлять техническую информацию
-      const enhancedPrompt = `${prompt}
-
-Важно: дай ТОЛЬКО конечный текст контента БЕЗ вводных фраз, технической информации и метаданных.
-Не добавляй префиксы или метки вроде "Ответ:", "Контент:" и т.п.
-Не нужно добавлять комментарии о структуре или пояснения.
-Верни ТОЛЬКО финальный отформатированный контент.`;
+      // Создаем генеративную модель
+      const genAI = new GoogleGenerativeAI(this.apiKey);
+      const geminiModel = genAI.getGenerativeModel({ model });
       
       // Генерируем контент
-      const result = await geminiModel.generateContent(enhancedPrompt);
+      const result = await geminiModel.generateContent(prompt);
       const response = result.response;
       const generatedContent = response.text();
       
-      logger.log(`[gemini-service] Content generation successful with model ${selectedModel}`, 'gemini');
-      
-      // Очищаем текст от возможных маркеров и технических деталей
-      let cleanedContent = generatedContent
-        .replace(/^(Контент:|Результат:|Готовый текст:|Ответ:|Вот готовый контент:|Вот результат:)/i, '')
-        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
-        .trim();
-        
-      return cleanedContent;
+      logger.log('[gemini-service] Content generation successful', 'gemini');
+      return generatedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating content:', error);
-      
-      // Улучшенное логирование ошибок API для отладки проблем с моделями
-      if (error instanceof Error) {
-        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-        
-        // Проверяем, является ли ошибка связанной с доступностью модели
-        if (error.message && error.message.includes('Model not found')) {
-          const requestedModel = this.getSelectedModel(model);
-          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
-        }
-      }
-      
       throw new Error(`Ошибка при генерации контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -231,15 +122,12 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
       
-      // Выбираем подходящую модель
-      const selectedModel = this.getSelectedModel(model);
-      
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
       
-      // Создаем генеративную модель через метод createGenAI
-      const genAI = this.createGenAI();
-      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
+      // Создаем генеративную модель
+      const genAI = new GoogleGenerativeAI(this.apiKey);
+      const geminiModel = genAI.getGenerativeModel({ model });
       
       // Формируем полный промпт
       let fullPrompt = prompt;
@@ -256,40 +144,15 @@ export class GeminiService {
       // Добавляем ключевые слова
       fullPrompt += `\n\nИспользуй следующие ключевые слова: ${keywordsText}`;
       
-      // Добавляем инструкции для чистого вывода
-      fullPrompt += `\n\nВажно: дай ТОЛЬКО готовый текст для публикации БЕЗ вводных фраз, технической информации и метаданных.
-Не добавляй префиксы вроде "Контент для ${platform || 'социальных сетей'}:" и подобные.
-Не нужно добавлять комментарии о формате, структуре или пояснения.
-Верни ТОЛЬКО финальный текст для публикации.`;
-      
       // Генерируем контент
       const result = await geminiModel.generateContent(fullPrompt);
       const response = result.response;
       const generatedContent = response.text();
       
-      logger.log(`[gemini-service] Social content generation successful with model ${selectedModel}`, 'gemini');
-      
-      // Очищаем текст от возможных маркеров и технических деталей
-      let cleanedContent = generatedContent
-        .replace(/^(Пост для [^:]+:|Публикация для [^:]+:|Контент для [^:]+:|Результат:|Готовый текст:|Вот пост для [^:]+:|Вот публикация:|Публикация:|Пост:)/i, '')
-        .replace(/^[ \t\n\r]+/, '') // Удаляем начальные пробелы и переносы строк
-        .trim();
-        
-      return cleanedContent;
+      logger.log('[gemini-service] Social content generation successful', 'gemini');
+      return generatedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating social content:', error);
-      
-      // Улучшенное логирование ошибок API для отладки проблем с моделями
-      if (error instanceof Error) {
-        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-        
-        // Проверяем, является ли ошибка связанной с доступностью модели
-        if (error.message && error.message.includes('Model not found')) {
-          const requestedModel = this.getSelectedModel(model);
-          logger.error(`[gemini-service] Model availability error: The model "${requestedModel}" is not available or doesn't exist`);
-        }
-      }
-      
       throw new Error(`Ошибка при генерации социального контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

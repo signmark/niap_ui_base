@@ -72,15 +72,7 @@ function extractKeywordsFromTrends(trends: TrendTopic[]): string[] {
 
 const generateContentSchema = z.object({
   prompt: z.string().min(1, "Введите промт для генерации контента"),
-  modelType: z.enum([
-    'deepseek', 
-    'qwen', 
-    'claude', 
-    'gemini', 
-    'gemini-1.5-pro', 
-    'gemini-2.5-flash', 
-    'gemini-2.5-pro'
-  ]).default('deepseek'),
+  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini']).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
 });
@@ -202,7 +194,6 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
             campaignId: campaignId || selectedTopics[0]?.campaignId || selectedTopics[0]?.campaign_id,
             platform: 'general', // В данном случае используем общую платформу
             service: values.modelType, // Указываем выбранный сервис
-            modelType: values.modelType, // Передаем выбранную модель
             analyzeTrends: true, // Включаем анализ трендов для выявления фишек
             extractKeywords: true, // Указываем необходимость подбора ключевых слов из кампании
             formatOutput: 'html', // Запрашиваем формат вывода в HTML, а не Markdown
@@ -447,10 +438,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
-                        <SelectItem value="gemini">Gemini</SelectItem>
-                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
+                        <SelectItem value="gemini">Gemini</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
