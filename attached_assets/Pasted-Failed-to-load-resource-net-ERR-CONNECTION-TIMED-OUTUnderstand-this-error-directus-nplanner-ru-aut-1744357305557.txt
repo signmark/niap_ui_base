@@ -1,0 +1,68 @@
+Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+directus.nplanner.ru/auth/refresh:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+hook.js:608 Error refreshing access token: TypeError: Failed to fetch
+    at refreshAccessToken (/src/lib/auth.ts:67:28)
+overrideMethod @ hook.js:608Understand this error
+ Очистка данных авторизации
+ Токен авторизации не найден, перенаправляем на страницу входа
+ AuthGuard: Checking auth state Object
+ AuthGuard: No token found, redirecting to login
+ AuthGuard: Checking auth state Object
+hook.js:608 TypeError: Failed to fetch
+    at refreshAccessToken (/src/lib/auth.ts:67:28)
+overrideMethod @ hook.js:608Understand this error
+/api/campaigns:1 
+            
+            
+           Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+hook.js:608 Error loading campaigns: Error: Требуется авторизация. Пожалуйста, войдите снова.
+    at queryFn (/src/components/CampaignSelector.tsx:59:19)
+overrideMethod @ hook.js:608Understand this error
+/api/keywords?campaignId=46868c44-c6a4-4bed-accf-9ad07bba790e:1 
+            
+            
+           Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+/api/campaign-content?campaignId=46868c44-c6a4-4bed-accf-9ad07bba790e:1 
+            
+            
+           Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+ Attempting login with: lbrspb@gmail.com
+directus.nplanner.ru/auth/login:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+hook.js:608 Login error: TypeError: Failed to fetch
+    at onSubmit (/src/pages/auth/login.tsx:49:30)
+    at /@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=80cf88ca:1675:15
+overrideMethod @ hook.js:608Understand this error
+ Attempting login with: lbrspb@gmail.com
+directus.nplanner.ru/auth/login:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+hook.js:608 Login error: TypeError: Failed to fetch
+    at onSubmit (/src/pages/auth/login.tsx:49:30)
+    at /@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=80cf88ca:1675:15
+overrideMethod @ hook.js:608Understand this error
+ Attempting login with: lbrspb@gmail.com
+directus.nplanner.ru/auth/login:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+hook.js:608 Login error: TypeError: Failed to fetch
+    at onSubmit (/src/pages/auth/login.tsx:49:30)
+    at /@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=80cf88ca:1675:15
+overrideMethod @ hook.js:608Understand this error
+ Attempting login with: lbrspb@gmail.com
+directus.nplanner.ru/auth/login:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_TIMED_OUTUnderstand this error
+hook.js:608 Login error: TypeError: Failed to fetch
+    at onSubmit (/src/pages/auth/login.tsx:49:30)
+    at /@fs/home/runner/workspace/node_modules/.vite/deps/chunk-YABUFNLM.js?v=80cf88ca:1675:15
+overrideMethod @ hook.js:608Understand this error
+ Attempting login with: lbrspb@gmail.com
