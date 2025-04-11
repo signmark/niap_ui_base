@@ -130,12 +130,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           content: data.content,
           service: data.service || selectedService
         };
-      
-      // Добавляем информацию о используемом сервисе
-      return {
-        content: data.content,
-        service: data.service || selectedService
-      };
+      } catch (error) {
+        console.error('Ошибка при обработке JSON ответа:', error);
+        throw new Error('Ошибка при обработке ответа от сервера');
+      }
     },
     onSuccess: (data) => {
       // Преобразуем контент в формат, подходящий для редактора
