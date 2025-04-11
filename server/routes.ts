@@ -5,7 +5,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
-import apiKeyService from './services/api-keys';
+import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
@@ -23,7 +23,6 @@ import { storage } from "./storage";
 import { directusApi } from "./directus";
 import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
-import { apiKeyService } from './services/api-keys';
 import { log } from "./utils/logger";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';

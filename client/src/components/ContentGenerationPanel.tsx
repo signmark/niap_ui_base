@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RichTextEditor from "./RichTextEditor";
 
 // Расширенный интерфейс, совместимый с TrendsList
@@ -38,6 +39,7 @@ const generateContentSchema = z.object({
   scheduledFor: z.date().optional(),
   platforms: z.array(z.enum(['telegram', 'vk', 'instagram', 'youtube'])),
   title: z.string().optional(),
+  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-pro-exp', 'gemini-2.5-pro-preview-03-25', 'gemini-2.5-pro-exp-03-25']).default('deepseek'),
 });
 
 type GenerateContentForm = z.infer<typeof generateContentSchema>;
@@ -60,6 +62,7 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
       platforms: ['telegram'],
       scheduledFor: undefined,
       title: "",
+      modelType: "deepseek",
     }
   });
 
