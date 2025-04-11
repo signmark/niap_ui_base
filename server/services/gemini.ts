@@ -37,6 +37,7 @@ export class GeminiService {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       
       // Простой запрос для проверки ключа
+      // Используем Flash, так как он самый быстрый для проверки ключа
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent('Hello, world!');
       
