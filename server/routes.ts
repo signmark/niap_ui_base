@@ -3344,12 +3344,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Определяем сервис для генерации - по умолчанию Perplexity
       // Приоритет параметров: aiService, service
       const selectedAiService = aiService || service || 'perplexity';
+      
+      // Проверяем, является ли выбранный сервис Gemini-моделью
+      const isGemini = selectedAiService === 'gemini' || 
+                      selectedAiService === 'gemini-1.5-pro' || 
+                      selectedAiService === 'gemini-1.5-flash' || 
+                      selectedAiService === 'gemini-2.0-flash' || 
+                      selectedAiService === 'gemini-2.0-pro-exp' || 
+                      selectedAiService === 'gemini-2.5-pro-preview-03-25' || 
+                      selectedAiService === 'gemini-2.5-pro-exp-03-25';
+                      
       // Проверяем, что это один из поддерживаемых сервисов
-      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude
+      // Поддерживаемые сервисы: perplexity, qwen, deepseek, claude и все Gemini-модели
       const useService = 
         selectedAiService === 'qwen' ? 'qwen' : 
         selectedAiService === 'deepseek' ? 'deepseek' : 
         selectedAiService === 'claude' ? 'claude' : 
+        isGemini ? 'gemini' : 
         'perplexity';
       
       console.log(`Инициализация ${useService} сервиса для пользователя: ${userId}`);
@@ -3487,6 +3498,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           usedService = 'claude';
           
+        } else if (useService === 'gemini') {
+          // Инициализируем Gemini API с токеном запроса
+          console.log(`Попытка инициализации Gemini сервиса для пользователя ${userId}`);
+          
+          // Импортируем сервис Gemini из нашего модуля
+          const { GeminiService } = require('./services/gemini');
+          
+          // Создаем новый экземпляр сервиса Gemini
+          const geminiInstance = new GeminiService({ apiKey: '' });
+          
+          // Получаем API ключ через API Keys Storage
+          try {
+            const apiKeyResult = await getApiKey(userId, token, 'gemini');
+            if (!apiKeyResult.success) {
+              console.error('Ошибка получения API ключа Gemini:', apiKeyResult.error);
+              return res.status(400).json({ 
+                error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
+                needApiKey: true
+              });
+            }
+            
+            // Устанавливаем API ключ в экземпляр сервиса
+            geminiInstance.updateApiKey(apiKeyResult.apiKey);
+            
+            // Проверяем валидность ключа
+            const keyValid = await geminiInstance.testApiKey();
+            if (!keyValid) {
+              console.error('API ключ Gemini недействителен');
+              return res.status(400).json({ 
+                error: 'API ключ Gemini недействителен. Пожалуйста, проверьте ключ в настройках пользователя.',
+                needApiKey: true
+              });
+            }
+            
+            console.log(`Generating content with Gemini for campaign ${campaignId} with keywords: ${keywords.join(", ")}`);
+            
+            // Определяем модель Gemini для использования
+            const geminiModel = selectedAiService; // Используем конкретную выбранную модель
+            
+            // Получаем платформу из tone
+            const platform = tone === 'professional' ? 'facebook' :
+                           tone === 'casual' ? 'telegram' :
+                           tone === 'friendly' ? 'instagram' : 'general';
+            
+            // Формируем промпт для генерации контента
+            const contentPrompt = `
+Ты - профессиональный контент-маркетолог с опытом в социальных сетях. Создай качественный пост для социальных сетей.
+
+КОНТЕКСТ:
+- Ключевые слова: ${keywords.join(", ")}
+- Платформа: ${platform}
+- Тон: ${tone}
+- Дополнительные инструкции: ${prompt}
+
+СТРУКТУРА ПОСТА:
+1. Привлекательный заголовок (используй <h1> или <h2> теги)
+2. Понятное и интересное введение
+3. Основная часть, раскрывающая тему
+4. Заключение с призывом к действию
+
+ТРЕБОВАНИЯ:
+- Текст должен быть оформлен в HTML формате (используй <p>, <h1>, <h2>, <ul>, <li> и другие теги)
+- Текст должен быть на русском языке
+- Используй ключевые слова органично
+- Адаптируй стиль и формат под указанную платформу
+- Сохраняй указанный тон повествования
+- Включи эмодзи и форматирование там, где это уместно
+
+Твой ответ должен содержать ТОЛЬКО HTML-формат текста поста без вводных фраз, пояснений и без кодовых блоков.`;
+            
+            // Используем Gemini для генерации контента
+            generatedContent = await geminiInstance.improveText({
+              text: '',
+              prompt: contentPrompt,
+              model: geminiModel
+            });
+            
+            usedService = 'gemini';
+            
+          } catch (geminiError) {
+            console.error('Ошибка при работе с Gemini API:', geminiError);
+            throw new Error(`Ошибка при генерации контента с Gemini: ${geminiError.message}`);
+          }
         } else {
           // По умолчанию используем Perplexity API
           console.log(`Попытка инициализации Perplexity сервиса для пользователя ${userId}`);
