@@ -366,20 +366,58 @@ export function registerUnifiedRoutes(app: Router) {
     }
   };
   
-  // Регистрируем маршрут с префиксом /api, т.к. клиент использует axios с baseURL: '/api'
+  // Регистрируем маршрут с префиксом /api, т.к. клиент использует fetch с URL: '/api/improve-text'
   app.post('/api/improve-text', (req, res) => {
     console.log('[CRITICAL DEBUG] ========= RECEIVED /api/improve-text REQUEST ==========');
-    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body));
+    console.log('[CRITICAL DEBUG] Request headers:', req.headers);
+    console.log('[CRITICAL DEBUG] Content-Type:', req.headers['content-type']);
+    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body || {}));
     console.log('[CRITICAL DEBUG] User ID:', req.userId);
+    
+    // Проверка авторизации
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Требуется авторизация'
+      });
+    }
+    
+    // Проверка Content-Type и наличия тела запроса
+    if (!req.headers['content-type']?.includes('application/json') || !req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный формат запроса: требуется JSON с полями text, prompt, service'
+      });
+    }
+    
     improveTextHandler(req, res);
   });
   
   // Создаем дополнительный маршрут с двойным префиксом /api/api/improve-text
-  // для обработки запросов с двойным префиксом (когда клиент использует baseURL: '/api' и URL: '/api/improve-text')
+  // для обработки запросов с двойным префиксом (если клиент некорректно использует axios baseURL + URL)
   app.post('/api/api/improve-text', (req, res) => {
     console.log('[CRITICAL DEBUG] ========= RECEIVED /api/api/improve-text REQUEST ==========');
-    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body));
+    console.log('[CRITICAL DEBUG] Request headers:', req.headers);
+    console.log('[CRITICAL DEBUG] Content-Type:', req.headers['content-type']);
+    console.log('[CRITICAL DEBUG] Request body:', JSON.stringify(req.body || {}));
     console.log('[CRITICAL DEBUG] User ID:', req.userId);
+    
+    // Проверка авторизации
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Требуется авторизация'
+      });
+    }
+    
+    // Проверка Content-Type и наличия тела запроса
+    if (!req.headers['content-type']?.includes('application/json') || !req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный формат запроса: требуется JSON с полями text, prompt, service'
+      });
+    }
+    
     improveTextHandler(req, res);
   });
   
