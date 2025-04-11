@@ -65,7 +65,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       // Используем единый маршрут для всех сервисов
-      let apiEndpoint = '/api/generate-content';
+      let apiEndpoint = '/generate-content';
       
       console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
