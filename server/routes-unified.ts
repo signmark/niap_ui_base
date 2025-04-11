@@ -353,9 +353,8 @@ export function registerUnifiedRoutes(app: Router) {
     }
   };
   
-  // Регистрируем два маршрута с одним обработчиком - один с префиксом /api, другой без
+  // Регистрируем только маршрут с префиксом /api, т.к. клиент использует axios с baseURL: '/api'
   app.post('/api/improve-text', improveTextHandler);
-  app.post('/improve-text', improveTextHandler);
   
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
