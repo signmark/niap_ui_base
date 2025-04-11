@@ -78,8 +78,7 @@ const generateContentSchema = z.object({
     'claude', 
     'gemini', 
     'gemini-1.5-pro', 
-    'gemini-2.5-flash', 
-    'gemini-2.5-pro'
+    'gemini-1.5-flash'
   ]).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
@@ -447,9 +446,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
-                        <SelectItem value="gemini">Gemini</SelectItem>
-                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (2025)</SelectItem>
-                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (2025)</SelectItem>
+                        <SelectItem value="gemini">Gemini (Pro)</SelectItem>
+                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
                       </SelectContent>
