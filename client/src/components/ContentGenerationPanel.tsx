@@ -236,6 +236,38 @@ export function ContentGenerationPanel({ selectedTopics, onGenerated }: ContentG
               )}
             />
 
+            {form.watch("useAI") && (
+              <FormField
+                control={form.control}
+                name="modelType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>AI Модель</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите модель AI" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="deepseek">DeepSeek</SelectItem>
+                          <SelectItem value="qwen">Qwen</SelectItem>
+                          <SelectItem value="claude">Claude</SelectItem>
+                          <SelectItem value="gemini">Gemini (Legacy)</SelectItem>
+                          <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                          <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                          <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                          <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
+                          <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</SelectItem>
+                          <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Experimental</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <Button type="submit" disabled={isGenerating}>
               {isGenerating ? (
                 <>
