@@ -454,6 +454,14 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                         <SelectItem value="gemini-2.0-pro">Gemini 2.0 Pro</SelectItem>
                         <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
                         <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro (Preview)</SelectItem>
+                        <SelectItem value="gemini-1.5-flash-001">Gemini 1.5 Flash 001</SelectItem>
+                        <SelectItem value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</SelectItem>
+                        <SelectItem value="gemini-1.0-pro-001">Gemini 1.0 Pro 001</SelectItem>
+                        <SelectItem value="gemini-1.0-pro-latest">Gemini 1.0 Pro Latest</SelectItem>
+                        <SelectItem value="gemini-1.0-pro-vision-001">Gemini 1.0 Pro Vision 001</SelectItem>
+                        <SelectItem value="gemini-1.0-pro-vision-latest">Gemini 1.0 Pro Vision Latest</SelectItem>
+                        <SelectItem value="gemini-ultra-vision-001">Gemini Ultra Vision 001</SelectItem>
+                        <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
                       </SelectContent>
