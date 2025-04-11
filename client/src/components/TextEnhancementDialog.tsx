@@ -207,6 +207,8 @@ export function TextEnhancementDialog({
           return 'gemini-1.5-flash';
         case 'gemini-1.5-pro':
           return 'gemini-1.5-pro';
+        case 'gemini-2.0-pro':
+          return 'gemini-2.0-pro';
         case 'gemini-2.0-flash':
           return 'gemini-2.0-flash';
         case 'gemini-2.5-pro-preview-03-25':
