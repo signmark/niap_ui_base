@@ -6,6 +6,7 @@ import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
+import { registerGeminiRoutes } from "./routes-gemini";
 import { registerImgurRoutes } from "./routes-imgur";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
@@ -144,6 +145,13 @@ app.use((req, res, next) => {
     registerQwenRoutes(app);
     console.log("Qwen routes registered");
     log("Qwen routes registered successfully");
+    
+    // Регистрируем маршруты для Gemini
+    console.log("Registering Gemini routes...");
+    log("Registering Gemini routes...");
+    registerGeminiRoutes(app);
+    console.log("Gemini routes registered");
+    log("Gemini routes registered successfully");
 
     log("Registering routes...");
     console.log("Starting route registration...");
