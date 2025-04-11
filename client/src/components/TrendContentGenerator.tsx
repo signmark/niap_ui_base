@@ -72,7 +72,7 @@ function extractKeywordsFromTrends(trends: TrendTopic[]): string[] {
 
 const generateContentSchema = z.object({
   prompt: z.string().min(1, "Введите промт для генерации контента"),
-  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini']).default('deepseek'),
+  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini', 'gemini-1.5-pro', 'gemini-1.5-flash']).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
 });
@@ -440,7 +440,9 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
-                        <SelectItem value="gemini">Gemini</SelectItem>
+                        <SelectItem value="gemini">Gemini Pro</SelectItem>
+                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (рекомендуется)</SelectItem>
+                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash (быстрая)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
