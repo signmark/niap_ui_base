@@ -67,7 +67,7 @@ export class GeminiService {
       'gemini-1.5-flash': FLASH_MODEL
     };
     
-    // Получаем модель из маппинга или возвращаем экспериментальную Pro
+    // Получаем модель из маппинга или используем Pro модель по умолчанию
     const mappedModel = modelMapping[model] || PRO_MODEL;
     
     // Регистрируем в логе, какую модель запросил пользователь
