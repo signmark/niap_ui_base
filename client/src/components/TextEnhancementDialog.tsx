@@ -196,7 +196,7 @@ export function TextEnhancementDialog({
   const [selectedPromptId, setSelectedPromptId] = useState("improve");
   const [selectedService, setSelectedService] = useState(AI_SERVICES.find(s => s.default)?.id || "claude");
   const [selectedModelId, setSelectedModelId] = useState("");
-  const [hasApiKey, setHasApiKey] = useState(true); // Предполагаем, что ключ есть, потом проверим
+  const [hasApiKey, setHasApiKey] = useState(true); // Если ключи уже настроены, это будет true
   
   const { toast } = useToast();
   
@@ -220,6 +220,7 @@ export function TextEnhancementDialog({
     if (open) {
       setText(initialText);
       setEnhancedText("");
+      setHasApiKey(true); // Сбрасываем состояние hasApiKey при каждом открытии
     }
   }, [open, initialText]);
 
@@ -269,9 +270,37 @@ export function TextEnhancementDialog({
       // Проверяем статус ответа
       if (!response.ok) {
         console.error(`Ошибка HTTP: ${response.status} ${response.statusText}`);
-        const errorText = await response.text();
-        console.error(`Ответ сервера: ${errorText.substring(0, 500)}...`);
-        throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+        
+        // Пытаемся получить информацию об ошибке из ответа
+        let errorMessage = `Ошибка сервера: ${response.status} ${response.statusText}`;
+        let errorData = null;
+        
+        try {
+          // Сначала пытаемся распарсить ответ как JSON
+          errorData = await response.json();
+          console.error('Ответ сервера:', errorData);
+          
+          // Если есть сообщение об ошибке в ответе, используем его
+          if (errorData && errorData.error) {
+            errorMessage = errorData.error;
+            
+            // Если нужен API ключ, выбрасываем специальную ошибку
+            if (errorData.needApiKey && errorData.service) {
+              throw new Error(errorMessage);
+            }
+          }
+        } catch (jsonError) {
+          // Если не удалось распарсить как JSON, пытаемся получить как текст
+          try {
+            const errorText = await response.text();
+            console.error(`Ответ сервера: ${errorText.substring(0, 500)}...`);
+          } catch (textError) {
+            console.error('Не удалось получить детали ошибки');
+          }
+        }
+        
+        // Выбрасываем ошибку с сообщением
+        throw new Error(errorMessage);
       }
       
       let data;
@@ -309,9 +338,13 @@ export function TextEnhancementDialog({
         setHasApiKey(false);
         
         toast({
-          variant: "destructive",
+          variant: "default", // Используем обычный вариант вместо "destructive"
           title: "Требуется API ключ",
-          description: `Для использования ${selectedService} необходимо добавить API ключ в настройках`,
+          description: `Для использования ${
+            selectedService === 'claude' ? 'Claude AI' : 
+            selectedService === 'deepseek' ? 'DeepSeek' : 
+            selectedService === 'gemini' ? 'Google Gemini' : 'Qwen'
+          } необходимо добавить API ключ в настройках пользователя`,
         });
         return;
       }
