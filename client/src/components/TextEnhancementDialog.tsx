@@ -232,7 +232,7 @@ export function TextEnhancementDialog({
 
   // Получение эндпоинта API в зависимости от выбранного сервиса
   const getApiEndpoint = () => {
-    return 'improve-text';  // Единый маршрут для всех сервисов без начального слеша (api.ts добавляет baseURL: '/api')
+    return '/api/improve-text';  // Используем абсолютный путь с префиксом /api/
   };
   
   // Получение правильного названия модели в зависимости от выбранного сервиса
