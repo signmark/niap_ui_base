@@ -65,9 +65,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       // Выбираем правильный API маршрут в зависимости от выбранного сервиса
-      let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
+      let apiEndpoint = '/api/generate-content'; // Маршрут по умолчанию
       
-      console.log(`Генерация контента через ${selectedService} API`);
+      // Специализированные маршруты для конкретных сервисов
+      if (selectedService === 'gemini') {
+        apiEndpoint = '/api/gemini/generate-content';
+      }
+      
+      console.log(`Генерация контента через ${selectedService} API (endpoint: ${apiEndpoint})`);
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
