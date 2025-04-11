@@ -32,8 +32,8 @@ export class GeminiService {
    * @returns Экземпляр GoogleGenerativeAI
    */
   private createGenAI(): GoogleGenerativeAI {
-    // Создаем экземпляр GoogleGenerativeAI с API v1 (не v1beta)
-    return new GoogleGenerativeAI(this.apiKey, { apiVersion: 'v1' });
+    // Создаем экземпляр GoogleGenerativeAI (с API v1 по умолчанию)
+    return new GoogleGenerativeAI(this.apiKey);
   }
   
   /**
@@ -48,7 +48,7 @@ export class GeminiService {
       const genAI = this.createGenAI();
       
       // Используем стабильную модель для проверки ключа
-      const PRO_MODEL = 'gemini-2.5-pro';
+      const PRO_MODEL = 'gemini-1.5-pro';
       const model = genAI.getGenerativeModel({ model: PRO_MODEL });
       const result = await model.generateContent('Hello, world!');
       
@@ -72,9 +72,9 @@ export class GeminiService {
    * @returns Выбранная модель
    */
   private getSelectedModel(model: string): string {
-    // Актуальные модели Gemini 2.5 (обновлены в 2025 году)
-    const PRO_MODEL = 'gemini-2.5-pro'; // Стабильная версия Pro модели
-    const FLASH_MODEL = 'gemini-2.5-flash'; // Стабильная версия Flash модели
+    // Актуальные модели Gemini 1.5 (обновлены в апреле 2025 года)
+    const PRO_MODEL = 'gemini-1.5-pro'; // Современная модель Pro
+    const FLASH_MODEL = 'gemini-1.5-flash'; // Быстрая модель Flash
     
     // Маппинг пользовательских моделей на фактические
     const modelMapping: {[key: string]: string} = {
