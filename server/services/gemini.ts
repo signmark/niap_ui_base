@@ -80,8 +80,7 @@ export class GeminiService {
     const modelMapping: {[key: string]: string} = {
       'gemini': PRO_MODEL, // По умолчанию используем Pro
       'gemini-pro': PRO_MODEL,
-      'gemini-2.5-pro': PRO_MODEL,
-      'gemini-2.5-flash': FLASH_MODEL, // Используем Flash модель для запросов к Flash
+      'gemini-2.5-pro': 'gemini-2.5-pro-preview-03-25', // Используем актуальную preview версию Gemini 2.5 Pro
       'gemini-1.5-pro': PRO_MODEL,
       'gemini-1.5-flash': FLASH_MODEL
     };
