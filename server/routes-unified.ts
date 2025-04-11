@@ -191,125 +191,130 @@ export function registerUnifiedRoutes(app: Router) {
           }
           
           case 'deepseek': {
-          // Получаем DeepSeek сервис
-          const deepseekService = await getDeepSeekService(req);
-          
-          if (!deepseekService) {
-            log(`[unified-routes] DeepSeek API key not configured for user ${userId}`, 'unified');
-            return res.status(400).json({
-              success: false,
-              error: 'API ключ DeepSeek не настроен',
-              needApiKey: true,
+            // Получаем DeepSeek сервис
+            const deepseekService = await getDeepSeekService(req);
+            
+            if (!deepseekService) {
+              log(`[unified-routes] DeepSeek API key not configured for user ${userId}`, 'unified');
+              return res.status(400).json({
+                success: false,
+                error: 'API ключ DeepSeek не настроен',
+                needApiKey: true,
+                service: 'deepseek'
+              });
+            }
+            
+            // Определяем, содержит ли текст HTML-теги
+            const containsHtml = /<[^>]+>/.test(text);
+            
+            // Формируем сообщения для DeepSeek API
+            let systemMessage = '';
+            let userMessage = '';
+            
+            if (containsHtml) {
+              systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Сделай текст более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+              userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
+            } else {
+              systemMessage = 'Улучши следующий текст. Сделай его более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+              userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
+            }
+            
+            const messages = [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: userMessage }
+            ];
+            
+            const modelToUse = model || 'deepseek-chat'; // Используем DeepSeek Chat как модель по умолчанию
+            
+            log(`[unified-routes] Calling DeepSeek with model ${modelToUse}`, 'unified');
+            
+            // Генерируем улучшенный текст
+            let deepseekResult = await deepseekService.generateText(messages as any, {
+              model: modelToUse,
+              temperature: 0.3,
+              max_tokens: 4000
+            });
+            
+            // Удаляем служебный текст в тройных обратных кавычках (```)
+            deepseekResult = deepseekResult.replace(/```[\s\S]*?```/g, '');
+            
+            // Если оригинальный текст содержал HTML, но ответ не содержит, 
+            // попробуем заключить абзацы в теги <p>
+            if (containsHtml && !/<[^>]+>/.test(deepseekResult)) {
+              log('[unified-routes] HTML tags were not preserved in DeepSeek response, attempting to add paragraph tags', 'unified');
+              deepseekResult = deepseekResult
+                .split('\n\n')
+                .map(para => para.trim())
+                .filter(para => para.length > 0)
+                .map(para => `<p>${para}</p>`)
+                .join('\n');
+            }
+            
+            return res.json({
+              success: true,
+              text: deepseekResult,
               service: 'deepseek'
             });
           }
           
-          // Определяем, содержит ли текст HTML-теги
-          const containsHtml = /<[^>]+>/.test(text);
-          
-          // Формируем сообщения для DeepSeek API
-          let systemMessage = '';
-          let userMessage = '';
-          
-          if (containsHtml) {
-            systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Сделай текст более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-            userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
-          } else {
-            systemMessage = 'Улучши следующий текст. Сделай его более убедительным, ярким, и интересным. Удали любые ошибки и неточности. Добавь детали и эмоциональность. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-            userMessage = `Инструкции: ${prompt}\n\nТекст:\n${text}`;
-          }
-          
-          const messages = [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: userMessage }
-          ];
-          
-          const modelToUse = model || 'deepseek-chat'; // Используем DeepSeek Chat как модель по умолчанию
-          
-          log(`[unified-routes] Calling DeepSeek with model ${modelToUse}`, 'unified');
-          
-          // Генерируем улучшенный текст
-          let deepseekResult = await deepseekService.generateText(messages, {
-            model: modelToUse,
-            temperature: 0.3,
-            max_tokens: 4000
-          });
-          
-          // Удаляем служебный текст в тройных обратных кавычках (```)
-          deepseekResult = deepseekResult.replace(/```[\s\S]*?```/g, '');
-          
-          // Если оригинальный текст содержал HTML, но ответ не содержит, 
-          // попробуем заключить абзацы в теги <p>
-          if (containsHtml && !/<[^>]+>/.test(deepseekResult)) {
-            log('[unified-routes] HTML tags were not preserved in DeepSeek response, attempting to add paragraph tags', 'unified');
-            deepseekResult = deepseekResult
-              .split('\n\n')
-              .map(para => para.trim())
-              .filter(para => para.length > 0)
-              .map(para => `<p>${para}</p>`)
-              .join('\n');
-          }
-          
-          return res.json({
-            success: true,
-            text: deepseekResult,
-            service: 'deepseek'
-          });
-          
-        case 'qwen':
-          // Получаем API ключ Qwen для пользователя
-          const qwenApiKey = await getQwenApiKey(req);
-          
-          if (!qwenApiKey) {
-            log(`[unified-routes] Qwen API key not configured for user ${userId}`, 'unified');
-            return res.status(400).json({
-              success: false,
-              error: 'API ключ Qwen не настроен',
-              needApiKey: true,
+          case 'qwen': {
+            // Получаем API ключ Qwen для пользователя
+            const qwenApiKey = await getQwenApiKey(req);
+            
+            if (!qwenApiKey) {
+              log(`[unified-routes] Qwen API key not configured for user ${userId}`, 'unified');
+              return res.status(400).json({
+                success: false,
+                error: 'API ключ Qwen не настроен',
+                needApiKey: true,
+                service: 'qwen'
+              });
+            }
+            
+            // Используем Qwen сервис с API ключом пользователя
+            qwenService.updateApiKey(qwenApiKey);
+            
+            // Определяем, содержит ли текст HTML-теги
+            const containsHtmlQwen = /<[^>]+>/.test(text);
+            
+            // Формируем сообщения для Qwen API
+            let qwenSystemMessage = '';
+            if (containsHtmlQwen) {
+              qwenSystemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Следуй инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+            } else {
+              qwenSystemMessage = 'Улучши следующий текст согласно инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+            }
+            
+            log(`[unified-routes] Calling Qwen service with model ${model || 'default'}`, 'unified');
+            
+            // Улучшаем текст с помощью Qwen
+            const qwenResult = await qwenService.generateText(
+              [
+                { role: 'system', content: qwenSystemMessage },
+                { role: 'user', content: `Инструкции: ${prompt}\n\nТекст:\n${text}` }
+              ], 
+              {
+                model: model || 'qwen-pro',
+                temperature: 0.3,
+                max_tokens: 4000
+              }
+            );
+            
+            return res.json({
+              success: true,
+              text: qwenResult,
               service: 'qwen'
             });
           }
           
-          // Используем Qwen сервис с API ключом пользователя
-          qwenService.updateApiKey(qwenApiKey);
-          
-          // Определяем, содержит ли текст HTML-теги
-          const containsHtmlQwen = /<[^>]+>/.test(text);
-          
-          // Формируем сообщения для Qwen API
-          if (containsHtmlQwen) {
-            systemMessage = 'Улучши следующий текст, сохраняя HTML-разметку. Следуй инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
-          } else {
-            systemMessage = 'Улучши следующий текст согласно инструкциям пользователя. Не добавляй собственных комментариев, просто верни улучшенный текст.';
+          default: {
+            log(`[unified-routes] Unsupported service: ${service}`, 'unified');
+            return res.status(400).json({
+              success: false,
+              error: `Неизвестный сервис: ${service}`
+            });
           }
-          
-          log(`[unified-routes] Calling Qwen service with model ${model || 'default'}`, 'unified');
-          
-          // Улучшаем текст с помощью Qwen
-          const qwenResult = await qwenService.generateText(
-            [
-              { role: 'system', content: systemMessage },
-              { role: 'user', content: `Инструкции: ${prompt}\n\nТекст:\n${text}` }
-            ], 
-            {
-              model: model || 'qwen-pro',
-              temperature: 0.3,
-              max_tokens: 4000
-            }
-          );
-          
-          return res.json({
-            success: true,
-            text: qwenResult,
-            service: 'qwen'
-          });
-          
-        default:
-          log(`[unified-routes] Unsupported service: ${service}`, 'unified');
-          return res.status(400).json({
-            success: false,
-            error: `Неизвестный сервис: ${service}`
-          });
+        }
       }
     } catch (error) {
       log(`[unified-routes] Error in improve-text endpoint: ${(error as Error).message}`, 'unified');
@@ -450,7 +455,7 @@ export function registerUnifiedRoutes(app: Router) {
           log(`[unified-routes] Calling DeepSeek for content generation with model ${modelToUse}`, 'unified');
           
           // Генерируем контент
-          let deepseekResult = await deepseekService.generateText(messages, {
+          let deepseekResult = await deepseekService.generateText(messages as any, {
             model: modelToUse,
             temperature: 0.7,
             max_tokens: 4000
