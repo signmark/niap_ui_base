@@ -119,67 +119,18 @@ const AI_SERVICES = [
     id: "gemini",
     name: "Gemini",
     models: [
-      // Стабильные рабочие модели (подтверждено тестами)
       {
-        id: "gemini-1.5-pro",
-        name: "Gemini 1.5 Pro",
+        id: "gemini-pro",
+        name: "Gemini Pro",
         default: true
       },
       {
-        id: "gemini-1.5-flash",
-        name: "Gemini 1.5 Flash"
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash (2025)"
       },
       {
-        id: "gemini-1.5-flash-8b",
-        name: "Gemini 1.5 Flash 8B"
-      },
-      {
-        id: "gemini-2.0-flash-001",
-        name: "Gemini 2.0 Flash"
-      },
-      {
-        id: "gemini-2.0-flash-lite-001", 
-        name: "Gemini 2.0 Flash Lite"
-      },
-      
-      // Экспериментальные и preview модели (beta API)
-      {
-        id: "gemini-2.5-pro-preview-03-25",
-        name: "Gemini 2.5 Pro (Preview) 🧪"
-      },
-      {
-        id: "gemini-2.5-pro-exp-03-25",
-        name: "Gemini 2.5 Pro (Experimental) 🧪"
-      },
-      {
-        id: "gemini-2.0-flash-exp",
-        name: "Gemini 2.0 Flash (Experimental) 🧪"
-      },
-      {
-        id: "gemini-2.0-flash-exp-image-generation",
-        name: "Gemini 2.0 Flash Image Gen 🧪"
-      },
-      {
-        id: "gemini-2.0-flash-thinking-exp-01-21",
-        name: "Gemini 2.0 Flash Thinking 🧪"
-      },
-      {
-        id: "gemini-2.0-flash-live-001",
-        name: "Gemini 2.0 Flash Live 🧪"
-      },
-      
-      // Устаревшие модели (для обратной совместимости)
-      {
-        id: "gemini-pro",
-        name: "Gemini Pro (Legacy)"
-      },
-      {
-        id: "gemini-2.0-pro",
-        name: "Gemini 2.0 Pro (Legacy)"
-      },
-      {
-        id: "gemini-2.0-flash",
-        name: "Gemini 2.0 Flash (Legacy)"
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro (2025)"
       }
     ]
   }
@@ -237,118 +188,42 @@ export function TextEnhancementDialog({
   
   // Получение правильного названия модели в зависимости от выбранного сервиса
   const getModelName = (service: string, modelId: string): string => {
-    // Для всех сервисов просто возвращаем ID модели как есть
-    return modelId;
+    // Если это Gemini сервис, используем специальные названия моделей для Gemini 2.5
+    if (service === 'gemini') {
+      switch (modelId) {
+        case 'gemini-2.5-flash':
+          return 'gemini-2.5-flash-exp-03-25';
+        case 'gemini-2.5-pro':
+          return 'gemini-2.5-pro-exp-03-25';
+        default:
+          return modelId; // Используем modelId для остальных моделей
+      }
+    }
+    return modelId; // Для остальных сервисов используем modelId напрямую
   };
-  
-  // Обновляем значение текста при изменении initialText
-  useEffect(() => {
-    setText(initialText);
-    console.log("TextEnhancementDialog: получен новый текст длиной:", initialText.length);
-  }, [initialText]);
   
   // Логирование в консоль для отладки
   console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
-  console.log(`TextEnhancementDialog: текущий текст имеет длину ${text.length} символов`);
   
-  // Мутация для улучшения текста - ТОЧНО КАК В ContentGenerationDialog
+  // Мутация для улучшения текста
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
-      if (!text.trim()) {
-        throw new Error('Введите текст для улучшения');
-      }
-      
-      // Получаем токен авторизации
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error('Требуется авторизация');
-      }
-      
-      // Используем единый маршрут для всех сервисов
-      let apiEndpoint = '/api/improve-text';
-      
-      console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
-      console.log('Авторизационный токен:', authToken ? 'Присутствует (скрыт)' : 'Отсутствует');
-      
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          text,
-          prompt: getCurrentPrompt(),
-          model: getModelName(selectedService, selectedModelId),
-          service: selectedService
-        })
-      });
-      
-      console.log('Отправленный запрос:', {
-        text: `[Текст длиной ${text.length} символов]`,
+      const response = await api.post(getApiEndpoint(), {
+        text,
         prompt: getCurrentPrompt(),
         model: getModelName(selectedService, selectedModelId),
-        service: selectedService,
-        headers: {
-          'Authorization': 'Bearer [скрыт]'
-        }
+        service: selectedService
       });
       
-      if (!response.ok) {
-        let errorText;
-        try {
-          const error = await response.json();
-          errorText = error.error || `Ошибка HTTP: ${response.status}`;
-        } catch (e) {
-          // Если не удалось распарсить JSON, получаем текст ошибки
-          const htmlText = await response.text();
-          console.error('Ошибка не в формате JSON:', htmlText.substring(0, 200));
-          errorText = `Ошибка сервера: ${response.status} ${response.statusText}`;
-        }
-        throw new Error(errorText);
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Произошла ошибка при улучшении текста');
       }
       
-      try {
-        // Сначала получаем текст ответа для диагностики
-        const responseText = await response.text();
-        console.log(`Получен ответ от сервера, длина: ${responseText.length} символов`);
-        
-        // Если ответ пустой или начинается с "<", это может быть HTML
-        if (!responseText || responseText.trim().startsWith('<')) {
-          console.error('Получен некорректный ответ (HTML вместо JSON):', responseText.substring(0, 200));
-          throw new Error('Сервер вернул некорректный ответ (HTML вместо JSON)');
-        }
-        
-        // Парсим JSON ответ
-        const data = JSON.parse(responseText);
-        
-        // Проверка структуры ответа
-        if (!data.text && data.success === false) {
-          console.error('API вернул ошибку:', data);
-          throw new Error(data.error || 'Неизвестная ошибка API');
-        }
-        
-        if (!data.text) {
-          console.error('API вернул успех, но без текста:', data);
-          throw new Error('API не вернул улучшенный текст');
-        }
-        
-        // Добавляем информацию о используемом сервисе
-        return {
-          text: data.text,
-          service: data.service || selectedService
-        };
-      } catch (e) {
-        console.error('Ошибка при обработке ответа:', e);
-        throw new Error(e instanceof Error ? e.message : 'Ошибка при обработке ответа от сервера');
-      }
+      return response.data.text;
     },
     onSuccess: (data) => {
-      // Получаем текст из ответа
-      const enhancedText = typeof data === 'object' && data.text ? data.text : String(data);
-      
-      setEnhancedText(enhancedText);
+      setEnhancedText(data);
       
       // Показываем уведомление об успешном улучшении
       toast({
@@ -357,30 +232,20 @@ export function TextEnhancementDialog({
       });
       
       // Сразу же сохраняем улучшенный текст и закрываем диалог
-      onSave(enhancedText);
+      onSave(data);
       onOpenChange(false);
     },
     onError: (error: any) => {
-      console.error('Ошибка TextEnhancementDialog:', error);
-      
       // Проверяем, нужен ли API ключ
-      if (error.response?.data?.needApiKey || 
-          (typeof error === 'object' && error?.message?.includes('API ключ') && 
-           error?.message?.includes('не настроен'))) {
+      if (error.response?.data?.needApiKey) {
         setHasApiKey(false);
-        
-        toast({
-          variant: "destructive",
-          title: "Необходим API ключ",
-          description: `Перейдите в настройки и добавьте API ключ ${selectedService.toUpperCase()}`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Ошибка",
-          description: error.message || "Не удалось улучшить текст",
-        });
       }
+      
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: error.message || "Не удалось улучшить текст",
+      });
     }
   });
 

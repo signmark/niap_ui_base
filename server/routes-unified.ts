@@ -16,13 +16,7 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса Gemini для пользователя
    */
   async function getGeminiService(req: Request): Promise<GeminiService | null> {
-    // Получаем userId либо из req.userId, либо из заголовка x-user-id
-    let userId = req.userId;
-    if (!userId && req.headers['x-user-id']) {
-      userId = req.headers['x-user-id'] as string;
-      console.log(`[getGeminiService] Using userId from x-user-id header: ${userId}`);
-    }
-    
+    const userId = req.userId;
     if (!userId) {
       log('[unified-routes] Cannot get Gemini service: userId is missing', 'unified');
       return null;
@@ -37,7 +31,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new GeminiService(apiKey);
     } catch (error) {
-      log(`[unified-routes] Error getting Gemini API key: ${(error as Error).message}`, 'unified');
+      log('[unified-routes] Error getting Gemini API key:', (error as Error).message, 'unified');
       return null;
     }
   }
@@ -46,13 +40,7 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса Claude для пользователя
    */
   async function getClaudeService(req: Request): Promise<ClaudeService | null> {
-    // Получаем userId либо из req.userId, либо из заголовка x-user-id
-    let userId = req.userId;
-    if (!userId && req.headers['x-user-id']) {
-      userId = req.headers['x-user-id'] as string;
-      console.log(`[getClaudeService] Using userId from x-user-id header: ${userId}`);
-    }
-    
+    const userId = req.userId;
     if (!userId) {
       log('[unified-routes] Cannot get Claude service: userId is missing', 'unified');
       return null;
@@ -67,7 +55,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new ClaudeService(apiKey);
     } catch (error) {
-      log(`[unified-routes] Error getting Claude API key: ${(error as Error).message}`, 'unified');
+      log('[unified-routes] Error getting Claude API key:', (error as Error).message, 'unified');
       return null;
     }
   }
@@ -76,13 +64,7 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение сервиса DeepSeek для пользователя
    */
   async function getDeepSeekService(req: Request): Promise<DeepSeekService | null> {
-    // Получаем userId либо из req.userId, либо из заголовка x-user-id
-    let userId = req.userId;
-    if (!userId && req.headers['x-user-id']) {
-      userId = req.headers['x-user-id'] as string;
-      console.log(`[getDeepSeekService] Using userId from x-user-id header: ${userId}`);
-    }
-    
+    const userId = req.userId;
     if (!userId) {
       log('[unified-routes] Cannot get DeepSeek service: userId is missing', 'unified');
       return null;
@@ -97,7 +79,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new DeepSeekService({ apiKey });
     } catch (error) {
-      log(`[unified-routes] Error getting DeepSeek API key: ${(error as Error).message}`, 'unified');
+      log('[unified-routes] Error getting DeepSeek API key:', (error as Error).message, 'unified');
       return null;
     }
   }
@@ -106,13 +88,7 @@ export function registerUnifiedRoutes(app: Router) {
    * Получение API ключа Qwen для пользователя
    */
   async function getQwenApiKey(req: Request): Promise<string | null> {
-    // Получаем userId либо из req.userId, либо из заголовка x-user-id
-    let userId = req.userId;
-    if (!userId && req.headers['x-user-id']) {
-      userId = req.headers['x-user-id'] as string;
-      console.log(`[getQwenApiKey] Using userId from x-user-id header: ${userId}`);
-    }
-    
+    const userId = req.userId;
     if (!userId) {
       log('[unified-routes] Cannot get Qwen API key: userId is missing', 'unified');
       return null;
@@ -127,7 +103,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return apiKey;
     } catch (error) {
-      log(`[unified-routes] Error getting Qwen API key: ${(error as Error).message}`, 'unified');
+      log('[unified-routes] Error getting Qwen API key:', (error as Error).message, 'unified');
       return null;
     }
   }
@@ -140,27 +116,13 @@ export function registerUnifiedRoutes(app: Router) {
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
       
-      // Простой ответ для тестов и отладки
-      if (process.env.NODE_ENV === 'development' && req.query.debug === 'true') {
-        return res.json({
-          success: true,
-          text: `Улучшенный текст: ${text.substring(0, 50)}...`,
-          service: service
-        });
-      }
-      
-      console.log(`[debug-improve-text] Полное тело запроса:`, JSON.stringify(req.body, null, 2));
-      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}, text length: ${text ? text.length : 0}, prompt length: ${prompt ? prompt.length : 0}`, 'unified');
+      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}`, 'unified');
       
       if (!text || !prompt) {
-        log(`[unified-routes] Missing text (length: ${text ? text.length : 0}) or prompt (length: ${prompt ? prompt.length : 0}) in improve-text request. Full body: ${JSON.stringify(req.body)}`, 'unified');
+        log('[unified-routes] Missing text or prompt in improve-text request', 'unified');
         return res.status(400).json({
           success: false,
-          error: 'Текст и инструкции обязательны',
-          details: {
-            textLength: text ? text.length : 0,
-            promptLength: prompt ? prompt.length : 0
-          }
+          error: 'Текст и инструкции обязательны'
         });
       }
       
@@ -365,15 +327,6 @@ export function registerUnifiedRoutes(app: Router) {
       const { prompt, keywords, tone, platform, service, model } = req.body;
       const userId = req.userId;
       
-      // Простой ответ для тестов и отладки
-      if (process.env.NODE_ENV === 'development' && req.query.debug === 'true') {
-        return res.json({
-          success: true,
-          content: `Сгенерированный контент с использованием ключевых слов: ${keywords ? keywords.join(', ') : 'нет ключевых слов'}`,
-          service: service
-        });
-      }
-      
       log(`[unified-routes] Received generate-content request with service=${service} from user ${userId}`, 'unified');
       
       if (!prompt) {
@@ -408,39 +361,37 @@ export function registerUnifiedRoutes(app: Router) {
       basePrompt += `\n\nОтформатируй текст с использованием HTML для структурирования (теги <p>, <br>, <ul>, <li>). Не используй заголовки <h1>, <h2>, etc.`;
       
       // Обработка в зависимости от запрошенного сервиса
-      // Проверяем, является ли это моделью Gemini по префиксу
-      if (service === 'gemini' || (typeof service === 'string' && service.startsWith('gemini-'))) {
-        // Получаем Gemini сервис
-        const geminiService = await getGeminiService(req);
-        
-        if (!geminiService) {
-          log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
-          return res.status(400).json({
-            success: false,
-            error: 'API ключ Gemini не настроен',
-            needApiKey: true,
+      switch (service) {
+        case 'gemini':
+        case 'gemini-pro':
+        case 'gemini-1.5-pro':
+        case 'gemini-2.5-pro':
+        case 'gemini-2.5-flash':
+          // Получаем Gemini сервис
+          const geminiService = await getGeminiService(req);
+          
+          if (!geminiService) {
+            log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
+            return res.status(400).json({
+              success: false,
+              error: 'API ключ Gemini не настроен',
+              needApiKey: true,
+              service: 'gemini'
+            });
+          }
+          
+          // Генерируем контент с помощью Gemini
+          log(`[unified-routes] Calling Gemini service for content generation with model ${model || 'default'}`, 'unified');
+          const geminiResult = await geminiService.generateContent(
+            basePrompt,
+            model || 'gemini-2.5-pro-exp-03-25'
+          );
+          
+          return res.json({
+            success: true,
+            content: geminiResult,
             service: 'gemini'
           });
-        }
-        
-        // Генерируем контент с помощью Gemini, используя модель из запроса или значение по умолчанию
-        log(`[unified-routes] Calling Gemini service for content generation with model ${service}`, 'unified');
-        // Если модель указана явно, используем её, иначе используем сервис в качестве имени модели
-        const modelToUse = model || service;
-        const geminiResult = await geminiService.generateContent(
-          basePrompt,
-          modelToUse
-        );
-        
-        return res.json({
-          success: true,
-          content: geminiResult,
-          service: 'gemini'
-        });
-      }
-      
-      // Для остальных сервисов используем switch
-      switch (service) {
           
         case 'claude':
           // Получаем Claude сервис
