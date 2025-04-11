@@ -183,18 +183,7 @@ export function TextEnhancementDialog({
 
   // Получение эндпоинта API в зависимости от выбранного сервиса
   const getApiEndpoint = () => {
-    switch (selectedService) {
-      case 'claude':
-        return '/api/claude/improve-text';
-      case 'deepseek':
-        return '/api/deepseek/improve-text';
-      case 'qwen':
-        return '/api/qwen/improve-text';
-      case 'gemini':
-        return '/api/gemini/improve-text';
-      default:
-        return '/api/claude/improve-text';
-    }
+    return '/api/improve-text';  // Единый маршрут для всех сервисов
   };
   
   // Логирование в консоль для отладки
