@@ -27,6 +27,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Добавляем механизм приоритетной обработки API запросов, чтобы они не перехватывались Vite
+app.use((req, res, next) => {
+  // Если это запрос к API, помечаем его специальным флагом
+  if (req.path.startsWith('/api/')) {
+    (req as any).isApiRequest = true;
+  }
+  next();
+});
+
 // Добавляем API маршрут для проверки статуса явно, чтобы он работал до инициализации Vite
 app.get('/api/status-check', (req, res) => {
   return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
@@ -186,6 +195,22 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
+    // Добавляем специальное middleware для прямой обработки API-запросов
+    // перед настройкой Vite, чтобы они не перехватывались
+    app.use((req, res, next) => {
+      // Если это запрос к API, то отвечаем сразу с ошибкой, не передавая его в Vite
+      if (req.path.startsWith('/api/') && !res.headersSent) {
+        console.log(`[API защита] Обработка API запроса: ${req.method} ${req.path}`);
+        
+        // Если это маршрут, который у нас не зарегистрирован, возвращаем ошибку 404
+        return res.status(404).json({
+          success: false,
+          error: `API endpoint not found: ${req.method} ${req.path}`
+        });
+      }
+      next();
+    });
+    
     // Всегда настраиваем Vite в среде Replit
     try {
       log("Setting up Vite in development mode...");
