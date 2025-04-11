@@ -112,6 +112,7 @@ export function registerUnifiedRoutes(app: Router) {
    * Единый маршрут для улучшения текста с помощью различных AI сервисов
    */
   // Регистрируем дублирующие маршруты: один с префиксом /api, другой без
+  // Обработчик для улучшения текста
   const improveTextHandler = async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
@@ -350,7 +351,11 @@ export function registerUnifiedRoutes(app: Router) {
         error: 'Внутренняя ошибка сервера при улучшении текста'
       });
     }
-  });
+  };
+  
+  // Регистрируем два маршрута с одним обработчиком - один с префиксом /api, другой без
+  app.post('/api/improve-text', improveTextHandler);
+  app.post('/improve-text', improveTextHandler);
   
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
