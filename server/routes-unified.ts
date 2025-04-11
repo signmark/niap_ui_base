@@ -377,10 +377,10 @@ export function registerUnifiedRoutes(app: Router) {
           
           // Генерируем контент с помощью Gemini
           log(`[unified-routes] Calling Gemini service for content generation with model ${model || 'default'}`, 'unified');
-          const geminiResult = await geminiService.generateText({
-            prompt: basePrompt,
-            model: model || 'gemini-2.5-pro-exp-03-25'
-          });
+          const geminiResult = await geminiService.generateContent(
+            basePrompt,
+            model || 'gemini-2.5-pro-exp-03-25'
+          );
           
           return res.json({
             success: true,
@@ -404,10 +404,10 @@ export function registerUnifiedRoutes(app: Router) {
           
           // Генерируем контент с помощью Claude
           log(`[unified-routes] Calling Claude service for content generation with model ${model || 'default'}`, 'unified');
-          const claudeResult = await claudeService.generateText({
-            prompt: basePrompt,
-            model: model || 'claude-3-haiku-20240307'
-          });
+          const claudeResult = await claudeService.generateContent(
+            basePrompt,
+            model || 'claude-3-haiku-20240307'
+          );
           
           return res.json({
             success: true,
@@ -489,11 +489,17 @@ export function registerUnifiedRoutes(app: Router) {
           log(`[unified-routes] Calling Qwen service for content generation with model ${model || 'default'}`, 'unified');
           
           // Генерируем контент с помощью Qwen
-          const qwenResult = await qwenService.generateText({
-            prompt: basePrompt,
-            model: model || 'qwen-pro',
-            systemPrompt: qwenSystemMessage
-          });
+          const qwenResult = await qwenService.generateText(
+            [
+              { role: 'system', content: qwenSystemMessage },
+              { role: 'user', content: basePrompt }
+            ],
+            {
+              model: model || 'qwen-pro',
+              temperature: 0.7,
+              max_tokens: 4000
+            }
+          );
           
           return res.json({
             success: true,
