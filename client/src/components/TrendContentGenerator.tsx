@@ -80,9 +80,7 @@ const generateContentSchema = z.object({
     'gemini-1.5-pro', 
     'gemini-1.5-flash',
     'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-2.5-pro-preview-03-25',
-    'gemini-2.5-pro-exp-03-25'
+    'gemini-2.5-pro-preview-03-25'
   ]).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
@@ -454,9 +452,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                         <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
                         <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
                         <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-                        <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</SelectItem>
-                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (Preview)</SelectItem>
-                        <SelectItem value="gemini-2.5-pro-exp">Gemini 2.5 Pro Exp</SelectItem>
+                        <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro (Preview)</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
                       </SelectContent>
