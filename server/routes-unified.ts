@@ -31,7 +31,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new GeminiService(apiKey);
     } catch (error) {
-      log('[unified-routes] Error getting Gemini API key:', (error as Error).message, 'unified');
+      log(`[unified-routes] Error getting Gemini API key: ${(error as Error).message}`, 'unified');
       return null;
     }
   }
@@ -55,7 +55,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new ClaudeService(apiKey);
     } catch (error) {
-      log('[unified-routes] Error getting Claude API key:', (error as Error).message, 'unified');
+      log(`[unified-routes] Error getting Claude API key: ${(error as Error).message}`, 'unified');
       return null;
     }
   }
@@ -79,7 +79,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return new DeepSeekService({ apiKey });
     } catch (error) {
-      log('[unified-routes] Error getting DeepSeek API key:', (error as Error).message, 'unified');
+      log(`[unified-routes] Error getting DeepSeek API key: ${(error as Error).message}`, 'unified');
       return null;
     }
   }
@@ -103,7 +103,7 @@ export function registerUnifiedRoutes(app: Router) {
       
       return apiKey;
     } catch (error) {
-      log('[unified-routes] Error getting Qwen API key:', (error as Error).message, 'unified');
+      log(`[unified-routes] Error getting Qwen API key: ${(error as Error).message}`, 'unified');
       return null;
     }
   }
@@ -361,37 +361,39 @@ export function registerUnifiedRoutes(app: Router) {
       basePrompt += `\n\nОтформатируй текст с использованием HTML для структурирования (теги <p>, <br>, <ul>, <li>). Не используй заголовки <h1>, <h2>, etc.`;
       
       // Обработка в зависимости от запрошенного сервиса
-      switch (service) {
-        case 'gemini':
-        case 'gemini-pro':
-        case 'gemini-1.5-pro':
-        case 'gemini-2.5-pro':
-        case 'gemini-2.5-flash':
-          // Получаем Gemini сервис
-          const geminiService = await getGeminiService(req);
-          
-          if (!geminiService) {
-            log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
-            return res.status(400).json({
-              success: false,
-              error: 'API ключ Gemini не настроен',
-              needApiKey: true,
-              service: 'gemini'
-            });
-          }
-          
-          // Генерируем контент с помощью Gemini
-          log(`[unified-routes] Calling Gemini service for content generation with model ${model || 'default'}`, 'unified');
-          const geminiResult = await geminiService.generateContent(
-            basePrompt,
-            model || 'gemini-2.5-pro-exp-03-25'
-          );
-          
-          return res.json({
-            success: true,
-            content: geminiResult,
+      // Проверяем, является ли это моделью Gemini по префиксу
+      if (service === 'gemini' || (typeof service === 'string' && service.startsWith('gemini-'))) {
+        // Получаем Gemini сервис
+        const geminiService = await getGeminiService(req);
+        
+        if (!geminiService) {
+          log(`[unified-routes] Gemini API key not configured for user ${userId}`, 'unified');
+          return res.status(400).json({
+            success: false,
+            error: 'API ключ Gemini не настроен',
+            needApiKey: true,
             service: 'gemini'
           });
+        }
+        
+        // Генерируем контент с помощью Gemini, используя модель из запроса или значение по умолчанию
+        log(`[unified-routes] Calling Gemini service for content generation with model ${service}`, 'unified');
+        // Если модель указана явно, используем её, иначе используем сервис в качестве имени модели
+        const modelToUse = model || service;
+        const geminiResult = await geminiService.generateContent(
+          basePrompt,
+          modelToUse
+        );
+        
+        return res.json({
+          success: true,
+          content: geminiResult,
+          service: 'gemini'
+        });
+      }
+      
+      // Для остальных сервисов используем switch
+      switch (service) {
           
         case 'claude':
           // Получаем Claude сервис
