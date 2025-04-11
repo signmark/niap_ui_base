@@ -146,7 +146,7 @@ export function registerUnifiedRoutes(app: Router) {
         console.log(`[improve-text] Using userId from x-user-id header: ${userId}`);
       }
       
-      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}`, 'unified');
+      log(`[unified-routes] Received improve-text request with service=${service} from user ${userId}, headers: ${JSON.stringify(req.headers)}`, 'unified');
       
       if (!text || !prompt) {
         log('[unified-routes] Missing text or prompt in improve-text request', 'unified');
