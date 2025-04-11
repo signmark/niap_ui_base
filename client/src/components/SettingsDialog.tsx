@@ -100,7 +100,7 @@ export function SettingsDialog() {
 
   // Обобщенная функция для тестирования API ключей
   const testApiKey = async (
-    keyType: 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini' | 'qwen',
+    keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini' | 'qwen',
     keyValue: string,
     setTestingState: React.Dispatch<React.SetStateAction<TestingState>>,
     additionalValidation?: () => boolean
