@@ -914,26 +914,14 @@ export class TelegramService extends BaseSocialService {
     
     // Обработка случая с супергруппой/каналом (-100...)
     if (chatId.startsWith('-100')) {
-      // Для приватных каналов используем формат с /c/
-      // Для публичных - формат без /c/
       const channelId = chatId.substring(4);
-      
-      // Для приватных каналов (без username)
-      if (!chatUsername) {
-        const url = `https://t.me/c/${channelId}/${messageId}`;
-        log(`Сформирован URL для приватного канала: ${url}`, 'social-publishing');
-        return url;
-      }
-      
-      // Для публичных супергрупп/каналов удаляем префикс -100
-      const url = `https://t.me/${channelId}/${messageId}`;
-      log(`Сформирован URL для публичного канала: ${url}`, 'social-publishing');
+      const url = `https://t.me/c/${channelId}/${messageId}`;
+      log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в ${url}`, 'social-publishing');
       return url;
     }
     
     // Обработка обычных групп (начинаются с -)
     if (chatId.startsWith('-')) {
-      // Для обычной группы без username форматируем URL по стандарту
       const groupId = chatId.substring(1); // Убираем только минус
       const url = `https://t.me/c/${groupId}/${messageId}`;
       log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
