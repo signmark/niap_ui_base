@@ -2068,7 +2068,8 @@ export class SocialPublishingWithImgurService {
         [platform]: {
           status: publicationResult.status,
           publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt) : null,
-          error: publicationResult.error || null
+          error: publicationResult.error || null,
+          postUrl: publicationResult.postUrl || null  // Добавляем URL поста в сохраняемый объект
         }
       };
       
