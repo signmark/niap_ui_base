@@ -4,6 +4,8 @@ import { ClaudeService } from './services/claude';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
+import { GeminiService } from './services/gemini';
+import apiKeyService from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
@@ -3502,15 +3504,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Инициализируем Gemini API с токеном запроса
           console.log(`Попытка инициализации Gemini сервиса для пользователя ${userId}`);
           
-          // Импортируем сервис Gemini из нашего модуля
-          const { GeminiService } = require('./services/gemini');
-          
           // Создаем новый экземпляр сервиса Gemini
           const geminiInstance = new GeminiService({ apiKey: '' });
           
           // Получаем API ключ через API Keys Storage
           try {
-            const apiKeyResult = await getApiKey(userId, token, 'gemini');
+            const apiKeyResult = await apiKeyService.getApiKey(userId, token, 'gemini');
             if (!apiKeyResult.success) {
               console.error('Ошибка получения API ключа Gemini:', apiKeyResult.error);
               return res.status(400).json({ 
