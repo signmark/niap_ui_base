@@ -77,19 +77,28 @@ export class GeminiService {
    */
   private getSelectedModelInfo(model: string): { modelName: string; apiVersion: 'v1' | 'v1beta' } {
     // Актуальные модели Gemini (обновлены в апреле 2025 года)
-    const PRO_MODEL_1_5 = 'gemini-1.5-pro'; // Современная модель Pro 1.5
-    const FLASH_MODEL_1_5 = 'gemini-1.5-flash'; // Быстрая модель Flash 1.5
+    const PRO_MODEL_1_5 = 'gemini-1.5-pro'; // Стабильная модель Pro 1.5
+    const FLASH_MODEL_1_5 = 'gemini-1.5-flash'; // Стабильная модель Flash 1.5
     const PRO_MODEL_2_5 = 'gemini-2.5-pro-preview-03-25'; // Preview модель Gemini 2.5 Pro
-    const FLASH_MODEL_2_5 = 'gemini-2.5-flash-exp-03-25'; // Preview модель Gemini 2.5 Flash
+    const PRO_MODEL_2_5_EXP = 'gemini-2.5-pro-exp-03-25'; // Экспериментальная версия Gemini 2.5 Pro
+    const FLASH_MODEL_2_0 = 'gemini-2.0-flash'; // Стабильная модель Gemini 2.0 Flash
+    const FLASH_MODEL_2_0_EXP = 'gemini-2.0-flash-exp'; // Экспериментальная модель Gemini 2.0 Flash
+    
+    // Gemini 2.5 Flash еще не выпущена для публичного API
+    // По результатам проверки в официальной документации 
+    // https://ai.google.dev/models/gemini
     
     // Маппинг пользовательских моделей на фактические
     const modelMapping: {[key: string]: { name: string; beta: boolean }} = {
       'gemini': { name: PRO_MODEL_1_5, beta: false }, // По умолчанию используем 1.5 Pro
       'gemini-pro': { name: PRO_MODEL_1_5, beta: false },
-      'gemini-2.5-pro': { name: PRO_MODEL_2_5, beta: true }, // Используем актуальную preview версию Gemini 2.5 Pro (beta)
+      'gemini-2.5-pro': { name: PRO_MODEL_2_5, beta: true }, // Используем preview версию Gemini 2.5 Pro (beta)
+      'gemini-2.5-pro-exp': { name: PRO_MODEL_2_5_EXP, beta: true }, // Экспериментальная версия
       'gemini-1.5-pro': { name: PRO_MODEL_1_5, beta: false },
       'gemini-1.5-flash': { name: FLASH_MODEL_1_5, beta: false },
-      'gemini-2.5-flash': { name: FLASH_MODEL_2_5, beta: true } // Используем актуальную preview версию Gemini 2.5 Flash (beta)
+      'gemini-2.0-flash': { name: FLASH_MODEL_2_0, beta: false }, // Gemini 2.0 Flash (стабильная)
+      'gemini-2.0-flash-exp': { name: FLASH_MODEL_2_0_EXP, beta: true }, // Gemini 2.0 Flash Exp (экспериментальная)
+      'gemini-2.5-flash': { name: FLASH_MODEL_2_0, beta: false } // Fallback к стабильной 2.0 Flash
     };
     
     // Получаем модель из маппинга или используем Pro модель 1.5 по умолчанию
