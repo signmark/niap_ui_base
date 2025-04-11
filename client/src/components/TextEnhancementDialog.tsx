@@ -131,6 +131,14 @@ const AI_SERVICES = [
       {
         id: "gemini-1.5-pro",
         name: "Gemini 1.5 Pro"
+      },
+      {
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash (2025)"
+      },
+      {
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro (2025)"
       }
     ]
   }
@@ -188,13 +196,17 @@ export function TextEnhancementDialog({
   
   // Получение правильного названия модели в зависимости от выбранного сервиса
   const getModelName = (service: string, modelId: string): string => {
-    // Если это Gemini сервис, проверяем конкретные модели
+    // Если это Gemini сервис, используем специальные названия моделей
     if (service === 'gemini') {
       switch (modelId) {
         case 'gemini-1.5-flash':
           return 'gemini-1.5-flash';
         case 'gemini-1.5-pro':
           return 'gemini-1.5-pro';
+        case 'gemini-2.5-flash':
+          return 'gemini-2.5-flash-exp-03-25'; // Экспериментальная версия через v1beta
+        case 'gemini-2.5-pro':
+          return 'gemini-2.5-pro-preview-03-25'; // Доступна через Google AI Studio и Vertex AI
         default:
           return modelId; // Используем modelId для остальных моделей
       }
