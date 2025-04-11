@@ -59,9 +59,21 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
+      // Проверяем, что переданная модель входит в список поддерживаемых
+      // Включая новые модели Gemini 2.5
+      const supportedModels = [
+        'gemini-1.5-flash', 
+        'gemini-1.5-pro', 
+        'gemini-2.5-flash', 
+        'gemini-2.5-pro'
+      ];
+      
+      // Если модель не поддерживается, используем флеш модель по умолчанию
+      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
+      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Подготавливаем инструкцию
       const instruction = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
@@ -71,7 +83,7 @@ export class GeminiService {
       const response = result.response;
       const improvedText = response.text();
       
-      logger.log('[gemini-service] Text improvement successful', 'gemini');
+      logger.log('[gemini-service] Text improvement successful with model ' + selectedModel, 'gemini');
       return improvedText;
     } catch (error) {
       logger.error('[gemini-service] Error improving text:', error);
@@ -89,16 +101,27 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
+      // Проверяем, что переданная модель входит в список поддерживаемых
+      const supportedModels = [
+        'gemini-1.5-flash', 
+        'gemini-1.5-pro', 
+        'gemini-2.5-flash', 
+        'gemini-2.5-pro'
+      ];
+      
+      // Если модель не поддерживается, используем флеш модель по умолчанию
+      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
+      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Генерируем контент
       const result = await geminiModel.generateContent(prompt);
       const response = result.response;
       const generatedContent = response.text();
       
-      logger.log('[gemini-service] Content generation successful', 'gemini');
+      logger.log(`[gemini-service] Content generation successful with model ${selectedModel}`, 'gemini');
       return generatedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating content:', error);
@@ -123,12 +146,23 @@ export class GeminiService {
     try {
       logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
       
+      // Проверяем, что переданная модель входит в список поддерживаемых
+      const supportedModels = [
+        'gemini-1.5-flash', 
+        'gemini-1.5-pro', 
+        'gemini-2.5-flash', 
+        'gemini-2.5-pro'
+      ];
+      
+      // Если модель не поддерживается, используем флеш модель по умолчанию
+      const selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
+      
       // Преобразуем ключевые слова в строку
       const keywordsText = keywords.join(', ');
       
       // Создаем генеративную модель
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const geminiModel = genAI.getGenerativeModel({ model });
+      const geminiModel = genAI.getGenerativeModel({ model: selectedModel });
       
       // Формируем полный промпт
       let fullPrompt = prompt;
@@ -150,7 +184,7 @@ export class GeminiService {
       const response = result.response;
       const generatedContent = response.text();
       
-      logger.log('[gemini-service] Social content generation successful', 'gemini');
+      logger.log(`[gemini-service] Social content generation successful with model ${selectedModel}`, 'gemini');
       return generatedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating social content:', error);

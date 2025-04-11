@@ -3528,6 +3528,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               tone === 'friendly' ? 'instagram' : 'general'
           );
           
+          // Определяем модель Gemini - используем переданную в запросе или значение по умолчанию
+          const modelName = req.body.modelType || service || 'gemini';
+          
+          // Преобразуем значение modelName в нужную версию модели Gemini
+          let geminiModel = 'gemini-1.5-flash'; // Значение по умолчанию
+          
+          // Маппинг из UI-значений в реальные названия моделей
+          if (modelName === 'gemini-1.5-pro') {
+            geminiModel = 'gemini-1.5-pro';
+          } else if (modelName === 'gemini-2.5-flash') {
+            geminiModel = 'gemini-2.5-flash';
+          } else if (modelName === 'gemini-2.5-pro') {
+            geminiModel = 'gemini-2.5-pro';
+          }
+          
           // Используем Gemini для генерации контента
           generatedContent = await geminiInstance.generateSocialContent(
             keywords,
@@ -3535,7 +3550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             {
               platform,
               tone,
-              model: 'gemini-1.5-flash'
+              model: geminiModel
             }
           );
           
