@@ -119,9 +119,10 @@ const AI_SERVICES = [
     id: "gemini",
     name: "Gemini",
     models: [
+      // Стабильные рабочие модели (подтверждено тестами)
       {
-        id: "gemini-pro",
-        name: "Gemini Pro",
+        id: "gemini-1.5-pro",
+        name: "Gemini 1.5 Pro",
         default: true
       },
       {
@@ -129,52 +130,56 @@ const AI_SERVICES = [
         name: "Gemini 1.5 Flash"
       },
       {
-        id: "gemini-1.5-pro",
-        name: "Gemini 1.5 Pro"
+        id: "gemini-1.5-flash-8b",
+        name: "Gemini 1.5 Flash 8B"
       },
       {
-        id: "gemini-2.0-pro",
-        name: "Gemini 2.0 Pro"
-      },
-      {
-        id: "gemini-2.0-flash",
+        id: "gemini-2.0-flash-001",
         name: "Gemini 2.0 Flash"
       },
       {
+        id: "gemini-2.0-flash-lite-001", 
+        name: "Gemini 2.0 Flash Lite"
+      },
+      
+      // Экспериментальные и preview модели (beta API)
+      {
         id: "gemini-2.5-pro-preview-03-25",
-        name: "Gemini 2.5 Pro (Preview)"
+        name: "Gemini 2.5 Pro (Preview) 🧪"
       },
       {
-        id: "gemini-1.5-flash-001",
-        name: "Gemini 1.5 Flash 001"
+        id: "gemini-2.5-pro-exp-03-25",
+        name: "Gemini 2.5 Pro (Experimental) 🧪"
       },
       {
-        id: "gemini-1.5-flash-latest",
-        name: "Gemini 1.5 Flash Latest"
+        id: "gemini-2.0-flash-exp",
+        name: "Gemini 2.0 Flash (Experimental) 🧪"
       },
       {
-        id: "gemini-1.0-pro-001",
-        name: "Gemini 1.0 Pro 001"
+        id: "gemini-2.0-flash-exp-image-generation",
+        name: "Gemini 2.0 Flash Image Gen 🧪"
       },
       {
-        id: "gemini-1.0-pro-latest", 
-        name: "Gemini 1.0 Pro Latest"
+        id: "gemini-2.0-flash-thinking-exp-01-21",
+        name: "Gemini 2.0 Flash Thinking 🧪"
       },
       {
-        id: "gemini-1.0-pro-vision-001",
-        name: "Gemini 1.0 Pro Vision 001"
+        id: "gemini-2.0-flash-live-001",
+        name: "Gemini 2.0 Flash Live 🧪"
+      },
+      
+      // Устаревшие модели (для обратной совместимости)
+      {
+        id: "gemini-pro",
+        name: "Gemini Pro (Legacy)"
       },
       {
-        id: "gemini-1.0-pro-vision-latest",
-        name: "Gemini 1.0 Pro Vision Latest"
+        id: "gemini-2.0-pro",
+        name: "Gemini 2.0 Pro (Legacy)"
       },
       {
-        id: "gemini-ultra-vision-001",
-        name: "Gemini Ultra Vision 001"
-      },
-      {
-        id: "gemini-pro-vision",
-        name: "Gemini Pro Vision"
+        id: "gemini-2.0-flash",
+        name: "Gemini 2.0 Flash (Legacy)"
       }
     ]
   }
@@ -232,40 +237,8 @@ export function TextEnhancementDialog({
   
   // Получение правильного названия модели в зависимости от выбранного сервиса
   const getModelName = (service: string, modelId: string): string => {
-    // Если это Gemini сервис, используем специальные названия моделей
-    if (service === 'gemini') {
-      switch (modelId) {
-        case 'gemini-1.5-flash':
-          return 'gemini-1.5-flash';
-        case 'gemini-1.5-pro':
-          return 'gemini-1.5-pro';
-        case 'gemini-2.0-pro':
-          return 'gemini-2.0-pro';
-        case 'gemini-2.0-flash':
-          return 'gemini-2.0-flash';
-        case 'gemini-2.5-pro-preview-03-25':
-          return 'gemini-2.5-pro-preview-03-25';
-        case 'gemini-1.5-flash-001':
-          return 'gemini-1.5-flash-001';
-        case 'gemini-1.5-flash-latest':
-          return 'gemini-1.5-flash-latest';
-        case 'gemini-1.0-pro-001':
-          return 'gemini-1.0-pro-001';
-        case 'gemini-1.0-pro-latest':
-          return 'gemini-1.0-pro-latest';
-        case 'gemini-1.0-pro-vision-001':
-          return 'gemini-1.0-pro-vision-001';
-        case 'gemini-1.0-pro-vision-latest':
-          return 'gemini-1.0-pro-vision-latest';
-        case 'gemini-ultra-vision-001':
-          return 'gemini-ultra-vision-001';
-        case 'gemini-pro-vision':
-          return 'gemini-pro-vision';
-        default:
-          return modelId; // Используем modelId для остальных моделей
-      }
-    }
-    return modelId; // Для остальных сервисов используем modelId напрямую
+    // Для всех сервисов просто возвращаем ID модели как есть
+    return modelId;
   };
   
   // Логирование в консоль для отладки
