@@ -53,24 +53,33 @@ export class GeminiService {
    * @returns Выбранная модель
    */
   private getSelectedModel(model: string): string {
-    // Поддерживаемые модели Gemini
+    // Поддерживаемые модели Gemini (актуальны в 2025 году)
     const supportedModels = [
       'gemini-pro',
-      'gemini-pro-vision', 
-      'gemini-ultra',
-      'gemini-1.0-pro',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash',
-      'gemini-2.5-pro',
-      'gemini-2.5-flash'
+      'gemini-pro-vision',
+      'gemini-ultra'
     ];
 
-    // Если просто "gemini", используем самую надежную модель
-    if (model === 'gemini') {
-      return 'gemini-2.5-pro'; // Используем самую новую модель по умолчанию
+    // Маппинг новых моделей на поддерживаемые
+    const modelMapping: {[key: string]: string} = {
+      'gemini': 'gemini-pro',
+      'gemini-2.5-pro': 'gemini-pro',
+      'gemini-2.5-flash': 'gemini-pro',
+      'gemini-1.5-pro': 'gemini-pro',
+      'gemini-1.5-flash': 'gemini-pro'
+    };
+
+    // Получаем модель из маппинга или возвращаем исходную
+    const mappedModel = modelMapping[model] || model;
+    
+    // Проверяем, поддерживается ли модель
+    if (supportedModels.includes(mappedModel)) {
+      logger.log(`[gemini-service] Using model ${mappedModel} (requested ${model})`, 'gemini');
+      return mappedModel;
     } else {
-      // Иначе используем переданную модель или дефолтную, если модель не поддерживается
-      return supportedModels.includes(model) ? model : 'gemini-2.5-pro';
+      // Если модель не поддерживается, возвращаем стандартную
+      logger.log(`[gemini-service] Model ${model} not supported, falling back to gemini-pro`, 'gemini');
+      return 'gemini-pro';
     }
   }
   
