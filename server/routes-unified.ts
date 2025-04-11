@@ -111,7 +111,7 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для улучшения текста с помощью различных AI сервисов
    */
-  app.post('/api/improve-text', async (req: Request, res: Response) => {
+  app.post('/improve-text', async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
@@ -354,7 +354,7 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для генерации контента с помощью различных AI сервисов
    */
-  app.post('/api/generate-content', async (req: Request, res: Response) => {
+  app.post('/generate-content', async (req: Request, res: Response) => {
     try {
       const { prompt, keywords, tone, platform, service, model } = req.body;
       const userId = req.userId;
