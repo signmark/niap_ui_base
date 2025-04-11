@@ -123,6 +123,17 @@ export class GeminiService {
       return cleanedText;
     } catch (error) {
       logger.error('[gemini-service] Error improving text:', error);
+      
+      // Улучшенное логирование ошибок API для отладки проблем с моделями
+      if (error instanceof Error) {
+        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+        
+        // Проверяем, является ли ошибка связанной с доступностью модели
+        if (error.message && error.message.includes('Model not found')) {
+          logger.error(`[gemini-service] Model availability error: The model "${selectedModel}" is not available or doesn't exist`);
+        }
+      }
+      
       throw new Error(`Ошибка при улучшении текста с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -168,6 +179,17 @@ export class GeminiService {
       return cleanedContent;
     } catch (error) {
       logger.error('[gemini-service] Error generating content:', error);
+      
+      // Улучшенное логирование ошибок API для отладки проблем с моделями
+      if (error instanceof Error) {
+        logger.error(`[gemini-service] Detailed error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+        
+        // Проверяем, является ли ошибка связанной с доступностью модели
+        if (error.message && error.message.includes('Model not found')) {
+          logger.error(`[gemini-service] Model availability error: The model "${selectedModel}" is not available or doesn't exist`);
+        }
+      }
+      
       throw new Error(`Ошибка при генерации контента с помощью Gemini: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
