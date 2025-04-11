@@ -280,6 +280,17 @@ export function TextEnhancementDialog({
         })
       });
       
+      console.log('Отправленный запрос:', {
+        text: text.substring(0, 100) + '...',
+        prompt: getCurrentPrompt(),
+        model: getModelName(selectedService, selectedModelId),
+        service: selectedService,
+        headers: {
+          'x-user-id': localStorage.getItem('user_id') || '',
+          'Authorization': 'Bearer [скрыт]'
+        }
+      });
+      
       if (!response.ok) {
         let errorText;
         try {
