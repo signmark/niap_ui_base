@@ -245,63 +245,63 @@ export function TextEnhancementDialog({
   console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
   
-  // Мутация для улучшения текста
+  // Мутация для улучшения текста - ТОЧНО КАК В ContentGenerationDialog
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
-      // Получаем токен авторизации (как в ContentGenerationDialog)
+      if (!text.trim()) {
+        throw new Error('Введите текст для улучшения');
+      }
+      
+      // Получаем токен авторизации
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error('Требуется авторизация');
       }
       
-      // Используем прямой fetch вместо api-клиента для большего контроля над заголовками
-      console.log('TextEnhancementDialog: Отправка запроса на улучшение текста:',
-        JSON.stringify({
-          text: text.substring(0, 50) + '...',
-          prompt: getCurrentPrompt().substring(0, 50) + '...',
+      // Используем единый маршрут для всех сервисов
+      let apiEndpoint = '/api/improve-text';
+      
+      console.log(`Улучшение текста через ${selectedService} API (endpoint: ${apiEndpoint})`);
+      
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          text,
+          prompt: getCurrentPrompt(),
           model: getModelName(selectedService, selectedModelId),
           service: selectedService
         })
-      );
+      });
+      
+      if (!response.ok) {
+        let errorText;
+        try {
+          const error = await response.json();
+          errorText = error.error || `Ошибка HTTP: ${response.status}`;
+        } catch (e) {
+          // Если не удалось распарсить JSON, получаем текст ошибки
+          const htmlText = await response.text();
+          console.error('Ошибка не в формате JSON:', htmlText.substring(0, 200));
+          errorText = `Ошибка сервера: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorText);
+      }
       
       try {
-        const response = await fetch(getApiEndpoint(), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-            'x-user-id': localStorage.getItem('user_id') || ''
-          },
-          body: JSON.stringify({
-            text,
-            prompt: getCurrentPrompt(),
-            model: getModelName(selectedService, selectedModelId),
-            service: selectedService
-          })
-        });
-      
-        // Проверяем тип контента перед разбором как JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const textResponse = await response.text();
-          console.error('Server returned non-JSON response:', textResponse.substring(0, 200));
-          throw new Error(`Сервер вернул неверный формат ответа: ${contentType || 'unknown'}`);
-        }
-      
         const data = await response.json();
-      
-        if (!response.ok) {
-          throw new Error(data.error || `HTTP ошибка: ${response.status}`);
-        }
-      
-        if (!data.success) {
-          throw new Error(data.error || 'Произошла ошибка при улучшении текста');
-        }
-      
-        return data.text;
-      } catch (error) {
-        console.error('Fetch error:', error);
-        throw error;
+        
+        // Добавляем информацию о используемом сервисе
+        return {
+          text: data.text,
+          service: data.service || selectedService
+        };
+      } catch (e) {
+        console.error('Ошибка при обработке JSON ответа:', e);
+        throw new Error('Ошибка при обработке ответа от сервера');
       }
     },
     onSuccess: (data) => {
