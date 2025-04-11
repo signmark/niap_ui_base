@@ -185,15 +185,15 @@ export function TextEnhancementDialog({
   const getApiEndpoint = () => {
     switch (selectedService) {
       case 'claude':
-        return '/claude/improve-text';
+        return '/api/claude/improve-text';
       case 'deepseek':
-        return '/deepseek/improve-text';
+        return '/api/deepseek/improve-text';
       case 'qwen':
-        return '/qwen/improve-text';
+        return '/api/qwen/improve-text';
       case 'gemini':
-        return '/gemini/improve-text';
+        return '/api/gemini/improve-text';
       default:
-        return '/claude/improve-text';
+        return '/api/claude/improve-text';
     }
   };
   
