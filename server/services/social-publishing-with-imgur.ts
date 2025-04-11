@@ -695,41 +695,47 @@ export class SocialPublishingWithImgurService {
    * @returns Корректно форматированный URL
    */
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
-    // Определяем базовый URL для публичных каналов или приватных чатов
-    let baseUrl = '';
+    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
     
-    // Если это username (начинается с @), удаляем @ и не добавляем /c/
-    if (chatId.startsWith('@')) {
-      baseUrl = `https://t.me/${chatId.substring(1)}`;
-    }
-    // Для числовых ID проверяем, нужен ли префикс /c/
-    else {
-      // Проверяем, является ли chatId полным числовым идентификатором канала (с -100...)
-      // который нужно обработать специальным образом
-      const isFullNumericId = chatId.startsWith('-100') && /^-100\d+$/.test(chatId);
-      
-      if (isFullNumericId) {
-        // Для таких ID нужен формат с /c/ и без -100
-        const channelId = chatId.substring(4); // Убираем префикс -100
-        log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в https://t.me/c/${channelId}`, 'social-publishing');
-        baseUrl = `https://t.me/c/${channelId}`;
-      } else if (chatId.startsWith('-')) {
-        // Для обычных групп (с - в начале) прямых ссылок нет
-        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
-        baseUrl = 'https://t.me';
-      } else {
-        // Для обычных числовых ID без префикса просто используем их (прямой канал или чат с ботом)
-        log(`Форматирование Telegram URL: обычный числовой ID ${chatId} используется напрямую`, 'social-publishing');
-        baseUrl = `https://t.me/${chatId}`;
+    // Если ID сообщения не указан, вернем дефолтный URL Telegram
+    if (!messageId) {
+      // Если это username (начинается с @), можем вернуть URL на канал
+      if (chatId.startsWith('@')) {
+        return `https://t.me/${chatId.substring(1)}`;
       }
+      
+      // Для всех остальных случаев без messageId возвращаем базовый URL
+      return 'https://t.me';
     }
     
-    // Добавляем ID сообщения, если он указан
-    if (messageId) {
-      return `${baseUrl}/${messageId}`;
+    // Обработка случая с username (@channel)
+    if (chatId.startsWith('@')) {
+      const username = chatId.substring(1);
+      const url = `https://t.me/${username}/${messageId}`;
+      log(`Сформирован URL для канала с username: ${url}`, 'social-publishing');
+      return url;
     }
     
-    return baseUrl;
+    // Обработка случая с супергруппой/каналом (-100...)
+    if (chatId.startsWith('-100')) {
+      const channelId = chatId.substring(4); // Убираем префикс -100
+      const url = `https://t.me/c/${channelId}/${messageId}`;
+      log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Обработка обычных групп (начинаются с -)
+    if (chatId.startsWith('-')) {
+      const groupId = chatId.substring(1); // Убираем только минус
+      const url = `https://t.me/c/${groupId}/${messageId}`;
+      log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Личные чаты или боты (числовой ID без минуса)
+    const url = `https://t.me/c/${chatId}/${messageId}`;
+    log(`Сформирован URL для личного чата/бота: ${url}`, 'social-publishing');
+    return url;
   }
   
   /**
