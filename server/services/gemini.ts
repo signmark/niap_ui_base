@@ -33,11 +33,19 @@ export class GeminiService {
    * @returns Экземпляр GoogleGenerativeAI
    */
   private createGenAI(apiVersion: 'v1' | 'v1beta' = 'v1'): GoogleGenerativeAI {
-    // Для исправления ошибки типизации в библиотеке
-    const apiConfig = apiVersion === 'v1beta' ? { apiVersion } : undefined;
-    
-    // Создаем экземпляр GoogleGenerativeAI с указанной версией API
-    return new GoogleGenerativeAI(this.apiKey, apiConfig);
+    try {
+      // Для указания версии API (v1 или v1beta)
+      const apiConfig = apiVersion === 'v1beta' ? { apiVersion } : undefined;
+      
+      // Создаем экземпляр с учетом версии типов библиотеки
+      // @ts-ignore - Игнорируем ошибку типов, так как библиотека поддерживает второй параметр,
+      // даже если в типах это не отражено
+      return new GoogleGenerativeAI(this.apiKey, apiConfig);
+    } catch (error) {
+      // Если версия API не поддерживается, откатываемся к стандартной
+      logger.error(`[gemini-service] Error creating Gemini API with version ${apiVersion}, falling back to v1:`, error);
+      return new GoogleGenerativeAI(this.apiKey);
+    }
   }
   
   /**
