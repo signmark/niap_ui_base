@@ -80,15 +80,33 @@ export class GeminiService {
       let userPrompt = '';
       
       if (containsHtml) {
-        userPrompt = `${prompt}\n\nВажно: текст содержит HTML разметку, которую нужно сохранить.\n\nВот текст для улучшения:\n\n${text}`;
+        userPrompt = `${prompt}\n\nВажно: 
+1. Текст содержит HTML разметку, которую нужно сохранить.
+2. Ответ должен содержать ТОЛЬКО улучшенный текст, без объяснений и кодовых блоков.
+3. Не заключай ответ в кавычки, теги code или markdown-разметку.
+4. Ответ должен начинаться сразу с первой буквы улучшенного текста.
+
+Вот текст для улучшения:\n\n${text}`;
       } else {
-        userPrompt = `${prompt}\n\nВот текст для улучшения:\n\n${text}`;
+        userPrompt = `${prompt}\n\nВажно: 
+1. Ответ должен содержать ТОЛЬКО улучшенный текст, без объяснений и кодовых блоков.
+2. Не заключай ответ в кавычки, теги code или markdown-разметку.
+3. Ответ должен начинаться сразу с первой буквы улучшенного текста.
+
+Вот текст для улучшения:\n\n${text}`;
       }
       
       // Получаем ответ от модели
       const result = await genModel.generateContent(userPrompt);
       const response = result.response;
-      const improvedText = response.text();
+      let improvedText = response.text();
+      
+      // Удаляем любую markdown-разметку и кодовые блоки, если они всё-таки появились
+      improvedText = improvedText
+        .replace(/^```[a-z]*\n/gm, '') // Удаляем открывающие маркеры кодовых блоков
+        .replace(/```$/gm, '')         // Удаляем закрывающие маркеры кодовых блоков
+        .replace(/^\s*```\s*$/gm, '')  // Удаляем строки с маркерами кодовых блоков
+        .trim();                      // Удаляем лишние пробелы
       
       logger.log('[gemini-service] Successfully improved text', 'gemini');
       return improvedText;
