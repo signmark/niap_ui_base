@@ -111,9 +111,8 @@ export function registerUnifiedRoutes(app: Router) {
   /**
    * Единый маршрут для улучшения текста с помощью различных AI сервисов
    */
-  // ВАЖНО: маршруты должны быть зарегистрированы с префиксом /api, чтобы они работали правильно,
-  // так как Vite перехватывает все запросы без префикса /api
-  app.post('/api/improve-text', async (req: Request, res: Response) => {
+  // Регистрируем дублирующие маршруты: один с префиксом /api, другой без
+  const improveTextHandler = async (req: Request, res: Response) => {
     try {
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;

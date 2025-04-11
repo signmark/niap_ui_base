@@ -195,21 +195,8 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // Добавляем специальное middleware для прямой обработки API-запросов
-    // перед настройкой Vite, чтобы они не перехватывались
-    app.use((req, res, next) => {
-      // Если это запрос к API, то отвечаем сразу с ошибкой, не передавая его в Vite
-      if (req.path.startsWith('/api/') && !res.headersSent) {
-        console.log(`[API защита] Обработка API запроса: ${req.method} ${req.path}`);
-        
-        // Если это маршрут, который у нас не зарегистрирован, возвращаем ошибку 404
-        return res.status(404).json({
-          success: false,
-          error: `API endpoint not found: ${req.method} ${req.path}`
-        });
-      }
-      next();
-    });
+    // УДАЛЕНО: специальное middleware для API-запросов, так как оно блокирует все
+    // незарегистрированные маршруты, а нам нужно, чтобы они проходили дальше
     
     // Всегда настраиваем Vite в среде Replit
     try {
