@@ -115,6 +115,19 @@ export function registerUnifiedRoutes(app: Router) {
   // Обработчик для улучшения текста
   const improveTextHandler = async (req: Request, res: Response) => {
     try {
+      console.log(`[CRITICAL DEBUG] НАЧАЛО ОБРАБОТКИ ЗАПРОСА IMPROVE-TEXT`);
+      console.log(`[CRITICAL DEBUG] Request body:`, req.body);
+      console.log(`[CRITICAL DEBUG] Request headers:`, req.headers);
+      
+      // Проверяем, что тело запроса не пустое
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.log(`[CRITICAL ERROR] Тело запроса пустое или отсутствует!`);
+        return res.status(400).json({
+          success: false,
+          error: 'Тело запроса пустое или отсутствует'
+        });
+      }
+      
       const { text, prompt, model, service } = req.body;
       const userId = req.userId;
       
