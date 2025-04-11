@@ -60,19 +60,17 @@ export class GeminiService {
       logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
       
       // Проверяем, что переданная модель входит в список поддерживаемых
-      // Включая новые модели Gemini 2.5
+      // Используем только доступные модели Gemini 1.5
       const supportedModels = [
         'gemini-1.5-flash', 
-        'gemini-1.5-pro', 
-        'gemini-2.5-flash', 
-        'gemini-2.5-pro'
+        'gemini-1.5-pro'
       ];
       
       // Определяем, какую модель использовать
       let selectedModel;
       // Если просто "gemini", используем самую надежную модель
       if (model === 'gemini') {
-        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
       } else {
         // Иначе используем переданную модель или дефолтную, если модель не поддерживается
         selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
@@ -109,18 +107,17 @@ export class GeminiService {
       logger.log(`[gemini-service] Generating content with model: ${model}`, 'gemini');
       
       // Проверяем, что переданная модель входит в список поддерживаемых
+      // Используем только доступные модели Gemini 1.5
       const supportedModels = [
         'gemini-1.5-flash', 
-        'gemini-1.5-pro', 
-        'gemini-2.5-flash', 
-        'gemini-2.5-pro'
+        'gemini-1.5-pro'
       ];
       
       // Определяем, какую модель использовать
       let selectedModel;
       // Если просто "gemini", используем самую надежную модель
       if (model === 'gemini') {
-        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
       } else {
         // Иначе используем переданную модель или дефолтную, если модель не поддерживается
         selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
@@ -161,18 +158,17 @@ export class GeminiService {
       logger.log(`[gemini-service] Generating social content for platform: ${platform || 'general'}, using model: ${model}`, 'gemini');
       
       // Проверяем, что переданная модель входит в список поддерживаемых
+      // Используем только доступные модели Gemini 1.5
       const supportedModels = [
         'gemini-1.5-flash', 
-        'gemini-1.5-pro', 
-        'gemini-2.5-flash', 
-        'gemini-2.5-pro'
+        'gemini-1.5-pro'
       ];
       
       // Определяем, какую модель использовать
       let selectedModel;
       // Если просто "gemini", используем самую надежную модель
       if (model === 'gemini') {
-        selectedModel = 'gemini-2.5-pro'; // Самая надежная модель
+        selectedModel = 'gemini-1.5-pro'; // Самая надежная модель из доступных
       } else {
         // Иначе используем переданную модель или дефолтную, если модель не поддерживается
         selectedModel = supportedModels.includes(model) ? model : 'gemini-1.5-flash';
