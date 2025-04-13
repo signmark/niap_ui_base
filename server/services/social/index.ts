@@ -57,30 +57,30 @@ export class SocialPublishingService {
       }
       
       // Выбираем соответствующий сервис в зависимости от платформы
-      switch (platform) {
+      switch (platformString) {
         case 'telegram':
-          return await telegramService.publishToPlatform(content, platform, settings);
+          return await telegramService.publishToPlatform(content, platformString as any, settings);
         
         case 'vk':
-          return await vkService.publishToPlatform(content, platform, settings);
+          return await vkService.publishToPlatform(content, platformString as any, settings);
         
         case 'instagram':
-          return await instagramService.publishToPlatform(content, platform, settings);
+          return await instagramService.publishToPlatform(content, platformString as any, settings);
         
         // Для остальных платформ возвращаем ошибку
         default:
-          log(`Платформа ${platform} не поддерживается`, 'social-publishing');
+          log(`Платформа ${platformString} не поддерживается`, 'social-publishing');
           return {
-            platform,
+            platform: platformString as any,
             status: 'failed',
             publishedAt: null,
-            error: `Platform ${platform} is not supported yet`
+            error: `Platform ${platformString} is not supported yet`
           };
       }
     } catch (error) {
-      log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
+      log(`Ошибка при публикации в ${platformString}: ${error}`, 'social-publishing');
       return {
-        platform,
+        platform: platformString as any,
         status: 'failed',
         publishedAt: null,
         error: `Error: ${error instanceof Error ? error.message : String(error)}`
