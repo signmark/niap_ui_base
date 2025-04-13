@@ -406,6 +406,13 @@ export function registerPublishingRoutes(app: Express): void {
           try {
             log(`Публикация контента ${content.id} в ${platform}`, 'api');
             
+            // Логируем настройки кампании для отладки
+            log(`[DEBUG] Настройки кампании для публикации в ${platform}: ${JSON.stringify({
+              id: campaign.id,
+              name: campaign.name,
+              telegram: (campaign.socialMediaSettings || campaign.settings)?.telegram || null
+            })}`, 'api');
+            
             // Публикуем контент в выбранную платформу
             const result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);
             

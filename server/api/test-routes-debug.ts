@@ -8,6 +8,7 @@ import { socialPublishingService } from '../services/social';
 import { storage } from '../storage';
 import { CampaignContent, SocialMediaSettings } from '@shared/schema';
 import { log } from '../utils/logger';
+import { telegramChatIdFixService } from '../services/telegram-chatid-fix';
 
 /**
  * Регистрирует тестовые маршруты для отладки
