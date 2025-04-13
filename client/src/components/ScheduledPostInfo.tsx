@@ -22,6 +22,23 @@ const formatTelegramUrl = (url: string | null): string | null => {
     
     if (pathParts.length === 0) return url;
     
+    // ИСПРАВЛЕНИЕ: особый случай для URL вида https://t.me/-1002302366310
+    // Формат отрицательных ID каналов/групп
+    if (pathParts[0].startsWith('-100')) {
+      // Отрицательные ID с -100 нужно форматировать в виде https://t.me/c/ID_БЕЗ_МИНУС_100
+      const channelId = pathParts[0].substring(4); // Убираем -100
+      const messageId = pathParts.length > 1 ? pathParts[1] : '';
+      return `https://t.me/c/${channelId}${messageId ? `/${messageId}` : ''}`;
+    }
+    
+    // ИСПРАВЛЕНИЕ: особый случай для других отрицательных ID
+    if (pathParts[0].startsWith('-') && !pathParts[0].startsWith('-100')) {
+      // Отрицательные ID нужно форматировать в виде https://t.me/c/ID_БЕЗ_МИНУСА
+      const channelId = pathParts[0].substring(1); // Убираем только минус
+      const messageId = pathParts.length > 1 ? pathParts[1] : '';
+      return `https://t.me/c/${channelId}${messageId ? `/${messageId}` : ''}`;
+    }
+    
     // Проверяем, является ли первый сегмент пути числовым ID (проблемный случай)
     // Например: https://t.me/2302366310 (числовой ID канала без /c/)
     if (pathParts.length === 1 && pathParts[0].match(/^\d+$/)) {
@@ -31,11 +48,12 @@ const formatTelegramUrl = (url: string | null): string | null => {
       // Возвращаем ссылку без изменений, так как она ведет на канал, а не конкретный пост
       if (url.split('/').length <= 4) {
         console.log('Обнаружен числовой ID канала Telegram без /c/ префикса', url);
-        return url; // возвращаем без изменений, т.к. формат неверный изначально
+        return `https://t.me/c/${pathParts[0]}`; // исправляем формат
       }
       
       // Если это URL с ID поста, форматируем правильно
-      return `https://t.me/c/${pathParts[0]}`;
+      const messageId = pathParts.length > 1 ? pathParts[1] : '';
+      return `https://t.me/c/${pathParts[0]}${messageId ? `/${messageId}` : ''}`;
     }
     
     // Фиксированная обработка URL-адресов Telegram
