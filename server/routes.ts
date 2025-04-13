@@ -2892,6 +2892,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerPublishingRoutes(app);
   // Регистрируем отладочные маршруты для тестирования
   registerTestDebugRoutes(app);
+  // Регистрируем простой отладочный маршрут
+  registerSimpleDebugRoute(app);
   console.log('API routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
