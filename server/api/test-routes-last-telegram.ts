@@ -5,7 +5,6 @@ import express, { Request, Response } from 'express';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import { telegramService } from '../services/social/telegram-service';
-import { SocialPlatforms } from '@shared/schema';
 
 const lastTelegramRouter = express.Router();
 
@@ -25,9 +24,9 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
       });
     }
     
-    // Используем метод для получения контента специального администратора
-    // с известным userId из базы
-    const content = await storage.getCampaignContent('admin', undefined, adminToken);
+    // Получаем все записи контента с использованием ID администратора
+    // Передаем ID администратора (из тестовых аккаунтов проекта)
+    const content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
     
     if (!content || content.length === 0) {
       return res.status(404).json({
@@ -200,8 +199,9 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
       });
     }
     
-    // Используем метод для получения контента через администратора
-    const content = await storage.getCampaignContent('admin', undefined, adminToken);
+    // Получаем все записи контента с использованием ID администратора
+    // Передаем ID администратора (из тестовых аккаунтов проекта)
+    const content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
     
     if (!content || content.length === 0) {
       return res.status(404).json({
